@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeON Church — UI デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+button, input, textarea { font-family: inherit; }
+
+/* コントロールバー */
+#ctrl {
+  position: sticky; top: 0; z-index: 200;
+  background: #1e1e2e; color: #cdd6f4;
+  padding: 8px 20px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+  font-size: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.6);
+}
+.ctrl-group { display: flex; gap: 4px; align-items: center; }
+.ctrl-label { color: #585b70; margin-right: 2px; }
+.ctrl-btn {
+  padding: 3px 10px; border-radius: 4px; border: none;
+  cursor: pointer; font-size: 12px; background: #313244; color: #cdd6f4;
+  transition: background .1s;
+}
+.ctrl-sep { width: 1px; background: #45475a; align-self: stretch; margin: 0 4px; }
+
+/* アクセントボタン（色つき丸） */
+.accent-btn {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; transition: transform .1s;
+}
+.accent-btn.active { border-color: #fff; transform: scale(1.2); }
+
+/* アプリ全体 */
+#app { display: flex; flex-direction: column; height: calc(100vh - 40px); overflow: hidden; }
+
+/* ナビバー */
+#navbar {
+  height: 56px; display: flex; align-items: center; padding: 0 24px; gap: 16px;
+  flex-shrink: 0; border-bottom: 1px solid;
+}
+.nav-logo { font-weight: 800; font-size: 20px; letter-spacing: -.01em; }
+.nav-spacer { flex: 1; }
+.nav-link { background: none; border: none; cursor: pointer; font-size: 14px; padding: 0 4px; }
+.nav-notif { position: relative; display: inline-flex; }
+.nav-badge {
+  position: absolute; top: -3px; right: -4px;
+  background: #ef4444; color: #fff; border-radius: 50%;
+  width: 14px; height: 14px; font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+}
+
+/* ボディ */
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* ---- サイドバー共通 ---- */
+#sidebar {
+  width: 200px; min-width: 200px; flex-shrink: 0;
+  overflow-y: auto; overflow-x: visible;
+  border-right: 1px solid;
+  padding: 12px 0;
+}
+.sb-book-btn {
+  width: 100%; text-align: left; padding: 9px 16px;
+  background: none; border: none; cursor: pointer; font-size: 15px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.sb-chapters { padding: 2px 8px 6px; }
+.sb-ch-btn {
+  display: block; width: 100%; text-align: left;
+  padding: 4px 14px; background: none; border: none;
+  cursor: pointer; font-size: 13px; border-radius: 4px;
+}
+
+/* スタイルB: フライアウト */
+#flyout {
+  display: none; position: fixed; z-index: 300;
+  left: 200px; width: 160px;
+  border: 1px solid; border-radius: 8px;
+  padding: 8px 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+}
+#flyout .fly-ch {
+  display: block; width: 100%; text-align: left;
+  padding: 5px 16px; background: none; border: none;
+  cursor: pointer; font-size: 13px;
+}
+
+/* スタイルC: 章セレクト画面 */
+.ch-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.ch-grid-btn {
+  width: 48px; height: 48px; border: 1px solid; border-radius: 6px;
+  background: none; cursor: pointer; font-size: 14px; font-weight: 600;
+}
+
+/* ---- メインエリア ---- */
+#content-wrap { flex: 1; display: flex; overflow: hidden; }
+#bible-area { flex: 1; overflow-y: auto; padding: 32px 28px; }
+
+/* コメントパネル（スタイルA: 右） */
+#comment-panel {
+  width: 320px; flex-shrink: 0; overflow-y: auto;
+  border-left: 1px solid; padding: 20px 20px;
+  display: none;
+}
+.cp-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid; }
+
+/* 聖書テキスト */
+.breadcrumb { font-size: 13px; margin-bottom: 6px; }
+.chapter-h { font-weight: 700; margin-bottom: 28px; }
+.verse-row { cursor: pointer; padding: 6px 0; border-radius: 5px; transition: background .1s, padding-left .1s; }
+.verse-row.c-style { padding: 10px 12px; margin-bottom: 3px; border: 1px solid transparent; }
+.verse-num { font-weight: 700; margin-right: 6px; font-size: 11px; user-select: none; }
+.verse-text { }
+.verse-inline-comments { margin-top: 12px; margin-left: 18px; padding: 12px; border-radius: 6px; }
+.verse-actions-row { display: flex; gap: 8px; margin-top: 8px; }
+.verse-actions-row button { padding: 4px 12px; border-radius: 5px; border: 1px solid; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+/* コメント共通 */
+.comments-block { margin-top: 40px; border-top: 1px solid; padding-top: 28px; }
+.comments-h { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.comment-input-area { margin-bottom: 24px; }
+.comment-input-area textarea { width: 100%; padding: 12px; resize: vertical; min-height: 80px; font-size: 14px; outline: none; border-radius: 6px; border: 1px solid; }
+.comment-input-area .post-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+.post-btn { padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; }
+.comment-item { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid; }
+.comment-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.comment-body-text { font-size: 15px; line-height: 1.7; margin-bottom: 10px; }
+.comment-acts { display: flex; gap: 12px; font-size: 13px; }
+.comment-acts button { background: none; border: none; cursor: pointer; font-size: 13px; }
+.reply-wrap { margin-top: 12px; margin-left: 18px; padding-left: 14px; }
+.reply-body { font-size: 14px; line-height: 1.65; margin-bottom: 8px; }
+.reply-acts button { background: none; border: none; cursor: pointer; font-size: 12px; }
+
+/* 他画面 */
+.screen-pad { padding: 32px 28px; overflow-y: auto; }
+.screen-h { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+.screen-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.card-list { display: flex; flex-direction: column; gap: 12px; }
+.card { padding: 16px 18px; border: 1px solid; border-radius: 8px; cursor: pointer; }
+.card-ref { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.card-body { font-size: 15px; line-height: 1.7; }
+.notif-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid; border-radius: 8px; border-left-width: 4px; }
+
+/* ログイン */
+.login-outer { max-width: 400px; margin: 60px auto; padding: 0 24px; overflow-y: auto; }
+.login-card { border: 1px solid; border-radius: 10px; padding: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.field input { width: 100%; padding: 10px 12px; font-size: 16px; outline: none; border: 1px solid; border-radius: 6px; }
+.login-btn { width: 100%; padding: 11px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 800; margin-top: 4px; }
+.login-footer { text-align: center; margin-top: 16px; font-size: 14px; }
+.login-footer button { background: none; border: none; cursor: pointer; font-weight: 700; padding: 0; }
+</style>
+</head>
+<body>
+
+<!-- コントロールバー -->
+<div id="ctrl">
+  <span style="font-weight:800;color:#89b4fa;letter-spacing:.05em">DEMO</span>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">モード:</span>
+    <button class="ctrl-btn" id="btn-light" onclick="setMode('light')">☀ ライト</button>
+    <button class="ctrl-btn" id="btn-dark"  onclick="setMode('dark')">🌙 ダーク</button>
+  </div>
+
+  <div class="ctrl-sep"></div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">フォント:</span>
+    <button class="ctrl-btn" id="btn-f-system" onclick="setFont('system')">システム</button>
+    <button class="ctrl-btn" id="btn-f-inter"  onclick="setFont('inter')">Inter</button>
+    <button class="ctrl-btn" id="btn-f-noto"   onclick="setFont('noto')">Noto Sans JP</button>
+  </div>
+
+  <div class="ctrl-sep"></div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">コメント:</span>
+    <button class="ctrl-btn" id="btn-c-A" onclick="setCommentStyle('A')">A 右パネル</button>
+    <button class="ctrl-btn" id="btn-c-B" onclick="setCommentStyle('B')">B インライン</button>
+    <button class="ctrl-btn" id="btn-c-C" onclick="setCommentStyle('C')">C 下部</button>
+  </div>
+
+  <div class="ctrl-sep"></div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">サイドバー:</span>
+    <button class="ctrl-btn" id="btn-s-A" onclick="setSidebarStyle('A')">A アコーディオン</button>
+    <button class="ctrl-btn" id="btn-s-B" onclick="setSidebarStyle('B')">B フライアウト</button>
+    <button class="ctrl-btn" id="btn-s-C" onclick="setSidebarStyle('C')">C 書籍のみ</button>
+  </div>
+
+  <div class="ctrl-sep"></div>
+
+  <div class="ctrl-group">
+    <span class="ctrl-label">アクセント:</span>
+    <button class="accent-btn" id="acc-blue"   style="background:#2563eb" onclick="setAccent('blue')"   title="ブルー"></button>
+    <button class="accent-btn" id="acc-indigo" style="background:#4f46e5" onclick="setAccent('indigo')" title="インディゴ"></button>
+    <button class="accent-btn" id="acc-teal"   style="background:#0d9488" onclick="setAccent('teal')"   title="ティール"></button>
+    <button class="accent-btn" id="acc-green"  style="background:#16a34a" onclick="setAccent('green')"  title="グリーン"></button>
+    <button class="accent-btn" id="acc-rose"   style="background:#e11d48" onclick="setAccent('rose')"   title="ローズ"></button>
+  </div>
+</div>
+
+<!-- アプリ本体 -->
+<div id="app">
+  <header id="navbar"></header>
+  <div id="body">
+    <aside id="sidebar"></aside>
+    <!-- フライアウト（スタイルB） -->
+    <div id="flyout" onmouseenter="keepFlyout()" onmouseleave="hideFlyout()"></div>
+    <div id="content-wrap">
+      <div id="bible-area"></div>
+      <div id="comment-panel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ----------------------------------------------------------------
+// データ
+// ----------------------------------------------------------------
+const VERSES = [
+  {n:1, t:"アブラハムの子であるダビデの子、イエス・キリストの系図。"},
+  {n:2, t:"アブラハムはイサクをもうけ、イサクはヤコブをもうけ、ヤコブはユダとその兄弟たちをもうけ、"},
+  {n:3, t:"ユダはタマルによってパレスとザラとをもうけ、パレスはエスロムをもうけ、エスロムはアラムをもうけ、"},
+  {n:4, t:"アラムはアミナダブをもうけ、アミナダブはナアソンをもうけ、ナアソンはサルモンをもうけ、"},
+  {n:5, t:"サルモンはラハブによってボアズをもうけ、ボアズはルツによってオベデをもうけ、オベデはエッサイをもうけ、"},
+  {n:6, t:"エッサイはダビデ王をもうけた。ダビデはウリヤの妻によってソロモンをもうけ、"},
+  {n:7, t:"ソロモンはレハベアムをもうけ、レハベアムはアビヤをもうけ、アビヤはアサをもうけ、"},
+  {n:8, t:"アサはヨサファテをもうけ、ヨサファテはヨラムをもうけ、ヨラムはウジヤをもうけ、"},
+];
+const BOOKS = [{name:"マタイ",ch:7},{name:"マルコ",ch:5},{name:"ルカ",ch:6},{name:"ヨハネ",ch:5}];
+const COMMENTS = [
+  {id:1, user:"田中太郎", body:"この系図は神の約束の成就を示しています。アブラハムとダビデへの約束が一つのラインで繋がっています。", votes:12, time:"2時間前",
+   replies:[{id:2, user:"佐藤花子", body:"特に異邦人の女性（ラハブ、ルツ）が含まれているのが印象的です。", votes:5, time:"1時間前"}]},
+  {id:3, user:"鈴木一郎", body:"14世代×3のパターンは記憶のための整理であり、神学的メッセージを優先しているのかもしれません。", votes:8, time:"3時間前", replies:[]},
+];
+const BOOKMARKS = [
+  {book:"マタイ",ch:5,v:3,text:"心の貧しい人たちは、さいわいである、天国はその人たちのものである。"},
+  {book:"ヨハネ",ch:3,v:16,text:"神はそのひとり子を賜わったほどに、この世を愛して下さった。"},
+  {book:"マルコ",ch:12,v:30,text:"心をつくし、精神をつくし、思いをつくし、力をつくして、主なるあなたの神を愛せよ。"},
+];
+const NOTIFS = [
+  {type:"reply", actor:"佐藤花子", text:"あなたのコメントに返信しました", time:"1時間前", read:false},
+  {type:"upvote", actor:"山田次郎", text:"あなたのコメントに投票しました", time:"3時間前", read:false},
+  {type:"reply", actor:"鈴木一郎", text:"あなたのコメントに返信しました", time:"昨日", read:true},
+];
+
+// ----------------------------------------------------------------
+// 設定
+// ----------------------------------------------------------------
+const ACCENTS = {
+  blue:   {l:'#2563eb', d:'#60a5fa', t:'#dbeafe', dt:'#1e3a5f'},
+  indigo: {l:'#4f46e5', d:'#818cf8', t:'#e0e7ff', dt:'#1e1b4b'},
+  teal:   {l:'#0d9488', d:'#2dd4bf', t:'#ccfbf1', dt:'#134e4a'},
+  green:  {l:'#16a34a', d:'#4ade80', t:'#dcfce7', dt:'#14532d'},
+  rose:   {l:'#e11d48', d:'#fb7185', t:'#ffe4e6', dt:'#4c0519'},
+};
+const FONTS = {
+  system: "system-ui,-apple-system,'Segoe UI',sans-serif",
+  inter:  "'Inter','Noto Sans JP',system-ui,sans-serif",
+  noto:   "'Noto Sans JP',system-ui,sans-serif",
+};
+const PALETTES = {
+  light: {bg:'#ffffff',bgAlt:'#f9fafb',bgHover:'#f3f4f6',border:'#e5e7eb',text:'#111827',textMuted:'#6b7280',textFaint:'#9ca3af',accentText:'#ffffff'},
+  dark:  {bg:'#09090b',bgAlt:'#18181b',bgHover:'#27272a',border:'#3f3f46',text:'#fafafa',textMuted:'#a1a1aa',textFaint:'#71717a',accentText:'#ffffff'},
+};
+
+// ----------------------------------------------------------------
+// 状態
+// ----------------------------------------------------------------
+let S = {
+  mode: 'light', font: 'system',
+  commentStyle: 'C', sidebarStyle: 'A', accent: 'blue',
+  screen: 'reading', activeBook: 'マタイ', activeChapter: 1,
+  expandedBook: 'マタイ', selectedVerse: null,
+  flyoutBook: null, flyoutOpen: false,
+};
+
+function pal() {
+  const base = PALETTES[S.mode];
+  const acc = ACCENTS[S.accent];
+  return { ...base, accent: S.mode==='light'?acc.l:acc.d, accentTint: S.mode==='light'?acc.t:acc.dt };
+}
+
+// ----------------------------------------------------------------
+// コントロール操作
+// ----------------------------------------------------------------
+function setMode(v) {
+  S.mode = v;
+  hi('btn-light','btn-dark', v==='light'?0:1, '#a6e3a1');
+  render();
+}
+function setFont(v) {
+  S.font = v;
+  hi('btn-f-system','btn-f-inter','btn-f-noto', {system:0,inter:1,noto:2}[v], '#89b4fa');
+  render();
+}
+function setCommentStyle(v) {
+  S.commentStyle = v; S.selectedVerse = null;
+  hi('btn-c-A','btn-c-B','btn-c-C', {A:0,B:1,C:2}[v], '#cba6f7');
+  render();
+}
+function setSidebarStyle(v) {
+  S.sidebarStyle = v;
+  hi('btn-s-A','btn-s-B','btn-s-C', {A:0,B:1,C:2}[v], '#f9e2af');
+  render();
+}
+function setAccent(v) {
+  S.accent = v;
+  document.querySelectorAll('.accent-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('acc-'+v).classList.add('active');
+  render();
+}
+function setScreen(v) { S.screen = v; S.selectedVerse = null; render(); }
+function goChapter(book, ch) { S.activeBook=book; S.activeChapter=ch; S.screen='reading'; S.selectedVerse=null; render(); }
+function toggleBook(name) { S.expandedBook = S.expandedBook===name?'':name; renderSidebar(); }
+function selectVerse(n) {
+  S.selectedVerse = S.selectedVerse===n ? null : n;
+  if (S.commentStyle==='A') { renderCommentPanel(); }
+  renderBibleArea();
+}
+
+// highlight helper: ids, activeIndex, color
+function hi(...args) {
+  const color = args.pop();
+  const activeIdx = args.pop();
+  args.forEach((id, i) => {
+    if (typeof id !== 'string') return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = i===activeIdx ? color : '#313244';
+    el.style.color = i===activeIdx ? '#1e1e2e' : '#cdd6f4';
+    el.style.fontWeight = i===activeIdx ? '700' : '400';
+  });
+}
+
+// ----------------------------------------------------------------
+// 初期化
+// ----------------------------------------------------------------
+function initCtrl() {
+  hi('btn-light','btn-dark', 0, '#a6e3a1');
+  hi('btn-f-system','btn-f-inter','btn-f-noto', 0, '#89b4fa');
+  hi('btn-c-A','btn-c-B','btn-c-C', 2, '#cba6f7');
+  hi('btn-s-A','btn-s-B','btn-s-C', 0, '#f9e2af');
+  document.getElementById('acc-blue').classList.add('active');
+}
+
+// ----------------------------------------------------------------
+// レンダリング
+// ----------------------------------------------------------------
+function render() {
+  const p = pal();
+  const ff = FONTS[S.font];
+  const app = document.getElementById('app');
+  app.style.background = p.bg;
+  app.style.color = p.text;
+  app.style.fontFamily = ff;
+  renderNavbar(p, ff);
+  renderSidebar(p, ff);
+  renderBibleArea(p, ff);
+  renderCommentPanel(p, ff);
+}
+
+// ---- ナビバー ----
+function renderNavbar(p, ff) {
+  const el = document.getElementById('navbar');
+  el.style.background = p.bgAlt;
+  el.style.borderColor = p.border;
+  el.innerHTML = `
+    <span class="nav-logo" style="color:${p.accent}">NeON Church</span>
+    <span class="nav-spacer"></span>
+    <button class="nav-link" style="color:${S.screen==='bookmarks'?p.accent:p.textMuted};font-weight:${S.screen==='bookmarks'?700:400}" onclick="setScreen('bookmarks')">ブックマーク</button>
+    <span class="nav-notif">
+      <button class="nav-link" style="font-size:18px" onclick="setScreen('notifications')">🔔</button>
+      <span class="nav-badge">2</span>
+    </span>
+    <span class="nav-avatar" style="background:${p.accent};color:${p.accentText}">田</span>
+  `;
+}
+
+// ---- サイドバー ----
+function renderSidebar(p, ff) {
+  const el = document.getElementById('sidebar');
+  p = p || pal(); ff = ff || FONTS[S.font];
+  el.style.background = p.bgAlt;
+  el.style.borderColor = p.border;
+
+  if (S.sidebarStyle === 'A') {
+    el.style.overflow = 'auto';
+    let h = '';
+    BOOKS.forEach(bk => {
+      const isActive = S.activeBook===bk.name && S.screen==='reading';
+      const isOpen = S.expandedBook===bk.name;
+      h += `<button class="sb-book-btn" style="color:${isActive?p.accent:p.text};font-weight:${isActive?700:400};background:${isActive?p.bgHover:'none'}" onclick="toggleBook('${bk.name}')">
+        ${bk.name}<span style="color:${p.textFaint};font-size:11px">${isOpen?'▾':'▸'}</span>
+      </button>`;
+      if (isOpen) {
+        h += `<div class="sb-chapters">`;
+        for (let i=1;i<=bk.ch;i++) {
+          const sel = isActive && S.activeChapter===i;
+          h += `<button class="sb-ch-btn" style="color:${sel?p.accentText:p.textMuted};background:${sel?p.accent:'none'};font-weight:${sel?600:400}" onclick="goChapter('${bk.name}',${i})">第${i}章</button>`;
+        }
+        h += '</div>';
+      }
+    });
+    el.innerHTML = h;
+
+  } else if (S.sidebarStyle === 'B') {
+    el.style.overflow = 'visible';
+    let h = '';
+    BOOKS.forEach(bk => {
+      const isActive = S.activeBook===bk.name && S.screen==='reading';
+      h += `<button class="sb-book-btn"
+        style="color:${isActive?p.accent:p.text};font-weight:${isActive?700:400};background:${isActive?p.bgHover:'none'}"
+        onmouseenter="showFlyout('${bk.name}',event)"
+        onmouseleave="scheduleFlyoutHide()">
+        ${bk.name}<span style="color:${p.textFaint};font-size:11px"> ›</span>
+      </button>`;
+    });
+    el.innerHTML = h;
+    const flyout = document.getElementById('flyout');
+    flyout.style.background = p.bgAlt;
+    flyout.style.borderColor = p.border;
+
+  } else {
+    // C: 書籍のみ
+    el.style.overflow = 'auto';
+    let h = '';
+    BOOKS.forEach(bk => {
+      const isActive = S.activeBook===bk.name && S.screen==='reading';
+      h += `<button class="sb-book-btn"
+        style="color:${isActive?p.accent:p.text};font-weight:${isActive?700:400};background:${isActive?p.bgHover:'none'}"
+        onclick="showChapterSelect('${bk.name}')">
+        ${bk.name}
+      </button>`;
+    });
+    el.innerHTML = h;
+  }
+}
+
+// フライアウト（サイドバーB）
+let flyHideTimer = null;
+function showFlyout(bookName, event) {
+  clearTimeout(flyHideTimer);
+  S.flyoutBook = bookName;
+  const p = pal();
+  const rect = event.currentTarget.getBoundingClientRect();
+  const ctrlH = document.getElementById('ctrl').offsetHeight;
+  const book = BOOKS.find(b=>b.name===bookName);
+  const flyout = document.getElementById('flyout');
+  flyout.style.top = (rect.top) + 'px';
+  flyout.style.background = p.bgAlt;
+  flyout.style.borderColor = p.border;
+  let h = `<div style="padding:6px 16px 8px;font-size:12px;font-weight:700;color:${p.textFaint}">${bookName}</div>`;
+  for (let i=1;i<=book.ch;i++) {
+    const sel = S.activeBook===bookName && S.activeChapter===i && S.screen==='reading';
+    h += `<button class="fly-ch" style="color:${sel?p.accent:p.text};font-weight:${sel?700:400};background:${sel?p.accentTint:'none'};font-family:${FONTS[S.font]}"
+      onclick="goChapter('${bookName}',${i})" onmouseenter="clearTimeout(flyHideTimer)">第${i}章</button>`;
+  }
+  flyout.innerHTML = h;
+  flyout.style.display = 'block';
+}
+function keepFlyout() { clearTimeout(flyHideTimer); }
+function scheduleFlyoutHide() { flyHideTimer = setTimeout(hideFlyout, 150); }
+function hideFlyout() { document.getElementById('flyout').style.display = 'none'; }
+
+// 章セレクト（サイドバーC）
+function showChapterSelect(bookName) {
+  S.activeBook = bookName; S.screen = 'chapter-select';
+  render();
+}
+
+// ---- メインエリア ----
+function renderBibleArea(p, ff) {
+  p = p || pal(); ff = ff || FONTS[S.font];
+  const el = document.getElementById('bible-area');
+
+  if (S.screen === 'bookmarks')       { el.innerHTML = renderBookmarks(p); return; }
+  if (S.screen === 'notifications')   { el.innerHTML = renderNotifications(p); return; }
+  if (S.screen === 'login')           { el.innerHTML = renderLogin(p); return; }
+  if (S.screen === 'chapter-select')  { el.innerHTML = renderChapterSelect(p, ff); return; }
+
+  // 読書画面
+  let versesH = '';
+  VERSES.forEach(v => {
+    const sel = S.selectedVerse === v.n;
+    const isStyleC = S.commentStyle === 'C';
+    const selBg = sel ? p.accentTint : (isStyleC ? p.bgAlt : 'transparent');
+    const borderL = sel ? `3px solid ${p.accent}` : isStyleC ? '3px solid transparent' : 'none';
+    const pl = (sel || isStyleC) ? '14px' : '4px';
+
+    let extra = '';
+    if (sel) {
+      if (S.commentStyle === 'A') {
+        // 右パネル：選択中表示のみ（パネル側にコメント表示）
+        extra = `<div class="verse-actions-row">
+          <button style="background:${p.accent};color:${p.accentText};border-color:${p.accent}" onclick="event.stopPropagation()">💬 コメント</button>
+          <button style="background:${p.bgHover};color:${p.text};border-color:${p.border}" onclick="event.stopPropagation()">🔖 ブックマーク</button>
+        </div>`;
+      } else if (S.commentStyle === 'B') {
+        // インライン：直下にコメント展開
+        extra = renderInlineComments(p, ff);
+      } else {
+        // C: アクションのみ
+        extra = `<div class="verse-actions-row">
+          <button style="background:${p.accent};color:${p.accentText};border-color:${p.accent}" onclick="event.stopPropagation()">💬 コメント</button>
+          <button style="background:${p.bgHover};color:${p.text};border-color:${p.border}" onclick="event.stopPropagation()">🔖 ブックマーク</button>
+        </div>`;
+      }
+    }
+
+    versesH += `<div class="verse-row${isStyleC?' c-style':''}"
+      style="background:${selBg};border-left:${borderL};padding-left:${pl};${isStyleC?`border-color:${sel?p.accent:'transparent'};border-radius:6px;`:''}"
+      onclick="selectVerse(${v.n})">
+      <span class="verse-num" style="color:${p.accent}">${v.n}</span>
+      <span class="verse-text" style="font-size:18px;line-height:1.85">${v.t}</span>
+      ${extra}
+    </div>`;
+  });
+
+  // 下部コメント（スタイルC のみ）
+  let bottomH = '';
+  if (S.commentStyle === 'C') {
+    bottomH = `<div class="comments-block" style="border-color:${p.border}">
+      <h2 class="comments-h" style="color:${p.text}">コメント (${COMMENTS.length})</h2>
+      ${renderCommentInput(p)}
+      ${COMMENTS.map(c => renderCommentItem(c, p, ff)).join('')}
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="breadcrumb" style="color:${p.textMuted}">${S.activeBook} › 第${S.activeChapter}章</div>
+    <h1 class="chapter-h" style="font-size:24px;color:${p.text}">${S.activeBook} 第${S.activeChapter}章</h1>
+    <div style="margin-bottom:${S.commentStyle==='C'?'0':'32px'}">${versesH}</div>
+    ${bottomH}
+  `;
+}
+
+// コメントパネル（スタイルA: 右）
+function renderCommentPanel(p, ff) {
+  p = p || pal(); ff = ff || FONTS[S.font];
+  const el = document.getElementById('comment-panel');
+  if (S.commentStyle !== 'A' || S.screen !== 'reading') {
+    el.style.display = 'none'; return;
+  }
+  el.style.display = 'block';
+  el.style.background = p.bgAlt;
+  el.style.borderColor = p.border;
+
+  if (!S.selectedVerse) {
+    el.innerHTML = `<div style="color:${p.textFaint};font-size:14px;padding-top:20px;text-align:center;line-height:1.7">節をクリックすると<br>コメントが表示されます</div>`;
+    return;
+  }
+  const verse = VERSES.find(v=>v.n===S.selectedVerse);
+  el.innerHTML = `
+    <div class="cp-title" style="color:${p.text};border-color:${p.border}">
+      <span style="color:${p.accent};font-size:12px;font-weight:700">第${S.activeChapter}章 ${S.selectedVerse}節</span><br>
+      <span style="font-size:13px;color:${p.textMuted};line-height:1.6">${verse.t}</span>
+    </div>
+    ${renderCommentInput(p, true)}
+    ${COMMENTS.map(c => renderCommentItem(c, p, ff, true)).join('')}
+  `;
+}
+
+// インラインコメント（スタイルB）
+function renderInlineComments(p, ff) {
+  return `<div class="verse-inline-comments" style="background:${p.bgHover};border-left:2px solid ${p.accent}">
+    ${renderCommentInput(p, false, true)}
+    ${COMMENTS.map(c => renderCommentItem(c, p, ff, false, true)).join('')}
+  </div>`;
+}
+
+// コメント入力欄
+function renderCommentInput(p, compact=false, inline=false) {
+  const h = inline ? '60px' : compact ? '60px' : '80px';
+  return `<div class="comment-input-area" style="${compact||inline?'margin-bottom:16px':''}">
+    <textarea style="background:${p.bg};color:${p.text};border-color:${p.border};font-size:${inline?'13px':'14px'}" placeholder="コメントを書く…" rows="2"></textarea>
+    <div class="post-row"><button class="post-btn" style="background:${p.accent};color:${p.accentText}">投稿</button></div>
+  </div>`;
+}
+
+// コメントアイテム
+function renderCommentItem(c, p, ff, compact=false, inline=false) {
+  const sz = inline ? '13px' : '15px';
+  let repliesH = c.replies.map(r => `
+    <div class="reply-wrap" style="border-left:2px solid ${p.border}">
+      <div class="comment-hd">
+        <span class="avatar" style="background:${p.bgHover};color:${p.textMuted};width:22px;height:22px;font-size:11px">${r.user[0]}</span>
+        <span style="font-size:13px;font-weight:600;color:${p.text}">${r.user}</span>
+        <span style="font-size:12px;color:${p.textFaint}">${r.time}</span>
+      </div>
+      <p class="reply-body" style="color:${p.text}">${r.body}</p>
+      <div class="reply-acts" style="color:${p.textMuted}">
+        <button style="color:${p.textMuted}">▲ ${r.votes}</button>
+        <button style="color:${p.textMuted};margin-left:10px">返信</button>
+      </div>
+    </div>`).join('');
+
+  return `<div class="comment-item" style="border-color:${p.border}">
+    <div class="comment-hd">
+      <span class="avatar" style="background:${p.accent};color:${p.accentText}">${c.user[0]}</span>
+      <span style="font-size:14px;font-weight:600;color:${p.text}">${c.user}</span>
+      <span style="font-size:12px;color:${p.textFaint}">${c.time}</span>
+    </div>
+    <p class="comment-body-text" style="color:${p.text};font-size:${sz}">${c.body}</p>
+    <div class="comment-acts" style="color:${p.textMuted}">
+      <button style="color:${p.textMuted}">▲ <strong style="color:${p.text}">${c.votes}</strong></button>
+      <button style="color:${p.textMuted}">返信</button>
+      <button style="color:${p.textFaint};font-size:12px">通報</button>
+    </div>
+    ${repliesH ? `<div>${repliesH}</div>` : ''}
+  </div>`;
+}
+
+// 章セレクト（サイドバーC）
+function renderChapterSelect(p, ff) {
+  const book = BOOKS.find(b=>b.name===S.activeBook);
+  let btns = '';
+  for (let i=1;i<=book.ch;i++) {
+    btns += `<button class="ch-grid-btn" style="border-color:${p.border};color:${p.text}" onmouseover="this.style.background='${p.accentTint}';this.style.borderColor='${p.accent}'" onmouseout="this.style.background='none';this.style.borderColor='${p.border}'" onclick="goChapter('${S.activeBook}',${i})">${i}</button>`;
+  }
+  return `<div>
+    <div class="breadcrumb" style="color:${p.textMuted}">書籍一覧 › ${S.activeBook}</div>
+    <h1 style="font-size:24px;font-weight:700;color:${p.text};margin-bottom:28px">${S.activeBook}</h1>
+    <p style="font-size:14px;color:${p.textMuted};margin-bottom:20px">章を選んでください</p>
+    <div class="ch-grid">${btns}</div>
+  </div>`;
+}
+
+// ブックマーク
+function renderBookmarks(p) {
+  return `<div>
+    <h1 class="screen-h" style="color:${p.text}">ブックマーク</h1>
+    <div class="card-list">
+      ${BOOKMARKS.map(bm=>`<div class="card" style="background:${p.bgAlt};border-color:${p.border}" onclick="setScreen('reading')">
+        <div class="card-ref" style="color:${p.accent}">${bm.book} ${bm.ch}:${bm.v}</div>
+        <p class="card-body" style="color:${p.text}">「${bm.text}」</p>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// 通知
+function renderNotifications(p) {
+  return `<div>
+    <div class="screen-hd">
+      <h1 class="screen-h" style="color:${p.text};margin-bottom:0">通知</h1>
+      <button style="padding:5px 12px;border:1px solid ${p.border};border-radius:6px;background:${p.bgAlt};color:${p.text};cursor:pointer;font-size:13px">すべて既読</button>
+    </div>
+    <div class="card-list">
+      ${NOTIFS.map(n=>{
+        const unreadBg = S.mode==='dark'?PALETTES.dark.bgHover:'#eff6ff';
+        const accentColor = ACCENTS[S.accent][S.mode==='dark'?'d':'l'];
+        return `<div class="notif-row" style="background:${n.read?p.bgAlt:unreadBg};border-color:${n.read?p.border:accentColor};border-left-color:${n.read?p.border:accentColor}">
+          <span style="font-size:20px">${n.type==='reply'?'💬':'▲'}</span>
+          <span style="flex:1;font-size:15px;color:${p.text}"><strong>${n.actor}</strong> が${n.text}</span>
+          <span style="font-size:12px;color:${p.textFaint}">${n.time}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ログイン
+function renderLogin(p) {
+  return `<div class="login-outer">
+    <h1 style="font-size:24px;font-weight:800;color:${p.text};margin-bottom:24px">ログイン</h1>
+    <div class="login-card" style="background:${p.bgAlt};border-color:${p.border}">
+      <div class="field">
+        <label style="color:${p.text}">ユーザー名</label>
+        <input type="text" placeholder="username" style="background:${p.bg};color:${p.text};border-color:${p.border}">
+      </div>
+      <div class="field">
+        <label style="color:${p.text}">パスワード</label>
+        <input type="password" placeholder="••••••••" style="background:${p.bg};color:${p.text};border-color:${p.border}">
+      </div>
+      <button class="login-btn" style="background:${p.accent};color:${p.accentText}" onclick="setScreen('reading')">ログイン</button>
+      <div class="login-footer" style="color:${p.textMuted}">アカウントがない方は <button style="color:${p.accent}">新規登録</button></div>
+    </div>
+  </div>`;
+}
+
+// ---- 初期化 ----
+initCtrl();
+render();
+</script>
+</body>
+</html>

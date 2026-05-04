@@ -8,7 +8,9 @@
       "Bash(npm install *)",
       "Bash(docker compose *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(npm run *)",
+      "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"cd 'C:\\\\Users\\\\ymats\\\\NeON-Church\\\\frontend'; npm run dev\")"
     ]
   }
 }
