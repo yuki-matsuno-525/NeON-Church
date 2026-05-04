@@ -38,8 +38,10 @@ THIRD_PARTY_APPS = [
     "drf_spectacular",
 ]
 
-# プロジェクト固有のアプリ（Phase 2 以降で追加していく）
-LOCAL_APPS: list[str] = []
+# プロジェクト固有のアプリ
+LOCAL_APPS: list[str] = [
+    "common",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -47,6 +49,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # ミドルウェア
 # ------------------------------------------------------------------
 MIDDLEWARE = [
+    # リクエストの最外層に置き、全レスポンスに X-Request-Id を付与する
+    "common.middleware.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -54,8 +58,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Phase 2 で追加: request_id 付与ミドルウェア
-    # "common.middleware.RequestIdMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -153,3 +155,41 @@ SPECTACULAR_SETTINGS = {
 # GET 系 API は CSRF なしでアクセス可能。
 # ------------------------------------------------------------------
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", cast=Csv())
+
+# ------------------------------------------------------------------
+# ロギング（JSON 構造化ログ）
+# RequestIdFilter が各レコードに request_id を付与する。
+# dev.py では root レベルを DEBUG に上書きする。
+# ------------------------------------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {
+            "()": "common.logging.RequestIdFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "common.logging.JsonFormatter",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["request_id"],
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

@@ -27,19 +27,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # ------------------------------------------------------------------
 # ログ設定（開発用）
-# コンソールに DEBUG レベルのログを出力する。
-# Phase 2 で JSON 構造化ロギングに切り替える。
+# base.py の JSON 構造化ロギングを継承し、DEBUG レベルに引き上げる。
 # ------------------------------------------------------------------
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG",
-    },
-}
+LOGGING["root"]["level"] = "DEBUG"  # noqa: F405
+LOGGING["loggers"]["django"]["level"] = "DEBUG"  # noqa: F405

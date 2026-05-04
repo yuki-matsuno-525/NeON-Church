@@ -23,10 +23,10 @@ urlpatterns = [
     path("api/schema/ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 
     # ------------------------------------------------------------------
-    # ヘルスチェック（Phase 2 で実装予定）
+    # ヘルスチェック
     # Better Stack の uptime monitoring が /healthz/ を定期的に叩く。
     # ------------------------------------------------------------------
-    # path("healthz/", include("common.urls")),
+    path("healthz/", include("common.urls")),
 
     # ------------------------------------------------------------------
     # 各アプリの API エンドポイント（Phase 以降で順次追加）
