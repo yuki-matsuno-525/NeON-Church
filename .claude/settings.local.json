@@ -5,7 +5,10 @@
       "Bash(.venv/Scripts/pip install *)",
       "Bash(.venv/Scripts/django-admin startproject *)",
       "Bash(npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src-dir --no-turbopack --import-alias \"@/*\" --yes)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(docker compose *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
