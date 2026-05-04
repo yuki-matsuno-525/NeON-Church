@@ -1,0 +1,80 @@
+# ==============================================================
+# NeON-Church 開発環境 Docker Compose
+#
+# 起動: docker-compose up --build
+# 停止: docker-compose down
+# DB リセット: docker-compose down -v
+#
+# サービス構成:
+#   db       - PostgreSQL（データ永続化あり）
+#   backend  - Django REST Framework（:8000）
+#   frontend - Next.js（:3000）
+# ==============================================================
+
+services:
+  # ------------------------------------------------------------
+  # PostgreSQL
+  # データは named volume "postgres_data" に永続化される。
+  # ------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # ローカルから直接 DB に接続したい場合に使用（本番では不要）
+      - "5432:5432"
+    healthcheck:
+      # DB が ready になるまで backend の起動を待たせるために使用
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------
+  # Django REST Framework バックエンド
+  # db の healthcheck が通ってから起動する。
+  # ------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      # ホットリロードのためにソースをマウント
+      - ./backend:/app
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ------------------------------------------------------------
+  # Next.js フロントエンド
+  # backend が起動してから立ち上げる。
+  # ------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      # ホットリロードのためにソースをマウント（node_modules は除外）
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  # PostgreSQL のデータを永続化する named volume
+  postgres_data:

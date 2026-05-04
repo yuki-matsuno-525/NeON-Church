@@ -1,0 +1,5 @@
+# イメージに含めないファイル
+node_modules/
+.next/
+.env
+.env.local
