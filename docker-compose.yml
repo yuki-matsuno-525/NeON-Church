@@ -45,6 +45,8 @@ services:
     volumes:
       # ホットリロードのためにソースをマウント
       - ./backend:/app
+      # 聖書テキストデータ（import_gospel コマンドが参照する）
+      - ./text:/text:ro
     env_file:
       - .env
     ports:
