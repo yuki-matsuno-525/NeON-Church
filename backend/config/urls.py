@@ -33,7 +33,7 @@ urlpatterns = [
     # ------------------------------------------------------------------
     path("api/auth/", include("users.urls")),
     path("api/", include("bible.urls")),
-    # path("api/", include("comments.urls")),
+    path("api/", include("comments.urls")),
     # path("api/", include("bookmarks.urls")),
     # path("api/", include("notifications.urls")),
 ]
