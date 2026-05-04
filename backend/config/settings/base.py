@@ -6,6 +6,7 @@
 # 環境変数（python-decouple）から取得する。
 # ==============================================================
 
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import Csv, config
@@ -36,11 +37,14 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "drf_spectacular",
+    # JWT のブラックリスト機能（ログアウト・rotation で使用）
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 # プロジェクト固有のアプリ
 LOCAL_APPS: list[str] = [
     "common",
+    "users",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -119,6 +123,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # ------------------------------------------------------------------
+# カスタムユーザーモデル
+# AbstractUser を UUID 主キーに拡張したモデルを使用する。
+# この設定は最初の migrate より前に確定している必要がある。
+# ------------------------------------------------------------------
+AUTH_USER_MODEL = "users.User"
+
+# ------------------------------------------------------------------
 # デフォルトの主キー型
 # 全モデルは UUIDField を明示的に定義するため、ここは参照されない。
 # ------------------------------------------------------------------
@@ -128,15 +139,26 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework
 # ------------------------------------------------------------------
 REST_FRAMEWORK = {
-    # 認証はデフォルト無効（各ビューで permission_classes を明示する）
+    # HTTP-only Cookie からトークンを取得するカスタム認証クラスを使用する
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "users.authentication.CookieJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     # drf-spectacular で OpenAPI スキーマを自動生成する
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# ------------------------------------------------------------------
+# simplejwt
+# access_token: 20分 / refresh_token: 20日 / rotation あり
+# ------------------------------------------------------------------
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=20),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
 # ------------------------------------------------------------------

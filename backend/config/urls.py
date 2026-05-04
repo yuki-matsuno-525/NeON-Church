@@ -31,7 +31,7 @@ urlpatterns = [
     # ------------------------------------------------------------------
     # 各アプリの API エンドポイント（Phase 以降で順次追加）
     # ------------------------------------------------------------------
-    # path("api/auth/", include("users.urls")),
+    path("api/auth/", include("users.urls")),
     # path("api/", include("bible.urls")),
     # path("api/", include("comments.urls")),
     # path("api/", include("bookmarks.urls")),
