@@ -109,6 +109,15 @@ class LogoutView(APIView):
         return response
 
 
+class MeView(APIView):
+    """GET /api/auth/me/  現在のログインユーザー情報を返す。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        return Response(UserSerializer(request.user).data)
+
+
 class TokenRefreshView(APIView):
     """
     アクセストークンのリフレッシュ。

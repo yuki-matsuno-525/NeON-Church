@@ -1,0 +1,141 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  fetchBooks,
+  fetchChapters,
+  fetchVerses,
+  fetchBookmarks,
+  type Verse,
+  type Chapter,
+  type Bookmark,
+} from "@/lib/api";
+import { getBookBySlug } from "@/lib/books";
+import { useAuth } from "@/contexts/AuthContext";
+import { VerseList } from "@/components/reader/VerseList";
+import { CommentPanel } from "@/components/reader/CommentPanel";
+import { ChapterComments } from "@/components/reader/ChapterComments";
+
+export default function ChapterPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const slug = typeof params.book === "string" ? params.book : "";
+  const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
+  const meta = getBookBySlug(slug);
+
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [chapter, setChapter] = useState<Chapter | null>(null);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!meta) {
+      router.push("/matthew/1");
+      return;
+    }
+
+    setSelectedVerseId(null);
+    setLoading(true);
+    setError(null);
+
+    fetchBooks()
+      .then((books) => {
+        const book = books.find((b) => b.name === meta.name);
+        if (!book) throw new Error("書が見つかりません");
+        return fetchChapters(book.id).then((chapters) => {
+          const ch = chapters.find((c) => c.number === chapterNum);
+          if (!ch) throw new Error("章が見つかりません");
+          setChapter(ch);
+          return fetchVerses(ch.id);
+        });
+      })
+      .then(setVerses)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [slug, chapterNum]);
+
+  useEffect(() => {
+    if (!user) {
+      setBookmarks([]);
+      return;
+    }
+    fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
+  }, [user]);
+
+  const handleSelectVerse = (verseId: string) => {
+    setSelectedVerseId((prev) => (prev === verseId ? null : verseId));
+  };
+
+  const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
+
+  if (!meta) return null;
+
+  if (loading) {
+    return (
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+    );
+  }
+
+  if (error) {
+    return <div style={{ padding: 32, color: "#ef4444" }}>{error}</div>;
+  }
+
+  return (
+    <div style={{ display: "flex", minHeight: "calc(100vh - var(--navbar-height))" }}>
+      {/* Main content */}
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          padding: "32px 32px",
+          overflowY: "auto",
+        }}
+      >
+        {/* Breadcrumb */}
+        <p style={{ fontSize: 13, color: "var(--text-faint)", marginBottom: 16 }}>
+          <Link href={`/${slug}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            {meta.short}
+          </Link>
+          {" › "}
+          <span>第{chapterNum}章</span>
+        </p>
+
+        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+          {meta.short} 第{chapterNum}章
+        </h1>
+
+        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+
+        <VerseList
+          verses={verses}
+          selectedVerseId={selectedVerseId}
+          onSelectVerse={handleSelectVerse}
+          bookmarks={bookmarks}
+          onBookmarksChange={setBookmarks}
+        />
+
+        {chapter && (
+          <ChapterComments
+            chapterId={chapter.id}
+            label={`${meta.short} 第${chapterNum}章へのコメント`}
+          />
+        )}
+      </div>
+
+      {/* Comment panel */}
+      {selectedVerse && (
+        <CommentPanel
+          verse={selectedVerse}
+          chapterNumber={chapterNum}
+          onClose={() => setSelectedVerseId(null)}
+        />
+      )}
+    </div>
+  );
+}
