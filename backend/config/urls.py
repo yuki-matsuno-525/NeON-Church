@@ -35,5 +35,5 @@ urlpatterns = [
     path("api/", include("bible.urls")),
     path("api/", include("comments.urls")),
     path("api/", include("bookmarks.urls")),
-    # path("api/", include("notifications.urls")),
+    path("api/", include("notifications.urls")),
 ]

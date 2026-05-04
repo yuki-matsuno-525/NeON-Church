@@ -8,6 +8,19 @@ from .models import Comment, Vote
 from .serializers import CommentSerializer
 
 
+def _notify(recipient, actor, notification_type, comment):
+    """通知を作成するヘルパー。自己通知はスキップ。"""
+    if recipient == actor:
+        return
+    from notifications.models import Notification
+    Notification.objects.create(
+        recipient=recipient,
+        actor=actor,
+        notification_type=notification_type,
+        comment=comment,
+    )
+
+
 class IsOwner(permissions.BasePermission):
     """オブジェクトの所有者（user フィールド）のみ許可する。"""
 
@@ -31,6 +44,16 @@ class CommentListCreateView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        comment = serializer.save()
+        if comment.parent:
+            _notify(
+                recipient=comment.parent.user,
+                actor=comment.user,
+                notification_type="reply",
+                comment=comment,
+            )
 
     def get_queryset(self):
         qs = Comment.objects.select_related("user").annotate(vote_count=Count("votes"))
@@ -71,6 +94,12 @@ class CommentUpvoteView(APIView):
         _, created = Vote.objects.get_or_create(user=request.user, comment=comment)
         if not created:
             return Response({"detail": "既に投票済みです。"}, status=status.HTTP_409_CONFLICT)
+        _notify(
+            recipient=comment.user,
+            actor=request.user,
+            notification_type="upvote",
+            comment=comment,
+        )
         return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, pk):
