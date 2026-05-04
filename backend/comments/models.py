@@ -59,3 +59,39 @@ class Vote(BaseModel):
         constraints = [
             models.UniqueConstraint(fields=["user", "comment"], name="unique_user_comment_vote"),
         ]
+
+
+class Report(BaseModel):
+    """
+    コメントへの通報。1ユーザー1コメント1件（unique_constraint で重複防止）。
+    管理者が Admin 画面で確認し、必要に応じて対象コメントを論理削除する。
+    """
+
+    SPAM = "spam"
+    OFFENSIVE = "offensive"
+    MISINFORMATION = "misinformation"
+    OTHER = "other"
+    REASON_CHOICES = [
+        (SPAM, "スパム"),
+        (OFFENSIVE, "不快なコンテンツ"),
+        (MISINFORMATION, "誤情報"),
+        (OTHER, "その他"),
+    ]
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    comment = models.ForeignKey(
+        Comment,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+
+    class Meta:
+        db_table = "reports"
+        constraints = [
+            models.UniqueConstraint(fields=["reporter", "comment"], name="unique_reporter_comment_report"),
+        ]

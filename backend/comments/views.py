@@ -2,10 +2,11 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .models import Comment, Vote
-from .serializers import CommentSerializer
+from .models import Comment, Report, Vote
+from .serializers import CommentSerializer, ReportSerializer
 
 
 def _notify(recipient, actor, notification_type, comment):
@@ -35,10 +36,15 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     verse_id / chapter_id / book_id のいずれかが必須。
     指定なしの場合は空リストを返す。
-    ordering=votes は Phase 6（Vote モデル追加後）に annotate を追加して対応する。
     """
 
     serializer_class = CommentSerializer
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def get_permissions(self):
         if self.request.method == "POST":
@@ -128,4 +134,43 @@ class CommentDestroyView(generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ReportView(APIView):
+    """
+    POST /api/comments/{pk}/report/  通報（要認証、同一コメントへの重複通報は 409）
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "report"
+
+    def post(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        serializer = ReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        _, created = Report.objects.get_or_create(
+            reporter=request.user,
+            comment=comment,
+            defaults={"reason": serializer.validated_data["reason"]},
+        )
+        if not created:
+            return Response({"detail": "既に通報済みです。"}, status=status.HTTP_409_CONFLICT)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class AdminCommentModerateView(APIView):
+    """
+    DELETE /api/comments/{pk}/moderate/  管理者による強制論理削除
+    管理者（is_staff=True）のみ利用可能。所有者チェックなし。
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def delete(self, request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        if not comment.is_deleted:
+            comment.is_deleted = True
+            comment.save(update_fields=["is_deleted", "updated_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)

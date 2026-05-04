@@ -1,7 +1,15 @@
 import pytest
+from django.core.cache import cache
 from rest_framework.test import APIClient
 
 REGISTER_URL = "/api/auth/register/"
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture

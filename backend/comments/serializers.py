@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Comment
+from .models import Comment, Report
 
 User = get_user_model()
 
@@ -45,3 +45,10 @@ class CommentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["user"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ["id", "reason", "created_at"]
+        read_only_fields = ["id", "created_at"]
