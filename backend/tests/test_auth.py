@@ -102,6 +102,13 @@ class TestLogout:
         res = api_client.post(LOGOUT_URL)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+    def test_cookies_cleared_after_logout(self, api_client, user_payload):
+        api_client.post(REGISTER_URL, user_payload, format="json")
+        res = api_client.post(LOGOUT_URL)
+        # Set-Cookie で max-age=0 または空値がセットされていることを確認
+        assert res.cookies["access_token"].value == ""
+        assert res.cookies["refresh_token"].value == ""
+
 
 # ------------------------------------------------------------------
 # トークンリフレッシュ
@@ -126,17 +133,13 @@ class TestTokenRefresh:
     def test_rotation_invalidates_old_token(self, api_client, user_payload):
         api_client.post(REGISTER_URL, user_payload, format="json")
 
-        # 1回目のリフレッシュ
+        # リフレッシュ前の refresh_token を保存
+        old_refresh = api_client.cookies["refresh_token"].value
+
+        # 1回目のリフレッシュ（rotation で新しいトークンが発行され、古いトークンはブラックリスト登録）
         api_client.post(REFRESH_URL)
 
-        # 2回目: 前回と同じ refresh_token を手動でセットして使い回す（ブラックリスト済みのはず）
-        # api_client の Cookie は既に更新されているため、
-        # ここでは更新前の古いトークンを直接送ってエラーになることを確認する方法として
-        # 古い Cookie を上書きしてリクエストを送る
-        # （このテストは rotation 機能の確認であり、ブラックリストが機能していれば 401 になる）
-        old_cookie = api_client.cookies.get("refresh_token")
-        if old_cookie:
-            # 上書きして試みる（rotation 済みなので再利用は不可のはずだが、
-            # テストクライアントが自動更新するため検証が難しい。
-            # token_blacklist の動作は別途手動確認推奨）
-            pass
+        # 古い refresh_token を強制セットして再利用を試みる → 401
+        api_client.cookies["refresh_token"] = old_refresh
+        res = api_client.post(REFRESH_URL)
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED

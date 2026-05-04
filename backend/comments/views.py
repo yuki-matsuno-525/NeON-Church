@@ -148,6 +148,8 @@ class ReportView(APIView):
 
     def post(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
+        if comment.user == request.user:
+            return Response({"detail": "自分のコメントは通報できません。"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = ReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         _, created = Report.objects.get_or_create(

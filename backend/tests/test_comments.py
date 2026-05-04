@@ -92,6 +92,16 @@ class TestCommentList:
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 0
 
+    def test_filter_by_chapter_id(self, api_client, comment, chapter):
+        res = api_client.get(COMMENTS_URL, {"chapter_id": str(chapter.id)})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 1
+
+    def test_filter_by_book_id(self, api_client, comment, book):
+        res = api_client.get(COMMENTS_URL, {"book_id": str(book.id)})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 1
+
     def test_anonymous_can_read(self, api_client, comment, verse):
         res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
         assert res.status_code == status.HTTP_200_OK

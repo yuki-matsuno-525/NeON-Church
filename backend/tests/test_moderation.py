@@ -77,6 +77,11 @@ class TestReport:
         other_auth_client.post(report_url(comment["id"]), {"reason": "spam"}, format="json")
         assert Report.objects.filter(comment_id=comment["id"]).count() == 1
 
+    def test_cannot_report_own_comment(self, auth_client, comment):
+        """自分のコメントは通報できない。"""
+        res = auth_client.post(report_url(comment["id"]), {"reason": "spam"}, format="json")
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
 
 # ------------------------------------------------------------------
 # 管理者強制削除
@@ -108,6 +113,12 @@ class TestAdminModerate:
             format="json",
         )
         assert admin_client.delete(moderate_url(res.data["id"])).status_code == status.HTTP_204_NO_CONTENT
+
+    def test_moderate_already_deleted_is_idempotent(self, admin_client, comment):
+        """削除済みコメントへの moderate は冪等（204 を返す）。"""
+        admin_client.delete(moderate_url(comment["id"]))
+        res = admin_client.delete(moderate_url(comment["id"]))
+        assert res.status_code == status.HTTP_204_NO_CONTENT
 
 
 # ------------------------------------------------------------------
