@@ -53,6 +53,7 @@ export function VerseList({
         return (
           <div
             key={verse.id}
+            data-testid="verse-item"
             onClick={() => onSelectVerse(verse.id)}
             style={{
               padding: "8px 12px",

@@ -31,3 +31,12 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # ------------------------------------------------------------------
 LOGGING["root"]["level"] = "DEBUG"  # noqa: F405
 LOGGING["loggers"]["django"]["level"] = "DEBUG"  # noqa: F405
+
+# ------------------------------------------------------------------
+# スロットリング（開発・E2E テスト用に緩める）
+# ------------------------------------------------------------------
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
+    "auth": "60/min",
+    "comment_create": "60/min",
+    "report": "60/min",
+}

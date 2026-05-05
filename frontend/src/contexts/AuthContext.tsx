@@ -28,10 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMe()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    // csrftoken Cookie を取得してから認証状態を確認する
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/api/csrf/`, { credentials: "include" })
+      .catch(() => {})
+      .finally(() => {
+        fetchMe()
+          .then(setUser)
+          .catch(() => setUser(null))
+          .finally(() => setLoading(false));
+      });
   }, []);
 
   const logout = async () => {

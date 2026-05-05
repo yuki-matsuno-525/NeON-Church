@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type Comment, upvoteComment, removeUpvote, formatRelativeTime } from "@/lib/api";
+import { type Comment, upvoteComment, removeUpvote, deleteComment, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 
@@ -37,6 +37,16 @@ export function CommentItem({
         setVoteCount((n) => n + 1);
         setUpvoted(true);
       }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user) return;
+    try {
+      await deleteComment(comment.id);
+      onRefresh?.();
     } catch {
       // ignore
     }
@@ -143,6 +153,24 @@ export function CommentItem({
               }}
             >
               返信
+            </button>
+          )}
+
+          {!comment.is_deleted && user?.id === comment.user.id && (
+            <button
+              onClick={handleDelete}
+              data-testid="delete-comment"
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--text-faint)",
+                fontSize: 13,
+                padding: 0,
+                fontFamily: "inherit",
+              }}
+            >
+              削除
             </button>
           )}
         </div>

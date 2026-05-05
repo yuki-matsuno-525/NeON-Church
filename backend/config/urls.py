@@ -8,6 +8,7 @@
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from common.urls import csrf_urlpatterns
 
 urlpatterns = [
     # Django 管理画面
@@ -31,6 +32,7 @@ urlpatterns = [
     # ------------------------------------------------------------------
     # 各アプリの API エンドポイント（Phase 以降で順次追加）
     # ------------------------------------------------------------------
+    path("api/", include(csrf_urlpatterns)),
     path("api/auth/", include("users.urls")),
     path("api/", include("bible.urls")),
     path("api/", include("comments.urls")),

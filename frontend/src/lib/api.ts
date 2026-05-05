@@ -49,10 +49,21 @@ class ApiError extends Error {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
+function getCsrfToken(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const match = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : undefined;
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const csrfToken = getCsrfToken();
   const res = await fetch(`${API_BASE}/api${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+      ...init?.headers,
+    },
     ...init,
   });
   if (!res.ok) {

@@ -104,8 +104,17 @@ class LogoutView(APIView):
                 pass
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
-        response.delete_cookie("access_token", samesite="Lax")
-        response.delete_cookie("refresh_token", samesite="Lax")
+        # set_cookie 時と同じパラメータで期限切れにすることで確実に削除する
+        for name in ("access_token", "refresh_token"):
+            response.set_cookie(
+                name,
+                "",
+                max_age=0,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite="Lax",
+                expires="Thu, 01 Jan 1970 00:00:00 GMT",
+            )
         return response
 
 
