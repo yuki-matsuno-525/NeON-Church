@@ -35,6 +35,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "corsheaders",
     "rest_framework",
     "drf_spectacular",
     # JWT のブラックリスト機能（ログアウト・rotation で使用）
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     # リクエストの最外層に置き、全レスポンスに X-Request-Id を付与する
     "common.middleware.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -187,6 +189,11 @@ SPECTACULAR_SETTINGS = {
 # GET 系 API は CSRF なしでアクセス可能。
 # ------------------------------------------------------------------
 CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", cast=Csv())
+
+# ------------------------------------------------------------------
+# CORS
+# ------------------------------------------------------------------
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", cast=Csv(), default="")
 
 # ------------------------------------------------------------------
 # ロギング（JSON 構造化ログ）
