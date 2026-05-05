@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { type Comment, upvoteComment, removeUpvote, deleteComment, formatRelativeTime } from "@/lib/api";
+import { type CommentNode, upvoteComment, removeUpvote, deleteComment, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 
 type Props = {
-  comment: Comment;
-  replies?: Comment[];
+  comment: CommentNode;
   onReply?: (body: string, parentId: string) => Promise<void>;
   onRefresh?: () => void;
   depth?: number;
@@ -15,7 +14,6 @@ type Props = {
 
 export function CommentItem({
   comment,
-  replies = [],
   onReply,
   onRefresh,
   depth = 0,
@@ -182,10 +180,10 @@ export function CommentItem({
         )}
       </div>
 
-      {replies.map((reply) => (
+      {comment.children.map((child) => (
         <CommentItem
-          key={reply.id}
-          comment={reply}
+          key={child.id}
+          comment={child}
           onReply={onReply}
           onRefresh={onRefresh}
           depth={depth + 1}

@@ -1,26 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchComments, createComment, type Comment } from "@/lib/api";
+import { fetchComments, createComment, buildCommentTree, type Comment } from "@/lib/api";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
 type Props = {
   chapterId: string;
-  /** The first verse ID of the chapter, used as a proxy for chapter-level comments */
   label?: string;
 };
-
-function buildTree(comments: Comment[]): { root: Comment; replies: Comment[] }[] {
-  const roots = comments.filter((c) => !c.parent);
-  const replyMap: Record<string, Comment[]> = {};
-  for (const c of comments) {
-    if (c.parent) {
-      (replyMap[c.parent] ??= []).push(c);
-    }
-  }
-  return roots.map((root) => ({ root, replies: replyMap[root.id] ?? [] }));
-}
 
 export function ChapterComments({ chapterId, label = "章へのコメント" }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -37,22 +25,17 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
     loadComments();
   }, [chapterId]);
 
-  // Derive first verse ID from loaded comments (needed for posting chapter-level comments)
-  const firstVerseId = comments[0]?.verse ?? null;
-
   const handleSubmit = async (body: string) => {
-    if (!firstVerseId) throw new Error("投稿先の節が見つかりません");
-    const comment = await createComment({ verse: firstVerseId, body });
+    const comment = await createComment({ chapter: chapterId, body });
     setComments((prev) => [comment, ...prev]);
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    if (!firstVerseId) throw new Error("投稿先の節が見つかりません");
-    const comment = await createComment({ verse: firstVerseId, body, parent: parentId });
+    const comment = await createComment({ chapter: chapterId, body, parent: parentId });
     setComments((prev) => [...prev, comment]);
   };
 
-  const tree = buildTree(comments);
+  const tree = buildCommentTree(comments);
 
   return (
     <section style={{ marginTop: 40 }}>
@@ -76,11 +59,10 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
           コメントはまだありません
         </p>
       ) : (
-        tree.map(({ root, replies }) => (
+        tree.map((node) => (
           <CommentItem
-            key={root.id}
-            comment={root}
-            replies={replies}
+            key={node.id}
+            comment={node}
             onReply={handleReply}
             onRefresh={loadComments}
           />

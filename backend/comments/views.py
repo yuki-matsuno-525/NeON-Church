@@ -72,9 +72,9 @@ class CommentListCreateView(generics.ListCreateAPIView):
         if verse_id:
             qs = qs.filter(verse_id=verse_id)
         elif chapter_id:
-            qs = qs.filter(verse__chapter_id=chapter_id)
+            qs = qs.filter(chapter_id=chapter_id)
         elif book_id:
-            qs = qs.filter(verse__chapter__book_id=book_id)
+            qs = qs.filter(book_id=book_id)
         else:
             return qs.none()
 

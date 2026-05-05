@@ -5,13 +5,17 @@ export type CommentUser = { id: string; username: string };
 export type Comment = {
   id: string;
   user: CommentUser;
-  verse: string;
+  verse: string | null;
+  chapter: string | null;
+  book: string | null;
   parent: string | null;
   body: string;
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
 };
+
+export type CommentNode = Comment & { children: CommentNode[] };
 export type BookmarkVerseDetail = {
   id: string;
   number: number;
@@ -110,7 +114,9 @@ export function fetchComments(params: {
 }
 
 export function createComment(data: {
-  verse: string;
+  verse?: string;
+  chapter?: string;
+  book?: string;
   body: string;
   parent?: string;
 }): Promise<Comment> {
@@ -118,6 +124,22 @@ export function createComment(data: {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export function buildCommentTree(comments: Comment[]): CommentNode[] {
+  const nodeMap = new Map<string, CommentNode>();
+  for (const c of comments) {
+    nodeMap.set(c.id, { ...c, children: [] });
+  }
+  const roots: CommentNode[] = [];
+  for (const node of nodeMap.values()) {
+    if (!node.parent) {
+      roots.push(node);
+    } else {
+      nodeMap.get(node.parent)?.children.push(node);
+    }
+  }
+  return roots;
 }
 
 export function upvoteComment(commentId: string): Promise<void> {

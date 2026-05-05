@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   fetchComments,
   createComment,
+  buildCommentTree,
   type Comment,
   type Verse,
 } from "@/lib/api";
@@ -15,17 +16,6 @@ type Props = {
   onClose: () => void;
   chapterNumber: number;
 };
-
-function buildTree(comments: Comment[]): { root: Comment; replies: Comment[] }[] {
-  const roots = comments.filter((c) => !c.parent);
-  const replyMap: Record<string, Comment[]> = {};
-  for (const c of comments) {
-    if (c.parent) {
-      (replyMap[c.parent] ??= []).push(c);
-    }
-  }
-  return roots.map((root) => ({ root, replies: replyMap[root.id] ?? [] }));
-}
 
 export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -54,7 +44,7 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
     setComments((prev) => [...prev, comment]);
   };
 
-  const tree = buildTree(comments);
+  const tree = buildCommentTree(comments);
 
   return (
     <div
@@ -132,11 +122,10 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
             コメントはまだありません
           </p>
         ) : (
-          tree.map(({ root, replies }) => (
+          tree.map((node) => (
             <CommentItem
-              key={root.id}
-              comment={root}
-              replies={replies}
+              key={node.id}
+              comment={node}
               onReply={handleReply}
               onRefresh={loadComments}
             />

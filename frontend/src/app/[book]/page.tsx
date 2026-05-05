@@ -3,21 +3,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchBooks, fetchChapters, fetchComments, createComment, type Chapter, type Comment } from "@/lib/api";
+import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
 import { getBookBySlug } from "@/lib/books";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
-
-function buildTree(comments: Comment[]): { root: Comment; replies: Comment[] }[] {
-  const roots = comments.filter((c) => !c.parent);
-  const replyMap: Record<string, Comment[]> = {};
-  for (const c of comments) {
-    if (c.parent) {
-      (replyMap[c.parent] ??= []).push(c);
-    }
-  }
-  return roots.map((root) => ({ root, replies: replyMap[root.id] ?? [] }));
-}
 
 export default function BookPage() {
   const params = useParams();
@@ -28,7 +17,6 @@ export default function BookPage() {
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [firstVerseId, setFirstVerseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +37,6 @@ export default function BookPage() {
         ]).then(([chs, cms]) => {
           setChapters(chs);
           setComments(cms);
-          if (cms.length > 0) setFirstVerseId(cms[0].verse);
         });
       })
       .catch((err) => setError(err.message))
@@ -57,14 +44,14 @@ export default function BookPage() {
   }, [slug]);
 
   const handleCommentSubmit = async (body: string) => {
-    if (!firstVerseId) throw new Error("投稿先の節が見つかりません");
-    const comment = await createComment({ verse: firstVerseId, body });
+    if (!bookId) return;
+    const comment = await createComment({ book: bookId, body });
     setComments((prev) => [comment, ...prev]);
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    if (!firstVerseId) throw new Error("投稿先の節が見つかりません");
-    const comment = await createComment({ verse: firstVerseId, body, parent: parentId });
+    if (!bookId) return;
+    const comment = await createComment({ book: bookId, body, parent: parentId });
     setComments((prev) => [...prev, comment]);
   };
 
@@ -82,7 +69,7 @@ export default function BookPage() {
     );
   }
 
-  const tree = buildTree(comments);
+  const tree = buildCommentTree(comments);
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
@@ -150,11 +137,10 @@ export default function BookPage() {
       {tree.length === 0 ? (
         <p style={{ color: "var(--text-faint)", fontSize: 13 }}>コメントはまだありません</p>
       ) : (
-        tree.map(({ root, replies }) => (
+        tree.map((node) => (
           <CommentItem
-            key={root.id}
-            comment={root}
-            replies={replies}
+            key={node.id}
+            comment={node}
             onReply={handleReply}
             onRefresh={() => {
               if (bookId) {

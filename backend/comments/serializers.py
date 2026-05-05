@@ -21,7 +21,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "parent", "body", "is_deleted", "created_at", "vote_count"]
+        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_deleted", "created_at", "vote_count"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count"]
 
     def get_vote_count(self, obj) -> int:
@@ -35,11 +35,31 @@ class CommentSerializer(serializers.ModelSerializer):
         return data
 
     def validate(self, data):
-        parent = data.get("parent")
-        if parent and parent.verse_id != data.get("verse").pk:
+        verse = data.get("verse")
+        chapter = data.get("chapter")
+        book = data.get("book")
+
+        targets = [x for x in [verse, chapter, book] if x is not None]
+        if len(targets) != 1:
             raise serializers.ValidationError(
-                {"parent": "返信先コメントは同じ節のものである必要があります。"}
+                "verse, chapter, book のうちいずれか一つを指定してください。"
             )
+
+        parent = data.get("parent")
+        if parent:
+            if verse and parent.verse_id != verse.pk:
+                raise serializers.ValidationError(
+                    {"parent": "返信先コメントは同じ節のものである必要があります。"}
+                )
+            elif chapter and parent.chapter_id != chapter.pk:
+                raise serializers.ValidationError(
+                    {"parent": "返信先コメントは同じ章のものである必要があります。"}
+                )
+            elif book and parent.book_id != book.pk:
+                raise serializers.ValidationError(
+                    {"parent": "返信先コメントは同じ書のものである必要があります。"}
+                )
+
         return data
 
     def create(self, validated_data):

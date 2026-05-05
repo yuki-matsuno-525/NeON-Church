@@ -18,6 +18,22 @@ class Comment(BaseModel):
     )
     verse = models.ForeignKey(
         "bible.Verse",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    chapter = models.ForeignKey(
+        "bible.Chapter",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    book = models.ForeignKey(
+        "bible.Book",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="comments",
     )

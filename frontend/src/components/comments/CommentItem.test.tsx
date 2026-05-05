@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CommentItem } from "./CommentItem";
-import type { Comment } from "@/lib/api";
+import type { CommentNode } from "@/lib/api";
 
 // next/link をシンプルな <a> にスタブ
 vi.mock("next/link", () => ({
@@ -28,15 +28,18 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
+const makeComment = (overrides: Partial<CommentNode> = {}): CommentNode => ({
   id: "c1",
   user: { id: "u1", username: "alice" },
   verse: "v1",
+  chapter: null,
+  book: null,
   parent: null,
   body: "テストコメント本文",
   is_deleted: false,
   created_at: new Date().toISOString(),
   vote_count: 3,
+  children: [],
   ...overrides,
 });
 

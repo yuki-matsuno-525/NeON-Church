@@ -76,6 +76,62 @@ class TestCommentCreate:
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_chapter_comment_post(self, auth_client, chapter):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"chapter": str(chapter.id), "body": "章コメント"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        assert str(res.data["chapter"]) == str(chapter.id)
+        assert res.data["verse"] is None
+
+    def test_book_comment_post(self, auth_client, book):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"book": str(book.id), "body": "書コメント"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        assert str(res.data["book"]) == str(book.id)
+        assert res.data["verse"] is None
+
+    def test_multiple_targets_rejected(self, auth_client, verse, chapter):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "chapter": str(chapter.id), "body": "不正"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_no_target_rejected(self, auth_client):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "ターゲットなし"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_chapter_reply_chain(self, auth_client, chapter):
+        """章コメントへの返信の返信（depth≥2）が正しく保存されることを確認。"""
+        res1 = auth_client.post(
+            COMMENTS_URL,
+            {"chapter": str(chapter.id), "body": "トップコメント"},
+            format="json",
+        )
+        res2 = auth_client.post(
+            COMMENTS_URL,
+            {"chapter": str(chapter.id), "body": "返信", "parent": res1.data["id"]},
+            format="json",
+        )
+        res3 = auth_client.post(
+            COMMENTS_URL,
+            {"chapter": str(chapter.id), "body": "返信の返信", "parent": res2.data["id"]},
+            format="json",
+        )
+        assert res3.status_code == status.HTTP_201_CREATED
+        assert str(res3.data["parent"]) == res2.data["id"]
+
 
 # ------------------------------------------------------------------
 # コメント一覧
@@ -92,15 +148,36 @@ class TestCommentList:
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 0
 
-    def test_filter_by_chapter_id(self, api_client, comment, chapter):
+    def test_filter_by_chapter_id(self, api_client, auth_client, chapter):
+        auth_client.post(
+            COMMENTS_URL,
+            {"chapter": str(chapter.id), "body": "章コメント"},
+            format="json",
+        )
         res = api_client.get(COMMENTS_URL, {"chapter_id": str(chapter.id)})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
 
-    def test_filter_by_book_id(self, api_client, comment, book):
+    def test_filter_by_book_id(self, api_client, auth_client, book):
+        auth_client.post(
+            COMMENTS_URL,
+            {"book": str(book.id), "body": "書コメント"},
+            format="json",
+        )
         res = api_client.get(COMMENTS_URL, {"book_id": str(book.id)})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
+
+    def test_verse_comments_not_in_chapter_filter(self, api_client, auth_client, verse, chapter):
+        """節コメントが章コメントフィルタに混入しないことを確認。"""
+        auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "節コメント"},
+            format="json",
+        )
+        res = api_client.get(COMMENTS_URL, {"chapter_id": str(chapter.id)})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 0
 
     def test_anonymous_can_read(self, api_client, comment, verse):
         res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
