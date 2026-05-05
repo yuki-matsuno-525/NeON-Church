@@ -32,3 +32,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "email", "bio", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    """プロフィール更新用。bio のみ変更可能。"""
+
+    class Meta:
+        model = User
+        fields = ["bio"]

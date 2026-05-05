@@ -93,9 +93,12 @@ export function Navbar() {
                   </span>
                 )}
               </Link>
-              <span style={{ color: "var(--text-muted)", fontSize: 13 }}>
+              <Link
+                href="/profile"
+                style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}
+              >
                 {user.username}
-              </span>
+              </Link>
               <button
                 onClick={handleLogout}
                 style={{

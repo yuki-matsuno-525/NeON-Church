@@ -8,6 +8,7 @@ REGISTER_URL = "/api/auth/register/"
 LOGIN_URL = "/api/auth/login/"
 LOGOUT_URL = "/api/auth/logout/"
 REFRESH_URL = "/api/auth/token/refresh/"
+ME_URL = "/api/auth/me/"
 
 
 # ------------------------------------------------------------------
@@ -143,3 +144,52 @@ class TestTokenRefresh:
         api_client.cookies["refresh_token"] = old_refresh
         res = api_client.post(REFRESH_URL)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# ------------------------------------------------------------------
+# 自分の情報取得
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestMe:
+    def test_get_returns_current_user(self, auth_client, user_payload):
+        res = auth_client.get(ME_URL)
+
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["username"] == user_payload["username"]
+        assert res.data["email"] == user_payload["email"]
+        assert "bio" in res.data
+
+    def test_requires_auth(self, api_client):
+        res = api_client.get(ME_URL)
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# ------------------------------------------------------------------
+# プロフィール更新
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestProfileUpdate:
+    def test_update_bio(self, auth_client):
+        res = auth_client.patch(ME_URL, {"bio": "テスト自己紹介"}, format="json")
+
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["bio"] == "テスト自己紹介"
+
+    def test_update_bio_to_empty(self, auth_client):
+        auth_client.patch(ME_URL, {"bio": "初期テキスト"}, format="json")
+        res = auth_client.patch(ME_URL, {"bio": ""}, format="json")
+
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["bio"] == ""
+
+    def test_requires_auth(self, api_client):
+        res = api_client.patch(ME_URL, {"bio": "test"}, format="json")
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_username_is_not_updated(self, auth_client, user_payload):
+        # username フィールドを送信しても bio のみ更新される
+        res = auth_client.patch(ME_URL, {"username": "hacked", "bio": "テスト"}, format="json")
+
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["username"] == user_payload["username"]
+        assert res.data["bio"] == "テスト"

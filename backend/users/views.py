@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .serializers import LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -119,11 +119,17 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    """GET /api/auth/me/  現在のログインユーザー情報を返す。"""
+    """GET /api/auth/me/  現在のログインユーザー情報を返す。PATCH でプロフィール更新。"""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
+        return Response(UserSerializer(request.user).data)
+
+    def patch(self, request: Request) -> Response:
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(UserSerializer(request.user).data)
 
 

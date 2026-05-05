@@ -162,6 +162,13 @@ export function fetchMe(): Promise<User> {
   return apiFetch("/auth/me/");
 }
 
+export function updateProfile(data: { bio: string }): Promise<User> {
+  return apiFetch("/auth/me/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 export function login(username: string, password: string): Promise<User> {
   return apiFetch("/auth/login/", {
     method: "POST",
