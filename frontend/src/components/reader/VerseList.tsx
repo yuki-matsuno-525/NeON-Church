@@ -21,6 +21,7 @@ export function VerseList({
 }: Props) {
   const { user } = useAuth();
   const [loadingBookmark, setLoadingBookmark] = useState<string | null>(null);
+  const [bookmarkError, setBookmarkError] = useState<string | null>(null);
 
   const bookmarkMap = new Map(bookmarks.map((bm) => [bm.verse_detail.id, bm]));
 
@@ -28,6 +29,7 @@ export function VerseList({
     e.stopPropagation();
     if (!user || loadingBookmark) return;
     setLoadingBookmark(verse.id);
+    setBookmarkError(null);
     try {
       const existing = bookmarkMap.get(verse.id);
       if (existing) {
@@ -37,8 +39,9 @@ export function VerseList({
         const bm = await createBookmark(verse.id);
         onBookmarksChange([...bookmarks, bm]);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("bookmark error:", err);
+      setBookmarkError("ブックマークの操作に失敗しました");
     } finally {
       setLoadingBookmark(null);
     }
@@ -46,6 +49,11 @@ export function VerseList({
 
   return (
     <div>
+      {bookmarkError && (
+        <p style={{ fontSize: 12, color: "#e53e3e", marginBottom: 8 }}>
+          {bookmarkError}
+        </p>
+      )}
       {verses.map((verse) => {
         const isSelected = selectedVerseId === verse.id;
         const isBookmarked = bookmarkMap.has(verse.id);
