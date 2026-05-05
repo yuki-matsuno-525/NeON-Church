@@ -40,6 +40,7 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setLoading inside loadComments is intentional
     loadComments();
   }, [verse.id]);
 

@@ -25,7 +25,6 @@ function buildTree(comments: Comment[]): { root: Comment; replies: Comment[] }[]
 export function ChapterComments({ chapterId, label = "章へのコメント" }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [firstVerseId, setFirstVerseId] = useState<string | null>(null);
 
   const loadComments = () => {
     fetchComments({ chapter_id: chapterId })
@@ -38,14 +37,8 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
     loadComments();
   }, [chapterId]);
 
-  // Find first verse ID from chapter comments (needed for posting)
-  useEffect(() => {
-    if (comments.length > 0) {
-      // Use the verse from the first comment as a target, or we skip posting until we have verseId
-      const first = comments[0];
-      if (first) setFirstVerseId(first.verse);
-    }
-  }, [comments]);
+  // Derive first verse ID from loaded comments (needed for posting chapter-level comments)
+  const firstVerseId = comments[0]?.verse ?? null;
 
   const handleSubmit = async (body: string) => {
     if (!firstVerseId) throw new Error("投稿先の節が見つかりません");

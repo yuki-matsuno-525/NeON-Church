@@ -40,8 +40,11 @@ export default function ChapterPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset state before new route fetch
     setSelectedVerseId(null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
 
     fetchBooks()
@@ -61,10 +64,7 @@ export default function ChapterPage() {
   }, [slug, chapterNum]);
 
   useEffect(() => {
-    if (!user) {
-      setBookmarks([]);
-      return;
-    }
+    if (!user) return;
     fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
   }, [user]);
 

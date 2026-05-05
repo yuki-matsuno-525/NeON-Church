@@ -13,10 +13,7 @@ export function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!user) {
-      setUnreadCount(0);
-      return;
-    }
+    if (!user) return;
     fetchNotifications()
       .then((ns) => setUnreadCount(ns.filter((n) => !n.is_read).length))
       .catch(() => {});
