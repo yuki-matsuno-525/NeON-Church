@@ -41,11 +41,6 @@
   display: none;
 }
 
-/* Sidebar オーバーレイ: デスクトップでは非表示 */
-.sidebar-overlay {
-  display: none;
-}
-
 @media (max-width: 768px) {
   /* ハンバーガーボタン: モバイルで表示 */
   .hamburger-btn {
@@ -65,11 +60,6 @@
 
   .sidebar.sidebar-open {
     left: 0 !important;
-  }
-
-  /* Sidebar オーバーレイ: モバイルで表示 */
-  .sidebar-overlay {
-    display: block !important;
   }
 
   /* コメントパネル: ボトムシート */

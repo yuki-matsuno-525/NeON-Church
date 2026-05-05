@@ -15,18 +15,20 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* モバイル: タップで閉じるオーバーレイ */}
-      <div
-        className="sidebar-overlay"
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          top: "var(--navbar-height)",
-          background: "rgba(0, 0, 0, 0.4)",
-          zIndex: 39,
-        }}
-      />
+      {/* モバイル: Sidebar が開いているときのみオーバーレイを表示 */}
+      {open && (
+        <div
+          className="sidebar-overlay"
+          onClick={onClose}
+          style={{
+            position: "fixed",
+            inset: 0,
+            top: "var(--navbar-height)",
+            background: "rgba(0, 0, 0, 0.4)",
+            zIndex: 39,
+          }}
+        />
+      )}
 
       <aside
         className={`sidebar${open ? " sidebar-open" : ""}`}
