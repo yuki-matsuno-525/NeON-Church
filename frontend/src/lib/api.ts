@@ -47,7 +47,8 @@ class ApiError extends Error {
   }
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+// 常に相対パスで Next.js rewrites を経由する（クロスドメイン Cookie 問題を回避）
+const API_BASE = "";
 
 function getCsrfToken(): string | undefined {
   if (typeof document === "undefined") return undefined;

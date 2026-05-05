@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // csrftoken Cookie を取得してから認証状態を確認する
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/api/csrf/`, { credentials: "include" })
+    fetch("/api/csrf/", { credentials: "include" })
       .catch(() => {})
       .finally(() => {
         fetchMe()
