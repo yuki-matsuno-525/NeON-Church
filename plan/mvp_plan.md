@@ -6,14 +6,14 @@ Your VersionのようなUI,UXで聖書、外典、偽書を読むことができ
 バックエンド：django rest framework
 DB：PostgreSQL
 ##  ドメイン構成
-next.js：neon.church.com
-drf：api.neon.church.com
+next.js：neon-church.com
+drf：api.neon-church.com
 （ドメインはこの限りではない）
 ##  認証方式
 ・JWT＋HTTP-only Cookieを採用。
 ・DRF：djangorestframework-simplejwtでトークンを作成し、access_token / refresh_token を HTTP-only Cookie にセット
 ・Next.js：以後のAPIリクエストでは Cookie を自動送信
-・CSRF_TRUSTED_ORIGINSでapi.neon.churchへの送信を許可
+・CSRF_TRUSTED_ORIGINSでapi.neon-church.comへの送信を許可
 ・アクセストークンの有効期限：20分
 ・リフレッシュトークンの有効期限：20日
 ・本番はSecure Cookie + HTTPS
