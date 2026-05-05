@@ -28,4 +28,4 @@ COPY . .
 EXPOSE 8000
 
 # デフォルトコマンド（docker-compose.yml の command で上書き可）
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"]
