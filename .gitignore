@@ -29,6 +29,7 @@ develop-eggs/
 .installed.cfg
 lib/
 lib64/
+!frontend/src/lib/
 *.so
 .venv/
 venv/
