@@ -1,8 +1,8 @@
 export const BOOKS = [
-  { slug: "matthew", name: "マタイによる福音書", short: "マタイ" },
-  { slug: "mark", name: "マルコによる福音書", short: "マルコ" },
-  { slug: "luke", name: "ルカによる福音書", short: "ルカ" },
-  { slug: "john", name: "ヨハネによる福音書", short: "ヨハネ" },
+  { slug: "matthew", name: "マタイによる福音書", short: "マタイ", totalChapters: 28 },
+  { slug: "mark",    name: "マルコによる福音書", short: "マルコ", totalChapters: 16 },
+  { slug: "luke",    name: "ルカによる福音書",   short: "ルカ",   totalChapters: 24 },
+  { slug: "john",    name: "ヨハネによる福音書", short: "ヨハネ", totalChapters: 21 },
 ] as const;
 
 export type BookSlug = (typeof BOOKS)[number]["slug"];

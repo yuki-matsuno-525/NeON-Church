@@ -136,6 +136,83 @@ export default function ChapterPage() {
           onClose={() => setSelectedVerseId(null)}
         />
       )}
+
+      {/* 章ナビゲーション（コメントパネルが閉じているときのみ表示） */}
+      {!selectedVerse && (
+        <>
+          {chapterNum > 1 && (
+            <Link
+              href={`/${slug}/${chapterNum - 1}`}
+              title={`第${chapterNum - 1}章`}
+              style={{
+                position: "fixed",
+                left: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                padding: "18px 10px",
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderLeft: "none",
+                borderRadius: "0 8px 8px 0",
+                color: "var(--text-muted)",
+                textDecoration: "none",
+                fontSize: 20,
+                opacity: 0.6,
+                zIndex: 20,
+                transition: "opacity 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.6")}
+            >
+              ‹
+              <span style={{ fontSize: 10, color: "var(--text-faint)", whiteSpace: "nowrap" }}>
+                {chapterNum - 1}章
+              </span>
+            </Link>
+          )}
+
+          {chapterNum < meta.totalChapters && (
+            <Link
+              href={`/${slug}/${chapterNum + 1}`}
+              title={`第${chapterNum + 1}章`}
+              style={{
+                position: "fixed",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                padding: "18px 10px",
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderRight: "none",
+                borderRadius: "8px 0 0 8px",
+                color: "var(--text-muted)",
+                textDecoration: "none",
+                fontSize: 20,
+                opacity: 0.6,
+                zIndex: 20,
+                transition: "opacity 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.6")}
+            >
+              ›
+              <span style={{ fontSize: 10, color: "var(--text-faint)", whiteSpace: "nowrap" }}>
+                {chapterNum + 1}章
+              </span>
+            </Link>
+          )}
+        </>
+      )}
     </div>
   );
 }
