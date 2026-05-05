@@ -45,3 +45,11 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   // Navbar にユーザー名が表示される
   await expect(page.getByText(username)).toBeVisible();
 });
+
+test("A-4: 未認証アクセス — コメントフォームが表示されない", async ({ page }) => {
+  await page.goto("/matthew/1");
+  await page.getByTestId("verse-item").first().click();
+  // 未ログインのためテキストエリアは表示されず、ログインリンクが表示される
+  await expect(page.getByPlaceholder("この節へのコメント...")).not.toBeVisible();
+  await expect(page.getByRole("link", { name: "ログイン" }).first()).toBeVisible();
+});

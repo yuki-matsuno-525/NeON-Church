@@ -1,4 +1,4 @@
-import { type APIRequestContext } from "@playwright/test";
+import { type APIRequestContext, expect } from "@playwright/test";
 
 export const API_BASE =
   process.env.PLAYWRIGHT_API_BASE ?? "http://localhost:8000";
@@ -42,4 +42,14 @@ export async function loginWithUI(
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
   await page.waitForURL("**/matthew/1");
+}
+
+/**
+ * ログアウトボタンを押し、Navbar に「ログイン」リンクが表示されるまで待つ。
+ */
+export async function logoutWithUI(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "ログアウト" }).click();
+  await expect(
+    page.getByRole("navigation").getByRole("link", { name: "ログイン" })
+  ).toBeVisible();
 }
