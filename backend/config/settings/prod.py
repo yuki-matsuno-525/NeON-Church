@@ -28,6 +28,11 @@ SECURE_HSTS_PRELOAD = True
 # HTTP → HTTPS リダイレクト
 SECURE_SSL_REDIRECT = True
 
+# Render などのリバースプロキシ配下では HTTPS 終端がプロキシ側で行われ、
+# Django には HTTP として届く。X-Forwarded-Proto ヘッダを信頼させないと
+# SECURE_SSL_REDIRECT と組み合わせて無限リダイレクトになる。
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # ------------------------------------------------------------------
 # Sentry（エラー監視）
 # SENTRY_DSN が設定されていない場合は初期化しない。
