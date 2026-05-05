@@ -58,6 +58,7 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
 
   return (
     <div
+      className="comment-panel"
       style={{
         width: "var(--panel-width)",
         minWidth: "var(--panel-width)",

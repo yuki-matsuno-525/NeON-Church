@@ -7,7 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { fetchNotifications } from "@/lib/api";
 
-export function Navbar() {
+type NavbarProps = {
+  onMenuToggle?: () => void;
+};
+
+export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -40,6 +44,25 @@ export function Navbar() {
         zIndex: 50,
       }}
     >
+      {/* ハンバーガーボタン（モバイルのみ表示） */}
+      <button
+        onClick={onMenuToggle}
+        aria-label="メニューを開く"
+        className="hamburger-btn"
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--text)",
+          fontSize: 22,
+          padding: "4px 6px",
+          lineHeight: 1,
+          flexShrink: 0,
+        }}
+      >
+        ☰
+      </button>
+
       <Link
         href="/matthew/1"
         style={{
