@@ -41,10 +41,20 @@
   display: none;
 }
 
+/* 前の章ボタン: デスクトップではサイドバー右端に配置 */
+.chapter-nav-prev {
+  left: var(--sidebar-width) !important;
+}
+
 @media (max-width: 768px) {
   /* ハンバーガーボタン: モバイルで表示 */
   .hamburger-btn {
     display: flex !important;
+  }
+
+  /* 前の章ボタン: モバイルでは画面左端 */
+  .chapter-nav-prev {
+    left: 0 !important;
   }
 
   /* Sidebar: ドロワー */

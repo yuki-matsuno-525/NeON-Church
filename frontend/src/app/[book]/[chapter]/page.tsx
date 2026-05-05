@@ -144,9 +144,9 @@ export default function ChapterPage() {
             <Link
               href={`/${slug}/${chapterNum - 1}`}
               title={`第${chapterNum - 1}章`}
+              className="chapter-nav-prev"
               style={{
                 position: "fixed",
-                left: 0,
                 top: "50%",
                 transform: "translateY(-50%)",
                 display: "flex",
@@ -158,19 +158,19 @@ export default function ChapterPage() {
                 border: "1px solid var(--border)",
                 borderLeft: "none",
                 borderRadius: "0 8px 8px 0",
-                color: "var(--text-muted)",
+                color: "var(--text)",
                 textDecoration: "none",
                 fontSize: 20,
-                opacity: 0.6,
+                opacity: 0.75,
                 zIndex: 20,
                 transition: "opacity 0.15s",
                 lineHeight: 1,
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.6")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
             >
               ‹
-              <span style={{ fontSize: 10, color: "var(--text-faint)", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                 {chapterNum - 1}章
               </span>
             </Link>
@@ -194,19 +194,19 @@ export default function ChapterPage() {
                 border: "1px solid var(--border)",
                 borderRight: "none",
                 borderRadius: "8px 0 0 8px",
-                color: "var(--text-muted)",
+                color: "var(--text)",
                 textDecoration: "none",
                 fontSize: 20,
-                opacity: 0.6,
+                opacity: 0.75,
                 zIndex: 20,
                 transition: "opacity 0.15s",
                 lineHeight: 1,
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.6")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
             >
               ›
-              <span style={{ fontSize: 10, color: "var(--text-faint)", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
                 {chapterNum + 1}章
               </span>
             </Link>
