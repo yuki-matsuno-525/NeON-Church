@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateProfile, type User } from "@/lib/api";
+import { updateProfile, fetchReadingProgress, formatRelativeTime, type User, type ReadingProgress } from "@/lib/api";
+import { BOOKS } from "@/lib/books";
 
 export default function ProfilePage() {
   const { user, loading, setUser } = useAuth();
@@ -11,6 +13,7 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,8 +24,14 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setBio(user.bio);
+      fetchReadingProgress().then(setReadingProgress).catch(() => {});
     }
   }, [user]);
+
+  function getBookSlug(bookName: string): string | null {
+    const found = BOOKS.find((b) => b.name === bookName);
+    return found ? found.slug : null;
+  }
 
   if (loading) {
     return (
@@ -58,6 +67,72 @@ export default function ProfilePage() {
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32 }}>
         プロフィール
       </h1>
+
+      {readingProgress.length > 0 && (
+        <div
+          style={{
+            background: "var(--bg-alt)",
+            border: "1px solid var(--border)",
+            borderRadius: 10,
+            padding: "20px 24px",
+            marginBottom: 24,
+          }}
+        >
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, margin: "0 0 16px" }}>
+            読書の記録
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {readingProgress.map((progress) => {
+              const slug = getBookSlug(progress.book_name);
+              const href = slug ? `/${slug}/${progress.chapter_number}` : null;
+              return (
+                <div
+                  key={progress.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: "10px 14px",
+                    background: "var(--bg)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div>
+                    <span style={{ fontWeight: 600, fontSize: 14 }}>
+                      {progress.book_name.replace("による福音書", "")}
+                    </span>
+                    <span style={{ fontSize: 13, color: "var(--text-muted)", marginLeft: 8 }}>
+                      第{progress.chapter_number}章 {progress.verse_number}節まで
+                    </span>
+                    <span style={{ fontSize: 12, color: "var(--text-faint)", marginLeft: 8 }}>
+                      {formatRelativeTime(progress.updated_at)}
+                    </span>
+                  </div>
+                  {href && (
+                    <Link
+                      href={href}
+                      style={{
+                        fontSize: 12,
+                        color: "var(--accent)",
+                        textDecoration: "none",
+                        padding: "4px 12px",
+                        border: "1px solid var(--accent)",
+                        borderRadius: 12,
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      続きから読む
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div
         style={{

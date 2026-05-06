@@ -44,6 +44,16 @@ export type User = {
   bio: string;
   created_at: string;
 };
+export type ReadingProgress = {
+  id: string;
+  book: string;
+  book_name: string;
+  chapter: string;
+  chapter_number: number;
+  verse: string;
+  verse_number: number;
+  updated_at: string;
+};
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -197,6 +207,21 @@ export function fetchMe(): Promise<User> {
 export function updateProfile(data: { bio: string }): Promise<User> {
   return apiFetch("/auth/me/", {
     method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function fetchReadingProgress(): Promise<ReadingProgress[]> {
+  return apiFetch("/reading-progress/");
+}
+
+export function saveReadingProgress(data: {
+  book: string;
+  chapter: string;
+  verse: string;
+}): Promise<ReadingProgress> {
+  return apiFetch("/reading-progress/save/", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }

@@ -207,7 +207,7 @@ export function CommentItem({
                   fontStyle: comment.is_deleted ? "italic" : "normal",
                 }}
               >
-                {currentBody}
+                {comment.is_deleted ? "このコメントは削除されました" : currentBody}
               </p>
             )}
 

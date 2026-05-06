@@ -38,4 +38,5 @@ urlpatterns = [
     path("api/", include("comments.urls")),
     path("api/", include("bookmarks.urls")),
     path("api/", include("notifications.urls")),
+    path("api/", include("reading_progress.urls")),
 ]
