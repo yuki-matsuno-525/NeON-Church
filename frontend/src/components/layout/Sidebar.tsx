@@ -74,32 +74,8 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           flexDirection: "column",
         }}
       >
-        <div style={{ flex: 1 }}>
-          {BOOKS.map((meta) => {
-            const isActive = currentSlug === meta.slug;
-            return (
-              <Link
-                key={meta.slug}
-                href={`/${meta.slug}`}
-                onClick={onClose}
-                style={{
-                  display: "block",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  fontSize: 13,
-                  fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "var(--accent)" : "var(--text)",
-                  background: isActive ? "var(--accent-tint)" : "transparent",
-                }}
-              >
-                {meta.short}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* モバイルのみ表示: 認証メニュー */}
-        {isMobile && <div style={{ borderTop: "1px solid var(--border)", padding: "8px 0" }}>
+        {/* モバイルのみ表示: 認証メニュー（上部） */}
+        {isMobile && <div style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
           {user ? (
             <>
               <Link
@@ -203,6 +179,30 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             </Link>
           )}
         </div>}
+
+        <div style={{ flex: 1 }}>
+          {BOOKS.map((meta) => {
+            const isActive = currentSlug === meta.slug;
+            return (
+              <Link
+                key={meta.slug}
+                href={`/${meta.slug}`}
+                onClick={onClose}
+                style={{
+                  display: "block",
+                  padding: "10px 12px",
+                  textDecoration: "none",
+                  fontSize: 13,
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? "var(--accent)" : "var(--text)",
+                  background: isActive ? "var(--accent-tint)" : "transparent",
+                }}
+              >
+                {meta.short}
+              </Link>
+            );
+          })}
+        </div>
       </aside>
     </>
   );
