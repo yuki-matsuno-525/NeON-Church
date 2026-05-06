@@ -98,13 +98,31 @@ export default function ChapterPage() {
         }}
       >
         {/* Breadcrumb */}
-        <p style={{ fontSize: 13, color: "var(--text-faint)", marginBottom: 16 }}>
-          <Link href={`/${slug}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-            {meta.short}
-          </Link>
-          {" › "}
-          <span>第{chapterNum}章</span>
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>
+            <Link href={`/${slug}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+              {meta.short}
+            </Link>
+            {" › "}
+            <span>第{chapterNum}章</span>
+          </p>
+          {chapter && (
+            <a
+              href="#chapter-comments"
+              style={{
+                fontSize: 12,
+                color: "var(--text-faint)",
+                textDecoration: "none",
+                padding: "3px 10px",
+                border: "1px solid var(--border)",
+                borderRadius: 12,
+                whiteSpace: "nowrap",
+              }}
+            >
+              章コメントへ ↓
+            </a>
+          )}
+        </div>
 
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
           {meta.short} 第{chapterNum}章

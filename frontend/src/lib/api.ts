@@ -156,6 +156,13 @@ export function deleteComment(commentId: string): Promise<void> {
   return apiFetch(`/comments/${commentId}/`, { method: "DELETE" });
 }
 
+export function updateComment(commentId: string, body: string): Promise<Comment> {
+  return apiFetch(`/comments/${commentId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ body }),
+  });
+}
+
 export function fetchBookmarks(): Promise<Bookmark[]> {
   return apiFetch("/bookmarks/");
 }

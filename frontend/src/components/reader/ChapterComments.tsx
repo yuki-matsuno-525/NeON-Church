@@ -13,17 +13,18 @@ type Props = {
 export function ChapterComments({ chapterId, label = "章へのコメント" }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordering, setOrdering] = useState<"new" | "votes">("new");
 
-  const loadComments = () => {
-    fetchComments({ chapter_id: chapterId })
+  const loadComments = (ord = ordering) => {
+    fetchComments({ chapter_id: chapterId, ordering: ord })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadComments();
-  }, [chapterId]);
+    loadComments(ordering);
+  }, [chapterId, ordering]);
 
   const handleSubmit = async (body: string) => {
     const comment = await createComment({ chapter: chapterId, body });
@@ -38,15 +39,38 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
   const tree = buildCommentTree(comments);
 
   return (
-    <section style={{ marginTop: 40 }}>
+    <section id="chapter-comments" style={{ marginTop: 40 }}>
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
-        {label}{" "}
-        <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
-          ({comments.length})
-        </span>
-      </h2>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+          {label}{" "}
+          <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
+            ({comments.length})
+          </span>
+        </h2>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          {(["new", "votes"] as const).map((ord) => (
+            <button
+              key={ord}
+              onClick={() => setOrdering(ord)}
+              style={{
+                fontSize: 12,
+                padding: "3px 10px",
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                background: ordering === ord ? "var(--accent)" : "transparent",
+                color: ordering === ord ? "var(--accent-text)" : "var(--text-faint)",
+                fontFamily: "inherit",
+              }}
+            >
+              {ord === "new" ? "新しい順" : "人気順"}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div style={{ marginBottom: 24 }}>
         <CommentInput onSubmit={handleSubmit} />
@@ -64,7 +88,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
             key={node.id}
             comment={node}
             onReply={handleReply}
-            onRefresh={loadComments}
+            onRefresh={() => loadComments(ordering)}
           />
         ))
       )}

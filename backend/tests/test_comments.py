@@ -269,3 +269,51 @@ class TestCommentUpvote:
         assert res.status_code == status.HTTP_200_OK
         assert res.data[0]["id"] == res_b.data["id"]
         assert res.data[1]["id"] == res_a.data["id"]
+
+
+# ------------------------------------------------------------------
+# コメント編集
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentUpdate:
+    def test_owner_can_edit(self, auth_client, comment):
+        res = auth_client.patch(
+            comment_url(comment["id"]),
+            {"body": "編集後のテキスト"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["body"] == "編集後のテキスト"
+
+    def test_other_user_cannot_edit(self, other_auth_client, comment):
+        res = other_auth_client.patch(
+            comment_url(comment["id"]),
+            {"body": "不正編集"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_anonymous_cannot_edit(self, api_client, comment):
+        res = api_client.patch(
+            comment_url(comment["id"]),
+            {"body": "不正編集"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_cannot_edit_deleted_comment(self, auth_client, comment):
+        auth_client.delete(comment_url(comment["id"]))
+        res = auth_client.patch(
+            comment_url(comment["id"]),
+            {"body": "削除済みを編集"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_empty_body_rejected(self, auth_client, comment):
+        res = auth_client.patch(
+            comment_url(comment["id"]),
+            {"body": "   "},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST

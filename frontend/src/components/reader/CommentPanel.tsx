@@ -20,10 +20,11 @@ type Props = {
 export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordering, setOrdering] = useState<"new" | "votes">("new");
 
-  const loadComments = () => {
+  const loadComments = (ord = ordering) => {
     setLoading(true);
-    fetchComments({ verse_id: verse.id })
+    fetchComments({ verse_id: verse.id, ordering: ord })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
@@ -31,8 +32,8 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- setLoading inside loadComments is intentional
-    loadComments();
-  }, [verse.id]);
+    loadComments(ordering);
+  }, [verse.id, ordering]);
 
   const handleSubmit = async (body: string) => {
     const comment = await createComment({ verse: verse.id, body });
@@ -111,6 +112,28 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
         <CommentInput onSubmit={handleSubmit} placeholder="この節へのコメント..." submitLabel="投稿" />
       </div>
 
+      {/* Ordering toggle */}
+      <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)", display: "flex", gap: 8 }}>
+        {(["new", "votes"] as const).map((ord) => (
+          <button
+            key={ord}
+            onClick={() => setOrdering(ord)}
+            style={{
+              fontSize: 12,
+              padding: "3px 10px",
+              borderRadius: 12,
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+              background: ordering === ord ? "var(--accent)" : "transparent",
+              color: ordering === ord ? "var(--accent-text)" : "var(--text-faint)",
+              fontFamily: "inherit",
+            }}
+          >
+            {ord === "new" ? "新しい順" : "人気順"}
+          </button>
+        ))}
+      </div>
+
       {/* Comment list */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0 16px" }}>
         {loading ? (
@@ -127,7 +150,7 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
               key={node.id}
               comment={node}
               onReply={handleReply}
-              onRefresh={loadComments}
+              onRefresh={() => loadComments(ordering)}
             />
           ))
         )}

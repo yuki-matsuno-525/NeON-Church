@@ -67,6 +67,22 @@ class CommentSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class CommentEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["body"]
+
+    def validate_body(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("本文を入力してください。")
+        return value
+
+    def update(self, instance, validated_data):
+        instance.body = validated_data["body"]
+        instance.save(update_fields=["body", "updated_at"])
+        return instance
+
+
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report

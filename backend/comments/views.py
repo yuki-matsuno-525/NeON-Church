@@ -116,16 +116,32 @@ class CommentUpvoteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CommentDestroyView(generics.DestroyAPIView):
+class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
     """
+    PATCH  /api/comments/{pk}/  body の編集（自分のコメントのみ、削除済みは不可）
     DELETE /api/comments/{pk}/  論理削除（自分のコメントのみ）
 
     物理削除は行わず is_deleted=True をセットする。
-    他人のコメントに対しては 403 を返す。
     """
 
     permission_classes = [permissions.IsAuthenticated, IsOwner]
     queryset = Comment.objects.all()
+    http_method_names = ["patch", "delete", "head", "options"]
+
+    def get_serializer(self, *args, **kwargs):
+        from .serializers import CommentEditSerializer
+        kwargs.setdefault("context", self.get_serializer_context())
+        return CommentEditSerializer(*args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_deleted:
+            return Response({"detail": "削除済みのコメントは編集できません。"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        from .serializers import CommentSerializer
+        return Response(CommentSerializer(instance).data)
 
     def perform_destroy(self, instance: Comment) -> None:
         instance.is_deleted = True
