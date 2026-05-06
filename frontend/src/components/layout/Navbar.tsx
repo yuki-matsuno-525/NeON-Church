@@ -25,7 +25,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/matthew/1");
+    router.push("/");
     router.refresh();
   };
 
@@ -64,7 +64,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       </button>
 
       <Link
-        href="/matthew/1"
+        href="/"
         style={{
           fontWeight: 800,
           fontSize: 20,

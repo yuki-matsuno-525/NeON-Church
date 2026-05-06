@@ -38,7 +38,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const handleLogout = async () => {
     onClose?.();
     await logout();
-    router.push("/matthew/1");
+    router.push("/");
     router.refresh();
   };
 

@@ -13,6 +13,7 @@ import {
   type Chapter,
   type Bookmark,
 } from "@/lib/api";
+import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug } from "@/lib/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { VerseList } from "@/components/reader/VerseList";
@@ -56,6 +57,14 @@ export default function ChapterPage() {
           const ch = chapters.find((c) => c.number === chapterNum);
           if (!ch) throw new Error("章が見つかりません");
           setChapter(ch);
+          // ログイン不問で localStorage に保存
+          saveLocalProgress(slug, {
+            bookId: book.id,
+            chapterId: ch.id,
+            chapterNumber: ch.number,
+            updatedAt: new Date().toISOString(),
+          });
+          // ログイン済みならサーバーにも保存
           if (user) {
             saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
           }

@@ -11,19 +11,17 @@ import { test, expect } from "@playwright/test";
  * 5. 節番号が表示される
  */
 test("聖書本文を読む", async ({ page }) => {
-  // トップページは /matthew/1 にリダイレクト
+  // 初回: localStorage 空・未ログイン → /matthew/1 にリダイレクト
   await page.goto("/");
   await expect(page).toHaveURL(/\/matthew\/1$/);
 
-  // Sidebar の「マタイ」リンクをクリック
+  // chapter 1 が localStorage に保存された後、サイドバー「マタイ」クリック
+  // → /matthew は localStorage 参照で /matthew/1 にリダイレクト
   await page.getByRole("link", { name: "マタイ" }).first().click();
-  await expect(page).toHaveURL(/\/matthew$/);
+  await expect(page).toHaveURL(/\/matthew\/1$/);
 
-  // 章一覧から5章を選ぶ（章グリッドのリンク "5"）
-  await page
-    .getByRole("link", { name: /^5$/ })
-    .first()
-    .click();
+  // 直接 /matthew/5 に移動
+  await page.goto("/matthew/5");
   await expect(page).toHaveURL(/\/matthew\/5$/);
 
   // 本文ページのh1が表示される
