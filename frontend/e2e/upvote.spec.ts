@@ -9,11 +9,14 @@ test("U-1,U-2: upvote・取り消し — vote 数が増減する", async ({ page
   // コメント投稿
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
-  await page.getByPlaceholder("この節へのコメント...").fill(`upvote_${ts}`);
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
-  await expect(page.getByText(`upvote_${ts}`)).toBeVisible();
+  const panel = page.locator(".comment-panel");
+  await panel.getByPlaceholder("この節へのコメント...").fill(`upvote_${ts}`);
+  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await expect(panel.getByText(`upvote_${ts}`)).toBeVisible();
 
-  const upvoteBtn = page.getByRole("button", { name: /▲/ }).first();
+  // 投稿したコメントの inner-div にスコープして ▲ ボタンを取得
+  const commentInner = panel.locator("p").filter({ hasText: `upvote_${ts}` }).locator("xpath=..");
+  const upvoteBtn = commentInner.getByRole("button", { name: /▲/ });
 
   // 初期 vote 数は 0
   await expect(upvoteBtn).toContainText("0");
@@ -35,11 +38,14 @@ test("U-3: 連続upvoteは最大1票に留まる", async ({ page, request }) => 
   // コメント投稿
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
-  await page.getByPlaceholder("この節へのコメント...").fill(`u3_${ts}`);
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
-  await expect(page.getByText(`u3_${ts}`)).toBeVisible();
+  const panel = page.locator(".comment-panel");
+  await panel.getByPlaceholder("この節へのコメント...").fill(`u3_${ts}`);
+  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await expect(panel.getByText(`u3_${ts}`)).toBeVisible();
 
-  const upvoteBtn = page.getByRole("button", { name: /▲/ }).first();
+  // 投稿したコメントの inner-div にスコープして ▲ ボタンを取得
+  const commentInner = panel.locator("p").filter({ hasText: `u3_${ts}` }).locator("xpath=..");
+  const upvoteBtn = commentInner.getByRole("button", { name: /▲/ });
 
   // 2回クリック（1回目: upvote, 2回目: 取り消し）
   await upvoteBtn.click();

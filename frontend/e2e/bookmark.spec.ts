@@ -31,5 +31,5 @@ test("Bk-3: お気に入り一覧 — ブックマーク後に一覧に表示さ
   await expect(page.getByRole("heading", { name: "ブックマーク" })).toBeVisible();
 
   // マタイのブックマークが表示される
-  await expect(page.getByText(/マタイ/)).toBeVisible();
+  await expect(page.getByText(/マタイによる福音書/)).toBeVisible();
 });

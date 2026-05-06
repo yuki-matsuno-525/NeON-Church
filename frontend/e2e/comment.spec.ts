@@ -28,40 +28,40 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
 
   // 最初の節をクリックしてコメントパネルを開く
   await page.getByTestId("verse-item").first().click();
+  const panel = page.locator(".comment-panel");
   // CommentPanel のフォームが表示される
-  await expect(page.getByPlaceholder("この節へのコメント...")).toBeVisible();
+  await expect(panel.getByPlaceholder("この節へのコメント...")).toBeVisible();
 
   // コメントを入力して投稿
   const ts = Date.now();
   const commentBody = `E2Eテストコメント_${ts}`;
-  await page.getByPlaceholder("この節へのコメント...").fill(commentBody);
-  // CommentPanel 内の「投稿」ボタン（exact: true でChapterCommentsの「投稿する」と区別）
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByPlaceholder("この節へのコメント...").fill(commentBody);
+  await panel.getByRole("button", { name: "投稿", exact: true }).click();
 
   // 投稿したコメントが表示される
-  await expect(page.getByText(commentBody)).toBeVisible();
+  await expect(panel.getByText(commentBody)).toBeVisible();
 
-  // 返信ボタンをクリック
-  await page.getByRole("button", { name: "返信" }).first().click();
+  // commentBody を含む inner-div にスコープして返信
+  const commentInner = panel.locator("p").filter({ hasText: commentBody }).locator("xpath=..");
+  await commentInner.getByRole("button", { name: "返信" }).click();
 
   // 返信フォームが表示される
-  await expect(page.getByPlaceholder("返信を入力...")).toBeVisible();
+  await expect(commentInner.getByPlaceholder("返信を入力...")).toBeVisible();
 
   // 返信を入力して送信
   const replyBody = `E2E返信_${ts}`;
-  await page.getByPlaceholder("返信を入力...").fill(replyBody);
-  // 返信フォームの「返信」送信ボタン
-  await page.getByRole("button", { name: "返信" }).last().click();
+  await commentInner.getByPlaceholder("返信を入力...").fill(replyBody);
+  await commentInner.locator('button[type="submit"]').click();
 
   // 返信がツリー表示される（インデントされた返信コメント）
-  await expect(page.getByText(replyBody)).toBeVisible();
+  await expect(panel.getByText(replyBody)).toBeVisible();
 
   // 元のコメントを削除（自分のコメントの削除ボタン）
-  await page.getByTestId("delete-comment").first().click();
+  await panel.getByTestId("delete-comment").first().click();
 
   // 「このコメントは削除されました」が表示される
   await expect(
-    page.getByText("このコメントは削除されました")
+    panel.getByText("このコメントは削除されました").first()
   ).toBeVisible();
 });
 
@@ -72,30 +72,32 @@ test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, r
 
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
+  const panel = page.locator(".comment-panel");
 
   // トップコメント投稿（depth=0）
-  await page.getByPlaceholder("この節へのコメント...").fill(`top_${ts}`);
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
-  await expect(page.getByText(`top_${ts}`)).toBeVisible();
+  await panel.getByPlaceholder("この節へのコメント...").fill(`top_${ts}`);
+  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await expect(panel.getByText(`top_${ts}`)).toBeVisible();
 
-  // depth=1 の返信
-  await page.getByRole("button", { name: "返信" }).first().click();
-  await page.getByPlaceholder("返信を入力...").fill(`reply1_${ts}`);
-  await page.getByRole("button", { name: "返信" }).last().click();
-  await expect(page.getByText(`reply1_${ts}`)).toBeVisible();
+  // top_${ts} コメントの inner-div にスコープして操作（他コメントのボタンと混同しない）
+  const topInner = panel.locator("p").filter({ hasText: `top_${ts}` }).locator("xpath=..");
 
-  // depth=2 の返信（depth=1 コメントの「返信」ボタンを押す）
-  await page
-    .locator("div")
-    .filter({ hasText: `reply1_${ts}` })
-    .last()
-    .getByRole("button", { name: "返信" })
-    .click();
-  await page.getByPlaceholder("返信を入力...").fill(`reply2_${ts}`);
-  await page.getByRole("button", { name: "返信" }).last().click();
+  // depth=1 の返信: toggle → fill → submit
+  await topInner.getByRole("button", { name: "返信" }).click();
+  await topInner.getByPlaceholder("返信を入力...").fill(`reply1_${ts}`);
+  await topInner.locator('button[type="submit"]').click();
+  await expect(panel.getByText(`reply1_${ts}`)).toBeVisible();
+
+  // reply1_${ts} コメントの inner-div にスコープ
+  const reply1Inner = panel.locator("p").filter({ hasText: `reply1_${ts}` }).locator("xpath=..");
+
+  // depth=2 の返信: toggle → fill → submit
+  await reply1Inner.getByRole("button", { name: "返信" }).click();
+  await reply1Inner.getByPlaceholder("返信を入力...").fill(`reply2_${ts}`);
+  await reply1Inner.locator('button[type="submit"]').click();
 
   // depth=2 コメントが表示される
-  await expect(page.getByText(`reply2_${ts}`)).toBeVisible();
+  await expect(panel.getByText(`reply2_${ts}`)).toBeVisible();
 });
 
 test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ page, request }) => {
