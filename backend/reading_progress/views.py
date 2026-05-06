@@ -31,18 +31,17 @@ class ReadingProgressSaveView(APIView):
     def post(self, request, *args, **kwargs):
         book_id = request.data.get("book")
         chapter_id = request.data.get("chapter")
-        verse_id = request.data.get("verse")
 
-        if not all([book_id, chapter_id, verse_id]):
+        if not all([book_id, chapter_id]):
             return Response(
-                {"detail": "book, chapter, verse は必須です。"},
+                {"detail": "book, chapter は必須です。"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         progress, created = ReadingProgress.objects.update_or_create(
             user=request.user,
             book_id=book_id,
-            defaults={"chapter_id": chapter_id, "verse_id": verse_id},
+            defaults={"chapter_id": chapter_id},
         )
         # update_or_create は既存レコードの updated_at を auto_now で更新しない場合があるため
         # defaults 経由の save() で確実に更新される

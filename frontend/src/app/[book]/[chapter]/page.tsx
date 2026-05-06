@@ -32,7 +32,6 @@ export default function ChapterPage() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
-  const [chapterBookId, setChapterBookId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,20 +52,17 @@ export default function ChapterPage() {
       .then((books) => {
         const book = books.find((b) => b.name === meta.name);
         if (!book) throw new Error("書が見つかりません");
-        setChapterBookId(book.id);
         return fetchChapters(book.id).then((chapters) => {
           const ch = chapters.find((c) => c.number === chapterNum);
           if (!ch) throw new Error("章が見つかりません");
           setChapter(ch);
-          return fetchVerses(ch.id).then((vs) => ({ book, ch, vs }));
+          if (user) {
+            saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
+          }
+          return fetchVerses(ch.id);
         });
       })
-      .then(({ book, ch, vs }) => {
-        setVerses(vs);
-        if (user && vs.length > 0) {
-          saveReadingProgress({ book: book.id, chapter: ch.id, verse: vs[0].id }).catch(() => {});
-        }
-      })
+      .then(setVerses)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [slug, chapterNum]);
@@ -77,13 +73,7 @@ export default function ChapterPage() {
   }, [user]);
 
   const handleSelectVerse = (verseId: string) => {
-    setSelectedVerseId((prev) => {
-      if (prev === verseId) return null;
-      if (user && chapter && chapterBookId) {
-        saveReadingProgress({ book: chapterBookId, chapter: chapter.id, verse: verseId }).catch(() => {});
-      }
-      return verseId;
-    });
+    setSelectedVerseId((prev) => (prev === verseId ? null : verseId));
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;

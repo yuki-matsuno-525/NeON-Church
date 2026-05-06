@@ -25,11 +25,6 @@ class ReadingProgress(BaseModel):
         on_delete=models.CASCADE,
         related_name="reading_progress",
     )
-    verse = models.ForeignKey(
-        "bible.Verse",
-        on_delete=models.CASCADE,
-        related_name="reading_progress",
-    )
 
     class Meta:
         db_table = "reading_progress"

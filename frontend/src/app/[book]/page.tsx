@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
+import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, fetchReadingProgress, type Chapter, type Comment } from "@/lib/api";
 import { getBookBySlug } from "@/lib/books";
+import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
 export default function BookPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const slug = typeof params.book === "string" ? params.book : "";
   const meta = getBookBySlug(slug);
 
@@ -21,6 +23,7 @@ export default function BookPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!meta) {
       router.push("/matthew/1");
       return;
@@ -31,17 +34,31 @@ export default function BookPage() {
         const book = books.find((b) => b.name === meta.name);
         if (!book) throw new Error("書が見つかりません");
         setBookId(book.id);
-        return Promise.all([
+
+        const dataFetch = Promise.all([
           fetchChapters(book.id),
           fetchComments({ book_id: book.id }),
         ]).then(([chs, cms]) => {
           setChapters(chs);
           setComments(cms);
         });
+
+        if (!user) return dataFetch;
+
+        return fetchReadingProgress()
+          .then((progressList) => {
+            const progress = progressList.find((p) => p.book === book.id);
+            if (progress) {
+              router.replace(`/${slug}/${progress.chapter_number}`);
+              return;
+            }
+            return dataFetch;
+          })
+          .catch(() => dataFetch);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, authLoading]);
 
   const handleCommentSubmit = async (body: string) => {
     if (!bookId) return;

@@ -50,8 +50,6 @@ export type ReadingProgress = {
   book_name: string;
   chapter: string;
   chapter_number: number;
-  verse: string;
-  verse_number: number;
   updated_at: string;
 };
 
@@ -218,7 +216,6 @@ export function fetchReadingProgress(): Promise<ReadingProgress[]> {
 export function saveReadingProgress(data: {
   book: string;
   chapter: string;
-  verse: string;
 }): Promise<ReadingProgress> {
   return apiFetch("/reading-progress/save/", {
     method: "POST",
