@@ -46,10 +46,30 @@
   left: var(--sidebar-width) !important;
 }
 
+/* ナビバー認証アイテム: モバイルでは非表示 */
+.nav-desktop-only {
+  display: contents;
+}
+
+/* サイドバー認証セクション: デスクトップでは非表示 */
+.sidebar-mobile-auth {
+  display: none;
+}
+
 @media (max-width: 768px) {
   /* ハンバーガーボタン: モバイルで表示 */
   .hamburger-btn {
     display: flex !important;
+  }
+
+  /* ナビバー認証アイテム: モバイルで非表示 */
+  .nav-desktop-only {
+    display: none !important;
+  }
+
+  /* サイドバー認証セクション: モバイルで表示 */
+  .sidebar-mobile-auth {
+    display: block !important;
   }
 
   /* 前の章ボタン: モバイルでは画面左端 */

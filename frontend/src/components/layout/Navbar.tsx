@@ -79,7 +79,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       <span style={{ flex: 1 }} />
 
       {!loading && (
-        <>
+        <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
               <Link
@@ -153,7 +153,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               ログイン
             </Link>
           )}
-        </>
+        </div>
       )}
 
       <ThemeToggle />
