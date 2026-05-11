@@ -52,6 +52,14 @@ export type User = {
   bio: string;
   created_at: string;
 };
+export type VerseOfDay = {
+  id: string;
+  number: number;
+  text: string;
+  book_name: string;
+  chapter_number: number;
+};
+
 export type MyComment = {
   id: string;
   user: CommentUser;
@@ -212,6 +220,10 @@ export function removeBookmark(bookmarkId: string): Promise<void> {
 
 export function fetchMyComments(): Promise<MyComment[]> {
   return apiFetch("/comments/mine/");
+}
+
+export function fetchVerseOfDay(): Promise<VerseOfDay> {
+  return apiFetch("/verse-of-the-day/");
 }
 
 export function fetchNotifications(): Promise<Notification[]> {

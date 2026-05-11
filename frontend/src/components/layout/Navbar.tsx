@@ -83,6 +83,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           {user ? (
             <>
               <Link
+                href="/read"
+                style={{ color: "var(--text-muted)", textDecoration: "none" }}
+              >
+                読む
+              </Link>
+              <Link
                 href="/bookmarks"
                 style={{ color: "var(--text-muted)", textDecoration: "none" }}
               >

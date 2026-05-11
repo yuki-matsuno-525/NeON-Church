@@ -1,8 +1,12 @@
+import datetime
+
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Book, Chapter, Verse
-from .serializers import BookSerializer, ChapterSerializer, VerseSerializer
+from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer
 
 
 class BookListView(generics.ListAPIView):
@@ -34,3 +38,22 @@ class VerseListView(generics.ListAPIView):
     def get_queryset(self):
         chapter = generics.get_object_or_404(Chapter, pk=self.kwargs["chapter_id"])
         return Verse.objects.filter(chapter=chapter)
+
+
+class VerseOfDayView(APIView):
+    """GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        today = datetime.date.today()
+        day_of_year = today.timetuple().tm_yday
+        count = Verse.objects.count()
+        if count == 0:
+            return Response({"detail": "聖書データが未登録です。"}, status=503)
+        index = (day_of_year - 1) % count
+        verse = (
+            Verse.objects.select_related("chapter__book")
+            .order_by("chapter__book__order", "chapter__number", "number")[index]
+        )
+        return Response(VerseOfDaySerializer(verse).data)
