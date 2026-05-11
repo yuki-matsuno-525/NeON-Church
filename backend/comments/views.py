@@ -153,6 +153,23 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class MyCommentListView(generics.ListAPIView):
+    """GET /api/comments/mine/  ログインユーザー自身のコメント一覧（削除済み除く、新着順）"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_serializer_class(self):
+        from .serializers import MyCommentSerializer
+        return MyCommentSerializer
+
+    def get_queryset(self):
+        return (
+            Comment.objects.filter(user=self.request.user, is_deleted=False)
+            .annotate(vote_count=Count("votes"))
+            .order_by("-created_at")
+        )
+
+
 class ReportView(APIView):
     """
     POST /api/comments/{pk}/report/  通報（要認証、同一コメントへの重複通報は 409）

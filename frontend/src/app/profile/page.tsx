@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateProfile, type User } from "@/lib/api";
+import { BOOKS } from "@/lib/books";
+
+function slugFromBookName(name: string): string {
+  return BOOKS.find((b) => b.name === name)?.slug ?? "";
+}
+
+type Tab = "bookmarks" | "comments";
 
 export default function ProfilePage() {
   const { user, loading, setUser } = useAuth();
@@ -11,6 +19,10 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("bookmarks");
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [myComments, setMyComments] = useState<MyComment[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,6 +34,19 @@ export default function ProfilePage() {
     if (user) {
       setBio(user.bio);
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoadingData(true);
+    Promise.all([
+      fetchBookmarks().catch(() => [] as Bookmark[]),
+      fetchMyComments().catch(() => [] as MyComment[]),
+    ]).then(([bms, coms]) => {
+      setBookmarks(bms);
+      setMyComments(coms);
+      setLoadingData(false);
+    });
   }, [user]);
 
   if (loading) {
@@ -51,6 +76,18 @@ export default function ProfilePage() {
     year: "numeric",
     month: "long",
     day: "numeric",
+  });
+
+  const tabStyle = (tab: Tab): React.CSSProperties => ({
+    padding: "8px 16px",
+    fontSize: 14,
+    fontWeight: activeTab === tab ? 700 : 400,
+    color: activeTab === tab ? "var(--accent)" : "var(--text-muted)",
+    background: "transparent",
+    border: "none",
+    borderBottom: activeTab === tab ? "2px solid var(--accent)" : "2px solid transparent",
+    cursor: "pointer",
+    fontFamily: "inherit",
   });
 
   return (
@@ -90,7 +127,7 @@ export default function ProfilePage() {
         </dl>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
         <div style={{ marginBottom: 16 }}>
           <label
             htmlFor="bio"
@@ -148,6 +185,93 @@ export default function ProfilePage() {
           {saving ? "保存中..." : "保存"}
         </button>
       </form>
+
+      {/* タブ */}
+      <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
+        <button style={tabStyle("bookmarks")} onClick={() => setActiveTab("bookmarks")}>
+          ブックマーク ({bookmarks.length})
+        </button>
+        <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
+          コメント ({myComments.length})
+        </button>
+      </div>
+
+      {loadingData ? (
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>読み込み中...</p>
+      ) : activeTab === "bookmarks" ? (
+        <BookmarkList bookmarks={bookmarks} />
+      ) : (
+        <CommentList comments={myComments} />
+      )}
     </div>
   );
 }
+
+function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
+  if (bookmarks.length === 0) {
+    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>ブックマークはまだありません。</p>;
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {bookmarks.map((bm) => {
+        if (bm.target_type === "comment" && bm.comment_detail) {
+          return (
+            <div key={bm.id} style={cardStyle}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
+                コメント by {bm.comment_detail.username}
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                {bm.comment_detail.body}
+              </p>
+            </div>
+          );
+        }
+        if (!bm.verse_detail) return null;
+        const slug = slugFromBookName(bm.verse_detail.book_name);
+        const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}` : "#";
+        return (
+          <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
+            <div style={{ ...cardStyle, cursor: "pointer" }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
+                {bm.verse_detail.book_name} {bm.verse_detail.chapter_number}章 {bm.verse_detail.number}節
+              </p>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                {bm.verse_detail.text}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+function CommentList({ comments }: { comments: MyComment[] }) {
+  if (comments.length === 0) {
+    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>コメントはまだありません。</p>;
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {comments.map((c) => (
+        <div key={c.id} style={cardStyle}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
+            {c.location_label}
+          </p>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+            {c.body}
+          </p>
+          <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+            {formatRelativeTime(c.created_at)} · ▲ {c.vote_count}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--bg-alt)",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  padding: "12px 14px",
+};

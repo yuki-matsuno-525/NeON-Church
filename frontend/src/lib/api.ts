@@ -52,6 +52,15 @@ export type User = {
   bio: string;
   created_at: string;
 };
+export type MyComment = {
+  id: string;
+  user: CommentUser;
+  body: string;
+  created_at: string;
+  vote_count: number;
+  location_label: string;
+};
+
 export type ReadingProgress = {
   id: string;
   book: string;
@@ -199,6 +208,10 @@ export function createCommentBookmark(commentId: string): Promise<Bookmark> {
 
 export function removeBookmark(bookmarkId: string): Promise<void> {
   return apiFetch(`/bookmarks/${bookmarkId}/`, { method: "DELETE" });
+}
+
+export function fetchMyComments(): Promise<MyComment[]> {
+  return apiFetch("/comments/mine/");
 }
 
 export function fetchNotifications(): Promise<Notification[]> {

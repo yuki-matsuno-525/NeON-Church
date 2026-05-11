@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import Comment, Report
+from bible.models import Verse, Chapter, Book
 
 User = get_user_model()
 
@@ -81,6 +82,42 @@ class CommentEditSerializer(serializers.ModelSerializer):
         instance.body = validated_data["body"]
         instance.save(update_fields=["body", "updated_at"])
         return instance
+
+
+class MyCommentSerializer(serializers.ModelSerializer):
+    """自分のコメント一覧用。投稿先の書名・章番号を含む。"""
+
+    user = CommentAuthorSerializer(read_only=True)
+    vote_count = serializers.SerializerMethodField()
+    location_label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ["id", "user", "body", "created_at", "vote_count", "location_label"]
+
+    def get_vote_count(self, obj) -> int:
+        return getattr(obj, "vote_count", 0)
+
+    def get_location_label(self, obj) -> str:
+        if obj.verse_id:
+            try:
+                verse = Verse.objects.select_related("chapter__book").get(pk=obj.verse_id)
+                return f"{verse.chapter.book.name} {verse.chapter.number}章 {verse.number}節"
+            except Verse.DoesNotExist:
+                pass
+        if obj.chapter_id:
+            try:
+                ch = Chapter.objects.select_related("book").get(pk=obj.chapter_id)
+                return f"{ch.book.name} {ch.number}章"
+            except Chapter.DoesNotExist:
+                pass
+        if obj.book_id:
+            try:
+                book = Book.objects.get(pk=obj.book_id)
+                return book.name
+            except Book.DoesNotExist:
+                pass
+        return ""
 
 
 class ReportSerializer(serializers.ModelSerializer):

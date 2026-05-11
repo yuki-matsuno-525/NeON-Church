@@ -1,11 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ProfilePage from "./page";
-import type { User } from "@/lib/api";
+import type { User, Bookmark, MyComment } from "@/lib/api";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -13,6 +19,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     updateProfile: vi.fn(),
+    fetchBookmarks: vi.fn().mockResolvedValue([]),
+    fetchMyComments: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -27,6 +35,31 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   email: "test@example.com",
   bio: "初期自己紹介",
   created_at: "2024-01-01T00:00:00Z",
+  ...overrides,
+});
+
+const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
+  id: "bm1",
+  verse_detail: {
+    id: "v1",
+    number: 3,
+    text: "アブラハムの子であるダビデの子、イエス・キリストの系図。",
+    chapter_number: 1,
+    book_name: "マタイによる福音書",
+  },
+  comment_detail: null,
+  target_type: "verse",
+  created_at: "2024-01-01T00:00:00Z",
+  ...overrides,
+});
+
+const makeMyComment = (overrides: Partial<MyComment> = {}): MyComment => ({
+  id: "c1",
+  user: { id: "u1", username: "testuser" },
+  body: "テストコメント",
+  created_at: "2024-01-01T00:00:00Z",
+  vote_count: 2,
+  location_label: "マタイによる福音書 1章 1節",
   ...overrides,
 });
 
@@ -110,5 +143,34 @@ describe("ProfilePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
+  });
+
+  it("ブックマークタブにブックマーク一覧が表示される", async () => {
+    const user = makeUser();
+    mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
+
+    const { fetchBookmarks } = await import("@/lib/api");
+    vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
+
+    render(<ProfilePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/マタイによる福音書/)).toBeInTheDocument();
+    });
+  });
+
+  it("コメントタブに自分のコメントが表示される", async () => {
+    const user = makeUser();
+    mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
+
+    const { fetchMyComments } = await import("@/lib/api");
+    vi.mocked(fetchMyComments).mockResolvedValue([makeMyComment()]);
+
+    render(<ProfilePage />);
+    fireEvent.click(screen.getByRole("button", { name: /コメント/ }));
+
+    await waitFor(() => {
+      expect(screen.getByText("テストコメント")).toBeInTheDocument();
+    });
   });
 });
