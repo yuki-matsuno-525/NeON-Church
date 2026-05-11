@@ -35,6 +35,12 @@ export default function ChapterPage() {
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [translation, setTranslation] = useState<string>("口語訳");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("bible-translation");
+    if (saved) setTranslation(saved);
+  }, []);
 
   useEffect(() => {
     if (!meta) {
@@ -49,9 +55,10 @@ export default function ChapterPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
 
-    fetchBooks()
+    fetchBooks(translation)
       .then((books) => {
-        const book = books.find((b) => b.name === meta.name);
+        const bookName = translation === "KJV" ? meta.englishName : meta.name;
+        const book = books.find((b) => b.name === bookName);
         if (!book) throw new Error("書が見つかりません");
         return fetchChapters(book.id).then((chapters) => {
           const ch = chapters.find((c) => c.number === chapterNum);
@@ -74,7 +81,7 @@ export default function ChapterPage() {
       .then(setVerses)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug, chapterNum]);
+  }, [slug, chapterNum, translation]);
 
   useEffect(() => {
     if (!user) return;
@@ -126,22 +133,43 @@ export default function ChapterPage() {
             {" › "}
             <span>第{chapterNum}章</span>
           </p>
-          {chapter && (
-            <a
-              href="#chapter-comments"
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => {
+                const next = translation === "口語訳" ? "KJV" : "口語訳";
+                localStorage.setItem("bible-translation", next);
+                setTranslation(next);
+              }}
               style={{
                 fontSize: 12,
                 color: "var(--text-faint)",
-                textDecoration: "none",
+                background: "none",
+                cursor: "pointer",
                 padding: "3px 10px",
                 border: "1px solid var(--border)",
                 borderRadius: 12,
                 whiteSpace: "nowrap",
               }}
             >
-              章コメントへ ↓
-            </a>
-          )}
+              {translation === "口語訳" ? "KJV に切り替え" : "口語訳 に切り替え"}
+            </button>
+            {chapter && (
+              <a
+                href="#chapter-comments"
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-faint)",
+                  textDecoration: "none",
+                  padding: "3px 10px",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                章コメントへ ↓
+              </a>
+            )}
+          </div>
         </div>
 
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>

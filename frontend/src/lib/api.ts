@@ -130,8 +130,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 export { ApiError };
 
-export function fetchBooks(): Promise<Book[]> {
-  return apiFetch("/books/");
+export function fetchBooks(translation?: string): Promise<Book[]> {
+  const qs = translation ? `?translation=${encodeURIComponent(translation)}` : "";
+  return apiFetch(`/books/${qs}`);
 }
 
 export function fetchChapters(bookId: string): Promise<Chapter[]> {
