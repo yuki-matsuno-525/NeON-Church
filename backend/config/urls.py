@@ -41,4 +41,5 @@ urlpatterns = [
     path("api/", include("bookmarks.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("reading_progress.urls")),
+    path("api/", include("translations.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -119,6 +119,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 Q&A
               </Link>
               <Link
+                href="/translations"
+                style={{ color: "var(--text-muted)", textDecoration: "none" }}
+              >
+                翻訳
+              </Link>
+              <Link
                 href="/bookmarks"
                 style={{ color: "var(--text-muted)", textDecoration: "none" }}
               >

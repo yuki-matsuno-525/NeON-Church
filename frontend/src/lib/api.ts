@@ -99,6 +99,55 @@ export type QAComment = {
   verse_number: number | null;
 };
 
+export type TranslationProject = {
+  id: string;
+  name: string;
+  description: string;
+  owner_username: string;
+  source_book: string;
+  source_book_name: string;
+  target_language: string;
+  status: "draft" | "active" | "published";
+  unit_count: number;
+  done_count: number;
+  is_member: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TranslationMembership = {
+  id: string;
+  user: string;
+  username: string;
+  role: "owner" | "member";
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+};
+
+export type TranslationUnit = {
+  id: string;
+  verse: string;
+  verse_number: number;
+  verse_text: string;
+  chapter_number: number;
+  assigned_to: string | null;
+  assigned_to_username: string | null;
+  body: string;
+  status: "todo" | "in_progress" | "review" | "done";
+  created_at: string;
+  updated_at: string;
+};
+
+export type TranslationComment = {
+  id: string;
+  unit: string | null;
+  username: string;
+  body: string;
+  display_body: string;
+  is_deleted: boolean;
+  created_at: string;
+};
+
 export type SearchResult = {
   verses: {
     id: string;
@@ -368,4 +417,115 @@ export function formatRelativeTime(dateStr: string): string {
   if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
   if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}日前`;
   return date.toLocaleDateString("ja-JP");
+}
+
+// ---------------------------------------------------------------------------
+// 翻訳プロジェクト
+// ---------------------------------------------------------------------------
+
+export function fetchTranslations(): Promise<TranslationProject[]> {
+  return apiFetch("/translations/");
+}
+
+export function fetchTranslation(id: string): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/`);
+}
+
+export function createTranslation(data: {
+  name: string;
+  description?: string;
+  source_book: string;
+  target_language: string;
+}): Promise<TranslationProject> {
+  return apiFetch("/translations/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateTranslation(id: string, data: Partial<Pick<TranslationProject, "name" | "description" | "target_language">>): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function activateTranslation(id: string): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/activate/`, { method: "POST" });
+}
+
+export function publishTranslation(id: string): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/publish/`, { method: "POST" });
+}
+
+export function unpublishTranslation(id: string): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/unpublish/`, { method: "POST" });
+}
+
+export function joinTranslation(id: string): Promise<TranslationMembership> {
+  return apiFetch(`/translations/${id}/join/`, { method: "POST" });
+}
+
+export function fetchTranslationMembers(id: string): Promise<TranslationMembership[]> {
+  return apiFetch(`/translations/${id}/members/`);
+}
+
+export function updateMembershipStatus(projectId: string, membershipId: string, status: "approved" | "rejected"): Promise<TranslationMembership> {
+  return apiFetch(`/translations/${projectId}/members/${membershipId}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function removeMember(projectId: string, membershipId: string): Promise<void> {
+  return apiFetch(`/translations/${projectId}/members/${membershipId}/`, { method: "DELETE" });
+}
+
+export function fetchTranslationUnits(projectId: string): Promise<TranslationUnit[]> {
+  return apiFetch(`/translations/${projectId}/units/`);
+}
+
+export function addTranslationUnit(projectId: string, verseId: string): Promise<TranslationUnit> {
+  return apiFetch(`/translations/${projectId}/units/`, {
+    method: "POST",
+    body: JSON.stringify({ verse: verseId }),
+  });
+}
+
+export function updateTranslationUnit(projectId: string, unitId: string, data: { body?: string; status?: TranslationUnit["status"] }): Promise<TranslationUnit> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function assignTranslationUnit(projectId: string, unitId: string, userId: string | null): Promise<TranslationUnit> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/assign/`, {
+    method: "POST",
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
+export function fetchTranslationComments(projectId: string): Promise<TranslationComment[]> {
+  return apiFetch(`/translations/${projectId}/comments/`);
+}
+
+export function fetchUnitComments(projectId: string, unitId: string): Promise<TranslationComment[]> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/comments/`);
+}
+
+export function postTranslationComment(projectId: string, body: string): Promise<TranslationComment> {
+  return apiFetch(`/translations/${projectId}/comments/`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+}
+
+export function postUnitComment(projectId: string, unitId: string, body: string): Promise<TranslationComment> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/comments/`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+}
+
+export function deleteTranslationComment(projectId: string, commentId: string): Promise<void> {
+  return apiFetch(`/translations/${projectId}/comments/${commentId}/`, { method: "DELETE" });
+}
+
+export function fetchTranslationRead(projectId: string): Promise<TranslationUnit[]> {
+  return apiFetch(`/translations/${projectId}/read/`);
 }

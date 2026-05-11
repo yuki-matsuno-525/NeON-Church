@@ -114,9 +114,9 @@ export default function Home() {
         <SectionCard
           icon="🌐"
           title="翻訳"
-          description="複数翻訳を対訳で読み比べることができます。"
-          href="#"
-          ready={false}
+          description="聖書の共同翻訳プロジェクトを作成・参加できます。"
+          href="/translations"
+          ready
         />
       </div>
 
