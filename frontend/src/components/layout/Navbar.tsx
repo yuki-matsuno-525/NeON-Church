@@ -86,6 +86,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         style={{ flex: 1, display: "flex", justifyContent: "center" }}
       >
         <input
+          type="search"
           name="q"
           placeholder="検索..."
           style={{
