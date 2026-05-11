@@ -108,8 +108,8 @@ export default function Home() {
           icon="💬"
           title="Q&A"
           description="聖書に関する疑問を投稿し、回答をもらえる場所。"
-          href="#"
-          ready={false}
+          href="/qa"
+          ready
         />
         <SectionCard
           icon="🌐"
