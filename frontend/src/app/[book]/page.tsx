@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
@@ -9,7 +9,7 @@ import { getBookBySlug } from "@/lib/books";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
-export default function BookPage() {
+function BookContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -159,5 +159,13 @@ export default function BookPage() {
         ))
       )}
     </div>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+      <BookContent />
+    </Suspense>
   );
 }

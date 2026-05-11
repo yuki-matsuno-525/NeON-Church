@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const user = await login(username, password);
       setUser(user);
-      router.push("/matthew");
+      router.push("/matthew/1");
     } catch (err) {
       setError(
         (err as ApiError).message ?? "ログインに失敗しました"

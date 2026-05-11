@@ -17,6 +17,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
 
   // 登録ページでフォームを使って登録
   await page.goto("/register");
+  await page.locator('input[type="text"]').waitFor({ state: "visible" });
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);

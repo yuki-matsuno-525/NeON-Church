@@ -11,6 +11,11 @@ export async function registerUser(
   request: APIRequestContext,
   suffix = ""
 ): Promise<{ username: string; email: string; password: string }> {
+  // 認証済みコンテキストでは CSRF Cookie が必要なため、事前取得してヘッダーに付ける
+  await request.get(`${API_BASE}/api/csrf/`);
+  const state = await request.storageState();
+  const csrfToken = state.cookies.find((c) => c.name === "csrftoken")?.value ?? "";
+
   const ts = Date.now();
   const username = `e2e_${ts}${suffix}`;
   const email = `e2e_${ts}${suffix}@test.example`;
@@ -18,6 +23,7 @@ export async function registerUser(
 
   const res = await request.post(`${API_BASE}/api/auth/register/`, {
     data: { username, email, password },
+    headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
   });
   if (!res.ok()) {
     throw new Error(`register failed: ${await res.text()}`);
@@ -36,8 +42,8 @@ export async function loginWithUI(
   password: string
 ) {
   await page.goto("/login");
-  // AuthContext が /api/csrf/ を叩いて csrftoken Cookie が設定されるまで待つ
-  await page.waitForLoadState("networkidle");
+  // ログインフォームが表示されるまで待つ（CSRF Cookie の設定完了も兼ねる）
+  await page.locator('input[type="text"]').waitFor({ state: "visible" });
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();

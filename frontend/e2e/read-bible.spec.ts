@@ -4,19 +4,23 @@ import { test, expect } from "@playwright/test";
  * E2E 1: 聖書本文を読む
  *
  * 確認する流れ:
- * 1. トップページを開く（/matthew/1 にリダイレクト）
- * 2. Sidebar からマタイを選ぶ
+ * 1. /matthew/1 を開く
+ * 2. Sidebar からマタイを選ぶ（localStorage に保存済みなので /matthew/1 にリダイレクト）
  * 3. 章一覧から5章を選ぶ
  * 4. 本文が表示される
  * 5. 節番号が表示される
  */
 test("聖書本文を読む", async ({ page }) => {
-  // 初回: localStorage 空・未ログイン → /matthew/1 にリダイレクト
-  await page.goto("/");
+  // /matthew/1 に直接アクセス（ページコンテンツ読み込みを待つ）
+  await page.goto("/matthew/1");
   await expect(page).toHaveURL(/\/matthew\/1$/);
 
-  // chapter 1 が localStorage に保存された後、サイドバー「マタイ」クリック
-  // → /matthew は localStorage 参照で /matthew/1 にリダイレクト
+  // 本文ページのh1が表示されるまで待つ（localStorage に章が保存される）
+  await expect(
+    page.getByRole("heading", { name: "マタイ 第1章", exact: true })
+  ).toBeVisible();
+
+  // サイドバー「マタイ」クリック → localStorage参照で /matthew/1 にリダイレクト
   await page.getByRole("link", { name: "マタイ" }).first().click();
   await expect(page).toHaveURL(/\/matthew\/1$/);
 

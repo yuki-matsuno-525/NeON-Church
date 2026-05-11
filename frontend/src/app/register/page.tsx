@@ -22,7 +22,7 @@ export default function RegisterPage() {
     try {
       const user = await register(username, email, password);
       setUser(user);
-      router.push("/matthew");
+      router.push("/matthew/1");
     } catch (err) {
       setError((err as ApiError).message ?? "登録に失敗しました");
     } finally {
