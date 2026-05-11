@@ -14,6 +14,7 @@ export type Comment = {
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
+  tags: Tag[];
 };
 
 export type CommentNode = Comment & { children: CommentNode[] };
@@ -53,6 +54,11 @@ export type User = {
   bio: string;
   created_at: string;
 };
+export type Tag = {
+  id: string;
+  name: string;
+};
+
 export type VerseOfDay = {
   id: string;
   number: number;
@@ -140,13 +146,19 @@ export function fetchComments(params: {
   chapter_id?: string;
   book_id?: string;
   ordering?: "new" | "votes";
+  tag_id?: string;
 }): Promise<Comment[]> {
   const q = new URLSearchParams();
   if (params.verse_id) q.set("verse_id", params.verse_id);
   if (params.chapter_id) q.set("chapter_id", params.chapter_id);
   if (params.book_id) q.set("book_id", params.book_id);
   if (params.ordering) q.set("ordering", params.ordering);
+  if (params.tag_id) q.set("tag_id", params.tag_id);
   return apiFetch(`/comments/?${q}`);
+}
+
+export function fetchTags(): Promise<Tag[]> {
+  return apiFetch("/tags/");
 }
 
 export function createComment(data: {
@@ -156,6 +168,7 @@ export function createComment(data: {
   body: string;
   parent?: string;
   is_qa?: boolean;
+  tag_ids?: string[];
 }): Promise<Comment> {
   return apiFetch("/comments/", {
     method: "POST",

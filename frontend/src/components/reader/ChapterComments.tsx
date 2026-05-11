@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchComments, createComment, buildCommentTree, type Comment } from "@/lib/api";
+import { fetchComments, fetchTags, createComment, buildCommentTree, type Comment, type Tag } from "@/lib/api";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
@@ -15,20 +15,26 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
-  const loadComments = (ord = ordering) => {
-    fetchComments({ chapter_id: chapterId, ordering: ord })
+  useEffect(() => {
+    fetchTags().then(setTags).catch(() => {});
+  }, []);
+
+  const loadComments = (ord = ordering, tagId = activeTagId) => {
+    fetchComments({ chapter_id: chapterId, ordering: ord, tag_id: tagId ?? undefined })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadComments(ordering);
-  }, [chapterId, ordering]);
+    loadComments(ordering, activeTagId);
+  }, [chapterId, ordering, activeTagId]);
 
-  const handleSubmit = async (body: string, isQa?: boolean) => {
-    const comment = await createComment({ chapter: chapterId, body, is_qa: isQa });
+  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
+    const comment = await createComment({ chapter: chapterId, body, is_qa: isQa, tag_ids: tagIds });
     setComments((prev) => [comment, ...prev]);
   };
 
@@ -73,8 +79,47 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
         </div>
       </div>
 
+      {/* タグフィルタ */}
+      {tags.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+          <button
+            onClick={() => setActiveTagId(null)}
+            style={{
+              fontSize: 12,
+              padding: "3px 10px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+              background: activeTagId === null ? "var(--accent)" : "transparent",
+              color: activeTagId === null ? "var(--accent-text)" : "var(--text-muted)",
+              fontFamily: "inherit",
+            }}
+          >
+            すべて
+          </button>
+          {tags.map((tag) => (
+            <button
+              key={tag.id}
+              onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
+              style={{
+                fontSize: 12,
+                padding: "3px 10px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                background: activeTagId === tag.id ? "var(--accent)" : "transparent",
+                color: activeTagId === tag.id ? "var(--accent-text)" : "var(--text-muted)",
+                fontFamily: "inherit",
+              }}
+            >
+              {tag.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div style={{ marginBottom: 24 }}>
-        <CommentInput onSubmit={handleSubmit} showQaOption />
+        <CommentInput onSubmit={handleSubmit} showQaOption showTagOption />
       </div>
 
       {loading ? (
@@ -89,7 +134,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
             key={node.id}
             comment={node}
             onReply={handleReply}
-            onRefresh={() => loadComments(ordering)}
+            onRefresh={() => loadComments(ordering, activeTagId)}
             initialBookmarkId={commentBookmarkMap[node.id]}
           />
         ))

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime } from "@/lib/api";
+import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime, type Tag } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 
@@ -242,6 +242,25 @@ export function CommentItem({
               >
                 {comment.is_deleted ? "このコメントは削除されました" : currentBody}
               </p>
+            )}
+
+            {comment.tags && comment.tags.length > 0 && (
+              <div style={{ display: "flex", gap: 4, marginLeft: 52, marginBottom: 6, flexWrap: "wrap" }}>
+                {comment.tags.map((tag: Tag) => (
+                  <span
+                    key={tag.id}
+                    style={{
+                      fontSize: 10,
+                      padding: "1px 7px",
+                      borderRadius: 999,
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
             )}
 
             <div

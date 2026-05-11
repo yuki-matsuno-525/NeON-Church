@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from .models import Comment, Report, Vote
-from .serializers import CommentSerializer, ReportSerializer
+from .models import Comment, Report, Tag, Vote
+from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
 
 def _notify(recipient, actor, notification_type, comment):
@@ -77,6 +77,10 @@ class CommentListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(book_id=book_id)
         else:
             return qs.none()
+
+        tag_id = params.get("tag_id")
+        if tag_id:
+            qs = qs.filter(tags__id=tag_id)
 
         ordering = params.get("ordering", "new")
         if ordering == "votes":
@@ -151,6 +155,14 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TagListView(generics.ListAPIView):
+    """GET /api/tags/  タグ一覧（認証不要）"""
+
+    permission_classes = [permissions.AllowAny]
+    queryset = Tag.objects.all().order_by("name")
+    serializer_class = TagSerializer
 
 
 class MyCommentListView(generics.ListAPIView):

@@ -1,12 +1,18 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Comment, Report
+from .models import Comment, Report, Tag
 from bible.models import Verse, Chapter, Book
 
 User = get_user_model()
 
 _DELETED_BODY = "このコメントは削除されました"
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["id", "name"]
 
 
 class CommentAuthorSerializer(serializers.ModelSerializer):
@@ -17,13 +23,16 @@ class CommentAuthorSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
-    # annotate(vote_count=Count("votes")) がない場合（POST レスポンス等）は 0 を返す
     vote_count = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True, write_only=True, required=False, source="tags"
+    )
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_qa", "is_deleted", "created_at", "vote_count"]
-        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count"]
+        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
+        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "tags"]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
@@ -64,8 +73,12 @@ class CommentSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
+        tags = validated_data.pop("tags", [])
         validated_data["user"] = self.context["request"].user
-        return super().create(validated_data)
+        comment = super().create(validated_data)
+        if tags:
+            comment.tags.set(tags)
+        return comment
 
 
 class CommentEditSerializer(serializers.ModelSerializer):

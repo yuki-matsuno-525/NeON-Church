@@ -3,6 +3,25 @@ from django.db import models
 
 from common.models import BaseModel
 
+PREDEFINED_TAGS = [
+    ("質問", "質問"),
+    ("感想", "感想"),
+    ("解説", "解説"),
+    ("証し", "証し"),
+    ("祈り", "祈り"),
+    ("考察", "考察"),
+]
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=20, unique=True)
+
+    class Meta:
+        db_table = "comment_tags"
+
+    def __str__(self) -> str:
+        return self.name
+
 
 class Comment(BaseModel):
     """
@@ -48,6 +67,7 @@ class Comment(BaseModel):
     body = models.TextField()
     is_qa = models.BooleanField(default=False, db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
+    tags = models.ManyToManyField(Tag, blank=True, related_name="comments")
 
     class Meta:
         db_table = "comments"
