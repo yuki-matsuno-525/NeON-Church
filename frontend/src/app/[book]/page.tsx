@@ -34,7 +34,7 @@ function BookContent() {
       return;
     }
 
-    fetchBooks()
+    fetchBooks("口語訳")
       .then((books) => {
         const book = books.find((b) => b.name === meta.name);
         if (!book) throw new Error("書が見つかりません");
