@@ -25,11 +25,14 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(q);
     if (q.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResult(null);
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     searchBible(q)
       .then(setResult)

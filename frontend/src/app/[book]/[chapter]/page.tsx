@@ -35,12 +35,11 @@ export default function ChapterPage() {
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [translation, setTranslation] = useState<string>("口語訳");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("bible-translation");
-    if (saved) setTranslation(saved);
-  }, []);
+  const [translation, setTranslation] = useState<string>(() =>
+    typeof window !== "undefined"
+      ? (localStorage.getItem("bible-translation") ?? "口語訳")
+      : "口語訳"
+  );
 
   useEffect(() => {
     if (!meta) {

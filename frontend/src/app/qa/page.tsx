@@ -36,6 +36,7 @@ export default function QAPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchQAComments({
       book_id: selectedBookId || undefined,

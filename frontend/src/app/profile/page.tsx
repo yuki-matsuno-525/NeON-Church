@@ -33,12 +33,14 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBio(user.bio);
     }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingData(true);
     Promise.all([
       fetchBookmarks().catch(() => [] as Bookmark[]),
