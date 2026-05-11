@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
@@ -12,6 +12,7 @@ import { CommentItem } from "@/components/comments/CommentItem";
 export default function BookPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const slug = typeof params.book === "string" ? params.book : "";
   const meta = getBookBySlug(slug);
 
@@ -28,7 +29,7 @@ export default function BookPage() {
     }
 
     const localProgress = getLocalProgress(slug);
-    if (localProgress) {
+    if (localProgress && searchParams.get("list") !== "1") {
       router.replace(`/${slug}/${localProgress.chapterNumber}`);
       return;
     }

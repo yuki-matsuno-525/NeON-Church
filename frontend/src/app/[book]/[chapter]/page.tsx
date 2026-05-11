@@ -113,7 +113,7 @@ export default function ChapterPage() {
         {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>
-            <Link href={`/${slug}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {meta.short}
             </Link>
             {" › "}
