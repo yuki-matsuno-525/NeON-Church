@@ -10,6 +10,7 @@ export type Comment = {
   book: string | null;
   parent: string | null;
   body: string;
+  is_qa: boolean;
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
@@ -154,6 +155,7 @@ export function createComment(data: {
   book?: string;
   body: string;
   parent?: string;
+  is_qa?: boolean;
 }): Promise<Comment> {
   return apiFetch("/comments/", {
     method: "POST",

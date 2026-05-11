@@ -46,6 +46,7 @@ class Comment(BaseModel):
         related_name="replies",
     )
     body = models.TextField()
+    is_qa = models.BooleanField(default=False, db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     class Meta:

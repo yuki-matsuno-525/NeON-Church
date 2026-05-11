@@ -36,8 +36,8 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
     loadComments(ordering);
   }, [verse.id, ordering]);
 
-  const handleSubmit = async (body: string) => {
-    const comment = await createComment({ verse: verse.id, body });
+  const handleSubmit = async (body: string, isQa?: boolean) => {
+    const comment = await createComment({ verse: verse.id, body, is_qa: isQa });
     setComments((prev) => [comment, ...prev]);
   };
 
@@ -110,7 +110,7 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
 
       {/* Comment input */}
       <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
-        <CommentInput onSubmit={handleSubmit} placeholder="この節へのコメント..." submitLabel="投稿" />
+        <CommentInput onSubmit={handleSubmit} placeholder="この節へのコメント..." submitLabel="投稿" showQaOption />
       </div>
 
       {/* Ordering toggle */}

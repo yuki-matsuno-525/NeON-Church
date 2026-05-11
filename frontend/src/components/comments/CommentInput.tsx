@@ -5,18 +5,21 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Props = {
-  onSubmit: (body: string) => Promise<void>;
+  onSubmit: (body: string, isQa?: boolean) => Promise<void>;
   placeholder?: string;
   submitLabel?: string;
+  showQaOption?: boolean;
 };
 
 export function CommentInput({
   onSubmit,
   placeholder = "コメントを入力...",
   submitLabel = "投稿する",
+  showQaOption = false,
 }: Props) {
   const { user } = useAuth();
   const [body, setBody] = useState("");
+  const [isQa, setIsQa] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +43,9 @@ export function CommentInput({
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit(body.trim());
+      await onSubmit(body.trim(), showQaOption ? isQa : undefined);
       setBody("");
+      setIsQa(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "投稿に失敗しました");
     } finally {
@@ -74,7 +78,18 @@ export function CommentInput({
           {error}
         </p>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+        {showQaOption && (
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-muted)", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={isQa}
+              onChange={(e) => setIsQa(e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            Q&A
+          </label>
+        )}
         <button
           type="submit"
           disabled={submitting || !body.trim()}

@@ -151,6 +151,21 @@ export function CommentItem({
           <span style={{ fontWeight: 700, fontSize: 13 }}>
             {comment.user.username}
           </span>
+          {comment.is_qa && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                background: "var(--accent)",
+                color: "var(--accent-text)",
+                padding: "1px 6px",
+                borderRadius: 999,
+                letterSpacing: "0.04em",
+              }}
+            >
+              Q&A
+            </span>
+          )}
           <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
             {formatRelativeTime(comment.created_at)}
           </span>

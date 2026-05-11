@@ -22,7 +22,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_deleted", "created_at", "vote_count"]
+        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_qa", "is_deleted", "created_at", "vote_count"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count"]
 
     def get_vote_count(self, obj) -> int:

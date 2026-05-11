@@ -27,8 +27,8 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
     loadComments(ordering);
   }, [chapterId, ordering]);
 
-  const handleSubmit = async (body: string) => {
-    const comment = await createComment({ chapter: chapterId, body });
+  const handleSubmit = async (body: string, isQa?: boolean) => {
+    const comment = await createComment({ chapter: chapterId, body, is_qa: isQa });
     setComments((prev) => [comment, ...prev]);
   };
 
@@ -74,7 +74,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <CommentInput onSubmit={handleSubmit} />
+        <CommentInput onSubmit={handleSubmit} showQaOption />
       </div>
 
       {loading ? (
