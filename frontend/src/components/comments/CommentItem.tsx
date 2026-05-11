@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, formatRelativeTime } from "@/lib/api";
+import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 
@@ -9,6 +9,7 @@ type Props = {
   comment: CommentNode;
   onReply?: (body: string, parentId: string) => Promise<void>;
   onRefresh?: () => void;
+  initialBookmarkId?: string;
   depth?: number;
 };
 
@@ -16,6 +17,7 @@ export function CommentItem({
   comment,
   onReply,
   onRefresh,
+  initialBookmarkId,
   depth = 0,
 }: Props) {
   const { user } = useAuth();
@@ -26,6 +28,7 @@ export function CommentItem({
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [currentBody, setCurrentBody] = useState(comment.body);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(initialBookmarkId ?? null);
 
   const handleUpvote = async () => {
     if (!user) return;
@@ -59,6 +62,21 @@ export function CommentItem({
     await onReply(body, comment.id);
     setShowReplyForm(false);
     onRefresh?.();
+  };
+
+  const handleBookmark = async () => {
+    if (!user) return;
+    try {
+      if (bookmarkId) {
+        await removeBookmark(bookmarkId);
+        setBookmarkId(null);
+      } else {
+        const bm = await createCommentBookmark(comment.id);
+        setBookmarkId(bm.id);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -252,6 +270,23 @@ export function CommentItem({
                   }}
                 >
                   返信
+                </button>
+              )}
+
+              {user && !comment.is_deleted && (
+                <button
+                  onClick={handleBookmark}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: bookmarkId ? "var(--accent)" : "var(--text-faint)",
+                    fontSize: 13,
+                    padding: 0,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {bookmarkId ? "★" : "☆"}
                 </button>
               )}
 

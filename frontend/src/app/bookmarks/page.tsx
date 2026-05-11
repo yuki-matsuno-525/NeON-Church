@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchBookmarks, type Bookmark } from "@/lib/api";
+import { fetchBookmarks, removeBookmark, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 
@@ -48,10 +48,48 @@ export default function BookmarksPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {bookmarks.map((bm) => {
+            if (bm.target_type === "comment" && bm.comment_detail) {
+              return (
+                <div
+                  key={bm.id}
+                  style={{
+                    background: "var(--bg-alt)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 8,
+                    padding: "16px",
+                  }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
+                    コメント by {bm.comment_detail.username}
+                  </p>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
+                    {bm.comment_detail.body}
+                  </p>
+                  <button
+                    onClick={async () => {
+                      await removeBookmark(bm.id);
+                      setBookmarks((prev) => prev.filter((b) => b.id !== bm.id));
+                    }}
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      color: "var(--text-faint)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    解除
+                  </button>
+                </div>
+              );
+            }
+
+            if (!bm.verse_detail) return null;
             const slug = slugFromBookName(bm.verse_detail.book_name);
-            const href = slug
-              ? `/${slug}/${bm.verse_detail.chapter_number}`
-              : "#";
+            const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}` : "#";
 
             return (
               <Link

@@ -23,9 +23,17 @@ export type BookmarkVerseDetail = {
   chapter_number: number;
   book_name: string;
 };
+export type BookmarkCommentDetail = {
+  id: string;
+  body: string;
+  username: string;
+  created_at: string;
+};
 export type Bookmark = {
   id: string;
-  verse_detail: BookmarkVerseDetail;
+  verse_detail: BookmarkVerseDetail | null;
+  comment_detail: BookmarkCommentDetail | null;
+  target_type: "verse" | "comment" | null;
   created_at: string;
 };
 export type Notification = {
@@ -179,6 +187,13 @@ export function createBookmark(verseId: string): Promise<Bookmark> {
   return apiFetch("/bookmarks/", {
     method: "POST",
     body: JSON.stringify({ verse: verseId }),
+  });
+}
+
+export function createCommentBookmark(commentId: string): Promise<Bookmark> {
+  return apiFetch("/bookmarks/", {
+    method: "POST",
+    body: JSON.stringify({ comment: commentId }),
   });
 }
 

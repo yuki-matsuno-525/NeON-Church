@@ -8,9 +8,10 @@ import { CommentItem } from "@/components/comments/CommentItem";
 type Props = {
   chapterId: string;
   label?: string;
+  commentBookmarkMap?: Record<string, string>;
 };
 
-export function ChapterComments({ chapterId, label = "章へのコメント" }: Props) {
+export function ChapterComments({ chapterId, label = "章へのコメント", commentBookmarkMap = {} }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
@@ -89,6 +90,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント" }: 
             comment={node}
             onReply={handleReply}
             onRefresh={() => loadComments(ordering)}
+            initialBookmarkId={commentBookmarkMap[node.id]}
           />
         ))
       )}

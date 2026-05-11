@@ -23,6 +23,15 @@ def bookmark(db, auth_client, verse):
     return res.data
 
 
+@pytest.fixture
+def comment(db, auth_client, verse):
+    from django.contrib.auth import get_user_model
+    from comments.models import Comment
+    User = get_user_model()
+    user = User.objects.get(username="testuser")
+    return Comment.objects.create(user=user, verse=verse, body="テストコメント")
+
+
 # ------------------------------------------------------------------
 # ブックマーク追加
 # ------------------------------------------------------------------
@@ -91,3 +100,37 @@ class TestBookmarkDelete:
         from bookmarks.models import Bookmark
         auth_client.delete(bookmark_url(bookmark["id"]))
         assert not Bookmark.objects.filter(id=bookmark["id"]).exists()
+
+
+# ------------------------------------------------------------------
+# コメントブックマーク
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentBookmark:
+    def test_can_bookmark_comment(self, auth_client, comment):
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["target_type"] == "comment"
+        assert res.data["comment_detail"]["id"] == str(comment.id)
+
+    def test_duplicate_comment_bookmark_is_409(self, auth_client, comment):
+        auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.status_code == status.HTTP_409_CONFLICT
+
+    def test_comment_bookmark_appears_in_list(self, auth_client, comment):
+        auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        res = auth_client.get(BOOKMARKS_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 1
+        assert res.data[0]["target_type"] == "comment"
+
+    def test_empty_body_is_rejected(self, auth_client):
+        res = auth_client.post(BOOKMARKS_URL, {}, format="json")
+        assert res.status_code in (status.HTTP_400_BAD_REQUEST, status.HTTP_409_CONFLICT, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def test_can_delete_comment_bookmark(self, auth_client, comment):
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        bm_id = res.data["id"]
+        del_res = auth_client.delete(bookmark_url(bm_id))
+        assert del_res.status_code == status.HTTP_204_NO_CONTENT

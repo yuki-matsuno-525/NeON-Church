@@ -22,14 +22,22 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return (
             Bookmark.objects.filter(user=self.request.user)
-            .select_related("verse__chapter__book")
+            .select_related("verse__chapter__book", "comment__user")
         )
 
     def perform_create(self, serializer):
         user = self.request.user
-        verse = serializer.validated_data["verse"]
-        if Bookmark.objects.filter(user=user, verse=verse).exists():
+        verse = serializer.validated_data.get("verse")
+        comment = serializer.validated_data.get("comment")
+
+        if not verse and not comment:
+            raise ValidationError({"detail": "verse または comment を指定してください。"})
+
+        if verse and Bookmark.objects.filter(user=user, verse=verse).exists():
             raise ValidationError({"detail": "既にブックマーク済みです。"}, code="duplicate")
+        if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
+            raise ValidationError({"detail": "既にブックマーク済みです。"}, code="duplicate")
+
         serializer.save(user=user)
 
     def create(self, request, *args, **kwargs):

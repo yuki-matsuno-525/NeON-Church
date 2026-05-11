@@ -6,8 +6,8 @@ from common.models import BaseModel
 
 class Bookmark(BaseModel):
     """
-    節へのブックマーク。1ユーザー1節1件（unique_constraint で重複防止）。
-    削除は物理削除のみ。
+    節またはコメントへのブックマーク。
+    verse / comment のいずれか一方のみを持つ（両方 null は許容しない）。
     """
 
     user = models.ForeignKey(
@@ -19,11 +19,29 @@ class Bookmark(BaseModel):
         "bible.Verse",
         on_delete=models.CASCADE,
         related_name="bookmarks",
+        null=True,
+        blank=True,
+    )
+    comment = models.ForeignKey(
+        "comments.Comment",
+        on_delete=models.CASCADE,
+        related_name="bookmarks",
+        null=True,
+        blank=True,
     )
 
     class Meta:
         db_table = "bookmarks"
         ordering = ["-created_at"]
         constraints = [
-            models.UniqueConstraint(fields=["user", "verse"], name="unique_user_verse_bookmark"),
+            models.UniqueConstraint(
+                fields=["user", "verse"],
+                condition=models.Q(verse__isnull=False),
+                name="unique_user_verse_bookmark",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "comment"],
+                condition=models.Q(comment__isnull=False),
+                name="unique_user_comment_bookmark",
+            ),
         ]

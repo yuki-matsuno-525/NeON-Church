@@ -87,6 +87,13 @@ export default function ChapterPage() {
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
 
+  const commentBookmarkMap: Record<string, string> = Object.fromEntries(
+    bookmarks
+      .filter((bm) => bm.target_type === "comment" && bm.comment_detail)
+      .map((bm) => [bm.comment_detail!.id, bm.id])
+  );
+  const verseBookmarks = bookmarks.filter((bm) => bm.target_type === "verse" || bm.target_type === null);
+
   if (!meta) return null;
 
   if (loading) {
@@ -147,14 +154,20 @@ export default function ChapterPage() {
           verses={verses}
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
-          bookmarks={bookmarks}
-          onBookmarksChange={setBookmarks}
+          bookmarks={verseBookmarks}
+          onBookmarksChange={(updated) =>
+            setBookmarks((prev) => [
+              ...prev.filter((bm) => bm.target_type === "comment"),
+              ...updated,
+            ])
+          }
         />
 
         {chapter && (
           <ChapterComments
             chapterId={chapter.id}
             label={`${meta.short} 第${chapterNum}章へのコメント`}
+            commentBookmarkMap={commentBookmarkMap}
           />
         )}
       </div>
@@ -165,6 +178,7 @@ export default function ChapterPage() {
           verse={selectedVerse}
           chapterNumber={chapterNum}
           onClose={() => setSelectedVerseId(null)}
+          commentBookmarkMap={commentBookmarkMap}
         />
       )}
 

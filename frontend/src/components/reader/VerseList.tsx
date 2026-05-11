@@ -23,7 +23,11 @@ export function VerseList({
   const [loadingBookmark, setLoadingBookmark] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
 
-  const bookmarkMap = new Map(bookmarks.map((bm) => [bm.verse_detail.id, bm]));
+  const bookmarkMap = new Map(
+    bookmarks
+      .filter((bm): bm is typeof bm & { verse_detail: NonNullable<typeof bm.verse_detail> } => bm.verse_detail !== null)
+      .map((bm) => [bm.verse_detail.id, bm])
+  );
 
   const handleBookmark = async (e: React.MouseEvent, verse: Verse) => {
     e.stopPropagation();

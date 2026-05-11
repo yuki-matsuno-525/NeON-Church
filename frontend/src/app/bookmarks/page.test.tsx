@@ -36,6 +36,8 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
     chapter_number: 1,
     book_name: "マタイによる福音書",
   },
+  comment_detail: null,
+  target_type: "verse",
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });

@@ -15,9 +15,10 @@ type Props = {
   verse: Verse;
   onClose: () => void;
   chapterNumber: number;
+  commentBookmarkMap?: Record<string, string>;
 };
 
-export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
+export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap = {} }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
@@ -151,6 +152,7 @@ export function CommentPanel({ verse, onClose, chapterNumber }: Props) {
               comment={node}
               onReply={handleReply}
               onRefresh={() => loadComments(ordering)}
+              initialBookmarkId={commentBookmarkMap[node.id]}
             />
           ))
         )}
