@@ -34,7 +34,7 @@ export default function Home() {
     done.current = true;
 
     if (!user) {
-      router.replace("/matthew/1");
+      router.replace("/matthew");
       return;
     }
 
@@ -56,9 +56,9 @@ export default function Home() {
             return;
           }
         }
-        router.replace("/matthew/1");
+        router.replace("/matthew");
       })
-      .catch(() => router.replace("/matthew/1"));
+      .catch(() => router.replace("/matthew"));
   }, [loading, user, router]);
 
   return (

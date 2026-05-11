@@ -24,7 +24,7 @@ export default function BookPage() {
 
   useEffect(() => {
     if (!meta) {
-      router.push("/matthew/1");
+      router.push("/matthew");
       return;
     }
 
