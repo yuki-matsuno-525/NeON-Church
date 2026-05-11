@@ -10,11 +10,17 @@ from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, Ver
 
 
 class BookListView(generics.ListAPIView):
-    """書一覧。認証不要。"""
+    """書一覧。認証不要。?translation=和訳 でフィルタ可能。"""
 
     permission_classes = [AllowAny]
-    queryset = Book.objects.all()
     serializer_class = BookSerializer
+
+    def get_queryset(self):
+        qs = Book.objects.all()
+        translation = self.request.query_params.get("translation")
+        if translation:
+            qs = qs.filter(translation=translation)
+        return qs
 
 
 class ChapterListView(generics.ListAPIView):
