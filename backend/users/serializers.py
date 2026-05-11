@@ -28,15 +28,25 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     """レスポンス用。機密フィールドを含まない。"""
 
+    avatar_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["id", "username", "email", "bio", "created_at"]
+        fields = ["id", "username", "email", "bio", "avatar_url", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+    def get_avatar_url(self, obj) -> str | None:
+        if not obj.avatar:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """プロフィール更新用。bio のみ変更可能。"""
+    """プロフィール更新用。bio と avatar を変更可能。"""
 
     class Meta:
         model = User
-        fields = ["bio"]
+        fields = ["bio", "avatar"]

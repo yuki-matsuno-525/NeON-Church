@@ -19,6 +19,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     updateProfile: vi.fn(),
+    uploadAvatar: vi.fn(),
     fetchBookmarks: vi.fn().mockResolvedValue([]),
     fetchMyComments: vi.fn().mockResolvedValue([]),
   };
@@ -34,6 +35,7 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   username: "testuser",
   email: "test@example.com",
   bio: "初期自己紹介",
+  avatar_url: null,
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });

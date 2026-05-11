@@ -52,6 +52,7 @@ export type User = {
   username: string;
   email: string;
   bio: string;
+  avatar_url: string | null;
   created_at: string;
 };
 export type Tag = {
@@ -261,6 +262,24 @@ export function updateProfile(data: { bio: string }): Promise<User> {
   return apiFetch("/auth/me/", {
     method: "PATCH",
     body: JSON.stringify(data),
+  });
+}
+
+export function uploadAvatar(file: File): Promise<User> {
+  const form = new FormData();
+  form.append("avatar", file);
+  const csrfToken = getCsrfToken();
+  return fetch(`/api/auth/me/`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
+    body: form,
+  }).then(async (res) => {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(res.status, body.detail ?? res.statusText);
+    }
+    return res.json() as Promise<User>;
   });
 }
 

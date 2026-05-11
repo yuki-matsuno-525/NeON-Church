@@ -5,6 +5,8 @@
 # ここで include() を使って登録する。
 # ==============================================================
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -39,4 +41,4 @@ urlpatterns = [
     path("api/", include("bookmarks.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("reading_progress.urls")),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

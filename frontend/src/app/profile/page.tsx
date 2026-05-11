@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
+import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 
@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("bookmarks");
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -57,6 +58,23 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    setMessage(null);
+    try {
+      const updated = await uploadAvatar(file);
+      setUser(updated);
+      setMessage({ type: "success", text: "プロフィール画像を更新しました。" });
+    } catch {
+      setMessage({ type: "error", text: "画像のアップロードに失敗しました。" });
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -95,6 +113,58 @@ export default function ProfilePage() {
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32 }}>
         プロフィール
       </h1>
+
+      {/* アバター */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: "50%",
+            background: user.avatar_url ? "transparent" : "var(--accent)",
+            color: "var(--accent-text)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 800,
+            fontSize: 28,
+            overflow: "hidden",
+            flexShrink: 0,
+            border: "2px solid var(--border)",
+          }}
+        >
+          {user.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            user.username[0]?.toUpperCase() ?? "?"
+          )}
+        </div>
+        <div>
+          <label
+            style={{
+              display: "inline-block",
+              fontSize: 13,
+              color: "var(--accent)",
+              cursor: avatarUploading ? "not-allowed" : "pointer",
+              opacity: avatarUploading ? 0.6 : 1,
+              fontWeight: 600,
+            }}
+          >
+            {avatarUploading ? "アップロード中..." : "画像を変更"}
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={handleAvatarChange}
+              disabled={avatarUploading}
+            />
+          </label>
+          <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+            JPG・PNG・GIF（5MB以下）
+          </p>
+        </div>
+      </div>
 
       <div
         style={{
