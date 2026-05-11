@@ -17,24 +17,26 @@ from django.db import transaction
 
 from bible.models import Book, Chapter, Verse
 
-TRANSLATION = "口語訳"
+DEFAULT_TRANSLATION = "口語訳"
 
 # <a name="101-1:1"> 形式のアンカーを識別する正規表現
 _VERSE_ANCHOR = re.compile(r"^(\d+)-(\d+):(\d+)$")
 
 
-def _parse_book_name(soup: BeautifulSoup) -> str:
+def _parse_book_name(soup: BeautifulSoup, translation: str) -> str:
     """
-    <h3> から書名（日本語部分）を抽出する。
-    例: "101 マタイによる福音書 - Matthew" → "マタイによる福音書"
+    <h3> から書名を抽出する。
+    口語訳: "101 マタイによる福音書 - Matthew" → "マタイによる福音書"
+    KJV:    "Matthew" → "Matthew"
     """
     h3 = soup.find("h3")
     if h3 is None:
         raise CommandError("<h3> タグが見つかりませんでした。")
     raw = h3.get_text(strip=True)
-    # "101 マタイによる福音書 - Matthew" → ["101 マタイによる福音書", "Matthew"]
+    if translation == "KJV":
+        return raw.strip()
+    # "101 マタイによる福音書 - Matthew" → "マタイによる福音書"
     japanese_part = raw.split(" - ")[0]
-    # 先頭の数字トークンを除去
     tokens = japanese_part.split()
     return " ".join(t for t in tokens if not t.isdigit())
 
@@ -74,7 +76,7 @@ def _parse_verses(soup: BeautifulSoup) -> dict[tuple[int, int], str]:
 
 
 class Command(BaseCommand):
-    help = "口語訳4福音書を text/ ディレクトリの HTM ファイルからインポートする。"
+    help = "4福音書を text/ ディレクトリの HTM ファイルからインポートする。"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -82,11 +84,18 @@ class Command(BaseCommand):
             default="/text",
             help="HTM ファイルが置かれているディレクトリ（デフォルト: /text）",
         )
+        parser.add_argument(
+            "--translation",
+            default=DEFAULT_TRANSLATION,
+            help=f"翻訳名（デフォルト: {DEFAULT_TRANSLATION}）例: KJV",
+        )
 
     def handle(self, *args, **options):
         text_dir = Path(options["path"])
         if not text_dir.is_dir():
             raise CommandError(f"ディレクトリが見つかりません: {text_dir}")
+
+        self.translation = options["translation"]
 
         # ファイルをソートして処理（101→102→103→104 の順で order を割り当てる）
         htm_files = sorted(text_dir.glob("*.htm"))
@@ -105,7 +114,7 @@ class Command(BaseCommand):
         with open(path, encoding="utf-8") as f:
             soup = BeautifulSoup(f, "html.parser")
 
-        book_name = _parse_book_name(soup)
+        book_name = _parse_book_name(soup, self.translation)
         verses = _parse_verses(soup)
 
         if not verses:
@@ -114,7 +123,7 @@ class Command(BaseCommand):
 
         book, created = Book.objects.get_or_create(
             name=book_name,
-            translation=TRANSLATION,
+            translation=self.translation,
             defaults={"order": order},
         )
         if created:
