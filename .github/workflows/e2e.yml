@@ -61,7 +61,7 @@ jobs:
 
       - name: Import gospel data
         working-directory: backend
-        run: python manage.py import_gospel
+        run: python manage.py import_gospel --path ../text
 
       - name: Start backend server
         working-directory: backend
