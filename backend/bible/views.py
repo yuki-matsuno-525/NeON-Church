@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Book, Chapter, Verse
-from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer
+from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
 
 class BookListView(generics.ListAPIView):
@@ -44,6 +44,30 @@ class VerseListView(generics.ListAPIView):
     def get_queryset(self):
         chapter = generics.get_object_or_404(Chapter, pk=self.kwargs["chapter_id"])
         return Verse.objects.filter(chapter=chapter)
+
+
+class SearchView(APIView):
+    """GET /api/search/?q=  節テキストと書名を icontains で検索（口語訳のみ）。"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        q = request.query_params.get("q", "").strip()
+        if len(q) < 2:
+            return Response({"verses": [], "books": []})
+
+        books = Book.objects.filter(name__icontains=q, translation="口語訳").order_by("order")
+        verses = (
+            Verse.objects.filter(text__icontains=q)
+            .select_related("chapter__book")
+            .filter(chapter__book__translation="口語訳")
+            .order_by("chapter__book__order", "chapter__number", "number")[:30]
+        )
+
+        return Response({
+            "verses": VerseSearchSerializer(verses, many=True).data,
+            "books": BookSerializer(books, many=True).data,
+        })
 
 
 class VerseOfDayView(APIView):

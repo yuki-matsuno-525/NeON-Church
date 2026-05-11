@@ -110,7 +110,29 @@ export default function ChapterPage() {
   }
 
   if (error) {
-    return <div style={{ padding: 32, color: "#ef4444" }}>{error}</div>;
+    return (
+      <div style={{ padding: 32 }}>
+        <p style={{ color: "#ef4444", marginBottom: 16 }}>{error}</p>
+        <button
+          onClick={() => {
+            const next = translation === "口語訳" ? "KJV" : "口語訳";
+            localStorage.setItem("bible-translation", next);
+            setTranslation(next);
+          }}
+          style={{
+            fontSize: 13,
+            color: "var(--text-muted)",
+            background: "none",
+            cursor: "pointer",
+            padding: "4px 12px",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+          }}
+        >
+          {translation === "口語訳" ? "KJV に切り替え" : "口語訳 に切り替え"}
+        </button>
+      </div>
+    );
   }
 
   return (

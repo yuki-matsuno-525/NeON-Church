@@ -86,6 +86,32 @@ export type ReadingProgress = {
   updated_at: string;
 };
 
+export type QAComment = {
+  id: string;
+  user: CommentUser;
+  body: string;
+  created_at: string;
+  vote_count: number;
+  tags: Tag[];
+  location_label: string;
+  book_name: string;
+  chapter_number: number | null;
+  verse_number: number | null;
+};
+
+export type SearchResult = {
+  verses: {
+    id: string;
+    number: number;
+    text: string;
+    chapter_number: number;
+    chapter_id: string;
+    book_name: string;
+    book_id: string;
+  }[];
+  books: Book[];
+};
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -318,6 +344,18 @@ export function register(
 
 export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
+}
+
+export function fetchQAComments(params?: { book_id?: string; tag_id?: string }): Promise<QAComment[]> {
+  const qs = new URLSearchParams();
+  if (params?.book_id) qs.set("book_id", params.book_id);
+  if (params?.tag_id) qs.set("tag_id", params.tag_id);
+  const q = qs.toString();
+  return apiFetch(`/comments/qa/${q ? `?${q}` : ""}`);
+}
+
+export function searchBible(q: string): Promise<SearchResult> {
+  return apiFetch(`/search/?q=${encodeURIComponent(q)}`);
 }
 
 export function formatRelativeTime(dateStr: string): string {

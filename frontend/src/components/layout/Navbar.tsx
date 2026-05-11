@@ -76,7 +76,30 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         NeON Church
       </Link>
 
-      <span style={{ flex: 1 }} />
+      {/* 検索バー */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
+          if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
+        }}
+        style={{ flex: 1, display: "flex", justifyContent: "center" }}
+      >
+        <input
+          name="q"
+          placeholder="検索..."
+          style={{
+            width: "100%",
+            maxWidth: 280,
+            padding: "5px 10px",
+            border: "1px solid var(--border)",
+            borderRadius: 20,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontSize: 13,
+          }}
+        />
+      </form>
 
       {!loading && (
         <div className="nav-desktop-only" style={{ display: "contents" }}>
@@ -87,6 +110,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 style={{ color: "var(--text-muted)", textDecoration: "none" }}
               >
                 読む
+              </Link>
+              <Link
+                href="/qa"
+                style={{ color: "var(--text-muted)", textDecoration: "none" }}
+              >
+                Q&A
               </Link>
               <Link
                 href="/bookmarks"

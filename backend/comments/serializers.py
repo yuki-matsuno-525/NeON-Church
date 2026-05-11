@@ -133,6 +133,57 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return ""
 
 
+class QACommentSerializer(serializers.ModelSerializer):
+    user = CommentAuthorSerializer(read_only=True)
+    vote_count = serializers.SerializerMethodField()
+    tags = TagSerializer(many=True, read_only=True)
+    location_label = serializers.SerializerMethodField()
+    book_name = serializers.SerializerMethodField()
+    chapter_number = serializers.SerializerMethodField()
+    verse_number = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = [
+            "id", "user", "body", "created_at", "vote_count",
+            "tags", "location_label", "book_name", "chapter_number", "verse_number",
+        ]
+
+    def get_vote_count(self, obj) -> int:
+        return getattr(obj, "vote_count", 0)
+
+    def get_book_name(self, obj) -> str:
+        if obj.verse_id:
+            return obj.verse.chapter.book.name
+        if obj.chapter_id:
+            return obj.chapter.book.name
+        if obj.book_id:
+            return obj.book.name
+        return ""
+
+    def get_chapter_number(self, obj):
+        if obj.verse_id:
+            return obj.verse.chapter.number
+        if obj.chapter_id:
+            return obj.chapter.number
+        return None
+
+    def get_verse_number(self, obj):
+        if obj.verse_id:
+            return obj.verse.number
+        return None
+
+    def get_location_label(self, obj) -> str:
+        book = self.get_book_name(obj)
+        ch = self.get_chapter_number(obj)
+        v = self.get_verse_number(obj)
+        if v is not None:
+            return f"{book} {ch}章 {v}節"
+        if ch is not None:
+            return f"{book} {ch}章"
+        return book
+
+
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report

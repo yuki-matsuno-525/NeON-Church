@@ -1,3 +1,4 @@
+from django.db import models
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
@@ -180,6 +181,46 @@ class MyCommentListView(generics.ListAPIView):
             .annotate(vote_count=Count("votes"))
             .order_by("-created_at")
         )
+
+
+class QACommentListView(generics.ListAPIView):
+    """GET /api/comments/qa/  Q&Aフラグ付きコメント一覧（認証不要）
+
+    ?book_id=   書で絞り込み
+    ?tag_id=    タグで絞り込み
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get_serializer_class(self):
+        from .serializers import QACommentSerializer
+        return QACommentSerializer
+
+    def get_queryset(self):
+        qs = (
+            Comment.objects.filter(is_qa=True, is_deleted=False, parent=None)
+            .select_related(
+                "user",
+                "verse__chapter__book",
+                "chapter__book",
+                "book",
+            )
+            .prefetch_related("tags")
+            .annotate(vote_count=Count("votes"))
+            .order_by("-created_at")
+        )
+        params = self.request.query_params
+        book_id = params.get("book_id")
+        tag_id = params.get("tag_id")
+        if book_id:
+            qs = qs.filter(
+                models.Q(book_id=book_id)
+                | models.Q(chapter__book_id=book_id)
+                | models.Q(verse__chapter__book_id=book_id)
+            )
+        if tag_id:
+            qs = qs.filter(tags__id=tag_id)
+        return qs
 
 
 class ReportView(APIView):
