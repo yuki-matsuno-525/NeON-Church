@@ -1,3 +1,4 @@
+from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
 
 from bible.models import Verse
@@ -21,7 +22,7 @@ class CommentBriefSerializer(serializers.Serializer):
 
     def get_body(self, obj):
         if obj.is_deleted:
-            return "このコメントは削除されました"
+            return DELETED_COMMENT_BODY
         return obj.body[:100]
 
 

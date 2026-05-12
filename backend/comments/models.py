@@ -3,6 +3,10 @@ from django.db import models
 
 from common.models import BaseModel
 
+# 論理削除済みコメントをフロントエンドに表示する際のプレースホルダー文字列。
+# serializers.py・bookmarks/serializers.py・notifications/serializers.py で共用する。
+DELETED_COMMENT_BODY = "このコメントは削除されました"
+
 PREDEFINED_TAGS = [
     ("感想", "感想"),
     ("解説", "解説"),

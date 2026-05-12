@@ -1,3 +1,4 @@
+from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
 
 from .models import Notification
@@ -24,5 +25,5 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_comment_body_snippet(self, obj) -> str:
         if obj.comment.is_deleted:
-            return "このコメントは削除されました"
+            return DELETED_COMMENT_BODY
         return obj.comment.body[:_SNIPPET_LENGTH]

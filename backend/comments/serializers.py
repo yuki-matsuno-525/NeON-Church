@@ -1,11 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Comment, Report, Tag
+from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
 
 User = get_user_model()
-
-_DELETED_BODY = "このコメントは削除されました"
 
 
 # ---------------------------------------------------------------------------
@@ -70,7 +68,7 @@ class CommentSerializer(serializers.ModelSerializer):
         """論理削除済みのコメントは body を差し替えて返す。"""
         data = super().to_representation(instance)
         if instance.is_deleted:
-            data["body"] = _DELETED_BODY
+            data["body"] = DELETED_COMMENT_BODY
         return data
 
     def validate(self, data):
