@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  fetchComments,
-  createComment,
-  buildCommentTree,
-  type Comment,
-  type Verse,
-} from "@/lib/api";
+import { useState } from "react";
+import { createComment, buildCommentTree, type Verse } from "@/lib/api";
+import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
@@ -19,26 +14,11 @@ type Props = {
 };
 
 export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap = {} }: Props) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
-
-  const loadComments = (ord = ordering) => {
-    setLoading(true);
-    fetchComments({ verse_id: verse.id, ordering: ord })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    fetchComments({ verse_id: verse.id, ordering })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [verse.id, ordering]);
+  const { comments, setComments, loading, reload } = useComments({
+    verse_id: verse.id,
+    ordering,
+  });
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
     const comment = await createComment({ verse: verse.id, body, is_qa: isQa, tag_ids: tagIds });
@@ -155,7 +135,7 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
               key={node.id}
               comment={node}
               onReply={handleReply}
-              onRefresh={() => loadComments(ordering)}
+              onRefresh={reload}
               initialBookmarkId={commentBookmarkMap[node.id]}
             />
           ))

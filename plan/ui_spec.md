@@ -74,11 +74,19 @@
 ## 3. ページ構成
 
 ```
-/                       → /matthew/1 へリダイレクト
+/                       → トップページ
+/read                   → 続きから読む（ReadingProgress）
 /[book]                 → 書ページ（章グリッド + 書コメント）
 /[book]/[chapter]       → 読書ページ
-/bookmarks              → ブックマーク一覧
+/bookmarks              → お気に入り一覧
 /notifications          → 通知一覧
+/qa                     → Q&A コメント一覧
+/search                 → 全文検索
+/translations           → 共同翻訳プロジェクト一覧
+/translations/[id]      → 翻訳プロジェクト詳細
+/profile                → 自分のプロフィール
+/profile/[username]     → 他ユーザーのプロフィール（公開）
+/about                  → サービス説明
 /login                  → ログイン
 /register               → 新規登録
 ```

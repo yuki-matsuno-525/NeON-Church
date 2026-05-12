@@ -1,7 +1,7 @@
-# 追加・将来機能 実装フェーズ計画
+# 実装フェーズ計画（Phase 13〜）
 
-`additional_plan.md` と `future_plan.md` の内容を実装順に整理したもの。  
-Phase 1〜12 は元計画通り継続。以下は Phase 13 以降。
+Phase 1〜12 の詳細は `archive/implementation_phases.md` を参照。  
+以下は Phase 13 以降（すべて完了済み）。
 
 ---
 

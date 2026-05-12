@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchComments, fetchTags, createComment, buildCommentTree, type Comment, type Tag } from "@/lib/api";
+import { fetchTags, createComment, buildCommentTree, type Tag } from "@/lib/api";
+import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 
@@ -12,29 +13,19 @@ type Props = {
 };
 
 export function ChapterComments({ chapterId, label = "章へのコメント", commentBookmarkMap = {} }: Props) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
+  const { comments, setComments, loading, reload } = useComments({
+    chapter_id: chapterId,
+    ordering,
+    tag_id: activeTagId,
+  });
+
   useEffect(() => {
     fetchTags().then(setTags).catch(() => {});
   }, []);
-
-  const loadComments = (ord = ordering, tagId = activeTagId) => {
-    fetchComments({ chapter_id: chapterId, ordering: ord, tag_id: tagId ?? undefined })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchComments({ chapter_id: chapterId, ordering, tag_id: activeTagId ?? undefined })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [chapterId, ordering, activeTagId]);
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
     const comment = await createComment({ chapter: chapterId, body, is_qa: isQa, tag_ids: tagIds });
@@ -137,7 +128,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
             key={node.id}
             comment={node}
             onReply={handleReply}
-            onRefresh={() => loadComments(ordering, activeTagId)}
+            onRefresh={reload}
             initialBookmarkId={commentBookmarkMap[node.id]}
           />
         ))
