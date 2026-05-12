@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { fetchNotifications } from "@/lib/api";
 
 type NavbarProps = {
@@ -66,11 +65,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       <Link
         href="/"
         style={{
-          fontWeight: 800,
+          fontWeight: 700,
           fontSize: 20,
-          color: "var(--text)",
+          color: "var(--accent)",
           textDecoration: "none",
-          letterSpacing: "-0.02em",
+          letterSpacing: "0.01em",
+          fontFamily: '"Noto Serif JP", serif',
         }}
       >
         NeON Church
@@ -136,9 +136,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                   color: "var(--text-muted)",
                   textDecoration: "none",
                   position: "relative",
+                  fontSize: 13,
                 }}
               >
-                🔔
+                通知
                 {unreadCount > 0 && (
                   <span
                     style={{
@@ -198,7 +199,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         </div>
       )}
 
-      <ThemeToggle />
     </nav>
   );
 }

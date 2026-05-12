@@ -89,8 +89,9 @@ export function VerseList({
           >
             <span
               style={{
-                lineHeight: 1.85,
-                fontSize: 18,
+                lineHeight: 1.9,
+                fontSize: 17,
+                fontFamily: '"Noto Serif JP", serif',
               }}
             >
               <sup

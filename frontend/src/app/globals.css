@@ -1,39 +1,40 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;500;700&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --bg: #ffffff;
-  --bg-alt: #f9fafb;
-  --bg-hover: #f3f4f6;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --text-faint: #9ca3af;
-  --accent: #2563eb;
-  --accent-text: #ffffff;
-  --accent-tint: #eff6ff;
+  --bg: #fdfbf7;
+  --bg-alt: #f4f0e8;
+  --bg-hover: #eae5d8;
+  --border: #d6cfbf;
+  --text: #1e1b14;
+  --text-muted: #6b6248;
+  --text-faint: #9c9078;
+  --accent: #4a3f6b;
+  --accent-text: #fdfbf7;
+  --accent-tint: #eeeaf5;
   --navbar-height: 56px;
   --sidebar-width: 200px;
   --panel-width: 320px;
 }
 
 .dark {
-  --bg: #09090b;
-  --bg-alt: #18181b;
-  --bg-hover: #27272a;
-  --border: #3f3f46;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  --text-faint: #71717a;
-  --accent: #60a5fa;
-  --accent-text: #09090b;
-  --accent-tint: #1e3a5f;
+  --bg: #12101a;
+  --bg-alt: #1a1726;
+  --bg-hover: #231f32;
+  --border: #332c47;
+  --text: #f0ecfa;
+  --text-muted: #a89dbd;
+  --text-faint: #7b7194;
+  --accent: #9b8fd4;
+  --accent-text: #12101a;
+  --accent-tint: #1e1b30;
 }
 
 @theme inline {
   --font-sans: "Noto Sans JP", sans-serif;
+  --font-serif: "Noto Serif JP", serif;
 }
 
 /* ハンバーガーボタン: デスクトップでは非表示 */
@@ -126,4 +127,11 @@ body {
   font-family: "Noto Sans JP", sans-serif;
   font-size: 14px;
   line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Noto Serif JP", serif;
+  letter-spacing: 0.02em;
 }

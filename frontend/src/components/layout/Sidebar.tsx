@@ -95,30 +95,25 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   textDecoration: "none",
                   fontSize: 13,
                   color: "var(--text)",
+                  position: "relative",
                 }}
               >
-                <span style={{ position: "relative" }}>
-                  🔔
-                  {unreadCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: -4,
-                        right: -8,
-                        background: "var(--accent)",
-                        color: "var(--accent-text)",
-                        borderRadius: "999px",
-                        fontSize: 9,
-                        padding: "1px 4px",
-                        fontWeight: 700,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </span>
                 通知
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      background: "var(--accent)",
+                      color: "var(--accent-text)",
+                      borderRadius: "999px",
+                      fontSize: 9,
+                      padding: "1px 5px",
+                      fontWeight: 700,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
               <Link
                 href="/bookmarks"

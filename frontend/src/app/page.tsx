@@ -98,21 +98,18 @@ export default function Home() {
         }}
       >
         <SectionCard
-          icon="📖"
           title="読む"
           description="聖書を読み、節・章へのコメントを投稿・共有できます。"
           href="/read"
           ready
         />
         <SectionCard
-          icon="💬"
           title="Q&A"
           description="聖書に関する疑問を投稿し、回答をもらえる場所。"
           href="/qa"
           ready
         />
         <SectionCard
-          icon="🌐"
           title="翻訳"
           description="聖書の共同翻訳プロジェクトを作成・参加できます。"
           href="/translations"
@@ -139,14 +136,13 @@ export default function Home() {
 }
 
 type SectionCardProps = {
-  icon: string;
   title: string;
   description: string;
   href: string;
   ready: boolean;
 };
 
-function SectionCard({ icon, title, description, href, ready }: SectionCardProps) {
+function SectionCard({ title, description, href, ready }: SectionCardProps) {
   return (
     <div
       style={{
@@ -179,8 +175,7 @@ function SectionCard({ icon, title, description, href, ready }: SectionCardProps
           準備中
         </span>
       )}
-      <span style={{ fontSize: 32 }}>{icon}</span>
-      <p style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{title}</p>
+      <p style={{ margin: 0, fontSize: 18, fontWeight: 700, fontFamily: '"Noto Serif JP", serif' }}>{title}</p>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
         {description}
       </p>
