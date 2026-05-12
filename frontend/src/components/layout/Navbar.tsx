@@ -32,18 +32,20 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
     <nav
       style={{
         height: "var(--navbar-height)",
-        background: "var(--bg-alt)",
-        borderBottom: "1px solid var(--border)",
+        background: "var(--glass-nav)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         alignItems: "center",
-        padding: "0 16px",
-        gap: 16,
+        padding: "0 20px",
+        gap: 20,
         position: "sticky",
         top: 0,
         zIndex: 50,
       }}
     >
-      {/* ハンバーガーボタン（モバイルのみ表示） */}
+      {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         onClick={onMenuToggle}
         aria-label="メニューを開く"
@@ -52,8 +54,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          color: "var(--text)",
-          fontSize: 22,
+          color: "var(--text-muted)",
+          fontSize: 20,
           padding: "4px 6px",
           lineHeight: 1,
           flexShrink: 0,
@@ -62,18 +64,20 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         ☰
       </button>
 
-      <Link
-        href="/"
-        style={{
-          fontWeight: 700,
-          fontSize: 20,
-          color: "var(--accent)",
-          textDecoration: "none",
-          letterSpacing: "0.01em",
-          fontFamily: '"Noto Serif JP", serif',
-        }}
-      >
-        NeON Church
+      {/* ロゴ */}
+      <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
+        <div style={{ height: 40, overflow: "hidden" }}>
+          <img
+            src="/img/logo.png"
+            alt="NeON Church"
+            style={{
+              height: 82,
+              width: "auto",
+              mixBlendMode: "screen",
+              display: "block",
+            }}
+          />
+        </div>
       </Link>
 
       {/* 検索バー */}
@@ -92,12 +96,13 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           style={{
             width: "100%",
             maxWidth: 280,
-            padding: "5px 10px",
+            padding: "5px 12px",
             border: "1px solid var(--border)",
             borderRadius: 20,
-            background: "var(--bg)",
+            background: "rgba(255, 255, 255, 0.04)",
             color: "var(--text)",
             fontSize: 13,
+            outline: "none",
           }}
         />
       </form>
@@ -106,28 +111,16 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
-              <Link
-                href="/read"
-                style={{ color: "var(--text-muted)", textDecoration: "none" }}
-              >
+              <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
                 読む
               </Link>
-              <Link
-                href="/qa"
-                style={{ color: "var(--text-muted)", textDecoration: "none" }}
-              >
+              <Link href="/qa" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
                 Q&A
               </Link>
-              <Link
-                href="/translations"
-                style={{ color: "var(--text-muted)", textDecoration: "none" }}
-              >
+              <Link href="/translations" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
                 翻訳
               </Link>
-              <Link
-                href="/bookmarks"
-                style={{ color: "var(--text-muted)", textDecoration: "none" }}
-              >
+              <Link href="/bookmarks" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
                 お気に入り
               </Link>
               <Link
@@ -146,8 +139,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                       position: "absolute",
                       top: -6,
                       right: -10,
-                      background: "var(--accent)",
-                      color: "var(--accent-text)",
+                      background: "var(--neon-pink)",
+                      color: "#fff",
                       borderRadius: "999px",
                       fontSize: 10,
                       padding: "1px 5px",
@@ -159,16 +152,19 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                   </span>
                 )}
               </Link>
-              <Link
-                href="/profile"
-                aria-label="プロフィール"
-                style={{ textDecoration: "none", flexShrink: 0 }}
-              >
+              <Link href="/profile" aria-label="プロフィール" style={{ textDecoration: "none", flexShrink: 0 }}>
                 {user.avatar_url ? (
                   <img
                     src={user.avatar_url}
                     alt={user.username}
-                    style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", display: "block" }}
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      display: "block",
+                      border: "1px solid var(--glass-border)",
+                    }}
                   />
                 ) : (
                   <span
@@ -177,7 +173,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                       height: 28,
                       borderRadius: "50%",
                       background: "var(--accent)",
-                      color: "var(--accent-text)",
+                      color: "#fff",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -193,12 +189,13 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 onClick={handleLogout}
                 style={{
                   border: "1px solid var(--border)",
-                  borderRadius: 5,
-                  padding: "4px 10px",
+                  borderRadius: 6,
+                  padding: "4px 12px",
                   background: "transparent",
                   color: "var(--text-muted)",
                   cursor: "pointer",
                   fontSize: 13,
+                  fontFamily: "inherit",
                 }}
               >
                 ログアウト
@@ -208,13 +205,14 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             <Link
               href="/login"
               style={{
-                background: "var(--accent)",
-                color: "var(--accent-text)",
+                background: "linear-gradient(135deg, #7618c5, #d81e80)",
+                color: "#fff",
                 borderRadius: 8,
-                padding: "6px 14px",
+                padding: "6px 16px",
                 textDecoration: "none",
                 fontWeight: 700,
                 fontSize: 13,
+                boxShadow: "0 0 14px rgba(198, 44, 170, 0.45)",
               }}
             >
               ログイン
@@ -222,7 +220,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           )}
         </div>
       )}
-
     </nav>
   );
 }

@@ -70,8 +70,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         style={{
           width: "var(--sidebar-width)",
           minWidth: "var(--sidebar-width)",
-          background: "var(--bg-alt)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--glass-nav)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
           overflowY: "auto",
           height: "calc(100vh - var(--navbar-height))",
           position: "sticky",

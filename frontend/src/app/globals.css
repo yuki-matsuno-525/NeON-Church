@@ -4,32 +4,29 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --bg: #fdfbf7;
-  --bg-alt: #f4f0e8;
-  --bg-hover: #eae5d8;
-  --border: #d6cfbf;
-  --text: #1e1b14;
-  --text-muted: #6b6248;
-  --text-faint: #9c9078;
-  --accent: #4a3f6b;
-  --accent-text: #fdfbf7;
-  --accent-tint: #eeeaf5;
-  --navbar-height: 56px;
+  /* Neon Dark — デフォルトテーマ */
+  --bg: #090516;
+  --bg-alt: #110c22;
+  --bg-hover: #1b1335;
+  --border: #2a1f44;
+  --text: rgba(236, 228, 252, 0.92);
+  --text-muted: rgba(162, 146, 208, 0.68);
+  --text-faint: rgba(115, 100, 162, 0.55);
+  --accent: #c040f0;
+  --accent-text: #fff;
+  --accent-tint: rgba(145, 60, 240, 0.18);
+  --navbar-height: 60px;
   --sidebar-width: 200px;
   --panel-width: 320px;
-}
 
-.dark {
-  --bg: #12101a;
-  --bg-alt: #1a1726;
-  --bg-hover: #231f32;
-  --border: #332c47;
-  --text: #f0ecfa;
-  --text-muted: #a89dbd;
-  --text-faint: #7b7194;
-  --accent: #9b8fd4;
-  --accent-text: #12101a;
-  --accent-tint: #1e1b30;
+  /* Glassmorphism */
+  --glass-bg: rgba(14, 8, 42, 0.62);
+  --glass-border: rgba(160, 82, 248, 0.26);
+  --glass-nav: rgba(8, 4, 24, 0.74);
+  --neon-pink: #ff2888;
+  --neon-purple: #cc44ff;
+  --glow-purple: rgba(192, 52, 240, 0.55);
+  --glow-pink: rgba(255, 38, 120, 0.55);
 }
 
 @theme inline {
@@ -58,27 +55,22 @@
 }
 
 @media (max-width: 768px) {
-  /* ハンバーガーボタン: モバイルで表示 */
   .hamburger-btn {
     display: flex !important;
   }
 
-  /* ナビバー認証アイテム: モバイルで非表示 */
   .nav-desktop-only {
     display: none !important;
   }
 
-  /* サイドバー認証セクション: モバイルで表示 */
   .sidebar-mobile-auth {
     display: block !important;
   }
 
-  /* 前の章ボタン: モバイルでは画面左端 */
   .chapter-nav-prev {
     left: 0 !important;
   }
 
-  /* Sidebar: ドロワー */
   .sidebar {
     position: fixed !important;
     top: var(--navbar-height) !important;
@@ -86,14 +78,13 @@
     height: calc(100vh - var(--navbar-height)) !important;
     z-index: 40;
     transition: left 0.25s ease;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.5);
   }
 
   .sidebar.sidebar-open {
     left: 0 !important;
   }
 
-  /* コメントパネル: ボトムシート */
   .comment-panel {
     position: fixed !important;
     bottom: 0 !important;
@@ -106,7 +97,7 @@
     border-top: 1px solid var(--border) !important;
     border-radius: 16px 16px 0 0 !important;
     z-index: 35;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -134,4 +125,19 @@ h2,
 h3 {
   font-family: "Noto Serif JP", serif;
   letter-spacing: 0.02em;
+}
+
+/* スクロールバー */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
 }

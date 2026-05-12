@@ -19,175 +19,376 @@ export default function Home() {
   }, []);
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "48px 24px" }}>
-      {/* Hero */}
-      <div style={{ textAlign: "center", marginBottom: 56 }}>
-        <h1
-          style={{
-            fontSize: 48,
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            margin: "0 0 16px",
-            color: "var(--text)",
-          }}
-        >
-          NeON Church
-        </h1>
-        <p style={{ fontSize: 18, color: "var(--text-muted)", margin: 0 }}>
-          聖書を読み、語り合う場所
-        </p>
-      </div>
-
-      {/* 今日の聖句 */}
-      {verseOfDay && (
-        <div
-          style={{
-            background: "var(--bg-alt)",
-            border: "1px solid var(--border)",
-            borderRadius: 12,
-            padding: "24px 28px",
-            marginBottom: 40,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              color: "var(--accent)",
-              margin: "0 0 12px",
-              textTransform: "uppercase",
-            }}
-          >
-            今日の聖句
-          </p>
-          <blockquote
-            style={{
-              margin: "0 0 12px",
-              fontSize: 18,
-              lineHeight: 1.7,
-              color: "var(--text)",
-              fontStyle: "italic",
-              borderLeft: "3px solid var(--accent)",
-              paddingLeft: 16,
-            }}
-          >
-            {verseOfDay.text}
-          </blockquote>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", textAlign: "right" }}>
-            {(() => {
-              const slug = slugFromBookName(verseOfDay.book_name);
-              const href = slug ? `/${slug}/${verseOfDay.chapter_number}` : "#";
-              return (
-                <Link href={href} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-                  {verseOfDay.book_name} {verseOfDay.chapter_number}章{verseOfDay.number}節
-                </Link>
-              );
-            })()}
-          </p>
-        </div>
-      )}
-
-      {/* 3セクション */}
+    <>
+      {/* 背景（固定・全画面） */}
       <div
         style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: "url('/img/background.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center 28%",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 1,
+          background: "rgba(6, 3, 20, 0.80)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* ページコンテンツ */}
+      <div
+        className="home-grid"
+        style={{
+          position: "relative",
+          zIndex: 2,
+          minHeight: "calc(100vh - var(--navbar-height))",
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-          marginBottom: 40,
+          gridTemplateColumns: "200px 1fr 200px 56px",
+          gridTemplateRows: "auto auto",
+          columnGap: 20,
+          rowGap: 40,
+          padding: "52px 32px 48px",
+          maxWidth: 1300,
+          margin: "0 auto",
         }}
       >
-        <SectionCard
-          title="読む"
-          description="聖書を読み、節・章へのコメントを投稿・共有できます。"
-          href="/read"
-          ready
-        />
-        <SectionCard
-          title="Q&A"
-          description="聖書に関する疑問を投稿し、回答をもらえる場所。"
-          href="/qa"
-          ready
-        />
-        <SectionCard
-          title="翻訳"
-          description="聖書の共同翻訳プロジェクトを作成・参加できます。"
-          href="/translations"
-          ready
-        />
-      </div>
-
-      {/* サービス説明リンク */}
-      <div style={{ textAlign: "center" }}>
-        <Link
-          href="/about"
+        {/* ヒーロー左 */}
+        <div
+          className="home-hero"
           style={{
-            fontSize: 14,
-            color: "var(--text-muted)",
-            textDecoration: "underline",
-            textDecorationColor: "var(--border)",
+            gridColumn: 1,
+            gridRow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            gap: 16,
           }}
         >
-          NeON Church について
-        </Link>
+          <h1
+            style={{
+              fontFamily: '"Noto Serif JP", serif',
+              fontSize: 38,
+              fontWeight: 700,
+              lineHeight: 1.35,
+              color: "rgba(255, 255, 255, 0.97)",
+              margin: 0,
+            }}
+          >
+            聖書を読み、<br />語り合う場所
+          </h1>
+        </div>
+
+        {/* 中央カード: 読む */}
+        <div
+          className="home-read"
+          style={{
+            gridColumn: 2,
+            gridRow: 1,
+            background: "rgba(18, 10, 50, 0.62)",
+            backdropFilter: "blur(28px)",
+            WebkitBackdropFilter: "blur(28px)",
+            border: "1px solid rgba(168, 88, 255, 0.30)",
+            borderRadius: 18,
+            padding: "26px 28px",
+            boxShadow: "0 14px 55px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.06)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 20,
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: '"Noto Serif JP", serif',
+                fontSize: 20,
+                fontWeight: 700,
+                color: "rgba(255, 255, 255, 0.96)",
+                margin: 0,
+              }}
+            >
+              読む
+            </h2>
+          </div>
+
+          {verseOfDay ? (
+            <>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.07em",
+                  textTransform: "uppercase",
+                  color: "rgba(193, 143, 255, 0.88)",
+                  margin: "0 0 8px",
+                }}
+              >
+                今日の聖句
+              </p>
+              {(() => {
+                const slug = slugFromBookName(verseOfDay.book_name);
+                const href = slug ? `/${slug}/${verseOfDay.chapter_number}` : "#";
+                return (
+                  <Link
+                    href={href}
+                    style={{
+                      display: "block",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "rgba(193, 143, 255, 0.88)",
+                      textDecoration: "none",
+                      marginBottom: 14,
+                    }}
+                  >
+                    {verseOfDay.book_name} {verseOfDay.chapter_number}章{verseOfDay.number}節
+                  </Link>
+                );
+              })()}
+              <blockquote
+                style={{
+                  fontFamily: '"Noto Serif JP", serif',
+                  fontSize: 15,
+                  lineHeight: 2.05,
+                  color: "rgba(255, 255, 255, 0.80)",
+                  margin: "0 0 20px",
+                  padding: 0,
+                  borderLeft: "none",
+                }}
+              >
+                {verseOfDay.text}
+              </blockquote>
+            </>
+          ) : (
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--text-faint)",
+                marginBottom: 20,
+              }}
+            >
+              聖書の各章を読み、コメントを投稿・共有できます。
+            </p>
+          )}
+
+          <div
+            style={{
+              paddingTop: 14,
+              borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+            }}
+          >
+            <Link
+              href="/read"
+              style={{
+                display: "inline-block",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#fff",
+                textDecoration: "none",
+                padding: "8px 20px",
+                background: "linear-gradient(135deg, #7618c5, #d81e80)",
+                borderRadius: 8,
+                boxShadow: "0 0 14px rgba(198, 44, 170, 0.40)",
+              }}
+            >
+              聖書を読む
+            </Link>
+          </div>
+        </div>
+
+        {/* 右カード群 */}
+        <div
+          className="home-right"
+          style={{
+            gridColumn: 3,
+            gridRow: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
+        >
+          <SmallCard
+            title="Q&A"
+            description="聖書に関する疑問を投稿し、回答をもらえる場所。"
+            href="/qa"
+          />
+          <SmallCard
+            title="翻訳"
+            description="聖書の共同翻訳プロジェクトを作成・参加できます。"
+            href="/translations"
+          />
+        </div>
+
+        {/* 縦書きネオンサイン（装飾） */}
+        <div
+          className="home-neon"
+          style={{
+            gridColumn: 4,
+            gridRow: "1 / 3",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              border: "2px solid rgba(255, 58, 140, 0.46)",
+              borderRadius: 9,
+              padding: "20px 10px",
+              boxShadow: "0 0 20px rgba(255, 40, 132, 0.55), inset 0 0 12px rgba(255,255,255,0.02)",
+              animation: "none",
+            }}
+          >
+            <span
+              style={{
+                writingMode: "vertical-rl",
+                textOrientation: "mixed",
+                fontFamily: '"Noto Serif JP", serif',
+                fontSize: 17,
+                fontWeight: 700,
+                color: "#ff2888",
+                textShadow: "0 0 6px rgba(255,40,132,0.75), 0 0 20px rgba(255,40,132,0.55)",
+                letterSpacing: 5,
+                lineHeight: 1,
+                display: "block",
+              }}
+            >
+              光は闇に輝いている
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: 11,
+              color: "#ff2888",
+              opacity: 0.72,
+              textShadow: "0 0 6px rgba(255,40,132,0.55)",
+              letterSpacing: 2,
+            }}
+          >
+            ヨハネ 1:5
+          </span>
+        </div>
+
+        {/* NeON Church について リンク */}
+        <div
+          className="home-about"
+          style={{
+            gridColumn: "1 / 4",
+            gridRow: 2,
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 8,
+            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
+          }}
+        >
+          <Link
+            href="/about"
+            style={{
+              fontSize: 13,
+              color: "var(--text-faint)",
+              textDecoration: "underline",
+              textDecorationColor: "var(--border)",
+            }}
+          >
+            NeON Church について
+          </Link>
+        </div>
       </div>
-    </div>
+
+      <style>{`
+        @media (max-width: 960px) {
+          .home-grid {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-rows: auto auto auto !important;
+          }
+          .home-hero  { grid-column: 1 / 3 !important; grid-row: 1 !important; }
+          .home-read  { grid-column: 1 / 3 !important; grid-row: 2 !important; }
+          .home-right { grid-column: 1 / 3 !important; grid-row: 3 !important; flex-direction: row !important; }
+          .home-neon  { display: none !important; }
+          .home-about { grid-column: 1 / 3 !important; }
+        }
+        @media (max-width: 600px) {
+          .home-grid  { grid-template-columns: 1fr !important; padding: 32px 16px 40px !important; }
+          .home-hero  { grid-column: 1 !important; }
+          .home-read  { grid-column: 1 !important; }
+          .home-right { grid-column: 1 !important; flex-direction: column !important; }
+          .home-about { grid-column: 1 !important; }
+        }
+      `}</style>
+    </>
   );
 }
 
-type SectionCardProps = {
+function SmallCard({
+  title,
+  description,
+  href,
+}: {
   title: string;
   description: string;
   href: string;
-  ready: boolean;
-};
-
-function SectionCard({ title, description, href, ready }: SectionCardProps) {
+}) {
   return (
     <Link
-      href={ready ? href : "#"}
+      href={href}
       style={{
-        background: "var(--bg-alt)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: "24px",
+        flex: 1,
         display: "flex",
         flexDirection: "column",
-        gap: 10,
-        opacity: ready ? 1 : 0.6,
-        position: "relative",
+        gap: 8,
+        background: "rgba(14, 7, 40, 0.65)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(115, 58, 210, 0.28)",
+        borderRadius: 16,
+        padding: "18px 20px",
         textDecoration: "none",
         color: "inherit",
-        cursor: ready ? "pointer" : "default",
-        transition: "border-color 0.15s",
+        cursor: "pointer",
+        transition: "border-color 0.2s, box-shadow 0.2s",
       }}
       onMouseEnter={(e) => {
-        if (ready) (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(188, 108, 255, 0.60)";
+        el.style.boxShadow = "0 8px 28px rgba(0,0,0,0.42)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(115, 58, 210, 0.28)";
+        el.style.boxShadow = "none";
       }}
     >
-      {!ready && (
-        <span
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            fontSize: 10,
-            fontWeight: 700,
-            background: "var(--border)",
-            color: "var(--text-muted)",
-            padding: "2px 8px",
-            borderRadius: 999,
-            letterSpacing: "0.05em",
-          }}
-        >
-          準備中
-        </span>
-      )}
-      <p style={{ margin: 0, fontSize: 18, fontWeight: 700, fontFamily: '"Noto Serif JP", serif' }}>{title}</p>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+      <p
+        style={{
+          fontFamily: '"Noto Serif JP", serif',
+          fontSize: 17,
+          fontWeight: 700,
+          color: "rgba(255, 255, 255, 0.94)",
+          margin: 0,
+        }}
+      >
+        {title}
+      </p>
+      <p
+        style={{
+          fontSize: 12,
+          color: "rgba(255, 255, 255, 0.44)",
+          lineHeight: 1.68,
+          margin: 0,
+          flex: 1,
+        }}
+      >
         {description}
       </p>
     </Link>
