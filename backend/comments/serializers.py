@@ -8,6 +8,36 @@ User = get_user_model()
 _DELETED_BODY = "このコメントは削除されました"
 
 
+# ---------------------------------------------------------------------------
+# 位置情報ヘルパー
+# ---------------------------------------------------------------------------
+
+def _get_location_parts(obj: Comment) -> tuple[str, int | None, int | None]:
+    """コメントの書名・章番号・節番号を返す。
+
+    verse / chapter / book のいずれかが FK で紐づく構造に対応する。
+    返り値: (book_name, chapter_number_or_None, verse_number_or_None)
+    """
+    if obj.verse_id and obj.verse:
+        v = obj.verse
+        return v.chapter.book.name, v.chapter.number, v.number
+    if obj.chapter_id and obj.chapter:
+        ch = obj.chapter
+        return ch.book.name, ch.number, None
+    if obj.book_id and obj.book:
+        return obj.book.name, None, None
+    return "", None, None
+
+
+def _format_location_label(book: str, chapter: int | None, verse: int | None) -> str:
+    """書名・章番号・節番号を「マタイ 1章 1節」形式の文字列にする。"""
+    if verse is not None:
+        return f"{book} {chapter}章 {verse}節"
+    if chapter is not None:
+        return f"{book} {chapter}章"
+    return book
+
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -118,19 +148,8 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return getattr(obj, "vote_count", 0)
 
     def get_location_label(self, obj) -> str:
-        if obj.verse_id:
-            v = obj.verse
-            if v:
-                return f"{v.chapter.book.name} {v.chapter.number}章 {v.number}節"
-        if obj.chapter_id:
-            ch = obj.chapter
-            if ch:
-                return f"{ch.book.name} {ch.number}章"
-        if obj.book_id:
-            bk = obj.book
-            if bk:
-                return bk.name
-        return ""
+        book, chapter, verse = _get_location_parts(obj)
+        return _format_location_label(book, chapter, verse)
 
 
 class BestAnswerSerializer(serializers.ModelSerializer):
@@ -169,35 +188,20 @@ class QACommentSerializer(serializers.ModelSerializer):
         return obj.replies.filter(is_deleted=False).count()
 
     def get_book_name(self, obj) -> str:
-        if obj.verse_id:
-            return obj.verse.chapter.book.name
-        if obj.chapter_id:
-            return obj.chapter.book.name
-        if obj.book_id:
-            return obj.book.name
-        return ""
+        book, _, _ = _get_location_parts(obj)
+        return book
 
-    def get_chapter_number(self, obj):
-        if obj.verse_id:
-            return obj.verse.chapter.number
-        if obj.chapter_id:
-            return obj.chapter.number
-        return None
+    def get_chapter_number(self, obj) -> int | None:
+        _, chapter, _ = _get_location_parts(obj)
+        return chapter
 
-    def get_verse_number(self, obj):
-        if obj.verse_id:
-            return obj.verse.number
-        return None
+    def get_verse_number(self, obj) -> int | None:
+        _, _, verse = _get_location_parts(obj)
+        return verse
 
     def get_location_label(self, obj) -> str:
-        book = self.get_book_name(obj)
-        ch = self.get_chapter_number(obj)
-        v = self.get_verse_number(obj)
-        if v is not None:
-            return f"{book} {ch}章 {v}節"
-        if ch is not None:
-            return f"{book} {ch}章"
-        return book
+        book, chapter, verse = _get_location_parts(obj)
+        return _format_location_label(book, chapter, verse)
 
 
 class CommentSearchSerializer(serializers.ModelSerializer):
@@ -209,13 +213,11 @@ class CommentSearchSerializer(serializers.ModelSerializer):
         fields = ["id", "body", "username", "created_at", "location"]
 
     def get_location(self, obj) -> str:
-        if obj.verse_id:
-            return f"{obj.verse.chapter.book.name} {obj.verse.chapter.number}章{obj.verse.number}節"
-        if obj.chapter_id:
-            return f"{obj.chapter.book.name} {obj.chapter.number}章"
-        if obj.book_id:
-            return obj.book.name
-        return ""
+        book, chapter, verse = _get_location_parts(obj)
+        # 検索結果では章節を「1章1節」（スペースなし）で表示する
+        if verse is not None:
+            return f"{book} {chapter}章{verse}節"
+        return _format_location_label(book, chapter, verse)
 
 
 class ReportSerializer(serializers.ModelSerializer):

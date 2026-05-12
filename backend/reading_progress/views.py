@@ -43,8 +43,6 @@ class ReadingProgressSaveView(APIView):
             book_id=book_id,
             defaults={"chapter_id": chapter_id},
         )
-        # update_or_create は既存レコードの updated_at を auto_now で更新しない場合があるため
-        # defaults 経由の save() で確実に更新される
         serializer = ReadingProgressSerializer(progress)
         return Response(
             serializer.data,

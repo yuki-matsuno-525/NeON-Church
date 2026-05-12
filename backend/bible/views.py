@@ -1,6 +1,7 @@
 import datetime
 
 from django.core.cache import cache
+from django.utils import timezone
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -85,7 +86,8 @@ class VerseOfDayView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        today = datetime.date.today()
+        # Django の TIME_ZONE 設定に基づいたローカル日付を使用する
+        today = timezone.localdate()
         cache_key = f"verse_of_day_{today.isoformat()}"
         data = cache.get(cache_key)
         if data is None:
@@ -99,8 +101,9 @@ class VerseOfDayView(APIView):
                 .order_by("chapter__book__order", "chapter__number", "number")[index]
             )
             data = VerseOfDaySerializer(verse).data
+            # キャッシュの有効期限を翌日の0時まで（ローカルタイム）に設定する
             tomorrow = today + datetime.timedelta(days=1)
-            midnight = datetime.datetime.combine(tomorrow, datetime.time.min)
-            ttl = int((midnight - datetime.datetime.now()).total_seconds())
+            midnight = timezone.make_aware(datetime.datetime.combine(tomorrow, datetime.time.min))
+            ttl = int((midnight - timezone.now()).total_seconds())
             cache.set(cache_key, data, ttl)
         return Response(data)
