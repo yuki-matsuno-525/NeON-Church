@@ -71,7 +71,7 @@ class Comment(BaseModel):
         on_delete=models.SET_NULL,
         related_name="best_answer_for",
     )
-    body = models.TextField()
+    body = models.TextField(max_length=5000)
     is_qa = models.BooleanField(default=False, db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
     tags = models.ManyToManyField(Tag, blank=True, related_name="comments")

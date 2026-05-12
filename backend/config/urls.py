@@ -9,22 +9,22 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from common.urls import csrf_urlpatterns
 
 urlpatterns = [
     # Django 管理画面
     path("admin/", admin.site.urls),
+]
 
-    # ------------------------------------------------------------------
-    # OpenAPI スキーマ
-    # /api/schema/     → schema.yaml をダウンロード
-    # /api/schema/ui/  → Swagger UI（開発時の動作確認に使用）
-    # フロントエンドの型生成（openapi-typescript）が /api/schema/ を参照する。
-    # ------------------------------------------------------------------
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/schema/ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+# OpenAPI スキーマ・Swagger UI は開発環境のみ公開
+if settings.DEBUG:
+    from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+    urlpatterns += [
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path("api/schema/ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    ]
 
+urlpatterns += [
     # ------------------------------------------------------------------
     # ヘルスチェック
     # Better Stack の uptime monitoring が /healthz/ を定期的に叩く。
