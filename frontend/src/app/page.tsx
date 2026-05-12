@@ -144,7 +144,8 @@ type SectionCardProps = {
 
 function SectionCard({ title, description, href, ready }: SectionCardProps) {
   return (
-    <div
+    <Link
+      href={ready ? href : "#"}
       style={{
         background: "var(--bg-alt)",
         border: "1px solid var(--border)",
@@ -155,6 +156,16 @@ function SectionCard({ title, description, href, ready }: SectionCardProps) {
         gap: 10,
         opacity: ready ? 1 : 0.6,
         position: "relative",
+        textDecoration: "none",
+        color: "inherit",
+        cursor: ready ? "pointer" : "default",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        if (ready) (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
       }}
     >
       {!ready && (
@@ -179,25 +190,6 @@ function SectionCard({ title, description, href, ready }: SectionCardProps) {
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
         {description}
       </p>
-      {ready && (
-        <Link
-          href={href}
-          style={{
-            marginTop: 8,
-            display: "inline-block",
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            borderRadius: 6,
-            padding: "7px 18px",
-            fontSize: 13,
-            fontWeight: 700,
-            textDecoration: "none",
-            alignSelf: "flex-start",
-          }}
-        >
-          開く
-        </Link>
-      )}
-    </div>
+    </Link>
   );
 }
