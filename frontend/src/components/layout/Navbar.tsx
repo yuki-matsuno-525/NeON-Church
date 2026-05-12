@@ -66,18 +66,16 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
       {/* ロゴ */}
       <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
-        <div style={{ height: 60, overflow: "hidden" }}>
-          <img
-            src="/img/logo.png"
-            alt="NeON Church"
-            style={{
-              height: 120,
-              width: "auto",
-              mixBlendMode: "screen",
-              display: "block",
-            }}
-          />
-        </div>
+        <img
+          src="/img/logo.png"
+          alt="NeON Church"
+          style={{
+            height: 44,
+            width: "auto",
+            mixBlendMode: "screen",
+            display: "block",
+          }}
+        />
       </Link>
 
       {/* 検索バー */}
