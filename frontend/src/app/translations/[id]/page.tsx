@@ -7,6 +7,8 @@ import {
   fetchTranslationUnits,
   fetchTranslationComments,
   fetchUnitComments,
+  fetchChapters,
+  fetchVerses,
   joinTranslation,
   activateTranslation,
   publishTranslation,
@@ -24,6 +26,8 @@ import {
   type TranslationUnit,
   type TranslationMembership,
   type TranslationComment,
+  type Chapter,
+  type Verse,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -53,6 +57,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   // ユニット追加フォーム
   const [addingUnit, setAddingUnit] = useState(false);
+  const [unitChapters, setUnitChapters] = useState<Chapter[]>([]);
+  const [unitVerses, setUnitVerses] = useState<Verse[]>([]);
+  const [unitChapterId, setUnitChapterId] = useState("");
   const [unitVerseId, setUnitVerseId] = useState("");
 
   // コメント投稿
@@ -112,13 +119,38 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     setMembers(m);
   };
 
+  const handleOpenAddUnit = () => {
+    setAddingUnit(true);
+    if (project && unitChapters.length === 0) {
+      fetchChapters(project.source_book).then(setUnitChapters).catch(() => {});
+    }
+  };
+
+  const handleUnitChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const chId = e.target.value;
+    setUnitChapterId(chId);
+    setUnitVerseId("");
+    setUnitVerses([]);
+    if (chId) {
+      fetchVerses(chId).then(setUnitVerses).catch(() => {});
+    }
+  };
+
   const handleAddUnit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!unitVerseId) return;
+    if (!unitChapterId) return;
     setAddingUnit(false);
-    const unit = await addTranslationUnit(id, unitVerseId).catch(() => null);
-    if (unit) setUnits((prev) => [...prev, unit]);
+    if (unitVerseId) {
+      const unit = await addTranslationUnit(id, unitVerseId).catch(() => null);
+      if (unit) setUnits((prev) => [...prev, unit]);
+    } else {
+      const verses = unitVerses.length > 0 ? unitVerses : await fetchVerses(unitChapterId).catch(() => []);
+      const results = await Promise.all(verses.map((v) => addTranslationUnit(id, v.id).catch(() => null)));
+      setUnits((prev) => [...prev, ...results.filter((u): u is TranslationUnit => u !== null)]);
+    }
+    setUnitChapterId("");
     setUnitVerseId("");
+    setUnitVerses([]);
   };
 
   const handleUnitStatusChange = async (unitId: string, newStatus: TranslationUnit["status"]) => {
@@ -285,27 +317,42 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           {isOwner && (
             <div style={{ marginBottom: 16 }}>
               {!addingUnit ? (
-                <button onClick={() => setAddingUnit(true)} style={btnStyle("var(--accent)")}>
+                <button onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
                   ＋ ユニット追加
                 </button>
               ) : (
                 <form onSubmit={handleAddUnit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                   <select
-                    value={unitVerseId}
-                    onChange={(e) => setUnitVerseId(e.target.value)}
+                    value={unitChapterId}
+                    onChange={handleUnitChapterChange}
                     style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
                     required
                   >
-                    <option value="">節IDを選択（直接入力）</option>
+                    <option value="">章を選択</option>
+                    {unitChapters.map((c) => (
+                      <option key={c.id} value={c.id}>{c.number}章</option>
+                    ))}
                   </select>
-                  <input
-                    value={unitVerseId}
-                    onChange={(e) => setUnitVerseId(e.target.value)}
-                    placeholder="節 UUID を入力"
-                    style={{ flex: 1, padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
-                  />
-                  <button type="submit" style={btnStyle("var(--accent)")}>追加</button>
-                  <button type="button" onClick={() => setAddingUnit(false)} style={btnStyle("var(--border)")}>キャンセル</button>
+                  {unitVerses.length > 0 && (
+                    <select
+                      value={unitVerseId}
+                      onChange={(e) => setUnitVerseId(e.target.value)}
+                      style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
+                    >
+                      <option value="">全節を追加</option>
+                      {unitVerses.map((v) => (
+                        <option key={v.id} value={v.id}>{v.number}節</option>
+                      ))}
+                    </select>
+                  )}
+                  <button type="submit" disabled={!unitChapterId} style={btnStyle("var(--accent)")}>追加</button>
+                  <button
+                    type="button"
+                    onClick={() => { setAddingUnit(false); setUnitChapterId(""); setUnitVerseId(""); setUnitVerses([]); }}
+                    style={btnStyle("var(--border)")}
+                  >
+                    キャンセル
+                  </button>
                 </form>
               )}
             </div>
