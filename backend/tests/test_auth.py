@@ -1,8 +1,5 @@
 import pytest
-from django.contrib.auth import get_user_model
 from rest_framework import status
-
-User = get_user_model()
 
 REGISTER_URL = "/api/auth/register/"
 LOGIN_URL = "/api/auth/login/"
@@ -59,7 +56,8 @@ class TestRegister:
 @pytest.mark.django_db
 class TestLogin:
     def test_success(self, api_client, user_payload):
-        User.objects.create_user(**user_payload)
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.create_user(**user_payload)
         res = api_client.post(
             LOGIN_URL,
             {"username": user_payload["username"], "password": user_payload["password"]},
@@ -71,7 +69,8 @@ class TestLogin:
         assert "refresh_token" in res.cookies
 
     def test_wrong_password(self, api_client, user_payload):
-        User.objects.create_user(**user_payload)
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.create_user(**user_payload)
         res = api_client.post(
             LOGIN_URL,
             {"username": user_payload["username"], "password": "wrongpassword"},

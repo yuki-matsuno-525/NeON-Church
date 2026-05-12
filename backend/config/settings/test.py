@@ -5,6 +5,11 @@ SQLite を使用して外部 DB サービスなしでテストを実行できる
 CI とローカル開発どちらでも使える。
 """
 
+import os
+
+os.environ.setdefault("DJANGO_SECRET_KEY", "django-insecure-test-only-key-not-for-production")
+os.environ.setdefault("DJANGO_ALLOWED_HOSTS", "*")
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True

@@ -59,14 +59,14 @@ describe("BookmarksPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/login");
   });
 
-  it("ブックマークがない場合「ブックマークはまだありません。」を表示する", async () => {
+  it("ブックマークがない場合「お気に入りはまだありません。」を表示する", async () => {
     const { fetchBookmarks } = await import("@/lib/api");
     vi.mocked(fetchBookmarks).mockResolvedValue([]);
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
 
     render(<BookmarksPage />);
 
-    await screen.findByText("ブックマークはまだありません。");
+    await screen.findByText("お気に入りはまだありません。");
   });
 
   it("ブックマーク一覧を表示する（書名・章・節番号）", async () => {
@@ -133,6 +133,6 @@ describe("BookmarksPage", () => {
 
     render(<BookmarksPage />);
 
-    await screen.findByText("ブックマークはまだありません。");
+    await screen.findByText("お気に入りはまだありません。");
   });
 });

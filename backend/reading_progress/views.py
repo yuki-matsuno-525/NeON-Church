@@ -17,7 +17,7 @@ class ReadingProgressListView(generics.ListAPIView):
     def get_queryset(self):
         return (
             ReadingProgress.objects.filter(user=self.request.user)
-            .select_related("book", "chapter", "verse")
+            .select_related("book", "chapter")
         )
 
 

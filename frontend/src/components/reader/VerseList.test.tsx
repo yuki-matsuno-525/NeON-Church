@@ -71,18 +71,18 @@ describe("VerseList", () => {
   // --- ブックマークボタン表示制御 ---
   it("選択されていない節にはブックマークボタンが表示されない", () => {
     render(<VerseList {...defaultProps} selectedVerseId={null} />);
-    expect(screen.queryByRole("button", { name: /ブックマーク/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /お気に入り/ })).not.toBeInTheDocument();
   });
 
   it("選択された節にブックマークボタンが表示される（ログイン時）", () => {
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    expect(screen.getByRole("button", { name: /ブックマーク/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /お気に入り/ })).toBeInTheDocument();
   });
 
   it("未ログイン時はブックマークボタンが表示されない", () => {
     mockUseAuth.mockReturnValue({ user: null });
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    expect(screen.queryByRole("button", { name: /ブックマーク/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /お気に入り/ })).not.toBeInTheDocument();
   });
 
   it("ブックマーク済みの節には「解除」ボタンが表示される", () => {
@@ -94,7 +94,7 @@ describe("VerseList", () => {
       />
     );
     expect(screen.getByRole("button", { name: /解除/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /🔖 ブックマーク/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /🔖 お気に入り/ })).not.toBeInTheDocument();
   });
 
   // --- ブックマーク追加 ---
@@ -103,7 +103,7 @@ describe("VerseList", () => {
     vi.mocked(createBookmark).mockResolvedValue(makeBookmark("v1"));
 
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    fireEvent.click(screen.getByRole("button", { name: /ブックマーク/ }));
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
 
     await waitFor(() => expect(createBookmark).toHaveBeenCalledWith("v1"));
   });
@@ -117,7 +117,7 @@ describe("VerseList", () => {
     render(
       <VerseList {...defaultProps} selectedVerseId="v1" onBookmarksChange={onBookmarksChange} />
     );
-    fireEvent.click(screen.getByRole("button", { name: /ブックマーク/ }));
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
 
     await waitFor(() => expect(onBookmarksChange).toHaveBeenCalledWith([bm]));
   });
@@ -161,7 +161,7 @@ describe("VerseList", () => {
     vi.mocked(createBookmark).mockRejectedValue(new Error("Network Error"));
 
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    fireEvent.click(screen.getByRole("button", { name: /ブックマーク/ }));
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
 
     await waitFor(() =>
       expect(screen.getByText("ブックマークの操作に失敗しました")).toBeInTheDocument()
@@ -177,7 +177,7 @@ describe("VerseList", () => {
     render(
       <VerseList {...defaultProps} selectedVerseId="v1" onSelectVerse={onSelectVerse} />
     );
-    fireEvent.click(screen.getByRole("button", { name: /ブックマーク/ }));
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
 
     expect(onSelectVerse).not.toHaveBeenCalled();
     // 非同期の state 更新を act 内で消化する
@@ -190,8 +190,8 @@ describe("VerseList", () => {
     vi.mocked(createBookmark).mockReturnValue(new Promise(() => {}));
 
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    fireEvent.click(screen.getByRole("button", { name: /ブックマーク/ }));
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
 
-    expect(screen.getByRole("button", { name: /ブックマーク/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /お気に入り/ })).toBeDisabled();
   });
 });

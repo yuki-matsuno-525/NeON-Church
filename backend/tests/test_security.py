@@ -7,14 +7,11 @@
 """
 
 import pytest
-from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from common.logging import _mask
 from tests.conftest import REGISTER_URL
-
-User = get_user_model()
 
 COMMENTS_URL = "/api/comments/"
 LOGIN_URL = "/api/auth/login/"
@@ -124,7 +121,8 @@ class TestCookieAttributes:
 class TestInactiveUserBlocked:
     def test_inactive_user_cannot_login(self, api_client, user_payload):
         """is_active=False のユーザーはログインできない。"""
-        User.objects.create_user(**user_payload, is_active=False)
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.create_user(**user_payload, is_active=False)
 
         res = api_client.post(LOGIN_URL, {
             "username": user_payload["username"],
