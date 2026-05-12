@@ -1,5 +1,6 @@
 import datetime
 
+from django.core.cache import cache
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -77,13 +78,21 @@ class VerseOfDayView(APIView):
 
     def get(self, request):
         today = datetime.date.today()
-        day_of_year = today.timetuple().tm_yday
-        count = Verse.objects.count()
-        if count == 0:
-            return Response({"detail": "聖書データが未登録です。"}, status=503)
-        index = (day_of_year - 1) % count
-        verse = (
-            Verse.objects.select_related("chapter__book")
-            .order_by("chapter__book__order", "chapter__number", "number")[index]
-        )
-        return Response(VerseOfDaySerializer(verse).data)
+        cache_key = f"verse_of_day_{today.isoformat()}"
+        data = cache.get(cache_key)
+        if data is None:
+            day_of_year = today.timetuple().tm_yday
+            count = Verse.objects.count()
+            if count == 0:
+                return Response({"detail": "聖書データが未登録です。"}, status=503)
+            index = (day_of_year - 1) % count
+            verse = (
+                Verse.objects.select_related("chapter__book")
+                .order_by("chapter__book__order", "chapter__number", "number")[index]
+            )
+            data = VerseOfDaySerializer(verse).data
+            tomorrow = today + datetime.timedelta(days=1)
+            midnight = datetime.datetime.combine(tomorrow, datetime.time.min)
+            ttl = int((midnight - datetime.datetime.now()).total_seconds())
+            cache.set(cache_key, data, ttl)
+        return Response(data)

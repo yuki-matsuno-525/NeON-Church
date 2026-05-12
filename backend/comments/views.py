@@ -63,7 +63,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
             )
 
     def get_queryset(self):
-        qs = Comment.objects.select_related("user").annotate(vote_count=Count("votes"))
+        qs = Comment.objects.select_related("user").prefetch_related("tags").annotate(vote_count=Count("votes"))
         params = self.request.query_params
 
         verse_id = params.get("verse_id")
@@ -181,6 +181,7 @@ class MyCommentListView(generics.ListAPIView):
     def get_queryset(self):
         return (
             Comment.objects.filter(user=self.request.user, is_deleted=False)
+            .select_related("verse__chapter__book", "chapter__book", "book")
             .annotate(vote_count=Count("votes"))
             .order_by("-created_at")
         )

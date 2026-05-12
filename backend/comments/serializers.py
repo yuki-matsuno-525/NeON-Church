@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import Comment, Report, Tag
-from bible.models import Verse, Chapter, Book
 
 User = get_user_model()
 
@@ -120,23 +119,17 @@ class MyCommentSerializer(serializers.ModelSerializer):
 
     def get_location_label(self, obj) -> str:
         if obj.verse_id:
-            try:
-                verse = Verse.objects.select_related("chapter__book").get(pk=obj.verse_id)
-                return f"{verse.chapter.book.name} {verse.chapter.number}章 {verse.number}節"
-            except Verse.DoesNotExist:
-                pass
+            v = obj.verse
+            if v:
+                return f"{v.chapter.book.name} {v.chapter.number}章 {v.number}節"
         if obj.chapter_id:
-            try:
-                ch = Chapter.objects.select_related("book").get(pk=obj.chapter_id)
+            ch = obj.chapter
+            if ch:
                 return f"{ch.book.name} {ch.number}章"
-            except Chapter.DoesNotExist:
-                pass
         if obj.book_id:
-            try:
-                book = Book.objects.get(pk=obj.book_id)
-                return book.name
-            except Book.DoesNotExist:
-                pass
+            bk = obj.book
+            if bk:
+                return bk.name
         return ""
 
 
