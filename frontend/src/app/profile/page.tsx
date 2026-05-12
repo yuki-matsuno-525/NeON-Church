@@ -172,6 +172,7 @@ export default function ProfilePage() {
         style={{
           background: "var(--bg-alt)",
           border: "1px solid var(--border)",
+          borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
           borderRadius: 10,
           padding: "24px",
           marginBottom: 24,
@@ -243,8 +244,8 @@ export default function ProfilePage() {
           type="submit"
           disabled={saving}
           style={{
-            background: "var(--accent)",
-            color: "var(--accent-text)",
+            background: saving ? "rgba(120, 30, 190, 0.5)" : "linear-gradient(135deg, #7618c5, #d81e80)",
+            color: "#fff",
             border: "none",
             borderRadius: 6,
             padding: "8px 20px",
@@ -252,6 +253,8 @@ export default function ProfilePage() {
             fontSize: 14,
             cursor: saving ? "not-allowed" : "pointer",
             opacity: saving ? 0.6 : 1,
+            boxShadow: saving ? "none" : "0 0 12px rgba(198, 44, 170, 0.35)",
+            fontFamily: "inherit",
           }}
         >
           {saving ? "保存中..." : "保存"}
@@ -344,6 +347,7 @@ function CommentList({ comments }: { comments: MyComment[] }) {
 const cardStyle: React.CSSProperties = {
   background: "var(--bg-alt)",
   border: "1px solid var(--border)",
-  borderRadius: 8,
+  borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+  borderRadius: 10,
   padding: "12px 14px",
 };

@@ -61,25 +61,29 @@ function SearchContent() {
           placeholder="キーワードを入力..."
           style={{
             flex: 1,
-            padding: "8px 12px",
-            border: "1px solid var(--border)",
+            padding: "9px 12px",
+            border: "1px solid rgba(140, 75, 235, 0.35)",
             borderRadius: 8,
-            background: "var(--bg-alt)",
+            background: "rgba(255, 255, 255, 0.05)",
             color: "var(--text)",
             fontSize: 14,
+            fontFamily: "inherit",
+            outline: "none",
           }}
         />
         <button
           type="submit"
           style={{
-            padding: "8px 16px",
-            background: "var(--accent)",
-            color: "var(--accent-text)",
+            padding: "9px 18px",
+            background: "linear-gradient(135deg, #7618c5, #d81e80)",
+            color: "#fff",
             border: "none",
             borderRadius: 8,
             cursor: "pointer",
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: 14,
+            fontFamily: "inherit",
+            boxShadow: "0 0 14px rgba(198, 44, 170, 0.40)",
           }}
         >
           検索

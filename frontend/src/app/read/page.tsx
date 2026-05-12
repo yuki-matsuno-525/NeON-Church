@@ -87,8 +87,8 @@ export default function ReadPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-          gap: 12,
+          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+          gap: 14,
         }}
       >
         {BOOKS.map((book) => (
@@ -98,28 +98,33 @@ export default function ReadPage() {
             style={{
               display: "flex",
               flexDirection: "column",
-              padding: "16px",
-              border: "1px solid var(--border)",
+              padding: "20px 18px",
+              border: "1px solid rgba(140, 75, 235, 0.30)",
+              borderLeft: "3px solid rgba(192, 64, 240, 0.55)",
               borderRadius: 10,
               textDecoration: "none",
               color: "var(--text)",
               background: "var(--bg-alt)",
-              transition: "background 0.1s",
+              transition: "border-color 0.18s, box-shadow 0.18s, background 0.18s",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)";
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--accent)";
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "var(--bg-hover)";
+              el.style.borderColor = "rgba(192, 64, 240, 0.65)";
+              el.style.boxShadow = "0 4px 20px rgba(0,0,0,0.35)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)";
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "var(--bg-alt)";
+              el.style.borderColor = "rgba(140, 75, 235, 0.30)";
+              el.style.boxShadow = "none";
             }}
           >
-            <span style={{ fontWeight: 700, fontSize: 15 }}>{book.short}</span>
-            <span style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 4 }}>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{book.short}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 5 }}>
               {book.name}
             </span>
-            <span style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 6 }}>
+            <span style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 8 }}>
               全{book.totalChapters}章
             </span>
           </Link>

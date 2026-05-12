@@ -63,7 +63,8 @@ export default function BookmarksPage() {
   const cardBase: React.CSSProperties = {
     background: "var(--bg-alt)",
     border: "1px solid var(--border)",
-    borderRadius: 8,
+    borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+    borderRadius: 10,
     padding: "16px",
   };
 

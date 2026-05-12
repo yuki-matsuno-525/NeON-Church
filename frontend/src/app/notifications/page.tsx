@@ -71,7 +71,7 @@ export default function NotificationsPage() {
           <button
             onClick={handleMarkAll}
             style={{
-              border: "1px solid var(--border)",
+              border: "1px solid rgba(140, 75, 235, 0.45)",
               borderRadius: 8,
               padding: "6px 14px",
               background: "transparent",

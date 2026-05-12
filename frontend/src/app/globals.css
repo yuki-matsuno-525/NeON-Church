@@ -6,9 +6,9 @@
 :root {
   /* Neon Dark — デフォルトテーマ */
   --bg: #090516;
-  --bg-alt: #110c22;
-  --bg-hover: #1b1335;
-  --border: #2a1f44;
+  --bg-alt: #160e2e;
+  --bg-hover: #201440;
+  --border: rgba(140, 75, 235, 0.30);
   --text: rgba(236, 228, 252, 0.92);
   --text-muted: rgba(162, 146, 208, 0.68);
   --text-faint: rgba(115, 100, 162, 0.55);
@@ -27,6 +27,21 @@
   --neon-purple: #cc44ff;
   --glow-purple: rgba(192, 52, 240, 0.55);
   --glow-pink: rgba(255, 38, 120, 0.55);
+}
+
+/* select の option はブラウザ依存 → 暗い背景を強制 */
+option {
+  background: #160e2e;
+  color: rgba(236, 228, 252, 0.92);
+}
+
+/* input / textarea / select 共通フォーカス */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(192, 64, 240, 0.65) !important;
+  box-shadow: 0 0 0 2px rgba(192, 64, 240, 0.14);
 }
 
 @theme inline {

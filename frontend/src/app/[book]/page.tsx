@@ -114,22 +114,28 @@ function BookContent() {
               alignItems: "center",
               justifyContent: "center",
               height: 48,
-              border: "1px solid var(--border)",
+              border: "1px solid rgba(140, 75, 235, 0.30)",
               borderRadius: 8,
               textDecoration: "none",
-              color: "var(--text)",
+              color: "var(--text-muted)",
               fontWeight: 700,
               fontSize: 14,
               background: "var(--bg-alt)",
-              transition: "background 0.1s",
+              transition: "border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)";
-              (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "var(--accent-tint)";
+              el.style.color = "var(--accent)";
+              el.style.borderColor = "rgba(192, 64, 240, 0.60)";
+              el.style.boxShadow = "0 0 10px rgba(192, 64, 240, 0.20)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text)";
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "var(--bg-alt)";
+              el.style.color = "var(--text-muted)";
+              el.style.borderColor = "rgba(140, 75, 235, 0.30)";
+              el.style.boxShadow = "none";
             }}
           >
             {ch.number}

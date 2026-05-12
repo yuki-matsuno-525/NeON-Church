@@ -44,11 +44,14 @@ export default function LoginPage() {
       <div
         style={{
           width: "100%",
-          maxWidth: 360,
-          background: "var(--bg-alt)",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          padding: 32,
+          maxWidth: 380,
+          background: "rgba(16, 9, 50, 0.80)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(145, 80, 240, 0.35)",
+          borderRadius: 16,
+          padding: "36px 32px",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
         }}
       >
         <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 24 }}>
@@ -75,10 +78,10 @@ export default function LoginPage() {
               required
               style={{
                 width: "100%",
-                padding: "8px 10px",
-                border: "1px solid var(--border)",
+                padding: "9px 12px",
+                border: "1px solid rgba(140, 75, 235, 0.35)",
                 borderRadius: 8,
-                background: "var(--bg)",
+                background: "rgba(255, 255, 255, 0.05)",
                 color: "var(--text)",
                 fontSize: 14,
                 fontFamily: "inherit",
@@ -106,10 +109,10 @@ export default function LoginPage() {
               required
               style={{
                 width: "100%",
-                padding: "8px 10px",
-                border: "1px solid var(--border)",
+                padding: "9px 12px",
+                border: "1px solid rgba(140, 75, 235, 0.35)",
                 borderRadius: 8,
-                background: "var(--bg)",
+                background: "rgba(255, 255, 255, 0.05)",
                 color: "var(--text)",
                 fontSize: 14,
                 fontFamily: "inherit",
@@ -129,9 +132,9 @@ export default function LoginPage() {
             disabled={submitting}
             style={{
               width: "100%",
-              padding: "10px",
-              background: "var(--accent)",
-              color: "var(--accent-text)",
+              padding: "11px",
+              background: submitting ? "rgba(120, 30, 190, 0.5)" : "linear-gradient(135deg, #7618c5, #d81e80)",
+              color: "#fff",
               border: "none",
               borderRadius: 8,
               fontWeight: 700,
@@ -139,6 +142,7 @@ export default function LoginPage() {
               cursor: submitting ? "not-allowed" : "pointer",
               opacity: submitting ? 0.6 : 1,
               fontFamily: "inherit",
+              boxShadow: submitting ? "none" : "0 0 18px rgba(198, 44, 170, 0.45)",
             }}
           >
             {submitting ? "ログイン中..." : "ログイン"}
