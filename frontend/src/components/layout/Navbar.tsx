@@ -161,9 +161,33 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               </Link>
               <Link
                 href="/profile"
-                style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}
+                aria-label="プロフィール"
+                style={{ textDecoration: "none", flexShrink: 0 }}
               >
-                {user.username}
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.username}
+                    style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "var(--accent)",
+                      color: "var(--accent-text)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user.username[0].toUpperCase()}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={handleLogout}
