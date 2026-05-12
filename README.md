@@ -76,6 +76,43 @@ docker-compose exec backend python manage.py import_kjv
 
 テキストデータは `text/` ディレクトリに配置してある。
 
+### シードデータの投入
+
+実際にサービスが使われた状態を再現するための豊富なサンプルデータを投入できる。
+
+**Docker 環境の場合:**
+
+```bash
+# シードを投入（既存データに追加）
+docker-compose exec backend python manage.py seed
+
+# 既存データを削除してからシードを投入（クリーンな状態にしたい場合）
+docker-compose exec backend python manage.py seed --clear
+```
+
+**Docker なし（SQLite E2E 環境）の場合:**
+
+```bash
+cd backend
+DJANGO_SETTINGS_MODULE=config.settings.e2e python manage.py seed --clear
+```
+
+投入されるデータの内訳:
+
+| データ | 件数 |
+|--------|------|
+| ユーザー | 15 人（多様な自己紹介・役割） |
+| コメント | 200+ 件（節・章・書レベル、返信ツリー depth 3、Q&A＋ベストアンサー） |
+| 投票 | 200+ 件 |
+| ブックマーク | 100+ 件（節・コメント両方） |
+| 通知 | 100+ 件（返信・いいね両タイプ） |
+| 読書進捗 | 40+ 件（各ユーザーが複数書籍） |
+| 翻訳プロジェクト | 3 件（draft / active / published 各 1 件） |
+| 翻訳ユニット | 60 件（todo / in_progress / review / done 混在） |
+| 翻訳コメント | 20+ 件 |
+
+> シードユーザーのパスワードはすべて `Seed@pass123`。
+
 ### 管理ユーザーの作成
 
 ```bash
