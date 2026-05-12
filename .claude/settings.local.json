@@ -23,7 +23,34 @@
       "PowerShell(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\" -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3; Write-Host \"Docker Desktop起動試行完了\")",
       "Bash(docker info *)",
       "Bash(docker-compose up *)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\ymats\\\\NeON-Church\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Skill(update-config)",
+      "Bash(node *)",
+      "Bash(npx next *)",
+      "Bash(git push *)",
+      "Bash(python manage.py migrate)",
+      "Bash(python -m pytest tests/test_bookmarks.py -v)",
+      "Bash(npm test *)",
+      "Bash(cd C:\\\\\\\\Users\\\\\\\\ymats\\\\\\\\NeON-Church)",
+      "Bash(.venv\\\\Scripts\\\\python.exe manage.py migrate --settings=config.settings.test)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$json = [Console]::In.ReadToEnd() | ConvertFrom-Json; $f = [string]$json.tool_input.file_path; if ($f -match 'backend' -and $f -match '(models|views|serializers)\\.py$') { try { Set-Location 'C:\\Users\\ymats\\NeON-Church\\frontend'; npm run gen:types } catch {} }; exit 0",
+            "shell": "powershell",
+            "timeout": 30,
+            "statusMessage": "型定義を再生成中..."
+          }
+        ]
+      }
     ]
   }
 }

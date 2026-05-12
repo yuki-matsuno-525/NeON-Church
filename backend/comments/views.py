@@ -232,6 +232,11 @@ class QACommentListView(generics.ListAPIView):
             )
         if tag_id:
             qs = qs.filter(tags__id=tag_id)
+        answered = params.get("answered")
+        if answered == "true":
+            qs = qs.filter(best_answer__isnull=False)
+        elif answered == "false":
+            qs = qs.filter(best_answer__isnull=True)
         return qs
 
 

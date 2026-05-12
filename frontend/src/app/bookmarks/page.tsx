@@ -74,11 +74,11 @@ export default function BookmarksPage() {
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-        ブックマーク
+        お気に入り
       </h1>
 
       {bookmarks.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>ブックマークはまだありません。</p>
+        <p style={{ color: "var(--text-muted)" }}>お気に入りはまだありません。</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {bookmarks.map((bm) => {

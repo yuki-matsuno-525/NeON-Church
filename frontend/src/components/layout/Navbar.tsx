@@ -128,7 +128,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 href="/bookmarks"
                 style={{ color: "var(--text-muted)", textDecoration: "none" }}
               >
-                ブックマーク
+                お気に入り
               </Link>
               <Link
                 href="/notifications"

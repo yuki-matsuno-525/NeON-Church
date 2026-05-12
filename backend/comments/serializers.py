@@ -200,6 +200,24 @@ class QACommentSerializer(serializers.ModelSerializer):
         return book
 
 
+class CommentSearchSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    location = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ["id", "body", "username", "created_at", "location"]
+
+    def get_location(self, obj) -> str:
+        if obj.verse_id:
+            return f"{obj.verse.chapter.book.name} {obj.verse.chapter.number}章{obj.verse.number}節"
+        if obj.chapter_id:
+            return f"{obj.chapter.book.name} {obj.chapter.number}章"
+        if obj.book_id:
+            return obj.book.name
+        return ""
+
+
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report

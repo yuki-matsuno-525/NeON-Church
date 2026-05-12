@@ -6,6 +6,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from comments.models import Comment
+from comments.serializers import CommentSearchSerializer
 from .models import Book, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
@@ -55,7 +57,7 @@ class SearchView(APIView):
     def get(self, request):
         q = request.query_params.get("q", "").strip()
         if len(q) < 2:
-            return Response({"verses": [], "books": []})
+            return Response({"verses": [], "books": [], "comments": []})
 
         books = Book.objects.filter(name__icontains=q, translation="口語訳").order_by("order")
         verses = (
@@ -64,10 +66,16 @@ class SearchView(APIView):
             .filter(chapter__book__translation="口語訳")
             .order_by("chapter__book__order", "chapter__number", "number")[:30]
         )
+        comments = (
+            Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None)
+            .select_related("user", "verse__chapter__book", "chapter__book", "book")
+            .order_by("-created_at")[:20]
+        )
 
         return Response({
             "verses": VerseSearchSerializer(verses, many=True).data,
             "books": BookSerializer(books, many=True).data,
+            "comments": CommentSearchSerializer(comments, many=True).data,
         })
 
 

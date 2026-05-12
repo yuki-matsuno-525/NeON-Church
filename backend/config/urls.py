@@ -36,6 +36,7 @@ urlpatterns = [
     # ------------------------------------------------------------------
     path("api/", include(csrf_urlpatterns)),
     path("api/auth/", include("users.urls")),
+    path("api/users/", include("users.public_urls")),
     path("api/", include("bible.urls")),
     path("api/", include("comments.urls")),
     path("api/", include("bookmarks.urls")),

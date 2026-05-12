@@ -166,6 +166,21 @@ export type SearchResult = {
     book_id: string;
   }[];
   books: Book[];
+  comments: {
+    id: string;
+    body: string;
+    username: string;
+    created_at: string;
+    location: string;
+  }[];
+};
+
+export type PublicUser = {
+  id: string;
+  username: string;
+  bio: string;
+  avatar_url: string | null;
+  created_at: string;
 };
 
 class ApiError extends Error {
@@ -402,10 +417,11 @@ export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
 }
 
-export function fetchQAComments(params?: { book_id?: string; tag_id?: string }): Promise<QAComment[]> {
+export function fetchQAComments(params?: { book_id?: string; tag_id?: string; answered?: boolean }): Promise<QAComment[]> {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
+  if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   const q = qs.toString();
   return apiFetch(`/comments/qa/${q ? `?${q}` : ""}`);
 }
@@ -546,4 +562,23 @@ export function deleteTranslationComment(projectId: string, commentId: string): 
 
 export function fetchTranslationRead(projectId: string): Promise<TranslationUnit[]> {
   return apiFetch(`/translations/${projectId}/read/`);
+}
+
+export function fetchUserProfile(username: string): Promise<PublicUser> {
+  return apiFetch(`/users/${username}/`);
+}
+
+export function fetchUserComments(username: string): Promise<Comment[]> {
+  return apiFetch(`/users/${username}/comments/`);
+}
+
+export function fetchUserBookmarks(username: string): Promise<Bookmark[]> {
+  return apiFetch(`/users/${username}/bookmarks/`);
+}
+
+export function assignTranslationUnit(projectId: string, unitId: string, userId: string | null): Promise<TranslationUnit> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/assign/`, {
+    method: "POST",
+    body: JSON.stringify({ user_id: userId }),
+  });
 }

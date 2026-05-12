@@ -21,6 +21,7 @@ import {
   postUnitComment,
   deleteTranslationComment,
   fetchTranslationMembers as fetchMembers,
+  assignTranslationUnit,
   formatRelativeTime,
   type TranslationProject,
   type TranslationUnit,
@@ -95,6 +96,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   }, [tab, id, isMember]);
 
+  useEffect(() => {
+    if (isOwner) {
+      fetchMembers(id).then(setMembers).catch(() => {});
+    }
+  }, [isOwner, id]);
+
   const handleJoin = async () => {
     await joinTranslation(id);
     const proj = await fetchTranslation(id);
@@ -151,6 +158,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     setUnitChapterId("");
     setUnitVerseId("");
     setUnitVerses([]);
+  };
+
+  const handleAssignUnit = async (unitId: string, userId: string) => {
+    const updated = await assignTranslationUnit(id, unitId, userId || null).catch(() => null);
+    if (updated) setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
   };
 
   const handleUnitStatusChange = async (unitId: string, newStatus: TranslationUnit["status"]) => {
@@ -397,6 +409,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         </span>
                       </div>
                     </div>
+
+                    {/* 担当者割り当て（オーナーのみ） */}
+                    {isOwner && (
+                      <div style={{ marginTop: 8 }}>
+                        <select
+                          value={unit.assigned_to ?? ""}
+                          onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
+                          style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                        >
+                          <option value="">担当者なし</option>
+                          {members.filter((m) => m.status === "approved").map((m) => (
+                            <option key={m.id} value={m.user}>{m.username}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* 担当者操作（オーナーまたは担当者） */}
                     {(isOwner || unit.assigned_to_username === user?.username) && (

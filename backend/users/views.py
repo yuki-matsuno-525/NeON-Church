@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated
+from rest_framework import generics, status
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import LoginSerializer, ProfileUpdateSerializer, RegisterSerializer, UserSerializer
+from .serializers import LoginSerializer, ProfileUpdateSerializer, PublicUserSerializer, RegisterSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -131,6 +131,63 @@ class MeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(UserSerializer(request.user, context={"request": request}).data)
+
+
+class UserProfileView(APIView):
+    """GET /api/users/<username>/  公開プロフィール（認証不要）"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request, username: str) -> Response:
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise NotFound("ユーザーが見つかりません。")
+        return Response(PublicUserSerializer(user, context={"request": request}).data)
+
+
+class UserCommentsView(generics.ListAPIView):
+    """GET /api/users/<username>/comments/  ユーザーのコメント一覧（認証不要）"""
+
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        from comments.serializers import CommentSerializer
+        return CommentSerializer
+
+    def get_queryset(self):
+        from django.db.models import Count
+        from comments.models import Comment
+        username = self.kwargs["username"]
+        if not User.objects.filter(username=username).exists():
+            raise NotFound("ユーザーが見つかりません。")
+        return (
+            Comment.objects.filter(user__username=username, is_deleted=False, parent=None)
+            .select_related("user")
+            .prefetch_related("tags")
+            .annotate(vote_count=Count("votes"))
+            .order_by("-created_at")[:50]
+        )
+
+
+class UserBookmarksView(generics.ListAPIView):
+    """GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要）"""
+
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        from bookmarks.serializers import BookmarkSerializer
+        return BookmarkSerializer
+
+    def get_queryset(self):
+        from bookmarks.models import Bookmark
+        username = self.kwargs["username"]
+        if not User.objects.filter(username=username).exists():
+            raise NotFound("ユーザーが見つかりません。")
+        return (
+            Bookmark.objects.filter(user__username=username)
+            .select_related("verse__chapter__book", "comment__user")
+        )
 
 
 class TokenRefreshView(APIView):

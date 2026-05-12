@@ -513,6 +513,7 @@ export default function QAPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedBookId, setSelectedBookId] = useState("");
   const [selectedTagId, setSelectedTagId] = useState("");
+  const [answeredFilter, setAnsweredFilter] = useState<"all" | "answered" | "unanswered">("all");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -530,6 +531,7 @@ export default function QAPage() {
     fetchQAComments({
       book_id: selectedBookId || undefined,
       tag_id: selectedTagId || undefined,
+      answered: answeredFilter === "all" ? undefined : answeredFilter === "answered",
     })
       .then(setComments)
       .catch(() => setComments([]))
@@ -542,11 +544,12 @@ export default function QAPage() {
     fetchQAComments({
       book_id: selectedBookId || undefined,
       tag_id: selectedTagId || undefined,
+      answered: answeredFilter === "all" ? undefined : answeredFilter === "answered",
     })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [selectedBookId, selectedTagId]);
+  }, [selectedBookId, selectedTagId, answeredFilter]);
 
   const handleBestAnswerChange = () => {
     loadComments();
@@ -600,7 +603,25 @@ export default function QAPage() {
       )}
 
       {/* フィルター */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
+        {(["all", "unanswered", "answered"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setAnsweredFilter(f)}
+            style={{
+              fontSize: 12,
+              padding: "4px 12px",
+              borderRadius: 999,
+              border: "1px solid var(--border)",
+              cursor: "pointer",
+              background: answeredFilter === f ? "var(--accent)" : "transparent",
+              color: answeredFilter === f ? "var(--accent-text)" : "var(--text-muted)",
+              fontFamily: "inherit",
+            }}
+          >
+            {f === "all" ? "すべて" : f === "unanswered" ? "未解決" : "解決済み"}
+          </button>
+        ))}
         <select
           value={selectedBookId}
           onChange={(e) => setSelectedBookId(e.target.value)}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime, type Tag } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
@@ -148,9 +149,12 @@ export function CommentItem({
           >
             {comment.user.username[0]?.toUpperCase() ?? "?"}
           </span>
-          <span style={{ fontWeight: 700, fontSize: 13 }}>
+          <Link
+            href={`/profile/${comment.user.username}`}
+            style={{ fontWeight: 700, fontSize: 13, color: "inherit", textDecoration: "none" }}
+          >
             {comment.user.username}
-          </span>
+          </Link>
           {comment.is_qa && (
             <span
               style={{

@@ -44,6 +44,24 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.avatar.url
 
 
+class PublicUserSerializer(serializers.ModelSerializer):
+    """公開プロフィール用。メールアドレスを含まない。"""
+
+    avatar_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "bio", "avatar_url", "created_at"]
+
+    def get_avatar_url(self, obj) -> str | None:
+        if not obj.avatar:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
+
+
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     """プロフィール更新用。bio と avatar を変更可能。"""
 

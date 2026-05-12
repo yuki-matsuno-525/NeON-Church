@@ -145,7 +145,7 @@ export function VerseList({
                       fontFamily: "inherit",
                     }}
                   >
-                    {isBookmarked ? "🔖 解除" : "🔖 ブックマーク"}
+                    {isBookmarked ? "🔖 解除" : "🔖 お気に入り"}
                   </button>
                 )}
               </div>

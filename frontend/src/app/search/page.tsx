@@ -44,7 +44,7 @@ function SearchContent() {
     if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   };
 
-  const totalHits = (result?.verses.length ?? 0) + (result?.books.length ?? 0);
+  const totalHits = (result?.verses.length ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
@@ -166,6 +166,43 @@ function SearchContent() {
                           i % 2 === 1
                             ? <mark key={i} style={{ background: "var(--accent)", color: "var(--accent-text)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
                             : <span key={i}>{part}</span>
+                        )}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* コメントヒット */}
+          {result.comments.length > 0 && (
+            <section style={{ marginBottom: 28 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text-muted)" }}>
+                コメント（最大20件）
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {result.comments.map((c) => {
+                  const parts = highlight(c.body, q).split("**");
+                  return (
+                    <div
+                      key={c.id}
+                      style={{
+                        padding: "12px 14px",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        background: "var(--bg-alt)",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
+                        <span style={{ fontWeight: 600 }}>{c.username}</span>
+                        {c.location && <span>· {c.location}</span>}
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+                        {parts.map((part, i) =>
+                          i % 2 === 1
+                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 2, padding: "0 2px" }}>{part}</mark>
+                            : part
                         )}
                       </p>
                     </div>

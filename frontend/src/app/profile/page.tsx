@@ -261,7 +261,7 @@ export default function ProfilePage() {
       {/* タブ */}
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         <button style={tabStyle("bookmarks")} onClick={() => setActiveTab("bookmarks")}>
-          ブックマーク ({bookmarks.length})
+          お気に入り ({bookmarks.length})
         </button>
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
           コメント ({myComments.length})
@@ -281,7 +281,7 @@ export default function ProfilePage() {
 
 function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
   if (bookmarks.length === 0) {
-    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>ブックマークはまだありません。</p>;
+    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>お気に入りはまだありません。</p>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

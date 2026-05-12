@@ -131,7 +131,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   color: "var(--text)",
                 }}
               >
-                ブックマーク
+                お気に入り
               </Link>
               <Link
                 href="/profile"
