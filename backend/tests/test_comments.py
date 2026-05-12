@@ -317,3 +317,148 @@ class TestCommentUpdate:
             format="json",
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ------------------------------------------------------------------
+# Q&A 投稿（場所なし許可）
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestQAPost:
+    def test_qa_without_location_allowed(self, auth_client):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "場所なしQ&A", "is_qa": True},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["is_qa"] is True
+        assert res.data["verse"] is None
+        assert res.data["chapter"] is None
+        assert res.data["book"] is None
+
+    def test_qa_with_book_allowed(self, auth_client, book):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "書付きQ&A", "is_qa": True, "book": str(book.id)},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        assert str(res.data["book"]) == str(book.id)
+
+    def test_non_qa_without_location_rejected(self, auth_client):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "場所なし通常コメント"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_reply_without_location_allowed(self, auth_client, verse):
+        parent = auth_client.post(
+            COMMENTS_URL,
+            {"body": "場所なしQ&A", "is_qa": True},
+            format="json",
+        ).data
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "返信", "parent": parent["id"]},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+
+    def test_filter_by_parent_id(self, auth_client, db):
+        parent = auth_client.post(
+            COMMENTS_URL,
+            {"body": "Q&A質問", "is_qa": True},
+            format="json",
+        ).data
+        auth_client.post(
+            COMMENTS_URL,
+            {"body": "返信1", "parent": parent["id"]},
+            format="json",
+        )
+        auth_client.post(
+            COMMENTS_URL,
+            {"body": "返信2", "parent": parent["id"]},
+            format="json",
+        )
+        res = auth_client.get(COMMENTS_URL, {"parent_id": parent["id"]})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 2
+
+
+# ------------------------------------------------------------------
+# ベストアンサー
+# ------------------------------------------------------------------
+def best_answer_url(comment_id):
+    return f"/api/comments/{comment_id}/best-answer/"
+
+
+@pytest.mark.django_db
+class TestBestAnswer:
+    @pytest.fixture
+    def qa_question(self, auth_client):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "Q&A質問", "is_qa": True},
+            format="json",
+        )
+        return res.data
+
+    @pytest.fixture
+    def qa_reply(self, other_auth_client, qa_question):
+        res = other_auth_client.post(
+            COMMENTS_URL,
+            {"body": "返信", "parent": qa_question["id"]},
+            format="json",
+        )
+        return res.data
+
+    def test_owner_can_set_best_answer(self, auth_client, qa_question, qa_reply):
+        res = auth_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": qa_reply["id"]},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK
+
+    def test_owner_can_unset_best_answer(self, auth_client, qa_question, qa_reply):
+        auth_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": qa_reply["id"]},
+            format="json",
+        )
+        res = auth_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": None},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK
+
+    def test_non_owner_cannot_set_best_answer(self, other_auth_client, qa_question, qa_reply):
+        res = other_auth_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": qa_reply["id"]},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_anonymous_cannot_set_best_answer(self, api_client, qa_question, qa_reply):
+        res = api_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": qa_reply["id"]},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_best_answer_appears_in_qa_list(self, auth_client, other_auth_client, qa_question, qa_reply, api_client):
+        auth_client.patch(
+            best_answer_url(qa_question["id"]),
+            {"answer_comment_id": qa_reply["id"]},
+            format="json",
+        )
+        res = api_client.get("/api/comments/qa/")
+        assert res.status_code == status.HTTP_200_OK
+        q = next(c for c in res.data if c["id"] == qa_question["id"])
+        assert q["best_answer"] is not None
+        assert q["best_answer"]["id"] == qa_reply["id"]

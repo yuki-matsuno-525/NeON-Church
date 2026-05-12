@@ -48,14 +48,21 @@ class CommentSerializer(serializers.ModelSerializer):
         verse = data.get("verse")
         chapter = data.get("chapter")
         book = data.get("book")
+        parent = data.get("parent")
+        is_qa = data.get("is_qa", False)
 
         targets = [x for x in [verse, chapter, book] if x is not None]
-        if len(targets) != 1:
+        # Q&A または返信は場所なしを許可（通常コメントは必ず1つ）
+        if not parent and not is_qa:
+            if len(targets) != 1:
+                raise serializers.ValidationError(
+                    "verse, chapter, book のうちいずれか一つを指定してください。"
+                )
+        elif len(targets) > 1:
             raise serializers.ValidationError(
-                "verse, chapter, book のうちいずれか一つを指定してください。"
+                "verse, chapter, book のうち最大一つを指定してください。"
             )
 
-        parent = data.get("parent")
         if parent:
             if verse and parent.verse_id != verse.pk:
                 raise serializers.ValidationError(
@@ -133,6 +140,14 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return ""
 
 
+class BestAnswerSerializer(serializers.ModelSerializer):
+    user = CommentAuthorSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "user", "body", "created_at"]
+
+
 class QACommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
@@ -141,16 +156,24 @@ class QACommentSerializer(serializers.ModelSerializer):
     book_name = serializers.SerializerMethodField()
     chapter_number = serializers.SerializerMethodField()
     verse_number = serializers.SerializerMethodField()
+    reply_count = serializers.SerializerMethodField()
+    best_answer = BestAnswerSerializer(read_only=True)
 
     class Meta:
         model = Comment
         fields = [
             "id", "user", "body", "created_at", "vote_count",
             "tags", "location_label", "book_name", "chapter_number", "verse_number",
+            "reply_count", "best_answer",
         ]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
+
+    def get_reply_count(self, obj) -> int:
+        if hasattr(obj, "reply_count"):
+            return obj.reply_count
+        return obj.replies.filter(is_deleted=False).count()
 
     def get_book_name(self, obj) -> str:
         if obj.verse_id:

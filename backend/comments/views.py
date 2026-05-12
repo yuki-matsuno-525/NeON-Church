@@ -69,6 +69,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
         verse_id = params.get("verse_id")
         chapter_id = params.get("chapter_id")
         book_id = params.get("book_id")
+        parent_id = params.get("parent_id")
 
         if verse_id:
             qs = qs.filter(verse_id=verse_id)
@@ -76,6 +77,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(chapter_id=chapter_id)
         elif book_id:
             qs = qs.filter(book_id=book_id)
+        elif parent_id:
+            qs = qs.filter(parent_id=parent_id)
         else:
             return qs.none()
 
@@ -204,9 +207,17 @@ class QACommentListView(generics.ListAPIView):
                 "verse__chapter__book",
                 "chapter__book",
                 "book",
+                "best_answer__user",
             )
             .prefetch_related("tags")
-            .annotate(vote_count=Count("votes"))
+            .annotate(
+                vote_count=Count("votes", distinct=True),
+                reply_count=Count(
+                    "replies",
+                    distinct=True,
+                    filter=models.Q(replies__is_deleted=False),
+                ),
+            )
             .order_by("-created_at")
         )
         params = self.request.query_params
@@ -221,6 +232,32 @@ class QACommentListView(generics.ListAPIView):
         if tag_id:
             qs = qs.filter(tags__id=tag_id)
         return qs
+
+
+class SetBestAnswerView(APIView):
+    """PATCH /api/comments/{pk}/best-answer/  ベストアンサーの設定・解除（質問投稿者のみ）
+
+    body: { "answer_comment_id": "<uuid>" }  設定
+    body: { "answer_comment_id": null }      解除
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        question = get_object_or_404(Comment, pk=pk, is_qa=True, parent=None)
+        if question.user != request.user:
+            return Response(
+                {"detail": "質問投稿者のみベストアンサーを設定できます。"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        answer_id = request.data.get("answer_comment_id")
+        if answer_id is None:
+            question.best_answer = None
+        else:
+            answer = get_object_or_404(Comment, pk=answer_id, parent=question, is_deleted=False)
+            question.best_answer = answer
+        question.save(update_fields=["best_answer", "updated_at"])
+        return Response(status=status.HTTP_200_OK)
 
 
 class ReportView(APIView):

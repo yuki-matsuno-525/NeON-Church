@@ -4,7 +4,6 @@ from django.db import models
 from common.models import BaseModel
 
 PREDEFINED_TAGS = [
-    ("質問", "質問"),
     ("感想", "感想"),
     ("解説", "解説"),
     ("証し", "証し"),
@@ -63,6 +62,14 @@ class Comment(BaseModel):
         blank=True,
         on_delete=models.CASCADE,
         related_name="replies",
+    )
+    # Q&A のベストアンサーとして選ばれた返信コメント。
+    best_answer = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="best_answer_for",
     )
     body = models.TextField()
     is_qa = models.BooleanField(default=False, db_index=True)

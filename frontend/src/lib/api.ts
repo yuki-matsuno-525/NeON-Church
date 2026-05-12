@@ -97,6 +97,13 @@ export type QAComment = {
   book_name: string;
   chapter_number: number | null;
   verse_number: number | null;
+  reply_count: number;
+  best_answer: {
+    id: string;
+    user: CommentUser;
+    body: string;
+    created_at: string;
+  } | null;
 };
 
 export type TranslationProject = {
@@ -401,6 +408,17 @@ export function fetchQAComments(params?: { book_id?: string; tag_id?: string }):
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
   const q = qs.toString();
   return apiFetch(`/comments/qa/${q ? `?${q}` : ""}`);
+}
+
+export function fetchCommentReplies(parentId: string): Promise<Comment[]> {
+  return apiFetch(`/comments/?parent_id=${parentId}`);
+}
+
+export function setBestAnswer(questionId: string, answerCommentId: string | null): Promise<void> {
+  return apiFetch(`/comments/${questionId}/best-answer/`, {
+    method: "PATCH",
+    body: JSON.stringify({ answer_comment_id: answerCommentId }),
+  });
 }
 
 export function searchBible(q: string): Promise<SearchResult> {

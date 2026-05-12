@@ -79,13 +79,11 @@ export default function ChapterPage() {
       })
       .then(setVerses)
       .catch((err) => {
-        if (translation !== "口語訳" && err.message === "書が見つかりません") {
-          // KJVデータ未インポートの場合は口語訳にフォールバック
-          localStorage.removeItem("bible-translation");
-          setTranslation("口語訳");
-        } else {
-          setError(err.message);
-        }
+        setError(
+          translation !== "口語訳" && err.message === "書が見つかりません"
+            ? "KJV版のデータが見つかりません。口語訳に切り替えてください。"
+            : err.message
+        );
       })
       .finally(() => setLoading(false));
   }, [slug, chapterNum, translation]);
