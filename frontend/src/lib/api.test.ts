@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { formatRelativeTime } from "./api";
+import { formatRelativeTime } from "./utils";
 
 const NOW = new Date("2024-06-01T12:00:00Z");
 
