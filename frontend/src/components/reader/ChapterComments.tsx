@@ -30,7 +30,10 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
   };
 
   useEffect(() => {
-    loadComments(ordering, activeTagId);
+    fetchComments({ chapter_id: chapterId, ordering, tag_id: activeTagId ?? undefined })
+      .then(setComments)
+      .catch(() => setComments([]))
+      .finally(() => setLoading(false));
   }, [chapterId, ordering, activeTagId]);
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {

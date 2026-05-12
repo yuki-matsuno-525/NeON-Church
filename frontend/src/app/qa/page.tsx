@@ -57,29 +57,27 @@ function QAPostForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!bookId) {
-      setChapters([]);
-      setChapterId("");
-      setVerses([]);
-      setVerseId("");
-      return;
-    }
-    fetchChapters(bookId).then(setChapters).catch(() => setChapters([]));
+  const handleBookChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newBookId = e.target.value;
+    setBookId(newBookId);
     setChapterId("");
+    setChapters([]);
     setVerses([]);
     setVerseId("");
-  }, [bookId]);
-
-  useEffect(() => {
-    if (!chapterId) {
-      setVerses([]);
-      setVerseId("");
-      return;
+    if (newBookId) {
+      fetchChapters(newBookId).then(setChapters).catch(() => setChapters([]));
     }
-    fetchVerses(chapterId).then(setVerses).catch(() => setVerses([]));
+  };
+
+  const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newChapterId = e.target.value;
+    setChapterId(newChapterId);
+    setVerses([]);
     setVerseId("");
-  }, [chapterId]);
+    if (newChapterId) {
+      fetchVerses(newChapterId).then(setVerses).catch(() => setVerses([]));
+    }
+  };
 
   const toggleTag = (id: string) =>
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
@@ -147,14 +145,14 @@ function QAPostForm({
 
       {/* 場所選択 */}
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-        <select value={bookId} onChange={(e) => setBookId(e.target.value)} style={inputStyle}>
+        <select value={bookId} onChange={handleBookChange} style={inputStyle}>
           <option value="">書を選択（任意）</option>
           {books.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
         {chapters.length > 0 && (
-          <select value={chapterId} onChange={(e) => setChapterId(e.target.value)} style={inputStyle}>
+          <select value={chapterId} onChange={handleChapterChange} style={inputStyle}>
             <option value="">章を選択（任意）</option>
             {chapters.map((c) => (
               <option key={c.id} value={c.id}>{c.number}章</option>

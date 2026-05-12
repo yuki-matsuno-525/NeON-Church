@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   fetchTranslation,
   fetchTranslationUnits,
-  fetchTranslationMembers,
   fetchTranslationComments,
   fetchUnitComments,
   joinTranslation,
@@ -16,18 +15,15 @@ import {
   removeMember,
   addTranslationUnit,
   updateTranslationUnit,
-  assignTranslationUnit,
   postTranslationComment,
   postUnitComment,
   deleteTranslationComment,
-  fetchBooks,
   fetchTranslationMembers as fetchMembers,
   formatRelativeTime,
   type TranslationProject,
   type TranslationUnit,
   type TranslationMembership,
   type TranslationComment,
-  type Book,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -56,7 +52,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [tab, setTab] = useState<"units" | "discussion" | "members">("units");
 
   // ユニット追加フォーム
-  const [books, setBooks] = useState<Book[]>([]);
   const [addingUnit, setAddingUnit] = useState(false);
   const [unitVerseId, setUnitVerseId] = useState("");
 
@@ -92,10 +87,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       fetchTranslationComments(id).then(setComments).catch(() => {});
     }
   }, [tab, id, isMember]);
-
-  useEffect(() => {
-    if (isOwner) fetchBooks("口語訳").then(setBooks).catch(() => {});
-  }, [isOwner]);
 
   const handleJoin = async () => {
     await joinTranslation(id);

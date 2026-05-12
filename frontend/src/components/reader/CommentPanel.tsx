@@ -32,8 +32,12 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- setLoading inside loadComments is intentional
-    loadComments(ordering);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    fetchComments({ verse_id: verse.id, ordering })
+      .then(setComments)
+      .catch(() => setComments([]))
+      .finally(() => setLoading(false));
   }, [verse.id, ordering]);
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {

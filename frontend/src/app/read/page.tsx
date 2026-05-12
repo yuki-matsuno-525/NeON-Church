@@ -18,28 +18,23 @@ export default function ReadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const resolved = useRef(false);
-  const [resume, setResume] = useState<ResumeTarget>(null);
-
-  useEffect(() => {
-    if (resolved.current) return;
-
-    // ローカル進捗があれば「続きから」として表示
+  const [resume, setResume] = useState<ResumeTarget>(() => {
     const localSlug = getLastBookSlug();
     const localProgress = localSlug ? getLocalProgress(localSlug) : null;
     if (localSlug && localProgress) {
       const meta = BOOKS.find((b) => b.slug === localSlug);
       if (meta) {
-        setResume({ slug: localSlug, chapter: localProgress.chapterNumber, bookName: meta.short });
+        return { slug: localSlug, chapter: localProgress.chapterNumber, bookName: meta.short };
       }
-      resolved.current = true;
-      return;
     }
+    return null;
+  });
 
-    if (loading) return;
+  useEffect(() => {
+    if (getLastBookSlug()) return;
+    if (resolved.current || loading) return;
     resolved.current = true;
-
     if (!user) return;
-
     fetchReadingProgress()
       .then((list) => {
         const latest = list[0];

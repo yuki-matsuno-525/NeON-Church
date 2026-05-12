@@ -50,9 +50,7 @@ export default function ChapterPage() {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset state before new route fetch
     setSelectedVerseId(null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
 
     fetchBooks(translation)
@@ -87,7 +85,7 @@ export default function ChapterPage() {
         );
       })
       .finally(() => setLoading(false));
-  }, [slug, chapterNum, translation]);
+  }, [slug, chapterNum, translation, meta, router, user]);
 
   useEffect(() => {
     if (!user) return;

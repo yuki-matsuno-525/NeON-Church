@@ -49,7 +49,7 @@ function BookContent() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, meta, router, searchParams]);
 
   const handleCommentSubmit = async (body: string) => {
     if (!bookId) return;
