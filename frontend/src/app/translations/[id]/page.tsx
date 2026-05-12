@@ -67,6 +67,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [commentBody, setCommentBody] = useState("");
   const [posting, setPosting] = useState(false);
 
+  // ユニットタブ: 選択中の章（null = 章一覧表示）
+  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+
   // ユニット展開（コメント表示）
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [unitComments, setUnitComments] = useState<Record<string, TranslationComment[]>>({});
@@ -370,13 +373,65 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
 
-          {units.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-              {isOwner ? "ユニットを追加してください。" : "まだユニットがありません。"}
-            </p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {units.map((unit) => (
+          {/* 章カード一覧 */}
+          {selectedChapter === null && (
+            units.length === 0 ? (
+              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
+                {isOwner ? "ユニットを追加してください。" : "まだユニットがありません。"}
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+                  gap: 8,
+                }}
+              >
+                {[...new Set(units.map((u) => u.chapter_number))].sort((a, b) => a - b).map((chNum) => (
+                  <button
+                    key={chNum}
+                    onClick={() => setSelectedChapter(chNum)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: 48,
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      background: "var(--bg-alt)",
+                      color: "var(--text)",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)";
+                      (e.currentTarget as HTMLElement).style.color = "var(--text)";
+                    }}
+                  >
+                    第{chNum}章
+                  </button>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* 章内ユニット一覧 */}
+          {selectedChapter !== null && (
+            <div>
+              <button
+                onClick={() => setSelectedChapter(null)}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 13, padding: "0 0 12px", display: "block" }}
+              >
+                ← 章一覧に戻る
+              </button>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>第{selectedChapter}章</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
                 <div key={unit.id} style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-alt)", overflow: "hidden" }}>
                   <div style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
@@ -504,7 +559,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
         </div>
       )}
 

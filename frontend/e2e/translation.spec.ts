@@ -99,8 +99,12 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   await page.locator('input[placeholder="例: 英語, English, en"]').fill("英語");
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
-  // 詳細ページに遷移
-  await expect(page).toHaveURL(/\/translations\/[^/]+$/);
+  // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
+  await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
+
+  // DRAFT → ACTIVE にして一覧に表示されるようにする
+  await page.getByRole("button", { name: "募集開始" }).click();
+  await expect(page.getByRole("button", { name: "公開する" })).toBeVisible();
 
   // 一覧ページに移動してプロジェクトが表示されることを確認
   await page.goto("/translations");
@@ -124,8 +128,9 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
   await page.locator('input[placeholder="例: 英語, English, en"]').fill("英語");
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
-  // 詳細ページに遷移
-  await expect(page).toHaveURL(/\/translations\/[^/]+$/);
+  // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
+  // ※ /translations/[^/]+$ は /translations/new にもマッチするためheadingで確認
+  await expect(page.getByRole("heading", { name: projectName })).toBeVisible();
   const projectUrl = page.url();
 
   // 「募集開始」ボタンをクリックして status を active にする

@@ -25,8 +25,8 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
 
   // 登録成功 → /matthew/1 にリダイレクト
   await expect(page).toHaveURL(/\/matthew\/1$/);
-  // Navbar にユーザー名が表示される
-  await expect(page.getByText(username)).toBeVisible();
+  // ログイン済み状態 = ログアウトボタンが表示される
+  await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
 
   // ログアウト
   await page.getByRole("button", { name: "ログアウト" }).click();
@@ -43,8 +43,8 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
 
   // ログイン成功 → /matthew/1 にリダイレクト
   await expect(page).toHaveURL(/\/matthew\/1$/);
-  // Navbar にユーザー名が表示される
-  await expect(page.getByText(username)).toBeVisible();
+  // ログイン済み状態 = ログアウトボタンが表示される
+  await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
 });
 
 test("A-4: 未認証アクセス — コメントフォームが表示されない", async ({ page }) => {

@@ -38,9 +38,11 @@ function SearchContent() {
       .finally(() => setLoading(false));
   }, [q]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const trimmed = inputValue.trim();
+    // FormData でDOM値を直接参照（controlled inputのstate同期タイミング問題を回避）
+    const formData = new FormData(e.currentTarget);
+    const trimmed = ((formData.get("search-q") as string) ?? inputValue).trim();
     if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   };
 
@@ -53,6 +55,7 @@ function SearchContent() {
       {/* 検索フォーム */}
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
         <input
+          name="search-q"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="キーワードを入力..."

@@ -31,7 +31,11 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
-        return obj.memberships.filter(user=request.user, status=TranslationMembership.STATUS_APPROVED).exists()
+        # PENDING（申請済み）も含めてメンバー扱いにし、二重申請ボタン表示を防ぐ
+        return obj.memberships.filter(
+            user=request.user,
+            status__in=[TranslationMembership.STATUS_APPROVED, TranslationMembership.STATUS_PENDING],
+        ).exists()
 
 
 class TranslationMembershipSerializer(serializers.ModelSerializer):
