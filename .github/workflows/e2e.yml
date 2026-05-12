@@ -27,6 +27,7 @@ jobs:
           --health-retries 5
 
     env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
       DJANGO_SECRET_KEY: ci-secret-key-for-e2e
       DJANGO_DEBUG: "True"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
