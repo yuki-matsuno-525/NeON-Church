@@ -171,7 +171,7 @@ class UserCommentsView(generics.ListAPIView):
 
 
 class UserBookmarksView(generics.ListAPIView):
-    """GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要）"""
+    """GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要・公開）"""
 
     permission_classes = [AllowAny]
 

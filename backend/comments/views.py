@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from common.permissions import IsOwner
 from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
@@ -21,13 +22,6 @@ def _notify(recipient, actor, notification_type, comment):
         notification_type=notification_type,
         comment=comment,
     )
-
-
-class IsOwner(permissions.BasePermission):
-    """オブジェクトの所有者（user フィールド）のみ許可する。"""
-
-    def has_object_permission(self, request, view, obj):
-        return obj.user == request.user
 
 
 class CommentListCreateView(generics.ListCreateAPIView):

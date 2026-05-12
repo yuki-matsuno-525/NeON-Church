@@ -308,18 +308,6 @@ export function searchBible(q: string): Promise<SearchResult> {
   return apiFetch(`/search/?q=${encodeURIComponent(q)}`);
 }
 
-export function formatRelativeTime(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diff = (now.getTime() - date.getTime()) / 1000;
-
-  if (diff < 60) return "たった今";
-  if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
-  if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}日前`;
-  return date.toLocaleDateString("ja-JP");
-}
-
 // ---------------------------------------------------------------------------
 // 翻訳プロジェクト
 // ---------------------------------------------------------------------------

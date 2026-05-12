@@ -87,43 +87,44 @@ class TranslationProjectDetailView(generics.RetrieveUpdateAPIView):
         return obj
 
 
+def _set_project_status(view, request, project_id, new_status):
+    """プロジェクトのステータスを更新して返す共通ヘルパー。
+
+    オーナーチェック（check_object_permissions）込み。
+    TranslationActivateView / TranslationPublishView / TranslationUnpublishView が共用する。
+    """
+    project = get_object_or_404(TranslationProject, pk=project_id)
+    view.check_object_permissions(request, project)
+    project.status = new_status
+    project.save(update_fields=["status", "updated_at"])
+    return Response(TranslationProjectSerializer(project, context={"request": request}).data)
+
+
 class TranslationPublishView(APIView):
     """POST /api/translations/{id}/publish/  公開（オーナーのみ）"""
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
     def post(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
-        self.check_object_permissions(request, project)
-        project.status = TranslationProject.STATUS_PUBLISHED
-        project.save(update_fields=["status", "updated_at"])
-        return Response(TranslationProjectSerializer(project, context={"request": request}).data)
+        return _set_project_status(self, request, project_id, TranslationProject.STATUS_PUBLISHED)
 
 
 class TranslationUnpublishView(APIView):
-    """POST /api/translations/{id}/unpublish/  公開取り消し→active（オーナーのみ）"""
+    """POST /api/translations/{id}/unpublish/  公開取り消し → active（オーナーのみ）"""
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
     def post(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
-        self.check_object_permissions(request, project)
-        project.status = TranslationProject.STATUS_ACTIVE
-        project.save(update_fields=["status", "updated_at"])
-        return Response(TranslationProjectSerializer(project, context={"request": request}).data)
+        return _set_project_status(self, request, project_id, TranslationProject.STATUS_ACTIVE)
 
 
 class TranslationActivateView(APIView):
-    """POST /api/translations/{id}/activate/  募集開始 draft→active（オーナーのみ）"""
+    """POST /api/translations/{id}/activate/  募集開始 draft → active（オーナーのみ）"""
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
     def post(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
-        self.check_object_permissions(request, project)
-        project.status = TranslationProject.STATUS_ACTIVE
-        project.save(update_fields=["status", "updated_at"])
-        return Response(TranslationProjectSerializer(project, context={"request": request}).data)
+        return _set_project_status(self, request, project_id, TranslationProject.STATUS_ACTIVE)
 
 
 # ---------------------------------------------------------------------------
@@ -297,18 +298,10 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
     serializer_class = TranslationCommentSerializer
 
     def get_permissions(self):
+        # POST は承認済みメンバーのみ（IsApprovedMember が kwargs["project_id"] を参照する）
         if self.request.method in permissions.SAFE_METHODS:
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
-
-    def _check_member(self):
-        project_id = self.kwargs["project_id"]
-        if not TranslationMembership.objects.filter(
-            project_id=project_id,
-            user=self.request.user,
-            status=TranslationMembership.STATUS_APPROVED,
-        ).exists():
-            self.permission_denied(self.request, message="承認済みメンバーのみコメントできます。")
+        return [permissions.IsAuthenticated(), IsApprovedMember()]
 
     def get_queryset(self):
         project_id = self.kwargs["project_id"]
@@ -321,7 +314,6 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
         return qs
 
     def perform_create(self, serializer):
-        self._check_member()
         project = get_object_or_404(TranslationProject, pk=self.kwargs["project_id"])
         unit_id = self.kwargs.get("unit_id")
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project) if unit_id else None

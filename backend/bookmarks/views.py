@@ -1,13 +1,9 @@
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
+from common.permissions import IsOwner
 from .models import Bookmark
 from .serializers import BookmarkSerializer
-
-
-class IsOwner(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        return obj.user == request.user
 
 
 class BookmarkListCreateView(generics.ListCreateAPIView):
