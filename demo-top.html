@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeON Church — Landing Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* =====================================================
+       THEME VARIABLES
+       ===================================================== */
+    :root {
+      /* 案A: Purple / Pink (default) */
+      --bg-overlay:        rgba(6, 3, 20, 0.80);
+      --nav-bg:            rgba(8, 4, 26, 0.72);
+      --card-main-bg:      rgba(18, 10, 50, 0.62);
+      --card-main-border:  rgba(168, 88, 255, 0.32);
+      --card-sm-bg:        rgba(14, 7, 40, 0.65);
+      --card-sm-border:    rgba(115, 58, 210, 0.28);
+      --card-hover-border: rgba(188, 108, 255, 0.65);
+      --neon-c:            #ff2888;
+      --neon-glow:         rgba(255, 40, 132, 0.75);
+      --neon-border:       rgba(255, 58, 140, 0.46);
+      --accent-a:          #cc44ff;
+      --accent-b:          #ff2070;
+      --glow-a:            rgba(198, 58, 255, 0.55);
+      --glow-b:            rgba(255, 28, 110, 0.55);
+      --text:              rgba(238, 232, 255, 0.92);
+      --text-muted:        rgba(168, 152, 215, 0.62);
+      --text-link:         rgba(193, 143, 255, 0.92);
+      --btn-grad:          linear-gradient(135deg, #7618c5, #d81e80);
+      --btn-glow:          rgba(198, 44, 170, 0.55);
+      --tab-active-bg:     rgba(152, 68, 250, 0.22);
+      --tab-active-border: rgba(172, 88, 255, 0.72);
+      --tab-active-color:  rgba(212, 172, 255, 0.98);
+      --info-icon:         rgba(183, 133, 255, 0.88);
+      --footer-bg:         rgba(5, 3, 16, 0.88);
+    }
+
+    body[data-theme="B"] {
+      /* 案B: Blue / Cyan */
+      --bg-overlay:        rgba(3, 6, 22, 0.80);
+      --nav-bg:            rgba(3, 7, 28, 0.72);
+      --card-main-bg:      rgba(8, 16, 52, 0.62);
+      --card-main-border:  rgba(52, 128, 255, 0.32);
+      --card-sm-bg:        rgba(5, 10, 42, 0.65);
+      --card-sm-border:    rgba(32, 92, 210, 0.28);
+      --card-hover-border: rgba(78, 162, 255, 0.65);
+      --neon-c:            #00c8f0;
+      --neon-glow:         rgba(0, 188, 240, 0.75);
+      --neon-border:       rgba(0, 198, 238, 0.46);
+      --accent-a:          #3a90ff;
+      --accent-b:          #00d4ff;
+      --glow-a:            rgba(32, 112, 255, 0.55);
+      --glow-b:            rgba(0, 193, 255, 0.55);
+      --text:              rgba(220, 235, 255, 0.92);
+      --text-muted:        rgba(128, 172, 232, 0.62);
+      --text-link:         rgba(118, 182, 255, 0.92);
+      --btn-grad:          linear-gradient(135deg, #0d3eb5, #009ad6);
+      --btn-glow:          rgba(18, 118, 222, 0.55);
+      --tab-active-bg:     rgba(28, 82, 208, 0.22);
+      --tab-active-border: rgba(62, 138, 255, 0.72);
+      --tab-active-color:  rgba(162, 212, 255, 0.98);
+      --info-icon:         rgba(102, 182, 255, 0.88);
+      --footer-bg:         rgba(2, 5, 18, 0.88);
+    }
+
+    body[data-theme="C"] {
+      /* 案C: Indigo / Gold （聖典・荘厳） */
+      --bg-overlay:        rgba(8, 5, 18, 0.84);
+      --nav-bg:            rgba(10, 6, 24, 0.75);
+      --card-main-bg:      rgba(20, 14, 46, 0.68);
+      --card-main-border:  rgba(128, 92, 215, 0.35);
+      --card-sm-bg:        rgba(15, 9, 36, 0.70);
+      --card-sm-border:    rgba(98, 68, 182, 0.28);
+      --card-hover-border: rgba(208, 162, 72, 0.55);
+      --neon-c:            #f0a820;
+      --neon-glow:         rgba(240, 163, 28, 0.75);
+      --neon-border:       rgba(222, 152, 32, 0.46);
+      --accent-a:          #d8a830;
+      --accent-b:          #b07518;
+      --glow-a:            rgba(218, 168, 42, 0.50);
+      --glow-b:            rgba(173, 118, 22, 0.45);
+      --text:              rgba(242, 236, 220, 0.92);
+      --text-muted:        rgba(180, 163, 138, 0.62);
+      --text-link:         rgba(222, 186, 102, 0.92);
+      --btn-grad:          linear-gradient(135deg, #5a3808, #b67518);
+      --btn-glow:          rgba(178, 128, 26, 0.45);
+      --tab-active-bg:     rgba(182, 132, 30, 0.20);
+      --tab-active-border: rgba(222, 168, 50, 0.65);
+      --tab-active-color:  rgba(240, 200, 118, 0.98);
+      --info-icon:         rgba(222, 175, 90, 0.88);
+      --footer-bg:         rgba(5, 3, 13, 0.90);
+    }
+
+    /* =====================================================
+       RESET
+       ===================================================== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    button { font-family: inherit; }
+
+    body {
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--text);
+    }
+
+    /* =====================================================
+       BACKGROUND
+       ===================================================== */
+    .bg-fixed {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: url('img/background.png');
+      background-size: cover;
+      background-position: center 28%;
+    }
+
+    .bg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: var(--bg-overlay);
+    }
+
+    /* =====================================================
+       PAGE WRAPPER
+       ===================================================== */
+    .page {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* =====================================================
+       NAVBAR
+       ===================================================== */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 36px;
+      gap: 32px;
+      background: var(--nav-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .logo {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 22px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+    .logo .ne {
+      color: var(--accent-a);
+      text-shadow: 0 0 8px var(--glow-a), 0 0 24px var(--glow-a);
+    }
+    .logo .on {
+      color: var(--accent-b);
+      text-shadow: 0 0 8px var(--glow-b), 0 0 24px var(--glow-b);
+    }
+    .logo .church { color: rgba(255, 255, 255, 0.88); margin-left: 4px; }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      flex: 1;
+    }
+    .nav-links a {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.62);
+      text-decoration: none;
+      transition: color 0.18s;
+    }
+    .nav-links a:hover { color: rgba(255, 255, 255, 0.92); }
+
+    .nav-auth {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .btn-login {
+      display: inline-block;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.68);
+      text-decoration: none;
+      padding: 7px 17px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .btn-login:hover { border-color: rgba(255,255,255,0.42); color: rgba(255,255,255,0.92); }
+
+    .btn-register {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      padding: 7px 18px;
+      background: var(--btn-grad);
+      border-radius: 8px;
+      box-shadow: 0 0 16px var(--btn-glow);
+      transition: box-shadow 0.18s, filter 0.18s;
+    }
+    .btn-register:hover { box-shadow: 0 0 30px var(--btn-glow); filter: brightness(1.08); }
+
+    /* =====================================================
+       MAIN GRID
+       ===================================================== */
+    .main {
+      flex: 1;
+      padding: 56px 36px 52px;
+      max-width: 1360px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 220px 1fr 220px 68px;
+      grid-template-rows: auto auto;
+      column-gap: 22px;
+      row-gap: 44px;
+    }
+
+    /* =====================================================
+       HERO LEFT
+       ===================================================== */
+    .hero-left {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .hero-heading {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.32;
+      color: rgba(255, 255, 255, 0.97);
+    }
+
+    .hero-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.82;
+    }
+
+    .btn-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.88);
+      text-decoration: none;
+      padding: 10px 22px;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(10px);
+      width: fit-content;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-cta:hover { background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.40); }
+
+    /* =====================================================
+       CENTER CARD: 読む
+       ===================================================== */
+    .card-read {
+      grid-column: 2;
+      grid-row: 1;
+      background: var(--card-main-bg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--card-main-border);
+      border-radius: 18px;
+      padding: 26px 30px 28px;
+      box-shadow:
+        0 14px 55px rgba(0, 0, 0, 0.60),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.20);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.96);
+    }
+
+    .badge {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.42);
+      background: rgba(255, 255, 255, 0.065);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      padding: 3px 11px;
+      border-radius: 20px;
+    }
+
+    .verse-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-link);
+      margin-bottom: 8px;
+    }
+
+    .verse-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .verse-ref {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-link);
+    }
+
+    .verse-arrows { display: flex; gap: 6px; }
+
+    .arrow-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      background: rgba(255, 255, 255, 0.055);
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.14s, color 0.14s;
+    }
+    .arrow-btn:hover { background: rgba(255,255,255,0.11); color: rgba(255,255,255,0.85); }
+
+    .verse-text {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 15px;
+      line-height: 2.08;
+      color: rgba(255, 255, 255, 0.80);
+      margin-bottom: 22px;
+    }
+
+    .verse-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      margin-bottom: 18px;
+    }
+
+    .action-btn {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.38);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.14s;
+    }
+    .action-btn:hover { color: rgba(255,255,255,0.68); }
+
+    .trans-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.30);
+      margin-bottom: 8px;
+    }
+
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .tab {
+      font-size: 12px;
+      padding: 4px 13px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.48);
+      cursor: pointer;
+      transition: background 0.14s, color 0.14s, border-color 0.14s;
+    }
+    .tab:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.72); }
+    .tab.active {
+      background: var(--tab-active-bg);
+      border-color: var(--tab-active-border);
+      color: var(--tab-active-color);
+    }
+
+    /* =====================================================
+       RIGHT CARDS: Q&A + 翻訳
+       ===================================================== */
+    .cards-right {
+      grid-column: 3;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-sm {
+      flex: 1;
+      background: var(--card-sm-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-sm-border);
+      border-radius: 16px;
+      padding: 20px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.20s, box-shadow 0.20s;
+    }
+    .card-sm:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.42);
+    }
+
+    .card-sm-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.94);
+      margin-bottom: 9px;
+    }
+
+    .card-sm-icon { font-size: 18px; }
+
+    .card-sm-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.44);
+      line-height: 1.68;
+      flex: 1;
+    }
+
+    .card-sm-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-link);
+      margin-top: 15px;
+    }
+
+    /* =====================================================
+       NEON VERTICAL SIGN
+       ===================================================== */
+    .neon-wrap {
+      grid-column: 4;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .neon-box {
+      border: 2px solid var(--neon-border);
+      border-radius: 9px;
+      padding: 22px 11px;
+      box-shadow:
+        0 0 20px var(--neon-glow),
+        0 0 45px rgba(0, 0, 0, 0.30),
+        inset 0 0 14px rgba(255, 255, 255, 0.025);
+      animation: flicker 5s infinite;
+    }
+
+    @keyframes flicker {
+      0%,  94%, 100% { opacity: 1; }
+      95%            { opacity: 0.86; }
+      96%            { opacity: 1; }
+      98%            { opacity: 0.90; }
+      99%            { opacity: 1; }
+    }
+
+    .neon-text {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--neon-c);
+      text-shadow:
+        0 0 6px var(--neon-glow),
+        0 0 20px var(--neon-glow),
+        0 0 40px rgba(255, 255, 255, 0.08);
+      letter-spacing: 5px;
+      line-height: 1;
+    }
+
+    .neon-ref {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--neon-c);
+      opacity: 0.74;
+      text-shadow: 0 0 7px var(--neon-glow);
+      letter-spacing: 2px;
+    }
+
+    /* =====================================================
+       INFO SECTION
+       ===================================================== */
+    .info-section {
+      grid-column: 1 / 4;
+      grid-row: 2;
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      padding-top: 38px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .info-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-icon {
+      font-size: 24px;
+      color: var(--info-icon);
+      line-height: 1;
+    }
+
+    .info-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.84);
+    }
+
+    .info-desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.38);
+      line-height: 1.72;
+    }
+
+    /* =====================================================
+       FOOTER
+       ===================================================== */
+    footer {
+      position: relative;
+      z-index: 2;
+      background: var(--footer-bg);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 20px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .footer-logo .ne { color: var(--accent-a); text-shadow: 0 0 6px var(--glow-a); }
+    .footer-logo .on { color: var(--accent-b); text-shadow: 0 0 6px var(--glow-b); }
+    .footer-logo .church { color: rgba(255,255,255,0.65); margin-left: 3px; }
+
+    .footer-copy { font-size: 11px; color: rgba(255,255,255,0.24); }
+
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a {
+      font-size: 12px;
+      color: rgba(255,255,255,0.30);
+      text-decoration: none;
+    }
+    .footer-links a:hover { color: rgba(255,255,255,0.58); }
+
+    /* =====================================================
+       THEME SWITCHER (fixed)
+       ===================================================== */
+    .switcher {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 7px;
+    }
+
+    .switcher-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: rgba(255,255,255,0.28);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .switcher-btn {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 17px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(8, 5, 22, 0.86);
+      color: rgba(255,255,255,0.56);
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      letter-spacing: 0.02em;
+      transition: color 0.18s, border-color 0.18s, box-shadow 0.18s;
+    }
+    .switcher-btn:hover { color: rgba(255,255,255,0.88); border-color: rgba(255,255,255,0.32); }
+    .switcher-btn.active {
+      color: #fff;
+      border-color: var(--accent-b);
+      box-shadow: 0 0 14px var(--btn-glow);
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+    @media (max-width: 1060px) {
+      .main {
+        grid-template-columns: 190px 1fr 190px 58px;
+        column-gap: 16px;
+        padding: 40px 24px 44px;
+      }
+      .hero-heading { font-size: 34px; }
+    }
+
+    @media (max-width: 800px) {
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        padding: 32px 20px 40px;
+        gap: 20px;
+      }
+      .hero-left    { grid-column: 1; grid-row: 1; }
+      .card-read    { grid-column: 1; grid-row: 2; }
+      .cards-right  { grid-column: 1; grid-row: 3; flex-direction: row; }
+      .card-sm      { flex: 1; }
+      .neon-wrap    { grid-column: 1; grid-row: 4; flex-direction: row; justify-content: center; }
+      .neon-text    { writing-mode: horizontal-tb; letter-spacing: 2px; }
+      .neon-box     { padding: 12px 22px; }
+      .info-section { grid-column: 1; grid-row: 5; grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 520px) {
+      .nav          { padding: 0 18px; gap: 14px; }
+      .nav-links    { display: none; }
+      .hero-heading { font-size: 28px; }
+      .info-section { grid-template-columns: 1fr; }
+      .cards-right  { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       BACKGROUND
+       ========================================== -->
+  <div class="bg-fixed"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- ==========================================
+       PAGE
+       ========================================== -->
+  <div class="page">
+
+    <!-- NAVBAR -->
+    <nav class="nav">
+      <a href="#" class="logo">
+        <span class="ne">Ne</span><span class="on">ON</span><span class="church"> Church</span>
+      </a>
+      <div class="nav-links">
+        <a href="#">読む</a>
+        <a href="#">Q&amp;A</a>
+        <a href="#">翻訳</a>
+        <a href="#">NeON Churchについて</a>
+      </div>
+      <div class="nav-auth">
+        <a href="#" class="btn-login">ログイン</a>
+        <a href="#" class="btn-register">新規登録</a>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- HERO LEFT -->
+      <div class="hero-left">
+        <h1 class="hero-heading">聖書を読み、<br>語り合う場所</h1>
+        <p class="hero-desc">
+          NeON Churchは、聖書を中心にした<br>
+          学びと対話のプラットフォームです。<br>
+          信じる人も、探している人も、<br>
+          すべての人に開かれています。
+        </p>
+        <a href="#" class="btn-cta">はじめての方へ →</a>
+      </div>
+
+      <!-- CENTER CARD: 読む -->
+      <div class="card-read">
+        <div class="card-head">
+          <div class="card-title">
+            <span>📖</span>
+            読む
+          </div>
+          <span class="badge">聖書 新共同訳</span>
+        </div>
+
+        <div class="verse-label">今日の一節</div>
+        <div class="verse-nav">
+          <span class="verse-ref">ヨハネによる福音書 3:16</span>
+          <div class="verse-arrows">
+            <button class="arrow-btn">‹</button>
+            <button class="arrow-btn">›</button>
+          </div>
+        </div>
+
+        <p class="verse-text">
+          神は、実は、そのひとり子をお与えになったほどに、世を愛された。それは御子を信じる者が、ひとりとして滅びることなく、永遠の命を得るためである。
+        </p>
+
+        <div class="verse-actions">
+          <button class="action-btn">📌 ブックマーク</button>
+          <button class="action-btn">💬 コメント</button>
+          <button class="action-btn">🔗 共有</button>
+        </div>
+
+        <div class="trans-label">翻訳を切り替え</div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab(this)">新共同訳</button>
+          <button class="tab" onclick="switchTab(this)">口語訳</button>
+          <button class="tab" onclick="switchTab(this)">新改訳2017</button>
+          <button class="tab" onclick="switchTab(this)">英語 (ESV)</button>
+        </div>
+      </div>
+
+      <!-- RIGHT CARDS -->
+      <div class="cards-right">
+        <a href="#" class="card-sm">
+          <div class="card-sm-title">
+            <span class="card-sm-icon">💬</span>
+            Q&amp;A
+          </div>
+          <p class="card-sm-desc">
+            疑問を投稿し、知恵を分かち合う。信仰の問い、聖書の解釈、人生の問いに。みんなで考え、学び合う場所。
+          </p>
+          <span class="card-sm-link">Q&amp;Aを見る →</span>
+        </a>
+
+        <a href="#" class="card-sm">
+          <div class="card-sm-title">
+            <span class="card-sm-icon">🌐</span>
+            翻訳
+          </div>
+          <p class="card-sm-desc">
+            聖書を、もっと深く、広く。多言語翻訳プロジェクトに参加できます。翻訳ツールを開いて、貢献しよう。
+          </p>
+          <span class="card-sm-link">翻訳ツールを開く →</span>
+        </a>
+      </div>
+
+      <!-- NEON VERTICAL SIGN -->
+      <div class="neon-wrap">
+        <div class="neon-box">
+          <div class="neon-text">光は闇に輝いている</div>
+        </div>
+        <div class="neon-ref">ヨハネ 1:5</div>
+      </div>
+
+      <!-- INFO SECTION -->
+      <div class="info-section">
+        <div class="info-card">
+          <div class="info-icon">📚</div>
+          <div class="info-title">NeON Churchについて</div>
+          <p class="info-desc">聖書を中心にした学びと対話を通して、ひとりひとりの人生に届ける場。</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">🙌</div>
+          <div class="info-title">すべての人に開かれた場</div>
+          <p class="info-desc">信じる人も、探している人も、みんなに。読む、考える、共有する。</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">📖</div>
+          <div class="info-title">聖書を中心にした学び</div>
+          <p class="info-desc">多くの翻訳を比較しながら、深く、丁寧に聖書を読むことができます。</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">🔒</div>
+          <div class="info-title">安心して使える環境</div>
+          <p class="info-desc">広告なし、プライバシーを守る。落ち着いて学べる空間です。</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-logo">
+        <span class="ne">Ne</span><span class="on">ON</span><span class="church"> Church</span>
+      </div>
+      <div class="footer-copy">© 2024 NeON Church. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="#">プライバシー</a>
+        <a href="#">利用規約</a>
+      </div>
+    </footer>
+
+  </div><!-- /.page -->
+
+  <!-- ==========================================
+       THEME SWITCHER
+       ========================================== -->
+  <div class="switcher">
+    <div class="switcher-label">DESIGN</div>
+    <button class="switcher-btn active" onclick="setTheme(null, this)">案A — パープル</button>
+    <button class="switcher-btn" onclick="setTheme('B', this)">案B — ブルー</button>
+    <button class="switcher-btn" onclick="setTheme('C', this)">案C — ゴールド</button>
+  </div>
+
+  <script>
+    function setTheme(theme, btn) {
+      if (theme) {
+        document.body.setAttribute('data-theme', theme);
+      } else {
+        document.body.removeAttribute('data-theme');
+      }
+      document.querySelectorAll('.switcher-btn').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+    }
+
+    function switchTab(tab) {
+      var container = tab.closest('.tabs');
+      container.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      tab.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
