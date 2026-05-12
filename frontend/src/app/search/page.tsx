@@ -34,7 +34,7 @@ function SearchContent() {
     setLoading(true);
     searchBible(q)
       .then(setResult)
-      .catch(() => setResult({ verses: [], books: [] }))
+      .catch(() => setResult({ verses: [], books: [], comments: [] }))
       .finally(() => setLoading(false));
   }, [q]);
 

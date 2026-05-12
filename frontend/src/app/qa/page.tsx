@@ -40,6 +40,7 @@ export default function QAPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadComments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBookId, selectedTagId, answeredFilter]);

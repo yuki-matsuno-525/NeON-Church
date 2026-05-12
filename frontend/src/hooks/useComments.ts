@@ -30,6 +30,7 @@ export function useComments(params: Params) {
   }, [verse_id, chapter_id, book_id, ordering, tag_id]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     reload();
   }, [reload]);
 
