@@ -7,6 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { fetchNotifications } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 
+const NAV_ITEMS = [
+  { label: "読む", href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
+  { label: "Q&A", href: "/qa", matchPrefixes: ["/qa"] },
+  { label: "翻訳", href: "/translations", matchPrefixes: ["/translations"] },
+] as const;
+
 type SidebarProps = {
   open?: boolean;
   onClose?: () => void;
@@ -181,27 +187,60 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         </div>}
 
         <div style={{ flex: 1 }}>
-          {BOOKS.map((meta) => {
-            const isActive = currentSlug === meta.slug;
-            return (
-              <Link
-                key={meta.slug}
-                href={`/${meta.slug}`}
-                onClick={onClose}
-                style={{
-                  display: "block",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  fontSize: 13,
-                  fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "var(--accent)" : "var(--text)",
-                  background: isActive ? "var(--accent-tint)" : "transparent",
-                }}
-              >
-                {meta.short}
-              </Link>
-            );
-          })}
+          {/* メインナビゲーション */}
+          <div style={{ padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+            {NAV_ITEMS.map((item) => {
+              const isActive = item.matchPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  style={{
+                    display: "block",
+                    padding: "9px 12px",
+                    textDecoration: "none",
+                    fontSize: 13,
+                    fontWeight: isActive ? 700 : 400,
+                    color: isActive ? "var(--accent)" : "var(--text)",
+                    background: isActive ? "var(--accent-tint)" : "transparent",
+                  }}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* 書一覧（「読む」セクション内） */}
+          {(pathname === "/read" || BOOKS.some((b) => pathname === `/${b.slug}` || pathname.startsWith(`/${b.slug}/`))) && (
+            <div style={{ padding: "8px 0" }}>
+              <p style={{ fontSize: 11, color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                書
+              </p>
+              {BOOKS.map((meta) => {
+                const isActive = currentSlug === meta.slug;
+                return (
+                  <Link
+                    key={meta.slug}
+                    href={`/${meta.slug}?list=1`}
+                    onClick={onClose}
+                    style={{
+                      display: "block",
+                      padding: "8px 12px 8px 20px",
+                      textDecoration: "none",
+                      fontSize: 13,
+                      fontWeight: isActive ? 700 : 400,
+                      color: isActive ? "var(--accent)" : "var(--text)",
+                      background: isActive ? "var(--accent-tint)" : "transparent",
+                    }}
+                  >
+                    {meta.short}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </aside>
     </>

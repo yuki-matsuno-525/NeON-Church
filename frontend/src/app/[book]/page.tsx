@@ -81,6 +81,14 @@ function BookContent() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+      <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 16px" }}>
+        <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+          書一覧
+        </Link>
+        {" › "}
+        <span>{meta.short}</span>
+      </p>
+
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
         {meta.name}
       </h1>

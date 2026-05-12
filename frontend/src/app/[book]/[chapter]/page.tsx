@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug } from "@/lib/books";
+import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
@@ -37,8 +38,8 @@ export default function ChapterPage() {
   const [error, setError] = useState<string | null>(null);
   const [translation, setTranslation] = useState<string>(() =>
     typeof window !== "undefined"
-      ? (localStorage.getItem("bible-translation") ?? "口語訳")
-      : "口語訳"
+      ? (localStorage.getItem("bible-translation") ?? DEFAULT_TRANSLATION)
+      : DEFAULT_TRANSLATION
   );
 
   useEffect(() => {
@@ -80,8 +81,8 @@ export default function ChapterPage() {
       .then(setVerses)
       .catch((err) => {
         setError(
-          translation !== "口語訳" && err.message === "書が見つかりません"
-            ? "KJV版のデータが見つかりません。口語訳に切り替えてください。"
+          translation !== DEFAULT_TRANSLATION && err.message === "書が見つかりません"
+            ? `「${translation}」のデータが見つかりません。別の翻訳に切り替えてください。`
             : err.message
         );
       })
@@ -118,24 +119,28 @@ export default function ChapterPage() {
     return (
       <div style={{ padding: 32 }}>
         <p style={{ color: "#ef4444", marginBottom: 16 }}>{error}</p>
-        <button
-          onClick={() => {
-            const next = translation === "口語訳" ? "KJV" : "口語訳";
-            localStorage.setItem("bible-translation", next);
-            setTranslation(next);
-          }}
-          style={{
-            fontSize: 13,
-            color: "var(--text-muted)",
-            background: "none",
-            cursor: "pointer",
-            padding: "4px 12px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-          }}
-        >
-          {translation === "口語訳" ? "KJV に切り替え" : "口語訳 に切り替え"}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {BIBLE_TRANSLATIONS.filter((t) => t.id !== translation).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                localStorage.setItem("bible-translation", t.id);
+                setTranslation(t.id);
+              }}
+              style={{
+                fontSize: 13,
+                color: "var(--text-muted)",
+                background: "none",
+                cursor: "pointer",
+                padding: "4px 12px",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+              }}
+            >
+              {t.label} に切り替え
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -153,7 +158,11 @@ export default function ChapterPage() {
       >
         {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <p style={{ fontSize: 16, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+            <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+              書一覧
+            </Link>
+            {" › "}
             <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {meta.short}
             </Link>
@@ -161,25 +170,28 @@ export default function ChapterPage() {
             <span>第{chapterNum}章</span>
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={() => {
-                const next = translation === "口語訳" ? "KJV" : "口語訳";
-                localStorage.setItem("bible-translation", next);
-                setTranslation(next);
+            <select
+              value={translation}
+              onChange={(e) => {
+                localStorage.setItem("bible-translation", e.target.value);
+                setTranslation(e.target.value);
               }}
               style={{
                 fontSize: 12,
                 color: "var(--text-faint)",
-                background: "none",
+                background: "var(--bg)",
                 cursor: "pointer",
                 padding: "3px 10px",
                 border: "1px solid var(--border)",
                 borderRadius: 12,
-                whiteSpace: "nowrap",
+                appearance: "none",
+                WebkitAppearance: "none",
               }}
             >
-              {translation === "口語訳" ? "KJV に切り替え" : "口語訳 に切り替え"}
-            </button>
+              {BIBLE_TRANSLATIONS.map((t) => (
+                <option key={t.id} value={t.id}>{t.label}</option>
+              ))}
+            </select>
             {chapter && (
               <a
                 href="#chapter-comments"
