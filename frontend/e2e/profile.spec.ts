@@ -53,8 +53,8 @@ test("Pr-3: お気に入りタブにブックマーク一覧が表示される",
   // 事前にお気に入りを登録する
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
-  await page.getByRole("button", { name: "🔖 お気に入り" }).click();
-  await expect(page.getByRole("button", { name: "🔖 解除" })).toBeVisible();
+  await page.getByRole("button", { name: "お気に入り" }).click();
+  await expect(page.getByRole("button", { name: "解除" })).toBeVisible();
 
   // プロフィールページのお気に入りタブを確認
   await page.goto("/profile");

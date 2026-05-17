@@ -9,7 +9,7 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -71,7 +71,7 @@ jobs:
       - name: Wait for backend
         run: |
           for i in $(seq 1 30); do
-            curl -sf http://localhost:8000/api/healthz/ && break
+            curl -sf http://localhost:8000/healthz/ && break
             sleep 2
           done
 

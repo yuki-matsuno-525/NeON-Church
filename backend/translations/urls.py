@@ -16,5 +16,7 @@ urlpatterns = [
     path("translations/<uuid:project_id>/units/<uuid:unit_id>/comments/", views.TranslationCommentListCreateView.as_view(), name="translation-unit-comments"),
     path("translations/<uuid:project_id>/comments/", views.TranslationCommentListCreateView.as_view(), name="translation-comments"),
     path("translations/<uuid:project_id>/comments/<uuid:comment_id>/", views.TranslationCommentDeleteView.as_view(), name="translation-comment-delete"),
+    path("translations/<uuid:project_id>/add-book/", views.TranslationAddBookView.as_view(), name="translation-add-book"),
+    path("translations/<uuid:project_id>/remove-book/", views.TranslationRemoveBookView.as_view(), name="translation-remove-book"),
     path("translations/<uuid:project_id>/read/", views.TranslationReadView.as_view(), name="translation-read"),
 ]

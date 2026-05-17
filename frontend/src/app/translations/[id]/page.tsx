@@ -16,6 +16,8 @@ import {
   updateMembershipStatus,
   removeMember,
   addTranslationUnit,
+  addBookToTranslation,
+  removeBookFromTranslation,
   updateTranslationUnit,
   postTranslationComment,
   postUnitComment,
@@ -27,6 +29,8 @@ import {
   type TranslationUnit,
   type TranslationMembership,
   type TranslationComment,
+  fetchBooks,
+  type Book,
   type Chapter,
   type Verse,
 } from "@/lib/api";
@@ -78,6 +82,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [editBody, setEditBody] = useState("");
 
   const isOwner = user?.username === project?.owner_username;
+
+  // 書を追加・削除
+  const [availableBooks, setAvailableBooks] = useState<Book[]>([]);
+  const [addBookId, setAddBookId] = useState("");
+  const [addingBook, setAddingBook] = useState(false);
+  const [removeBookId, setRemoveBookId] = useState("");
+  const [removingBook, setRemovingBook] = useState(false);
   const isMember = project?.is_member ?? false;
 
   useEffect(() => {
@@ -102,6 +113,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   useEffect(() => {
     if (isOwner) {
       fetchMembers(id).then(setMembers).catch(() => {});
+      fetchBooks("口語訳").then(setAvailableBooks).catch(() => {});
     }
   }, [isOwner, id]);
 
@@ -330,7 +342,64 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       {tab === "units" && (
         <div>
           {isOwner && (
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              {/* 書を一括追加 */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!addBookId) return;
+                  setAddingBook(true);
+                  try {
+                    const res = await addBookToTranslation(id, addBookId);
+                    alert(`「${res.book_name}」から ${res.created} ユニットを追加しました。`);
+                    const u = await fetchTranslationUnits(id);
+                    setUnits(u);
+                    setAddBookId("");
+                  } catch { /* ignore */ } finally { setAddingBook(false); }
+                }}
+                style={{ display: "flex", gap: 8, alignItems: "center" }}
+              >
+                <select
+                  value={addBookId}
+                  onChange={(e) => setAddBookId(e.target.value)}
+                  style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
+                >
+                  <option value="">書を選択して一括追加</option>
+                  {availableBooks.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+                <button type="submit" disabled={!addBookId || addingBook} style={btnStyle("var(--accent)")}>
+                  書を追加
+                </button>
+              </form>
+              {/* 書を一括削除 */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!removeBookId) return;
+                  if (!confirm("この書のすべてのユニットを削除しますか？")) return;
+                  setRemovingBook(true);
+                  try {
+                    const res = await removeBookFromTranslation(id, removeBookId);
+                    alert(`「${res.book_name}」の ${res.deleted} ユニットを削除しました。`);
+                    const u = await fetchTranslationUnits(id);
+                    setUnits(u);
+                    setRemoveBookId("");
+                  } catch { /* ignore */ } finally { setRemovingBook(false); }
+                }}
+                style={{ display: "flex", gap: 8, alignItems: "center" }}
+              >
+                <select
+                  value={removeBookId}
+                  onChange={(e) => setRemoveBookId(e.target.value)}
+                  style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
+                >
+                  <option value="">書を選択して削除</option>
+                  {availableBooks.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+                <button type="submit" disabled={!removeBookId || removingBook} style={btnStyle("#ef4444")}>
+                  書を削除
+                </button>
+              </form>
               {!addingUnit ? (
                 <button onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
                   ＋ ユニット追加

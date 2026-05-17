@@ -459,3 +459,58 @@ class TestTranslationRead:
         res = APIClient().get(read_url(published_project["id"]))
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data) == 1
+
+
+def add_book_url(project_id):
+    return f"/api/translations/{project_id}/add-book/"
+
+
+@pytest.mark.django_db
+class TestTranslationAddBook:
+    def test_owner_can_add_book(self, owner_client, active_project, book, chapter, verse):
+        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["created"] >= 1
+
+    def test_non_owner_cannot_add_book(self, auth_client, active_project, book):
+        res = auth_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_anonymous_cannot_add_book(self, api_client, active_project, book):
+        res = api_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_idempotent(self, owner_client, active_project, book, chapter, verse):
+        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["created"] == 0
+
+    def test_missing_book_id_returns_400(self, owner_client, active_project):
+        res = owner_client.post(add_book_url(active_project["id"]), {}, format="json")
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def remove_book_url(project_id):
+    return f"/api/translations/{project_id}/remove-book/"
+
+
+@pytest.mark.django_db
+class TestTranslationRemoveBook:
+    def test_owner_can_remove_book(self, owner_client, active_project, book, chapter, verse):
+        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = owner_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["deleted"] >= 1
+
+    def test_non_owner_cannot_remove_book(self, auth_client, active_project, book):
+        res = auth_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_anonymous_cannot_remove_book(self, api_client, active_project, book):
+        res = api_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_missing_book_id_returns_400(self, owner_client, active_project):
+        res = owner_client.delete(remove_book_url(active_project["id"]), {}, format="json")
+        assert res.status_code == status.HTTP_400_BAD_REQUEST

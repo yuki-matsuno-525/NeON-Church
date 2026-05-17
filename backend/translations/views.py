@@ -336,6 +336,54 @@ class TranslationCommentDeleteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class TranslationAddBookView(APIView):
+    """
+    POST /api/translations/{id}/add-book/
+    指定した書のすべての節を翻訳ユニットとして一括追加（オーナーのみ）。
+    すでに存在するユニットはスキップ（冪等）。
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, project_id):
+        from bible.models import Book, Verse
+        project = get_object_or_404(TranslationProject, pk=project_id)
+        if project.owner != request.user:
+            return Response({"detail": "オーナーのみ操作できます。"}, status=status.HTTP_403_FORBIDDEN)
+        book_id = request.data.get("book_id")
+        if not book_id:
+            return Response({"detail": "book_id は必須です。"}, status=status.HTTP_400_BAD_REQUEST)
+        book = get_object_or_404(Book, pk=book_id)
+        verses = Verse.objects.filter(chapter__book=book)
+        created = 0
+        for verse in verses:
+            _, is_new = TranslationUnit.objects.get_or_create(project=project, verse=verse)
+            if is_new:
+                created += 1
+        return Response({"created": created, "book_name": book.name}, status=status.HTTP_201_CREATED)
+
+
+class TranslationRemoveBookView(APIView):
+    """
+    DELETE /api/translations/{id}/remove-book/
+    指定した書のすべての翻訳ユニットを削除（オーナーのみ）。
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, project_id):
+        from bible.models import Book
+        project = get_object_or_404(TranslationProject, pk=project_id)
+        if project.owner != request.user:
+            return Response({"detail": "オーナーのみ操作できます。"}, status=status.HTTP_403_FORBIDDEN)
+        book_id = request.data.get("book_id")
+        if not book_id:
+            return Response({"detail": "book_id は必須です。"}, status=status.HTTP_400_BAD_REQUEST)
+        book = get_object_or_404(Book, pk=book_id)
+        deleted, _ = TranslationUnit.objects.filter(project=project, verse__chapter__book=book).delete()
+        return Response({"deleted": deleted, "book_name": book.name}, status=status.HTTP_200_OK)
+
+
 class TranslationReadView(APIView):
     """GET /api/translations/{id}/read/  公開済み翻訳の完了ユニット一覧（誰でも閲覧可）"""
 

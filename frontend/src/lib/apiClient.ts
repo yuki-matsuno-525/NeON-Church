@@ -372,6 +372,20 @@ export function fetchTranslationUnits(projectId: string): Promise<TranslationUni
   return apiFetch(`/translations/${projectId}/units/`);
 }
 
+export function addBookToTranslation(projectId: string, bookId: string): Promise<{ created: number; book_name: string }> {
+  return apiFetch(`/translations/${projectId}/add-book/`, {
+    method: "POST",
+    body: JSON.stringify({ book_id: bookId }),
+  });
+}
+
+export function removeBookFromTranslation(projectId: string, bookId: string): Promise<{ deleted: number; book_name: string }> {
+  return apiFetch(`/translations/${projectId}/remove-book/`, {
+    method: "DELETE",
+    body: JSON.stringify({ book_id: bookId }),
+  });
+}
+
 export function addTranslationUnit(projectId: string, verseId: string): Promise<TranslationUnit> {
   return apiFetch(`/translations/${projectId}/units/`, {
     method: "POST",
