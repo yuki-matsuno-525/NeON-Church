@@ -13,9 +13,14 @@ type Props = {
   commentBookmarkMap?: Record<string, string>;
 };
 
+const MIN_WIDTH = 280;
+const MAX_WIDTH = 640;
+const DEFAULT_WIDTH = 360;
+
 export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap = {} }: Props) {
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [isMobile, setIsMobile] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -40,6 +45,23 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
 
   const tree = buildCommentTree(comments);
 
+  const handleResizeStart = (e: React.MouseEvent) => {
+    if (isMobile) return;
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+    const onMove = (ev: MouseEvent) => {
+      const delta = startX - ev.clientX;
+      setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta)));
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
   const mobileStyle: React.CSSProperties = isMobile ? {
     position: "fixed",
     inset: 0,
@@ -54,8 +76,8 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
     <div
       className="comment-panel"
       style={{
-        width: "var(--panel-width)",
-        minWidth: "var(--panel-width)",
+        width: isMobile ? "100%" : panelWidth,
+        minWidth: isMobile ? "unset" : MIN_WIDTH,
         background: "var(--bg-alt)",
         borderLeft: "1px solid var(--border)",
         height: "calc(100vh - var(--navbar-height))",
@@ -67,6 +89,21 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
         ...mobileStyle,
       }}
     >
+      {/* ドラッグリサイズハンドル（デスクトップのみ） */}
+      {!isMobile && (
+        <div
+          onMouseDown={handleResizeStart}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+            cursor: "ew-resize",
+            zIndex: 10,
+          }}
+        />
+      )}
       {/* Header */}
       <div
         style={{
