@@ -5,7 +5,9 @@ import ChapterPage from "./page";
 
 vi.mock("next/navigation", () => ({
   useParams: vi.fn(),
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => "/matthew/4",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("next/link", () => ({

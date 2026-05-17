@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   fetchBooks,
@@ -24,6 +24,8 @@ import { ChapterComments } from "@/components/reader/ChapterComments";
 export default function ChapterPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
 
   const slug = typeof params.book === "string" ? params.book : "";
@@ -33,7 +35,7 @@ export default function ChapterPage() {
   const [verses, setVerses] = useState<Verse[]>([]);
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
+  const selectedVerseId = searchParams.get("verse");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -49,8 +51,6 @@ export default function ChapterPage() {
       return;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset state before new route fetch
-    setSelectedVerseId(null);
     setLoading(true);
     setError(null);
 
@@ -100,7 +100,13 @@ export default function ChapterPage() {
   }, []);
 
   const handleSelectVerse = (verseId: string) => {
-    setSelectedVerseId((prev) => (prev === verseId ? null : verseId));
+    if (verseId === selectedVerseId) {
+      router.back();
+    } else if (selectedVerseId) {
+      router.replace(`${pathname}?verse=${verseId}`);
+    } else {
+      router.push(`${pathname}?verse=${verseId}`);
+    }
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
@@ -249,7 +255,7 @@ export default function ChapterPage() {
         <CommentPanel
           verse={selectedVerse}
           chapterNumber={chapterNum}
-          onClose={() => setSelectedVerseId(null)}
+          onClose={() => router.back()}
           commentBookmarkMap={commentBookmarkMap}
         />
       )}
