@@ -211,6 +211,10 @@ export function fetchNotifications(): Promise<Notification[]> {
   return apiFetch("/notifications/");
 }
 
+export function fetchUnreadCount(): Promise<number> {
+  return apiFetch<Notification[]>("/notifications/?unread=1").then((ns) => ns.length);
+}
+
 export function markNotificationRead(notificationId: string): Promise<void> {
   return apiFetch(`/notifications/${notificationId}/read/`, { method: "POST" });
 }

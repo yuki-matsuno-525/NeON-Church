@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchNotifications } from "@/lib/api";
+import { fetchUnreadCount } from "@/lib/api";
 
 type NavbarProps = {
   onMenuToggle?: () => void;
@@ -18,9 +18,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   useEffect(() => {
     if (!user) return;
-    fetchNotifications()
-      .then((ns) => setUnreadCount(ns.filter((n) => !n.is_read).length))
-      .catch(() => {});
+    const refresh = () => fetchUnreadCount().then(setUnreadCount).catch(() => {});
+    refresh();
+    const id = setInterval(refresh, 30_000);
+    return () => clearInterval(id);
   }, [user]);
 
   const handleLogout = async () => {
@@ -124,20 +125,25 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               </Link>
               <Link
                 href="/notifications"
+                aria-label="通知"
                 style={{
                   color: "var(--text-muted)",
                   textDecoration: "none",
                   position: "relative",
-                  fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                通知
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
                 {unreadCount > 0 && (
                   <span
                     style={{
                       position: "absolute",
                       top: -6,
-                      right: -10,
+                      right: -8,
                       background: "var(--neon-pink)",
                       color: "#fff",
                       borderRadius: "999px",
