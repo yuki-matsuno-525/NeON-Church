@@ -31,7 +31,7 @@ const SECTIONS = [
   },
 ];
 
-export default function Home() {
+export default function DemoHomePage() {
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
 
@@ -84,15 +84,16 @@ export default function Home() {
           gap: 24,
         }}
       >
-        {/* ヒーローセクション */}
+        {/* ── ヒーローセクション ── */}
         <div style={{ padding: "16px 0 8px" }}>
           <p
             style={{
               fontSize: 11,
               fontWeight: 700,
-              letterSpacing: "0.07em",
+              letterSpacing: "0.14em",
               color: "rgba(193, 143, 255, 0.55)",
               margin: "0 0 16px",
+              textTransform: "uppercase",
             }}
           >
             NeON Church
@@ -144,13 +145,14 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* 今日の聖句 */}
+        {/* ── 今日の聖句 ── */}
         {verseOfDay && (
           <div
             style={{
               position: "relative",
               overflow: "hidden",
-              background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+              background:
+                "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
               border: "3px solid rgba(190, 95, 255, 0.95)",
               borderRadius: 20,
               padding: "24px 28px",
@@ -166,9 +168,12 @@ export default function Home() {
             <div
               style={{
                 position: "absolute",
-                top: 0, left: 0, right: 0,
+                top: 0,
+                left: 0,
+                right: 0,
                 height: "50%",
-                background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
                 borderRadius: "18px 18px 0 0",
                 pointerEvents: "none",
               }}
@@ -207,12 +212,13 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              {verseOfDay.book_name} {verseOfDay.chapter_number}章{verseOfDay.number}節 →
+              {verseOfDay.book_name} {verseOfDay.chapter_number}章
+              {verseOfDay.number}節 →
             </Link>
           </div>
         )}
 
-        {/* セクションカード（3等分・等サイズ） */}
+        {/* ── セクションカード（3等分・等サイズ） ── */}
         <div
           className="home-cards"
           style={{
@@ -232,7 +238,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* 最近のQ&A */}
+        {/* ── 最近のコミュニティ活動 ── */}
         {recentQA.length > 0 && (
           <div>
             <div
@@ -273,7 +279,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* NeON Church について */}
+        {/* ── NeON Church について ── */}
         <div
           style={{
             display: "flex",
@@ -394,7 +400,8 @@ function SectionCard({
         display: "flex",
         flexDirection: "column",
         gap: 10,
-        background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+        background:
+          "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
         border: "3px solid rgba(190, 95, 255, 0.95)",
         borderRadius: 20,
         padding: "24px 22px",
@@ -443,7 +450,8 @@ function SectionCard({
           left: 0,
           right: 0,
           height: "50%",
-          background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
           borderRadius: "18px 18px 0 0",
           pointerEvents: "none",
         }}
