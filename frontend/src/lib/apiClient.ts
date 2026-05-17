@@ -449,6 +449,10 @@ export function fetchUserBookmarks(username: string): Promise<Bookmark[]> {
   return apiFetch(`/users/${username}/bookmarks/`);
 }
 
+export function fetchTrendingComments(): Promise<QAComment[]> {
+  return apiFetch("/comments/trending/");
+}
+
 export function reportComment(commentId: string, reason: string): Promise<void> {
   return apiFetch(`/comments/${commentId}/report/`, {
     method: "POST",

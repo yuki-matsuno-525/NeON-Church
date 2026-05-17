@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchVerseOfDay, fetchQAComments, type VerseOfDay, type QAComment } from "@/lib/api";
+import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -34,12 +34,14 @@ const SECTIONS = [
 export default function Home() {
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
+  const [trending, setTrending] = useState<QAComment[]>([]);
 
   useEffect(() => {
     fetchVerseOfDay().then(setVerseOfDay).catch(() => {});
     fetchQAComments()
       .then((qa) => setRecentQA(qa.slice(0, 4)))
       .catch(() => {});
+    fetchTrendingComments().then(setTrending).catch(() => {});
   }, []);
 
   const slug = verseOfDay ? slugFromBookName(verseOfDay.book_name) : "";
@@ -234,6 +236,37 @@ export default function Home() {
           ))}
         </div>
 
+        {/* トレンド */}
+        {trending.length > 0 && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.07em",
+                  color: "rgba(193, 143, 255, 0.60)",
+                  margin: 0,
+                }}
+              >
+                トレンド
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {trending.map((c) => (
+                <TrendingCard key={c.id} comment={c} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 最近のQ&A */}
         {recentQA.length > 0 && (
           <div>
@@ -371,6 +404,75 @@ function ActivityCard({ qa }: { qa: QAComment }) {
           <>
             <span>·</span>
             <span>返信 {qa.reply_count}</span>
+          </>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+function TrendingCard({ comment }: { comment: QAComment }) {
+  const slug = BOOKS.find((b) => b.name === comment.book_name)?.slug ?? "";
+  const href = slug && comment.chapter_number
+    ? `/${slug}/${comment.chapter_number}${comment.verse_number ? `#verse-${comment.verse_number}` : ""}`
+    : "#";
+
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "block",
+        background: "rgba(255, 255, 255, 0.03)",
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        borderRadius: 12,
+        padding: "14px 16px",
+        textDecoration: "none",
+        color: "inherit",
+        transition: "border-color 0.15s, background 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(190, 95, 255, 0.30)";
+        el.style.background = "rgba(110, 40, 200, 0.08)";
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(255, 255, 255, 0.08)";
+        el.style.background = "rgba(255, 255, 255, 0.03)";
+      }}
+    >
+      <p
+        style={{
+          fontSize: 13,
+          color: "rgba(255, 255, 255, 0.78)",
+          margin: "0 0 8px",
+          lineHeight: 1.65,
+          overflow: "hidden",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+        }}
+      >
+        {comment.body}
+      </p>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 11,
+          color: "rgba(255, 255, 255, 0.32)",
+        }}
+      >
+        <span>▲ {comment.vote_count}</span>
+        <span>·</span>
+        <span>{comment.user.username}</span>
+        <span>·</span>
+        <span>{comment.location_label}</span>
+        {comment.reply_count > 0 && (
+          <>
+            <span>·</span>
+            <span>返信 {comment.reply_count}</span>
           </>
         )}
       </div>

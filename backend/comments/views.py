@@ -234,6 +234,38 @@ class QACommentListView(generics.ListAPIView):
         return qs
 
 
+class TrendingCommentView(generics.ListAPIView):
+    """GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要）"""
+
+    permission_classes = [permissions.AllowAny]
+
+    def get_serializer_class(self):
+        from .serializers import QACommentSerializer
+        return QACommentSerializer
+
+    def get_queryset(self):
+        return (
+            Comment.objects.filter(is_deleted=False, parent=None)
+            .select_related(
+                "user",
+                "verse__chapter__book",
+                "chapter__book",
+                "book",
+                "best_answer__user",
+            )
+            .prefetch_related("tags")
+            .annotate(
+                vote_count=Count("votes", distinct=True),
+                reply_count=Count(
+                    "replies",
+                    distinct=True,
+                    filter=models.Q(replies__is_deleted=False),
+                ),
+            )
+            .order_by("-vote_count", "-created_at")[:5]
+        )
+
+
 class SetBestAnswerView(APIView):
     """PATCH /api/comments/{pk}/best-answer/  ベストアンサーの設定・解除（質問投稿者のみ）
 

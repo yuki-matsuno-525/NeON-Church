@@ -462,3 +462,42 @@ class TestBestAnswer:
         q = next(c for c in res.data if c["id"] == qa_question["id"])
         assert q["best_answer"] is not None
         assert q["best_answer"]["id"] == qa_reply["id"]
+
+
+# ------------------------------------------------------------------
+# トレンドコメント
+# ------------------------------------------------------------------
+TRENDING_URL = "/api/comments/trending/"
+
+
+@pytest.mark.django_db
+class TestTrendingComments:
+    def test_trending_returns_200(self, api_client):
+        res = api_client.get(TRENDING_URL)
+        assert res.status_code == status.HTTP_200_OK
+
+    def test_trending_ordered_by_vote_count(self, api_client, auth_client, other_auth_client, verse):
+        # コメントAを投稿してupvote
+        res_a = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "人気コメント"}, format="json")
+        other_auth_client.post(f"/api/comments/{res_a.data['id']}/upvote/")
+
+        # コメントBを投稿（upvoteなし）
+        auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "普通コメント"}, format="json")
+
+        res = api_client.get(TRENDING_URL)
+        assert res.status_code == status.HTTP_200_OK
+        if len(res.data) >= 2:
+            assert res.data[0]["vote_count"] >= res.data[1]["vote_count"]
+
+    def test_trending_excludes_deleted(self, api_client, auth_client, verse):
+        from comments.models import Comment
+        res_c = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "削除対象"}, format="json")
+        Comment.objects.filter(id=res_c.data["id"]).update(is_deleted=True)
+        trending_ids = [c["id"] for c in api_client.get(TRENDING_URL).data]
+        assert res_c.data["id"] not in trending_ids
+
+    def test_trending_max_5(self, api_client, auth_client, verse):
+        for i in range(7):
+            auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": f"コメント{i}"}, format="json")
+        res = api_client.get(TRENDING_URL)
+        assert len(res.data) <= 5
