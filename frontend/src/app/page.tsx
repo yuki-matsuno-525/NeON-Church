@@ -286,7 +286,7 @@ export default function Home() {
             href="/about"
             style={{
               fontSize: 13,
-              color: "var(--text-faint)",
+              color: "var(--text-muted)",
               textDecoration: "underline",
               textDecorationColor: "var(--border)",
             }}

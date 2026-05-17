@@ -129,7 +129,7 @@ export function VerseList({
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  💬 コメント
+                  コメント
                 </button>
                 {user && (
                   <button
@@ -146,7 +146,7 @@ export function VerseList({
                       fontFamily: "inherit",
                     }}
                   >
-                    {isBookmarked ? "🔖 解除" : "🔖 お気に入り"}
+                    {isBookmarked ? "解除" : "お気に入り"}
                   </button>
                 )}
               </div>
