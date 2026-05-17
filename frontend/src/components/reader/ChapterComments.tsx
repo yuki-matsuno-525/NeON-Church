@@ -16,6 +16,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { comments, setComments, loading, reload } = useComments({
     chapter_id: chapterId,
@@ -37,7 +38,11 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
     setComments((prev) => [...prev, comment]);
   };
 
-  const tree = buildCommentTree(comments);
+  const q = searchQuery.trim().toLowerCase();
+  const filteredComments = q
+    ? comments.filter((c) => c.body.toLowerCase().includes(q))
+    : comments;
+  const tree = buildCommentTree(filteredComments);
 
   return (
     <section id="chapter-comments" style={{ marginTop: 40 }}>
@@ -111,6 +116,26 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
           ))}
         </div>
       )}
+
+      <div style={{ marginBottom: 12 }}>
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="コメントを検索..."
+          style={{
+            width: "100%",
+            padding: "6px 12px",
+            fontSize: 13,
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontFamily: "inherit",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
 
       <div style={{ marginBottom: 24 }}>
         <CommentInput onSubmit={handleSubmit} showQaOption showTagOption />

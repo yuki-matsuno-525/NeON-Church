@@ -21,6 +21,7 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [isMobile, setIsMobile] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -43,7 +44,11 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
     setComments((prev) => [...prev, comment]);
   };
 
-  const tree = buildCommentTree(comments);
+  const q = searchQuery.trim().toLowerCase();
+  const filteredComments = q
+    ? comments.filter((c) => c.body.toLowerCase().includes(q))
+    : comments;
+  const tree = buildCommentTree(filteredComments);
 
   const handleResizeStart = (e: React.MouseEvent) => {
     if (isMobile) return;
@@ -173,6 +178,27 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
             {ord === "new" ? "新しい順" : "人気順"}
           </button>
         ))}
+      </div>
+
+      {/* Search */}
+      <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="コメントを検索..."
+          style={{
+            width: "100%",
+            padding: "5px 10px",
+            fontSize: 12,
+            border: "1px solid var(--border)",
+            borderRadius: 6,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontFamily: "inherit",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
       </div>
 
       {/* Comment list */}
