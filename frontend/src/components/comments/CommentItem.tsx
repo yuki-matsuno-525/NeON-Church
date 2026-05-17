@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime, type Tag } from "@/lib/api";
+import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime, type Tag, reportComment } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 
@@ -30,6 +30,9 @@ export function CommentItem({
   const [editBody, setEditBody] = useState(comment.body);
   const [currentBody, setCurrentBody] = useState(comment.body);
   const [bookmarkId, setBookmarkId] = useState<string | null>(initialBookmarkId ?? null);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportReason, setReportReason] = useState("spam");
+  const [reportStatus, setReportStatus] = useState<"idle" | "done" | "dup">("idle");
 
   const handleUpvote = async () => {
     if (!user) return;
@@ -77,6 +80,18 @@ export function CommentItem({
       }
     } catch {
       // ignore
+    }
+  };
+
+  const handleReport = async () => {
+    try {
+      await reportComment(comment.id, reportReason);
+      setReportStatus("done");
+      setShowReportForm(false);
+    } catch (e) {
+      const err = e as { status?: number };
+      setReportStatus(err.status === 409 ? "dup" : "idle");
+      setShowReportForm(false);
     }
   };
 
@@ -361,11 +376,61 @@ export function CommentItem({
                   </button>
                 </>
               )}
+
+              {user && user.id !== comment.user.id && !comment.is_deleted && reportStatus === "idle" && (
+                <button
+                  onClick={() => setShowReportForm((v) => !v)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--text-faint)",
+                    fontSize: 12,
+                    padding: 0,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  報告
+                </button>
+              )}
+              {reportStatus === "done" && (
+                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>報告しました</span>
+              )}
+              {reportStatus === "dup" && (
+                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>報告済みです</span>
+              )}
             </div>
 
             {showReplyForm && (
               <div style={{ marginLeft: 52, marginTop: 8 }}>
                 <CommentInput onSubmit={handleReply} placeholder="返信を入力..." submitLabel="返信" />
+              </div>
+            )}
+
+            {showReportForm && (
+              <div style={{ marginLeft: 52, marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  style={{ fontSize: 12, padding: "3px 8px", border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg)", color: "var(--text)", fontFamily: "inherit" }}
+                >
+                  <option value="spam">スパム</option>
+                  <option value="offensive">不快なコンテンツ</option>
+                  <option value="misinformation">誤情報</option>
+                  <option value="other">その他</option>
+                </select>
+                <button
+                  onClick={handleReport}
+                  style={{ fontSize: 12, padding: "3px 10px", background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  送信
+                </button>
+                <button
+                  onClick={() => setShowReportForm(false)}
+                  style={{ fontSize: 12, padding: "3px 10px", background: "transparent", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  キャンセル
+                </button>
               </div>
             )}
           </>

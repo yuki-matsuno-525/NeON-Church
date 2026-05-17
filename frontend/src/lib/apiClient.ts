@@ -448,3 +448,10 @@ export function fetchUserComments(username: string): Promise<Comment[]> {
 export function fetchUserBookmarks(username: string): Promise<Bookmark[]> {
   return apiFetch(`/users/${username}/bookmarks/`);
 }
+
+export function reportComment(commentId: string, reason: string): Promise<void> {
+  return apiFetch(`/comments/${commentId}/report/`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
