@@ -1,14 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 
+const PAGE_SIZE = 10;
+
 export default function QAPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+      <QAContent />
+    </Suspense>
+  );
+}
+
+function QAContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const [comments, setComments] = useState<QAComment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -152,18 +166,49 @@ export default function QAPage() {
         <div style={{ color: "var(--text-muted)", padding: 16 }}>読み込み中...</div>
       ) : comments.length === 0 ? (
         <div style={{ color: "var(--text-muted)", padding: 16 }}>Q&Aコメントはまだありません。</div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {comments.map((c) => (
-            <QACard
-              key={c.id}
-              comment={c}
-              currentUserId={user?.id ?? null}
-              onBestAnswerChange={loadComments}
-            />
-          ))}
-        </div>
-      )}
+      ) : (() => {
+        const totalPages = Math.ceil(comments.length / PAGE_SIZE);
+        const safePage = Math.min(page, totalPages);
+        const pageItems = comments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+        const goTo = (p: number) => router.push(`/qa?page=${p}`);
+        return (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {pageItems.map((c) => (
+                <QACard
+                  key={c.id}
+                  comment={c}
+                  currentUserId={user?.id ?? null}
+                  onBestAnswerChange={loadComments}
+                />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
+                <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>前</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button key={p} onClick={() => goTo(p)} style={pageBtnStyle(false, p === safePage)}>{p}</button>
+                ))}
+                <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>次</button>
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
+}
+
+function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
+  return {
+    padding: "4px 12px",
+    border: "1px solid var(--border)",
+    borderRadius: 6,
+    background: active ? "var(--accent)" : "transparent",
+    color: active ? "var(--accent-text)" : disabled ? "var(--text-faint)" : "var(--text-muted)",
+    cursor: disabled ? "default" : "pointer",
+    fontSize: 13,
+    fontFamily: "inherit",
+    opacity: disabled ? 0.4 : 1,
+  };
 }

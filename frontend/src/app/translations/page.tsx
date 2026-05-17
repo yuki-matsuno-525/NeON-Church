@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchTranslations, type TranslationProject } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+
+const PAGE_SIZE = 10;
 
 const STATUS_LABEL: Record<string, string> = {
   active: "進行中",
@@ -16,7 +19,18 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function TranslationsPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+      <TranslationsContent />
+    </Suspense>
+  );
+}
+
+function TranslationsContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const [projects, setProjects] = useState<TranslationProject[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,9 +87,15 @@ export default function TranslationsPage() {
             </Link>
           )}
         </div>
-      ) : (
+      ) : (() => {
+        const totalPages = Math.ceil(projects.length / PAGE_SIZE);
+        const safePage = Math.min(page, Math.max(1, totalPages));
+        const pageItems = projects.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+        const goTo = (p: number) => router.push(`/translations?page=${p}`);
+        return (
+          <>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {projects.map((p) => (
+          {pageItems.map((p) => (
             <Link
               key={p.id}
               href={`/translations/${p.id}`}
@@ -132,7 +152,32 @@ export default function TranslationsPage() {
             </Link>
           ))}
         </div>
-      )}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
+            <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>前</button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button key={n} onClick={() => goTo(n)} style={pageBtnStyle(false, n === safePage)}>{n}</button>
+            ))}
+            <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>次</button>
+          </div>
+        )}
+          </>
+        );
+      })()}
     </div>
   );
+}
+
+function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
+  return {
+    padding: "4px 12px",
+    border: "1px solid var(--border)",
+    borderRadius: 6,
+    background: active ? "var(--accent)" : "transparent",
+    color: active ? "var(--accent-text)" : disabled ? "var(--text-faint)" : "var(--text-muted)",
+    cursor: disabled ? "default" : "pointer",
+    fontSize: 13,
+    fontFamily: "inherit",
+    opacity: disabled ? 0.4 : 1,
+  };
 }

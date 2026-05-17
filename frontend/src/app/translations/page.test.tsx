@@ -3,6 +3,11 @@ import { render, screen } from "@testing-library/react";
 import TranslationsPage from "./page";
 import type { TranslationProject } from "@/lib/api";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("next/link", () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => (
     <a href={href}>{children}</a>
