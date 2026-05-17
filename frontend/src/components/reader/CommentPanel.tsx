@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createComment, buildCommentTree, type Verse } from "@/lib/api";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
@@ -15,6 +15,14 @@ type Props = {
 
 export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap = {} }: Props) {
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const { comments, setComments, loading, reload } = useComments({
     verse_id: verse.id,
     ordering,
@@ -32,6 +40,16 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
 
   const tree = buildCommentTree(comments);
 
+  const mobileStyle: React.CSSProperties = isMobile ? {
+    position: "fixed",
+    inset: 0,
+    top: "var(--navbar-height)",
+    width: "100%",
+    minWidth: "unset",
+    height: "calc(100vh - var(--navbar-height))",
+    zIndex: 100,
+  } : {};
+
   return (
     <div
       className="comment-panel"
@@ -46,6 +64,7 @@ export function CommentPanel({ verse, onClose, chapterNumber, commentBookmarkMap
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        ...mobileStyle,
       }}
     >
       {/* Header */}
