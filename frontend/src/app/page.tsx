@@ -14,16 +14,19 @@ const SECTIONS = [
     title: "読む",
     description: "聖書の各章を読み、コメントを投稿・共有できます。",
     href: "/read",
+    icon: "/img/icon-read.png",
   },
   {
     title: "Q&A",
     description: "聖書に関する疑問を投稿し、回答をもらえる場所。",
     href: "/qa",
+    icon: "/img/icon-qa.png",
   },
   {
     title: "翻訳",
     description: "聖書の共同翻訳プロジェクトを作成・参加できます。",
     href: "/translations",
+    icon: "/img/icon-translation.png",
   },
 ];
 
@@ -63,6 +66,7 @@ export default function Home() {
 
       {/* ページコンテンツ */}
       <div
+        className="home-content"
         style={{
           position: "relative",
           zIndex: 2,
@@ -72,6 +76,7 @@ export default function Home() {
           padding: "52px 32px 48px",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "center",
           gap: 24,
         }}
       >
@@ -79,17 +84,34 @@ export default function Home() {
         {verseOfDay && (
           <div
             style={{
-              background: "rgba(18, 10, 50, 0.62)",
-              backdropFilter: "blur(28px)",
-              WebkitBackdropFilter: "blur(28px)",
-              border: "1px solid rgba(168, 88, 255, 0.30)",
-              borderRadius: 18,
+              position: "relative",
+              overflow: "hidden",
+              background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+              border: "3px solid rgba(190, 95, 255, 0.95)",
+              borderRadius: 20,
               padding: "24px 28px",
-              boxShadow: "0 14px 55px rgba(0,0,0,0.60), inset 0 1px 0 rgba(255,255,255,0.06)",
+              boxShadow: [
+                "0 0 6px  rgba(210, 110, 255, 0.90)",
+                "0 0 18px rgba(185, 80,  255, 0.65)",
+                "0 0 38px rgba(155, 55,  230, 0.40)",
+                "0 0 65px rgba(130, 45,  205, 0.18)",
+                "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+              ].join(", "),
             }}
           >
+            <div
+              style={{
+                position: "absolute",
+                top: 0, left: 0, right: 0,
+                height: "50%",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+                borderRadius: "18px 18px 0 0",
+                pointerEvents: "none",
+              }}
+            />
             <p
               style={{
+                position: "relative",
                 fontSize: 11,
                 fontWeight: 700,
                 letterSpacing: "0.07em",
@@ -101,6 +123,7 @@ export default function Home() {
             </p>
             <blockquote
               style={{
+                position: "relative",
                 fontFamily: '"Noto Serif JP", serif',
                 fontSize: 15,
                 lineHeight: 2.0,
@@ -114,6 +137,7 @@ export default function Home() {
             <Link
               href={verseHref}
               style={{
+                position: "relative",
                 fontSize: 13,
                 color: "rgba(193, 143, 255, 0.88)",
                 textDecoration: "none",
@@ -139,6 +163,7 @@ export default function Home() {
               title={s.title}
               description={s.description}
               href={s.href}
+              icon={s.icon}
             />
           ))}
         </div>
@@ -167,6 +192,11 @@ export default function Home() {
       </div>
 
       <style>{`
+        @media (min-width: 769px) {
+          .home-content {
+            transform: translateX(calc(-1 * var(--sidebar-width) / 2));
+          }
+        }
         @media (max-width: 640px) {
           .home-cards {
             grid-template-columns: 1fr !important;
@@ -181,10 +211,12 @@ function SectionCard({
   title,
   description,
   href,
+  icon,
 }: {
   title: string;
   description: string;
   href: string;
+  icon: string;
 }) {
   return (
     <Link
@@ -193,46 +225,99 @@ function SectionCard({
         display: "flex",
         flexDirection: "column",
         gap: 10,
-        background: "rgba(14, 7, 40, 0.65)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(115, 58, 210, 0.28)",
-        borderRadius: 16,
+        background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+        border: "3px solid rgba(190, 95, 255, 0.95)",
+        borderRadius: 20,
         padding: "24px 22px",
         textDecoration: "none",
         color: "inherit",
         cursor: "pointer",
-        transition: "border-color 0.2s, box-shadow 0.2s",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: [
+          "0 0 6px  rgba(210, 110, 255, 0.90)",
+          "0 0 18px rgba(185, 80,  255, 0.65)",
+          "0 0 38px rgba(155, 55,  230, 0.40)",
+          "0 0 65px rgba(130, 45,  205, 0.18)",
+          "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+        ].join(", "),
+        transition: "box-shadow 0.2s, border-color 0.2s",
         minHeight: 140,
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = "rgba(188, 108, 255, 0.60)";
-        el.style.boxShadow = "0 8px 28px rgba(0,0,0,0.42)";
+        el.style.borderColor = "rgba(225, 135, 255, 1.0)";
+        el.style.boxShadow = [
+          "0 0 8px  rgba(230, 130, 255, 1.00)",
+          "0 0 22px rgba(205, 100, 255, 0.82)",
+          "0 0 46px rgba(170, 68,  240, 0.55)",
+          "0 0 80px rgba(150, 55,  220, 0.25)",
+          "inset 0 0 14px rgba(215, 115, 255, 0.22)",
+        ].join(", ");
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = "rgba(115, 58, 210, 0.28)";
-        el.style.boxShadow = "none";
+        el.style.borderColor = "rgba(190, 95, 255, 0.95)";
+        el.style.boxShadow = [
+          "0 0 6px  rgba(210, 110, 255, 0.90)",
+          "0 0 18px rgba(185, 80,  255, 0.65)",
+          "0 0 38px rgba(155, 55,  230, 0.40)",
+          "0 0 65px rgba(130, 45,  205, 0.18)",
+          "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+        ].join(", ");
       }}
     >
-      <p
+      <div
         style={{
-          fontFamily: '"Noto Serif JP", serif',
-          fontSize: 18,
-          fontWeight: 700,
-          color: "rgba(255, 255, 255, 0.94)",
-          margin: 0,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "50%",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+          borderRadius: "18px 18px 0 0",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          position: "relative",
         }}
       >
-        {title}
-      </p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={icon}
+          alt=""
+          style={{
+            width: 52,
+            height: 52,
+            objectFit: "contain",
+            flexShrink: 0,
+          }}
+        />
+        <p
+          style={{
+            fontFamily: '"Noto Serif JP", serif',
+            fontSize: 40,
+            fontWeight: 700,
+            color: "rgba(255, 255, 255, 0.94)",
+            margin: 0,
+            lineHeight: 1,
+          }}
+        >
+          {title}
+        </p>
+      </div>
       <p
         style={{
           fontSize: 13,
           color: "rgba(255, 255, 255, 0.44)",
           lineHeight: 1.7,
           margin: 0,
+          position: "relative",
         }}
       >
         {description}

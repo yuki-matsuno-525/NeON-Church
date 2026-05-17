@@ -88,16 +88,17 @@ class VerseOfDayView(APIView):
     def get(self, request):
         # Django の TIME_ZONE 設定に基づいたローカル日付を使用する
         today = timezone.localdate()
-        cache_key = f"verse_of_day_{today.isoformat()}"
+        cache_key = f"verse_of_day_kougo_{today.isoformat()}"
         data = cache.get(cache_key)
         if data is None:
             day_of_year = today.timetuple().tm_yday
-            count = Verse.objects.count()
+            qs = Verse.objects.filter(chapter__book__translation="口語訳")
+            count = qs.count()
             if count == 0:
                 return Response({"detail": "聖書データが未登録です。"}, status=503)
             index = (day_of_year - 1) % count
             verse = (
-                Verse.objects.select_related("chapter__book")
+                qs.select_related("chapter__book")
                 .order_by("chapter__book__order", "chapter__number", "number")[index]
             )
             data = VerseOfDaySerializer(verse).data

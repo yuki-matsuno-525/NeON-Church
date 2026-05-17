@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カードデザイン比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: 'Noto Sans JP', sans-serif;
+  color: #fff;
+  background-image: url('/img/background.png');
+  background-size: cover;
+  background-position: center 28%;
+  background-attachment: fixed;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 3, 20, 0.80);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 32px;
+}
+
+h1 {
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.08em;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.col-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(193, 143, 255, 0.80);
+  margin-bottom: 16px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ===== 画像方式 ===== */
+.card-img {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 22px;
+  min-height: 120px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background-image: url('/img/block-1.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: filter 0.2s;
+  position: relative;
+}
+.card-img:hover { filter: brightness(1.15); }
+
+/* ===== CSS方式 ===== */
+.card-css {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 22px;
+  min-height: 120px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%);
+  border: 3px solid rgba(190, 95, 255, 0.95);
+  box-shadow:
+    0 0 6px  rgba(210, 110, 255, 0.90),
+    0 0 18px rgba(185, 80,  255, 0.65),
+    0 0 38px rgba(155, 55,  230, 0.40),
+    0 0 65px rgba(130, 45,  205, 0.18),
+    inset 0 0 10px rgba(200, 100, 255, 0.15);
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.card-css::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 18px 18px 0 0;
+  pointer-events: none;
+}
+.card-css:hover {
+  border-color: rgba(225, 135, 255, 1.0);
+  box-shadow:
+    0 0 8px  rgba(230, 130, 255, 1.00),
+    0 0 22px rgba(205, 100, 255, 0.82),
+    0 0 46px rgba(170, 68,  240, 0.55),
+    0 0 80px rgba(150, 55,  220, 0.25),
+    inset 0 0 14px rgba(215, 115, 255, 0.22);
+}
+
+/* ===== 共通テキスト ===== */
+.card-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.94);
+  position: relative;
+}
+.card-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.44);
+  line-height: 1.7;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .compare { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="page">
+  <h1>カードデザイン比較</h1>
+  <div class="compare">
+
+    <!-- 画像方式 -->
+    <div>
+      <div class="col-label">画像方式（block-1.png）</div>
+      <div class="cards">
+        <a class="card-img" href="#">
+          <p class="card-title">読む</p>
+          <p class="card-desc">聖書の各章を読み、コメントを投稿・共有できます。</p>
+        </a>
+        <a class="card-img" href="#">
+          <p class="card-title">Q&amp;A</p>
+          <p class="card-desc">聖書に関する疑問を投稿し、回答をもらえる場所。</p>
+        </a>
+        <a class="card-img" href="#">
+          <p class="card-title">翻訳</p>
+          <p class="card-desc">聖書の共同翻訳プロジェクトを作成・参加できます。</p>
+        </a>
+      </div>
+    </div>
+
+    <!-- CSS方式 -->
+    <div>
+      <div class="col-label">CSS方式（ネオングロー再現）</div>
+      <div class="cards">
+        <a class="card-css" href="#">
+          <p class="card-title">読む</p>
+          <p class="card-desc">聖書の各章を読み、コメントを投稿・共有できます。</p>
+        </a>
+        <a class="card-css" href="#">
+          <p class="card-title">Q&amp;A</p>
+          <p class="card-desc">聖書に関する疑問を投稿し、回答をもらえる場所。</p>
+        </a>
+        <a class="card-css" href="#">
+          <p class="card-title">翻訳</p>
+          <p class="card-desc">聖書の共同翻訳プロジェクトを作成・参加できます。</p>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
