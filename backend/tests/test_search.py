@@ -88,17 +88,19 @@ class TestSearchView:
         assert res.data["verses"] == []
         assert res.data["books"] == []
 
-    def test_search_excludes_non_kogo_translation_verses(self, api_client, verse, verse_kjv):
-        # KJV 節は除外される
+    def test_search_includes_kjv_verses(self, api_client, verse, verse_kjv):
+        # KJV 節も検索対象に含まれる
         res = api_client.get(SEARCH_URL, {"q": "Jesus"})
         assert res.status_code == status.HTTP_200_OK
-        assert res.data["verses"] == []
+        assert len(res.data["verses"]) == 1
+        assert res.data["verses"][0]["id"] == str(verse_kjv.id)
 
-    def test_search_excludes_non_kogo_translation_books(self, api_client, book, book_kjv):
-        # KJV 書名は除外される
+    def test_search_includes_kjv_books(self, api_client, book, book_kjv):
+        # KJV 書名も検索対象に含まれる
         res = api_client.get(SEARCH_URL, {"q": "Matthew"})
         assert res.status_code == status.HTTP_200_OK
-        assert res.data["books"] == []
+        assert len(res.data["books"]) == 1
+        assert res.data["books"][0]["name"] == "Matthew"
 
     def test_anonymous_access_allowed(self, api_client, verse):
         res = api_client.get(SEARCH_URL, {"q": "アブラハム"})

@@ -51,7 +51,7 @@ class VerseListView(generics.ListAPIView):
 
 
 class SearchView(APIView):
-    """GET /api/search/?q=  節テキストと書名を icontains で検索（口語訳のみ）。"""
+    """GET /api/search/?q=  節テキストと書名を icontains で検索（全翻訳対象）。"""
 
     permission_classes = [AllowAny]
 
@@ -60,11 +60,10 @@ class SearchView(APIView):
         if len(q) < 2:
             return Response({"verses": [], "books": [], "comments": []})
 
-        books = Book.objects.filter(name__icontains=q, translation="口語訳").order_by("order")
+        books = Book.objects.filter(name__icontains=q).order_by("order")
         verses = (
             Verse.objects.filter(text__icontains=q)
             .select_related("chapter__book")
-            .filter(chapter__book__translation="口語訳")
             .order_by("chapter__book__order", "chapter__number", "number")[:30]
         )
         comments = (

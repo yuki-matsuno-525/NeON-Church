@@ -7,7 +7,7 @@ import { searchBible, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 
 function getSlugByName(name: string): string | null {
-  return BOOKS.find((b) => b.name === name)?.slug ?? null;
+  return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? null;
 }
 
 function highlight(text: string, q: string): string {
