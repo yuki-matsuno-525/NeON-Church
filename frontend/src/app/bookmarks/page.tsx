@@ -111,7 +111,7 @@ export default function BookmarksPage() {
 
             if (!bm.verse_detail) return null;
             const slug = slugFromBookName(bm.verse_detail.book_name);
-            const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}` : "#";
+            const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}#verse-${bm.verse_detail.number}` : "#";
 
             return (
               <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>

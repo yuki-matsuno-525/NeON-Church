@@ -73,6 +73,7 @@ export function VerseList({
 
         return (
           <div
+            id={`verse-${verse.number}`}
             key={verse.id}
             data-testid="verse-item"
             onClick={() => onSelectVerse(verse.id)}

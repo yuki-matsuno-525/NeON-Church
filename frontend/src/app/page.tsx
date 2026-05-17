@@ -43,7 +43,9 @@ export default function Home() {
   }, []);
 
   const slug = verseOfDay ? slugFromBookName(verseOfDay.book_name) : "";
-  const verseHref = slug ? `/${slug}/${verseOfDay?.chapter_number}` : "#";
+  const verseHref = slug && verseOfDay
+    ? `/${slug}/${verseOfDay.chapter_number}#verse-${verseOfDay.number}`
+    : "#";
 
   return (
     <>

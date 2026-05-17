@@ -36,6 +36,7 @@ export default function ChapterPage() {
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [translation, setTranslation] = useState<string>(() =>
     typeof window !== "undefined"
       ? (localStorage.getItem("bible-translation") ?? DEFAULT_TRANSLATION)
@@ -91,6 +92,12 @@ export default function ChapterPage() {
     if (!user) return;
     fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
   }, [user]);
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSelectVerse = (verseId: string) => {
     setSelectedVerseId((prev) => (prev === verseId ? null : verseId));
@@ -245,6 +252,34 @@ export default function ChapterPage() {
           onClose={() => setSelectedVerseId(null)}
           commentBookmarkMap={commentBookmarkMap}
         />
+      )}
+
+      {/* スクロールトップボタン */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="ページ上部へ"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: selectedVerse ? "calc(var(--panel-width) + 16px)" : 24,
+            background: "var(--accent)",
+            color: "var(--accent-text)",
+            border: "none",
+            borderRadius: "50%",
+            width: 44,
+            height: 44,
+            cursor: "pointer",
+            fontSize: 18,
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+          }}
+        >
+          ↑
+        </button>
       )}
 
       {/* 章ナビゲーション（コメントパネルが閉じているときのみ表示） */}

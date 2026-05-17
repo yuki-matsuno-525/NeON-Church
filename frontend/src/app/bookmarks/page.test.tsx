@@ -99,7 +99,7 @@ describe("BookmarksPage", () => {
     render(<BookmarksPage />);
 
     const link = await screen.findByRole("link");
-    expect(link).toHaveAttribute("href", "/matthew/1");
+    expect(link).toHaveAttribute("href", "/matthew/1#verse-3");
   });
 
   it("複数のブックマークがすべて表示される", async () => {
