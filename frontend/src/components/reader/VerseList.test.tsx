@@ -17,6 +17,10 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/matthew/1",
+}));
+
 const makeVerse = (overrides: Partial<Verse> = {}): Verse => ({
   id: "v1",
   chapter: "c1",
@@ -79,10 +83,18 @@ describe("VerseList", () => {
     expect(screen.getByRole("button", { name: /お気に入り/ })).toBeInTheDocument();
   });
 
-  it("未ログイン時はブックマークボタンが表示されない", () => {
+  it("未ログイン時もブックマークボタンが表示される", () => {
     mockUseAuth.mockReturnValue({ user: null });
     render(<VerseList {...defaultProps} selectedVerseId="v1" />);
-    expect(screen.queryByRole("button", { name: /お気に入り/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /お気に入り/ })).toBeInTheDocument();
+  });
+
+  it("未ログイン時にブックマークボタンをクリックしても createBookmark が呼ばれない", async () => {
+    const { createBookmark } = await import("@/lib/api");
+    mockUseAuth.mockReturnValue({ user: null });
+    render(<VerseList {...defaultProps} selectedVerseId="v1" />);
+    fireEvent.click(screen.getByRole("button", { name: /お気に入り/ }));
+    expect(createBookmark).not.toHaveBeenCalled();
   });
 
   it("ブックマーク済みの節には「解除」ボタンが表示される", () => {
@@ -94,7 +106,7 @@ describe("VerseList", () => {
       />
     );
     expect(screen.getByRole("button", { name: /解除/ })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /🔖 お気に入り/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "お気に入り" })).not.toBeInTheDocument();
   });
 
   // --- ブックマーク追加 ---

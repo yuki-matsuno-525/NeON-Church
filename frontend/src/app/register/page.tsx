@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { register, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const from = searchParams.get("from");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +25,7 @@ export default function RegisterPage() {
     try {
       const user = await register(username, email, password);
       setUser(user);
-      router.push("/matthew/1");
+      router.push(from && from.startsWith("/") ? from : "/");
     } catch (err) {
       setError((err as ApiError).message ?? "登録に失敗しました");
     } finally {
@@ -148,5 +151,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }

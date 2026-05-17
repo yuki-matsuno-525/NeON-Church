@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchTags, type Tag } from "@/lib/api";
 
@@ -21,6 +22,7 @@ export function CommentInput({
   showTagOption = false,
 }: Props) {
   const { user } = useAuth();
+  const pathname = usePathname();
   const [body, setBody] = useState("");
   const [isQa, setIsQa] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -38,7 +40,7 @@ export function CommentInput({
     return (
       <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
         <Link
-          href="/login"
+          href={`/login?from=${encodeURIComponent(pathname)}`}
           style={{ color: "var(--accent)", textDecoration: "underline" }}
         >
           ログイン

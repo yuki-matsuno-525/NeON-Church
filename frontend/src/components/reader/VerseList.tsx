@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { createBookmark, removeBookmark, type Verse, type Bookmark } from "@/lib/api";
 import { useState } from "react";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 
 type Props = {
   verses: Verse[];
@@ -22,6 +23,7 @@ export function VerseList({
   const { user } = useAuth();
   const [loadingBookmark, setLoadingBookmark] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const bookmarkMap = new Map(
     bookmarks
@@ -31,7 +33,11 @@ export function VerseList({
 
   const handleBookmark = async (e: React.MouseEvent, verse: Verse) => {
     e.stopPropagation();
-    if (!user || loadingBookmark) return;
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    if (loadingBookmark) return;
     setLoadingBookmark(verse.id);
     setBookmarkError(null);
     try {
@@ -53,6 +59,9 @@ export function VerseList({
 
   return (
     <div>
+      {showLoginModal && (
+        <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
+      )}
       {bookmarkError && (
         <p style={{ fontSize: 12, color: "#e53e3e", marginBottom: 8 }}>
           {bookmarkError}
@@ -131,24 +140,22 @@ export function VerseList({
                 >
                   コメント
                 </button>
-                {user && (
-                  <button
-                    onClick={(e) => handleBookmark(e, verse)}
-                    disabled={loadingBookmark === verse.id}
-                    style={{
-                      border: "1px solid var(--border)",
-                      borderRadius: 5,
-                      padding: "3px 10px",
-                      background: isBookmarked ? "var(--accent-tint)" : "transparent",
-                      color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {isBookmarked ? "解除" : "お気に入り"}
-                  </button>
-                )}
+                <button
+                  onClick={(e) => handleBookmark(e, verse)}
+                  disabled={loadingBookmark === verse.id}
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 5,
+                    padding: "3px 10px",
+                    background: isBookmarked ? "var(--accent-tint)" : "transparent",
+                    color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {isBookmarked ? "解除" : "お気に入り"}
+                </button>
               </div>
             )}
           </div>

@@ -5,6 +5,7 @@ import RegisterPage from "./page";
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 vi.mock("next/link", () => ({
@@ -47,7 +48,7 @@ describe("RegisterPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "登録する" }));
 
     await waitFor(() => expect(mockSetUser).toHaveBeenCalledWith(mockUser));
-    expect(mockPush).toHaveBeenCalledWith("/matthew/1");
+    expect(mockPush).toHaveBeenCalledWith("/");
   });
 
   it("登録失敗時にエラーメッセージを表示", async () => {

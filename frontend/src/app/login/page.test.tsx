@@ -5,6 +5,7 @@ import LoginPage from "./page";
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: () => null }),
 }));
 
 vi.mock("next/link", () => ({
@@ -46,7 +47,7 @@ describe("LoginPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
 
     await waitFor(() => expect(mockSetUser).toHaveBeenCalledWith(mockUser));
-    expect(mockPush).toHaveBeenCalledWith("/matthew/1");
+    expect(mockPush).toHaveBeenCalledWith("/");
   });
 
   it("ログイン失敗時にエラーメッセージを表示", async () => {

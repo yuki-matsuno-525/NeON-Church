@@ -20,7 +20,7 @@ export default function BookmarksPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      router.push("/login?from=/bookmarks");
     }
   }, [user, loading, router]);
 

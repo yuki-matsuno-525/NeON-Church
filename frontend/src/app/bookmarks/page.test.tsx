@@ -56,7 +56,7 @@ describe("BookmarksPage", () => {
   it("未ログインの場合 /login にリダイレクトする", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false });
     render(<BookmarksPage />);
-    expect(mockPush).toHaveBeenCalledWith("/login");
+    expect(mockPush).toHaveBeenCalledWith("/login?from=/bookmarks");
   });
 
   it("ブックマークがない場合「お気に入りはまだありません。」を表示する", async () => {

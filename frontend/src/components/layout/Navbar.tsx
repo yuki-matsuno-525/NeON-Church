@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchNotifications } from "@/lib/api";
@@ -13,6 +13,7 @@ type NavbarProps = {
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -201,7 +202,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             </>
           ) : (
             <Link
-              href="/login"
+              href={`/login?from=${encodeURIComponent(pathname)}`}
               style={{
                 background: "linear-gradient(135deg, #7618c5, #d81e80)",
                 color: "#fff",

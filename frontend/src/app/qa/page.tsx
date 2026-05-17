@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 
 export default function QAPage() {
   const { user } = useAuth();
@@ -17,6 +17,7 @@ export default function QAPage() {
   const [answeredFilter, setAnsweredFilter] = useState<"all" | "answered" | "unanswered">("all");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     Promise.all([fetchBooks("口語訳"), fetchTags()])
@@ -47,11 +48,17 @@ export default function QAPage() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+      {showLoginModal && (
+        <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Q&A</h1>
-        {user && !showForm && (
+        {!showForm && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              if (!user) { setShowLoginModal(true); return; }
+              setShowForm(true);
+            }}
             style={{
               padding: "7px 16px",
               border: "none",
@@ -66,14 +73,6 @@ export default function QAPage() {
           >
             質問する
           </button>
-        )}
-        {!user && (
-          <Link
-            href="/login"
-            style={{ fontSize: 13, color: "var(--accent)", textDecoration: "none" }}
-          >
-            ログインして質問する
-          </Link>
         )}
       </div>
       <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 24 }}>

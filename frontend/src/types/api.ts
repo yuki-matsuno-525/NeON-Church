@@ -574,7 +574,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description POST /api/translations/{id}/activate/  募集開始 draft→active（オーナーのみ） */
+        /** @description POST /api/translations/{id}/activate/  募集開始 draft → active（オーナーのみ） */
         post: operations["api_translations_activate_create"];
         delete?: never;
         options?: never;
@@ -805,7 +805,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description POST /api/translations/{id}/unpublish/  公開取り消し→active（オーナーのみ） */
+        /** @description POST /api/translations/{id}/unpublish/  公開取り消し → active（オーナーのみ） */
         post: operations["api_translations_unpublish_create"];
         delete?: never;
         options?: never;
@@ -837,7 +837,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET /api/users/<username>/bookmarks/  自分のブックマーク一覧（要認証・本人のみ） */
+        /** @description GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要・公開） */
         get: operations["api_users_bookmarks_list"];
         put?: never;
         post?: never;
@@ -1064,8 +1064,8 @@ export interface components {
             readonly tags: components["schemas"]["Tag"][];
             readonly location_label: string;
             readonly book_name: string;
-            readonly chapter_number: string;
-            readonly verse_number: string;
+            readonly chapter_number: number | null;
+            readonly verse_number: number | null;
             readonly reply_count: number;
             readonly best_answer: components["schemas"]["BestAnswer"];
         };

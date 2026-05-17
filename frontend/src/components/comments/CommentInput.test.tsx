@@ -13,6 +13,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+}));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return { ...actual, fetchTags: vi.fn().mockResolvedValue([]) };
@@ -29,7 +33,8 @@ describe("CommentInput", () => {
   it("未ログイン時はログインリンクを表示する", () => {
     mockUseAuth.mockReturnValue({ user: null });
     render(<CommentInput onSubmit={mockOnSubmit} />);
-    expect(screen.getByRole("link", { name: "ログイン" })).toHaveAttribute("href", "/login");
+    const link = screen.getByRole("link", { name: "ログイン" });
+    expect(link.getAttribute("href")).toMatch(/^\/login\?from=/);
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 

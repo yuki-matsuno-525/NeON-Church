@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { login, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setUser } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const from = searchParams.get("from");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +24,7 @@ export default function LoginPage() {
     try {
       const user = await login(username, password);
       setUser(user);
-      router.push("/matthew/1");
+      router.push(from && from.startsWith("/") ? from : "/");
     } catch (err) {
       setError(
         (err as ApiError).message ?? "ログインに失敗しました"
@@ -157,5 +160,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -51,7 +51,7 @@ describe("NotificationsPage", () => {
   it("未ログイン時は /login にリダイレクトする", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false });
     render(<NotificationsPage />);
-    expect(mockPush).toHaveBeenCalledWith("/login");
+    expect(mockPush).toHaveBeenCalledWith("/login?from=/notifications");
   });
 
   it("通知がない場合「通知はありません。」を表示する", async () => {

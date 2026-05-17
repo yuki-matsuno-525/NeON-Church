@@ -34,7 +34,8 @@
       "Bash(python -m pytest tests/test_bookmarks.py -v)",
       "Bash(npm test *)",
       "Bash(cd C:\\\\\\\\Users\\\\\\\\ymats\\\\\\\\NeON-Church)",
-      "Bash(.venv\\\\Scripts\\\\python.exe manage.py migrate --settings=config.settings.test)"
+      "Bash(.venv\\\\Scripts\\\\python.exe manage.py migrate --settings=config.settings.test)",
+      "Bash(python *)"
     ]
   },
   "hooks": {

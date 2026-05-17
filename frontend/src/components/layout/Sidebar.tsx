@@ -163,7 +163,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             </>
           ) : (
             <Link
-              href="/login"
+              href={`/login?from=${encodeURIComponent(pathname)}`}
               onClick={onClose}
               style={{
                 display: "block",

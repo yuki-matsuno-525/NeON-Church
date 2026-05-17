@@ -79,7 +79,7 @@ describe("ProfilePage", () => {
   it("未ログインの場合 /login にリダイレクトする", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false, setUser: vi.fn() });
     render(<ProfilePage />);
-    expect(mockPush).toHaveBeenCalledWith("/login");
+    expect(mockPush).toHaveBeenCalledWith("/login?from=/profile");
   });
 
   it("ユーザー情報が表示される", () => {
