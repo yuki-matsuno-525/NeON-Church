@@ -9,6 +9,10 @@ import os
 
 os.environ.setdefault("DJANGO_SECRET_KEY", "django-insecure-test-only-key-not-for-production")
 os.environ.setdefault("DJANGO_ALLOWED_HOSTS", "*")
+# base.py が decouple で読む DB 設定のダミー値（test.py で SQLite に上書きするため実際には使用しない）
+os.environ.setdefault("POSTGRES_DB", "test_db")
+os.environ.setdefault("POSTGRES_USER", "test_user")
+os.environ.setdefault("POSTGRES_PASSWORD", "test_pass")
 
 from .base import *  # noqa: F401, F403
 
