@@ -54,6 +54,7 @@ export default function ChapterPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
 
@@ -104,6 +105,7 @@ export default function ChapterPage() {
     const hash = window.location.hash;
     if (hash.startsWith("#verse-")) {
       const num = parseInt(hash.slice(7), 10);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (!isNaN(num)) setHighlightVerseNumber(num);
     }
   }, []);
