@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createBookmark, removeBookmark, createComment, buildCommentTree, type Verse, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -31,18 +31,10 @@ export function CommentPanel({
 }: Props) {
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
-  const [isMobile, setIsMobile] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
 
   const { comments, setComments, loading, reload } = useComments({
     verse_id: verse.id,
@@ -94,7 +86,6 @@ export function CommentPanel({
   const tree = buildCommentTree(filteredComments);
 
   const handleResizeStart = (e: React.MouseEvent) => {
-    if (isMobile) return;
     e.preventDefault();
     const startX = e.clientX;
     const startWidth = panelWidth;
@@ -110,24 +101,14 @@ export function CommentPanel({
     window.addEventListener("mouseup", onUp);
   };
 
-  const mobileStyle: React.CSSProperties = isMobile ? {
-    position: "fixed",
-    inset: 0,
-    top: "var(--navbar-height)",
-    width: "100%",
-    minWidth: "unset",
-    height: "calc(100vh - var(--navbar-height))",
-    zIndex: 100,
-  } : {};
-
   return (
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
       <div
         className="comment-panel"
         style={{
-          width: isMobile ? "100%" : panelWidth,
-          minWidth: isMobile ? "unset" : MIN_WIDTH,
+          width: panelWidth,
+          minWidth: MIN_WIDTH,
           background: "var(--bg-alt)",
           borderLeft: "1px solid var(--border)",
           height: "calc(100vh - var(--navbar-height))",
@@ -136,24 +117,22 @@ export function CommentPanel({
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          ...mobileStyle,
         }}
       >
-        {/* ドラッグリサイズハンドル（デスクトップのみ） */}
-        {!isMobile && (
-          <div
-            onMouseDown={handleResizeStart}
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 6,
-              cursor: "ew-resize",
-              zIndex: 10,
-            }}
-          />
-        )}
+        {/* ドラッグリサイズハンドル */}
+        <div
+          className="resize-handle"
+          onMouseDown={handleResizeStart}
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 6,
+            cursor: "ew-resize",
+            zIndex: 10,
+          }}
+        />
 
         {/* Header */}
         <div

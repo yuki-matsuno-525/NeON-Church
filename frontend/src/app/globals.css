@@ -100,20 +100,33 @@ select:focus {
     left: 0 !important;
   }
 
-  .comment-panel {
+  /* 節選択時: 本文を非表示にしてコメントパネルを全画面表示 */
+  .reader-wrapper.has-verse .reader-main {
+    display: none !important;
+  }
+  .reader-wrapper.has-verse .reader-panel {
     position: fixed !important;
-    bottom: 0 !important;
+    top: var(--navbar-height) !important;
     left: 0 !important;
     right: 0 !important;
+    bottom: 0 !important;
+    z-index: 50;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .reader-wrapper.has-verse .reader-panel .comment-panel {
+    position: static !important;
     width: 100% !important;
     min-width: 0 !important;
-    height: 65vh !important;
+    flex: 1 !important;
+    height: auto !important;
     border-left: none !important;
     border-top: 1px solid var(--border) !important;
-    border-radius: 16px 16px 0 0 !important;
-    z-index: 35;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
   }
+  .reader-wrapper.has-verse .resize-handle {
+    display: none !important;
+  }
+
 }
 
 *,

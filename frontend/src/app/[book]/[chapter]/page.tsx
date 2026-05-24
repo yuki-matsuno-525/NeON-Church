@@ -157,9 +157,13 @@ export default function ChapterPage() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "calc(100vh - var(--navbar-height))" }}>
+    <div
+      className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
+      style={{ display: "flex", minHeight: "calc(100vh - var(--navbar-height))" }}
+    >
       {/* Main content */}
       <div
+        className="reader-main"
         style={{
           flex: 1,
           minWidth: 0,
@@ -250,21 +254,23 @@ export default function ChapterPage() {
         )}
       </div>
 
-      {/* Comment panel */}
+      {/* Comment panel（CSS でモバイル全画面 / デスクトップ サイドバーを切り替え） */}
       {selectedVerse && (
-        <CommentPanel
-          verse={selectedVerse}
-          chapterNumber={chapterNum}
-          onClose={() => router.back()}
-          commentBookmarkMap={commentBookmarkMap}
-          verseBookmarks={verseBookmarks}
-          onVerseBookmarksChange={(updated) =>
-            setBookmarks((prev) => [
-              ...prev.filter((bm) => bm.target_type === "comment"),
-              ...updated,
-            ])
-          }
-        />
+        <div className="reader-panel">
+          <CommentPanel
+            verse={selectedVerse}
+            chapterNumber={chapterNum}
+            onClose={() => router.back()}
+            commentBookmarkMap={commentBookmarkMap}
+            verseBookmarks={verseBookmarks}
+            onVerseBookmarksChange={(updated) =>
+              setBookmarks((prev) => [
+                ...prev.filter((bm) => bm.target_type === "comment"),
+                ...updated,
+              ])
+            }
+          />
+        </div>
       )}
 
       {/* スクロールトップボタン */}
