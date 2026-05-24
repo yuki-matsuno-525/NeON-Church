@@ -1,3 +1,7 @@
+# コードベース学習ガイド
+
+このプロジェクトの構造、主要な処理フロー、機能ごとの実装場所、学習ロードマップは [`docs/codebase-guide.md`](docs/codebase-guide.md) にまとめています。
+
 # NeON Church
 
 聖書・外典・偽書をオンラインで読みながら、Reddit スタイルでコメント・議論できる Web サービス。
