@@ -337,6 +337,10 @@ export function updateTranslation(id: string, data: Partial<Pick<TranslationProj
   return apiFetch(`/translations/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
 }
 
+export function deleteTranslation(id: string): Promise<void> {
+  return apiFetch(`/translations/${id}/`, { method: "DELETE" });
+}
+
 export function activateTranslation(id: string): Promise<TranslationProject> {
   return apiFetch(`/translations/${id}/activate/`, { method: "POST" });
 }

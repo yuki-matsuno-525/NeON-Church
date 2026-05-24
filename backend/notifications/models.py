@@ -6,16 +6,19 @@ from common.models import BaseModel
 
 class Notification(BaseModel):
     """
-    通知。返信・upvote のトリガーで作成される。
+    通知。返信・upvote・メンションのトリガーで作成される。
     recipient: 通知を受け取るユーザー
     actor: 通知をトリガーしたユーザー
+    comment / translation_comment のどちらか一方が設定される。
     """
 
     REPLY = "reply"
     UPVOTE = "upvote"
+    MENTION = "mention"
     TYPE_CHOICES = [
         (REPLY, "返信"),
         (UPVOTE, "いいね"),
+        (MENTION, "メンション"),
     ]
 
     recipient = models.ForeignKey(
@@ -29,9 +32,17 @@ class Notification(BaseModel):
         related_name="triggered_notifications",
     )
     notification_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    # 返信通知: 返信コメント / upvote 通知: いいねされたコメント
     comment = models.ForeignKey(
         "comments.Comment",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    translation_comment = models.ForeignKey(
+        "translations.TranslationComment",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="notifications",
     )

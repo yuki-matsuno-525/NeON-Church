@@ -1,9 +1,33 @@
+import re
+
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from notifications.models import Notification
 from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment
+
+User = get_user_model()
+
+
+def _create_mention_notifications(comment: TranslationComment) -> None:
+    """コメント本文の @username を解析して通知を作成する。自己メンションは無視。"""
+    usernames = set(re.findall(r"@([\w]+)", comment.body))
+    if not usernames:
+        return
+    users = User.objects.filter(username__in=usernames).exclude(pk=comment.user_id)
+    notifications = [
+        Notification(
+            recipient=u,
+            actor=comment.user,
+            notification_type=Notification.MENTION,
+            translation_comment=comment,
+        )
+        for u in users
+    ]
+    Notification.objects.bulk_create(notifications, ignore_conflicts=True)
 from .serializers import (
     TranslationProjectSerializer,
     TranslationMembershipSerializer,
@@ -51,9 +75,14 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         return [permissions.AllowAny()]
 
     def get_queryset(self):
-        return TranslationProject.objects.select_related("owner", "source_book").exclude(
-            status=TranslationProject.STATUS_DRAFT
-        )
+        qs = TranslationProject.objects.select_related("owner", "source_book")
+        user = self.request.user
+        if user.is_authenticated:
+            from django.db.models import Q
+            return qs.filter(
+                Q(owner=user) | ~Q(status=TranslationProject.STATUS_DRAFT)
+            )
+        return qs.exclude(status=TranslationProject.STATUS_DRAFT)
 
     def perform_create(self, serializer):
         project = serializer.save(owner=self.request.user, status=TranslationProject.STATUS_DRAFT)
@@ -65,10 +94,11 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         )
 
 
-class TranslationProjectDetailView(generics.RetrieveUpdateAPIView):
+class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    GET   /api/translations/{id}/  プロジェクト詳細
-    PATCH /api/translations/{id}/  編集（オーナーのみ）
+    GET    /api/translations/{id}/  プロジェクト詳細
+    PATCH  /api/translations/{id}/  編集（オーナーのみ）
+    DELETE /api/translations/{id}/  削除（オーナーのみ）
     """
 
     serializer_class = TranslationProjectSerializer
@@ -317,7 +347,9 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
         project = get_object_or_404(TranslationProject, pk=self.kwargs["project_id"])
         unit_id = self.kwargs.get("unit_id")
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project) if unit_id else None
-        serializer.save(project=project, unit=unit, user=self.request.user)
+        comment = serializer.save(project=project, unit=unit, user=self.request.user)
+        if unit_id:
+            _create_mention_notifications(comment)
 
 
 class TranslationCommentDeleteView(APIView):

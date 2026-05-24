@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   fetchTranslation,
   fetchTranslationUnits,
-  fetchTranslationComments,
   fetchUnitComments,
   fetchChapters,
   fetchVerses,
@@ -19,9 +19,8 @@ import {
   addBookToTranslation,
   removeBookFromTranslation,
   updateTranslationUnit,
-  postTranslationComment,
   postUnitComment,
-  deleteTranslationComment,
+  deleteTranslation,
   fetchTranslationMembers as fetchMembers,
   assignTranslationUnit,
   formatRelativeTime,
@@ -29,8 +28,6 @@ import {
   type TranslationUnit,
   type TranslationMembership,
   type TranslationComment,
-  fetchBooks,
-  type Book,
   type Chapter,
   type Verse,
 } from "@/lib/api";
@@ -50,15 +47,82 @@ const STATUS_BADGE_COLOR: Record<string, string> = {
   done: "#22c55e",
 };
 
+function MentionInput({
+  value,
+  onChange,
+  onSubmit,
+  members,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  members: string[];
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    onChange(v);
+    const match = v.match(/@([\w]*)$/);
+    if (match) {
+      const q = match[1].toLowerCase();
+      setSuggestions(members.filter((m) => m.toLowerCase().startsWith(q) && m !== "").slice(0, 5));
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleSelect = (username: string) => {
+    const replaced = value.replace(/@[\w]*$/, `@${username} `);
+    onChange(replaced);
+    setSuggestions([]);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      setSuggestions([]);
+      onSubmit();
+    }
+  };
+
+  return (
+    <div style={{ position: "relative", marginTop: 8 }}>
+      <input
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        placeholder="@メンション可。Enterで送信..."
+        style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }}
+      />
+      {suggestions.length > 0 && (
+        <ul style={{ position: "absolute", bottom: "100%", left: 0, margin: 0, padding: 0, listStyle: "none", background: "var(--bg-alt)", border: "1px solid var(--border)", borderRadius: 8, width: "100%", zIndex: 10 }}>
+          {suggestions.map((s) => (
+            <li
+              key={s}
+              onMouseDown={() => handleSelect(s)}
+              style={{ padding: "6px 12px", cursor: "pointer", fontSize: 13 }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ""; }}
+            >
+              @{s}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function TranslationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const router = useRouter();
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [units, setUnits] = useState<TranslationUnit[]>([]);
   const [members, setMembers] = useState<TranslationMembership[]>([]);
-  const [comments, setComments] = useState<TranslationComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"units" | "discussion" | "members">("units");
+  const [tab, setTab] = useState<"units" | "members">("units");
 
   // ユニット追加フォーム
   const [addingUnit, setAddingUnit] = useState(false);
@@ -66,10 +130,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [unitVerses, setUnitVerses] = useState<Verse[]>([]);
   const [unitChapterId, setUnitChapterId] = useState("");
   const [unitVerseId, setUnitVerseId] = useState("");
-
-  // コメント投稿
-  const [commentBody, setCommentBody] = useState("");
-  const [posting, setPosting] = useState(false);
 
   // ユニットタブ: 選択中の章（null = 章一覧表示）
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
@@ -83,11 +143,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   const isOwner = user?.username === project?.owner_username;
 
-  // 書を追加・削除
-  const [availableBooks, setAvailableBooks] = useState<Book[]>([]);
-  const [addBookId, setAddBookId] = useState("");
   const [addingBook, setAddingBook] = useState(false);
-  const [removeBookId, setRemoveBookId] = useState("");
   const [removingBook, setRemovingBook] = useState(false);
   const isMember = project?.is_member ?? false;
 
@@ -105,17 +161,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     if (tab === "members" && isMember) {
       fetchMembers(id).then(setMembers).catch(() => {});
     }
-    if (tab === "discussion") {
-      fetchTranslationComments(id).then(setComments).catch(() => {});
-    }
   }, [tab, id, isMember]);
 
   useEffect(() => {
-    if (isOwner) {
+    if (isMember) {
       fetchMembers(id).then(setMembers).catch(() => {});
-      fetchBooks("口語訳").then(setAvailableBooks).catch(() => {});
     }
-  }, [isOwner, id]);
+  }, [isMember, id]);
 
   const handleJoin = async () => {
     await joinTranslation(id);
@@ -129,6 +181,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     else if (action === "publish") proj = await publishTranslation(id);
     else proj = await unpublishTranslation(id);
     setProject(proj);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("このプロジェクトを削除しますか？この操作は取り消せません。")) return;
+    await deleteTranslation(id);
+    router.push("/translations");
   };
 
   const handleMemberAction = async (membershipId: string, action: "approved" | "rejected" | "remove") => {
@@ -193,14 +251,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     setEditingUnit(null);
   };
 
-  const handlePostComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentBody.trim()) return;
-    setPosting(true);
-    const c = await postTranslationComment(id, commentBody).catch(() => null);
-    if (c) setComments((prev) => [c, ...prev]);
-    setCommentBody("");
-    setPosting(false);
+  const renderCommentBody = (body: string) => {
+    const parts = body.split(/(@[\w]+)/g);
+    return parts.map((p, i) =>
+      p.startsWith("@") ? <strong key={i} style={{ color: "var(--accent)" }}>{p}</strong> : p
+    );
   };
 
   const handleLoadUnitComments = async (unitId: string) => {
@@ -223,11 +278,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       setUnitComments((prev) => ({ ...prev, [unitId]: [c, ...(prev[unitId] ?? [])] }));
       setUnitCommentBody((prev) => ({ ...prev, [unitId]: "" }));
     }
-  };
-
-  const handleDeleteProjectComment = async (commentId: string) => {
-    await deleteTranslationComment(id, commentId);
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
   };
 
   if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>;
@@ -280,6 +330,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 </button>
               </>
             )}
+            <button onClick={handleDelete} style={btnStyle("#ef4444")}>
+              削除
+            </button>
           </div>
         )}
 
@@ -291,7 +344,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           <span style={{ fontSize: 12, color: "var(--text-faint)" }}>参加受付中ではありません</span>
         )}
         {project.status === "published" && (
-          <Link href={`/translations/${id}/read`} style={{ ...btnStyle("#22c55e"), textDecoration: "none" }}>
+          <Link href={`/translations/${id}/read`} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>
             翻訳を読む
           </Link>
         )}
@@ -318,7 +371,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
       {/* タブ */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 24, gap: 0 }}>
-        {(["units", "discussion", "members"] as const).map((t) => (
+        {(["units", "members"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -333,7 +386,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               fontSize: 14,
             }}
           >
-            {t === "units" ? "ユニット" : t === "discussion" ? "議論" : "メンバー"}
+            {t === "units" ? "ユニット" : "メンバー"}
           </button>
         ))}
       </div>
@@ -343,63 +396,39 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         <div>
           {isOwner && (
             <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-              {/* 書を一括追加 */}
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!addBookId) return;
+              <button
+                disabled={addingBook}
+                onClick={async () => {
+                  if (!project) return;
                   setAddingBook(true);
                   try {
-                    const res = await addBookToTranslation(id, addBookId);
-                    alert(`「${res.book_name}」から ${res.created} ユニットを追加しました。`);
+                    const res = await addBookToTranslation(id, project.source_book);
+                    alert(`${res.created} ユニットを追加しました。`);
                     const u = await fetchTranslationUnits(id);
                     setUnits(u);
-                    setAddBookId("");
                   } catch { /* ignore */ } finally { setAddingBook(false); }
                 }}
-                style={{ display: "flex", gap: 8, alignItems: "center" }}
+                style={btnStyle("var(--accent)")}
               >
-                <select
-                  value={addBookId}
-                  onChange={(e) => setAddBookId(e.target.value)}
-                  style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
-                >
-                  <option value="">書を選択して一括追加</option>
-                  {availableBooks.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-                <button type="submit" disabled={!addBookId || addingBook} style={btnStyle("var(--accent)")}>
-                  書を追加
-                </button>
-              </form>
-              {/* 書を一括削除 */}
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!removeBookId) return;
-                  if (!confirm("この書のすべてのユニットを削除しますか？")) return;
+                {addingBook ? "追加中…" : "全章を一括追加"}
+              </button>
+              <button
+                disabled={removingBook}
+                onClick={async () => {
+                  if (!project) return;
+                  if (!confirm("すべてのユニットを削除しますか？")) return;
                   setRemovingBook(true);
                   try {
-                    const res = await removeBookFromTranslation(id, removeBookId);
-                    alert(`「${res.book_name}」の ${res.deleted} ユニットを削除しました。`);
+                    const res = await removeBookFromTranslation(id, project.source_book);
+                    alert(`${res.deleted} ユニットを削除しました。`);
                     const u = await fetchTranslationUnits(id);
                     setUnits(u);
-                    setRemoveBookId("");
                   } catch { /* ignore */ } finally { setRemovingBook(false); }
                 }}
-                style={{ display: "flex", gap: 8, alignItems: "center" }}
+                style={btnStyle("#ef4444")}
               >
-                <select
-                  value={removeBookId}
-                  onChange={(e) => setRemoveBookId(e.target.value)}
-                  style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
-                >
-                  <option value="">書を選択して削除</option>
-                  {availableBooks.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-                <button type="submit" disabled={!removeBookId || removingBook} style={btnStyle("#ef4444")}>
-                  書を削除
-                </button>
-              </form>
+                {removingBook ? "削除中…" : "全ユニット削除"}
+              </button>
               {!addingUnit ? (
                 <button onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
                   ＋ ユニット追加
@@ -608,19 +637,18 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
                             <span style={{ fontWeight: 600 }}>{c.username}</span>
                             <span style={{ color: "var(--text-faint)", fontSize: 11, marginLeft: 8 }}>{formatRelativeTime(c.created_at)}</span>
-                            <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>{c.display_body}</p>
+                            <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
+                              {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
+                            </p>
                           </div>
                         ))}
                         {isMember && (
-                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <input
-                              value={unitCommentBody[unit.id] ?? ""}
-                              onChange={(e) => setUnitCommentBody((prev) => ({ ...prev, [unit.id]: e.target.value }))}
-                              placeholder="コメントを入力..."
-                              style={{ flex: 1, padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13 }}
-                            />
-                            <button onClick={() => handlePostUnitComment(unit.id)} style={btnStyle("var(--accent)")}>送信</button>
-                          </div>
+                          <MentionInput
+                            value={unitCommentBody[unit.id] ?? ""}
+                            onChange={(v) => setUnitCommentBody((prev) => ({ ...prev, [unit.id]: v }))}
+                            onSubmit={() => handlePostUnitComment(unit.id)}
+                            members={members.filter((m) => m.status === "approved").map((m) => m.username)}
+                          />
                         )}
                       </div>
                     )}
@@ -630,48 +658,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
         )}
-        </div>
-      )}
-
-      {/* 議論タブ */}
-      {tab === "discussion" && (
-        <div>
-          {isMember && (
-            <form onSubmit={handlePostComment} style={{ marginBottom: 24, display: "flex", gap: 8 }}>
-              <input
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                placeholder="プロジェクト全体への議論を投稿..."
-                style={{ flex: 1, padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 14 }}
-              />
-              <button type="submit" disabled={posting} style={btnStyle("var(--accent)")}>投稿</button>
-            </form>
-          )}
-          {comments.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>まだ議論はありません。</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {comments.map((c) => (
-                <div key={c.id} style={{ padding: "12px 16px", border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-alt)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>{c.username}</span>
-                    <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{formatRelativeTime(c.created_at)}</span>
-                    {(c.username === user?.username || isOwner) && !c.is_deleted && (
-                      <button
-                        onClick={() => handleDeleteProjectComment(c.id)}
-                        style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", color: "var(--text-faint)", fontSize: 12 }}
-                      >
-                        削除
-                      </button>
-                    )}
-                  </div>
-                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
-                    {c.display_body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
