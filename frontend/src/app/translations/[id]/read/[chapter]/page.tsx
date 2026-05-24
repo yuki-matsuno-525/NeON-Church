@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
+import { languageLabel } from "@/lib/languages";
 
 export default function TranslationReadChapterPage({
   params,
@@ -62,7 +63,7 @@ export default function TranslationReadChapterPage({
         {project?.name} — 第{chapterNum}章
       </h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 28px" }}>
-        {project?.source_book_name} → {project?.target_language}
+        {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
       </p>
 
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />

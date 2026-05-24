@@ -33,17 +33,19 @@ class TranslationProject(BaseModel):
         related_name="translation_projects",
     )
     LANGUAGE_CHOICES = [
-        ("現代日本語", "現代日本語"),
-        ("やさしい日本語", "やさしい日本語"),
-        ("口語日本語", "口語日本語"),
-        ("文語日本語", "文語日本語"),
-        ("English", "English"),
-        ("한국어", "한국어"),
-        ("中文（简体）", "中文（简体）"),
-        ("中文（繁體）", "中文（繁體）"),
+        ("ja", "日本語"),
+        ("en", "English"),
+        ("ko", "한국어"),
+        ("zh-Hans", "中文（简体）"),
+        ("zh-Hant", "中文（繁體）"),
+        ("fr", "Français"),
+        ("de", "Deutsch"),
+        ("es", "Español"),
+        ("pt", "Português"),
+        ("ar", "العربية"),
     ]
 
-    target_language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES)
+    target_language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True)
 
     class Meta:

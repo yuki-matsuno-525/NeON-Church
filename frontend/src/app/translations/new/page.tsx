@@ -6,17 +6,7 @@ import { createTranslation, fetchBooks, type Book } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-
-const LANGUAGE_OPTIONS = [
-  "現代日本語",
-  "やさしい日本語",
-  "口語日本語",
-  "文語日本語",
-  "English",
-  "한국어",
-  "中文（简体）",
-  "中文（繁體）",
-] as const;
+import { LANGUAGE_OPTIONS } from "@/lib/languages";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
@@ -133,8 +123,8 @@ export default function NewTranslationPage() {
             required
           >
             <option value="">{t.selectLangOption}</option>
-            {LANGUAGE_OPTIONS.map((lang) => (
-              <option key={lang} value={lang}>{lang}</option>
+            {LANGUAGE_OPTIONS.map(({ tag, label }) => (
+              <option key={tag} value={tag}>{label}</option>
             ))}
           </select>
         </div>

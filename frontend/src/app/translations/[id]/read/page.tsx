@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
+import { languageLabel } from "@/lib/languages";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -45,7 +46,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
 
       <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project?.name}</h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 32px" }}>
-        {project?.source_book_name} → {project?.target_language}
+        {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
       </p>
 
       {chapterNums.length === 0 ? (

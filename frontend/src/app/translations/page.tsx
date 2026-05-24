@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { fetchTranslations, type TranslationProject } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { languageLabel } from "@/lib/languages";
 
 const PAGE_SIZE = 10;
 
@@ -141,7 +142,7 @@ function TranslationsContent() {
 
                 <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--text-faint)", flexWrap: "wrap" }}>
                   <span>📖 {p.source_book_name}</span>
-                  <span>🌐 {p.target_language}</span>
+                  <span>🌐 {languageLabel(p.target_language)}</span>
                   <span>{t.createdBy} {p.owner_username}</span>
                   <span>
                     {t.progress} {p.done_count}/{p.unit_count}

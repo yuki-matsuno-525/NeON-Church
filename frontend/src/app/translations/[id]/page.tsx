@@ -33,6 +33,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_COLOR: Record<string, string> = {
   todo: "var(--border)",
@@ -316,7 +317,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project.name}</h1>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            {project.source_book_name} → {project.target_language} ／ {t.createdBy} {project.owner_username}
+            {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>
         </div>
 

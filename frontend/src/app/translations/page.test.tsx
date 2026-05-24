@@ -34,7 +34,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   owner_username: "alice",
   source_book: "b1",
   source_book_name: "マタイによる福音書",
-  target_language: "English",
+  target_language: "en",
   status: "active",
   unit_count: 100,
   done_count: 30,
@@ -114,7 +114,7 @@ describe("TranslationsPage", () => {
     const { fetchTranslations } = await import("@/lib/api");
     vi.mocked(fetchTranslations).mockResolvedValue([
       makeProject({ id: "p1", name: "マタイ英訳プロジェクト" }),
-      makeProject({ id: "p2", name: "マルコ仏訳プロジェクト", target_language: "French" }),
+      makeProject({ id: "p2", name: "マルコ仏訳プロジェクト", target_language: "fr" }),
     ]);
     mockUseAuth.mockReturnValue({ user: null });
 
@@ -122,6 +122,6 @@ describe("TranslationsPage", () => {
 
     await screen.findByText("マタイ英訳プロジェクト");
     expect(screen.getByText("マルコ仏訳プロジェクト")).toBeInTheDocument();
-    expect(screen.getByText(/French/)).toBeInTheDocument();
+    expect(screen.getByText(/Français/)).toBeInTheDocument();
   });
 });
