@@ -12,6 +12,7 @@ import type {
   MyComment,
   ReadingProgress,
   QAComment,
+  TranslationLanguage,
   TranslationProject,
   TranslationMembership,
   TranslationUnit,
@@ -315,6 +316,10 @@ export function searchBible(q: string): Promise<SearchResult> {
 // ---------------------------------------------------------------------------
 // 翻訳プロジェクト
 // ---------------------------------------------------------------------------
+
+export function fetchTranslationLanguages(): Promise<TranslationLanguage[]> {
+  return apiFetch("/translations/languages/");
+}
 
 export function fetchTranslations(): Promise<TranslationProject[]> {
   return apiFetch("/translations/");

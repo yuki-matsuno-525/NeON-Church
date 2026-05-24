@@ -4,6 +4,21 @@ from django.db import models
 from common.models import BaseModel
 
 
+class Language(BaseModel):
+    """翻訳先言語の選択肢。DBで管理することで動的に追加・削除できる。"""
+
+    tag = models.CharField(max_length=20, unique=True)
+    label = models.CharField(max_length=100)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        db_table = "translation_languages"
+        ordering = ["order"]
+
+    def __str__(self) -> str:
+        return self.label
+
+
 class TranslationProject(BaseModel):
     """
     共同翻訳プロジェクト。
@@ -32,20 +47,8 @@ class TranslationProject(BaseModel):
         on_delete=models.PROTECT,
         related_name="translation_projects",
     )
-    LANGUAGE_CHOICES = [
-        ("ja", "日本語"),
-        ("en", "English"),
-        ("ko", "한국어"),
-        ("zh-Hans", "中文（简体）"),
-        ("zh-Hant", "中文（繁體）"),
-        ("fr", "Français"),
-        ("de", "Deutsch"),
-        ("es", "Español"),
-        ("pt", "Português"),
-        ("ar", "العربية"),
-    ]
 
-    target_language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES)
+    target_language = models.CharField(max_length=20)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True)
 
     class Meta:

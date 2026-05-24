@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notifications.models import Notification
-from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment
+from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, Language
 
 User = get_user_model()
 
@@ -29,6 +29,7 @@ def _create_mention_notifications(comment: TranslationComment) -> None:
     ]
     Notification.objects.bulk_create(notifications, ignore_conflicts=True)
 from .serializers import (
+    LanguageSerializer,
     TranslationProjectSerializer,
     TranslationMembershipSerializer,
     TranslationUnitSerializer,
@@ -414,6 +415,14 @@ class TranslationRemoveBookView(APIView):
         book = get_object_or_404(Book, pk=book_id)
         deleted, _ = TranslationUnit.objects.filter(project=project, verse__chapter__book=book).delete()
         return Response({"deleted": deleted, "book_name": book.name}, status=status.HTTP_200_OK)
+
+
+class LanguageListView(generics.ListAPIView):
+    """GET /api/translations/languages/  翻訳先言語一覧（誰でも閲覧可）"""
+
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
+    permission_classes = [permissions.AllowAny]
 
 
 class TranslationReadView(APIView):

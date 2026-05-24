@@ -106,6 +106,13 @@ export type QAComment = {
   } | null;
 };
 
+export type TranslationLanguage = {
+  id: string;
+  tag: string;
+  label: string;
+  order: number;
+};
+
 export type TranslationProject = {
   id: string;
   name: string;

@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
-from bible.serializers import BookSerializer
-from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment
+
+from .models import Language, TranslationProject, TranslationMembership, TranslationUnit, TranslationComment
+
+
+class LanguageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Language
+        fields = ["id", "tag", "label", "order"]
 
 
 class TranslationProjectSerializer(serializers.ModelSerializer):

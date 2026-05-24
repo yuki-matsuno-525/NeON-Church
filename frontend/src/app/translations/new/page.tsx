@@ -2,27 +2,35 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createTranslation, fetchBooks, type Book } from "@/lib/api";
+import { createTranslation, fetchBooks, fetchTranslationLanguages, type Book, type TranslationLanguage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { LANGUAGE_OPTIONS } from "@/lib/languages";
+import { BIBLE_TRANSLATIONS } from "@/lib/translations";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const t = useT();
   const [books, setBooks] = useState<Book[]>([]);
+  const [languages, setLanguages] = useState<TranslationLanguage[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [sourceVersion, setSourceVersion] = useState(BIBLE_TRANSLATIONS[0]?.id ?? "");
   const [sourceBook, setSourceBook] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchBooks("口語訳").then(setBooks).catch(() => {});
+    fetchTranslationLanguages().then(setLanguages).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!sourceVersion) return;
+    setSourceBook("");
+    fetchBooks(sourceVersion).then(setBooks).catch(() => {});
+  }, [sourceVersion]);
 
   if (!authLoading && !user) {
     router.replace("/login");
@@ -100,6 +108,20 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
+          <label style={labelStyle}>{t.bibleVersion}</label>
+          <select
+            value={sourceVersion}
+            onChange={(e) => setSourceVersion(e.target.value)}
+            style={inputStyle}
+            required
+          >
+            {BIBLE_TRANSLATIONS.map(({ id, label }) => (
+              <option key={id} value={id}>{label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label style={labelStyle}>{t.sourceBook}</label>
           <select
             value={sourceBook}
@@ -123,8 +145,8 @@ export default function NewTranslationPage() {
             required
           >
             <option value="">{t.selectLangOption}</option>
-            {LANGUAGE_OPTIONS.map(({ tag, label }) => (
-              <option key={tag} value={tag}>{label}</option>
+            {languages.map(({ id, tag, label }) => (
+              <option key={id} value={tag}>{label}</option>
             ))}
           </select>
         </div>
