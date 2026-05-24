@@ -28,6 +28,7 @@ export default function NewTranslationPage() {
 
   useEffect(() => {
     if (!sourceVersion) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSourceBook("");
     fetchBooks(sourceVersion).then(setBooks).catch(() => {});
   }, [sourceVersion]);
