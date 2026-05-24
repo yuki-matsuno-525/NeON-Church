@@ -257,6 +257,13 @@ export default function ChapterPage() {
           chapterNumber={chapterNum}
           onClose={() => router.back()}
           commentBookmarkMap={commentBookmarkMap}
+          verseBookmarks={verseBookmarks}
+          onVerseBookmarksChange={(updated) =>
+            setBookmarks((prev) => [
+              ...prev.filter((bm) => bm.target_type === "comment"),
+              ...updated,
+            ])
+          }
         />
       )}
 
