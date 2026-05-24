@@ -104,7 +104,7 @@ function SearchContent() {
 
           {result.books.length > 0 && (
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text-muted)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionBooks}
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -135,7 +135,7 @@ function SearchContent() {
 
           {result.verses.length > 0 && (
             <section>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text-muted)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionVerses}
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -182,7 +182,7 @@ function SearchContent() {
 
           {result.comments.length > 0 && (
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text-muted)" }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionComments}
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

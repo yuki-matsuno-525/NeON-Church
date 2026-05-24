@@ -217,6 +217,6 @@ function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
     cursor: disabled ? "default" : "pointer",
     fontSize: 13,
     fontFamily: "inherit",
-    opacity: disabled ? 0.4 : 1,
+    opacity: disabled ? 0.5 : 1,
   };
 }

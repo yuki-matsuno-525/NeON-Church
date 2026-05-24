@@ -10,8 +10,8 @@
   --bg-hover: #201440;
   --border: rgba(140, 75, 235, 0.30);
   --text: rgba(236, 228, 252, 0.92);
-  --text-muted: rgba(162, 146, 208, 0.68);
-  --text-faint: rgba(115, 100, 162, 0.55);
+  --text-muted: #a898d8;
+  --text-faint: #7a6aaa;
   --accent: #c040f0;
   --accent-text: #fff;
   --accent-tint: rgba(145, 60, 240, 0.18);
@@ -159,6 +159,13 @@ h2,
 h3 {
   font-family: "Noto Serif JP", serif;
   letter-spacing: 0.02em;
+}
+
+/* プレースホルダー */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
 }
 
 /* スクロールバー */

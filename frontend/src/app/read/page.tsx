@@ -82,7 +82,7 @@ export default function ReadPage() {
         </div>
       )}
 
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>
         {t.selectBook}
       </h2>
 

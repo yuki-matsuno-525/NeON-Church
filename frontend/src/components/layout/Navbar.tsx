@@ -141,23 +141,23 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
-              <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
+              <Link href="/read" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.read}
               </Link>
-              <Link href="/qa" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
+              <Link href="/qa" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.qa}
               </Link>
-              <Link href="/translations" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
+              <Link href="/translations" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.translate}
               </Link>
-              <Link href="/bookmarks" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
+              <Link href="/bookmarks" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.bookmarks}
               </Link>
               <Link
                 href="/notifications"
                 aria-label="通知"
                 style={{
-                  color: "var(--text-muted)",
+                  color: "var(--text)",
                   textDecoration: "none",
                   position: "relative",
                   display: "flex",
