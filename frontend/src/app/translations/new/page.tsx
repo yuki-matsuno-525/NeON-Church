@@ -7,6 +7,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 
+const LANGUAGE_OPTIONS = [
+  "現代日本語",
+  "やさしい日本語",
+  "口語日本語",
+  "文語日本語",
+  "English",
+  "한국어",
+  "中文（简体）",
+  "中文（繁體）",
+] as const;
+
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -30,7 +41,7 @@ export default function NewTranslationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !sourceBook || !targetLanguage.trim()) return;
+    if (!name.trim() || !sourceBook || !targetLanguage) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -38,7 +49,7 @@ export default function NewTranslationPage() {
         name: name.trim(),
         description: description.trim(),
         source_book: sourceBook,
-        target_language: targetLanguage.trim(),
+        target_language: targetLanguage,
       });
       router.push(`/translations/${project.id}`);
     } catch {
@@ -115,13 +126,17 @@ export default function NewTranslationPage() {
 
         <div>
           <label style={labelStyle}>{t.targetLanguage}</label>
-          <input
+          <select
             value={targetLanguage}
             onChange={(e) => setTargetLanguage(e.target.value)}
-            placeholder={t.targetLangPlaceholder}
             style={inputStyle}
             required
-          />
+          >
+            <option value="">{t.selectLangOption}</option>
+            {LANGUAGE_OPTIONS.map((lang) => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
         </div>
 
         {error && (

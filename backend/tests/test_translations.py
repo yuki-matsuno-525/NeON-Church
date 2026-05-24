@@ -119,7 +119,7 @@ def project(db, owner_client, book):
         "name": "テスト翻訳プロジェクト",
         "description": "説明文",
         "source_book": str(book.id),
-        "target_language": "en",
+        "target_language": "現代日本語",
     }, format="json")
     assert res.status_code == status.HTTP_201_CREATED
     return res.data
@@ -164,14 +164,14 @@ class TestTranslationProjectList:
         assert published_project["id"] in ids
 
     def test_create_requires_auth(self, anon_client, book):
-        res = anon_client.post(LIST_URL, {"name": "X", "source_book": str(book.id), "target_language": "en"}, format="json")
+        res = anon_client.post(LIST_URL, {"name": "X", "source_book": str(book.id), "target_language": "English"}, format="json")
         assert res.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
 
     def test_create_sets_owner_membership(self, db, owner_client, book):
         res = owner_client.post(LIST_URL, {
             "name": "新プロジェクト",
             "source_book": str(book.id),
-            "target_language": "ja",
+            "target_language": "現代日本語",
         }, format="json")
         assert res.status_code == status.HTTP_201_CREATED
         project_id = res.data["id"]

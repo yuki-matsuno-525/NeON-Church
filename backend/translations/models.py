@@ -32,7 +32,18 @@ class TranslationProject(BaseModel):
         on_delete=models.PROTECT,
         related_name="translation_projects",
     )
-    target_language = models.CharField(max_length=20)
+    LANGUAGE_CHOICES = [
+        ("現代日本語", "現代日本語"),
+        ("やさしい日本語", "やさしい日本語"),
+        ("口語日本語", "口語日本語"),
+        ("文語日本語", "文語日本語"),
+        ("English", "English"),
+        ("한국어", "한국어"),
+        ("中文（简体）", "中文（简体）"),
+        ("中文（繁體）", "中文（繁體）"),
+    ]
+
+    target_language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True)
 
     class Meta:
