@@ -11,6 +11,7 @@ import {
   type Comment,
 } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
+import { useT } from "@/lib/i18n";
 
 function getSlugByName(name: string): string | null {
   return BOOKS.find((b) => b.name === name)?.slug ?? null;
@@ -19,7 +20,10 @@ function getSlugByName(name: string): string | null {
 function buildVerseUrl(comment: QAComment): string | null {
   const slug = getSlugByName(comment.book_name);
   if (!slug) return null;
-  if (comment.chapter_number) return `/${slug}/${comment.chapter_number}`;
+  if (comment.chapter_number) {
+    const hash = comment.verse_number ? `#verse-${comment.verse_number}` : "";
+    return `/${slug}/${comment.chapter_number}${hash}`;
+  }
   return `/${slug}`;
 }
 
@@ -30,6 +34,7 @@ type Props = {
 };
 
 export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -63,7 +68,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
       setReplyBody("");
       loadReplies();
     } catch (err) {
-      setReplyError(err instanceof Error ? err.message : "投稿に失敗しました");
+      setReplyError(err instanceof Error ? err.message : t.postFailed);
     } finally {
       setSubmittingReply(false);
     }
@@ -88,7 +93,6 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         background: "var(--bg-alt)",
       }}
     >
-      {/* ヘッダー */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>{comment.user.username}</span>
         <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
@@ -110,10 +114,8 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         )}
       </div>
 
-      {/* 本文 */}
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{comment.body}</p>
 
-      {/* ベストアンサー（設定済みの場合） */}
       {comment.best_answer && (
         <div
           style={{
@@ -125,7 +127,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
           }}
         >
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 4 }}>
-            ✓ ベストアンサー
+            {t.bestAnswer}
           </div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 2 }}>
             {comment.best_answer.user.username} · {formatRelativeTime(comment.best_answer.created_at)}
@@ -134,11 +136,10 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         </div>
       )}
 
-      {/* タグ・vote・返信ボタン */}
       <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-        {comment.tags.map((t) => (
+        {comment.tags.map((tag) => (
           <span
-            key={t.id}
+            key={tag.id}
             style={{
               fontSize: 11,
               padding: "2px 7px",
@@ -148,7 +149,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
               color: "var(--text-muted)",
             }}
           >
-            {t.name}
+            {tag.name}
           </span>
         ))}
         <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-faint)" }}>
@@ -166,17 +167,16 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
             fontFamily: "inherit",
           }}
         >
-          返信 {comment.reply_count}件 {expanded ? "▲" : "▼"}
+          {t.repliesCount(comment.reply_count)} {expanded ? "▲" : "▼"}
         </button>
       </div>
 
-      {/* 返信一覧 */}
       {expanded && (
         <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
           {loadingReplies ? (
-            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>読み込み中...</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</div>
           ) : replies.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>返信はまだありません。</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.noReplies}</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {replies.map((r) => {
@@ -194,7 +194,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap" }}>
                       {isBest && (
                         <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>
-                          ✓ ベストアンサー
+                          {t.bestAnswer}
                         </span>
                       )}
                       <span style={{ fontWeight: 600, fontSize: 12 }}>{r.user.username}</span>
@@ -216,12 +216,12 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
                             fontFamily: "inherit",
                           }}
                         >
-                          {isBest ? "解除" : "ベストアンサー"}
+                          {isBest ? t.unsetBestAnswer : t.setBestAnswer}
                         </button>
                       )}
                     </div>
                     <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
-                      {r.is_deleted ? "このコメントは削除されました" : r.body}
+                      {r.is_deleted ? t.deletedComment : r.body}
                     </p>
                   </div>
                 );
@@ -229,13 +229,12 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
             </div>
           )}
 
-          {/* 返信フォーム */}
           {currentUserId && (
             <form onSubmit={handleReplySubmit} style={{ marginTop: 10 }}>
               <textarea
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
-                placeholder="返信を入力..."
+                placeholder={t.replyPlaceholder}
                 rows={2}
                 style={{
                   width: "100%",
@@ -271,7 +270,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
                     fontFamily: "inherit",
                   }}
                 >
-                  {submittingReply ? "投稿中..." : "返信する"}
+                  {submittingReply ? t.posting : t.replyBtn}
                 </button>
               </div>
             </form>

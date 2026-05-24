@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   onClose: () => void;
@@ -8,6 +9,7 @@ type Props = {
 
 export function LoginRequiredModal({ onClose }: Props) {
   const pathname = usePathname();
+  const t = useT();
   const loginHref = `/login?from=${encodeURIComponent(pathname)}`;
 
   return (
@@ -39,10 +41,10 @@ export function LoginRequiredModal({ onClose }: Props) {
         }}
       >
         <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-          ログインが必要です
+          {t.loginRequired}
         </p>
         <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
-          この機能を使うにはログインしてください。
+          {t.loginRequiredDesc}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button
@@ -58,7 +60,7 @@ export function LoginRequiredModal({ onClose }: Props) {
               fontFamily: "inherit",
             }}
           >
-            閉じる
+            {t.close}
           </button>
           <a
             href={loginHref}
@@ -73,7 +75,7 @@ export function LoginRequiredModal({ onClose }: Props) {
               boxShadow: "0 0 14px rgba(198, 44, 170, 0.45)",
             }}
           >
-            ログインする
+            {t.loginBtn}
           </a>
         </div>
       </div>

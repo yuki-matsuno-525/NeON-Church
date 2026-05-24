@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { fetchUnreadCount } from "@/lib/api";
 
 type NavbarProps = {
@@ -12,6 +13,7 @@ type NavbarProps = {
 
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, loading, logout } = useAuth();
+  const { lang, setLang } = useLang();
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -29,6 +31,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
     router.push("/");
     router.refresh();
   };
+
+  const t = lang === "en"
+    ? { read: "Read", qa: "Q&A", translate: "Translate", bookmarks: "Bookmarks", logout: "Sign out", login: "Sign in", search: "Search..." }
+    : { read: "読む", qa: "Q&A", translate: "翻訳", bookmarks: "お気に入り", logout: "ログアウト", login: "ログイン", search: "検索..." };
 
   return (
     <nav
@@ -92,7 +98,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <input
           type="search"
           name="q"
-          placeholder="検索..."
+          placeholder={t.search}
           style={{
             width: "100%",
             maxWidth: 280,
@@ -107,21 +113,45 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         />
       </form>
 
+      {/* 言語切り替え */}
+      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        {(["ja", "en"] as const).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLang(l)}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: "3px 7px",
+              fontSize: 12,
+              fontWeight: lang === l ? 700 : 400,
+              color: lang === l ? "rgba(193, 143, 255, 1)" : "var(--text-muted)",
+              borderRadius: 4,
+              fontFamily: "inherit",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       {!loading && (
         <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
               <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
-                読む
+                {t.read}
               </Link>
               <Link href="/qa" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
-                Q&A
+                {t.qa}
               </Link>
               <Link href="/translations" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
-                翻訳
+                {t.translate}
               </Link>
               <Link href="/bookmarks" style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 13 }}>
-                お気に入り
+                {t.bookmarks}
               </Link>
               <Link
                 href="/notifications"
@@ -203,7 +233,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                   fontFamily: "inherit",
                 }}
               >
-                ログアウト
+                {t.logout}
               </button>
             </>
           ) : (
@@ -220,7 +250,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 boxShadow: "0 0 14px rgba(198, 44, 170, 0.45)",
               }}
             >
-              ログイン
+              {t.login}
             </Link>
           )}
         </div>

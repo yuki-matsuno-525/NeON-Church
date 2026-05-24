@@ -11,12 +11,14 @@ import {
   saveLocalProgress,
 } from "@/lib/readingProgress";
 import { BOOKS } from "@/lib/books";
+import { useT } from "@/lib/i18n";
 
 type ResumeTarget = { slug: string; chapter: number; bookName: string } | null;
 
 export default function ReadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useT();
   const resolved = useRef(false);
   const [resume, setResume] = useState<ResumeTarget>(() => {
     const localSlug = getLastBookSlug();
@@ -56,7 +58,7 @@ export default function ReadPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>聖書を読む</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{t.readTitle}</h1>
 
       {resume && (
         <div style={{ marginBottom: 28 }}>
@@ -75,13 +77,13 @@ export default function ReadPage() {
               border: "1px solid var(--accent)",
             }}
           >
-            続きから読む — {resume.bookName} 第{resume.chapter}章 ›
+            {t.resumeReading(resume.bookName, resume.chapter)}
           </Link>
         </div>
       )}
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
-        書を選択
+        {t.selectBook}
       </h2>
 
       <div
@@ -125,7 +127,7 @@ export default function ReadPage() {
               {book.name}
             </span>
             <span style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 8 }}>
-              全{book.totalChapters}章
+              {t.totalChapters(book.totalChapters)}
             </span>
           </Link>
         ))}

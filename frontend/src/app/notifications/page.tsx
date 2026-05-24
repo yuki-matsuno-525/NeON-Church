@@ -10,17 +10,20 @@ import {
   formatRelativeTime,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-
-const TYPE_LABEL: Record<string, string> = {
-  reply: "返信",
-  upvote: "いいね",
-};
+import { useT } from "@/lib/i18n";
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fetching, setFetching] = useState(true);
+
+  const typeLabel = (type: string): string => {
+    if (type === "reply") return t.notifReply;
+    if (type === "upvote") return t.notifUpvote;
+    return type;
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,7 +53,7 @@ export default function NotificationsPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
     );
   }
 
@@ -66,7 +69,7 @@ export default function NotificationsPage() {
           marginBottom: 24,
         }}
       >
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>通知</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 700 }}>{t.notificationsTitle}</h1>
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAll}
@@ -81,13 +84,13 @@ export default function NotificationsPage() {
               fontFamily: "inherit",
             }}
           >
-            すべて既読
+            {t.markAllRead}
           </button>
         )}
       </div>
 
       {notifications.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>通知はありません。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.noNotifications}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {notifications.map((n) => (
@@ -123,7 +126,7 @@ export default function NotificationsPage() {
                     borderRadius: 4,
                   }}
                 >
-                  {TYPE_LABEL[n.notification_type] ?? n.notification_type}
+                  {typeLabel(n.notification_type)}
                 </span>
                 <span style={{ fontWeight: 700, fontSize: 13 }}>
                   {n.actor_username}

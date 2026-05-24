@@ -5,13 +5,9 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchTranslations, type TranslationProject } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 const PAGE_SIZE = 10;
-
-const STATUS_LABEL: Record<string, string> = {
-  active: "進行中",
-  published: "公開済み",
-};
 
 const STATUS_COLOR: Record<string, string> = {
   active: "var(--accent)",
@@ -19,8 +15,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function TranslationsPage() {
+  const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
       <TranslationsContent />
     </Suspense>
   );
@@ -30,6 +27,7 @@ function TranslationsContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useT();
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const [projects, setProjects] = useState<TranslationProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,13 +39,19 @@ function TranslationsContent() {
       .finally(() => setLoading(false));
   }, []);
 
+  const statusLabel = (status: string) => {
+    if (status === "active") return t.statusActive;
+    if (status === "published") return t.statusPublished;
+    return status;
+  };
+
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>翻訳プロジェクト</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.translationsTitle}</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            聖書の共同翻訳プロジェクト一覧
+            {t.translationsDesc}
           </p>
         </div>
         {user && (
@@ -63,13 +67,13 @@ function TranslationsContent() {
               fontSize: 14,
             }}
           >
-            ＋ 新規作成
+            {t.newProject}
           </Link>
         )}
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-muted)", padding: 16 }}>読み込み中...</div>
+        <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.loading}</div>
       ) : projects.length === 0 ? (
         <div
           style={{
@@ -80,10 +84,10 @@ function TranslationsContent() {
             borderRadius: 12,
           }}
         >
-          <p style={{ fontSize: 15, margin: 0 }}>まだ公開されたプロジェクトはありません。</p>
+          <p style={{ fontSize: 15, margin: 0 }}>{t.noProjects}</p>
           {user && (
             <Link href="/translations/new" style={{ color: "var(--accent)", fontSize: 14 }}>
-              最初のプロジェクトを作成する →
+              {t.createFirst}
             </Link>
           )}
         </div>
@@ -125,7 +129,7 @@ function TranslationsContent() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {STATUS_LABEL[p.status] ?? p.status}
+                    {statusLabel(p.status)}
                   </span>
                 </div>
 
@@ -138,9 +142,9 @@ function TranslationsContent() {
                 <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--text-faint)", flexWrap: "wrap" }}>
                   <span>📖 {p.source_book_name}</span>
                   <span>🌐 {p.target_language}</span>
-                  <span>作成: {p.owner_username}</span>
+                  <span>{t.createdBy} {p.owner_username}</span>
                   <span>
-                    進捗: {p.done_count}/{p.unit_count} 節
+                    {t.progress} {p.done_count}/{p.unit_count}
                     {p.unit_count > 0 && (
                       <span style={{ marginLeft: 6 }}>
                         ({Math.round((p.done_count / p.unit_count) * 100)}%)
@@ -154,11 +158,11 @@ function TranslationsContent() {
         </div>
         {totalPages > 1 && (
           <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-            <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>前</button>
+            <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>{t.prev}</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
               <button key={n} onClick={() => goTo(n)} style={pageBtnStyle(false, n === safePage)}>{n}</button>
             ))}
-            <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>次</button>
+            <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>{t.next}</button>
           </div>
         )}
           </>

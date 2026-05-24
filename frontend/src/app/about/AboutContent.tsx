@@ -1,0 +1,62 @@
+"use client";
+
+import Link from "next/link";
+import { useT } from "@/lib/i18n";
+
+export function AboutContent() {
+  const t = useT();
+
+  return (
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px" }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>
+        {t.aboutTitle}
+      </h1>
+      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 40 }}>
+        {t.aboutSubtitle}
+      </p>
+
+      <Section title={t.aboutSection1Title}>
+        <p>{t.aboutSection1Body}</p>
+      </Section>
+
+      <Section title={t.aboutSection2Title}>
+        <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+          {t.aboutFeatures.map((f, i) => <li key={i}>{f}</li>)}
+        </ul>
+      </Section>
+
+      <Section title={t.aboutSection3Title}>
+        <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+          {t.aboutPlanned.map((f, i) => <li key={i}>{f}</li>)}
+        </ul>
+      </Section>
+
+      <div style={{ marginTop: 40 }}>
+        <Link
+          href="/"
+          style={{
+            color: "var(--accent)",
+            textDecoration: "none",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
+          {t.backToHome}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 32 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "var(--accent)" }}>
+        {title}
+      </h2>
+      <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)" }}>
+        {children}
+      </div>
+    </div>
+  );
+}

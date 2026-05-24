@@ -5,39 +5,63 @@ import Link from "next/link";
 import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { formatRelativeTime } from "@/lib/utils";
+import { useLang } from "@/contexts/LanguageContext";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
 }
 
-const SECTIONS = [
-  {
-    title: "読む",
-    description: "聖書の各章を読み、コメントを投稿・共有できます。",
-    href: "/read",
-    icon: "/img/icon-read.png",
-  },
-  {
-    title: "Q&A",
-    description: "聖書に関する疑問を投稿し、回答をもらえる場所。",
-    href: "/qa",
-    icon: "/img/icon-qa.png",
-  },
-  {
-    title: "翻訳",
-    description: "聖書の共同翻訳プロジェクトを作成・参加できます。",
-    href: "/translations",
-    icon: "/img/icon-translation.png",
-  },
+const SECTIONS_JA = [
+  { title: "読む", description: "聖書の各章を読み、コメントを投稿・共有できます。", href: "/read", icon: "/img/icon-read.png" },
+  { title: "Q&A", description: "聖書に関する疑問を投稿し、回答をもらえる場所。", href: "/qa", icon: "/img/icon-qa.png" },
+  { title: "翻訳", description: "聖書の共同翻訳プロジェクトを作成・参加できます。", href: "/translations", icon: "/img/icon-translation.png" },
 ];
 
+const SECTIONS_EN = [
+  { title: "Read", description: "Read each chapter of the Bible and post or share comments.", href: "/read", icon: "/img/icon-read.png" },
+  { title: "Q&A", description: "Post questions about the Bible and receive answers.", href: "/qa", icon: "/img/icon-qa.png" },
+  { title: "Translate", description: "Create or join collaborative Bible translation projects.", href: "/translations", icon: "/img/icon-translation.png" },
+];
+
+const HOME_T = {
+  ja: {
+    tagline: "すべての声を、\n等しく。",
+    desc: "外典・偽書から正典まで。聖書のあらゆるテキストを読み、議論し、翻訳する場所。",
+    todayVerse: "今日の聖句",
+    loading: "読み込み中...",
+    trending: "トレンド",
+    recentQA: "最近のQ&A",
+    seeAll: "すべて見る →",
+    about: "NeON Church について",
+    replies: "返信",
+  },
+  en: {
+    tagline: "Equal voice\nfor all.",
+    desc: "From Apocrypha to canon. Read, discuss, and translate every text of the Bible.",
+    todayVerse: "Today's Verse",
+    loading: "Loading...",
+    trending: "Trending",
+    recentQA: "Recent Q&A",
+    seeAll: "See all →",
+    about: "About NeON Church",
+    replies: "replies",
+  },
+};
+
 export default function Home() {
+  const { lang } = useLang();
+  const t = HOME_T[lang];
+  const sections = lang === "en" ? SECTIONS_EN : SECTIONS_JA;
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
+  const [verseLoading, setVerseLoading] = useState(true);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
   const [trending, setTrending] = useState<QAComment[]>([]);
 
   useEffect(() => {
-    fetchVerseOfDay().then(setVerseOfDay).catch(() => {});
+    fetchVerseOfDay()
+      .then(setVerseOfDay)
+      .catch(() => {})
+      .finally(() => setVerseLoading(false));
     fetchQAComments()
       .then((qa) => setRecentQA(qa.slice(0, 4)))
       .catch(() => {});
@@ -110,110 +134,174 @@ export default function Home() {
               margin: "0 0 16px",
               lineHeight: 1.3,
               letterSpacing: "-0.01em",
+              whiteSpace: "pre-line",
             }}
           >
-            すべての声を、<br />等しく。
+            {t.tagline}
           </h1>
           <p
             style={{
               fontSize: 14,
               color: "rgba(255, 255, 255, 0.45)",
               lineHeight: 1.9,
-              margin: "0 0 28px",
+              margin: 0,
               maxWidth: 480,
             }}
           >
-            外典・偽書から正典まで。聖書のあらゆるテキストを読み、議論し、翻訳する場所。
+            {t.desc}
           </p>
-          <Link
-            href="/read"
-            style={{
-              display: "inline-block",
-              padding: "10px 26px",
-              background:
-                "linear-gradient(135deg, rgba(170, 80, 255, 0.85) 0%, rgba(120, 45, 210, 0.92) 100%)",
-              border: "1px solid rgba(190, 95, 255, 0.75)",
-              borderRadius: 8,
-              color: "rgba(255, 255, 255, 0.95)",
-              fontSize: 14,
-              fontWeight: 600,
-              textDecoration: "none",
-              boxShadow: [
-                "0 0 12px rgba(170, 80, 255, 0.35)",
-                "0 0 28px rgba(140, 60, 220, 0.18)",
-              ].join(", "),
-            }}
-          >
-            読み始める →
-          </Link>
         </div>
 
         {/* 今日の聖句 */}
-        {verseOfDay && (
-          <div
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
-              border: "3px solid rgba(190, 95, 255, 0.95)",
-              borderRadius: 20,
-              padding: "24px 28px",
-              boxShadow: [
-                "0 0 6px  rgba(210, 110, 255, 0.90)",
-                "0 0 18px rgba(185, 80,  255, 0.65)",
-                "0 0 38px rgba(155, 55,  230, 0.40)",
-                "0 0 65px rgba(130, 45,  205, 0.18)",
-                "inset 0 0 10px rgba(200, 100, 255, 0.15)",
-              ].join(", "),
-            }}
-          >
+        {(verseLoading || verseOfDay) && (
+          verseLoading ? (
             <div
               style={{
-                position: "absolute",
-                top: 0, left: 0, right: 0,
-                height: "50%",
-                background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
-                borderRadius: "18px 18px 0 0",
-                pointerEvents: "none",
-              }}
-            />
-            <p
-              style={{
+                display: "block",
                 position: "relative",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.07em",
-                color: "rgba(193, 143, 255, 0.88)",
-                margin: "0 0 10px",
+                overflow: "hidden",
+                background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+                border: "3px solid rgba(190, 95, 255, 0.95)",
+                borderRadius: 20,
+                padding: "24px 28px",
+                boxShadow: [
+                  "0 0 6px  rgba(210, 110, 255, 0.90)",
+                  "0 0 18px rgba(185, 80,  255, 0.65)",
+                  "0 0 38px rgba(155, 55,  230, 0.40)",
+                  "0 0 65px rgba(130, 45,  205, 0.18)",
+                  "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+                ].join(", "),
               }}
             >
-              今日の聖句
-            </p>
-            <blockquote
-              style={{
-                position: "relative",
-                fontFamily: '"Noto Serif JP", serif',
-                fontSize: 15,
-                lineHeight: 2.0,
-                color: "rgba(255, 255, 255, 0.85)",
-                margin: "0 0 14px",
-                padding: 0,
-              }}
-            >
-              {verseOfDay.text}
-            </blockquote>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0,
+                  height: "50%",
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+                  borderRadius: "18px 18px 0 0",
+                  pointerEvents: "none",
+                }}
+              />
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.07em",
+                  color: "rgba(193, 143, 255, 0.88)",
+                  margin: "0 0 10px",
+                }}
+              >
+                {t.todayVerse}
+              </p>
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 14,
+                  color: "rgba(255, 255, 255, 0.30)",
+                  margin: 0,
+                }}
+              >
+                {t.loading}
+              </p>
+            </div>
+          ) : (
             <Link
               href={verseHref}
               style={{
+                display: "block",
                 position: "relative",
-                fontSize: 13,
-                color: "rgba(193, 143, 255, 0.88)",
+                overflow: "hidden",
+                background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+                border: "3px solid rgba(190, 95, 255, 0.95)",
+                borderRadius: 20,
+                padding: "24px 28px",
                 textDecoration: "none",
+                color: "inherit",
+                cursor: "pointer",
+                boxShadow: [
+                  "0 0 6px  rgba(210, 110, 255, 0.90)",
+                  "0 0 18px rgba(185, 80,  255, 0.65)",
+                  "0 0 38px rgba(155, 55,  230, 0.40)",
+                  "0 0 65px rgba(130, 45,  205, 0.18)",
+                  "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+                ].join(", "),
+                transition: "box-shadow 0.2s, border-color 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = "rgba(225, 135, 255, 1.0)";
+                el.style.boxShadow = [
+                  "0 0 8px  rgba(230, 130, 255, 1.00)",
+                  "0 0 22px rgba(205, 100, 255, 0.82)",
+                  "0 0 46px rgba(170, 68,  240, 0.55)",
+                  "0 0 80px rgba(150, 55,  220, 0.25)",
+                  "inset 0 0 14px rgba(215, 115, 255, 0.22)",
+                ].join(", ");
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.borderColor = "rgba(190, 95, 255, 0.95)";
+                el.style.boxShadow = [
+                  "0 0 6px  rgba(210, 110, 255, 0.90)",
+                  "0 0 18px rgba(185, 80,  255, 0.65)",
+                  "0 0 38px rgba(155, 55,  230, 0.40)",
+                  "0 0 65px rgba(130, 45,  205, 0.18)",
+                  "inset 0 0 10px rgba(200, 100, 255, 0.15)",
+                ].join(", ");
               }}
             >
-              {verseOfDay.book_name} {verseOfDay.chapter_number}章{verseOfDay.number}節 →
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0, left: 0, right: 0,
+                  height: "50%",
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)",
+                  borderRadius: "18px 18px 0 0",
+                  pointerEvents: "none",
+                }}
+              />
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.07em",
+                  color: "rgba(193, 143, 255, 0.88)",
+                  margin: "0 0 10px",
+                }}
+              >
+                {t.todayVerse}
+              </p>
+              <blockquote
+                style={{
+                  position: "relative",
+                  fontFamily: '"Noto Serif JP", serif',
+                  fontSize: 15,
+                  lineHeight: 2.0,
+                  color: "rgba(255, 255, 255, 0.85)",
+                  margin: "0 0 14px",
+                  padding: 0,
+                }}
+              >
+                {verseOfDay!.text}
+              </blockquote>
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 13,
+                  color: "rgba(193, 143, 255, 0.88)",
+                  margin: 0,
+                }}
+              >
+                {verseOfDay!.book_name}{" "}
+                {lang === "en"
+                  ? `Ch.${verseOfDay!.chapter_number} v.${verseOfDay!.number} →`
+                  : `${verseOfDay!.chapter_number}章${verseOfDay!.number}節 →`}
+              </p>
             </Link>
-          </div>
+          )
         )}
 
         {/* セクションカード（3等分・等サイズ） */}
@@ -225,7 +313,7 @@ export default function Home() {
             gap: 16,
           }}
         >
-          {SECTIONS.map((s) => (
+          {sections.map((s) => (
             <SectionCard
               key={s.href}
               title={s.title}
@@ -256,12 +344,12 @@ export default function Home() {
                   margin: 0,
                 }}
               >
-                トレンド
+                {t.trending}
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {trending.map((c) => (
-                <TrendingCard key={c.id} comment={c} />
+                <TrendingCard key={c.id} comment={c} lang={lang} />
               ))}
             </div>
           </div>
@@ -287,7 +375,7 @@ export default function Home() {
                   margin: 0,
                 }}
               >
-                最近のQ&A
+                {t.recentQA}
               </p>
               <Link
                 href="/qa"
@@ -297,12 +385,12 @@ export default function Home() {
                   textDecoration: "none",
                 }}
               >
-                すべて見る →
+                {t.seeAll}
               </Link>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {recentQA.map((qa) => (
-                <ActivityCard key={qa.id} qa={qa} />
+                <ActivityCard key={qa.id} qa={qa} lang={lang} />
               ))}
             </div>
           </div>
@@ -326,7 +414,7 @@ export default function Home() {
               textDecorationColor: "var(--border)",
             }}
           >
-            NeON Church について
+            {t.about}
           </Link>
         </div>
       </div>
@@ -347,7 +435,7 @@ export default function Home() {
   );
 }
 
-function ActivityCard({ qa }: { qa: QAComment }) {
+function ActivityCard({ qa, lang }: { qa: QAComment; lang: string }) {
   return (
     <Link
       href="/qa"
@@ -403,7 +491,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
         {qa.reply_count > 0 && (
           <>
             <span>·</span>
-            <span>返信 {qa.reply_count}</span>
+            <span>{lang === "en" ? "replies" : "返信"} {qa.reply_count}</span>
           </>
         )}
       </div>
@@ -411,7 +499,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
   );
 }
 
-function TrendingCard({ comment }: { comment: QAComment }) {
+function TrendingCard({ comment, lang }: { comment: QAComment; lang: string }) {
   const slug = BOOKS.find((b) => b.name === comment.book_name)?.slug ?? "";
   const href = slug && comment.chapter_number
     ? `/${slug}/${comment.chapter_number}${comment.verse_number ? `#verse-${comment.verse_number}` : ""}`
@@ -472,7 +560,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
         {comment.reply_count > 0 && (
           <>
             <span>·</span>
-            <span>返信 {comment.reply_count}</span>
+            <span>{lang === "en" ? "replies" : "返信"} {comment.reply_count}</span>
           </>
         )}
       </div>

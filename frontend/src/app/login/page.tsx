@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useAuth();
+  const t = useT();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ function LoginForm() {
       router.push(from && from.startsWith("/") ? from : "/");
     } catch (err) {
       setError(
-        (err as ApiError).message ?? "ログインに失敗しました"
+        (err as ApiError).message ?? t.loginFailed
       );
     } finally {
       setSubmitting(false);
@@ -58,7 +60,7 @@ function LoginForm() {
         }}
       >
         <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 24 }}>
-          ログイン
+          {t.loginTitle}
         </h1>
 
         <form onSubmit={handleSubmit}>
@@ -72,7 +74,7 @@ function LoginForm() {
                 color: "var(--text-muted)",
               }}
             >
-              ユーザー名
+              {t.username}
             </label>
             <input
               type="text"
@@ -103,7 +105,7 @@ function LoginForm() {
                 color: "var(--text-muted)",
               }}
             >
-              パスワード
+              {t.password}
             </label>
             <input
               type="password"
@@ -148,14 +150,14 @@ function LoginForm() {
               boxShadow: submitting ? "none" : "0 0 18px rgba(198, 44, 170, 0.45)",
             }}
           >
-            {submitting ? "ログイン中..." : "ログイン"}
+            {submitting ? t.loggingIn : t.loginTitle}
           </button>
         </form>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--text-muted)" }}>
-          アカウントをお持ちでない方は{" "}
+          {t.noAccount}{" "}
           <Link href="/register" style={{ color: "var(--accent)", textDecoration: "underline" }}>
-            新規登録
+            {t.register}
           </Link>
         </p>
       </div>
@@ -164,8 +166,9 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
       <LoginForm />
     </Suspense>
   );

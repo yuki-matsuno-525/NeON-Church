@@ -7,12 +7,14 @@ import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { useT } from "@/lib/i18n";
 
 const PAGE_SIZE = 10;
 
 export default function QAPage() {
+  const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
       <QAContent />
     </Suspense>
   );
@@ -22,6 +24,7 @@ function QAContent() {
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useT();
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const [comments, setComments] = useState<QAComment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
@@ -60,13 +63,19 @@ function QAContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBookId, selectedTagId, answeredFilter]);
 
+  const filterLabel = (f: "all" | "unanswered" | "answered") => {
+    if (f === "all") return t.filterAll;
+    if (f === "unanswered") return t.filterUnanswered;
+    return t.filterAnswered;
+  };
+
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Q&A</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.qaTitle}</h1>
         {!showForm && (
           <button
             onClick={() => {
@@ -85,12 +94,12 @@ function QAContent() {
               fontFamily: "inherit",
             }}
           >
-            質問する
+            {t.askQuestion}
           </button>
         )}
       </div>
       <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 24 }}>
-        聖書に関する質問・疑問のコメント一覧です。
+        {t.qaDesc}
       </p>
 
       {showForm && (
@@ -105,7 +114,6 @@ function QAContent() {
         />
       )}
 
-      {/* フィルター */}
       <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
         {(["all", "unanswered", "answered"] as const).map((f) => (
           <button
@@ -122,7 +130,7 @@ function QAContent() {
               fontFamily: "inherit",
             }}
           >
-            {f === "all" ? "すべて" : f === "unanswered" ? "未解決" : "解決済み"}
+            {filterLabel(f)}
           </button>
         ))}
         <select
@@ -137,7 +145,7 @@ function QAContent() {
             fontSize: 13,
           }}
         >
-          <option value="">すべての書</option>
+          <option value="">{t.allBooks}</option>
           {books.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
@@ -155,17 +163,17 @@ function QAContent() {
             fontSize: 13,
           }}
         >
-          <option value="">すべてのタグ</option>
-          {tags.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+          <option value="">{t.allTags}</option>
+          {tags.map((tag) => (
+            <option key={tag.id} value={tag.id}>{tag.name}</option>
           ))}
         </select>
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-muted)", padding: 16 }}>読み込み中...</div>
+        <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.loading}</div>
       ) : comments.length === 0 ? (
-        <div style={{ color: "var(--text-muted)", padding: 16 }}>Q&Aコメントはまだありません。</div>
+        <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.qaEmpty}</div>
       ) : (() => {
         const totalPages = Math.ceil(comments.length / PAGE_SIZE);
         const safePage = Math.min(page, totalPages);
@@ -185,11 +193,11 @@ function QAContent() {
             </div>
             {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-                <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>前</button>
+                <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>{t.prev}</button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <button key={p} onClick={() => goTo(p)} style={pageBtnStyle(false, p === safePage)}>{p}</button>
                 ))}
-                <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>次</button>
+                <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>{t.next}</button>
               </div>
             )}
           </>

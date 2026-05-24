@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { register, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useAuth();
+  const t = useT();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ function RegisterForm() {
       setUser(user);
       router.push(from && from.startsWith("/") ? from : "/");
     } catch (err) {
-      setError((err as ApiError).message ?? "登録に失敗しました");
+      setError((err as ApiError).message ?? t.registerFailed);
     } finally {
       setSubmitting(false);
     }
@@ -77,12 +79,12 @@ function RegisterForm() {
         }}
       >
         <h1 style={{ fontSize: 20, fontWeight: 800, marginBottom: 24 }}>
-          新規登録
+          {t.registerTitle}
         </h1>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>ユーザー名</label>
+            <label style={labelStyle}>{t.username}</label>
             <input
               type="text"
               value={username}
@@ -93,7 +95,7 @@ function RegisterForm() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>メールアドレス</label>
+            <label style={labelStyle}>{t.email}</label>
             <input
               type="email"
               value={email}
@@ -104,7 +106,7 @@ function RegisterForm() {
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={labelStyle}>パスワード（8文字以上）</label>
+            <label style={labelStyle}>{t.passwordHint}</label>
             <input
               type="password"
               value={password}
@@ -139,14 +141,14 @@ function RegisterForm() {
               boxShadow: submitting ? "none" : "0 0 18px rgba(198, 44, 170, 0.45)",
             }}
           >
-            {submitting ? "登録中..." : "登録する"}
+            {submitting ? t.registering : t.registerBtn}
           </button>
         </form>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--text-muted)" }}>
-          すでにアカウントをお持ちの方は{" "}
+          {t.hasAccount}{" "}
           <Link href="/login" style={{ color: "var(--accent)", textDecoration: "underline" }}>
-            ログイン
+            {t.login}
           </Link>
         </p>
       </div>
@@ -155,8 +157,9 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
       <RegisterForm />
     </Suspense>
   );

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
+import { useT } from "@/lib/i18n";
 import { BOOKS } from "@/lib/books";
 
 function slugFromBookName(name: string): string {
@@ -16,6 +18,8 @@ type Tab = "bookmarks" | "comments";
 export default function ProfilePage() {
   const { user, loading, setUser } = useAuth();
   const router = useRouter();
+  const t = useT();
+  const { lang } = useLang();
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -54,7 +58,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
     );
   }
 
@@ -68,9 +72,9 @@ export default function ProfilePage() {
     try {
       const updated = await uploadAvatar(file);
       setUser(updated);
-      setMessage({ type: "success", text: "プロフィール画像を更新しました。" });
+      setMessage({ type: "success", text: t.profileUpdated });
     } catch {
-      setMessage({ type: "error", text: "画像のアップロードに失敗しました。" });
+      setMessage({ type: "error", text: t.avatarFailed });
     } finally {
       setAvatarUploading(false);
       e.target.value = "";
@@ -84,19 +88,18 @@ export default function ProfilePage() {
     try {
       const updated: User = await updateProfile({ bio });
       setUser(updated);
-      setMessage({ type: "success", text: "プロフィールを更新しました。" });
+      setMessage({ type: "success", text: t.profileUpdated });
     } catch {
-      setMessage({ type: "error", text: "更新に失敗しました。もう一度お試しください。" });
+      setMessage({ type: "error", text: t.profileUpdateFailed });
     } finally {
       setSaving(false);
     }
   };
 
-  const joinedDate = new Date(user.created_at).toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const joinedDate = new Date(user.created_at).toLocaleDateString(
+    lang === "en" ? "en-US" : "ja-JP",
+    { year: "numeric", month: "long", day: "numeric" }
+  );
 
   const tabStyle = (tab: Tab): React.CSSProperties => ({
     padding: "8px 16px",
@@ -113,10 +116,9 @@ export default function ProfilePage() {
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 24px" }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32 }}>
-        プロフィール
+        {t.profileTitle}
       </h1>
 
-      {/* アバター */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
         <div
           style={{
@@ -153,7 +155,7 @@ export default function ProfilePage() {
               fontWeight: 600,
             }}
           >
-            {avatarUploading ? "アップロード中..." : "画像を変更"}
+            {avatarUploading ? t.uploadingAvatar : t.changeAvatar}
             <input
               type="file"
               accept="image/*"
@@ -163,7 +165,7 @@ export default function ProfilePage() {
             />
           </label>
           <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
-            JPG・PNG・GIF（5MB以下）
+            {t.avatarHint}
           </p>
         </div>
       </div>
@@ -181,19 +183,19 @@ export default function ProfilePage() {
         <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 16 }}>
           <div>
             <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              ユーザー名
+              {t.username}
             </dt>
             <dd style={{ margin: 0, fontWeight: 600 }}>{user.username}</dd>
           </div>
           <div>
             <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              メールアドレス
+              {t.email}
             </dt>
             <dd style={{ margin: 0 }}>{user.email}</dd>
           </div>
           <div>
             <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              登録日
+              {t.joinedDate}
             </dt>
             <dd style={{ margin: 0 }}>{joinedDate}</dd>
           </div>
@@ -206,14 +208,14 @@ export default function ProfilePage() {
             htmlFor="bio"
             style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8 }}
           >
-            自己紹介
+            {t.bio}
           </label>
           <textarea
             id="bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
-            placeholder="自己紹介を入力してください"
+            placeholder={t.bioPlaceholder}
             style={{
               width: "100%",
               padding: "10px 12px",
@@ -257,22 +259,21 @@ export default function ProfilePage() {
             fontFamily: "inherit",
           }}
         >
-          {saving ? "保存中..." : "保存"}
+          {saving ? t.saving : t.save}
         </button>
       </form>
 
-      {/* タブ */}
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         <button style={tabStyle("bookmarks")} onClick={() => setActiveTab("bookmarks")}>
-          お気に入り ({bookmarks.length})
+          {t.tabBookmarks} ({bookmarks.length})
         </button>
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
-          コメント ({myComments.length})
+          {t.tabComments} ({myComments.length})
         </button>
       </div>
 
       {loadingData ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>読み込み中...</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.loading}</p>
       ) : activeTab === "bookmarks" ? (
         <BookmarkList bookmarks={bookmarks} />
       ) : (
@@ -283,8 +284,9 @@ export default function ProfilePage() {
 }
 
 function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
+  const t = useT();
   if (bookmarks.length === 0) {
-    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>お気に入りはまだありません。</p>;
+    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -293,7 +295,7 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
           return (
             <div key={bm.id} style={cardStyle}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                コメント by {bm.comment_detail.username}
+                {t.commentBy(bm.comment_detail.username)}
               </p>
               <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
                 {bm.comment_detail.body}
@@ -308,7 +310,7 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
           <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
             <div style={{ ...cardStyle, cursor: "pointer" }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                {bm.verse_detail.book_name} {bm.verse_detail.chapter_number}章 {bm.verse_detail.number}節
+                {bm.verse_detail.book_name} {t.verseFmt(bm.verse_detail.chapter_number, bm.verse_detail.number)}
               </p>
               <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
                 {bm.verse_detail.text}
@@ -322,8 +324,9 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
 }
 
 function CommentList({ comments }: { comments: MyComment[] }) {
+  const t = useT();
   if (comments.length === 0) {
-    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>コメントはまだありません。</p>;
+    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

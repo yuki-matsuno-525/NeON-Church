@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { createTranslation, fetchBooks, type Book } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [books, setBooks] = useState<Book[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -40,7 +42,7 @@ export default function NewTranslationPage() {
       });
       router.push(`/translations/${project.id}`);
     } catch {
-      setError("作成に失敗しました。もう一度お試しください。");
+      setError(t.createFailed);
       setSubmitting(false);
     }
   };
@@ -68,43 +70,43 @@ export default function NewTranslationPage() {
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ marginBottom: 24 }}>
         <Link href="/translations" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
-          ← 翻訳プロジェクト一覧
+          {t.backToTranslations}
         </Link>
       </div>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>新規翻訳プロジェクト</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>{t.newTranslationTitle}</h1>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <label style={labelStyle}>プロジェクト名 *</label>
+          <label style={labelStyle}>{t.projectName}</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="例: マタイ英語翻訳"
+            placeholder={t.projectNamePlaceholder}
             style={inputStyle}
             required
           />
         </div>
 
         <div>
-          <label style={labelStyle}>説明</label>
+          <label style={labelStyle}>{t.description}</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="プロジェクトの目的や方針を記述（任意）"
+            placeholder={t.descPlaceholder}
             rows={3}
             style={{ ...inputStyle, resize: "vertical" }}
           />
         </div>
 
         <div>
-          <label style={labelStyle}>翻訳元の書 *</label>
+          <label style={labelStyle}>{t.sourceBook}</label>
           <select
             value={sourceBook}
             onChange={(e) => setSourceBook(e.target.value)}
             style={inputStyle}
             required
           >
-            <option value="">書を選択...</option>
+            <option value="">{t.selectBookOption}</option>
             {books.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
@@ -112,11 +114,11 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>翻訳先言語 *</label>
+          <label style={labelStyle}>{t.targetLanguage}</label>
           <input
             value={targetLanguage}
             onChange={(e) => setTargetLanguage(e.target.value)}
-            placeholder="例: 英語, English, en"
+            placeholder={t.targetLangPlaceholder}
             style={inputStyle}
             required
           />
@@ -143,7 +145,7 @@ export default function NewTranslationPage() {
               opacity: submitting ? 0.6 : 1,
             }}
           >
-            {submitting ? "作成中..." : "プロジェクトを作成"}
+            {submitting ? t.creating : t.createProject}
           </button>
           <Link
             href="/translations"
@@ -157,7 +159,7 @@ export default function NewTranslationPage() {
               textAlign: "center",
             }}
           >
-            キャンセル
+            {t.cancel}
           </Link>
         </div>
       </form>

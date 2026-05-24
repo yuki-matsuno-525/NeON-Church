@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createBookmark, removeBookmark, type Verse, type Bookmark } from "@/lib/api";
 import { useState } from "react";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   verses: Verse[];
@@ -11,6 +12,7 @@ type Props = {
   onSelectVerse: (verseId: string) => void;
   bookmarks: Bookmark[];
   onBookmarksChange: (bookmarks: Bookmark[]) => void;
+  highlightVerseNumber?: number | null;
 };
 
 export function VerseList({
@@ -19,8 +21,10 @@ export function VerseList({
   onSelectVerse,
   bookmarks,
   onBookmarksChange,
+  highlightVerseNumber,
 }: Props) {
   const { user } = useAuth();
+  const t = useT();
   const [loadingBookmark, setLoadingBookmark] = useState<string | null>(null);
   const [bookmarkError, setBookmarkError] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -51,7 +55,7 @@ export function VerseList({
       }
     } catch (err) {
       console.error("bookmark error:", err);
-      setBookmarkError("ブックマークの操作に失敗しました");
+      setBookmarkError(t.bookmarkFailed);
     } finally {
       setLoadingBookmark(null);
     }
@@ -70,6 +74,7 @@ export function VerseList({
       {verses.map((verse) => {
         const isSelected = selectedVerseId === verse.id;
         const isBookmarked = bookmarkMap.has(verse.id);
+        const isHighlighted = !isSelected && verse.number === highlightVerseNumber;
 
         return (
           <div
@@ -81,10 +86,11 @@ export function VerseList({
               padding: "8px 12px",
               cursor: "pointer",
               borderRadius: 5,
-              background: isSelected ? "var(--accent-tint)" : "transparent",
+              background: isSelected ? "var(--accent-tint)" : isHighlighted ? undefined : "transparent",
               color: isSelected ? "var(--accent)" : "var(--text)",
               marginBottom: 2,
-              transition: "background 0.1s",
+              transition: isHighlighted ? undefined : "background 0.1s",
+              animation: isHighlighted ? "verse-flash 10s ease-out forwards" : undefined,
             }}
             onMouseEnter={(e) => {
               if (!isSelected) {
@@ -139,7 +145,7 @@ export function VerseList({
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  コメント
+                  {t.comment}
                 </button>
                 <button
                   onClick={(e) => handleBookmark(e, verse)}
@@ -155,7 +161,7 @@ export function VerseList({
                     fontFamily: "inherit",
                   }}
                 >
-                  {isBookmarked ? "解除" : "お気に入り"}
+                  {isBookmarked ? t.remove : t.bookmark}
                 </button>
               </div>
             )}

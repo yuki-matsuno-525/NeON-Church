@@ -32,13 +32,7 @@ import {
   type Verse,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-
-const STATUS_LABEL: Record<string, string> = {
-  todo: "未着手",
-  in_progress: "進行中",
-  review: "レビュー中",
-  done: "完了",
-};
+import { useT } from "@/lib/i18n";
 
 const STATUS_BADGE_COLOR: Record<string, string> = {
   todo: "var(--border)",
@@ -52,11 +46,13 @@ function MentionInput({
   onChange,
   onSubmit,
   members,
+  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   members: string[];
+  placeholder: string;
 }) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -92,7 +88,7 @@ function MentionInput({
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder="@メンション可。Enterで送信..."
+        placeholder={placeholder}
         style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }}
       />
       {suggestions.length > 0 && (
@@ -118,23 +114,21 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [units, setUnits] = useState<TranslationUnit[]>([]);
   const [members, setMembers] = useState<TranslationMembership[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"units" | "members">("units");
+  const [tab, setTab] = useState<"units" | "review" | "members">("units");
 
-  // ユニット追加フォーム
   const [addingUnit, setAddingUnit] = useState(false);
   const [unitChapters, setUnitChapters] = useState<Chapter[]>([]);
   const [unitVerses, setUnitVerses] = useState<Verse[]>([]);
   const [unitChapterId, setUnitChapterId] = useState("");
   const [unitVerseId, setUnitVerseId] = useState("");
 
-  // ユニットタブ: 選択中の章（null = 章一覧表示）
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
 
-  // ユニット展開（コメント表示）
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [unitComments, setUnitComments] = useState<Record<string, TranslationComment[]>>({});
   const [unitCommentBody, setUnitCommentBody] = useState<Record<string, string>>({});
@@ -146,6 +140,20 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [addingBook, setAddingBook] = useState(false);
   const [removingBook, setRemovingBook] = useState(false);
   const isMember = project?.is_member ?? false;
+
+  const statusLabel = (status: string) => {
+    if (status === "todo") return t.statusPending;
+    if (status === "in_progress") return t.statusInProgress;
+    if (status === "review") return t.statusInReview;
+    if (status === "done") return t.statusDone;
+    return status;
+  };
+
+  const memberStatusLabel = (status: string) => {
+    if (status === "approved") return t.statusApproved;
+    if (status === "pending") return t.statusPendingApproval;
+    return t.statusRejected;
+  };
 
   useEffect(() => {
     Promise.all([
@@ -280,19 +288,27 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   };
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>;
-  if (!project) return <div style={{ padding: 32, color: "var(--text-muted)" }}>プロジェクトが見つかりません。</div>;
+  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  if (!project) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.noProjects}</div>;
 
   const progressPct = project.unit_count > 0
     ? Math.round((project.done_count / project.unit_count) * 100)
     : 0;
 
+  const tabLabel = (tabKey: "units" | "review" | "members") => {
+    if (tabKey === "units") return t.units;
+    if (tabKey === "review") {
+      const reviewCount = units.filter((u) => u.status === "review").length;
+      return `${t.review}${reviewCount > 0 ? ` (${reviewCount})` : ""}`;
+    }
+    return t.members;
+  };
+
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
-      {/* ヘッダー */}
       <div style={{ marginBottom: 6 }}>
         <Link href="/translations" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
-          ← 翻訳プロジェクト一覧
+          {t.backToTranslations}
         </Link>
       </div>
 
@@ -300,21 +316,20 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project.name}</h1>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            {project.source_book_name} → {project.target_language} ／ 作成: {project.owner_username}
+            {project.source_book_name} → {project.target_language} ／ {t.createdBy} {project.owner_username}
           </div>
         </div>
 
-        {/* オーナー操作 */}
         {isOwner && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {project.status === "draft" && (
               <button onClick={() => handleStatusChange("activate")} style={btnStyle("var(--accent)")}>
-                募集開始
+                {t.startRecruiting}
               </button>
             )}
             {project.status === "active" && (
               <button onClick={() => handleStatusChange("publish")} style={btnStyle("#22c55e")}>
-                公開する
+                {t.publish}
               </button>
             )}
             {project.status === "published" && (
@@ -323,29 +338,28 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   href={`/translations/${id}/read`}
                   style={{ ...btnStyle("var(--text-muted)"), textDecoration: "none" }}
                 >
-                  閲覧ページ
+                  {t.viewPage}
                 </Link>
                 <button onClick={() => handleStatusChange("unpublish")} style={btnStyle("#ef4444")}>
-                  公開取り消し
+                  {t.unpublish}
                 </button>
               </>
             )}
             <button onClick={handleDelete} style={btnStyle("#ef4444")}>
-              削除
+              {t.delete}
             </button>
           </div>
         )}
 
-        {/* 参加ボタン */}
         {user && !isOwner && !isMember && project.status === "active" && (
-          <button onClick={handleJoin} style={btnStyle("var(--accent)")}>参加申請</button>
+          <button onClick={handleJoin} style={btnStyle("var(--accent)")}>{t.applyMembership}</button>
         )}
         {user && !isOwner && !isMember && project.status !== "active" && (
-          <span style={{ fontSize: 12, color: "var(--text-faint)" }}>参加受付中ではありません</span>
+          <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.notRecruiting}</span>
         )}
         {project.status === "published" && (
           <Link href={`/translations/${id}/read`} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>
-            翻訳を読む
+            {t.readTranslation}
           </Link>
         )}
       </div>
@@ -356,12 +370,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </p>
       )}
 
-      {/* 進捗バー */}
       {project.unit_count > 0 && (
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-            <span>進捗</span>
-            <span>{project.done_count}/{project.unit_count} 節 ({progressPct}%)</span>
+            <span>{t.progress}</span>
+            <span>{project.done_count}/{project.unit_count} ({progressPct}%)</span>
           </div>
           <div style={{ height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
             <div style={{ width: `${progressPct}%`, height: "100%", background: "#22c55e", borderRadius: 4, transition: "width 0.3s" }} />
@@ -369,29 +382,27 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {/* タブ */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 24, gap: 0 }}>
-        {(["units", "members"] as const).map((t) => (
+        {(["units", "review", "members"] as const).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             style={{
               padding: "8px 18px",
               background: "transparent",
               border: "none",
-              borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent",
-              color: tab === t ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: tab === t ? 700 : 400,
+              borderBottom: tab === tabKey ? "2px solid var(--accent)" : "2px solid transparent",
+              color: tab === tabKey ? "var(--accent)" : "var(--text-muted)",
+              fontWeight: tab === tabKey ? 700 : 400,
               cursor: "pointer",
               fontSize: 14,
             }}
           >
-            {t === "units" ? "ユニット" : "メンバー"}
+            {tabLabel(tabKey)}
           </button>
         ))}
       </div>
 
-      {/* ユニット一覧 */}
       {tab === "units" && (
         <div>
           {isOwner && (
@@ -410,7 +421,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 }}
                 style={btnStyle("var(--accent)")}
               >
-                {addingBook ? "追加中…" : "全章を一括追加"}
+                {addingBook ? t.adding : t.addAllChapters}
               </button>
               <button
                 disabled={removingBook}
@@ -427,11 +438,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 }}
                 style={btnStyle("#ef4444")}
               >
-                {removingBook ? "削除中…" : "全ユニット削除"}
+                {removingBook ? t.deleting : t.deleteAllUnits}
               </button>
               {!addingUnit ? (
                 <button onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
-                  ＋ ユニット追加
+                  {t.addUnit}
                 </button>
               ) : (
                 <form onSubmit={handleAddUnit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -441,9 +452,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
                     required
                   >
-                    <option value="">章を選択</option>
+                    <option value="">{t.selectChapter}</option>
                     {unitChapters.map((c) => (
-                      <option key={c.id} value={c.id}>{c.number}章</option>
+                      <option key={c.id} value={c.id}>{c.number}</option>
                     ))}
                   </select>
                   {unitVerses.length > 0 && (
@@ -452,30 +463,29 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       onChange={(e) => setUnitVerseId(e.target.value)}
                       style={{ padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 13 }}
                     >
-                      <option value="">全節を追加</option>
+                      <option value="">{t.addAllVerses}</option>
                       {unitVerses.map((v) => (
-                        <option key={v.id} value={v.id}>{v.number}節</option>
+                        <option key={v.id} value={v.id}>{v.number}</option>
                       ))}
                     </select>
                   )}
-                  <button type="submit" disabled={!unitChapterId} style={btnStyle("var(--accent)")}>追加</button>
+                  <button type="submit" disabled={!unitChapterId} style={btnStyle("var(--accent)")}>{t.add}</button>
                   <button
                     type="button"
                     onClick={() => { setAddingUnit(false); setUnitChapterId(""); setUnitVerseId(""); setUnitVerses([]); }}
                     style={btnStyle("var(--border)")}
                   >
-                    キャンセル
+                    {t.cancel}
                   </button>
                 </form>
               )}
             </div>
           )}
 
-          {/* 章カード一覧 */}
           {selectedChapter === null && (
             units.length === 0 ? (
               <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-                {isOwner ? "ユニットを追加してください。" : "まだユニットがありません。"}
+                {isOwner ? t.noUnitsMsg : t.noUnits}
               </p>
             ) : (
               <div
@@ -511,23 +521,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       (e.currentTarget as HTMLElement).style.color = "var(--text)";
                     }}
                   >
-                    第{chNum}章
+                    {chNum}
                   </button>
                 ))}
               </div>
             )
           )}
 
-          {/* 章内ユニット一覧 */}
           {selectedChapter !== null && (
             <div>
               <button
                 onClick={() => setSelectedChapter(null)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 13, padding: "0 0 12px", display: "block" }}
               >
-                ← 章一覧に戻る
+                {t.backToChapters}
               </button>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>第{selectedChapter}章</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>{selectedChapter}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
                 <div key={unit.id} style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-alt)", overflow: "hidden" }}>
@@ -535,9 +544,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-                          {unit.chapter_number}章{unit.verse_number}節
+                          {unit.chapter_number}:{unit.verse_number}
                           {unit.assigned_to_username && (
-                            <span style={{ marginLeft: 8 }}>担当: {unit.assigned_to_username}</span>
+                            <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
                           )}
                         </div>
                         <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.5 }}>
@@ -558,12 +567,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             color: unit.status === "todo" ? "var(--text-muted)" : "#fff",
                           }}
                         >
-                          {STATUS_LABEL[unit.status]}
+                          {statusLabel(unit.status)}
                         </span>
                       </div>
                     </div>
 
-                    {/* 担当者割り当て（オーナーのみ） */}
                     {isOwner && (
                       <div style={{ marginTop: 8 }}>
                         <select
@@ -571,7 +579,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
                           style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
                         >
-                          <option value="">担当者なし</option>
+                          <option value="">{t.noAssignee}</option>
                           {members.filter((m) => m.status === "approved").map((m) => (
                             <option key={m.id} value={m.user}>{m.username}</option>
                           ))}
@@ -579,7 +587,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       </div>
                     )}
 
-                    {/* 担当者操作（オーナーまたは担当者） */}
                     {(isOwner || unit.assigned_to_username === user?.username) && (
                       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                         {editingUnit === unit.id ? (
@@ -590,15 +597,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                               rows={3}
                               style={{ flex: 1, padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, resize: "vertical", minWidth: 200 }}
                             />
-                            <button onClick={() => handleSaveBody(unit.id)} style={btnStyle("var(--accent)")}>保存</button>
-                            <button onClick={() => setEditingUnit(null)} style={btnStyle("var(--border)")}>キャンセル</button>
+                            <button onClick={() => handleSaveBody(unit.id)} style={btnStyle("var(--accent)")}>{t.save}</button>
+                            <button onClick={() => setEditingUnit(null)} style={btnStyle("var(--border)")}>{t.cancel}</button>
                           </>
                         ) : (
                           <button
                             onClick={() => { setEditingUnit(unit.id); setEditBody(unit.body); }}
                             style={btnStyle("var(--border)")}
                           >
-                            訳文編集
+                            {t.editTranslation}
                           </button>
                         )}
                         {unit.status !== "done" && (
@@ -607,28 +614,27 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
                             style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
                           >
-                            <option value="todo">未着手</option>
-                            <option value="in_progress">進行中</option>
-                            <option value="review">レビュー中</option>
-                            {isOwner && <option value="done">完了</option>}
+                            <option value="todo">{t.statusPending}</option>
+                            <option value="in_progress">{t.statusInProgress}</option>
+                            <option value="review">{t.statusInReview}</option>
+                            {isOwner && <option value="done">{t.statusDone}</option>}
                           </select>
                         )}
                         {isOwner && unit.status === "done" && (
                           <button onClick={() => handleUnitStatusChange(unit.id, "review")} style={btnStyle("#f59e0b")}>
-                            差し戻し
+                            {t.sendBack}
                           </button>
                         )}
                       </div>
                     )}
                   </div>
 
-                  {/* ユニットコメント */}
                   <div style={{ borderTop: "1px solid var(--border)", padding: "6px 16px" }}>
                     <button
                       onClick={() => handleLoadUnitComments(unit.id)}
                       style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 12, padding: "4px 0" }}
                     >
-                      {expandedUnit === unit.id ? "▲ 議論を閉じる" : "▼ 議論を見る"}
+                      {expandedUnit === unit.id ? t.closeDiscussion : t.openDiscussion}
                       {unitComments[unit.id]?.length ? ` (${unitComments[unit.id].length})` : ""}
                     </button>
                     {expandedUnit === unit.id && (
@@ -648,6 +654,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             onChange={(v) => setUnitCommentBody((prev) => ({ ...prev, [unit.id]: v }))}
                             onSubmit={() => handlePostUnitComment(unit.id)}
                             members={members.filter((m) => m.status === "approved").map((m) => m.username)}
+                            placeholder={t.mentionPlaceholder}
                           />
                         )}
                       </div>
@@ -661,18 +668,56 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {/* メンバータブ */}
+      {tab === "review" && (
+        <div>
+          {units.filter((u) => u.status === "review").length === 0 ? (
+            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noReviewUnits}</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {units.filter((u) => u.status === "review").map((unit) => (
+                <div key={unit.id} style={{ border: "1px solid #f59e0b", borderRadius: 10, background: "var(--bg-alt)", padding: "12px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+                        {unit.chapter_number}:{unit.verse_number}
+                        {unit.assigned_to_username && (
+                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.5 }}>
+                        {unit.verse_text}
+                      </p>
+                      {unit.body && (
+                        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                      )}
+                    </div>
+                    {isOwner && (
+                      <button
+                        onClick={() => handleUnitStatusChange(unit.id, "done")}
+                        style={btnStyle("#22c55e")}
+                      >
+                        {t.approve}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {tab === "members" && (
         <div>
           {!isMember ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>メンバーのみ閲覧できます。</p>
+            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.membersOnly}</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {members.map((m) => (
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{m.username}</span>
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    {m.role === "owner" ? "オーナー" : "メンバー"}
+                    {m.role === "owner" ? t.roleOwner : t.roleMember}
                   </span>
                   <span
                     style={{
@@ -684,18 +729,18 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       fontWeight: 700,
                     }}
                   >
-                    {m.status === "approved" ? "承認済み" : m.status === "pending" ? "承認待ち" : "拒否"}
+                    {memberStatusLabel(m.status)}
                   </span>
                   {isOwner && m.role !== "owner" && (
                     <div style={{ display: "flex", gap: 6 }}>
                       {m.status === "pending" && (
                         <>
-                          <button onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("#22c55e", true)}>承認</button>
-                          <button onClick={() => handleMemberAction(m.id, "rejected")} style={btnStyle("#ef4444", true)}>拒否</button>
+                          <button onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("#22c55e", true)}>{t.approve}</button>
+                          <button onClick={() => handleMemberAction(m.id, "rejected")} style={btnStyle("#ef4444", true)}>{t.reject}</button>
                         </>
                       )}
                       {m.status === "approved" && (
-                        <button onClick={() => handleMemberAction(m.id, "remove")} style={btnStyle("#ef4444", true)}>除名</button>
+                        <button onClick={() => handleMemberAction(m.id, "remove")} style={btnStyle("#ef4444", true)}>{t.kick}</button>
                       )}
                     </div>
                   )}

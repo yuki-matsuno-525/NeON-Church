@@ -6,6 +6,7 @@ import Link from "next/link";
 import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
+import { useT } from "@/lib/i18n";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -14,6 +15,7 @@ function slugFromBookName(name: string): string {
 export default function BookmarksPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [fetching, setFetching] = useState(true);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
@@ -56,7 +58,7 @@ export default function BookmarksPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
     );
   }
 
@@ -75,11 +77,11 @@ export default function BookmarksPage() {
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-        お気に入り
+        {t.bookmarksTitle}
       </h1>
 
       {bookmarks.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>お気に入りはまだありません。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.noBookmarks}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {bookmarks.map((bm) => {
@@ -89,7 +91,7 @@ export default function BookmarksPage() {
               return (
                 <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
-                    コメント by {bm.comment_detail.username}
+                    {t.commentBy(bm.comment_detail.username)}
                   </p>
                   <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
                     {bm.comment_detail.body}
@@ -97,11 +99,11 @@ export default function BookmarksPage() {
                   <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
                     {isRemoved ? (
                       <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>
-                        元に戻す
+                        {t.undo}
                       </button>
                     ) : (
                       <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>
-                        解除
+                        {t.remove}
                       </button>
                     )}
                   </div>
@@ -121,8 +123,7 @@ export default function BookmarksPage() {
                   style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
                 >
                   <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
-                    {bm.verse_detail.book_name} {bm.verse_detail.chapter_number}章{" "}
-                    {bm.verse_detail.number}節
+                    {bm.verse_detail.book_name} {t.verseFmt(bm.verse_detail.chapter_number, bm.verse_detail.number)}
                   </p>
                   <p
                     style={{
@@ -142,11 +143,11 @@ export default function BookmarksPage() {
                 <div style={{ marginTop: 8 }}>
                   {isRemoved ? (
                     <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>
-                      元に戻す
+                      {t.undo}
                     </button>
                   ) : (
                     <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>
-                      解除
+                      {t.remove}
                     </button>
                   )}
                 </div>

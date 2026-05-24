@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchTags, type Tag } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   onSubmit: (body: string, isQa?: boolean, tagIds?: string[]) => Promise<void>;
@@ -16,12 +17,13 @@ type Props = {
 
 export function CommentInput({
   onSubmit,
-  placeholder = "コメントを入力...",
-  submitLabel = "投稿する",
+  placeholder,
+  submitLabel,
   showQaOption = false,
   showTagOption = false,
 }: Props) {
   const { user } = useAuth();
+  const t = useT();
   const pathname = usePathname();
   const [body, setBody] = useState("");
   const [isQa, setIsQa] = useState(false);
@@ -29,6 +31,9 @@ export function CommentInput({
   const [tags, setTags] = useState<Tag[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const effectivePlaceholder = placeholder ?? t.commentPlaceholder;
+  const effectiveLabel = submitLabel ?? t.submitComment;
 
   useEffect(() => {
     if (showTagOption) {
@@ -43,16 +48,16 @@ export function CommentInput({
           href={`/login?from=${encodeURIComponent(pathname)}`}
           style={{ color: "var(--accent)", textDecoration: "underline" }}
         >
-          ログイン
+          {t.login}
         </Link>
-        してコメントする
+        {t.loginToComment}
       </p>
     );
   }
 
   const toggleTag = (id: string) => {
     setSelectedTags((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((tag) => tag !== id) : [...prev, id]
     );
   };
 
@@ -71,7 +76,7 @@ export function CommentInput({
       setIsQa(false);
       setSelectedTags([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "投稿に失敗しました");
+      setError(err instanceof Error ? err.message : t.postFailed);
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +87,7 @@ export function CommentInput({
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={placeholder}
+        placeholder={effectivePlaceholder}
         rows={3}
         style={{
           width: "100%",
@@ -156,7 +161,7 @@ export function CommentInput({
             fontFamily: "inherit",
           }}
         >
-          {submitting ? "投稿中..." : submitLabel}
+          {submitting ? t.posting : effectiveLabel}
         </button>
       </div>
     </form>

@@ -6,12 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchNotifications } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
+import { useT } from "@/lib/i18n";
 
-const NAV_ITEMS = [
-  { label: "読む", href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
-  { label: "Q&A", href: "/qa", matchPrefixes: ["/qa"] },
-  { label: "翻訳", href: "/translations", matchPrefixes: ["/translations"] },
-] as const;
+const NAV_HREFS = [
+  { href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
+  { href: "/qa", matchPrefixes: ["/qa"] },
+  { href: "/translations", matchPrefixes: ["/translations"] },
+];
 
 type SidebarProps = {
   open?: boolean;
@@ -22,9 +23,16 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const t = useT();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+
+  const navItems = [
+    { label: t.read, ...NAV_HREFS[0] },
+    { label: t.qa, ...NAV_HREFS[1] },
+    { label: t.translate, ...NAV_HREFS[2] },
+  ];
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 768);
@@ -50,7 +58,6 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* モバイル: Sidebar が開いているときのみオーバーレイを表示 */}
       {open && (
         <div
           className="sidebar-overlay"
@@ -82,7 +89,6 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           flexDirection: "column",
         }}
       >
-        {/* モバイルのみ表示: 認証メニュー（上部） */}
         {isMobile && <div style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
           {user ? (
             <>
@@ -100,7 +106,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   position: "relative",
                 }}
               >
-                通知
+                {t.notifications}
                 {unreadCount > 0 && (
                   <span
                     style={{
@@ -128,7 +134,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   color: "var(--text)",
                 }}
               >
-                お気に入り
+                {t.bookmarks}
               </Link>
               <Link
                 href="/profile"
@@ -158,7 +164,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   fontFamily: "inherit",
                 }}
               >
-                ログアウト
+                {t.logout}
               </button>
             </>
           ) : (
@@ -178,15 +184,14 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                 textAlign: "center",
               }}
             >
-              ログイン
+              {t.login}
             </Link>
           )}
         </div>}
 
         <div style={{ flex: 1 }}>
-          {/* メインナビゲーション */}
           <div style={{ padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive = item.matchPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
               return (
                 <Link
@@ -209,11 +214,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             })}
           </div>
 
-          {/* 書一覧（「読む」セクション内） */}
           {(pathname === "/read" || BOOKS.some((b) => pathname === `/${b.slug}` || pathname.startsWith(`/${b.slug}/`))) && (
             <div style={{ padding: "8px 0" }}>
               <p style={{ fontSize: 11, color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                書
+                {t.books}
               </p>
               {BOOKS.map((meta) => {
                 const isActive = currentSlug === meta.slug;

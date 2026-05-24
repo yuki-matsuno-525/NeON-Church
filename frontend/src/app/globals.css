@@ -49,6 +49,12 @@ select:focus {
   --font-serif: "Noto Serif JP", serif;
 }
 
+@keyframes verse-flash {
+  0%   { background: rgba(192, 64, 240, 0.28); box-shadow: inset 0 0 0 2px rgba(192, 64, 240, 0.40); }
+  60%  { background: rgba(192, 64, 240, 0.10); box-shadow: none; }
+  100% { background: transparent; box-shadow: none; }
+}
+
 /* ハンバーガーボタン: デスクトップでは非表示 */
 .hamburger-btn {
   display: none;
@@ -141,7 +147,7 @@ body {
 }
 
 body {
-  background: var(--bg);
+  background: #090516;
   color: var(--text);
   font-family: "Noto Sans JP", sans-serif;
   font-size: 14px;

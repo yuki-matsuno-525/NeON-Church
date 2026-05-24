@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { useT } from "@/lib/i18n";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -27,6 +28,7 @@ export default function ChapterPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+  const t = useT();
 
   const slug = typeof params.book === "string" ? params.book : "";
   const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
@@ -37,6 +39,7 @@ export default function ChapterPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const selectedVerseId = searchParams.get("verse");
   const [loading, setLoading] = useState(true);
+  const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [translation, setTranslation] = useState<string>(() =>
@@ -63,14 +66,12 @@ export default function ChapterPage() {
           const ch = chapters.find((c) => c.number === chapterNum);
           if (!ch) throw new Error("章が見つかりません");
           setChapter(ch);
-          // ログイン不問で localStorage に保存
           saveLocalProgress(slug, {
             bookId: book.id,
             chapterId: ch.id,
             chapterNumber: ch.number,
             updatedAt: new Date().toISOString(),
           });
-          // ログイン済みならサーバーにも保存
           if (user) {
             saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
           }
@@ -81,12 +82,12 @@ export default function ChapterPage() {
       .catch((err) => {
         setError(
           translation !== DEFAULT_TRANSLATION && err.message === "書が見つかりません"
-            ? `「${translation}」のデータが見つかりません。別の翻訳に切り替えてください。`
+            ? t.translationNotFound(translation)
             : err.message
         );
       })
       .finally(() => setLoading(false));
-  }, [slug, chapterNum, translation, meta, router, user]);
+  }, [slug, chapterNum, translation, meta, router, user, t]);
 
   useEffect(() => {
     if (!user) return;
@@ -98,6 +99,23 @@ export default function ChapterPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#verse-")) {
+      const num = parseInt(hash.slice(7), 10);
+      if (!isNaN(num)) setHighlightVerseNumber(num);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || !highlightVerseNumber) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`verse-${highlightVerseNumber}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [loading, highlightVerseNumber]);
 
   const handleSelectVerse = (verseId: string) => {
     if (verseId === selectedVerseId) {
@@ -122,7 +140,7 @@ export default function ChapterPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
     );
   }
 
@@ -131,12 +149,12 @@ export default function ChapterPage() {
       <div style={{ padding: 32 }}>
         <p style={{ color: "#ef4444", marginBottom: 16 }}>{error}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {BIBLE_TRANSLATIONS.filter((t) => t.id !== translation).map((t) => (
+          {BIBLE_TRANSLATIONS.filter((trans) => trans.id !== translation).map((trans) => (
             <button
-              key={t.id}
+              key={trans.id}
               onClick={() => {
-                localStorage.setItem("bible-translation", t.id);
-                setTranslation(t.id);
+                localStorage.setItem("bible-translation", trans.id);
+                setTranslation(trans.id);
               }}
               style={{
                 fontSize: 13,
@@ -148,7 +166,7 @@ export default function ChapterPage() {
                 borderRadius: 8,
               }}
             >
-              {t.label} に切り替え
+              {t.switchTranslation(trans.label)}
             </button>
           ))}
         </div>
@@ -161,7 +179,6 @@ export default function ChapterPage() {
       className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
       style={{ display: "flex", minHeight: "calc(100vh - var(--navbar-height))" }}
     >
-      {/* Main content */}
       <div
         className="reader-main"
         style={{
@@ -171,18 +188,17 @@ export default function ChapterPage() {
           overflowY: "auto",
         }}
       >
-        {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
             <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-              書一覧
+              {t.bookList}
             </Link>
             {" › "}
             <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {meta.short}
             </Link>
             {" › "}
-            <span>第{chapterNum}章</span>
+            <span>{t.chapterFmt(chapterNum)}</span>
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <select
@@ -203,8 +219,8 @@ export default function ChapterPage() {
                 WebkitAppearance: "none",
               }}
             >
-              {BIBLE_TRANSLATIONS.map((t) => (
-                <option key={t.id} value={t.id}>{t.label}</option>
+              {BIBLE_TRANSLATIONS.map((trans) => (
+                <option key={trans.id} value={trans.id}>{trans.label}</option>
               ))}
             </select>
             {chapter && (
@@ -220,14 +236,14 @@ export default function ChapterPage() {
                   whiteSpace: "nowrap",
                 }}
               >
-                章コメントへ ↓
+                {t.toComments}
               </a>
             )}
           </div>
         </div>
 
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-          {meta.short} 第{chapterNum}章
+          {meta.short} {t.chapterFmt(chapterNum)}
         </h1>
 
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
@@ -237,6 +253,7 @@ export default function ChapterPage() {
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
           bookmarks={verseBookmarks}
+          highlightVerseNumber={highlightVerseNumber}
           onBookmarksChange={(updated) =>
             setBookmarks((prev) => [
               ...prev.filter((bm) => bm.target_type === "comment"),
@@ -248,13 +265,12 @@ export default function ChapterPage() {
         {chapter && (
           <ChapterComments
             chapterId={chapter.id}
-            label={`${meta.short} 第${chapterNum}章へのコメント`}
+            label={`${meta.short} ${t.chapterFmt(chapterNum)}`}
             commentBookmarkMap={commentBookmarkMap}
           />
         )}
       </div>
 
-      {/* Comment panel（CSS でモバイル全画面 / デスクトップ サイドバーを切り替え） */}
       {selectedVerse && (
         <div className="reader-panel">
           <CommentPanel
@@ -273,11 +289,10 @@ export default function ChapterPage() {
         </div>
       )}
 
-      {/* スクロールトップボタン */}
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="ページ上部へ"
+          aria-label={t.backToTop}
           style={{
             position: "fixed",
             bottom: 24,
@@ -301,13 +316,12 @@ export default function ChapterPage() {
         </button>
       )}
 
-      {/* 章ナビゲーション（コメントパネルが閉じているときのみ表示） */}
       {!selectedVerse && (
         <>
           {chapterNum > 1 && (
             <Link
               href={`/${slug}/${chapterNum - 1}`}
-              title={`第${chapterNum - 1}章`}
+              title={t.chapterFmt(chapterNum - 1)}
               className="chapter-nav-prev"
               style={{
                 position: "fixed",
@@ -335,7 +349,7 @@ export default function ChapterPage() {
             >
               ‹
               <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                {chapterNum - 1}章
+                {chapterNum - 1}
               </span>
             </Link>
           )}
@@ -343,7 +357,7 @@ export default function ChapterPage() {
           {chapterNum < meta.totalChapters && (
             <Link
               href={`/${slug}/${chapterNum + 1}`}
-              title={`第${chapterNum + 1}章`}
+              title={t.chapterFmt(chapterNum + 1)}
               style={{
                 position: "fixed",
                 right: 0,
@@ -371,7 +385,7 @@ export default function ChapterPage() {
             >
               ›
               <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                {chapterNum + 1}章
+                {chapterNum + 1}
               </span>
             </Link>
           )}
