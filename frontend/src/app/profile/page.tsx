@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { BOOKS } from "@/lib/books";
-import { SkeletonList } from "@/components/ui";
+import { SkeletonList, EmptyState, Button } from "@/components/ui";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -298,7 +298,17 @@ export default function ProfilePage() {
 function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
   const t = useT();
   if (bookmarks.length === 0) {
-    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>;
+    return (
+      <EmptyState
+        title={t.noMyBookmarks}
+        description={t.emptyMyBookmarksDesc}
+        action={
+          <Link href="/read" style={{ textDecoration: "none" }}>
+            <Button variant="primary">{t.emptyBookmarksCta}</Button>
+          </Link>
+        }
+      />
+    );
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -338,7 +348,17 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
 function CommentList({ comments }: { comments: MyComment[] }) {
   const t = useT();
   if (comments.length === 0) {
-    return <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>;
+    return (
+      <EmptyState
+        title={t.noMyComments}
+        description={t.emptyMyCommentsDesc}
+        action={
+          <Link href="/read" style={{ textDecoration: "none" }}>
+            <Button variant="primary">{t.emptyBookmarksCta}</Button>
+          </Link>
+        }
+      />
+    );
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

@@ -7,7 +7,7 @@ import { fetchTranslations, type TranslationProject } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
-import { SkeletonList } from "@/components/ui";
+import { SkeletonList, EmptyState, Button } from "@/components/ui";
 
 const PAGE_SIZE = 10;
 
@@ -77,22 +77,17 @@ function TranslationsContent() {
       {loading ? (
         <SkeletonList count={3} />
       ) : projects.length === 0 ? (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "48px 16px",
-            color: "var(--text-muted)",
-            border: "1px dashed var(--border)",
-            borderRadius: 12,
-          }}
-        >
-          <p style={{ fontSize: 15, margin: 0 }}>{t.noProjects}</p>
-          {user && (
-            <Link href="/translations/new" style={{ color: "var(--accent)", fontSize: 14 }}>
-              {t.createFirst}
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          title={t.noProjects}
+          description={t.emptyTranslationsDesc}
+          action={
+            user ? (
+              <Link href="/translations/new" style={{ textDecoration: "none" }}>
+                <Button variant="primary">{t.emptyTranslationsCta}</Button>
+              </Link>
+            ) : undefined
+          }
+        />
       ) : (() => {
         const totalPages = Math.ceil(projects.length / PAGE_SIZE);
         const safePage = Math.min(page, Math.max(1, totalPages));

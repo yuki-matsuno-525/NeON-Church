@@ -7,7 +7,7 @@ import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, 
 import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
-import { SkeletonList } from "@/components/ui";
+import { SkeletonList, EmptyState, Button } from "@/components/ui";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -87,7 +87,15 @@ export default function BookmarksPage() {
       </h1>
 
       {bookmarks.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>{t.noBookmarks}</p>
+        <EmptyState
+          title={t.noBookmarks}
+          description={t.emptyBookmarksDesc}
+          action={
+            <Link href="/read" style={{ textDecoration: "none" }}>
+              <Button variant="primary">{t.emptyBookmarksCta}</Button>
+            </Link>
+          }
+        />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {bookmarks.map((bm) => {

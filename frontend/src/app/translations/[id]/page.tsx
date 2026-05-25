@@ -33,7 +33,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList } from "@/components/ui";
+import { SkeletonList, EmptyState } from "@/components/ui";
 import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_COLOR: Record<string, string> = {
@@ -492,9 +492,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
           {selectedChapter === null && (
             units.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-                {isOwner ? t.noUnitsMsg : t.noUnits}
-              </p>
+              <EmptyState
+                title={t.noUnits}
+                description={isOwner ? t.emptyUnitsDesc : t.noUnitsMsg}
+              />
             ) : (
               <div
                 style={{
@@ -679,7 +680,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       {tab === "review" && (
         <div>
           {units.filter((u) => u.status === "review").length === 0 ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noReviewUnits}</p>
+            <EmptyState title={t.noReviewUnits} description={t.emptyReviewUnitsDesc} />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {units.filter((u) => u.status === "review").map((unit) => (

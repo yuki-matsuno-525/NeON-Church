@@ -332,6 +332,20 @@ const ja = {
   showPassword: "パスワードを表示",
   hidePassword: "パスワードを非表示",
   passwordTooShort: "パスワードは8文字以上で入力してください。",
+
+  // 空状態（EmptyState 用）
+  emptyBookmarksDesc: "本文を読んでお気に入りを追加すると、ここに表示されます。",
+  emptyBookmarksCta: "読書を始める",
+  emptyNotificationsDesc: "あなたへの返信やリアクションがあるとここに表示されます。",
+  emptyMyBookmarksDesc: "気になった節やコメントを保存して、後から見返せます。",
+  emptyMyCommentsDesc: "本文を読んで気づきをコメントすると、ここに表示されます。",
+  emptyQaDesc: "最初の質問を投稿してコミュニティを盛り上げましょう。",
+  emptyQaCta: "質問する",
+  emptyTranslationsDesc: "翻訳プロジェクトを立ち上げて、共同翻訳を始められます。",
+  emptyTranslationsCta: "プロジェクトを作る",
+  emptyUnitsDesc: "翻訳する節を追加して、作業を始めましょう。",
+  emptyUnitsCta: "節を追加",
+  emptyReviewUnitsDesc: "レビュー待ちの節がここに表示されます。",
 };
 
 const en: typeof ja = {
@@ -629,6 +643,19 @@ const en: typeof ja = {
   showPassword: "Show password",
   hidePassword: "Hide password",
   passwordTooShort: "Password must be at least 8 characters.",
+
+  emptyBookmarksDesc: "Read passages and save your favorites — they'll show up here.",
+  emptyBookmarksCta: "Start reading",
+  emptyNotificationsDesc: "Replies and reactions to you will appear here.",
+  emptyMyBookmarksDesc: "Save verses and comments to revisit them later.",
+  emptyMyCommentsDesc: "Share your thoughts on a passage and they'll show up here.",
+  emptyQaDesc: "Post the first question to get the community started.",
+  emptyQaCta: "Ask a question",
+  emptyTranslationsDesc: "Create a project to begin collaborative translation.",
+  emptyTranslationsCta: "Create a project",
+  emptyUnitsDesc: "Add verses to translate and get started.",
+  emptyUnitsCta: "Add a unit",
+  emptyReviewUnitsDesc: "Units awaiting review will appear here.",
 };
 
 export type Translations = typeof ja;

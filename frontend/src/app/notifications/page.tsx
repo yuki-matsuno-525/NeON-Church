@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList } from "@/components/ui";
+import { SkeletonList, EmptyState } from "@/components/ui";
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
@@ -94,7 +94,10 @@ export default function NotificationsPage() {
       </div>
 
       {notifications.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>{t.noNotifications}</p>
+        <EmptyState
+          title={t.noNotifications}
+          description={t.emptyNotificationsDesc}
+        />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {notifications.map((n) => (
