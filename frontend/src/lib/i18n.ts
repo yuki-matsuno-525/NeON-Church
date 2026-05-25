@@ -326,6 +326,9 @@ const ja = {
   relHoursAgo: (n: number) => `${n}時間前`,
   relDaysAgo: (n: number) => `${n}日前`,
   dateLocale: "ja-JP",
+
+  // 汎用 a11y
+  clearInput: "入力をクリア",
 };
 
 const en: typeof ja = {
@@ -618,6 +621,8 @@ const en: typeof ja = {
   relHoursAgo: (n: number) => `${n}h ago`,
   relDaysAgo: (n: number) => `${n}d ago`,
   dateLocale: "en-US",
+
+  clearInput: "Clear input",
 };
 
 export type Translations = typeof ja;

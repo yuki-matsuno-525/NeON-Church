@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useId, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { searchBible, type SearchResult } from "@/lib/api";
@@ -21,6 +21,7 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const t = useT();
+  const inputId = useId();
   const q = searchParams.get("q") ?? "";
   const [inputValue, setInputValue] = useState(q);
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -54,23 +55,57 @@ function SearchContent() {
       <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20 }}>{t.searchTitle}</h1>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
-        <input
-          name="search-q"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder={t.searchKeyword}
-          style={{
-            flex: 1,
-            padding: "9px 12px",
-            border: "1px solid rgba(140, 75, 235, 0.35)",
-            borderRadius: 8,
-            background: "rgba(255, 255, 255, 0.05)",
-            color: "var(--text)",
-            fontSize: 14,
-            fontFamily: "inherit",
-            outline: "none",
-          }}
-        />
+        <label htmlFor={inputId} className="sr-only">{t.searchKeyword}</label>
+        <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+          <input
+            id={inputId}
+            name="search-q"
+            type="search"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder={t.searchKeyword}
+            autoComplete="off"
+            style={{
+              width: "100%",
+              padding: "9px 12px",
+              paddingRight: inputValue ? 36 : 12,
+              border: "1px solid rgba(140, 75, 235, 0.35)",
+              borderRadius: 8,
+              background: "rgba(255, 255, 255, 0.05)",
+              color: "var(--text)",
+              fontSize: 14,
+              fontFamily: "inherit",
+            }}
+          />
+          {inputValue && (
+            <button
+              type="button"
+              onClick={() => setInputValue("")}
+              aria-label={t.clearInput}
+              style={{
+                position: "absolute",
+                right: 6,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 26,
+                height: 26,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "transparent",
+                border: "none",
+                color: "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: 16,
+                lineHeight: 1,
+                borderRadius: 4,
+                fontFamily: "inherit",
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
         <button
           type="submit"
           style={{

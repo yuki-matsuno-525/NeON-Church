@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useId, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { register, type ApiError } from "@/lib/api";
@@ -12,6 +12,10 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const { setUser } = useAuth();
   const t = useT();
+  const usernameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const errorId = useId();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +48,6 @@ function RegisterForm() {
     color: "var(--text)",
     fontSize: 14,
     fontFamily: "inherit",
-    outline: "none",
   };
 
   const labelStyle: React.CSSProperties = {
@@ -84,41 +87,58 @@ function RegisterForm() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>{t.username}</label>
+            <label htmlFor={usernameId} style={labelStyle}>{t.username}</label>
             <input
+              id={usernameId}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              autoComplete="username"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               style={fieldStyle}
             />
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>{t.email}</label>
+            <label htmlFor={emailId} style={labelStyle}>{t.email}</label>
             <input
+              id={emailId}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               style={fieldStyle}
             />
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={labelStyle}>{t.passwordHint}</label>
+            <label htmlFor={passwordId} style={labelStyle}>{t.passwordHint}</label>
             <input
+              id={passwordId}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              autoComplete="new-password"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               style={fieldStyle}
             />
           </div>
 
           {error && (
-            <p style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}>
+            <p
+              id={errorId}
+              role="alert"
+              aria-live="polite"
+              style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}
+            >
               {error}
             </p>
           )}

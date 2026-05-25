@@ -35,13 +35,39 @@ option {
   color: rgba(236, 228, 252, 0.92);
 }
 
-/* input / textarea / select 共通フォーカス */
+/* input / textarea / select 共通フォーカス（マウスクリック時は控えめなring） */
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
   border-color: rgba(192, 64, 240, 0.65) !important;
   box-shadow: 0 0 0 2px rgba(192, 64, 240, 0.14);
+}
+
+/* キーボードフォーカス時は明確なアウトラインを出す（a11y） */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* スクリーンリーダー専用テキスト */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @theme inline {

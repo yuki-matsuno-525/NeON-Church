@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useId, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, type ApiError } from "@/lib/api";
@@ -12,6 +12,9 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { setUser } = useAuth();
   const t = useT();
+  const usernameId = useId();
+  const passwordId = useId();
+  const errorId = useId();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +69,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
             <label
+              htmlFor={usernameId}
               style={{
                 display: "block",
                 fontSize: 13,
@@ -77,10 +81,14 @@ function LoginForm() {
               {t.username}
             </label>
             <input
+              id={usernameId}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
+              autoComplete="username"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               style={{
                 width: "100%",
                 padding: "9px 12px",
@@ -90,13 +98,13 @@ function LoginForm() {
                 color: "var(--text)",
                 fontSize: 14,
                 fontFamily: "inherit",
-                outline: "none",
               }}
             />
           </div>
 
           <div style={{ marginBottom: 24 }}>
             <label
+              htmlFor={passwordId}
               style={{
                 display: "block",
                 fontSize: 13,
@@ -108,10 +116,14 @@ function LoginForm() {
               {t.password}
             </label>
             <input
+              id={passwordId}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
               style={{
                 width: "100%",
                 padding: "9px 12px",
@@ -121,13 +133,17 @@ function LoginForm() {
                 color: "var(--text)",
                 fontSize: 14,
                 fontFamily: "inherit",
-                outline: "none",
               }}
             />
           </div>
 
           {error && (
-            <p style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}>
+            <p
+              id={errorId}
+              role="alert"
+              aria-live="polite"
+              style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}
+            >
               {error}
             </p>
           )}

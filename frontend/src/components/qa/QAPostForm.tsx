@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { fetchChapters, fetchVerses, createComment, type Book, type Chapter, type Tag, type Verse } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 
@@ -23,6 +23,11 @@ const inputStyle: React.CSSProperties = {
 
 export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
   const t = useT();
+  const bodyId = useId();
+  const bookSelectId = useId();
+  const chapterSelectId = useId();
+  const verseSelectId = useId();
+  const errorId = useId();
   const [body, setBody] = useState("");
   const [bookId, setBookId] = useState("");
   const [chapterId, setChapterId] = useState("");
@@ -89,11 +94,15 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
         background: "var(--bg-alt)",
       }}
     >
+      <label htmlFor={bodyId} className="sr-only">{t.qaInputPlaceholder}</label>
       <textarea
+        id={bodyId}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={t.qaInputPlaceholder}
         rows={4}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         style={{
           width: "100%",
           padding: "8px 10px",
@@ -104,34 +113,40 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
           fontSize: 14,
           resize: "vertical",
           fontFamily: "inherit",
-          outline: "none",
           boxSizing: "border-box",
         }}
       />
 
       {/* 場所選択 */}
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-        <select value={bookId} onChange={handleBookChange} style={inputStyle}>
+        <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
+        <select id={bookSelectId} value={bookId} onChange={handleBookChange} style={inputStyle}>
           <option value="">{t.qaSelectBookOptional}</option>
           {books.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
         {chapters.length > 0 && (
-          <select value={chapterId} onChange={handleChapterChange} style={inputStyle}>
-            <option value="">{t.qaSelectChapterOptional}</option>
-            {chapters.map((c) => (
-              <option key={c.id} value={c.id}>{t.chapterOption(c.number)}</option>
-            ))}
-          </select>
+          <>
+            <label htmlFor={chapterSelectId} className="sr-only">{t.qaSelectChapterOptional}</label>
+            <select id={chapterSelectId} value={chapterId} onChange={handleChapterChange} style={inputStyle}>
+              <option value="">{t.qaSelectChapterOptional}</option>
+              {chapters.map((c) => (
+                <option key={c.id} value={c.id}>{t.chapterOption(c.number)}</option>
+              ))}
+            </select>
+          </>
         )}
         {verses.length > 0 && (
-          <select value={verseId} onChange={(e) => setVerseId(e.target.value)} style={inputStyle}>
-            <option value="">{t.qaSelectVerseOptional}</option>
-            {verses.map((v) => (
-              <option key={v.id} value={v.id}>{t.verseOption(v.number)}</option>
-            ))}
-          </select>
+          <>
+            <label htmlFor={verseSelectId} className="sr-only">{t.qaSelectVerseOptional}</label>
+            <select id={verseSelectId} value={verseId} onChange={(e) => setVerseId(e.target.value)} style={inputStyle}>
+              <option value="">{t.qaSelectVerseOptional}</option>
+              {verses.map((v) => (
+                <option key={v.id} value={v.id}>{t.verseOption(v.number)}</option>
+              ))}
+            </select>
+          </>
         )}
       </div>
 
@@ -163,7 +178,16 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
         </div>
       )}
 
-      {error && <p style={{ color: "#ef4444", fontSize: 12, margin: "6px 0 0" }}>{error}</p>}
+      {error && (
+        <p
+          id={errorId}
+          role="alert"
+          aria-live="polite"
+          style={{ color: "#ef4444", fontSize: 12, margin: "6px 0 0" }}
+        >
+          {error}
+        </p>
+      )}
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
         <button

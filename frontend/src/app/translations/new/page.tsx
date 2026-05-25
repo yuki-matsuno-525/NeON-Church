@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useId, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createTranslation, fetchBooks, fetchTranslationLanguages, type Book, type TranslationLanguage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,12 @@ export default function NewTranslationPage() {
   const router = useRouter();
   const t = useT();
   const translationOptions = useTranslationOptions();
+  const nameId = useId();
+  const descriptionId = useId();
+  const versionId = useId();
+  const bookId = useId();
+  const languageId = useId();
+  const errorId = useId();
   const [books, setBooks] = useState<Book[]>([]);
   const [languages, setLanguages] = useState<TranslationLanguage[]>([]);
   const [name, setName] = useState("");
@@ -88,30 +94,35 @@ export default function NewTranslationPage() {
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <label style={labelStyle}>{t.projectName}</label>
+          <label htmlFor={nameId} style={labelStyle}>{t.projectName}</label>
           <input
+            id={nameId}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.projectNamePlaceholder}
             style={inputStyle}
             required
+            autoComplete="off"
           />
         </div>
 
         <div>
-          <label style={labelStyle}>{t.description}</label>
+          <label htmlFor={descriptionId} style={labelStyle}>{t.description}</label>
           <textarea
+            id={descriptionId}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t.descPlaceholder}
             rows={3}
+            autoComplete="off"
             style={{ ...inputStyle, resize: "vertical" }}
           />
         </div>
 
         <div>
-          <label style={labelStyle}>{t.bibleVersion}</label>
+          <label htmlFor={versionId} style={labelStyle}>{t.bibleVersion}</label>
           <select
+            id={versionId}
             value={sourceVersion}
             onChange={(e) => setSourceVersion(e.target.value)}
             style={inputStyle}
@@ -124,8 +135,9 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>{t.sourceBook}</label>
+          <label htmlFor={bookId} style={labelStyle}>{t.sourceBook}</label>
           <select
+            id={bookId}
             value={sourceBook}
             onChange={(e) => setSourceBook(e.target.value)}
             style={inputStyle}
@@ -139,8 +151,9 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>{t.targetLanguage}</label>
+          <label htmlFor={languageId} style={labelStyle}>{t.targetLanguage}</label>
           <select
+            id={languageId}
             value={targetLanguage}
             onChange={(e) => setTargetLanguage(e.target.value)}
             style={inputStyle}
@@ -154,7 +167,14 @@ export default function NewTranslationPage() {
         </div>
 
         {error && (
-          <p style={{ color: "#ef4444", fontSize: 13, margin: 0 }}>{error}</p>
+          <p
+            id={errorId}
+            role="alert"
+            aria-live="polite"
+            style={{ color: "#ef4444", fontSize: 13, margin: 0 }}
+          >
+            {error}
+          </p>
         )}
 
         <div style={{ display: "flex", gap: 12 }}>

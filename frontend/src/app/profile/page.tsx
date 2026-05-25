@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
@@ -20,6 +20,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const t = useT();
   const { lang } = useLang();
+  const avatarInputId = useId();
+  const messageId = useId();
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -146,6 +148,7 @@ export default function ProfilePage() {
         </div>
         <div>
           <label
+            htmlFor={avatarInputId}
             style={{
               display: "inline-block",
               fontSize: 13,
@@ -156,14 +159,15 @@ export default function ProfilePage() {
             }}
           >
             {avatarUploading ? t.uploadingAvatar : t.changeAvatar}
-            <input
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleAvatarChange}
-              disabled={avatarUploading}
-            />
           </label>
+          <input
+            id={avatarInputId}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleAvatarChange}
+            disabled={avatarUploading}
+          />
           <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
             {t.avatarHint}
           </p>
@@ -216,6 +220,8 @@ export default function ProfilePage() {
             onChange={(e) => setBio(e.target.value)}
             rows={4}
             placeholder={t.bioPlaceholder}
+            autoComplete="off"
+            aria-describedby={message ? messageId : undefined}
             style={{
               width: "100%",
               padding: "10px 12px",
@@ -232,6 +238,9 @@ export default function ProfilePage() {
 
         {message && (
           <p
+            id={messageId}
+            role={message.type === "error" ? "alert" : "status"}
+            aria-live="polite"
             style={{
               fontSize: 13,
               color: message.type === "success" ? "var(--accent)" : "#e53e3e",
