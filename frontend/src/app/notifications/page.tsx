@@ -65,7 +65,7 @@ export default function NotificationsPage() {
   if (loading || fetching) {
     return (
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>{t.notificationsTitle}</h1>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>{t.notificationsTitle}</h1>
         <SkeletonList count={4} />
       </div>
     );
@@ -83,20 +83,20 @@ export default function NotificationsPage() {
           marginBottom: 24,
         }}
       >
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>{t.notificationsTitle}</h1>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700 }}>{t.notificationsTitle}</h1>
         <button
           onClick={handleMarkAll}
           disabled={unreadCount === 0}
           aria-disabled={unreadCount === 0}
           style={{
-            border: "1px solid rgba(140, 75, 235, 0.45)",
-            borderRadius: 8,
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
             padding: "6px 14px",
             background: "transparent",
             color: unreadCount === 0 ? "var(--text-faint)" : "var(--text-muted)",
             cursor: unreadCount === 0 ? "default" : "pointer",
             opacity: unreadCount === 0 ? 0.6 : 1,
-            fontSize: 13,
+            fontSize: "var(--font-size-sm)",
             fontFamily: "inherit",
           }}
         >
@@ -150,10 +150,10 @@ function NotificationItem({
 }) {
   const cardStyle: React.CSSProperties = {
     padding: "14px 16px",
-    borderRadius: 8,
+    borderRadius: "var(--radius-md)",
     background: n.is_read ? "var(--bg-alt)" : "var(--accent-tint)",
     borderLeft: n.is_read ? "3px solid transparent" : "3px solid var(--accent)",
-    transition: "background 0.1s",
+    transition: `background var(--duration-fast) var(--ease-out)`,
     display: "block",
     textDecoration: "none",
     color: "inherit",
@@ -171,14 +171,8 @@ function NotificationItem({
         }}
       >
         <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--accent)",
-            background: "var(--accent-tint)",
-            padding: "2px 6px",
-            borderRadius: 4,
-          }}
+          className="badge"
+          style={{ background: "var(--accent-tint)", color: "var(--accent)" }}
         >
           {typeLabel}
         </span>
