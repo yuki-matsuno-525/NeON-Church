@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI } from "./helpers";
+import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
 
 test("P-1: 他者のコメントに削除ボタンが表示されない", async ({ page, request }) => {
   const ts = Date.now();
@@ -10,9 +10,11 @@ test("P-1: 他者のコメントに削除ボタンが表示されない", async 
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const commentText = `other_comment_${ts}`;
-  await page.getByPlaceholder("この節へのコメント...").fill(commentText);
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
-  await expect(page.getByText(commentText)).toBeVisible();
+  const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
+  await panel.getByPlaceholder("この節へのコメント...").fill(commentText);
+  await panel.getByRole("button", { name: "投稿する" }).click();
+  await expect(panel.getByText(commentText)).toBeVisible();
   await logoutWithUI(page);
 
   // ユーザーB: 登録・ログイン

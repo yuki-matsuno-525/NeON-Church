@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI } from "./helpers";
+import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
 
 test("U-1,U-2: upvote・取り消し — vote 数が増減する", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_upv");
@@ -10,8 +10,9 @@ test("U-1,U-2: upvote・取り消し — vote 数が増減する", async ({ page
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
   await panel.getByPlaceholder("この節へのコメント...").fill(`upvote_${ts}`);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
   await expect(panel.getByText(`upvote_${ts}`)).toBeVisible();
 
   // 投稿したコメントの inner-div にスコープして ▲ ボタンを取得
@@ -39,8 +40,9 @@ test("U-3: 連続upvoteは最大1票に留まる", async ({ page, request }) => 
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
   await panel.getByPlaceholder("この節へのコメント...").fill(`u3_${ts}`);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
   await expect(panel.getByText(`u3_${ts}`)).toBeVisible();
 
   // 投稿したコメントの inner-div にスコープして ▲ ボタンを取得

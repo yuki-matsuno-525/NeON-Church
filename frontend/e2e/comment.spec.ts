@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI } from "./helpers";
+import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
 
 /**
  * E2E 3: コメント投稿・返信・削除
@@ -29,14 +29,15 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
   // 最初の節をクリックしてコメントパネルを開く
   await page.getByTestId("verse-item").first().click();
   const panel = page.locator(".comment-panel");
-  // CommentPanel のフォームが表示される
+  // UX-9: 投稿フォームは折りたたみ済み。CTA を押して展開
+  await openVerseCompose(page);
   await expect(panel.getByPlaceholder("この節へのコメント...")).toBeVisible();
 
   // コメントを入力して投稿
   const ts = Date.now();
   const commentBody = `E2Eテストコメント_${ts}`;
   await panel.getByPlaceholder("この節へのコメント...").fill(commentBody);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
 
   // 投稿したコメントが表示される
   await expect(panel.getByText(commentBody)).toBeVisible();
@@ -73,10 +74,11 @@ test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, r
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
 
   // トップコメント投稿（depth=0）
   await panel.getByPlaceholder("この節へのコメント...").fill(`top_${ts}`);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
   await expect(panel.getByText(`top_${ts}`)).toBeVisible();
 
   // top_${ts} コメントの inner-div にスコープして操作（他コメントのボタンと混同しない）
@@ -105,8 +107,8 @@ test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ p
   await loginWithUI(page, username, password);
   await page.goto("/matthew/1");
 
-  // 章コメント欄にスクロール
-  await page.getByRole("heading", { name: /章へのコメント/ }).scrollIntoViewIfNeeded();
+  // 章コメント欄にスクロール (heading 文言が label に依存して変わるため section#chapter-comments を直接使う)
+  await page.locator("#chapter-comments").scrollIntoViewIfNeeded();
 
   const ts = Date.now();
   const chapterComment = `chapter_${ts}`;
@@ -139,14 +141,16 @@ test("C-7: 節コメントが章コメント欄に混入しない", async ({ pag
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const verseComment = `verse_only_${ts}`;
-  await page.getByPlaceholder("この節へのコメント...").fill(verseComment);
-  await page.getByRole("button", { name: "投稿", exact: true }).click();
-  await expect(page.getByText(verseComment)).toBeVisible();
+  const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
+  await panel.getByPlaceholder("この節へのコメント...").fill(verseComment);
+  await panel.getByRole("button", { name: "投稿する" }).click();
+  await expect(panel.getByText(verseComment)).toBeVisible();
 
   // コメントパネルを閉じる
-  await page.getByRole("button", { name: "閉じる" }).click();
+  await panel.getByRole("button", { name: "コメントパネルを閉じる" }).click();
 
   // 章コメント欄（section）内に節コメントが表示されていないことを確認
-  const chapterSection = page.locator("section").filter({ hasText: "章へのコメント" });
+  const chapterSection = page.locator("#chapter-comments");
   await expect(chapterSection.getByText(verseComment)).not.toBeVisible();
 });

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI } from "./helpers";
+import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
 
 test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({ page, request }) => {
   const ts = Date.now();
@@ -10,9 +10,10 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
   const commentText = `notif_comment_${ts}`;
   await panel.getByPlaceholder("この節へのコメント...").fill(commentText);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
   await expect(panel.getByText(commentText)).toBeVisible();
   await logoutWithUI(page);
 
@@ -60,8 +61,9 @@ test("N-3: 自己返信では通知が来ない", async ({ page, request }) => {
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const panel = page.locator(".comment-panel");
+  await openVerseCompose(page);
   await panel.getByPlaceholder("この節へのコメント...").fill(`self_${ts}`);
-  await panel.getByRole("button", { name: "投稿", exact: true }).click();
+  await panel.getByRole("button", { name: "投稿する" }).click();
   await expect(panel.getByText(`self_${ts}`)).toBeVisible();
 
   // 自分のコメントに返信（inner-div にスコープ）

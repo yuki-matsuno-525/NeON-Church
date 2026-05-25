@@ -60,3 +60,15 @@ export async function logoutWithUI(page: import("@playwright/test").Page) {
     page.getByRole("navigation").getByRole("link", { name: "ログイン" })
   ).toBeVisible();
 }
+
+/**
+ * UX-9 で CommentPanel の投稿フォームがデフォルト折りたたみになったため、
+ * テストではまず「コメントを書く」CTA をクリックしてフォームを開く必要がある。
+ * 投稿成功またはキャンセルで再び折りたたまれる。
+ */
+export async function openVerseCompose(page: import("@playwright/test").Page) {
+  await page
+    .locator(".comment-panel")
+    .getByRole("button", { name: "コメントを書く" })
+    .click();
+}
