@@ -367,7 +367,7 @@ v0.x.0 — 探索性とデザイン整理
 | R1 | UX-1 フォーム a11y 統一 | DONE | | login/register/profile/QAPostForm/translations-new/search に label htmlFor / autocomplete / role=alert / focus-visible / 検索 × ボタン |
 | R1 | UX-2 認証導線磨き込み | DONE | | パスワード表示切替 / 既ログイン時リダイレクト / passwordTooShort / apiClient エラー文言の人間可読化 |
 | R1 | UX-3 共通 UI コンポーネント整備 | DONE | | Skeleton/Spinner/EmptyState/Button/TextField/Toast(+Provider)/ConfirmDialog 追加。ClientLayout に ToastProvider 挿入。/demo/ui で動作確認可能 |
-| R1 | UX-4 共通コンポーネント適用 | TODO | | |
+| R1 | UX-4 共通コンポーネント適用 | DONE | | 6 画面の loading を SkeletonList、空状態を EmptyState (CTA 付き)、translations/[id] の confirm/alert を ConfirmDialog/Toast に置換 |
 | R1 | UX-5 Footer + 信頼性ページ | TODO | | |
 | R2 | UX-6 通知のクリック先と文脈 | TODO | | |
 | R2 | UX-7 公開プロフィールのプライバシー | TODO | | |
