@@ -76,6 +76,17 @@
   --leading-tight: 1.25;   /* 見出し */
   --leading-base: 1.6;     /* 本文 */
   --leading-reading: 1.85; /* Reader 長文 */
+
+  /* Breakpoints (Release 4) — メディアクエリでは CSS 変数を参照できないため、
+     ここでは「命名と値の対応表」として保持し、各メディアクエリのコメントで参照する。
+     - sm: 640px  小型モバイル
+     - md: 768px  既存の唯一の breakpoint。タブレット縦
+     - lg: 1024px タブレット横〜小型ノート
+     - xl: 1280px デスクトップ */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
 }
 
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
