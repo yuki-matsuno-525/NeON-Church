@@ -135,16 +135,16 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
-              <Link href="/read" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+              <Link href="/read" aria-current={pathname.startsWith("/read") ? "page" : undefined} style={{ color: pathname.startsWith("/read") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.read}
               </Link>
-              <Link href="/qa" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+              <Link href="/qa" aria-current={pathname.startsWith("/qa") ? "page" : undefined} style={{ color: pathname.startsWith("/qa") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.qa}
               </Link>
-              <Link href="/translations" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+              <Link href="/translations" aria-current={pathname.startsWith("/translations") ? "page" : undefined} style={{ color: pathname.startsWith("/translations") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.translate}
               </Link>
-              <Link href="/bookmarks" style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+              <Link href="/bookmarks" aria-current={pathname.startsWith("/bookmarks") ? "page" : undefined} style={{ color: pathname.startsWith("/bookmarks") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.bookmarks}
               </Link>
               <Link
@@ -233,16 +233,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           ) : (
             <Link
               href={`/login?from=${encodeURIComponent(pathname)}`}
-              style={{
-                background: "linear-gradient(135deg, #7618c5, #d81e80)",
-                color: "#fff",
-                borderRadius: 8,
-                padding: "6px 16px",
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: 13,
-                boxShadow: "0 0 14px rgba(198, 44, 170, 0.45)",
-              }}
+              className="btn btn-primary"
+              style={{ fontSize: 13 }}
             >
               {t.login}
             </Link>
