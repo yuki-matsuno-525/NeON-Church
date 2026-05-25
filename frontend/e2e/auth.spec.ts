@@ -23,9 +23,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "登録する" }).click();
 
-  // 登録成功 → /matthew/1 にリダイレクト
-  await expect(page).toHaveURL(/\/matthew\/1$/);
-  // ログイン済み状態 = ログアウトボタンが表示される
+  // 登録成功 = ログアウトボタンが表示される (リダイレクト先はホーム)
   await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
 
   // ログアウト
@@ -41,9 +39,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
 
-  // ログイン成功 → /matthew/1 にリダイレクト
-  await expect(page).toHaveURL(/\/matthew\/1$/);
-  // ログイン済み状態 = ログアウトボタンが表示される
+  // ログイン成功 = ログアウトボタンが表示される
   await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
 });
 

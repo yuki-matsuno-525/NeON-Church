@@ -45,15 +45,15 @@ test("B-2: 章ナビゲーション — 前後章に遷移する", async ({ page
     page.getByRole("heading", { name: "マタイ 第5章", exact: true })
   ).toBeVisible();
 
-  // 次章（6章）へ
-  await page.getByTitle("第6章").click();
+  // 次章（6章）へ (UX-11 で本文末尾の prev/next バーに変更)
+  await page.getByRole("link", { name: /次の章/ }).click();
   await expect(page).toHaveURL(/\/matthew\/6$/);
   await expect(
     page.getByRole("heading", { name: "マタイ 第6章", exact: true })
   ).toBeVisible();
 
   // 前章（5章）へ戻る
-  await page.getByTitle("第5章").click();
+  await page.getByRole("link", { name: /前の章/ }).click();
   await expect(page).toHaveURL(/\/matthew\/5$/);
   await expect(
     page.getByRole("heading", { name: "マタイ 第5章", exact: true })

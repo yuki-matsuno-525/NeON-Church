@@ -34,7 +34,8 @@ export async function registerUser(
 
 /**
  * ブラウザページでログインフォームを使ってログインする。
- * ログイン後、/matthew/1 にリダイレクトされることを前提とする。
+ * ログイン成功は Navbar に「ログアウト」ボタンが表示されることで判定する。
+ * (リダイレクト先は `?from=...` の有無で変わるため URL では待たない)
  */
 export async function loginWithUI(
   page: import("@playwright/test").Page,
@@ -47,7 +48,7 @@ export async function loginWithUI(
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
-  await page.waitForURL("**/matthew/1");
+  await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
 }
 
 /**
