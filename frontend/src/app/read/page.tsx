@@ -10,7 +10,7 @@ import {
   getLocalProgress,
   saveLocalProgress,
 } from "@/lib/readingProgress";
-import { BOOKS } from "@/lib/books";
+import { BOOKS, CATEGORY_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 
 type ResumeTarget = { slug: string; chapter: number; bookName: string } | null;
@@ -79,56 +79,67 @@ export default function ReadPage() {
         </Link>
       )}
 
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>
-        {t.selectBook}
-      </h2>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-          gap: 14,
-        }}
-      >
-        {BOOKS.map((book) => (
-          <Link
-            key={book.slug}
-            href={`/${book.slug}?list=1`}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              padding: "20px 18px",
-              border: "1px solid rgba(140, 75, 235, 0.30)",
-              borderLeft: "3px solid rgba(192, 64, 240, 0.55)",
-              borderRadius: 10,
-              textDecoration: "none",
-              color: "var(--text)",
-              background: "var(--bg-alt)",
-              transition: "border-color 0.18s, box-shadow 0.18s, background 0.18s",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "var(--bg-hover)";
-              el.style.borderColor = "rgba(192, 64, 240, 0.65)";
-              el.style.boxShadow = "0 4px 20px rgba(0,0,0,0.35)";
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "var(--bg-alt)";
-              el.style.borderColor = "rgba(140, 75, 235, 0.30)";
-              el.style.boxShadow = "none";
-            }}
-          >
-            <span style={{ fontWeight: 700, fontSize: 16 }}>{book.short}</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 5 }}>
-              {book.name}
-            </span>
-            <span style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 8 }}>
-              {t.totalChapters(book.totalChapters)}
-            </span>
-          </Link>
+      {CATEGORY_ORDER
+        .map((cat) => ({ cat, books: BOOKS.filter((b) => b.category === cat) }))
+        .filter(({ books }) => books.length > 0)
+        .map(({ cat, books }) => (
+          <div key={cat} style={{ marginBottom: "var(--space-6)" }}>
+            <div style={{ marginBottom: "var(--space-3)" }}>
+              <span
+                className="badge"
+                style={{ background: "var(--accent-tint)", color: "var(--accent)", fontSize: "var(--font-size-sm)", padding: "3px 10px" }}
+              >
+                {cat}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                gap: 14,
+              }}
+            >
+              {books.map((book) => (
+                <Link
+                  key={book.slug}
+                  href={`/${book.slug}?list=1`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "20px 18px",
+                    border: "1px solid var(--border)",
+                    borderLeft: "3px solid var(--accent)",
+                    borderRadius: "var(--radius-lg)",
+                    textDecoration: "none",
+                    color: "var(--text)",
+                    background: "var(--bg-alt)",
+                    transition: "border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out)",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = "var(--bg-hover)";
+                    el.style.borderColor = "var(--accent)";
+                    el.style.boxShadow = "var(--shadow-card)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = "var(--bg-alt)";
+                    el.style.borderColor = "var(--border)";
+                    el.style.boxShadow = "none";
+                  }}
+                >
+                  <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{book.short}</span>
+                  <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-1)" }}>
+                    {book.name}
+                  </span>
+                  <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                    {t.totalChapters(book.totalChapters)}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
-      </div>
     </div>
   );
 }
