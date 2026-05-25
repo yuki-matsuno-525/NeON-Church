@@ -60,7 +60,7 @@ export default function BookmarksPage() {
   if (loading || fetching) {
     return (
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
           {t.bookmarksTitle}
         </h1>
         <SkeletonList count={3} />
@@ -97,7 +97,7 @@ export default function BookmarksPage() {
           }
         />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
           {bookmarks.map((bm) => {
             const isRemoved = removedIds.has(bm.id);
 
