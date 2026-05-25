@@ -47,7 +47,7 @@ export default function TranslationReadChapterPage({
   const nextChapter = currentIndex < chapterNums.length - 1 ? chapterNums[currentIndex + 1] : null;
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "32px 16px" }}>
       {/* Breadcrumb */}
       <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 20px" }}>
         <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
@@ -80,7 +80,7 @@ export default function TranslationReadChapterPage({
                 {unit.verse_number}
               </span>
               <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{unit.body}</p>
+                <p style={{ margin: 0, fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-lg)", lineHeight: "var(--leading-reading)" }}>{unit.body}</p>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
                   {t.originalText} {unit.verse_text}
                 </p>
