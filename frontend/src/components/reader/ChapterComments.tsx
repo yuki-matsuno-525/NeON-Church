@@ -5,6 +5,7 @@ import { fetchTags, createComment, buildCommentTree, type Tag } from "@/lib/api"
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   chapterId: string;
@@ -12,7 +13,9 @@ type Props = {
   commentBookmarkMap?: Record<string, string>;
 };
 
-export function ChapterComments({ chapterId, label = "章へのコメント", commentBookmarkMap = {} }: Props) {
+export function ChapterComments({ chapterId, label, commentBookmarkMap = {} }: Props) {
+  const t = useT();
+  const heading = label ?? t.chapterCommentsHeading;
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
-          {label}{" "}
+          {heading}{" "}
           <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
             ({comments.length})
           </span>
@@ -72,7 +75,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
                 fontFamily: "inherit",
               }}
             >
-              {ord === "new" ? "新しい順" : "人気順"}
+              {ord === "new" ? t.orderNew : t.orderVotes}
             </button>
           ))}
         </div>
@@ -94,7 +97,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
               fontFamily: "inherit",
             }}
           >
-            すべて
+            {t.all}
           </button>
           {tags.map((tag) => (
             <button
@@ -121,7 +124,7 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="コメントを検索..."
+          placeholder={t.searchComments}
           style={{
             width: "100%",
             padding: "6px 12px",
@@ -142,10 +145,10 @@ export function ChapterComments({ chapterId, label = "章へのコメント", co
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>読み込み中...</p>
+        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
       ) : tree.length === 0 ? (
         <p style={{ color: "var(--text-faint)", fontSize: 13 }}>
-          コメントはまだありません
+          {t.noCommentsYet}
         </p>
       ) : (
         tree.map((node) => (

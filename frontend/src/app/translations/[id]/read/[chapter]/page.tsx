@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
+import { useT } from "@/lib/i18n";
 
 export default function TranslationReadChapterPage({
   params,
@@ -12,6 +13,7 @@ export default function TranslationReadChapterPage({
 }) {
   const { id, chapter } = use(params);
   const chapterNum = Number(chapter);
+  const t = useT();
 
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [allUnits, setAllUnits] = useState<TranslationUnit[]>([]);
@@ -26,15 +28,15 @@ export default function TranslationReadChapterPage({
       setProject(proj);
       setAllUnits(u);
     }).catch(() => {
-      setError("公開されていないプロジェクトか、存在しないプロジェクトです。");
+      setError(t.notPublishedOrMissing);
     }).finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t.notPublishedOrMissing]);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>;
+  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
   if (error) return (
     <div style={{ padding: 32, textAlign: "center" }}>
       <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <Link href="/translations" style={{ color: "var(--accent)" }}>← プロジェクト一覧に戻る</Link>
+      <Link href="/translations" style={{ color: "var(--accent)" }}>{t.backToProjectList}</Link>
     </div>
   );
 
@@ -49,18 +51,18 @@ export default function TranslationReadChapterPage({
       {/* Breadcrumb */}
       <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 20px" }}>
         <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {project?.name ?? "プロジェクト"}
+          {project?.name ?? t.projectFallback}
         </Link>
         {" › "}
         <Link href={`/translations/${id}/read`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          章一覧
+          {t.chapterList}
         </Link>
         {" › "}
-        <span>第{chapterNum}章</span>
+        <span>{t.chapterFmt(chapterNum)}</span>
       </p>
 
       <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
-        {project?.name} — 第{chapterNum}章
+        {project?.name} — {t.chapterFmt(chapterNum)}
       </h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 28px" }}>
         {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
@@ -69,7 +71,7 @@ export default function TranslationReadChapterPage({
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
       {units.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>この章に公開された翻訳節がありません。</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {units.map((unit) => (
@@ -80,7 +82,7 @@ export default function TranslationReadChapterPage({
               <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7 }}>{unit.body}</p>
                 <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
-                  原文: {unit.verse_text}
+                  {t.originalText} {unit.verse_text}
                 </p>
               </div>
             </div>
@@ -95,7 +97,7 @@ export default function TranslationReadChapterPage({
             href={`/translations/${id}/read/${prevChapter}`}
             style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 8 }}
           >
-            ‹ 第{prevChapter}章
+            {t.prevChapterFmt(prevChapter)}
           </Link>
         ) : <span />}
         {nextChapter != null ? (
@@ -103,7 +105,7 @@ export default function TranslationReadChapterPage({
             href={`/translations/${id}/read/${nextChapter}`}
             style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 8 }}
           >
-            第{nextChapter}章 ›
+            {t.nextChapterFmt(nextChapter)}
           </Link>
         ) : <span />}
       </div>

@@ -9,11 +9,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const chapterNum = Number(chapter);
   if (!meta || !chapterNum) return {};
   return {
-    title: `${meta.short} 第${chapterNum}章`,
-    description: `${meta.name} ${chapterNum}章を読む。節・章へのコメントが投稿できます。`,
+    title: `${meta.englishName} ${chapterNum}`,
+    description: `Read ${meta.englishName} chapter ${chapterNum}. Post comments on verses and the chapter.`,
     openGraph: {
-      title: `${meta.short} 第${chapterNum}章`,
-      description: `${meta.name} ${chapterNum}章を読む。`,
+      title: `${meta.englishName} ${chapterNum}`,
+      description: `Read ${meta.englishName} chapter ${chapterNum}.`,
       type: "article",
     },
   };

@@ -15,12 +15,12 @@ import {
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug } from "@/lib/books";
-import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from "@/lib/translations";
+import { DEFAULT_TRANSLATION } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
-import { useT } from "@/lib/i18n";
+import { useT, useBookLabel, useTranslationOptions } from "@/lib/i18n";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -33,6 +33,8 @@ export default function ChapterPage() {
   const slug = typeof params.book === "string" ? params.book : "";
   const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
   const meta = getBookBySlug(slug);
+  const label = useBookLabel(slug);
+  const translationOptions = useTranslationOptions();
 
   const [verses, setVerses] = useState<Verse[]>([]);
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -62,10 +64,10 @@ export default function ChapterPage() {
       .then((books) => {
         const bookName = translation === "KJV" ? meta.englishName : meta.name;
         const book = books.find((b) => b.name === bookName);
-        if (!book) throw new Error("書が見つかりません");
+        if (!book) throw new Error(t.bookNotFound);
         return fetchChapters(book.id).then((chapters) => {
           const ch = chapters.find((c) => c.number === chapterNum);
-          if (!ch) throw new Error("章が見つかりません");
+          if (!ch) throw new Error(t.chapterNotFound);
           setChapter(ch);
           saveLocalProgress(slug, {
             bookId: book.id,
@@ -82,7 +84,7 @@ export default function ChapterPage() {
       .then(setVerses)
       .catch((err) => {
         setError(
-          translation !== DEFAULT_TRANSLATION && err.message === "書が見つかりません"
+          translation !== DEFAULT_TRANSLATION && err.message === t.bookNotFound
             ? t.translationNotFound(translation)
             : err.message
         );
@@ -151,7 +153,7 @@ export default function ChapterPage() {
       <div style={{ padding: 32 }}>
         <p style={{ color: "#ef4444", marginBottom: 16 }}>{error}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {BIBLE_TRANSLATIONS.filter((trans) => trans.id !== translation).map((trans) => (
+          {translationOptions.filter((trans) => trans.id !== translation).map((trans) => (
             <button
               key={trans.id}
               onClick={() => {
@@ -197,7 +199,7 @@ export default function ChapterPage() {
             </Link>
             {" › "}
             <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-              {meta.short}
+              {label?.short ?? meta.short}
             </Link>
             {" › "}
             <span>{t.chapterFmt(chapterNum)}</span>
@@ -221,7 +223,7 @@ export default function ChapterPage() {
                 WebkitAppearance: "none",
               }}
             >
-              {BIBLE_TRANSLATIONS.map((trans) => (
+              {translationOptions.map((trans) => (
                 <option key={trans.id} value={trans.id}>{trans.label}</option>
               ))}
             </select>
@@ -245,7 +247,7 @@ export default function ChapterPage() {
         </div>
 
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-          {meta.short} {t.chapterFmt(chapterNum)}
+          {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
         </h1>
 
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
@@ -267,7 +269,7 @@ export default function ChapterPage() {
         {chapter && (
           <ChapterComments
             chapterId={chapter.id}
-            label={`${meta.short} ${t.chapterFmt(chapterNum)}`}
+            label={`${label?.short ?? meta.short} ${t.chapterFmt(chapterNum)}`}
             commentBookmarkMap={commentBookmarkMap}
           />
         )}

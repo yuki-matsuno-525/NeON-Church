@@ -8,13 +8,19 @@ import { getLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug } from "@/lib/books";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
+import { useT, useBookLabel } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { defaultTranslationForLang } from "@/lib/translations";
 
 function BookContent() {
+  const t = useT();
+  const { lang } = useLang();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const slug = typeof params.book === "string" ? params.book : "";
   const meta = getBookBySlug(slug);
+  const label = useBookLabel(slug);
 
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -34,10 +40,10 @@ function BookContent() {
       return;
     }
 
-    fetchBooks("口語訳")
+    fetchBooks(defaultTranslationForLang(lang))
       .then((books) => {
         const book = books.find((b) => b.name === meta.name);
-        if (!book) throw new Error("書が見つかりません");
+        if (!book) throw new Error(t.bookNotFound);
         setBookId(book.id);
         return Promise.all([
           fetchChapters(book.id),
@@ -49,7 +55,7 @@ function BookContent() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [slug, meta, router, searchParams]);
+  }, [slug, meta, router, searchParams, lang, t.bookNotFound]);
 
   const handleCommentSubmit = async (body: string) => {
     if (!bookId) return;
@@ -67,7 +73,7 @@ function BookContent() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
     );
   }
 
@@ -83,18 +89,18 @@ function BookContent() {
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
       <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 16px" }}>
         <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          書一覧
+          {t.bookList}
         </Link>
         {" › "}
-        <span>{meta.short}</span>
+        <span>{label?.short ?? meta.short}</span>
       </p>
 
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-        {meta.name}
+        {label?.name ?? meta.name}
       </h1>
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
-        章を選択
+        {t.selectChapterHeading}
       </h2>
 
       <div
@@ -146,7 +152,7 @@ function BookContent() {
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
-        この書へのコメント{" "}
+        {t.bookCommentsHeading}{" "}
         <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
           ({comments.length})
         </span>
@@ -157,7 +163,7 @@ function BookContent() {
       </div>
 
       {tree.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>コメントはまだありません</p>
+        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.noCommentsYet}</p>
       ) : (
         tree.map((node) => (
           <CommentItem
@@ -176,9 +182,14 @@ function BookContent() {
   );
 }
 
+function LoadingFallback() {
+  const t = useT();
+  return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+}
+
 export default function BookPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>}>
+    <Suspense fallback={<LoadingFallback />}>
       <BookContent />
     </Suspense>
   );

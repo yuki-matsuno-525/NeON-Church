@@ -4,9 +4,11 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
+import { useT } from "@/lib/i18n";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useT();
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [units, setUnits] = useState<TranslationUnit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,15 +22,15 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       setProject(proj);
       setUnits(u);
     }).catch(() => {
-      setError("公開されていないプロジェクトか、存在しないプロジェクトです。");
+      setError(t.notPublishedOrMissing);
     }).finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t.notPublishedOrMissing]);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</div>;
+  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
   if (error) return (
     <div style={{ padding: 32, textAlign: "center" }}>
       <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <Link href="/translations" style={{ color: "var(--accent)" }}>← プロジェクト一覧に戻る</Link>
+      <Link href="/translations" style={{ color: "var(--accent)" }}>{t.backToProjectList}</Link>
     </div>
   );
 
@@ -38,10 +40,10 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
       <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 8px" }}>
         <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {project?.name ?? "プロジェクト"}
+          {project?.name ?? t.projectFallback}
         </Link>
         {" › "}
-        <span>章を選択</span>
+        <span>{t.selectChapterHeading}</span>
       </p>
 
       <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project?.name}</h1>
@@ -50,11 +52,11 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       </p>
 
       {chapterNums.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>まだ公開された翻訳節がありません。</p>
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVerses}</p>
       ) : (
         <>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
-            章を選択
+            {t.selectChapterHeading}
           </h2>
           <div
             style={{
@@ -90,7 +92,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
                   (e.currentTarget as HTMLElement).style.color = "var(--text)";
                 }}
               >
-                第{chNum}章
+                {t.chapterFmt(chNum)}
               </Link>
             ))}
           </div>

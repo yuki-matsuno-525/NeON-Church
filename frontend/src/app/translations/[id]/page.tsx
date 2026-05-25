@@ -193,7 +193,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleDelete = async () => {
-    if (!confirm("このプロジェクトを削除しますか？この操作は取り消せません。")) return;
+    if (!confirm(t.confirmDeleteProject)) return;
     await deleteTranslation(id);
     router.push("/translations");
   };
@@ -415,7 +415,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   setAddingBook(true);
                   try {
                     const res = await addBookToTranslation(id, project.source_book);
-                    alert(`${res.created} ユニットを追加しました。`);
+                    alert(t.unitsAdded(res.created));
                     const u = await fetchTranslationUnits(id);
                     setUnits(u);
                   } catch { /* ignore */ } finally { setAddingBook(false); }
@@ -428,11 +428,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 disabled={removingBook}
                 onClick={async () => {
                   if (!project) return;
-                  if (!confirm("すべてのユニットを削除しますか？")) return;
+                  if (!confirm(t.confirmDeleteAllUnits)) return;
                   setRemovingBook(true);
                   try {
                     const res = await removeBookFromTranslation(id, project.source_book);
-                    alert(`${res.deleted} ユニットを削除しました。`);
+                    alert(t.unitsDeleted(res.deleted));
                     const u = await fetchTranslationUnits(id);
                     setUnits(u);
                   } catch { /* ignore */ } finally { setRemovingBook(false); }

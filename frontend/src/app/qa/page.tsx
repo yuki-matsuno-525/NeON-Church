@@ -8,6 +8,8 @@ import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { defaultTranslationForLang } from "@/lib/translations";
 
 const PAGE_SIZE = 10;
 
@@ -25,6 +27,7 @@ function QAContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
   const [comments, setComments] = useState<QAComment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
@@ -37,13 +40,13 @@ function QAContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchBooks("口語訳"), fetchTags()])
+    Promise.all([fetchBooks(defaultTranslationForLang(lang)), fetchTags()])
       .then(([bks, tgs]) => {
         setBooks(bks);
         setTags(tgs);
       })
       .catch(() => {});
-  }, []);
+  }, [lang]);
 
   const loadComments = () => {
     setLoading(true);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { fetchChapters, fetchVerses, createComment, type Book, type Chapter, type Tag, type Verse } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   books: Book[];
@@ -21,6 +22,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
+  const t = useT();
   const [body, setBody] = useState("");
   const [bookId, setBookId] = useState("");
   const [chapterId, setChapterId] = useState("");
@@ -70,7 +72,7 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
       });
       onSubmitted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "投稿に失敗しました");
+      setError(err instanceof Error ? err.message : t.postFailed);
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +92,7 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="質問を入力..."
+        placeholder={t.qaInputPlaceholder}
         rows={4}
         style={{
           width: "100%",
@@ -110,24 +112,24 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
       {/* 場所選択 */}
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <select value={bookId} onChange={handleBookChange} style={inputStyle}>
-          <option value="">書を選択（任意）</option>
+          <option value="">{t.qaSelectBookOptional}</option>
           {books.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
         {chapters.length > 0 && (
           <select value={chapterId} onChange={handleChapterChange} style={inputStyle}>
-            <option value="">章を選択（任意）</option>
+            <option value="">{t.qaSelectChapterOptional}</option>
             {chapters.map((c) => (
-              <option key={c.id} value={c.id}>{c.number}章</option>
+              <option key={c.id} value={c.id}>{t.chapterOption(c.number)}</option>
             ))}
           </select>
         )}
         {verses.length > 0 && (
           <select value={verseId} onChange={(e) => setVerseId(e.target.value)} style={inputStyle}>
-            <option value="">節を選択（任意）</option>
+            <option value="">{t.qaSelectVerseOptional}</option>
             {verses.map((v) => (
-              <option key={v.id} value={v.id}>{v.number}節</option>
+              <option key={v.id} value={v.id}>{t.verseOption(v.number)}</option>
             ))}
           </select>
         )}
@@ -178,7 +180,7 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
             fontFamily: "inherit",
           }}
         >
-          キャンセル
+          {t.cancel}
         </button>
         <button
           type="submit"
@@ -196,7 +198,7 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
             fontFamily: "inherit",
           }}
         >
-          {submitting ? "投稿中..." : "質問を投稿する"}
+          {submitting ? t.posting : t.submitQuestion}
         </button>
       </div>
     </form>

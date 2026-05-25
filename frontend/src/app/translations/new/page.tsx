@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { createTranslation, fetchBooks, fetchTranslationLanguages, type Book, type TranslationLanguage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { useT } from "@/lib/i18n";
+import { useT, useTranslationOptions } from "@/lib/i18n";
 import { BIBLE_TRANSLATIONS } from "@/lib/translations";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const t = useT();
+  const translationOptions = useTranslationOptions();
   const [books, setBooks] = useState<Book[]>([]);
   const [languages, setLanguages] = useState<TranslationLanguage[]>([]);
   const [name, setName] = useState("");
@@ -116,7 +117,7 @@ export default function NewTranslationPage() {
             style={inputStyle}
             required
           >
-            {BIBLE_TRANSLATIONS.map(({ id, label }) => (
+            {translationOptions.map(({ id, label }) => (
               <option key={id} value={id}>{label}</option>
             ))}
           </select>

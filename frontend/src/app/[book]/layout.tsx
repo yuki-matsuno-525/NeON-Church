@@ -8,11 +8,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const meta = getBookBySlug(slug);
   if (!meta) return {};
   return {
-    title: meta.name,
-    description: `${meta.name}の章一覧とコメント。聖書を読んで語り合おう。`,
+    title: meta.englishName,
+    description: `Chapter list and comments for ${meta.englishName} (${meta.name}). Read, discuss, and share.`,
     openGraph: {
-      title: meta.name,
-      description: `${meta.name}の章一覧とコメント。`,
+      title: meta.englishName,
+      description: `Chapter list and comments for ${meta.englishName}.`,
       type: "website",
     },
   };

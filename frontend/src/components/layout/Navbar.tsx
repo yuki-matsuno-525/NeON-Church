@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { fetchUnreadCount } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type NavbarProps = {
   onMenuToggle?: () => void;
@@ -14,6 +15,7 @@ type NavbarProps = {
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, loading, logout } = useAuth();
   const { lang, setLang } = useLang();
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -31,10 +33,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
     router.push("/");
     router.refresh();
   };
-
-  const t = lang === "en"
-    ? { read: "Read", qa: "Q&A", translate: "Translate", bookmarks: "Bookmarks", logout: "Sign out", login: "Sign in", search: "Search..." }
-    : { read: "読む", qa: "Q&A", translate: "翻訳", bookmarks: "お気に入り", logout: "ログアウト", login: "ログイン", search: "検索..." };
 
   return (
     <nav
@@ -56,7 +54,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         onClick={onMenuToggle}
-        aria-label="メニューを開く"
+        aria-label={t.menuOpen}
         className="hamburger-btn"
         style={{
           background: "transparent",
@@ -98,7 +96,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <input
           type="search"
           name="q"
-          placeholder={t.search}
+          placeholder={t.searchPlaceholder}
           style={{
             width: "100%",
             maxWidth: 280,
@@ -155,7 +153,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               </Link>
               <Link
                 href="/notifications"
-                aria-label="通知"
+                aria-label={t.notifications}
                 style={{
                   color: "var(--text)",
                   textDecoration: "none",
@@ -187,7 +185,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                   </span>
                 )}
               </Link>
-              <Link href="/profile" aria-label="プロフィール" style={{ textDecoration: "none", flexShrink: 0 }}>
+              <Link href="/profile" aria-label={t.profile} style={{ textDecoration: "none", flexShrink: 0 }}>
                 {user.avatar_url ? (
                   <img
                     src={user.avatar_url}

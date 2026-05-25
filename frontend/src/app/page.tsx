@@ -4,54 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
-import { formatRelativeTime } from "@/lib/utils";
-import { useLang } from "@/contexts/LanguageContext";
+import { useT, useRelativeTime } from "@/lib/i18n";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
 }
 
-const SECTIONS_JA = [
-  { title: "読む", description: "聖書の各章を読み、コメントを投稿・共有できます。", href: "/read", icon: "/img/icon-read.png" },
-  { title: "Q&A", description: "聖書に関する疑問を投稿し、回答をもらえる場所。", href: "/qa", icon: "/img/icon-qa.png" },
-  { title: "翻訳", description: "聖書の共同翻訳プロジェクトを作成・参加できます。", href: "/translations", icon: "/img/icon-translation.png" },
-];
-
-const SECTIONS_EN = [
-  { title: "Read", description: "Read each chapter of the Bible and post or share comments.", href: "/read", icon: "/img/icon-read.png" },
-  { title: "Q&A", description: "Post questions about the Bible and receive answers.", href: "/qa", icon: "/img/icon-qa.png" },
-  { title: "Translate", description: "Create or join collaborative Bible translation projects.", href: "/translations", icon: "/img/icon-translation.png" },
-];
-
-const HOME_T = {
-  ja: {
-    tagline: "すべての声を、\n等しく。",
-    desc: "外典・偽書から正典まで。聖書のあらゆるテキストを読み、議論し、翻訳する場所。",
-    todayVerse: "今日の聖句",
-    loading: "読み込み中...",
-    trending: "トレンド",
-    recentQA: "最近のQ&A",
-    seeAll: "すべて見る →",
-    about: "NeON Church について",
-    replies: "返信",
-  },
-  en: {
-    tagline: "Equal voice\nfor all.",
-    desc: "From Apocrypha to canon. Read, discuss, and translate every text of the Bible.",
-    todayVerse: "Today's Verse",
-    loading: "Loading...",
-    trending: "Trending",
-    recentQA: "Recent Q&A",
-    seeAll: "See all →",
-    about: "About NeON Church",
-    replies: "replies",
-  },
-};
-
 export default function Home() {
-  const { lang } = useLang();
-  const t = HOME_T[lang];
-  const sections = lang === "en" ? SECTIONS_EN : SECTIONS_JA;
+  const t = useT();
+  const sections = [
+    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.png" },
+    { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.png" },
+    { title: t.translate, description: t.sectionTranslateDesc, href: "/translations", icon: "/img/icon-translation.png" },
+  ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
@@ -137,7 +102,7 @@ export default function Home() {
               whiteSpace: "pre-line",
             }}
           >
-            {t.tagline}
+            {t.homeTagline}
           </h1>
           <p
             style={{
@@ -148,7 +113,7 @@ export default function Home() {
               maxWidth: 480,
             }}
           >
-            {t.desc}
+            {t.homeDesc}
           </p>
         </div>
 
@@ -295,10 +260,7 @@ export default function Home() {
                   margin: 0,
                 }}
               >
-                {verseOfDay!.book_name}{" "}
-                {lang === "en"
-                  ? `Ch.${verseOfDay!.chapter_number} v.${verseOfDay!.number} →`
-                  : `${verseOfDay!.chapter_number}章${verseOfDay!.number}節 →`}
+                {t.chapterVerseFmt(verseOfDay!.book_name, verseOfDay!.chapter_number, verseOfDay!.number)}
               </p>
             </Link>
           )
@@ -349,7 +311,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {trending.map((c) => (
-                <TrendingCard key={c.id} comment={c} lang={lang} />
+                <TrendingCard key={c.id} comment={c} />
               ))}
             </div>
           </div>
@@ -390,7 +352,7 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {recentQA.map((qa) => (
-                <ActivityCard key={qa.id} qa={qa} lang={lang} />
+                <ActivityCard key={qa.id} qa={qa} />
               ))}
             </div>
           </div>
@@ -414,7 +376,7 @@ export default function Home() {
               textDecorationColor: "var(--border)",
             }}
           >
-            {t.about}
+            {t.aboutLink}
           </Link>
         </div>
       </div>
@@ -435,7 +397,9 @@ export default function Home() {
   );
 }
 
-function ActivityCard({ qa, lang }: { qa: QAComment; lang: string }) {
+function ActivityCard({ qa }: { qa: QAComment }) {
+  const t = useT();
+  const relTime = useRelativeTime();
   return (
     <Link
       href="/qa"
@@ -487,11 +451,11 @@ function ActivityCard({ qa, lang }: { qa: QAComment; lang: string }) {
         <span>·</span>
         <span>{qa.location_label}</span>
         <span>·</span>
-        <span>{formatRelativeTime(qa.created_at)}</span>
+        <span>{relTime(qa.created_at)}</span>
         {qa.reply_count > 0 && (
           <>
             <span>·</span>
-            <span>{lang === "en" ? "replies" : "返信"} {qa.reply_count}</span>
+            <span>{t.replyLabel} {qa.reply_count}</span>
           </>
         )}
       </div>
@@ -499,7 +463,8 @@ function ActivityCard({ qa, lang }: { qa: QAComment; lang: string }) {
   );
 }
 
-function TrendingCard({ comment, lang }: { comment: QAComment; lang: string }) {
+function TrendingCard({ comment }: { comment: QAComment }) {
+  const t = useT();
   const slug = BOOKS.find((b) => b.name === comment.book_name)?.slug ?? "";
   const href = slug && comment.chapter_number
     ? `/${slug}/${comment.chapter_number}${comment.verse_number ? `#verse-${comment.verse_number}` : ""}`
@@ -560,7 +525,7 @@ function TrendingCard({ comment, lang }: { comment: QAComment; lang: string }) {
         {comment.reply_count > 0 && (
           <>
             <span>·</span>
-            <span>{lang === "en" ? "replies" : "返信"} {comment.reply_count}</span>
+            <span>{t.replyLabel} {comment.reply_count}</span>
           </>
         )}
       </div>

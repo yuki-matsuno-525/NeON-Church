@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { AboutContent } from "./AboutContent";
 
 export const metadata: Metadata = {
-  title: "NeON Church について",
-  description: "NeON Church は聖書を読み、語り合うためのプラットフォームです。節・章へのコメント、Q&A、共同翻訳プロジェクトに参加できます。",
+  title: "About NeON Church",
+  description:
+    "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha. Comment on verses and chapters, ask questions, and join collaborative translation projects.",
 };
 
 export default function AboutPage() {

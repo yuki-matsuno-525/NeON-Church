@@ -9,3 +9,7 @@ export const BIBLE_TRANSLATIONS: TranslationOption[] = [
 ];
 
 export const DEFAULT_TRANSLATION = "口語訳";
+
+export function defaultTranslationForLang(lang: string): string {
+  return lang === "en" ? "KJV" : "口語訳";
+}

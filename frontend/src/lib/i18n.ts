@@ -1,6 +1,8 @@
 "use client";
 
 import { useLang } from "@/contexts/LanguageContext";
+import { getBookBySlug } from "@/lib/books";
+import { BIBLE_TRANSLATIONS } from "@/lib/translations";
 
 const ja = {
   // 共通
@@ -235,6 +237,95 @@ const ja = {
   loginRequired: "ログインが必要です",
   loginRequiredDesc: "この機能を使うにはログインしてください。",
   loginBtn: "ログインする",
+
+  // 共通 (追加)
+  submit: "送信",
+  edit: "編集",
+  replyShort: "返信",
+  report: "報告",
+  reported: "報告しました",
+  reportedDup: "報告済みです",
+  expand: "展開",
+  collapse: "折り畳む",
+  numReplies: (n: number) => `${n}件の返信`,
+
+  // 章/書/ユーザー not found
+  bookNotFound: "書が見つかりません",
+  chapterNotFound: "章が見つかりません",
+  userNotFound: "ユーザーが見つかりません。",
+
+  // プロフィール（追加）
+  selfProfileBefore: "自分のプロフィールは",
+  selfProfileLink: "こちら",
+  selfProfileAfter: "から確認できます。",
+  joinedOn: (dateStr: string) =>
+    `${new Date(dateStr).toLocaleDateString("ja-JP")} 登録`,
+
+  // コメント関連の見出し・空状態
+  noCommentsYet: "コメントはまだありません",
+  bookCommentsHeading: "この書へのコメント",
+  chapterCommentsHeading: "章へのコメント",
+  verseCommentInput: "この節へのコメント...",
+
+  // ブックマーク
+  bookmarkAdd: "お気に入りに追加",
+  bookmarkRemove: "お気に入りを解除",
+  bookmarkShort: "お気に入り",
+  removeShort: "解除",
+
+  // 並び替え・検索
+  orderNew: "新しい順",
+  orderVotes: "人気順",
+  searchComments: "コメントを検索...",
+
+  // Q&A 投稿フォーム
+  qaInputPlaceholder: "質問を入力...",
+  qaSelectBookOptional: "書を選択（任意）",
+  qaSelectChapterOptional: "章を選択（任意）",
+  qaSelectVerseOptional: "節を選択（任意）",
+  submitQuestion: "質問を投稿する",
+  chapterOption: (n: number) => `${n}章`,
+  verseOption: (n: number) => `${n}節`,
+
+  // 翻訳プロジェクト
+  confirmDeleteProject: "このプロジェクトを削除しますか？この操作は取り消せません。",
+  confirmDeleteAllUnits: "すべてのユニットを削除しますか？",
+  unitsAdded: (n: number) => `${n} ユニットを追加しました。`,
+  unitsDeleted: (n: number) => `${n} ユニットを削除しました。`,
+  notPublishedOrMissing: "公開されていないプロジェクトか、存在しないプロジェクトです。",
+  backToProjectList: "← プロジェクト一覧に戻る",
+  projectFallback: "プロジェクト",
+  selectChapterHeading: "章を選択",
+  noPublishedVerses: "まだ公開された翻訳節がありません。",
+  noPublishedVersesForChapter: "この章に公開された翻訳節がありません。",
+  chapterList: "章一覧",
+  originalText: "原文:",
+  prevChapterFmt: (n: number) => `‹ 第${n}章`,
+  nextChapterFmt: (n: number) => `第${n}章 ›`,
+  chapterVerseHeader: (c: number, v: number) => `第${c}章 ${v}節`,
+
+  // 通報理由
+  reportReasonSpam: "スパム",
+  reportReasonOffensive: "不快なコンテンツ",
+  reportReasonMisinformation: "誤情報",
+  reportReasonOther: "その他",
+
+  // ThemeToggle
+  switchToLight: "ライトモードに切り替え",
+  switchToDark: "ダークモードに切り替え",
+
+  // ホーム セクション説明
+  sectionReadDesc: "聖書全章を読む。読書進捗は自動保存。",
+  sectionQaDesc: "聖書に関する質問・回答のコミュニティ。",
+  sectionTranslateDesc: "外典・偽書も含めた共同翻訳プロジェクト。",
+  replyLabel: "返信",
+
+  // 相対時刻 / 日付ロケール
+  relJustNow: "たった今",
+  relMinutesAgo: (n: number) => `${n}分前`,
+  relHoursAgo: (n: number) => `${n}時間前`,
+  relDaysAgo: (n: number) => `${n}日前`,
+  dateLocale: "ja-JP",
 };
 
 const en: typeof ja = {
@@ -450,6 +541,83 @@ const en: typeof ja = {
   loginRequired: "Login required",
   loginRequiredDesc: "Please sign in to use this feature.",
   loginBtn: "Sign in",
+
+  submit: "Submit",
+  edit: "Edit",
+  replyShort: "Reply",
+  report: "Report",
+  reported: "Reported",
+  reportedDup: "Already reported",
+  expand: "Expand",
+  collapse: "Collapse",
+  numReplies: (n: number) => `${n} ${n === 1 ? "reply" : "replies"}`,
+
+  bookNotFound: "Book not found",
+  chapterNotFound: "Chapter not found",
+  userNotFound: "User not found.",
+
+  selfProfileBefore: "Your own profile is available",
+  selfProfileLink: "here",
+  selfProfileAfter: ".",
+  joinedOn: (dateStr: string) =>
+    `Joined ${new Date(dateStr).toLocaleDateString("en-US")}`,
+
+  noCommentsYet: "No comments yet",
+  bookCommentsHeading: "Comments on this book",
+  chapterCommentsHeading: "Chapter comments",
+  verseCommentInput: "Comment on this verse...",
+
+  bookmarkAdd: "Add bookmark",
+  bookmarkRemove: "Remove bookmark",
+  bookmarkShort: "Bookmark",
+  removeShort: "Remove",
+
+  orderNew: "Newest",
+  orderVotes: "Popular",
+  searchComments: "Search comments...",
+
+  qaInputPlaceholder: "Enter your question...",
+  qaSelectBookOptional: "Select a book (optional)",
+  qaSelectChapterOptional: "Select a chapter (optional)",
+  qaSelectVerseOptional: "Select a verse (optional)",
+  submitQuestion: "Post question",
+  chapterOption: (n: number) => `Chapter ${n}`,
+  verseOption: (n: number) => `Verse ${n}`,
+
+  confirmDeleteProject: "Delete this project? This action cannot be undone.",
+  confirmDeleteAllUnits: "Delete all units?",
+  unitsAdded: (n: number) => `Added ${n} units.`,
+  unitsDeleted: (n: number) => `Deleted ${n} units.`,
+  notPublishedOrMissing: "This project is not published or does not exist.",
+  backToProjectList: "← Back to project list",
+  projectFallback: "Project",
+  selectChapterHeading: "Select chapter",
+  noPublishedVerses: "No translated verses published yet.",
+  noPublishedVersesForChapter: "No translated verses for this chapter.",
+  chapterList: "Chapter list",
+  originalText: "Original:",
+  prevChapterFmt: (n: number) => `‹ Chapter ${n}`,
+  nextChapterFmt: (n: number) => `Chapter ${n} ›`,
+  chapterVerseHeader: (c: number, v: number) => `Chapter ${c} v.${v}`,
+
+  reportReasonSpam: "Spam",
+  reportReasonOffensive: "Offensive content",
+  reportReasonMisinformation: "Misinformation",
+  reportReasonOther: "Other",
+
+  switchToLight: "Switch to light mode",
+  switchToDark: "Switch to dark mode",
+
+  sectionReadDesc: "Read all chapters of the Bible. Reading progress auto-saved.",
+  sectionQaDesc: "Community for Bible questions and answers.",
+  sectionTranslateDesc: "Collaborative translation including Apocrypha and Pseudepigrapha.",
+  replyLabel: "replies",
+
+  relJustNow: "Just now",
+  relMinutesAgo: (n: number) => `${n}m ago`,
+  relHoursAgo: (n: number) => `${n}h ago`,
+  relDaysAgo: (n: number) => `${n}d ago`,
+  dateLocale: "en-US",
 };
 
 export type Translations = typeof ja;
@@ -459,4 +627,45 @@ export const translations: Record<string, Translations> = { ja, en };
 export function useT(): Translations {
   const { lang } = useLang();
   return translations[lang] ?? translations.ja;
+}
+
+export function useBookLabel(slug: string): { name: string; short: string } | null {
+  const { lang } = useLang();
+  const b = getBookBySlug(slug);
+  if (!b) return null;
+  return lang === "en"
+    ? { name: b.englishName, short: b.englishName }
+    : { name: b.name, short: b.short };
+}
+
+export function bookLabel(slug: string, lang: string): { name: string; short: string } | null {
+  const b = getBookBySlug(slug);
+  if (!b) return null;
+  return lang === "en"
+    ? { name: b.englishName, short: b.englishName }
+    : { name: b.name, short: b.short };
+}
+
+export function useTranslationOptions(): { id: string; label: string }[] {
+  const { lang } = useLang();
+  return BIBLE_TRANSLATIONS.map((t) =>
+    lang === "en"
+      ? {
+          id: t.id,
+          label: t.id === "口語訳" ? "Japanese (Kogoyaku)" : "KJV (English)",
+        }
+      : { id: t.id, label: t.label },
+  );
+}
+
+export function useRelativeTime(): (dateStr: string) => string {
+  const t = useT();
+  return (dateStr: string) => {
+    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+    if (diff < 60) return t.relJustNow;
+    if (diff < 3600) return t.relMinutesAgo(Math.floor(diff / 60));
+    if (diff < 86400) return t.relHoursAgo(Math.floor(diff / 3600));
+    if (diff < 86400 * 30) return t.relDaysAgo(Math.floor(diff / 86400));
+    return new Date(dateStr).toLocaleDateString(t.dateLocale);
+  };
 }

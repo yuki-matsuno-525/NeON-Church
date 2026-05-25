@@ -7,6 +7,7 @@ import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { useT } from "@/lib/i18n";
 
 type Props = {
   verse: Verse;
@@ -29,6 +30,7 @@ export function CommentPanel({
   verseBookmarks = [],
   onVerseBookmarksChange,
 }: Props) {
+  const t = useT();
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
@@ -147,7 +149,7 @@ export function CommentPanel({
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>
-              第{chapterNumber}章 {verse.number}節
+              {t.chapterVerseHeader(chapterNumber, verse.number)}
             </p>
             <p
               style={{
@@ -164,7 +166,7 @@ export function CommentPanel({
             <button
               onClick={handleBookmark}
               disabled={loadingBookmark}
-              aria-label={isBookmarked ? "お気に入りを解除" : "お気に入りに追加"}
+              aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
               style={{
                 border: "1px solid var(--border)",
                 borderRadius: 6,
@@ -176,11 +178,11 @@ export function CommentPanel({
                 fontFamily: "inherit",
               }}
             >
-              {isBookmarked ? "解除" : "お気に入り"}
+              {isBookmarked ? t.removeShort : t.bookmarkShort}
             </button>
             <button
               onClick={onClose}
-              aria-label="閉じる"
+              aria-label={t.close}
               style={{
                 background: "transparent",
                 border: "none",
@@ -198,7 +200,7 @@ export function CommentPanel({
 
         {/* Comment input */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
-          <CommentInput onSubmit={handleSubmit} placeholder="この節へのコメント..." submitLabel="投稿" showQaOption showTagOption />
+          <CommentInput onSubmit={handleSubmit} placeholder={t.verseCommentInput} submitLabel={t.submitComment} showQaOption showTagOption />
         </div>
 
         {/* Ordering toggle */}
@@ -218,7 +220,7 @@ export function CommentPanel({
                 fontFamily: "inherit",
               }}
             >
-              {ord === "new" ? "新しい順" : "人気順"}
+              {ord === "new" ? t.orderNew : t.orderVotes}
             </button>
           ))}
         </div>
@@ -228,7 +230,7 @@ export function CommentPanel({
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="コメントを検索..."
+            placeholder={t.searchComments}
             style={{
               width: "100%",
               padding: "5px 10px",
@@ -248,11 +250,11 @@ export function CommentPanel({
         <div style={{ flex: 1, overflowY: "auto", padding: "0 16px" }}>
           {loading ? (
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
-              読み込み中...
+              {t.loading}
             </p>
           ) : tree.length === 0 ? (
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
-              コメントはまだありません
+              {t.noCommentsYet}
             </p>
           ) : (
             tree.map((node) => (

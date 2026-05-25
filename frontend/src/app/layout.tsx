@@ -10,20 +10,23 @@ export const metadata: Metadata = {
     default: "NeON Church",
     template: "%s | NeON Church",
   },
-  description: "聖書を読み、語り合う場所。節・章へのコメント投稿、Q&A、共同翻訳プロジェクトに参加できます。",
+  description:
+    "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects. 聖書・外典・偽典を読み、語り合うプラットフォーム。",
   metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "NeON Church",
-    description: "聖書を読み、語り合う場所。節・章へのコメント投稿、Q&A、共同翻訳プロジェクトに参加できます。",
+    description:
+      "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects.",
     url: SITE_URL,
     siteName: "NeON Church",
-    locale: "ja_JP",
+    locale: "en_US",
+    alternateLocale: ["ja_JP"],
     type: "website",
   },
   twitter: {
     card: "summary",
     title: "NeON Church",
-    description: "聖書を読み、語り合う場所。",
+    description: "Read and discuss the Bible, Apocrypha, and Pseudepigrapha.",
   },
 };
 
@@ -33,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>
           <ClientLayout>{children}</ClientLayout>

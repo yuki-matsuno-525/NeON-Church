@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, formatRelativeTime, type Tag, reportComment } from "@/lib/api";
+import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, type Tag, reportComment } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
+import { useT, useRelativeTime } from "@/lib/i18n";
 
 type Props = {
   comment: CommentNode;
@@ -21,6 +22,8 @@ export function CommentItem({
   initialBookmarkId,
   depth = 0,
 }: Props) {
+  const t = useT();
+  const relTime = useRelativeTime();
   const { user } = useAuth();
   const [upvoted, setUpvoted] = useState(false);
   const [voteCount, setVoteCount] = useState(comment.vote_count);
@@ -129,8 +132,8 @@ export function CommentItem({
           {hasChildren && (
             <button
               onClick={() => setCollapsed((v) => !v)}
-              aria-label={collapsed ? "展開" : "折り畳む"}
-              title={collapsed ? "展開" : "折り畳む"}
+              aria-label={collapsed ? t.expand : t.collapse}
+              title={collapsed ? t.expand : t.collapse}
               style={{
                 background: "transparent",
                 border: "none",
@@ -186,11 +189,11 @@ export function CommentItem({
             </span>
           )}
           <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
-            {formatRelativeTime(comment.created_at)}
+            {relTime(comment.created_at)}
           </span>
           {collapsed && hasChildren && (
             <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
-              ({comment.children.length}件の返信)
+              ({t.numReplies(comment.children.length)})
             </span>
           )}
         </div>
@@ -230,7 +233,7 @@ export function CommentItem({
                       fontFamily: "inherit",
                     }}
                   >
-                    保存
+                    {t.save}
                   </button>
                   <button
                     onClick={() => { setEditing(false); setEditBody(currentBody); }}
@@ -245,7 +248,7 @@ export function CommentItem({
                       fontFamily: "inherit",
                     }}
                   >
-                    キャンセル
+                    {t.cancel}
                   </button>
                 </div>
               </div>
@@ -259,7 +262,7 @@ export function CommentItem({
                   fontStyle: comment.is_deleted ? "italic" : "normal",
                 }}
               >
-                {comment.is_deleted ? "このコメントは削除されました" : currentBody}
+                {comment.is_deleted ? t.deletedComment : currentBody}
               </p>
             )}
 
@@ -322,7 +325,7 @@ export function CommentItem({
                     fontFamily: "inherit",
                   }}
                 >
-                  返信
+                  {t.replyShort}
                 </button>
               )}
 
@@ -357,7 +360,7 @@ export function CommentItem({
                       fontFamily: "inherit",
                     }}
                   >
-                    編集
+                    {t.edit}
                   </button>
                   <button
                     onClick={handleDelete}
@@ -372,7 +375,7 @@ export function CommentItem({
                       fontFamily: "inherit",
                     }}
                   >
-                    削除
+                    {t.delete}
                   </button>
                 </>
               )}
@@ -390,20 +393,20 @@ export function CommentItem({
                     fontFamily: "inherit",
                   }}
                 >
-                  報告
+                  {t.report}
                 </button>
               )}
               {reportStatus === "done" && (
-                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>報告しました</span>
+                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reported}</span>
               )}
               {reportStatus === "dup" && (
-                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>報告済みです</span>
+                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reportedDup}</span>
               )}
             </div>
 
             {showReplyForm && (
               <div style={{ marginLeft: 52, marginTop: 8 }}>
-                <CommentInput onSubmit={handleReply} placeholder="返信を入力..." submitLabel="返信" />
+                <CommentInput onSubmit={handleReply} placeholder={t.replyPlaceholder} submitLabel={t.replyBtn} />
               </div>
             )}
 
@@ -414,22 +417,22 @@ export function CommentItem({
                   onChange={(e) => setReportReason(e.target.value)}
                   style={{ fontSize: 12, padding: "3px 8px", border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg)", color: "var(--text)", fontFamily: "inherit" }}
                 >
-                  <option value="spam">スパム</option>
-                  <option value="offensive">不快なコンテンツ</option>
-                  <option value="misinformation">誤情報</option>
-                  <option value="other">その他</option>
+                  <option value="spam">{t.reportReasonSpam}</option>
+                  <option value="offensive">{t.reportReasonOffensive}</option>
+                  <option value="misinformation">{t.reportReasonMisinformation}</option>
+                  <option value="other">{t.reportReasonOther}</option>
                 </select>
                 <button
                   onClick={handleReport}
                   style={{ fontSize: 12, padding: "3px 10px", background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
                 >
-                  送信
+                  {t.submit}
                 </button>
                 <button
                   onClick={() => setShowReportForm(false)}
                   style={{ fontSize: 12, padding: "3px 10px", background: "transparent", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
                 >
-                  キャンセル
+                  {t.cancel}
                 </button>
               </div>
             )}
