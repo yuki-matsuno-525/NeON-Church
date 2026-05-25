@@ -38,14 +38,29 @@ export type Bookmark = {
   target_type: "verse" | "comment" | null;
   created_at: string;
 };
+export type NotificationTargetKind =
+  | "verse_comment"
+  | "chapter_comment"
+  | "book_comment"
+  | "qa"
+  | "translation_unit"
+  | null;
+
 export type Notification = {
   id: string;
   notification_type: "reply" | "upvote";
   actor_username: string;
-  comment_id: string;
+  comment_id: string | null;
   comment_body_snippet: string;
+  translation_project_id: string | null;
   is_read: boolean;
   created_at: string;
+  target_kind: NotificationTargetKind;
+  book_name: string | null;
+  chapter_number: number | null;
+  verse_number: number | null;
+  translation_unit_id: string | null;
+  is_qa: boolean;
 };
 export type User = {
   id: string;

@@ -236,7 +236,7 @@ export function fetchNotifications(): Promise<Notification[]> {
 }
 
 export function fetchUnreadCount(): Promise<number> {
-  return apiFetch<Notification[]>("/notifications/?unread=1").then((ns) => ns.length);
+  return apiFetch<{ count: number }>("/notifications/unread-count/").then((r) => r.count);
 }
 
 export function markNotificationRead(notificationId: string): Promise<void> {
