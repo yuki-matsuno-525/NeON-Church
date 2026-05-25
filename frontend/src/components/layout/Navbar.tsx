@@ -53,8 +53,13 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           cursor: "pointer",
           color: "var(--text-muted)",
           fontSize: 20,
-          padding: "4px 6px",
+          minWidth: 44,
+          minHeight: 44,
+          padding: 0,
           lineHeight: 1,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
           flexShrink: 0,
         }}
       >

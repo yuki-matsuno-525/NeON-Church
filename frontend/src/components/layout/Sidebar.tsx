@@ -191,9 +191,12 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={onClose}
+                  aria-current={isActive ? "page" : undefined}
                   style={{
-                    display: "block",
-                    padding: "9px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "12px 12px",
+                    minHeight: 44,
                     textDecoration: "none",
                     fontSize: 13,
                     fontWeight: isActive ? 700 : 400,
@@ -219,9 +222,12 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                     key={meta.slug}
                     href={`/${meta.slug}?list=1`}
                     onClick={onClose}
+                    aria-current={isActive ? "page" : undefined}
                     style={{
-                      display: "block",
-                      padding: "8px 12px 8px 20px",
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "10px 12px 10px 20px",
+                      minHeight: 40,
                       textDecoration: "none",
                       fontSize: 13,
                       fontWeight: isActive ? 700 : 400,
