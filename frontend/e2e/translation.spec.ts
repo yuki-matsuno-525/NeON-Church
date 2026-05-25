@@ -63,13 +63,12 @@ test("Tr-4: /translations/new から新規プロジェクトを作成できる",
     .locator('textarea[placeholder="プロジェクトの目的や方針を記述（任意）"]')
     .fill("E2Eテスト用プロジェクトです");
 
+  // 書籍バージョンは「口語訳」がデフォルトなのでそのまま
   // 翻訳元の書を選択（マタイによる福音書）
-  await page.locator("select").first().selectOption({ label: "マタイによる福音書" });
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
 
-  // 翻訳先言語を入力
-  await page
-    .locator('input[placeholder="例: 英語, English, en"]')
-    .fill("English");
+  // 翻訳先言語を選択
+  await page.locator("select").nth(2).selectOption({ label: "English" });
 
   // フォーム送信
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
@@ -95,8 +94,8 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   const projectName = `E2E一覧確認_${ts}`;
 
   await page.locator('input[placeholder="例: マタイ英語翻訳"]').fill(projectName);
-  await page.locator("select").first().selectOption({ label: "マタイによる福音書" });
-  await page.locator('input[placeholder="例: 英語, English, en"]').fill("英語");
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
+  await page.locator("select").nth(2).selectOption({ label: "English" });
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
   // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
@@ -124,8 +123,8 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
   await page.goto("/translations/new");
   const projectName = `E2E参加申請_${ts}`;
   await page.locator('input[placeholder="例: マタイ英語翻訳"]').fill(projectName);
-  await page.locator("select").first().selectOption({ label: "マタイによる福音書" });
-  await page.locator('input[placeholder="例: 英語, English, en"]').fill("英語");
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
+  await page.locator("select").nth(2).selectOption({ label: "English" });
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
   // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
