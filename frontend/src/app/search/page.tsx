@@ -67,7 +67,7 @@ function SearchContent() {
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20 }}>{t.searchTitle}</h1>
+      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.searchTitle}</h1>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
         <label htmlFor={inputId} className="sr-only">{t.searchKeyword}</label>
@@ -84,11 +84,11 @@ function SearchContent() {
               width: "100%",
               padding: "9px 12px",
               paddingRight: inputValue ? 36 : 12,
-              border: "1px solid rgba(140, 75, 235, 0.35)",
-              borderRadius: 8,
-              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-md)",
+              background: "var(--bg-alt)",
               color: "var(--text)",
-              fontSize: 14,
+              fontSize: "var(--font-size-sm)",
               fontFamily: "inherit",
             }}
           />
@@ -121,21 +121,7 @@ function SearchContent() {
             </button>
           )}
         </div>
-        <button
-          type="submit"
-          style={{
-            padding: "9px 18px",
-            background: "linear-gradient(135deg, #7618c5, #d81e80)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontWeight: 700,
-            fontSize: 14,
-            fontFamily: "inherit",
-            boxShadow: "0 0 14px rgba(198, 44, 170, 0.40)",
-          }}
-        >
+        <button type="submit" className="btn btn-primary">
           {t.searchTitle}
         </button>
       </form>
@@ -157,7 +143,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionBooks}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                 {result.books.map((b) => {
                   const slug = getSlugByName(b.name);
                   return (
@@ -189,7 +175,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionVerses}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                 {result.verses.map((v) => {
                   const slug = getSlugByName(v.book_name);
                   const url = slug ? `/${slug}/${v.chapter_number}#verse-${v.number}` : null;
@@ -221,7 +207,7 @@ function SearchContent() {
                       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>
                         {parts.map((part, i) =>
                           i % 2 === 1
-                            ? <mark key={i} style={{ background: "var(--accent)", color: "var(--accent-text)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
+                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
                             : <span key={i}>{part}</span>
                         )}
                       </p>
@@ -237,7 +223,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionComments}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                 {result.comments.map((c) => {
                   const parts = highlight(c.body, q).split("**");
                   return (
