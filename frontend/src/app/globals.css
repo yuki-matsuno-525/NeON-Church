@@ -246,6 +246,15 @@ select:focus-visible {
   }
 }
 
+/* リサイズハンドル */
+.resize-handle {
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.resize-handle:hover,
+.resize-handle:active {
+  background: var(--bg-hover);
+}
+
 /* ハンバーガーボタン: デスクトップでは非表示 */
 .hamburger-btn {
   display: none;

@@ -192,7 +192,23 @@ export default function ChapterPage() {
           overflowY: "auto",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{
+          position: "sticky",
+          top: "var(--navbar-height)",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+          padding: "8px 0",
+          background: "var(--glass-nav)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border)",
+          marginLeft: -32,
+          marginRight: -32,
+          paddingLeft: 32,
+          paddingRight: 32,
+        }}>
           <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
             <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {t.bookList}
