@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { BOOKS } from "@/lib/books";
+import { SkeletonList } from "@/components/ui";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -60,7 +61,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 24px" }}>
+        <SkeletonList count={3} />
+      </div>
     );
   }
 
@@ -282,7 +285,7 @@ export default function ProfilePage() {
       </div>
 
       {loadingData ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.loading}</p>
+        <SkeletonList count={3} />
       ) : activeTab === "bookmarks" ? (
         <BookmarkList bookmarks={bookmarks} />
       ) : (

@@ -33,6 +33,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { SkeletonList } from "@/components/ui";
 import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_COLOR: Record<string, string> = {
@@ -289,7 +290,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   };
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+        <SkeletonList count={4} />
+      </div>
+    );
+  }
   if (!project) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.noProjects}</div>;
 
   const progressPct = project.unit_count > 0

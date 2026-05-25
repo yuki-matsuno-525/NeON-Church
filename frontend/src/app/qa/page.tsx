@@ -7,6 +7,7 @@ import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { SkeletonList } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
@@ -174,7 +175,7 @@ function QAContent() {
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.loading}</div>
+        <SkeletonList count={3} />
       ) : comments.length === 0 ? (
         <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.qaEmpty}</div>
       ) : (() => {

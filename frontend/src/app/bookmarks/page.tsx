@@ -7,6 +7,7 @@ import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, 
 import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { SkeletonList } from "@/components/ui";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -58,7 +59,12 @@ export default function BookmarksPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+          {t.bookmarksTitle}
+        </h1>
+        <SkeletonList count={3} />
+      </div>
     );
   }
 

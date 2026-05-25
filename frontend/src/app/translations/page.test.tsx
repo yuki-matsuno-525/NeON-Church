@@ -49,13 +49,13 @@ describe("TranslationsPage", () => {
     vi.clearAllMocks();
   });
 
-  it("ローディング中に「読み込み中...」が表示される", async () => {
+  it("ローディング中に Skeleton が表示される", async () => {
     const { fetchTranslations } = await import("@/lib/api");
     vi.mocked(fetchTranslations).mockReturnValue(new Promise(() => {}));
     mockUseAuth.mockReturnValue({ user: null });
 
     render(<TranslationsPage />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    expect(screen.getByTestId("skeleton-list")).toBeInTheDocument();
   });
 
   it("ログイン済みユーザーに「＋ 新規作成」リンクが表示される", async () => {

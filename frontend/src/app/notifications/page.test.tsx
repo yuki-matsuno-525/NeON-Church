@@ -40,12 +40,12 @@ describe("NotificationsPage", () => {
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
   });
 
-  it("ローディング中に「読み込み中...」を表示する", async () => {
+  it("ローディング中に Skeleton を表示する", async () => {
     const { fetchNotifications } = await import("@/lib/api");
     vi.mocked(fetchNotifications).mockReturnValue(new Promise(() => {}));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: true });
     render(<NotificationsPage />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    expect(screen.getByTestId("skeleton-list")).toBeInTheDocument();
   });
 
   it("未ログイン時は /login にリダイレクトする", () => {

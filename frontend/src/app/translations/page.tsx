@@ -7,6 +7,7 @@ import { fetchTranslations, type TranslationProject } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
+import { SkeletonList } from "@/components/ui";
 
 const PAGE_SIZE = 10;
 
@@ -74,7 +75,7 @@ function TranslationsContent() {
       </div>
 
       {loading ? (
-        <div style={{ color: "var(--text-muted)", padding: 16 }}>{t.loading}</div>
+        <SkeletonList count={3} />
       ) : projects.length === 0 ? (
         <div
           style={{

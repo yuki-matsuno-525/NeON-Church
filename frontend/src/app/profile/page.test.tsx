@@ -70,10 +70,10 @@ describe("ProfilePage", () => {
     vi.clearAllMocks();
   });
 
-  it("ローディング中にローディング表示を返す", () => {
+  it("ローディング中に Skeleton を表示する", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: true, setUser: vi.fn() });
     render(<ProfilePage />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    expect(screen.getByTestId("skeleton-list")).toBeInTheDocument();
   });
 
   it("未ログインの場合 /login にリダイレクトする", () => {

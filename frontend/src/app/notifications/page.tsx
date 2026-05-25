@@ -11,6 +11,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { SkeletonList } from "@/components/ui";
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
@@ -53,7 +54,10 @@ export default function NotificationsPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>{t.notificationsTitle}</h1>
+        <SkeletonList count={4} />
+      </div>
     );
   }
 

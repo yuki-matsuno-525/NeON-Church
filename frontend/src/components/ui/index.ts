@@ -1,4 +1,5 @@
 export { Skeleton } from "./Skeleton";
+export { SkeletonList } from "./SkeletonList";
 export { Spinner } from "./Spinner";
 export { EmptyState } from "./EmptyState";
 export { Button } from "./Button";
