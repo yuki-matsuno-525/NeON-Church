@@ -346,6 +346,17 @@ const ja = {
   emptyUnitsDesc: "翻訳する節を追加して、作業を始めましょう。",
   emptyUnitsCta: "節を追加",
   emptyReviewUnitsDesc: "レビュー待ちの節がここに表示されます。",
+
+  // Footer / 信頼性ページ
+  footerNavLabel: "サイト全体のリンク",
+  footerAbout: "NeON Church について",
+  footerTerms: "利用規約",
+  footerPrivacy: "プライバシー",
+  footerGuidelines: "コミュニティガイドライン",
+  footerLicenses: "ライセンス",
+  footerFeedback: "フィードバック",
+  footerGithub: "GitHub",
+  footerBetaNote: "ベータ版運用中。仕様は予告なく変更される場合があります。",
 };
 
 const en: typeof ja = {
@@ -656,6 +667,16 @@ const en: typeof ja = {
   emptyUnitsDesc: "Add verses to translate and get started.",
   emptyUnitsCta: "Add a unit",
   emptyReviewUnitsDesc: "Units awaiting review will appear here.",
+
+  footerNavLabel: "Site links",
+  footerAbout: "About NeON Church",
+  footerTerms: "Terms of Service",
+  footerPrivacy: "Privacy Policy",
+  footerGuidelines: "Community Guidelines",
+  footerLicenses: "Licenses",
+  footerFeedback: "Feedback",
+  footerGithub: "GitHub",
+  footerBetaNote: "This service is in beta. Specifications may change without notice.",
 };
 
 export type Translations = typeof ja;
