@@ -36,11 +36,11 @@ import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, ConfirmDialog, useToast } from "@/components/ui";
 import { languageLabel } from "@/lib/languages";
 
-const STATUS_BADGE_COLOR: Record<string, string> = {
-  todo: "var(--border)",
-  in_progress: "var(--accent)",
-  review: "#f59e0b",
-  done: "#22c55e",
+const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
+  todo:        { bg: "var(--bg-hover)",             color: "var(--text-muted)"    },
+  in_progress: { bg: "var(--accent-tint)",          color: "var(--accent)"        },
+  review:      { bg: "rgba(245,158,11,0.15)",       color: "var(--state-warning)" },
+  done:        { bg: "rgba(34,197,94,0.15)",         color: "var(--state-success)" },
 };
 
 function MentionInput({
@@ -341,7 +341,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project.name}</h1>
+          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: "0 0 4px" }}>{project.name}</h1>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
             {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>
@@ -404,7 +404,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <span>{project.done_count}/{project.unit_count} ({progressPct}%)</span>
           </div>
           <div style={{ height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
-            <div style={{ width: `${progressPct}%`, height: "100%", background: "#22c55e", borderRadius: 4, transition: "width 0.3s" }} />
+            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--state-success)", borderRadius: 4, transition: "width 0.3s" }} />
           </div>
         </div>
       )}
@@ -554,7 +554,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               >
                 {t.backToChapters}
               </button>
-              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>{selectedChapter}</h3>
+              <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{selectedChapter}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
                 <div key={unit.id} style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-alt)", overflow: "hidden" }}>
@@ -576,13 +576,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                         <span
+                          className="badge"
                           style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: "2px 8px",
-                            borderRadius: 999,
-                            background: STATUS_BADGE_COLOR[unit.status],
-                            color: unit.status === "todo" ? "var(--text-muted)" : "#fff",
+                            background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
+                            color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
                           }}
                         >
                           {statusLabel(unit.status)}
@@ -738,13 +735,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     {m.role === "owner" ? t.roleOwner : t.roleMember}
                   </span>
                   <span
+                    className="badge"
                     style={{
-                      fontSize: 11,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      background: m.status === "approved" ? "#22c55e" : m.status === "pending" ? "#f59e0b" : "#ef4444",
-                      color: "#fff",
-                      fontWeight: 700,
+                      background: m.status === "approved" ? "rgba(34,197,94,0.15)" : m.status === "pending" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
+                      color: m.status === "approved" ? "var(--state-success)" : m.status === "pending" ? "var(--state-warning)" : "var(--state-danger)",
                     }}
                   >
                     {memberStatusLabel(m.status)}
