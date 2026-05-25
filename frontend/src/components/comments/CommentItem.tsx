@@ -133,6 +133,7 @@ export function CommentItem({
             <button
               onClick={() => setCollapsed((v) => !v)}
               aria-label={collapsed ? t.expand : t.collapse}
+              aria-expanded={!collapsed}
               title={collapsed ? t.expand : t.collapse}
               style={{
                 background: "transparent",

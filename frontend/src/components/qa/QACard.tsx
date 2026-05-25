@@ -157,6 +157,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         </span>
         <button
           onClick={handleExpand}
+          aria-expanded={expanded}
           style={{
             fontSize: 12,
             color: "var(--text-muted)",
