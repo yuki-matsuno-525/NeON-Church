@@ -152,19 +152,27 @@ select:focus-visible {
     left: 0 !important;
   }
 
-  /* 節選択時: 本文を非表示にしてコメントパネルを全画面表示 */
+  /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
+     本文の文脈 (前後の節) を失わずにコメントを書ける。 */
   .reader-wrapper.has-verse .reader-main {
-    display: none !important;
+    display: block !important;
+    /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
+    padding-bottom: 70vh !important;
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed !important;
-    top: var(--navbar-height) !important;
+    top: auto !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
+    height: 70vh !important;
     z-index: 50;
     display: flex !important;
     flex-direction: column !important;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    overflow: hidden;
   }
   .reader-wrapper.has-verse .reader-panel .comment-panel {
     position: static !important;
