@@ -113,6 +113,27 @@ export function CommentPanel({
     window.addEventListener("mouseup", onUp);
   };
 
+  const handleResizeTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    const startX = touch.clientX;
+    const startWidth = panelWidth;
+    const onMove = (ev: TouchEvent) => {
+      const t = ev.touches[0];
+      if (!t) return;
+      const delta = startX - t.clientX;
+      setPanelWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta)));
+    };
+    const onEnd = () => {
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("touchcancel", onEnd);
+    };
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("touchend", onEnd);
+    window.addEventListener("touchcancel", onEnd);
+  };
+
   return (
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
@@ -131,10 +152,13 @@ export function CommentPanel({
           overflow: "hidden",
         }}
       >
-        {/* ドラッグリサイズハンドル */}
+        {/* ドラッグリサイズハンドル (マウス + タッチ対応) */}
         <div
           className="resize-handle"
+          role="separator"
+          aria-orientation="vertical"
           onMouseDown={handleResizeStart}
+          onTouchStart={handleResizeTouchStart}
           style={{
             position: "absolute",
             left: 0,
@@ -142,6 +166,7 @@ export function CommentPanel({
             bottom: 0,
             width: 6,
             cursor: "ew-resize",
+            touchAction: "none",
             zIndex: 10,
           }}
         />
@@ -192,15 +217,21 @@ export function CommentPanel({
             </button>
             <button
               onClick={onClose}
-              aria-label={t.close}
+              aria-label={t.closeCommentPanel}
               style={{
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
                 color: "var(--text-faint)",
-                fontSize: 18,
+                fontSize: 22,
                 lineHeight: 1,
+                width: 32,
+                height: 32,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
                 padding: 0,
+                borderRadius: 6,
               }}
             >
               ×
