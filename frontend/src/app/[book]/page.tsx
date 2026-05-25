@@ -27,6 +27,7 @@ function BookContent() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
 
   useEffect(() => {
     if (!meta) {
@@ -106,47 +107,65 @@ function BookContent() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(48px, 1fr))",
-          gap: 8,
+          gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
+          gap: "var(--space-2)",
           marginBottom: 40,
         }}
       >
-        {chapters.map((ch) => (
-          <Link
-            key={ch.id}
-            href={`/${slug}/${ch.number}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: 48,
-              border: "1px solid rgba(140, 75, 235, 0.30)",
-              borderRadius: 8,
-              textDecoration: "none",
-              color: "var(--text-muted)",
-              fontWeight: 700,
-              fontSize: 14,
-              background: "var(--bg-alt)",
-              transition: "border-color 0.18s, background 0.18s, color 0.18s, box-shadow 0.18s",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "var(--accent-tint)";
-              el.style.color = "var(--accent)";
-              el.style.borderColor = "rgba(192, 64, 240, 0.60)";
-              el.style.boxShadow = "0 0 10px rgba(192, 64, 240, 0.20)";
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "var(--bg-alt)";
-              el.style.color = "var(--text-muted)";
-              el.style.borderColor = "rgba(140, 75, 235, 0.30)";
-              el.style.boxShadow = "none";
-            }}
-          >
-            {ch.number}
-          </Link>
-        ))}
+        {chapters.map((ch) => {
+          const isCurrent = ch.number === currentChapter;
+          return (
+            <Link
+              key={ch.id}
+              href={`/${slug}/${ch.number}`}
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: 44,
+                border: isCurrent ? "1px solid var(--accent)" : "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                textDecoration: "none",
+                color: isCurrent ? "var(--accent)" : "var(--text-muted)",
+                fontWeight: 700,
+                fontSize: "var(--font-size-sm)",
+                background: isCurrent ? "var(--accent-tint)" : "var(--bg-alt)",
+                transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "var(--accent-tint)";
+                el.style.color = "var(--accent)";
+                el.style.borderColor = "var(--accent)";
+                el.style.boxShadow = "var(--shadow-glow)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isCurrent ? "var(--accent-tint)" : "var(--bg-alt)";
+                el.style.color = isCurrent ? "var(--accent)" : "var(--text-muted)";
+                el.style.borderColor = isCurrent ? "var(--accent)" : "var(--border)";
+                el.style.boxShadow = "none";
+              }}
+            >
+              {ch.number}
+              {isCurrent && (
+                <span
+                  aria-label="読書中"
+                  style={{
+                    position: "absolute",
+                    bottom: 3,
+                    left: 3,
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                  }}
+                />
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
