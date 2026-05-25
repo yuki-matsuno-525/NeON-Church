@@ -65,19 +65,24 @@ describe("ChapterPage - 章ナビゲーション", () => {
     vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "4" });
   });
 
+  const prevLink = () => screen.queryByRole("link", { name: /前の章/ });
+  const nextLink = () => screen.queryByRole("link", { name: /次の章/ });
+
   it("中間の章のとき前後両方のリンクが表示される", async () => {
     render(<ChapterPage />);
     await waitFor(() => {
-      expect(screen.getByTitle("第3章")).toBeInTheDocument();
-      expect(screen.getByTitle("第5章")).toBeInTheDocument();
+      expect(prevLink()).toBeInTheDocument();
+      expect(nextLink()).toBeInTheDocument();
     });
+    expect(prevLink()).toHaveTextContent("3");
+    expect(nextLink()).toHaveTextContent("5");
   });
 
   it("前後のリンクが正しいURLを持つ", async () => {
     render(<ChapterPage />);
     await waitFor(() => {
-      expect(screen.getByTitle("第3章")).toHaveAttribute("href", "/matthew/3");
-      expect(screen.getByTitle("第5章")).toHaveAttribute("href", "/matthew/5");
+      expect(prevLink()).toHaveAttribute("href", "/matthew/3");
+      expect(nextLink()).toHaveAttribute("href", "/matthew/5");
     });
   });
 
@@ -88,8 +93,8 @@ describe("ChapterPage - 章ナビゲーション", () => {
 
     render(<ChapterPage />);
 
-    await waitFor(() => expect(screen.getByTitle("第2章")).toBeInTheDocument());
-    expect(screen.queryByTitle("第0章")).not.toBeInTheDocument();
+    await waitFor(() => expect(nextLink()).toBeInTheDocument());
+    expect(prevLink()).not.toBeInTheDocument();
   });
 
   it("最終章（マタイ28章）のとき次の章リンクが表示されない", async () => {
@@ -99,8 +104,8 @@ describe("ChapterPage - 章ナビゲーション", () => {
 
     render(<ChapterPage />);
 
-    await waitFor(() => expect(screen.getByTitle("第27章")).toBeInTheDocument());
-    expect(screen.queryByTitle("第29章")).not.toBeInTheDocument();
+    await waitFor(() => expect(prevLink()).toBeInTheDocument());
+    expect(nextLink()).not.toBeInTheDocument();
   });
 
   it("書ごとの最終章が正しく制御される（マルコ16章）", async () => {
@@ -113,7 +118,7 @@ describe("ChapterPage - 章ナビゲーション", () => {
 
     render(<ChapterPage />);
 
-    await waitFor(() => expect(screen.getByTitle("第15章")).toBeInTheDocument());
-    expect(screen.queryByTitle("第17章")).not.toBeInTheDocument();
+    await waitFor(() => expect(prevLink()).toBeInTheDocument());
+    expect(nextLink()).not.toBeInTheDocument();
   });
 });

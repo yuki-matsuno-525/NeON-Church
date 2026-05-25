@@ -205,28 +205,29 @@ export default function ChapterPage() {
             <span>{t.chapterFmt(chapterNum)}</span>
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <select
-              value={translation}
-              onChange={(e) => {
-                localStorage.setItem("bible-translation", e.target.value);
-                setTranslation(e.target.value);
-              }}
-              style={{
-                fontSize: 12,
-                color: "var(--text-faint)",
-                background: "var(--bg)",
-                cursor: "pointer",
-                padding: "3px 10px",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                appearance: "none",
-                WebkitAppearance: "none",
-              }}
-            >
-              {translationOptions.map((trans) => (
-                <option key={trans.id} value={trans.id}>{trans.label}</option>
-              ))}
-            </select>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+              <span>{t.translationLabel}</span>
+              <select
+                value={translation}
+                onChange={(e) => {
+                  localStorage.setItem("bible-translation", e.target.value);
+                  setTranslation(e.target.value);
+                }}
+                style={{
+                  fontSize: 12,
+                  color: "var(--text)",
+                  background: "var(--bg)",
+                  cursor: "pointer",
+                  padding: "4px 10px",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                }}
+              >
+                {translationOptions.map((trans) => (
+                  <option key={trans.id} value={trans.id}>{trans.label}</option>
+                ))}
+              </select>
+            </label>
             {chapter && (
               <a
                 href="#chapter-comments"
@@ -273,6 +274,63 @@ export default function ChapterPage() {
             commentBookmarkMap={commentBookmarkMap}
           />
         )}
+
+        {/* 章 Prev/Next バー (本文末尾、左右 fixed のナビに代わる新配置) */}
+        <nav
+          aria-label={`${label?.short ?? meta.short} ${t.chapterFmt(chapterNum)} ${t.prevChapter} / ${t.nextChapter}`}
+          style={{
+            marginTop: 40,
+            paddingTop: 20,
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          {chapterNum > 1 ? (
+            <Link
+              href={`/${slug}/${chapterNum - 1}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "10px 16px",
+                minHeight: 44,
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                color: "var(--text)",
+                textDecoration: "none",
+                fontSize: 14,
+              }}
+            >
+              <span aria-hidden="true">‹</span>
+              <span>{t.prevChapter} ({chapterNum - 1})</span>
+            </Link>
+          ) : <span />}
+          {chapterNum < meta.totalChapters ? (
+            <Link
+              href={`/${slug}/${chapterNum + 1}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "10px 16px",
+                minHeight: 44,
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                color: "var(--text)",
+                textDecoration: "none",
+                fontSize: 14,
+                marginLeft: "auto",
+              }}
+            >
+              <span>{t.nextChapter} ({chapterNum + 1})</span>
+              <span aria-hidden="true">›</span>
+            </Link>
+          ) : null}
+        </nav>
       </div>
 
       {selectedVerse && (
@@ -300,7 +358,7 @@ export default function ChapterPage() {
           style={{
             position: "fixed",
             bottom: 24,
-            right: selectedVerse ? "calc(var(--panel-width) + 16px)" : 24,
+            right: 24,
             background: "var(--accent)",
             color: "var(--accent-text)",
             border: "none",
@@ -318,82 +376,6 @@ export default function ChapterPage() {
         >
           ↑
         </button>
-      )}
-
-      {!selectedVerse && (
-        <>
-          {chapterNum > 1 && (
-            <Link
-              href={`/${slug}/${chapterNum - 1}`}
-              title={t.chapterFmt(chapterNum - 1)}
-              className="chapter-nav-prev"
-              style={{
-                position: "fixed",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 4,
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderLeft: "none",
-                borderRadius: "0 8px 8px 0",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
-            >
-              ‹
-              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                {chapterNum - 1}
-              </span>
-            </Link>
-          )}
-
-          {chapterNum < meta.totalChapters && (
-            <Link
-              href={`/${slug}/${chapterNum + 1}`}
-              title={t.chapterFmt(chapterNum + 1)}
-              style={{
-                position: "fixed",
-                right: 0,
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 4,
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderRight: "none",
-                borderRadius: "8px 0 0 8px",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
-            >
-              ›
-              <span style={{ fontSize: 10, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                {chapterNum + 1}
-              </span>
-            </Link>
-          )}
-        </>
       )}
     </div>
   );

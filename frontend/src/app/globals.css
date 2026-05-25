@@ -106,11 +106,6 @@ select:focus-visible {
   display: none;
 }
 
-/* 前の章ボタン: デスクトップではサイドバー右端に配置 */
-.chapter-nav-prev {
-  left: var(--sidebar-width) !important;
-}
-
 /* ナビバー認証アイテム: モバイルでは非表示 */
 .nav-desktop-only {
   display: contents;
@@ -132,10 +127,6 @@ select:focus-visible {
 
   .sidebar-mobile-auth {
     display: block !important;
-  }
-
-  .chapter-nav-prev {
-    left: 0 !important;
   }
 
   .sidebar {

@@ -368,6 +368,11 @@ const ja = {
   // CommentPanel (UX-9)
   writeCommentCta: "コメントを書く",
   closeCommentPanel: "コメントパネルを閉じる",
+
+  // 章ナビ / 翻訳切替 (UX-11)
+  translationLabel: "翻訳",
+  prevChapter: "前の章",
+  nextChapter: "次の章",
 };
 
 const en: typeof ja = {
@@ -697,6 +702,10 @@ const en: typeof ja = {
 
   writeCommentCta: "Write a comment",
   closeCommentPanel: "Close comment panel",
+
+  translationLabel: "Translation",
+  prevChapter: "Previous chapter",
+  nextChapter: "Next chapter",
 };
 
 export type Translations = typeof ja;
