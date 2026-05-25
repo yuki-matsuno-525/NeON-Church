@@ -16,6 +16,7 @@ def read_url(notification_id):
 
 
 READ_ALL_URL = "/api/notifications/read-all/"
+UNREAD_COUNT_URL = "/api/notifications/unread-count/"
 
 
 @pytest.fixture
@@ -151,3 +152,80 @@ class TestNotificationRead:
         assert res.status_code == status.HTTP_200_OK
         unread = auth_client.get(NOTIFICATIONS_URL, {"unread": "1"}).data
         assert len(unread) == 0
+
+
+# ------------------------------------------------------------------
+# target_kind / book_name / chapter_number / verse_number
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestNotificationTarget:
+    def test_verse_comment_reply_target_fields(self, auth_client, other_auth_client, comment, verse):
+        """節コメントへの返信通知に target_kind=verse_comment と書名/章番号/節番号が含まれる。"""
+        other_auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "返信", "parent": comment["id"]},
+            format="json",
+        )
+        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        assert n["target_kind"] == "verse_comment"
+        assert n["book_name"] == verse.chapter.book.name
+        assert n["chapter_number"] == verse.chapter.number
+        assert n["verse_number"] == verse.number
+        assert n["is_qa"] is False
+
+    def test_upvote_on_verse_comment_target_fields(self, auth_client, other_auth_client, comment, verse):
+        """upvote 通知でも root の verse 情報が target になる。"""
+        other_auth_client.post(upvote_url(comment["id"]))
+        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        assert n["target_kind"] == "verse_comment"
+        assert n["book_name"] == verse.chapter.book.name
+        assert n["verse_number"] == verse.number
+
+    def test_qa_reply_target_kind_is_qa(self, auth_client, other_auth_client, verse):
+        """is_qa=True のコメントへの返信は target_kind=qa を返す。"""
+        qa = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "質問", "is_qa": True},
+            format="json",
+        ).data
+        reply = other_auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "回答", "parent": qa["id"]},
+            format="json",
+        ).data
+        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        assert n["target_kind"] == "qa"
+        assert n["is_qa"] is True
+        # comment_id は通知トリガーになった返信側、root の質問は target_kind=qa の文脈で扱う
+        assert n["comment_id"] == reply["id"]
+
+
+# ------------------------------------------------------------------
+# 未読件数 API
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestNotificationUnreadCount:
+    def test_anonymous_cannot_get(self, api_client):
+        res = api_client.get(UNREAD_COUNT_URL)
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_zero_when_no_notifications(self, auth_client):
+        res = auth_client.get(UNREAD_COUNT_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data == {"count": 0}
+
+    def test_counts_only_unread_and_own(self, auth_client, other_auth_client, comment, verse):
+        # auth_client への通知を 2 件作る
+        other_auth_client.post(upvote_url(comment["id"]))
+        other_auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "返信", "parent": comment["id"]},
+            format="json",
+        )
+        # other_auth_client にはまだ通知がない
+        assert other_auth_client.get(UNREAD_COUNT_URL).data == {"count": 0}
+        assert auth_client.get(UNREAD_COUNT_URL).data == {"count": 2}
+        # 1 件既読化すると 1 件減る
+        first = auth_client.get(NOTIFICATIONS_URL).data[0]
+        auth_client.post(read_url(first["id"]))
+        assert auth_client.get(UNREAD_COUNT_URL).data == {"count": 1}

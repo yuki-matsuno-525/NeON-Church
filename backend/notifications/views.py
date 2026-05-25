@@ -46,3 +46,15 @@ class NotificationReadAllView(APIView):
     def post(self, request):
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
         return Response(status=status.HTTP_200_OK)
+
+
+class NotificationUnreadCountView(APIView):
+    """GET /api/notifications/unread-count/  未読件数だけを軽量に返す。"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(
+            recipient=request.user, is_read=False
+        ).count()
+        return Response({"count": count}, status=status.HTTP_200_OK)
