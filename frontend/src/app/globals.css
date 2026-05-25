@@ -87,6 +87,13 @@
   --bp-md: 768px;
   --bp-lg: 1024px;
   --bp-xl: 1280px;
+
+  /* Motion tokens (Release 4) — 既存の transition: 0.15s 中心の体感を保ちつつ命名 */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
