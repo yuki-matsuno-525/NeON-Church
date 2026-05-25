@@ -377,4 +377,4 @@ v0.x.0 — 探索性とデザイン整理
 | R3 | UX-11 章ナビ / 翻訳切替配置整理 | DONE | | 左右 fixed の章ナビを撤去し本文末尾の prev/next バーへ、翻訳 select にラベル「翻訳」明示、scroll-top の panel 干渉ロジック削除 |
 | R3 | UX-12 DS 第 1 弾 | DONE | | CSS 変数 (radius/space/shadow) と共通クラス (.card/.btn-*/.badge-*) を globals.css に追加。inline style 置換は次フェーズで段階的に |
 | R3 | UX-13 モバイルナビ タップ性向上 | DONE | | ハンバーガーボタン 44x44px 確保、Sidebar の各 nav リンクに min-height: 44px と aria-current=page を付与 |
-| R3 | UX-14 検索体験改善 | TODO | | |
+| R3 | UX-14 検索体験改善 | DONE | | 結果カードに種別バッジ (書/節/コメント) 追加、0 件時を EmptyState (Q&A/読書 CTA 付き) に置換 |
