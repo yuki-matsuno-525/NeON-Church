@@ -27,7 +27,90 @@
   --neon-purple: #cc44ff;
   --glow-purple: rgba(192, 52, 240, 0.55);
   --glow-pink: rgba(255, 38, 120, 0.55);
+
+  /* Design tokens (UX-12) — 段階的に inline style を置き換えていくためのベース */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.40);
+  --shadow-glow: 0 0 14px var(--glow-purple);
 }
+
+/* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
+
+/* カード */
+.card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.card-hover {
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card-hover:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-card);
+}
+
+/* ボタン */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(135deg, #7618c5, #d81e80);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(198, 44, 170, 0.40);
+}
+.btn-secondary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.btn-ghost:hover {
+  background: var(--bg-hover);
+}
+
+/* バッジ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge-status-active { background: var(--accent); color: var(--accent-text); }
+.badge-status-published { background: #22c55e; color: #fff; }
+.badge-status-pending { background: var(--border); color: var(--text); }
 
 /* select の option はブラウザ依存 → 暗い背景を強制 */
 option {
