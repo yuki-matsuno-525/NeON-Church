@@ -369,7 +369,7 @@ v0.x.0 — 探索性とデザイン整理
 | R1 | UX-3 共通 UI コンポーネント整備 | DONE | | Skeleton/Spinner/EmptyState/Button/TextField/Toast(+Provider)/ConfirmDialog 追加。ClientLayout に ToastProvider 挿入。/demo/ui で動作確認可能 |
 | R1 | UX-4 共通コンポーネント適用 | DONE | | 6 画面の loading を SkeletonList、空状態を EmptyState (CTA 付き)、translations/[id] の confirm/alert を ConfirmDialog/Toast に置換 |
 | R1 | UX-5 Footer + 信頼性ページ | DONE | | Footer 追加 (全ページ表示) + /terms /privacy /guidelines /licenses /feedback の 5 ページ追加 + About 末尾にも信頼性リンク群 |
-| R2 | UX-6 通知のクリック先と文脈 | TODO | | |
+| R2 | UX-6 通知のクリック先と文脈 | DONE | | backend に target 情報 + unread-count API、NotificationContext + URL/label helper、Navbar/Sidebar/通知ページを Context に統合、通知カードを Link 化、全既読ボタン常時表示 |
 | R2 | UX-7 公開プロフィールのプライバシー | TODO | | |
 | R2 | UX-8 節操作とモバイル本文表示 | TODO | | |
 | R2 | UX-9 CommentPanel 読書圧軽減 | TODO | | |
