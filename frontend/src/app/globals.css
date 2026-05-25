@@ -28,7 +28,10 @@
   --glow-purple: rgba(192, 52, 240, 0.55);
   --glow-pink: rgba(255, 38, 120, 0.55);
 
-  /* Design tokens (UX-12) — 段階的に inline style を置き換えていくためのベース */
+  /* Design tokens (UX-12) — 段階的に inline style を置き換えていくためのベース。
+     Release 4 以降の新規/修正コンポーネントは必ず var(--space-*) / var(--radius-*) を使用すること。
+     インラインの padding/gap/margin の直値（11px と 12px の混在など）は触る都度
+     最も近い --space-* トークンへ寄せて統一する。 */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
