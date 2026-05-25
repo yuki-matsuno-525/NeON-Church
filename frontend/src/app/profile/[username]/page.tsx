@@ -40,7 +40,6 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         setProfile(p);
         // ブックマーク公開ユーザーは favorites を初期タブにする
         if (p.bookmarks_visibility === "public") {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setActiveTab("favorites");
         }
       })

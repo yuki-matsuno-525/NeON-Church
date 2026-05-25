@@ -3,12 +3,12 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, formatRelativeTime } from "@/lib/api";
+import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { BOOKS } from "@/lib/books";
-import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { SkeletonList, EmptyState, Button, Toggle } from "@/components/ui";
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name)?.slug ?? "";
@@ -98,6 +98,18 @@ export default function ProfilePage() {
       setMessage({ type: "error", text: t.profileUpdateFailed });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleVisibilityToggle = async (next: boolean) => {
+    const visibility: BookmarksVisibility = next ? "public" : "private";
+    setMessage(null);
+    try {
+      const updated = await updateProfile({ bookmarks_visibility: visibility });
+      setUser(updated);
+      setMessage({ type: "success", text: t.profileUpdated });
+    } catch {
+      setMessage({ type: "error", text: t.profileUpdateFailed });
     }
   };
 
@@ -274,6 +286,32 @@ export default function ProfilePage() {
           {saving ? t.saving : t.save}
         </button>
       </form>
+
+      {/* プライバシー設定 */}
+      <section
+        aria-labelledby="privacy-heading"
+        style={{
+          background: "var(--bg-alt)",
+          border: "1px solid var(--border)",
+          borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+          borderRadius: 10,
+          padding: "20px 22px",
+          marginBottom: 40,
+        }}
+      >
+        <h2
+          id="privacy-heading"
+          style={{ fontSize: 14, fontWeight: 700, margin: "0 0 14px", color: "var(--text)" }}
+        >
+          {t.privacyHeading}
+        </h2>
+        <Toggle
+          checked={user.bookmarks_visibility === "public"}
+          onChange={handleVisibilityToggle}
+          label={t.bookmarksVisibilityLabel}
+          description={t.bookmarksVisibilityHint}
+        />
+      </section>
 
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         <button style={tabStyle("bookmarks")} onClick={() => setActiveTab("bookmarks")}>

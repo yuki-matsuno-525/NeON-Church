@@ -357,6 +357,13 @@ const ja = {
   footerFeedback: "フィードバック",
   footerGithub: "GitHub",
   footerBetaNote: "ベータ版運用中。仕様は予告なく変更される場合があります。",
+
+  // プライバシー設定 (UX-7)
+  privacyHeading: "プライバシー",
+  bookmarksVisibilityLabel: "お気に入りを他のユーザーに公開する",
+  bookmarksVisibilityHint: "オフのときは公開プロフィールにお気に入りタブが表示されません。",
+  bookmarksVisibilityOn: "公開",
+  bookmarksVisibilityOff: "非公開",
 };
 
 const en: typeof ja = {
@@ -677,6 +684,12 @@ const en: typeof ja = {
   footerFeedback: "Feedback",
   footerGithub: "GitHub",
   footerBetaNote: "This service is in beta. Specifications may change without notice.",
+
+  privacyHeading: "Privacy",
+  bookmarksVisibilityLabel: "Show my bookmarks on my public profile",
+  bookmarksVisibilityHint: "When off, the bookmarks tab won't appear on your public profile.",
+  bookmarksVisibilityOn: "Public",
+  bookmarksVisibilityOff: "Private",
 };
 
 export type Translations = typeof ja;
