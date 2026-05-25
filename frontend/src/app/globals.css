@@ -41,6 +41,21 @@
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25);
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.40);
   --shadow-glow: 0 0 14px var(--glow-purple);
+
+  /* Accent roles (Release 4) — アクセントの 3 階層
+     - primary: 主要 CTA（btn-primary の gradient）
+     - secondary: --accent と同値、リンク/フォーカス/二次強調
+     - spot: --neon-pink と同値、限定的なハイライト */
+  --accent-primary-grad: linear-gradient(135deg, #7618c5, #d81e80);
+  --accent-secondary: var(--accent);
+  --accent-spot: var(--neon-pink);
+  --accent-active: #a020d0;
+
+  /* State colors (Release 4) — 状態色の集約 */
+  --state-success: #22c55e;
+  --state-warning: #f59e0b;
+  --state-danger: #ef4444;
+  --state-info: #3b82f6;
 }
 
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
