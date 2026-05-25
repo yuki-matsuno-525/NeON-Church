@@ -90,8 +90,8 @@ export function PrivacyContent() {
   const { lang } = useLang();
   const c = content[lang] ?? content.en;
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>{c.title}</h1>
+    <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: '"Noto Serif JP", serif' }}>{c.title}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
         {c.intro}
       </p>
