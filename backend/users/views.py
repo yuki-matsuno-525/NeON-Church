@@ -171,7 +171,12 @@ class UserCommentsView(generics.ListAPIView):
 
 
 class UserBookmarksView(generics.ListAPIView):
-    """GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要・公開）"""
+    """GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要）
+
+    対象ユーザーの bookmarks_visibility が "public" のときのみ実データを返す。
+    "private"（既定）のときは空配列を返す。フロントエンドは公開プロフィールの
+    visibility を見てタブ表示自体を出し分ける。
+    """
 
     permission_classes = [AllowAny]
 
@@ -182,10 +187,14 @@ class UserBookmarksView(generics.ListAPIView):
     def get_queryset(self):
         from bookmarks.models import Bookmark
         username = self.kwargs["username"]
-        if not User.objects.filter(username=username).exists():
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
             raise NotFound("ユーザーが見つかりません。")
+        if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
+            return Bookmark.objects.none()
         return (
-            Bookmark.objects.filter(user__username=username)
+            Bookmark.objects.filter(user=user)
             .select_related("verse__chapter__book", "comment__user")
         )
 

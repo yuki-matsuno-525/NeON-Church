@@ -69,7 +69,15 @@ class UserSerializer(AvatarUrlMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "bio", "avatar_url", "created_at"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "bio",
+            "avatar_url",
+            "bookmarks_visibility",
+            "created_at",
+        ]
         read_only_fields = ["id", "created_at"]
 
 
@@ -80,14 +88,21 @@ class PublicUserSerializer(AvatarUrlMixin, serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "bio", "avatar_url", "created_at"]
+        fields = [
+            "id",
+            "username",
+            "bio",
+            "avatar_url",
+            "bookmarks_visibility",
+            "created_at",
+        ]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """プロフィール更新用。bio と avatar を変更可能。"""
+    """プロフィール更新用。bio / avatar / bookmarks_visibility を変更可能。"""
 
     avatar = serializers.ImageField(required=False, validators=[validate_avatar])
 
     class Meta:
         model = User
-        fields = ["bio", "avatar"]
+        fields = ["bio", "avatar", "bookmarks_visibility"]

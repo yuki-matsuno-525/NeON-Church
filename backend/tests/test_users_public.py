@@ -23,7 +23,9 @@ def user_bookmarks_url(username: str) -> str:
 
 @pytest.fixture
 def target_user(db):
-    """テスト対象の公開プロフィールを持つユーザー。"""
+    """テスト対象の公開プロフィールを持つユーザー。
+    既存テストの互換のためお気に入りは public にしておく。
+    """
     from django.contrib.auth import get_user_model
     User = get_user_model()
     return User.objects.create_user(
@@ -31,6 +33,20 @@ def target_user(db):
         email="target@example.com",
         password="targetpass123",
         bio="これはターゲットユーザーです。",
+        bookmarks_visibility=User.BOOKMARKS_PUBLIC,
+    )
+
+
+@pytest.fixture
+def private_target_user(db):
+    """お気に入り非公開のユーザー（デフォルト挙動の検証用）。"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    return User.objects.create_user(
+        username="privateuser",
+        email="private@example.com",
+        password="privatepass123",
+        bio="非公開ユーザー",
     )
 
 
@@ -201,3 +217,63 @@ class TestUserBookmarksView:
         assert res.status_code == status.HTTP_200_OK
         # target_user のブックマークのみ
         assert len(res.data) == 1
+
+
+# ------------------------------------------------------------------
+# bookmarks_visibility プライバシー
+# ------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestBookmarksVisibility:
+    def test_default_is_private_for_new_user(self, private_target_user):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        assert private_target_user.bookmarks_visibility == User.BOOKMARKS_PRIVATE
+
+    def test_public_profile_includes_visibility(self, api_client, target_user):
+        res = api_client.get(user_profile_url("targetuser"))
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["bookmarks_visibility"] == "public"
+
+    def test_private_user_bookmarks_returns_empty(
+        self, api_client, private_target_user, verse
+    ):
+        from bookmarks.models import Bookmark
+        Bookmark.objects.create(user=private_target_user, verse=verse)
+        res = api_client.get(user_bookmarks_url("privateuser"))
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data == []
+
+    def test_public_user_bookmarks_returns_data(
+        self, api_client, target_user, verse
+    ):
+        from bookmarks.models import Bookmark
+        Bookmark.objects.create(user=target_user, verse=verse)
+        res = api_client.get(user_bookmarks_url("targetuser"))
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data) == 1
+
+    def test_me_endpoint_includes_visibility(self, auth_client):
+        res = auth_client.get("/api/auth/me/")
+        assert res.status_code == status.HTTP_200_OK
+        assert "bookmarks_visibility" in res.data
+        assert res.data["bookmarks_visibility"] == "private"
+
+    def test_patch_me_can_switch_to_public(self, auth_client):
+        res = auth_client.patch(
+            "/api/auth/me/",
+            {"bookmarks_visibility": "public"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["bookmarks_visibility"] == "public"
+        me = auth_client.get("/api/auth/me/").data
+        assert me["bookmarks_visibility"] == "public"
+
+    def test_invalid_visibility_value_returns_400(self, auth_client):
+        res = auth_client.patch(
+            "/api/auth/me/",
+            {"bookmarks_visibility": "invalid"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
