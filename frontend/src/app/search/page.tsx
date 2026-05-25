@@ -6,6 +6,21 @@ import Link from "next/link";
 import { searchBible, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { EmptyState, Button } from "@/components/ui";
+
+const KIND_BADGE_STYLE: React.CSSProperties = {
+  display: "inline-block",
+  fontSize: 10,
+  fontWeight: 700,
+  padding: "2px 8px",
+  borderRadius: 999,
+  border: "1px solid var(--border)",
+  color: "var(--text-muted)",
+  background: "var(--bg)",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  marginRight: 8,
+};
 
 function getSlugByName(name: string): string | null {
   return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? null;
@@ -160,6 +175,7 @@ function SearchContent() {
                         fontWeight: 600,
                       }}
                     >
+                      <span style={KIND_BADGE_STYLE}>{t.searchKindBook}</span>
                       {b.name}
                     </Link>
                   );
@@ -190,6 +206,7 @@ function SearchContent() {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                         <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
                         </span>
                         {url && (
@@ -233,7 +250,8 @@ function SearchContent() {
                         background: "var(--bg-alt)",
                       }}
                     >
-                      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>
+                      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 6, alignItems: "center" }}>
+                        <span style={KIND_BADGE_STYLE}>{t.searchKindComment}</span>
                         <span style={{ fontWeight: 600 }}>{c.username}</span>
                         {c.location && <span>· {c.location}</span>}
                       </div>
@@ -252,9 +270,20 @@ function SearchContent() {
           )}
 
           {totalHits === 0 && (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-              {t.searchEmpty(q)}
-            </p>
+            <EmptyState
+              title={t.searchEmpty(q)}
+              description={t.searchEmptyDesc}
+              action={
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                  <Link href="/qa" style={{ textDecoration: "none" }}>
+                    <Button variant="ghost">{t.searchEmptyGoQa}</Button>
+                  </Link>
+                  <Link href="/read" style={{ textDecoration: "none" }}>
+                    <Button variant="primary">{t.searchEmptyGoRead}</Button>
+                  </Link>
+                </div>
+              }
+            />
           )}
         </>
       )}

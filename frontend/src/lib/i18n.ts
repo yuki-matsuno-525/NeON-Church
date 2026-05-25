@@ -373,6 +373,14 @@ const ja = {
   translationLabel: "翻訳",
   prevChapter: "前の章",
   nextChapter: "次の章",
+
+  // 検索 (UX-14)
+  searchKindBook: "書",
+  searchKindVerse: "節",
+  searchKindComment: "コメント",
+  searchEmptyDesc: "別のキーワードを試すか、関連するページを開いて探してみてください。",
+  searchEmptyGoQa: "Q&A を見る",
+  searchEmptyGoRead: "文献を読む",
 };
 
 const en: typeof ja = {
@@ -706,6 +714,13 @@ const en: typeof ja = {
   translationLabel: "Translation",
   prevChapter: "Previous chapter",
   nextChapter: "Next chapter",
+
+  searchKindBook: "Book",
+  searchKindVerse: "Verse",
+  searchKindComment: "Comment",
+  searchEmptyDesc: "Try different keywords or browse related pages.",
+  searchEmptyGoQa: "Browse Q&A",
+  searchEmptyGoRead: "Browse texts",
 };
 
 export type Translations = typeof ja;
