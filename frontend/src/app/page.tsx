@@ -13,7 +13,7 @@ function slugFromBookName(name: string): string {
 export default function Home() {
   const t = useT();
   const sections = [
-    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.png" },
+    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.png", featured: true },
     { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.png" },
     { title: t.translate, description: t.sectionTranslateDesc, href: "/translations", icon: "/img/icon-translation.png" },
   ];
@@ -78,7 +78,7 @@ export default function Home() {
         }}
       >
         {/* ヒーローセクション */}
-        <div style={{ padding: "16px 0 8px" }}>
+        <div style={{ padding: "var(--space-5) 0 var(--space-2)" }}>
           <p
             style={{
               fontSize: 11,
@@ -278,6 +278,7 @@ export default function Home() {
               description={s.description}
               href={s.href}
               icon={s.icon}
+              featured={s.featured}
             />
           ))}
         </div>
@@ -534,11 +535,13 @@ function SectionCard({
   description,
   href,
   icon,
+  featured = false,
 }: {
   title: string;
   description: string;
   href: string;
   icon: string;
+  featured?: boolean;
 }) {
   return (
     <Link
@@ -547,8 +550,12 @@ function SectionCard({
         display: "flex",
         flexDirection: "column",
         gap: 10,
-        background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
-        border: "3px solid rgba(190, 95, 255, 0.95)",
+        background: featured
+          ? "linear-gradient(160deg, rgba(125, 45, 215, 0.44) 0%, rgba(80, 20, 168, 0.56) 100%)"
+          : "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+        border: featured
+          ? "3px solid rgba(210, 130, 255, 1.0)"
+          : "3px solid rgba(190, 95, 255, 0.95)",
         borderRadius: 20,
         padding: "24px 22px",
         textDecoration: "none",
@@ -579,7 +586,7 @@ function SectionCard({
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = "rgba(190, 95, 255, 0.95)";
+        el.style.borderColor = featured ? "rgba(210, 130, 255, 1.0)" : "rgba(190, 95, 255, 0.95)";
         el.style.boxShadow = [
           "0 0 6px  rgba(210, 110, 255, 0.90)",
           "0 0 18px rgba(185, 80,  255, 0.65)",
