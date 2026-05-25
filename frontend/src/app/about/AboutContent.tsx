@@ -31,6 +31,43 @@ export function AboutContent() {
         </ul>
       </Section>
 
+      <nav
+        aria-label={t.footerNavLabel}
+        style={{
+          marginBottom: 32,
+          paddingTop: 16,
+          borderTop: "1px solid var(--border)",
+        }}
+      >
+        <ul
+          style={{
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "8px 18px",
+            fontSize: 13,
+          }}
+        >
+          <li>
+            <Link href="/guidelines" style={trustLinkStyle}>{t.footerGuidelines}</Link>
+          </li>
+          <li>
+            <Link href="/licenses" style={trustLinkStyle}>{t.footerLicenses}</Link>
+          </li>
+          <li>
+            <Link href="/terms" style={trustLinkStyle}>{t.footerTerms}</Link>
+          </li>
+          <li>
+            <Link href="/privacy" style={trustLinkStyle}>{t.footerPrivacy}</Link>
+          </li>
+          <li>
+            <Link href="/feedback" style={trustLinkStyle}>{t.footerFeedback}</Link>
+          </li>
+        </ul>
+      </nav>
+
       <div style={{ marginTop: 40 }}>
         <Link
           href="/"
@@ -47,6 +84,11 @@ export function AboutContent() {
     </div>
   );
 }
+
+const trustLinkStyle: React.CSSProperties = {
+  color: "var(--accent)",
+  textDecoration: "none",
+};
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
