@@ -147,64 +147,72 @@ function QAContent() {
         />
       )}
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
-        {(["all", "unanswered", "answered"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setAnsweredFilter(f)}
-            aria-pressed={answeredFilter === f}
-            style={{
-              fontSize: 12,
-              padding: "4px 12px",
-              borderRadius: 999,
-              border: "1px solid var(--border)",
-              cursor: "pointer",
-              background: answeredFilter === f ? "var(--accent)" : "transparent",
-              color: answeredFilter === f ? "var(--accent-text)" : "var(--text-muted)",
-              fontFamily: "inherit",
-            }}
-          >
-            {filterLabel(f)}
-          </button>
-        ))}
-        <select
-          aria-label={t.allBooks}
-          value={selectedBookId}
-          onChange={(e) => setSelectedBookId(e.target.value)}
-          style={{
-            padding: "6px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg-alt)",
-            color: "var(--text)",
-            fontSize: 13,
-          }}
-        >
-          <option value="">{t.allBooks}</option>
-          {books.map((b) => (
-            <option key={b.id} value={b.id}>{b.name}</option>
+      <fieldset style={{ border: "none", padding: 0, margin: "0 0 24px" }}>
+        <legend style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginBottom: "var(--space-2)", fontWeight: 600, letterSpacing: "0.04em" }}>
+          {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
+        </legend>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          {(["all", "unanswered", "answered"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setAnsweredFilter(f)}
+              aria-pressed={answeredFilter === f}
+              style={{
+                fontSize: "var(--font-size-sm)",
+                padding: "4px 12px",
+                borderRadius: 999,
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                background: answeredFilter === f ? "var(--accent)" : "transparent",
+                color: answeredFilter === f ? "var(--accent-text)" : "var(--text-muted)",
+                fontFamily: "inherit",
+              }}
+            >
+              {filterLabel(f)}
+            </button>
           ))}
-        </select>
-
-        <select
-          aria-label={t.allTags}
-          value={selectedTagId}
-          onChange={(e) => setSelectedTagId(e.target.value)}
-          style={{
-            padding: "6px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg-alt)",
-            color: "var(--text)",
-            fontSize: 13,
-          }}
-        >
-          <option value="">{t.allTags}</option>
-          {tags.map((tag) => (
-            <option key={tag.id} value={tag.id}>{tag.name}</option>
-          ))}
-        </select>
-      </div>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+            <select
+              aria-label={t.allBooks}
+              value={selectedBookId}
+              onChange={(e) => setSelectedBookId(e.target.value)}
+              style={{
+                padding: "6px 10px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-alt)",
+                color: "var(--text)",
+                fontSize: "var(--font-size-sm)",
+              }}
+            >
+              <option value="">{t.allBooks}</option>
+              {books.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+            <select
+              aria-label={t.allTags}
+              value={selectedTagId}
+              onChange={(e) => setSelectedTagId(e.target.value)}
+              style={{
+                padding: "6px 10px",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-alt)",
+                color: "var(--text)",
+                fontSize: "var(--font-size-sm)",
+              }}
+            >
+              <option value="">{t.allTags}</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </fieldset>
 
       {loading ? (
         <SkeletonList count={3} />

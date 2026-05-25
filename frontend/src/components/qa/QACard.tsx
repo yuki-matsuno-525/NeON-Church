@@ -99,6 +99,25 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
           {formatRelativeTime(comment.created_at)}
         </span>
+        {comment.best_answer ? (
+          <span
+            className="badge"
+            style={{ background: "rgba(34,197,94,0.15)", color: "var(--state-success)", display: "inline-flex", alignItems: "center", gap: 3 }}
+            aria-label={t.filterAnswered}
+          >
+            <Icon name="check-circle" size={11} />
+            {t.filterAnswered}
+          </span>
+        ) : (
+          <span
+            className="badge"
+            style={{ background: "rgba(245,158,11,0.15)", color: "var(--state-warning)", display: "inline-flex", alignItems: "center", gap: 3 }}
+            aria-label={t.filterUnanswered}
+          >
+            <Icon name="help-circle" size={11} />
+            {t.filterUnanswered}
+          </span>
+        )}
         {url && (
           <Link
             href={url}
