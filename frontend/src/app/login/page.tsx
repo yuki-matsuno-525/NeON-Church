@@ -1,16 +1,22 @@
 "use client";
 
-import { useId, useState, Suspense } from "react";
+import { useEffect, useId, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { PasswordField } from "@/components/auth/PasswordField";
+
+function safeRedirectTarget(from: string | null): string {
+  if (from && from.startsWith("/") && !from.startsWith("//")) return from;
+  return "/";
+}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser } = useAuth();
+  const { user, loading: authLoading, setUser } = useAuth();
   const t = useT();
   const usernameId = useId();
   const passwordId = useId();
@@ -22,22 +28,36 @@ function LoginForm() {
 
   const from = searchParams.get("from");
 
+  // 既ログインなら即リダイレクト
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace(safeRedirectTarget(from));
+    }
+  }, [authLoading, user, from, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const user = await login(username, password);
-      setUser(user);
-      router.push(from && from.startsWith("/") ? from : "/");
+      const loggedIn = await login(username, password);
+      setUser(loggedIn);
+      router.push(safeRedirectTarget(from));
     } catch (err) {
-      setError(
-        (err as ApiError).message ?? t.loginFailed
-      );
+      const apiErr = err as ApiError;
+      const message = apiErr.message && apiErr.status !== 500 ? apiErr.message : t.loginFailed;
+      setError(message);
     } finally {
       setSubmitting(false);
     }
   };
+
+  // 既ログイン or 認証ロード中はフォームを描画しない（チラつき防止）
+  if (authLoading || user) {
+    return (
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+    );
+  }
 
   return (
     <div
@@ -115,17 +135,15 @@ function LoginForm() {
             >
               {t.password}
             </label>
-            <input
+            <PasswordField
               id={passwordId}
-              type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={setPassword}
               autoComplete="current-password"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
-              style={{
-                width: "100%",
+              required
+              ariaInvalid={error ? true : undefined}
+              ariaDescribedby={error ? errorId : undefined}
+              inputStyle={{
                 padding: "9px 12px",
                 border: "1px solid rgba(140, 75, 235, 0.35)",
                 borderRadius: 8,

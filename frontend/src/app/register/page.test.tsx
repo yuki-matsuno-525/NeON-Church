@@ -3,8 +3,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RegisterPage from "./page";
 
 const mockPush = vi.fn();
+const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useSearchParams: () => ({ get: () => null }),
 }));
 
@@ -83,5 +84,35 @@ describe("RegisterPage", () => {
   it("ログインリンクが /login を指す", () => {
     render(<RegisterPage />);
     expect(screen.getByRole("link", { name: "ログイン" })).toHaveAttribute("href", "/login");
+  });
+
+  it("8文字未満のパスワードで送信すると client validation エラーを表示し、API は呼ばれない", async () => {
+    const { register } = await import("@/lib/api");
+    vi.mocked(register).mockResolvedValue({
+      id: "u1",
+      username: "x",
+      email: "x@y.com",
+      bio: "",
+      avatar_url: null,
+      created_at: "",
+    });
+
+    render(<RegisterPage />);
+    const textboxes = screen.getAllByRole("textbox");
+    fireEvent.change(textboxes[0], { target: { value: "bob" } });
+    fireEvent.change(textboxes[1], { target: { value: "bob@example.com" } });
+    const pw = document.querySelector('input[autocomplete="new-password"]') as HTMLInputElement;
+    // minLength を回避してフォーム submit を発火させるため、ボタンは無効化されない値で submit テスト
+    // ここでは valueMissing になっていないが minLength 違反のため client-side validation で
+    // 我々のコードが先に passwordTooShort を出す
+    fireEvent.change(pw, { target: { value: "short" } });
+    // submit ハンドラを直接呼ぶため form を取得して submit
+    const form = pw.closest("form")!;
+    fireEvent.submit(form);
+
+    await waitFor(() =>
+      expect(screen.getByText("パスワードは8文字以上で入力してください。")).toBeInTheDocument()
+    );
+    expect(register).not.toHaveBeenCalled();
   });
 });

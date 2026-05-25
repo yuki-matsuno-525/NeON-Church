@@ -27,6 +27,29 @@ export class ApiError extends Error {
   }
 }
 
+// DRF 等のエラーレスポンスから人間可読な1行を取り出す。
+// 想定形: { detail: "..." } | { field: ["msg1", "msg2"], ... } | "string" | ["msg"]
+function extractErrorMessage(body: unknown): string | null {
+  if (body == null) return null;
+  if (typeof body === "string") return body;
+  if (Array.isArray(body)) {
+    for (const item of body) {
+      const msg = extractErrorMessage(item);
+      if (msg) return msg;
+    }
+    return null;
+  }
+  if (typeof body === "object") {
+    const obj = body as Record<string, unknown>;
+    if (typeof obj.detail === "string") return obj.detail;
+    for (const value of Object.values(obj)) {
+      const msg = extractErrorMessage(value);
+      if (msg) return msg;
+    }
+  }
+  return null;
+}
+
 // 常に相対パスで Next.js rewrites を経由する（クロスドメイン Cookie 問題を回避）
 const API_BASE = "";
 
@@ -83,7 +106,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
     let message = res.statusText;
     try {
       const body = await res.json();
-      message = body.detail ?? JSON.stringify(body);
+      message = extractErrorMessage(body) ?? res.statusText;
     } catch {
       // ignore parse failure
     }

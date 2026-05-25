@@ -3,8 +3,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import LoginPage from "./page";
 
 const mockPush = vi.fn();
+const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
   useSearchParams: () => ({ get: () => null }),
 }));
 
@@ -78,5 +79,14 @@ describe("LoginPage", () => {
   it("新規登録リンクが /register を指す", () => {
     render(<LoginPage />);
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute("href", "/register");
+  });
+
+  it("パスワード表示切替ボタンが表示され、トグルできる", () => {
+    render(<LoginPage />);
+    const toggle = screen.getByRole("button", { name: "パスワードを表示" });
+    const pw = document.querySelector('input[type="password"]') as HTMLInputElement;
+    expect(pw).toBeTruthy();
+    fireEvent.click(toggle);
+    expect(document.querySelector('input[type="text"][autocomplete="current-password"]')).toBeTruthy();
   });
 });

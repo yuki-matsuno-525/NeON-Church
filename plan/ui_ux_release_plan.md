@@ -365,7 +365,7 @@ v0.x.0 — 探索性とデザイン整理
 | Release | Step | 状態 | コミット | 備考 |
 |---------|------|------|----------|------|
 | R1 | UX-1 フォーム a11y 統一 | DONE | | login/register/profile/QAPostForm/translations-new/search に label htmlFor / autocomplete / role=alert / focus-visible / 検索 × ボタン |
-| R1 | UX-2 認証導線磨き込み | TODO | | |
+| R1 | UX-2 認証導線磨き込み | DONE | | パスワード表示切替 / 既ログイン時リダイレクト / passwordTooShort / apiClient エラー文言の人間可読化 |
 | R1 | UX-3 共通 UI コンポーネント整備 | TODO | | |
 | R1 | UX-4 共通コンポーネント適用 | TODO | | |
 | R1 | UX-5 Footer + 信頼性ページ | TODO | | |

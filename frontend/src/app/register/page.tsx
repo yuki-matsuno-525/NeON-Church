@@ -1,16 +1,24 @@
 "use client";
 
-import { useId, useState, Suspense } from "react";
+import { useEffect, useId, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { register, type ApiError } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
+import { PasswordField } from "@/components/auth/PasswordField";
+
+const PASSWORD_MIN_LENGTH = 8;
+
+function safeRedirectTarget(from: string | null): string {
+  if (from && from.startsWith("/") && !from.startsWith("//")) return from;
+  return "/";
+}
 
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser } = useAuth();
+  const { user, loading: authLoading, setUser } = useAuth();
   const t = useT();
   const usernameId = useId();
   const emailId = useId();
@@ -24,20 +32,40 @@ function RegisterForm() {
 
   const from = searchParams.get("from");
 
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace(safeRedirectTarget(from));
+    }
+  }, [authLoading, user, from, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setError(t.passwordTooShort);
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const user = await register(username, email, password);
-      setUser(user);
-      router.push(from && from.startsWith("/") ? from : "/");
+      const registered = await register(username, email, password);
+      setUser(registered);
+      router.push(safeRedirectTarget(from));
     } catch (err) {
-      setError((err as ApiError).message ?? t.registerFailed);
+      const apiErr = err as ApiError;
+      const message = apiErr.message && apiErr.status !== 500 ? apiErr.message : t.registerFailed;
+      setError(message);
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (authLoading || user) {
+    return (
+      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+    );
+  }
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
@@ -118,17 +146,16 @@ function RegisterForm() {
 
           <div style={{ marginBottom: 24 }}>
             <label htmlFor={passwordId} style={labelStyle}>{t.passwordHint}</label>
-            <input
+            <PasswordField
               id={passwordId}
-              type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
+              onChange={setPassword}
               autoComplete="new-password"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
-              style={fieldStyle}
+              required
+              minLength={PASSWORD_MIN_LENGTH}
+              ariaInvalid={error ? true : undefined}
+              ariaDescribedby={error ? errorId : undefined}
+              inputStyle={fieldStyle}
             />
           </div>
 

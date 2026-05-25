@@ -329,6 +329,9 @@ const ja = {
 
   // 汎用 a11y
   clearInput: "入力をクリア",
+  showPassword: "パスワードを表示",
+  hidePassword: "パスワードを非表示",
+  passwordTooShort: "パスワードは8文字以上で入力してください。",
 };
 
 const en: typeof ja = {
@@ -623,6 +626,9 @@ const en: typeof ja = {
   dateLocale: "en-US",
 
   clearInput: "Clear input",
+  showPassword: "Show password",
+  hidePassword: "Hide password",
+  passwordTooShort: "Password must be at least 8 characters.",
 };
 
 export type Translations = typeof ja;

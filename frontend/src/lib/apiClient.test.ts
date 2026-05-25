@@ -149,10 +149,24 @@ describe("apiFetch", () => {
     expect(err.message).toBe("Forbidden");
   });
 
-  it("4xx エラーで detail なし → JSON 全体を message にする", async () => {
+  it("4xx エラーで detail なし → 値の中から最初の文字列を取り出す", async () => {
     mockFetch.mockResolvedValueOnce(makeRes(400, { error: "bad" }));
     const err = await fetchBooks().catch((e) => e);
-    expect(err.message).toBe('{"error":"bad"}');
+    expect(err.message).toBe("bad");
+  });
+
+  it("4xx エラーで DRF 風の {field: [msg]} → 配列先頭メッセージを使う", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeRes(400, { username: ["A user with that username already exists."] })
+    );
+    const err = await fetchBooks().catch((e) => e);
+    expect(err.message).toBe("A user with that username already exists.");
+  });
+
+  it("4xx エラーで空オブジェクト → statusText にフォールバック", async () => {
+    mockFetch.mockResolvedValueOnce(makeRes(400, {}));
+    const err = await fetchBooks().catch((e) => e);
+    expect(err.message).toBe("Error");
   });
 
   it("4xx エラーで JSON パース失敗 → statusText を message にする", async () => {
