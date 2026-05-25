@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type Tag } from "@/lib/api";
@@ -13,6 +13,12 @@ import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
 
 const PAGE_SIZE = 10;
+
+type AnsweredFilter = "all" | "answered" | "unanswered";
+
+function parseAnswered(value: string | null): AnsweredFilter {
+  return value === "answered" || value === "unanswered" ? value : "all";
+}
 
 export default function QAPage() {
   const t = useT();
@@ -29,16 +35,40 @@ function QAContent() {
   const router = useRouter();
   const t = useT();
   const { lang } = useLang();
+
+  // URL を単一の真実とする。state は URL から派生。
+  const selectedBookId = searchParams.get("book") ?? "";
+  const selectedTagId = searchParams.get("tag") ?? "";
+  const answeredFilter = parseAnswered(searchParams.get("answered"));
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
+
   const [comments, setComments] = useState<QAComment[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedBookId, setSelectedBookId] = useState("");
-  const [selectedTagId, setSelectedTagId] = useState("");
-  const [answeredFilter, setAnsweredFilter] = useState<"all" | "answered" | "unanswered">("all");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  /** クエリパラメータを部分更新して URL に反映する。null/空文字は削除。 */
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(updates)) {
+        if (value == null || value === "") params.delete(key);
+        else params.set(key, value);
+      }
+      const q = params.toString();
+      // router.replace で履歴を汚さない (連続フィルタ変更で戻るが効きすぎないため)
+      router.replace(q ? `/qa?${q}` : "/qa", { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  const setSelectedBookId = (id: string) => updateParams({ book: id || null, page: null });
+  const setSelectedTagId = (id: string) => updateParams({ tag: id || null, page: null });
+  const setAnsweredFilter = (f: AnsweredFilter) =>
+    updateParams({ answered: f === "all" ? null : f, page: null });
+  const goToPage = (p: number) => updateParams({ page: p > 1 ? String(p) : null });
 
   useEffect(() => {
     Promise.all([fetchBooks(defaultTranslationForLang(lang)), fetchTags()])
@@ -49,7 +79,7 @@ function QAContent() {
       .catch(() => {});
   }, [lang]);
 
-  const loadComments = () => {
+  const loadComments = useCallback(() => {
     setLoading(true);
     fetchQAComments({
       book_id: selectedBookId || undefined,
@@ -59,15 +89,14 @@ function QAContent() {
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  };
+  }, [selectedBookId, selectedTagId, answeredFilter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBookId, selectedTagId, answeredFilter]);
+  }, [loadComments]);
 
-  const filterLabel = (f: "all" | "unanswered" | "answered") => {
+  const filterLabel = (f: AnsweredFilter) => {
     if (f === "all") return t.filterAll;
     if (f === "unanswered") return t.filterUnanswered;
     return t.filterAnswered;
@@ -123,6 +152,7 @@ function QAContent() {
           <button
             key={f}
             onClick={() => setAnsweredFilter(f)}
+            aria-pressed={answeredFilter === f}
             style={{
               fontSize: 12,
               padding: "4px 12px",
@@ -138,6 +168,7 @@ function QAContent() {
           </button>
         ))}
         <select
+          aria-label={t.allBooks}
           value={selectedBookId}
           onChange={(e) => setSelectedBookId(e.target.value)}
           style={{
@@ -156,6 +187,7 @@ function QAContent() {
         </select>
 
         <select
+          aria-label={t.allTags}
           value={selectedTagId}
           onChange={(e) => setSelectedTagId(e.target.value)}
           style={{
@@ -196,7 +228,6 @@ function QAContent() {
         const totalPages = Math.ceil(comments.length / PAGE_SIZE);
         const safePage = Math.min(page, totalPages);
         const pageItems = comments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-        const goTo = (p: number) => router.push(`/qa?page=${p}`);
         return (
           <>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -211,11 +242,11 @@ function QAContent() {
             </div>
             {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-                <button onClick={() => goTo(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>{t.prev}</button>
+                <button onClick={() => goToPage(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>{t.prev}</button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => goTo(p)} style={pageBtnStyle(false, p === safePage)}>{p}</button>
+                  <button key={p} onClick={() => goToPage(p)} aria-current={p === safePage ? "page" : undefined} style={pageBtnStyle(false, p === safePage)}>{p}</button>
                 ))}
-                <button onClick={() => goTo(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>{t.next}</button>
+                <button onClick={() => goToPage(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>{t.next}</button>
               </div>
             )}
           </>

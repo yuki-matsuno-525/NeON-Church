@@ -373,7 +373,7 @@ v0.x.0 — 探索性とデザイン整理
 | R2 | UX-7 公開プロフィールのプライバシー | DONE | | User.bookmarks_visibility (default=private) 追加、公開プロフィールでタブ非表示、自分のプロフィールに公開トグル |
 | R2 | UX-8 節操作とモバイル本文表示 | DONE | | 節タップ領域 44px 確保、verse-flash 2.5s に短縮、no-op コメントボタン削除、モバイルで本文を背景に残す bottom sheet 化 |
 | R2 | UX-9 CommentPanel 読書圧軽減 | DONE | | 投稿フォームをデフォルト折りたたみ、リサイズハンドルにタッチ対応、閉じるボタンに aria-label と 32px タップ領域 |
-| R3 | UX-10 Q&A フィルタ URL 反映 | TODO | | |
+| R3 | UX-10 Q&A フィルタ URL 反映 | DONE | | book / tag / answered / page を URL query と双方向同期。URL を単一情報源にし、ブラウザバックで前のフィルタ状態に戻れる |
 | R3 | UX-11 章ナビ / 翻訳切替配置整理 | TODO | | |
 | R3 | UX-12 DS 第 1 弾 | TODO | | |
 | R3 | UX-13 モバイルナビ タップ性向上 | TODO | | |
