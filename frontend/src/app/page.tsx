@@ -291,22 +291,20 @@ export default function Home() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: 12,
+                marginBottom: "var(--space-3)",
               }}
             >
-              <p
+              <h2
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.07em",
-                  color: "rgba(193, 143, 255, 0.60)",
+                  fontSize: "var(--font-size-xl)",
+                  color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
                 }}
               >
                 {t.trending}
-              </p>
+              </h2>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "var(--space-2)" }}>
               {trending.map((c) => (
                 <TrendingCard key={c.id} comment={c} />
               ))}
@@ -322,24 +320,22 @@ export default function Home() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: 12,
+                marginBottom: "var(--space-3)",
               }}
             >
-              <p
+              <h2
                 style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.07em",
-                  color: "rgba(193, 143, 255, 0.60)",
+                  fontSize: "var(--font-size-xl)",
+                  color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
                 }}
               >
                 {t.recentQA}
-              </p>
+              </h2>
               <Link
                 href="/qa"
                 style={{
-                  fontSize: 12,
+                  fontSize: "var(--font-size-sm)",
                   color: "rgba(193, 143, 255, 0.50)",
                   textDecoration: "none",
                 }}
@@ -347,7 +343,7 @@ export default function Home() {
                 {t.seeAll}
               </Link>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "var(--space-2)" }}>
               {recentQA.map((qa) => (
                 <ActivityCard key={qa.id} qa={qa} />
               ))}
