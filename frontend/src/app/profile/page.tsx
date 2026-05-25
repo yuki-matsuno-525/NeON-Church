@@ -132,7 +132,7 @@ export default function ProfilePage() {
 
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32 }}>
+      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
         {t.profileTitle}
       </h1>
 
@@ -234,6 +234,7 @@ export default function ProfilePage() {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={4}
+            maxLength={500}
             placeholder={t.bioPlaceholder}
             autoComplete="off"
             aria-describedby={message ? messageId : undefined}
@@ -249,6 +250,9 @@ export default function ProfilePage() {
               boxSizing: "border-box",
             }}
           />
+          <p style={{ textAlign: "right", margin: "4px 0 0", fontSize: "var(--font-size-xs)", color: bio.length >= 450 ? "var(--state-warning)" : "var(--text-faint)" }}>
+            {bio.length}/500
+          </p>
         </div>
 
         {message && (
@@ -257,9 +261,9 @@ export default function ProfilePage() {
             role={message.type === "error" ? "alert" : "status"}
             aria-live="polite"
             style={{
-              fontSize: 13,
-              color: message.type === "success" ? "var(--accent)" : "#e53e3e",
-              marginBottom: 12,
+              fontSize: "var(--font-size-sm)",
+              color: message.type === "success" ? "var(--accent)" : "var(--state-danger)",
+              marginBottom: "var(--space-3)",
             }}
           >
             {message.text}
@@ -269,19 +273,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          style={{
-            background: saving ? "rgba(120, 30, 190, 0.5)" : "linear-gradient(135deg, #7618c5, #d81e80)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 6,
-            padding: "8px 20px",
-            fontWeight: 700,
-            fontSize: 14,
-            cursor: saving ? "not-allowed" : "pointer",
-            opacity: saving ? 0.6 : 1,
-            boxShadow: saving ? "none" : "0 0 12px rgba(198, 44, 170, 0.35)",
-            fontFamily: "inherit",
-          }}
+          className="btn btn-primary"
         >
           {saving ? t.saving : t.save}
         </button>
@@ -314,10 +306,18 @@ export default function ProfilePage() {
       </section>
 
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
-        <button style={tabStyle("bookmarks")} onClick={() => setActiveTab("bookmarks")}>
+        <button
+          style={tabStyle("bookmarks")}
+          onClick={() => setActiveTab("bookmarks")}
+          aria-current={activeTab === "bookmarks" ? "page" : undefined}
+        >
           {t.tabBookmarks} ({bookmarks.length})
         </button>
-        <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
+        <button
+          style={tabStyle("comments")}
+          onClick={() => setActiveTab("comments")}
+          aria-current={activeTab === "comments" ? "page" : undefined}
+        >
           {t.tabComments} ({myComments.length})
         </button>
       </div>
