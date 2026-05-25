@@ -112,11 +112,11 @@ function LoginForm() {
               style={{
                 width: "100%",
                 padding: "9px 12px",
-                border: "1px solid rgba(140, 75, 235, 0.35)",
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-alt)",
                 color: "var(--text)",
-                fontSize: 14,
+                fontSize: "var(--font-size-sm)",
                 fontFamily: "inherit",
               }}
             />
@@ -145,11 +145,11 @@ function LoginForm() {
               ariaDescribedby={error ? errorId : undefined}
               inputStyle={{
                 padding: "9px 12px",
-                border: "1px solid rgba(140, 75, 235, 0.35)",
-                borderRadius: 8,
-                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                background: "var(--bg-alt)",
                 color: "var(--text)",
-                fontSize: 14,
+                fontSize: "var(--font-size-sm)",
                 fontFamily: "inherit",
               }}
             />
@@ -160,7 +160,7 @@ function LoginForm() {
               id={errorId}
               role="alert"
               aria-live="polite"
-              style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}
+              style={{ color: "var(--state-danger)", fontSize: "var(--font-size-sm)", marginBottom: "var(--space-4)" }}
             >
               {error}
             </p>
@@ -169,20 +169,8 @@ function LoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            style={{
-              width: "100%",
-              padding: "11px",
-              background: submitting ? "rgba(120, 30, 190, 0.5)" : "linear-gradient(135deg, #7618c5, #d81e80)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: submitting ? "not-allowed" : "pointer",
-              opacity: submitting ? 0.6 : 1,
-              fontFamily: "inherit",
-              boxShadow: submitting ? "none" : "0 0 18px rgba(198, 44, 170, 0.45)",
-            }}
+            className="btn btn-primary"
+            style={{ width: "100%" }}
           >
             {submitting ? t.loggingIn : t.loginTitle}
           </button>
