@@ -364,6 +364,10 @@ const ja = {
   bookmarksVisibilityHint: "オフのときは公開プロフィールにお気に入りタブが表示されません。",
   bookmarksVisibilityOn: "公開",
   bookmarksVisibilityOff: "非公開",
+
+  // CommentPanel (UX-9)
+  writeCommentCta: "コメントを書く",
+  closeCommentPanel: "コメントパネルを閉じる",
 };
 
 const en: typeof ja = {
@@ -690,6 +694,9 @@ const en: typeof ja = {
   bookmarksVisibilityHint: "When off, the bookmarks tab won't appear on your public profile.",
   bookmarksVisibilityOn: "Public",
   bookmarksVisibilityOff: "Private",
+
+  writeCommentCta: "Write a comment",
+  closeCommentPanel: "Close comment panel",
 };
 
 export type Translations = typeof ja;

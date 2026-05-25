@@ -37,6 +37,7 @@ export function CommentPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
 
   const { comments, setComments, loading, reload } = useComments({
     verse_id: verse.id,
@@ -74,6 +75,15 @@ export function CommentPanel({
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
     const comment = await createComment({ verse: verse.id, body, is_qa: isQa, tag_ids: tagIds });
     setComments((prev) => [comment, ...prev]);
+    setComposeOpen(false);
+  };
+
+  const handleOpenCompose = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    setComposeOpen(true);
   };
 
   const handleReply = async (body: string, parentId: string) => {
@@ -198,9 +208,39 @@ export function CommentPanel({
           </div>
         </div>
 
-        {/* Comment input */}
+        {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
-          <CommentInput onSubmit={handleSubmit} placeholder={t.verseCommentInput} submitLabel={t.submitComment} showQaOption showTagOption />
+          {composeOpen ? (
+            <CommentInput
+              onSubmit={handleSubmit}
+              onCancel={() => setComposeOpen(false)}
+              placeholder={t.verseCommentInput}
+              submitLabel={t.submitComment}
+              showQaOption
+              showTagOption
+              autoFocus
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={handleOpenCompose}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                minHeight: 40,
+                background: "transparent",
+                border: "1px dashed var(--border)",
+                borderRadius: 8,
+                color: "var(--text-muted)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "inherit",
+                textAlign: "left",
+              }}
+            >
+              {t.writeCommentCta}
+            </button>
+          )}
         </div>
 
         {/* Ordering toggle */}

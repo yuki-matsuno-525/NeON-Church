@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,22 +9,27 @@ import { useT } from "@/lib/i18n";
 
 type Props = {
   onSubmit: (body: string, isQa?: boolean, tagIds?: string[]) => Promise<void>;
+  onCancel?: () => void;
   placeholder?: string;
   submitLabel?: string;
   showQaOption?: boolean;
   showTagOption?: boolean;
+  autoFocus?: boolean;
 };
 
 export function CommentInput({
   onSubmit,
+  onCancel,
   placeholder,
   submitLabel,
   showQaOption = false,
   showTagOption = false,
+  autoFocus = false,
 }: Props) {
   const { user } = useAuth();
   const t = useT();
   const pathname = usePathname();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
   const [isQa, setIsQa] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -40,6 +45,12 @@ export function CommentInput({
       fetchTags().then(setTags).catch(() => {});
     }
   }, [showTagOption]);
+
+  useEffect(() => {
+    if (autoFocus) {
+      textareaRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   if (!user) {
     return (
@@ -85,6 +96,7 @@ export function CommentInput({
   return (
     <form onSubmit={handleSubmit}>
       <textarea
+        ref={textareaRef}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={effectivePlaceholder}
@@ -144,6 +156,24 @@ export function CommentInput({
             />
             Q&A
           </label>
+        )}
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "6px 14px",
+              color: "var(--text-muted)",
+              cursor: "pointer",
+              fontSize: 13,
+              fontFamily: "inherit",
+            }}
+          >
+            {t.cancel}
+          </button>
         )}
         <button
           type="submit"
