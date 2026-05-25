@@ -8,12 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { Icon, type IconName } from "@/components/ui/Icon";
 
 const PAGE_SIZE = 10;
 
-const STATUS_COLOR: Record<string, string> = {
-  active: "var(--accent)",
-  published: "#22c55e",
+const STATUS_STYLE: Record<string, { bg: string; color: string; icon: IconName }> = {
+  active:    { bg: "var(--accent-tint)",           color: "var(--accent)",        icon: "circle-dot" },
+  published: { bg: "rgba(34,197,94,0.15)",          color: "var(--state-success)", icon: "check-circle" },
 };
 
 export default function TranslationsPage() {
@@ -95,63 +96,66 @@ function TranslationsContent() {
         const goTo = (p: number) => router.push(`/translations?page=${p}`);
         return (
           <>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {pageItems.map((p) => (
-            <Link
-              key={p.id}
-              href={`/translations/${p.id}`}
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              <div
-                style={{
-                  padding: "18px 20px",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  background: "var(--bg-alt)",
-                  transition: "border-color 0.15s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+          {pageItems.map((p) => {
+            const st = STATUS_STYLE[p.status] ?? { bg: "var(--bg-hover)", color: "var(--text-muted)", icon: "lock" as IconName };
+            return (
+              <Link
+                key={p.id}
+                href={`/translations/${p.id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
               >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
-                  <span style={{ fontWeight: 700, fontSize: 16, flex: 1 }}>{p.name}</span>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      padding: "2px 8px",
-                      borderRadius: 999,
-                      background: STATUS_COLOR[p.status] ?? "var(--border)",
-                      color: p.status === "published" ? "#fff" : "var(--accent-text)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {statusLabel(p.status)}
-                  </span>
-                </div>
+                <div
+                  className="card card-hover"
+                  style={{
+                    transition: "border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
+                    height: "100%",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "var(--accent)";
+                    el.style.boxShadow = "var(--shadow-card)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.borderColor = "var(--border)";
+                    el.style.boxShadow = "none";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: "var(--space-2)" }}>
+                    <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, flex: 1, margin: 0 }}>{p.name}</h3>
+                    <span
+                      className="badge"
+                      style={{ background: st.bg, color: st.color, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}
+                    >
+                      <Icon name={st.icon} size={11} />
+                      {statusLabel(p.status)}
+                    </span>
+                  </div>
 
-                {p.description && (
-                  <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                    {p.description}
-                  </p>
-                )}
+                  {p.description && (
+                    <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                      {p.description}
+                    </p>
+                  )}
 
-                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "var(--text-faint)", flexWrap: "wrap" }}>
-                  <span>📖 {p.source_book_name}</span>
-                  <span>🌐 {languageLabel(p.target_language)}</span>
-                  <span>{t.createdBy} {p.owner_username}</span>
-                  <span>
-                    {t.progress} {p.done_count}/{p.unit_count}
-                    {p.unit_count > 0 && (
-                      <span style={{ marginLeft: 6 }}>
-                        ({Math.round((p.done_count / p.unit_count) * 100)}%)
-                      </span>
-                    )}
-                  </span>
+                  <div style={{ display: "flex", gap: 16, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap" }}>
+                    <span>📖 {p.source_book_name}</span>
+                    <span>🌐 {languageLabel(p.target_language)}</span>
+                    <span>{t.createdBy} {p.owner_username}</span>
+                    <span>
+                      {t.progress} {p.done_count}/{p.unit_count}
+                      {p.unit_count > 0 && (
+                        <span style={{ marginLeft: 6 }}>
+                          ({Math.round((p.done_count / p.unit_count) * 100)}%)
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
         {totalPages > 1 && (
           <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
