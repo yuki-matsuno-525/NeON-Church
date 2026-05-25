@@ -94,7 +94,7 @@ export default function NewTranslationPage() {
 
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div>
-          <label htmlFor={nameId} style={labelStyle}>{t.projectName}</label>
+          <label htmlFor={nameId} style={labelStyle}>{t.projectName} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
           <input
             id={nameId}
             value={name}
@@ -135,7 +135,7 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label htmlFor={bookId} style={labelStyle}>{t.sourceBook}</label>
+          <label htmlFor={bookId} style={labelStyle}>{t.sourceBook} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
           <select
             id={bookId}
             value={sourceBook}
@@ -151,7 +151,7 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label htmlFor={languageId} style={labelStyle}>{t.targetLanguage}</label>
+          <label htmlFor={languageId} style={labelStyle}>{t.targetLanguage} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
           <select
             id={languageId}
             value={targetLanguage}
@@ -171,7 +171,7 @@ export default function NewTranslationPage() {
             id={errorId}
             role="alert"
             aria-live="polite"
-            style={{ color: "#ef4444", fontSize: 13, margin: 0 }}
+            style={{ color: "var(--state-danger)", fontSize: "var(--font-size-sm)", margin: 0 }}
           >
             {error}
           </p>
@@ -181,32 +181,14 @@ export default function NewTranslationPage() {
           <button
             type="submit"
             disabled={submitting}
-            style={{
-              flex: 1,
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              border: "none",
-              borderRadius: 8,
-              padding: "10px",
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: submitting ? "not-allowed" : "pointer",
-              opacity: submitting ? 0.6 : 1,
-            }}
+            className="btn btn-primary"
+            style={{ flex: 1 }}
           >
             {submitting ? t.creating : t.createProject}
           </button>
           <Link
             href="/translations"
-            style={{
-              padding: "10px 20px",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              textDecoration: "none",
-              color: "var(--text-muted)",
-              fontSize: 14,
-              textAlign: "center",
-            }}
+            className="btn btn-ghost"
           >
             {t.cancel}
           </Link>
