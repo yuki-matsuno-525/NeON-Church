@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { ToastProvider } from "@/components/ui";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <>
+    <ToastProvider>
       {/* 全ページ共通の背景（ホームページと同じ画像＋オーバーレイ） */}
       <div
         style={{
@@ -35,6 +36,6 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
       </div>
-    </>
+    </ToastProvider>
   );
 }
