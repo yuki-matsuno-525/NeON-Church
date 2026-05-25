@@ -106,11 +106,15 @@
   padding: var(--space-4);
 }
 .card-hover {
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
 }
 .card-hover:hover {
   border-color: var(--accent);
   box-shadow: var(--shadow-card);
+}
+.card-hover:active {
+  transform: translateY(1px);
 }
 
 /* ボタン */
@@ -125,9 +129,14 @@
   font-family: inherit;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
   border: 1px solid transparent;
   text-decoration: none;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 .btn:disabled {
   opacity: 0.6;
