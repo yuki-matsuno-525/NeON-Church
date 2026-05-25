@@ -33,7 +33,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState } from "@/components/ui";
+import { SkeletonList, EmptyState, ConfirmDialog, useToast } from "@/components/ui";
 import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_COLOR: Record<string, string> = {
@@ -122,6 +122,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [members, setMembers] = useState<TranslationMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"units" | "review" | "members">("units");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDeleteAllUnits, setConfirmDeleteAllUnits] = useState(false);
+  const toast = useToast();
 
   const [addingUnit, setAddingUnit] = useState(false);
   const [unitChapters, setUnitChapters] = useState<Chapter[]>([]);
@@ -194,9 +197,25 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleDelete = async () => {
-    if (!confirm(t.confirmDeleteProject)) return;
+    setConfirmDelete(false);
     await deleteTranslation(id);
     router.push("/translations");
+  };
+
+  const handleConfirmDeleteAllUnits = async () => {
+    setConfirmDeleteAllUnits(false);
+    if (!project) return;
+    setRemovingBook(true);
+    try {
+      const res = await removeBookFromTranslation(id, project.source_book);
+      toast.show(t.unitsDeleted(res.deleted), { type: "success" });
+      const u = await fetchTranslationUnits(id);
+      setUnits(u);
+    } catch {
+      /* ignore */
+    } finally {
+      setRemovingBook(false);
+    }
   };
 
   const handleMemberAction = async (membershipId: string, action: "approved" | "rejected" | "remove") => {
@@ -353,7 +372,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 </button>
               </>
             )}
-            <button onClick={handleDelete} style={btnStyle("#ef4444")}>
+            <button onClick={() => setConfirmDelete(true)} style={btnStyle("#ef4444")}>
               {t.delete}
             </button>
           </div>
@@ -422,7 +441,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   setAddingBook(true);
                   try {
                     const res = await addBookToTranslation(id, project.source_book);
-                    alert(t.unitsAdded(res.created));
+                    toast.show(t.unitsAdded(res.created), { type: "success" });
                     const u = await fetchTranslationUnits(id);
                     setUnits(u);
                   } catch { /* ignore */ } finally { setAddingBook(false); }
@@ -433,17 +452,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               </button>
               <button
                 disabled={removingBook}
-                onClick={async () => {
-                  if (!project) return;
-                  if (!confirm(t.confirmDeleteAllUnits)) return;
-                  setRemovingBook(true);
-                  try {
-                    const res = await removeBookFromTranslation(id, project.source_book);
-                    alert(t.unitsDeleted(res.deleted));
-                    const u = await fetchTranslationUnits(id);
-                    setUnits(u);
-                  } catch { /* ignore */ } finally { setRemovingBook(false); }
-                }}
+                onClick={() => setConfirmDeleteAllUnits(true)}
                 style={btnStyle("#ef4444")}
               >
                 {removingBook ? t.deleting : t.deleteAllUnits}
@@ -759,6 +768,23 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t.confirmDeleteProject}
+        confirmText={t.delete}
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+      <ConfirmDialog
+        open={confirmDeleteAllUnits}
+        title={t.confirmDeleteAllUnits}
+        confirmText={t.deleteAllUnits}
+        destructive
+        onConfirm={handleConfirmDeleteAllUnits}
+        onCancel={() => setConfirmDeleteAllUnits(false)}
+      />
     </div>
   );
 }
