@@ -56,6 +56,23 @@
   --state-warning: #f59e0b;
   --state-danger: #ef4444;
   --state-info: #3b82f6;
+
+  /* Typography scale (Release 4) — 実装で多用されている値に合わせたスケール
+     用途目安: xs=ラベル/補助、sm=セカンダリ本文、base=デフォルト、md=本文、
+     lg=Reader 本文、xl=サブ見出し、2xl=見出し、3xl=ヒーロー */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 15px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 40px;
+
+  /* Line-height tokens — 用途別 */
+  --leading-tight: 1.25;   /* 見出し */
+  --leading-base: 1.6;     /* 本文 */
+  --leading-reading: 1.85; /* Reader 長文 */
 }
 
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
