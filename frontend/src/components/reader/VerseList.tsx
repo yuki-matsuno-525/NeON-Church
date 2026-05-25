@@ -83,14 +83,15 @@ export function VerseList({
             data-testid="verse-item"
             onClick={() => onSelectVerse(verse.id)}
             style={{
-              padding: "8px 12px",
+              padding: "12px 16px",
+              minHeight: 44,
               cursor: "pointer",
               borderRadius: 5,
               background: isSelected ? "var(--accent-tint)" : isHighlighted ? undefined : "transparent",
               color: isSelected ? "var(--accent)" : "var(--text)",
               marginBottom: 2,
               transition: isHighlighted ? undefined : "background 0.1s",
-              animation: isHighlighted ? "verse-flash 10s ease-out forwards" : undefined,
+              animation: isHighlighted ? "verse-flash 2.5s ease-out forwards" : undefined,
             }}
             onMouseEnter={(e) => {
               if (!isSelected) {
@@ -132,28 +133,16 @@ export function VerseList({
                   gap: 8,
                 }}
               >
-                <button
-                  style={{
-                    border: "1px solid var(--accent)",
-                    borderRadius: 5,
-                    padding: "3px 10px",
-                    background: "transparent",
-                    color: "var(--accent)",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontFamily: "inherit",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {t.comment}
-                </button>
+                {/* 「コメント」ボタンは no-op だったため削除。コメントは右のパネルから操作。 */}
                 <button
                   onClick={(e) => handleBookmark(e, verse)}
                   disabled={loadingBookmark === verse.id}
+                  aria-pressed={isBookmarked}
                   style={{
                     border: "1px solid var(--border)",
                     borderRadius: 5,
-                    padding: "3px 10px",
+                    padding: "6px 14px",
+                    minHeight: 32,
                     background: isBookmarked ? "var(--accent-tint)" : "transparent",
                     color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
                     cursor: "pointer",
