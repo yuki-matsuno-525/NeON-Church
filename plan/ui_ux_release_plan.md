@@ -371,7 +371,7 @@ v0.x.0 — 探索性とデザイン整理
 | R1 | UX-5 Footer + 信頼性ページ | DONE | | Footer 追加 (全ページ表示) + /terms /privacy /guidelines /licenses /feedback の 5 ページ追加 + About 末尾にも信頼性リンク群 |
 | R2 | UX-6 通知のクリック先と文脈 | DONE | | backend に target 情報 + unread-count API、NotificationContext + URL/label helper、Navbar/Sidebar/通知ページを Context に統合、通知カードを Link 化、全既読ボタン常時表示 |
 | R2 | UX-7 公開プロフィールのプライバシー | DONE | | User.bookmarks_visibility (default=private) 追加、公開プロフィールでタブ非表示、自分のプロフィールに公開トグル |
-| R2 | UX-8 節操作とモバイル本文表示 | TODO | | |
+| R2 | UX-8 節操作とモバイル本文表示 | DONE | | 節タップ領域 44px 確保、verse-flash 2.5s に短縮、no-op コメントボタン削除、モバイルで本文を背景に残す bottom sheet 化 |
 | R2 | UX-9 CommentPanel 読書圧軽減 | TODO | | |
 | R3 | UX-10 Q&A フィルタ URL 反映 | TODO | | |
 | R3 | UX-11 章ナビ / 翻訳切替配置整理 | TODO | | |
