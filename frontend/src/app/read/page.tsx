@@ -58,28 +58,25 @@ export default function ReadPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{t.readTitle}</h1>
+      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.readTitle}</h1>
 
       {resume && (
-        <div style={{ marginBottom: 28 }}>
-          <Link
-            href={`/${resume.slug}/${resume.chapter}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-              color: "var(--accent)",
-              background: "var(--accent-tint)",
-              textDecoration: "none",
-              padding: "6px 14px",
-              borderRadius: 20,
-              border: "1px solid var(--accent)",
-            }}
-          >
+        <Link
+          href={`/${resume.slug}/${resume.chapter}`}
+          className="card card-hover"
+          style={{
+            display: "block",
+            textDecoration: "none",
+            color: "inherit",
+            marginBottom: "var(--space-6)",
+            boxShadow: "var(--shadow-card-hover)",
+            borderLeft: "3px solid var(--accent)",
+          }}
+        >
+          <h2 style={{ fontSize: "var(--font-size-xl)", margin: 0 }}>
             {t.resumeReading(resume.bookName, resume.chapter)}
-          </Link>
-        </div>
+          </h2>
+        </Link>
       )}
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text)", marginBottom: 12 }}>
