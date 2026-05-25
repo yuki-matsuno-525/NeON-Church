@@ -56,6 +56,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // user が変わるたびに refresh / polling を再構築
   useEffect(() => {
     if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCount(0);
       if (pollingIdRef.current) {
         window.clearInterval(pollingIdRef.current);

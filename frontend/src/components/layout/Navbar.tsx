@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { fetchUnreadCount } from "@/lib/api";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useT } from "@/lib/i18n";
 
 type NavbarProps = {
@@ -15,18 +14,10 @@ type NavbarProps = {
 export function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, loading, logout } = useAuth();
   const { lang, setLang } = useLang();
+  const { unreadCount } = useNotifications();
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    if (!user) return;
-    const refresh = () => fetchUnreadCount().then(setUnreadCount).catch(() => {});
-    refresh();
-    const id = setInterval(refresh, 30_000);
-    return () => clearInterval(id);
-  }, [user]);
 
   const handleLogout = async () => {
     await logout();

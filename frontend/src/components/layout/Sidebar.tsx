@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchNotifications } from "@/lib/api";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 
@@ -23,9 +23,9 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const t = useT();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   const navItems = [
@@ -41,13 +41,6 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     mql.addEventListener("change", check);
     return () => mql.removeEventListener("change", check);
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    fetchNotifications()
-      .then((ns) => setUnreadCount(ns.filter((n) => !n.is_read).length))
-      .catch(() => {});
-  }, [user]);
 
   const handleLogout = async () => {
     onClose?.();

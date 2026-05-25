@@ -78,12 +78,13 @@ describe("NotificationsPage", () => {
     await screen.findByRole("button", { name: "すべて既読" });
   });
 
-  it("すべて既読のとき「すべて既読」ボタンが表示されない", async () => {
+  it("すべて既読のとき「すべて既読」ボタンは disabled で表示される (layout shift 防止)", async () => {
     const { fetchNotifications } = await import("@/lib/api");
     vi.mocked(fetchNotifications).mockResolvedValue([makeNotification({ is_read: true })]);
     render(<NotificationsPage />);
     await screen.findByText("bob");
-    expect(screen.queryByRole("button", { name: "すべて既読" })).not.toBeInTheDocument();
+    const btn = screen.getByRole("button", { name: "すべて既読" });
+    expect(btn).toBeDisabled();
   });
 
   it("「すべて既読」ボタン押下で markAllNotificationsRead が呼ばれる", async () => {
