@@ -32,24 +32,36 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("favorites");
+  const [activeTab, setActiveTab] = useState<Tab>("comments");
 
   useEffect(() => {
     fetchUserProfile(username)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        // ブックマーク公開ユーザーは favorites を初期タブにする
+        if (p.bookmarks_visibility === "public") {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setActiveTab("favorites");
+        }
+      })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [username]);
 
   useEffect(() => {
     if (!profile) return;
-    Promise.all([
-      fetchUserComments(username).catch(() => [] as Comment[]),
-      fetchUserBookmarks(username).catch(() => [] as Bookmark[]),
-    ]).then(([cms, bms]) => {
-      setComments(cms);
-      setBookmarks(bms);
-    });
+    fetchUserComments(username)
+      .then(setComments)
+      .catch(() => setComments([]));
+    // 非公開ユーザーはブックマーク API を呼ばない (空配列が返るが無駄な往復を避ける)
+    if (profile.bookmarks_visibility === "public") {
+      fetchUserBookmarks(username)
+        .then(setBookmarks)
+        .catch(() => setBookmarks([]));
+    } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBookmarks([]);
+    }
   }, [profile, username]);
 
   if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
@@ -118,17 +130,19 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         </p>
       )}
 
-      {/* タブ */}
+      {/* タブ。ブックマークタブは visibility=public のときのみ表示 */}
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
-        <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")}>
-          {t.tabBookmarks} ({bookmarks.length})
-        </button>
+        {profile.bookmarks_visibility === "public" && (
+          <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")}>
+            {t.tabBookmarks} ({bookmarks.length})
+          </button>
+        )}
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
           {t.tabComments} ({comments.length})
         </button>
       </div>
 
-      {activeTab === "favorites" ? (
+      {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
         bookmarks.length === 0 ? (
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
         ) : (

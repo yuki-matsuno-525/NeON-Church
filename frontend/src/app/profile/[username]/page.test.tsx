@@ -41,6 +41,7 @@ const makeProfile = (overrides: Partial<PublicUser> = {}): PublicUser => ({
   username: "targetuser",
   bio: "これはテストユーザーです。",
   avatar_url: null,
+  bookmarks_visibility: "public",
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });
@@ -138,7 +139,7 @@ describe("UserProfilePage", () => {
     await screen.findByText("ユーザーが見つかりません。");
   });
 
-  it("お気に入りタブが表示される", async () => {
+  it("お気に入りタブが表示される (visibility=public)", async () => {
     const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
     vi.mocked(fetchUserComments).mockResolvedValue([]);
@@ -149,6 +150,20 @@ describe("UserProfilePage", () => {
 
     await screen.findByText(/お気に入り/);
     await screen.findByText(/マタイによる福音書/);
+  });
+
+  it("visibility=private のときお気に入りタブが表示されず、bookmarks API は呼ばれない", async () => {
+    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile({ bookmarks_visibility: "private" }));
+    vi.mocked(fetchUserComments).mockResolvedValue([makeComment()]);
+    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
+
+    render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
+
+    await screen.findByText("targetuser");
+    expect(screen.queryByRole("button", { name: /お気に入り/ })).not.toBeInTheDocument();
+    expect(fetchUserBookmarks).not.toHaveBeenCalled();
   });
 
   it("コメントタブに切り替えできる", async () => {

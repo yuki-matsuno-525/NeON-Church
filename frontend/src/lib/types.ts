@@ -68,6 +68,7 @@ export type User = {
   email: string;
   bio: string;
   avatar_url: string | null;
+  bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };
 export type Tag = {
@@ -197,10 +198,13 @@ export type SearchResult = {
   }[];
 };
 
+export type BookmarksVisibility = "private" | "public";
+
 export type PublicUser = {
   id: string;
   username: string;
   bio: string;
   avatar_url: string | null;
+  bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };

@@ -251,7 +251,10 @@ export function fetchMe(): Promise<User> {
   return apiFetch("/auth/me/");
 }
 
-export function updateProfile(data: { bio: string }): Promise<User> {
+export function updateProfile(data: {
+  bio?: string;
+  bookmarks_visibility?: "private" | "public";
+}): Promise<User> {
   return apiFetch("/auth/me/", {
     method: "PATCH",
     body: JSON.stringify(data),
