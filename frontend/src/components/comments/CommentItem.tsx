@@ -5,6 +5,7 @@ import Link from "next/link";
 import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, type Tag, reportComment } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
+import { Icon } from "@/components/ui/Icon";
 import { useT, useRelativeTime } from "@/lib/i18n";
 
 type Props = {
@@ -141,12 +142,13 @@ export function CommentItem({
                 cursor: "pointer",
                 padding: "2px 4px",
                 color: "var(--text-faint)",
-                fontSize: 11,
+                display: "inline-flex",
+                alignItems: "center",
                 flexShrink: 0,
                 lineHeight: 1,
               }}
             >
-              {collapsed ? "▶" : "▼"}
+              <Icon name={collapsed ? "chevron-right" : "chevron-down"} size={14} />
             </button>
           )}
           {!hasChildren && <span style={{ width: 20, flexShrink: 0 }} />}

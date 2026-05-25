@@ -11,6 +11,7 @@ import {
   type Comment,
 } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
+import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
 
 function getSlugByName(name: string): string | null {
@@ -152,8 +153,18 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
             {tag.name}
           </span>
         ))}
-        <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-faint)" }}>
-          ▲ {comment.vote_count}
+        <span
+          style={{
+            marginLeft: "auto",
+            fontSize: 12,
+            color: "var(--text-faint)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <Icon name="chevron-up" size={12} />
+          {comment.vote_count}
         </span>
         <button
           onClick={handleExpand}
@@ -166,9 +177,13 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
             cursor: "pointer",
             padding: 0,
             fontFamily: "inherit",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
           }}
         >
-          {t.repliesCount(comment.reply_count)} {expanded ? "▲" : "▼"}
+          <span>{t.repliesCount(comment.reply_count)}</span>
+          <Icon name={expanded ? "chevron-up" : "chevron-down"} size={12} />
         </button>
       </div>
 
