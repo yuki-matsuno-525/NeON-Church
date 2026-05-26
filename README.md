@@ -1,10 +1,16 @@
-# コードベース学習ガイド
-
-このプロジェクトの構造、主要な処理フロー、機能ごとの実装場所、学習ロードマップは [`docs/codebase-guide.md`](docs/codebase-guide.md) にまとめています。
-
 # NeON Church
 
+**Read the Bible — including the Apocrypha and Pseudepigrapha — with Reddit-style comments.**
+
+NeON Church is an online platform where you can read, annotate, and discuss biblical texts (canon, Apocrypha, and Pseudepigrapha) together. Every text is treated as equal — no second-class scriptures.
+
+**Live:** https://neon-church.com · **GitHub:** https://github.com/yuki-matsuno-525/NeON-Church
+
+---
+
 聖書・外典・偽書をオンラインで読みながら、Reddit スタイルでコメント・議論できる Web サービス。
+
+> コードベース解説は [`docs/codebase-guide.md`](docs/codebase-guide.md) を参照。
 
 ## 機能
 
@@ -52,7 +58,7 @@
 
 ```bash
 # リポジトリをクローン
-git clone https://github.com/<your-org>/NeON-Church.git
+git clone https://github.com/yuki-matsuno-525/NeON-Church.git
 cd NeON-Church
 
 # 環境変数ファイルを作成
@@ -162,6 +168,10 @@ npm test
 | `CSRF_TRUSTED_ORIGINS` | CSRF を許可するオリジン |
 | `POSTGRES_*` | PostgreSQL 接続情報 |
 | `NEXT_PUBLIC_API_BASE_URL` | フロントエンドからのバックエンド API URL |
+| `NEXT_PUBLIC_SITE_URL` | 公開ドメイン（OGP の metadataBase に使用） |
+| `GOOGLE_CLIENT_ID/SECRET` | Google OAuth 認証情報 |
+| `GITHUB_CLIENT_ID/SECRET` | GitHub OAuth 認証情報 |
+| `NEXT_PUBLIC_OAUTH_*_ENABLED` | OAuth ボタンの表示フラグ |
 | `SENTRY_DSN` | Sentry DSN（省略可） |
 
 ## API 概要
@@ -211,11 +221,7 @@ NeON-Church/
 │       └── lib/         # API クライアント・型定義
 ├── text/                # 聖書テキストデータ（インポート用）
 ├── plan/                # 設計ドキュメント
-│   ├── spec.md          # サービス仕様
-│   ├── additional_phases.md # 実装フェーズ一覧（Phase 13〜22）
-│   ├── ui_spec.md       # UI 仕様・デザイントークン
-│   ├── test_plan.md     # テスト設計
-│   └── archive/         # 完了済みフェーズメモ
+│   └── pre-launch-checklist.md # 公開前チェックリスト
 └── docker-compose.yml
 ```
 
