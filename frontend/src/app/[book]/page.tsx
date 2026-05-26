@@ -41,9 +41,11 @@ function BookContent() {
       return;
     }
 
-    fetchBooks(defaultTranslationForLang(lang))
+    const translationId = defaultTranslationForLang(lang);
+    fetchBooks(translationId)
       .then((books) => {
-        const book = books.find((b) => b.name === meta.name);
+        const bookName = translationId === "KJV" ? meta.englishName : meta.name;
+        const book = books.find((b) => b.name === bookName);
         if (!book) throw new Error(t.bookNotFound);
         setBookId(book.id);
         return Promise.all([
