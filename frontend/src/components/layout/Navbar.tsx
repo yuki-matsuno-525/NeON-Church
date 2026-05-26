@@ -101,11 +101,12 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <input
           type="search"
           name="q"
+          className="navbar-search-input"
           placeholder={t.searchPlaceholder}
           style={{
             width: "100%",
             maxWidth: 280,
-            padding: "5px 12px",
+            padding: "8px 12px",
             border: "1px solid var(--border)",
             borderRadius: 20,
             background: "rgba(255, 255, 255, 0.04)",
@@ -126,7 +127,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              padding: "3px 7px",
+              padding: "8px 10px",
               fontSize: 12,
               fontWeight: lang === l ? 700 : 400,
               color: lang === l ? "rgba(193, 143, 255, 1)" : "var(--text-muted)",
