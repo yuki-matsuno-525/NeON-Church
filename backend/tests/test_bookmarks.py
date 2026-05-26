@@ -59,7 +59,7 @@ class TestBookmarkList:
     def test_authenticated_can_list(self, auth_client, bookmark):
         res = auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_anonymous_cannot_list(self, api_client, bookmark):
         res = api_client.get(BOOKMARKS_URL)
@@ -69,11 +69,11 @@ class TestBookmarkList:
         """他ユーザーのブックマークは見えない。"""
         res = other_auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_verse_detail_is_included(self, auth_client, bookmark, verse):
         res = auth_client.get(BOOKMARKS_URL)
-        detail = res.data[0]["verse_detail"]
+        detail = res.data["results"][0]["verse_detail"]
         assert detail["id"] == str(verse.id)
         assert "book_name" in detail
         assert "chapter_number" in detail
@@ -122,8 +122,8 @@ class TestCommentBookmark:
         auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
         res = auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        assert res.data[0]["target_type"] == "comment"
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == "comment"
 
     def test_empty_body_is_rejected(self, auth_client):
         res = auth_client.post(BOOKMARKS_URL, {}, format="json")

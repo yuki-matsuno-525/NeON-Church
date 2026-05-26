@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
@@ -34,6 +35,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     """
 
     serializer_class = CommentSerializer
+    pagination_class = StandardPageNumberPagination
     throttle_scope = "comment_create"
 
     def get_throttles(self):
@@ -78,7 +80,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
         tag_id = params.get("tag_id")
         if tag_id:
-            qs = qs.filter(tags__id=tag_id)
+            # M2M JOIN による重複行を防ぐため distinct() を末尾に付ける
+            qs = qs.filter(tags__id=tag_id).distinct()
 
         ordering = params.get("ordering", "new")
         if ordering == "votes":
@@ -167,6 +170,7 @@ class MyCommentListView(generics.ListAPIView):
     """GET /api/comments/mine/  ログインユーザー自身のコメント一覧（削除済み除く、新着順）"""
 
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPageNumberPagination
 
     def get_serializer_class(self):
         from .serializers import MyCommentSerializer
@@ -189,6 +193,7 @@ class QACommentListView(generics.ListAPIView):
     """
 
     permission_classes = [permissions.AllowAny]
+    pagination_class = StandardPageNumberPagination
 
     def get_serializer_class(self):
         from .serializers import QACommentSerializer
@@ -225,7 +230,7 @@ class QACommentListView(generics.ListAPIView):
                 | models.Q(verse__chapter__book_id=book_id)
             )
         if tag_id:
-            qs = qs.filter(tags__id=tag_id)
+            qs = qs.filter(tags__id=tag_id).distinct()
         answered = params.get("answered")
         if answered == "true":
             qs = qs.filter(best_answer__isnull=False)

@@ -81,6 +81,22 @@ function refreshToken(): Promise<void> {
   return refreshPromise;
 }
 
+// バックエンドのページネーション付きレスポンス形式。
+// 中身を全部取り切るだけのフロントでは next/previous は使わず results だけ取り出す。
+interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+async function apiFetchList<T>(path: string): Promise<T[]> {
+  const data = await apiFetch<PaginatedResponse<T> | T[]>(path);
+  // paginate されていないエンドポイント（タグ等）は配列を直接返す
+  if (Array.isArray(data)) return data;
+  return data.results;
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const csrfToken = getCsrfToken();
   const res = await fetch(`${API_BASE}/api${path}`, {
@@ -144,7 +160,9 @@ export function fetchComments(params: {
   if (params.book_id) q.set("book_id", params.book_id);
   if (params.ordering) q.set("ordering", params.ordering);
   if (params.tag_id) q.set("tag_id", params.tag_id);
-  return apiFetch(`/comments/?${q}`);
+  // 1ページ最大100件まで取得（コメント数が多い節向け）
+  q.set("page_size", "100");
+  return apiFetchList(`/comments/?${q}`);
 }
 
 export function fetchTags(): Promise<Tag[]> {
@@ -203,7 +221,7 @@ export function updateComment(commentId: string, body: string): Promise<Comment>
 }
 
 export function fetchBookmarks(): Promise<Bookmark[]> {
-  return apiFetch("/bookmarks/");
+  return apiFetchList("/bookmarks/?page_size=100");
 }
 
 export function createBookmark(verseId: string): Promise<Bookmark> {
@@ -225,7 +243,7 @@ export function removeBookmark(bookmarkId: string): Promise<void> {
 }
 
 export function fetchMyComments(): Promise<MyComment[]> {
-  return apiFetch("/comments/mine/");
+  return apiFetchList("/comments/mine/?page_size=100");
 }
 
 export function fetchVerseOfDay(translation?: string): Promise<VerseOfDay> {
@@ -234,7 +252,7 @@ export function fetchVerseOfDay(translation?: string): Promise<VerseOfDay> {
 }
 
 export function fetchNotifications(): Promise<Notification[]> {
-  return apiFetch("/notifications/");
+  return apiFetchList("/notifications/?page_size=100");
 }
 
 export function fetchUnreadCount(): Promise<number> {
@@ -304,12 +322,12 @@ export function fetchQAComments(params?: { book_id?: string; tag_id?: string; an
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
-  const q = qs.toString();
-  return apiFetch(`/comments/qa/${q ? `?${q}` : ""}`);
+  qs.set("page_size", "100");
+  return apiFetchList(`/comments/qa/?${qs}`);
 }
 
 export function fetchCommentReplies(parentId: string): Promise<Comment[]> {
-  return apiFetch(`/comments/?parent_id=${parentId}`);
+  return apiFetchList(`/comments/?parent_id=${parentId}&page_size=100`);
 }
 
 export function setBestAnswer(questionId: string, answerCommentId: string | null): Promise<void> {
@@ -461,11 +479,11 @@ export function fetchUserProfile(username: string): Promise<PublicUser> {
 }
 
 export function fetchUserComments(username: string): Promise<Comment[]> {
-  return apiFetch(`/users/${username}/comments/`);
+  return apiFetchList(`/users/${username}/comments/?page_size=100`);
 }
 
 export function fetchUserBookmarks(username: string): Promise<Bookmark[]> {
-  return apiFetch(`/users/${username}/bookmarks/`);
+  return apiFetchList(`/users/${username}/bookmarks/?page_size=100`);
 }
 
 export function fetchTrendingComments(): Promise<QAComment[]> {

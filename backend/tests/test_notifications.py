@@ -53,9 +53,9 @@ class TestNotificationTrigger:
         )
         res = auth_client.get(NOTIFICATIONS_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        assert res.data[0]["notification_type"] == "reply"
-        assert res.data[0]["actor_username"] == "otheruser"
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["notification_type"] == "reply"
+        assert res.data["results"][0]["actor_username"] == "otheruser"
 
     def test_self_reply_does_not_create_notification(self, auth_client, comment, verse):
         """自分への返信は通知されない。"""
@@ -65,21 +65,21 @@ class TestNotificationTrigger:
             format="json",
         )
         res = auth_client.get(NOTIFICATIONS_URL)
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_upvote_creates_notification(self, auth_client, other_auth_client, comment):
         """他ユーザーが upvote すると auth_client ユーザーに通知が届く。"""
         other_auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(NOTIFICATIONS_URL)
-        assert len(res.data) == 1
-        assert res.data[0]["notification_type"] == "upvote"
-        assert res.data[0]["actor_username"] == "otheruser"
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["notification_type"] == "upvote"
+        assert res.data["results"][0]["actor_username"] == "otheruser"
 
     def test_self_upvote_does_not_create_notification(self, auth_client, comment):
         """自分への upvote は通知されない。"""
         auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(NOTIFICATIONS_URL)
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
 
 # ------------------------------------------------------------------
@@ -95,23 +95,23 @@ class TestNotificationList:
         """他ユーザーの通知は見えない。"""
         auth_client.post(upvote_url(comment["id"]))  # other_auth_client への通知はない
         res = other_auth_client.get(NOTIFICATIONS_URL)
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_unread_filter(self, auth_client, other_auth_client, comment, verse):
         """?unread=1 で未読のみ返る。"""
         # 通知を1件作成
         other_auth_client.post(upvote_url(comment["id"]))
         # 既読にする
-        notifications = auth_client.get(NOTIFICATIONS_URL).data
+        notifications = auth_client.get(NOTIFICATIONS_URL).data["results"]
         auth_client.post(read_url(notifications[0]["id"]))
         # 未読フィルタ
         res = auth_client.get(NOTIFICATIONS_URL, {"unread": "1"})
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_comment_body_snippet_shown(self, auth_client, other_auth_client, comment):
         other_auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(NOTIFICATIONS_URL)
-        assert res.data[0]["comment_body_snippet"] == "テストコメント"
+        assert res.data["results"][0]["comment_body_snippet"] == "テストコメント"
 
 
 # ------------------------------------------------------------------
@@ -121,11 +121,11 @@ class TestNotificationList:
 class TestNotificationRead:
     def test_mark_as_read(self, auth_client, other_auth_client, comment):
         other_auth_client.post(upvote_url(comment["id"]))
-        notification_id = auth_client.get(NOTIFICATIONS_URL).data[0]["id"]
+        notification_id = auth_client.get(NOTIFICATIONS_URL).data["results"][0]["id"]
         res = auth_client.post(read_url(notification_id))
         assert res.status_code == status.HTTP_200_OK
         # is_read が True になっていることを確認
-        updated = auth_client.get(NOTIFICATIONS_URL).data[0]
+        updated = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         assert updated["is_read"] is True
 
     def test_cannot_read_others_notification(self, auth_client, other_auth_client, comment, verse):
@@ -135,7 +135,7 @@ class TestNotificationRead:
             {"verse": str(verse.id), "body": "返信", "parent": comment["id"]},
             format="json",
         )
-        notification_id = auth_client.get(NOTIFICATIONS_URL).data[0]["id"]
+        notification_id = auth_client.get(NOTIFICATIONS_URL).data["results"][0]["id"]
         # other_auth_client が auth_client の通知を既読にしようとする
         res = other_auth_client.post(read_url(notification_id))
         assert res.status_code == status.HTTP_404_NOT_FOUND
@@ -151,7 +151,7 @@ class TestNotificationRead:
         res = auth_client.post(READ_ALL_URL)
         assert res.status_code == status.HTTP_200_OK
         unread = auth_client.get(NOTIFICATIONS_URL, {"unread": "1"}).data
-        assert len(unread) == 0
+        assert unread["count"] == 0
 
 
 # ------------------------------------------------------------------
@@ -166,7 +166,7 @@ class TestNotificationTarget:
             {"verse": str(verse.id), "body": "返信", "parent": comment["id"]},
             format="json",
         )
-        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        n = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         assert n["target_kind"] == "verse_comment"
         assert n["book_name"] == verse.chapter.book.name
         assert n["chapter_number"] == verse.chapter.number
@@ -176,7 +176,7 @@ class TestNotificationTarget:
     def test_upvote_on_verse_comment_target_fields(self, auth_client, other_auth_client, comment, verse):
         """upvote 通知でも root の verse 情報が target になる。"""
         other_auth_client.post(upvote_url(comment["id"]))
-        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        n = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         assert n["target_kind"] == "verse_comment"
         assert n["book_name"] == verse.chapter.book.name
         assert n["verse_number"] == verse.number
@@ -193,7 +193,7 @@ class TestNotificationTarget:
             {"verse": str(verse.id), "body": "回答", "parent": qa["id"]},
             format="json",
         ).data
-        n = auth_client.get(NOTIFICATIONS_URL).data[0]
+        n = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         assert n["target_kind"] == "qa"
         assert n["is_qa"] is True
         # comment_id は通知トリガーになった返信側、root の質問は target_kind=qa の文脈で扱う
@@ -226,6 +226,6 @@ class TestNotificationUnreadCount:
         assert other_auth_client.get(UNREAD_COUNT_URL).data == {"count": 0}
         assert auth_client.get(UNREAD_COUNT_URL).data == {"count": 2}
         # 1 件既読化すると 1 件減る
-        first = auth_client.get(NOTIFICATIONS_URL).data[0]
+        first = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         auth_client.post(read_url(first["id"]))
         assert auth_client.get(UNREAD_COUNT_URL).data == {"count": 1}

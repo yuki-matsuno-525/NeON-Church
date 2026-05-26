@@ -141,12 +141,13 @@ class TestCommentList:
     def test_filter_by_verse(self, api_client, comment, verse):
         res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
+        assert len(res.data["results"]) == 1
 
     def test_no_filter_returns_empty(self, api_client, comment):
         res = api_client.get(COMMENTS_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_filter_by_chapter_id(self, api_client, auth_client, chapter):
         auth_client.post(
@@ -156,7 +157,7 @@ class TestCommentList:
         )
         res = api_client.get(COMMENTS_URL, {"chapter_id": str(chapter.id)})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_filter_by_book_id(self, api_client, auth_client, book):
         auth_client.post(
@@ -166,7 +167,7 @@ class TestCommentList:
         )
         res = api_client.get(COMMENTS_URL, {"book_id": str(book.id)})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_verse_comments_not_in_chapter_filter(self, api_client, auth_client, verse, chapter):
         """節コメントが章コメントフィルタに混入しないことを確認。"""
@@ -177,7 +178,7 @@ class TestCommentList:
         )
         res = api_client.get(COMMENTS_URL, {"chapter_id": str(chapter.id)})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 0
+        assert res.data["count"] == 0
 
     def test_anonymous_can_read(self, api_client, comment, verse):
         res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
@@ -186,8 +187,8 @@ class TestCommentList:
     def test_deleted_comment_body_is_masked(self, auth_client, comment, verse):
         auth_client.delete(comment_url(comment["id"]))
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
-        assert res.data[0]["body"] == "このコメントは削除されました"
-        assert res.data[0]["is_deleted"] is True
+        assert res.data["results"][0]["body"] == "このコメントは削除されました"
+        assert res.data["results"][0]["is_deleted"] is True
 
 
 # ------------------------------------------------------------------
@@ -250,13 +251,13 @@ class TestCommentUpvote:
         auth_client.post(upvote_url(comment["id"]))
         other_auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
-        assert res.data[0]["vote_count"] == 2
+        assert res.data["results"][0]["vote_count"] == 2
 
     def test_vote_count_decrements_after_remove(self, auth_client, comment, verse):
         auth_client.post(upvote_url(comment["id"]))
         auth_client.delete(upvote_url(comment["id"]))
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
-        assert res.data[0]["vote_count"] == 0
+        assert res.data["results"][0]["vote_count"] == 0
 
     def test_ordering_by_votes(self, auth_client, other_auth_client, verse):
         """vote が多いコメントが先頭に来ることを確認。"""
@@ -267,8 +268,8 @@ class TestCommentUpvote:
 
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id), "ordering": "votes"})
         assert res.status_code == status.HTTP_200_OK
-        assert res.data[0]["id"] == res_b.data["id"]
-        assert res.data[1]["id"] == res_a.data["id"]
+        assert res.data["results"][0]["id"] == res_b.data["id"]
+        assert res.data["results"][1]["id"] == res_a.data["id"]
 
 
 # ------------------------------------------------------------------
@@ -393,7 +394,7 @@ class TestQAPost:
         )
         res = auth_client.get(COMMENTS_URL, {"parent_id": parent["id"]})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 2
+        assert res.data["count"] == 2
 
 
 # ------------------------------------------------------------------
@@ -468,7 +469,7 @@ class TestBestAnswer:
         )
         res = api_client.get("/api/comments/qa/")
         assert res.status_code == status.HTTP_200_OK
-        q = next(c for c in res.data if c["id"] == qa_question["id"])
+        q = next(c for c in res.data["results"] if c["id"] == qa_question["id"])
         assert q["best_answer"] is not None
         assert q["best_answer"]["id"] == qa_reply["id"]
 

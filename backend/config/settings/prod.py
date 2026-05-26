@@ -10,8 +10,17 @@ from decouple import config
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from .base import *  # noqa: F401, F403
+from .base import DATABASES  # noqa: F401  for mypy/linters
 
 DEBUG = False
+
+# ------------------------------------------------------------------
+# データベース接続プーリング
+# Render PostgreSQL の接続上限を考慮し、60 秒間ソケットを使い回す。
+# CONN_HEALTH_CHECKS=True で死んだ接続を自動で開き直す。
+# ------------------------------------------------------------------
+DATABASES["default"]["CONN_MAX_AGE"] = 60
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 # ------------------------------------------------------------------
 # セキュリティ強化
@@ -49,9 +58,12 @@ if _sentry_dsn:
     )
 
 # ------------------------------------------------------------------
-# 静的ファイル（本番では whitenoise 等を使うことを検討）
+# 静的ファイル
+# WhiteNoise の Compressed + Manifest ストレージで gzip / hash 付ファイル名を有効化する。
+# collectstatic が staticfiles/ に出力したファイルを Django プロセス自身が配信する。
 # ------------------------------------------------------------------
 STATIC_ROOT = BASE_DIR / "staticfiles"  # noqa: F405
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ------------------------------------------------------------------
 # メール（本番では SMTP サービスを設定する）

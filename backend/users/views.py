@@ -15,6 +15,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from common.pagination import StandardPageNumberPagination
+
 from .serializers import LoginSerializer, ProfileUpdateSerializer, PublicUserSerializer, RegisterSerializer, UserSerializer
 
 User = get_user_model()
@@ -170,6 +172,7 @@ class UserCommentsView(generics.ListAPIView):
     """GET /api/users/<username>/comments/  ユーザーのコメント一覧（認証不要）"""
 
     permission_classes = [AllowAny]
+    pagination_class = StandardPageNumberPagination
 
     def get_serializer_class(self):
         from comments.serializers import CommentSerializer
@@ -186,7 +189,7 @@ class UserCommentsView(generics.ListAPIView):
             .select_related("user")
             .prefetch_related("tags")
             .annotate(vote_count=Count("votes"))
-            .order_by("-created_at")[:50]
+            .order_by("-created_at")
         )
 
 
@@ -199,6 +202,7 @@ class UserBookmarksView(generics.ListAPIView):
     """
 
     permission_classes = [AllowAny]
+    pagination_class = StandardPageNumberPagination
 
     def get_serializer_class(self):
         from bookmarks.serializers import BookmarkSerializer

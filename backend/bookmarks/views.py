@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
+from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 from .models import Bookmark
 from .serializers import BookmarkSerializer
@@ -14,6 +15,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
 
     serializer_class = BookmarkSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
         return (

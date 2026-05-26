@@ -136,8 +136,8 @@ class TestUserCommentsView:
     def test_そのユーザーのコメント一覧を返す(self, api_client, target_user, target_user_comment):
         res = api_client.get(user_comments_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        assert res.data[0]["body"] == "ターゲットユーザーのコメントです。"
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["body"] == "ターゲットユーザーのコメントです。"
 
     def test_匿名アクセス可能(self, api_client, target_user, target_user_comment):
         res = api_client.get(user_comments_url("targetuser"))
@@ -150,7 +150,7 @@ class TestUserCommentsView:
     def test_コメントがないとき空リストを返す(self, api_client, target_user):
         res = api_client.get(user_comments_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert res.data == []
+        assert res.data["count"] == 0
 
     def test_存在しないユーザーで404(self, api_client):
         res = api_client.get(user_comments_url("nonexistentuser"))
@@ -165,8 +165,8 @@ class TestUserCommentsView:
         )
         res = api_client.get(user_comments_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        assert all(c["body"] == "ターゲットユーザーのコメントです。" for c in res.data)
+        assert res.data["count"] == 1
+        assert all(c["body"] == "ターゲットユーザーのコメントです。" for c in res.data["results"])
 
 
 # ------------------------------------------------------------------
@@ -178,7 +178,7 @@ class TestUserBookmarksView:
     def test_そのユーザーのお気に入り一覧を返す(self, api_client, target_user, target_user_bookmark):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_匿名アクセス可能(self, api_client, target_user, target_user_bookmark):
         res = api_client.get(user_bookmarks_url("targetuser"))
@@ -191,7 +191,7 @@ class TestUserBookmarksView:
     def test_お気に入りがないとき空リストを返す(self, api_client, target_user):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert res.data == []
+        assert res.data["count"] == 0
 
     def test_存在しないユーザーで404(self, api_client):
         res = api_client.get(user_bookmarks_url("nonexistentuser"))
@@ -200,8 +200,8 @@ class TestUserBookmarksView:
     def test_ブックマークにverse_detailが含まれる(self, api_client, target_user, target_user_bookmark, verse):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        bm = res.data[0]
+        assert res.data["count"] == 1
+        bm = res.data["results"][0]
         assert "verse_detail" in bm
         assert bm["verse_detail"]["id"] == str(verse.id)
 
@@ -211,7 +211,7 @@ class TestUserBookmarksView:
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         # target_user のブックマークのみ
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
 
 # ------------------------------------------------------------------
@@ -237,7 +237,7 @@ class TestBookmarksVisibility:
         Bookmark.objects.create(user=private_target_user, verse=verse)
         res = api_client.get(user_bookmarks_url("privateuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert res.data == []
+        assert res.data["count"] == 0
 
     def test_public_user_bookmarks_returns_data(
         self, api_client, target_user, verse
@@ -246,7 +246,7 @@ class TestBookmarksVisibility:
         Bookmark.objects.create(user=target_user, verse=verse)
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_me_endpoint_includes_visibility(self, auth_client):
         res = auth_client.get("/api/auth/me/")

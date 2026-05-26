@@ -3,6 +3,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.pagination import StandardPageNumberPagination
+
 from .models import Notification
 from .serializers import NotificationSerializer
 
@@ -15,6 +17,7 @@ class NotificationListView(generics.ListAPIView):
 
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
         qs = Notification.objects.filter(
