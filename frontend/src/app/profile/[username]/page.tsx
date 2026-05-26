@@ -99,22 +99,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
       {/* プロフィールヘッダー */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-        {profile.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={profile.username}
-            style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border)" }}
-          />
-        ) : (
-          <div style={{
-            width: 64, height: 64, borderRadius: "50%",
-            background: "var(--bg-alt)", border: "2px solid var(--border)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 24, color: "var(--text-muted)",
-          }}>
-            {profile.username[0].toUpperCase()}
-          </div>
-        )}
+        <div style={{
+          width: 64, height: 64, borderRadius: "50%",
+          background: "var(--bg-alt)", border: "2px solid var(--border)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 24, color: "var(--text-muted)",
+        }}>
+          {profile.username[0].toUpperCase()}
+        </div>
         <div>
           <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>{profile.username}</h1>
           <p style={{ fontSize: 12, color: "var(--text-faint)", margin: 0 }}>

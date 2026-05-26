@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProfile, uploadAvatar, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
+import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
@@ -21,11 +21,9 @@ export default function ProfilePage() {
   const router = useRouter();
   const t = useT();
   const { lang } = useLang();
-  const avatarInputId = useId();
   const messageId = useId();
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("bookmarks");
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -68,23 +66,6 @@ export default function ProfilePage() {
   }
 
   if (!user) return null;
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarUploading(true);
-    setMessage(null);
-    try {
-      const updated = await uploadAvatar(file);
-      setUser(updated);
-      setMessage({ type: "success", text: t.profileUpdated });
-    } catch {
-      setMessage({ type: "error", text: t.avatarFailed });
-    } finally {
-      setAvatarUploading(false);
-      e.target.value = "";
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,56 +118,24 @@ export default function ProfilePage() {
       </h1>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-        <div
+        <span
           style={{
             width: 72,
             height: 72,
             borderRadius: "50%",
-            background: user.avatar_url ? "transparent" : "var(--accent)",
+            background: "var(--accent)",
             color: "var(--accent-text)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontWeight: 800,
             fontSize: 28,
-            overflow: "hidden",
             flexShrink: 0,
             border: "2px solid var(--border)",
           }}
         >
-          {user.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            user.username[0]?.toUpperCase() ?? "?"
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor={avatarInputId}
-            style={{
-              display: "inline-block",
-              fontSize: 13,
-              color: "var(--accent)",
-              cursor: avatarUploading ? "not-allowed" : "pointer",
-              opacity: avatarUploading ? 0.6 : 1,
-              fontWeight: 600,
-            }}
-          >
-            {avatarUploading ? t.uploadingAvatar : t.changeAvatar}
-          </label>
-          <input
-            id={avatarInputId}
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            onChange={handleAvatarChange}
-            disabled={avatarUploading}
-          />
-          <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
-            {t.avatarHint}
-          </p>
-        </div>
+          {user.username[0]?.toUpperCase() ?? "?"}
+        </span>
       </div>
 
       <div

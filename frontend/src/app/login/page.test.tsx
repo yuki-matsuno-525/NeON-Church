@@ -39,7 +39,7 @@ describe("LoginPage", () => {
 
   it("ログイン成功時にユーザーをセットして /matthew/1 にリダイレクト", async () => {
     const { login } = await import("@/lib/api");
-    const mockUser = { id: "u1", username: "alice", email: "a@b.com", bio: "", avatar_url: null, created_at: "" };
+    const mockUser = { id: "u1", username: "alice", email: "a@b.com", bio: "", created_at: "" };
     vi.mocked(login).mockResolvedValue(mockUser);
 
     render(<LoginPage />);

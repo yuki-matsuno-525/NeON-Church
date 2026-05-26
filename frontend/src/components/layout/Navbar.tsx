@@ -192,37 +192,22 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 )}
               </Link>
               <Link href="/profile" aria-label={t.profile} style={{ textDecoration: "none", flexShrink: 0 }}>
-                {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.username}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      display: "block",
-                      border: "1px solid var(--glass-border)",
-                    }}
-                  />
-                ) : (
-                  <span
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background: "var(--accent)",
-                      color: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 13,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {user.username[0].toUpperCase()}
-                  </span>
-                )}
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  {user.username[0].toUpperCase()}
+                </span>
               </Link>
               <button
                 onClick={handleLogout}

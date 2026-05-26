@@ -116,11 +116,6 @@ class TestUserProfileView:
         assert "bio" in res.data
         assert res.data["bio"] == "これはターゲットユーザーです。"
 
-    def test_返却フィールドにavatar_urlが含まれる(self, api_client, target_user):
-        res = api_client.get(user_profile_url("targetuser"))
-        assert res.status_code == status.HTTP_200_OK
-        assert "avatar_url" in res.data
-
     def test_返却フィールドにcreated_atが含まれる(self, api_client, target_user):
         res = api_client.get(user_profile_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK

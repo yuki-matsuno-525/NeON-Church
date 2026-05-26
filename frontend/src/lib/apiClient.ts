@@ -263,24 +263,6 @@ export function updateProfile(data: {
   });
 }
 
-export function uploadAvatar(file: File): Promise<User> {
-  const form = new FormData();
-  form.append("avatar", file);
-  const csrfToken = getCsrfToken();
-  return fetch(`/api/auth/me/`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
-    body: form,
-  }).then(async (res) => {
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new ApiError(res.status, body.detail ?? res.statusText);
-    }
-    return res.json() as Promise<User>;
-  });
-}
-
 export function fetchReadingProgress(): Promise<ReadingProgress[]> {
   return apiFetch("/reading-progress/");
 }

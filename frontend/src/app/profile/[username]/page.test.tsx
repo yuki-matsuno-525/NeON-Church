@@ -40,7 +40,6 @@ const makeProfile = (overrides: Partial<PublicUser> = {}): PublicUser => ({
   id: "u2",
   username: "targetuser",
   bio: "これはテストユーザーです。",
-  avatar_url: null,
   bookmarks_visibility: "public",
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,

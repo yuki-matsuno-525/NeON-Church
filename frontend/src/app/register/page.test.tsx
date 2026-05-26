@@ -38,7 +38,7 @@ describe("RegisterPage", () => {
 
   it("登録成功時にユーザーをセットして /matthew/1 にリダイレクト", async () => {
     const { register } = await import("@/lib/api");
-    const mockUser = { id: "u1", username: "bob", email: "b@c.com", bio: "", avatar_url: null, created_at: "" };
+    const mockUser = { id: "u1", username: "bob", email: "b@c.com", bio: "", created_at: "" };
     vi.mocked(register).mockResolvedValue(mockUser);
 
     render(<RegisterPage />);
@@ -93,7 +93,6 @@ describe("RegisterPage", () => {
       username: "x",
       email: "x@y.com",
       bio: "",
-      avatar_url: null,
       created_at: "",
     });
 

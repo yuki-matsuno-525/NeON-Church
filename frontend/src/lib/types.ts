@@ -67,7 +67,6 @@ export type User = {
   username: string;
   email: string;
   bio: string;
-  avatar_url: string | null;
   bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };
@@ -205,7 +204,6 @@ export type PublicUser = {
   id: string;
   username: string;
   bio: string;
-  avatar_url: string | null;
   bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };
