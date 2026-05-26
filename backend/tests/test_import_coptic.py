@@ -306,6 +306,91 @@ class TestImportCopticZip:
 
 
 @pytest.mark.django_db
+class TestImportCopticLicense:
+    """--license フラグのテスト。"""
+
+    def _make_warren_wells_conllu(self) -> str:
+        return (
+            "# newdoc id = sahidica.nt:41_Mark_01\n"
+            "# sent_id = sahidica_nt-41_Mark_01_s0001\n"
+            "# text = ⲧⲁⲣⲭⲏ .\n"
+            "1\tⲧⲁⲣⲭⲏ\t_\tNOUN\tN\t_\t0\troot\t_\t_\n\n"
+        )
+
+    def test_license_open_excludes_academic(self, tmp_path):
+        """--license open で Warren Wells 文書がスキップされる。"""
+        meta = {
+            "41_Mark_01": {
+                "corpus": "sahidica.nt",
+                "languages": "Sahidic Coptic",
+                "license": "(c)2000-2006 by J Warren Wells, for academic use only.",
+            }
+        }
+        _build_corpus_dir(tmp_path, meta)
+        nt_dir = tmp_path / "sahidica.nt" / "sahidica.nt_CONLLU"
+        nt_dir.mkdir(parents=True)
+        (nt_dir / "41_Mark_01.conllu").write_text(self._make_warren_wells_conllu(), encoding="utf-8")
+
+        call_command("import_coptic", str(tmp_path), "--license", "open", "--skip-en")
+
+        assert not Book.objects.filter(name="Mark", translation="Sahidic Coptic").exists()
+
+    def test_license_all_includes_academic(self, tmp_path):
+        """--license all（デフォルト）で Warren Wells 文書もインポートされる。"""
+        meta = {
+            "41_Mark_01": {
+                "corpus": "sahidica.nt",
+                "languages": "Sahidic Coptic",
+                "license": "(c)2000-2006 by J Warren Wells, for academic use only.",
+            }
+        }
+        _build_corpus_dir(tmp_path, meta)
+        nt_dir = tmp_path / "sahidica.nt" / "sahidica.nt_CONLLU"
+        nt_dir.mkdir(parents=True)
+        (nt_dir / "41_Mark_01.conllu").write_text(self._make_warren_wells_conllu(), encoding="utf-8")
+
+        call_command("import_coptic", str(tmp_path), "--license", "all", "--skip-en")
+
+        assert Book.objects.filter(name="Mark", translation="Sahidic Coptic").exists()
+
+    def test_license_cc_includes_nc(self, tmp_path):
+        """--license cc で CC BY-NC-SA 文書がインポートされる。"""
+        meta = {
+            "AP.001.n135.mother": {
+                "corpus": "apophthegmata.patrum",
+                "language": "Sahidic Coptic",
+                "license": "CC BY-NC-SA 4.0",
+            }
+        }
+        _build_corpus_dir(tmp_path, meta)
+        ap_dir = tmp_path / "AP" / "apophthegmata.patrum_CONLLU"
+        ap_dir.mkdir(parents=True)
+        (ap_dir / "AP.001.n135.mother.conllu").write_text(AP_001_CONTENT, encoding="utf-8")
+
+        call_command("import_coptic", str(tmp_path), "--license", "cc", "--skip-en")
+
+        assert Book.objects.filter(name="Apophthegmata Patrum", translation="Sahidic Coptic").exists()
+
+    def test_license_open_excludes_nc(self, tmp_path):
+        """--license open で CC BY-NC-SA 文書がスキップされる。"""
+        meta = {
+            "AP.001.n135.mother": {
+                "corpus": "apophthegmata.patrum",
+                "language": "Sahidic Coptic",
+                "license": "CC BY-NC-SA 4.0",
+            }
+        }
+        _build_corpus_dir(tmp_path, meta)
+        ap_dir = tmp_path / "AP" / "apophthegmata.patrum_CONLLU"
+        ap_dir.mkdir(parents=True)
+        (ap_dir / "AP.001.n135.mother.conllu").write_text(AP_001_CONTENT, encoding="utf-8")
+
+        call_command("import_coptic", str(tmp_path), "--license", "open", "--skip-en")
+
+        assert not Book.objects.filter(name="Apophthegmata Patrum").exists()
+
+
+@pytest.mark.django_db
 class TestImportCopticCorpusFilter:
     """--corpus フラグで単一コーパスのみ処理できる。"""
 
