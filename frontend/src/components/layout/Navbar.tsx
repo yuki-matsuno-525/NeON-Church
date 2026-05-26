@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +19,13 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
+  const [scrolled, setScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -29,9 +37,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
     <nav
       style={{
         height: "var(--navbar-height)",
-        background: "var(--glass-nav)",
+        background: scrolled ? "rgba(8, 4, 24, 0.88)" : "var(--glass-nav)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
+        transition: `background var(--duration-base) var(--ease-out)`,
         borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         alignItems: "center",

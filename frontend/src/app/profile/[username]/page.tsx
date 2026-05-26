@@ -91,7 +91,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const cardStyle: React.CSSProperties = {
     background: "var(--bg-alt)",
     border: "1px solid var(--border)",
-    borderRadius: 8,
+    borderRadius: "var(--radius-md)",
     padding: "12px 14px",
   };
 
@@ -116,7 +116,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           </div>
         )}
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{profile.username}</h1>
+          <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>{profile.username}</h1>
           <p style={{ fontSize: 12, color: "var(--text-faint)", margin: 0 }}>
             {t.joinedOn(profile.created_at)}
           </p>
@@ -132,11 +132,11 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       {/* タブ。ブックマークタブは visibility=public のときのみ表示 */}
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         {profile.bookmarks_visibility === "public" && (
-          <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")}>
+          <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-current={activeTab === "favorites" ? "page" : undefined}>
             {t.tabBookmarks} ({bookmarks.length})
           </button>
         )}
-        <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")}>
+        <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-current={activeTab === "comments" ? "page" : undefined}>
           {t.tabComments} ({comments.length})
         </button>
       </div>
@@ -145,7 +145,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         bookmarks.length === 0 ? (
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
             {bookmarks.map((bm) => {
               if (bm.target_type === "comment" && bm.comment_detail) {
                 return (
@@ -182,7 +182,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         comments.length === 0 ? (
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
             {comments.map((c) => (
               <div key={c.id} style={cardStyle}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
