@@ -380,7 +380,7 @@ export default function Home() {
             transform: translateX(calc(-1 * var(--sidebar-width) / 2));
           }
         }
-        @media (max-width: 640px) {
+        @media (max-width: 767px) {
           .home-cards {
             grid-template-columns: 1fr !important;
           }

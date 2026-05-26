@@ -95,7 +95,7 @@ export default function ReadPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
                 gap: 14,
               }}
             >
