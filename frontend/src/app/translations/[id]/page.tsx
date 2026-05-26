@@ -355,7 +355,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               </button>
             )}
             {project.status === "active" && (
-              <button onClick={() => handleStatusChange("publish")} style={btnStyle("#22c55e")}>
+              <button onClick={() => handleStatusChange("publish")} style={btnStyle("var(--state-success)")}>
                 {t.publish}
               </button>
             )}
@@ -367,12 +367,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 >
                   {t.viewPage}
                 </Link>
-                <button onClick={() => handleStatusChange("unpublish")} style={btnStyle("#ef4444")}>
+                <button onClick={() => handleStatusChange("unpublish")} style={btnStyle("var(--state-danger)")}>
                   {t.unpublish}
                 </button>
               </>
             )}
-            <button onClick={() => setConfirmDelete(true)} style={btnStyle("#ef4444")}>
+            <button onClick={() => setConfirmDelete(true)} style={btnStyle("var(--state-danger)")}>
               {t.delete}
             </button>
           </div>
@@ -453,7 +453,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               <button
                 disabled={removingBook}
                 onClick={() => setConfirmDeleteAllUnits(true)}
-                style={btnStyle("#ef4444")}
+                style={btnStyle("var(--state-danger)")}
               >
                 {removingBook ? t.deleting : t.deleteAllUnits}
               </button>
@@ -636,7 +636,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           </select>
                         )}
                         {isOwner && unit.status === "done" && (
-                          <button onClick={() => handleUnitStatusChange(unit.id, "review")} style={btnStyle("#f59e0b")}>
+                          <button onClick={() => handleUnitStatusChange(unit.id, "review")} style={btnStyle("var(--state-warning)")}>
                             {t.sendBack}
                           </button>
                         )}
@@ -709,7 +709,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     {isOwner && (
                       <button
                         onClick={() => handleUnitStatusChange(unit.id, "done")}
-                        style={btnStyle("#22c55e")}
+                        style={btnStyle("var(--state-success)")}
                       >
                         {t.approve}
                       </button>
@@ -747,12 +747,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div style={{ display: "flex", gap: 6 }}>
                       {m.status === "pending" && (
                         <>
-                          <button onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("#22c55e", true)}>{t.approve}</button>
-                          <button onClick={() => handleMemberAction(m.id, "rejected")} style={btnStyle("#ef4444", true)}>{t.reject}</button>
+                          <button onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("var(--state-success)", true)}>{t.approve}</button>
+                          <button onClick={() => handleMemberAction(m.id, "rejected")} style={btnStyle("var(--state-danger)", true)}>{t.reject}</button>
                         </>
                       )}
                       {m.status === "approved" && (
-                        <button onClick={() => handleMemberAction(m.id, "remove")} style={btnStyle("#ef4444", true)}>{t.kick}</button>
+                        <button onClick={() => handleMemberAction(m.id, "remove")} style={btnStyle("var(--state-danger)", true)}>{t.kick}</button>
                       )}
                     </div>
                   )}

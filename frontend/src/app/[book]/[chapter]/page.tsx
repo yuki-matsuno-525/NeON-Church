@@ -151,7 +151,7 @@ export default function ChapterPage() {
   if (error) {
     return (
       <div style={{ padding: 32 }}>
-        <p style={{ color: "#ef4444", marginBottom: 16 }}>{error}</p>
+        <p style={{ color: "var(--state-danger)", marginBottom: 16 }}>{error}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {translationOptions.filter((trans) => trans.id !== translation).map((trans) => (
             <button

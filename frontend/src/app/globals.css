@@ -289,7 +289,7 @@ select:focus-visible {
     left: calc(-1 * var(--sidebar-width)) !important;
     height: calc(100vh - var(--navbar-height)) !important;
     z-index: 40;
-    transition: left 0.25s ease;
+    transition: left var(--duration-base) var(--ease-out);
     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.5);
   }
 

@@ -82,7 +82,7 @@ function BookContent() {
 
   if (error) {
     return (
-      <div style={{ padding: 32, color: "#ef4444" }}>{error}</div>
+      <div style={{ padding: 32, color: "var(--state-danger)" }}>{error}</div>
     );
   }
 
