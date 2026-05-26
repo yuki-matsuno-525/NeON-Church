@@ -71,7 +71,7 @@ export default function BookmarksPage() {
   const cardBase: React.CSSProperties = {
     background: "var(--bg-alt)",
     border: "1px solid var(--border)",
-    borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+    borderLeft: "3px solid var(--accent)",
     borderRadius: 10,
     padding: "16px",
   };
@@ -82,7 +82,7 @@ export default function BookmarksPage() {
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
         {t.bookmarksTitle}
       </h1>
 

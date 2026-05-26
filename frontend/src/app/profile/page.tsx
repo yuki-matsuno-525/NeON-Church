@@ -193,7 +193,7 @@ export default function ProfilePage() {
         style={{
           background: "var(--bg-alt)",
           border: "1px solid var(--border)",
-          borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+          borderLeft: "3px solid var(--accent)",
           borderRadius: 10,
           padding: "24px",
           marginBottom: 24,
@@ -285,7 +285,7 @@ export default function ProfilePage() {
         style={{
           background: "var(--bg-alt)",
           border: "1px solid var(--border)",
-          borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
+          borderLeft: "3px solid var(--accent)",
           borderRadius: 10,
           padding: "20px 22px",
           marginBottom: 40,

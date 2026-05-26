@@ -414,6 +414,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           <button
             key={tabKey}
             onClick={() => setTab(tabKey)}
+            aria-current={tab === tabKey ? "page" : undefined}
             style={{
               padding: "8px 18px",
               background: "transparent",

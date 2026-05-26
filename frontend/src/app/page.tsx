@@ -133,7 +133,6 @@ export default function Home() {
                   "0 0 6px  rgba(210, 110, 255, 0.90)",
                   "0 0 18px rgba(185, 80,  255, 0.65)",
                   "0 0 38px rgba(155, 55,  230, 0.40)",
-                  "inset 0 0 10px rgba(200, 100, 255, 0.15)",
                 ].join(", "),
               }}
             >
@@ -188,7 +187,6 @@ export default function Home() {
                   "0 0 6px  rgba(210, 110, 255, 0.90)",
                   "0 0 18px rgba(185, 80,  255, 0.65)",
                   "0 0 38px rgba(155, 55,  230, 0.40)",
-                  "inset 0 0 10px rgba(200, 100, 255, 0.15)",
                 ].join(", "),
                 transition: "box-shadow var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out)",
               }}
@@ -199,7 +197,6 @@ export default function Home() {
                   "0 0 8px  rgba(230, 130, 255, 1.00)",
                   "0 0 22px rgba(205, 100, 255, 0.82)",
                   "0 0 46px rgba(170, 68,  240, 0.55)",
-                  "inset 0 0 14px rgba(215, 115, 255, 0.22)",
                 ].join(", ");
               }}
               onMouseLeave={(e) => {
@@ -296,6 +293,7 @@ export default function Home() {
             >
               <h2
                 style={{
+                  fontFamily: '"Noto Serif JP", serif',
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -325,6 +323,7 @@ export default function Home() {
             >
               <h2
                 style={{
+                  fontFamily: '"Noto Serif JP", serif',
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -563,8 +562,6 @@ function SectionCard({
           "0 0 6px  rgba(210, 110, 255, 0.90)",
           "0 0 18px rgba(185, 80,  255, 0.65)",
           "0 0 38px rgba(155, 55,  230, 0.40)",
-          "0 0 65px rgba(130, 45,  205, 0.18)",
-          "inset 0 0 10px rgba(200, 100, 255, 0.15)",
         ].join(", "),
         transition: "box-shadow 0.2s, border-color 0.2s",
         minHeight: 140,
@@ -576,8 +573,6 @@ function SectionCard({
           "0 0 8px  rgba(230, 130, 255, 1.00)",
           "0 0 22px rgba(205, 100, 255, 0.82)",
           "0 0 46px rgba(170, 68,  240, 0.55)",
-          "0 0 80px rgba(150, 55,  220, 0.25)",
-          "inset 0 0 14px rgba(215, 115, 255, 0.22)",
         ].join(", ");
       }}
       onMouseLeave={(e) => {
@@ -587,8 +582,6 @@ function SectionCard({
           "0 0 6px  rgba(210, 110, 255, 0.90)",
           "0 0 18px rgba(185, 80,  255, 0.65)",
           "0 0 38px rgba(155, 55,  230, 0.40)",
-          "0 0 65px rgba(130, 45,  205, 0.18)",
-          "inset 0 0 10px rgba(200, 100, 255, 0.15)",
         ].join(", ");
       }}
     >

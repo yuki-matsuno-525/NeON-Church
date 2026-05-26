@@ -61,7 +61,7 @@ export default function TranslationReadChapterPage({
         <span>{t.chapterFmt(chapterNum)}</span>
       </p>
 
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>
+      <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>
         {project?.name} — {t.chapterFmt(chapterNum)}
       </h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 28px" }}>

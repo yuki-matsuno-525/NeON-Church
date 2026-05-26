@@ -126,6 +126,7 @@ function BookContent() {
                 alignItems: "center",
                 justifyContent: "center",
                 height: 44,
+                minWidth: 44,
                 border: isCurrent ? "1px solid var(--accent)" : "1px solid var(--border)",
                 borderRadius: "var(--radius-md)",
                 textDecoration: "none",

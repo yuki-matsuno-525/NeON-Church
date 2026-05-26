@@ -151,16 +151,31 @@ function NotificationItem({
   const cardStyle: React.CSSProperties = {
     padding: "14px 16px",
     borderRadius: "var(--radius-md)",
-    background: n.is_read ? "var(--bg-alt)" : "var(--accent-tint)",
+    background: n.is_read ? "var(--bg-alt)" : "var(--bg-hover)",
     borderLeft: n.is_read ? "3px solid transparent" : "3px solid var(--accent)",
     transition: `background var(--duration-fast) var(--ease-out)`,
     display: "block",
     textDecoration: "none",
     color: "inherit",
+    position: "relative",
   };
 
   const body = (
     <>
+      {!n.is_read && (
+        <span
+          aria-label="未読"
+          style={{
+            position: "absolute",
+            top: 18,
+            right: 16,
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: "var(--accent)",
+          }}
+        />
+      )}
       <div
         style={{
           display: "flex",

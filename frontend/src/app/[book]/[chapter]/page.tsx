@@ -263,7 +263,7 @@ export default function ChapterPage() {
           </div>
         </div>
 
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24 }}>
           {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
         </h1>
 

@@ -151,7 +151,7 @@ function SearchContent() {
                       key={b.id}
                       href={slug ? `/${slug}` : "/"}
                       style={{
-                        padding: "10px 14px",
+                        padding: "var(--space-3)",
                         border: "1px solid var(--border)",
                         borderRadius: 8,
                         background: "var(--bg-alt)",
@@ -184,7 +184,7 @@ function SearchContent() {
                     <div
                       key={v.id}
                       style={{
-                        padding: "12px 14px",
+                        padding: "var(--space-3)",
                         border: "1px solid var(--border)",
                         borderRadius: 8,
                         background: "var(--bg-alt)",
@@ -230,7 +230,7 @@ function SearchContent() {
                     <div
                       key={c.id}
                       style={{
-                        padding: "12px 14px",
+                        padding: "var(--space-3)",
                         border: "1px solid var(--border)",
                         borderRadius: 8,
                         background: "var(--bg-alt)",

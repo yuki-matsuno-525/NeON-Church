@@ -73,7 +73,7 @@ export default function ReadPage() {
             borderLeft: "3px solid var(--accent)",
           }}
         >
-          <h2 style={{ fontSize: "var(--font-size-xl)", margin: 0 }}>
+          <h2 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-xl)", margin: 0 }}>
             {t.resumeReading(resume.bookName, resume.chapter)}
           </h2>
         </Link>

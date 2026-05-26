@@ -103,7 +103,7 @@ function RegisterForm() {
         style={{
           width: "100%",
           maxWidth: 380,
-          background: "rgba(16, 9, 50, 0.80)",
+          background: "var(--bg-alt)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           border: "1px solid rgba(145, 80, 240, 0.35)",
