@@ -332,6 +332,10 @@ select:focus-visible {
     display: none !important;
   }
 
+  .reader-main {
+    padding: 16px !important;
+  }
+
 }
 
 *,
@@ -343,6 +347,7 @@ select:focus-visible {
 html,
 body {
   height: 100%;
+  scroll-padding-top: var(--navbar-height);
 }
 
 body {
