@@ -108,7 +108,7 @@ export function CommentInput({
           borderRadius: 8,
           background: "var(--bg)",
           color: "var(--text)",
-          fontSize: 14,
+          fontSize: 16,
           resize: "vertical",
           fontFamily: "inherit",
           outline: "none",
@@ -141,7 +141,7 @@ export function CommentInput({
         </div>
       )}
       {error && (
-        <p style={{ color: "#ef4444", fontSize: 12, margin: "4px 0 0" }}>
+        <p style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
           {error}
         </p>
       )}
