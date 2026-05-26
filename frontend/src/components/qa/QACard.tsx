@@ -169,7 +169,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
               color: "var(--text-muted)",
             }}
           >
-            {tag.name}
+            {t.tagNames[tag.name] ?? tag.name}
           </span>
         ))}
         <span

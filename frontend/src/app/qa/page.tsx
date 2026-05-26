@@ -209,7 +209,7 @@ function QAContent() {
             >
               <option value="">{t.allTags}</option>
               {tags.map((tag) => (
-                <option key={tag.id} value={tag.id}>{tag.name}</option>
+                <option key={tag.id} value={tag.id}>{t.tagNames[tag.name] ?? tag.name}</option>
               ))}
             </select>
           </label>

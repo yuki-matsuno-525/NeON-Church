@@ -282,7 +282,7 @@ export function CommentItem({
                       color: "var(--text-muted)",
                     }}
                   >
-                    {tag.name}
+                    {t.tagNames[tag.name] ?? tag.name}
                   </span>
                 ))}
               </div>

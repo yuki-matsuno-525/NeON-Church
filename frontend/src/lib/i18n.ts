@@ -86,6 +86,13 @@ const ja = {
   filterAnswered: "解決済み",
   allBooks: "すべての書",
   allTags: "すべてのタグ",
+  tagNames: {
+    "感想": "感想",
+    "解説": "解説",
+    "証し": "証し",
+    "祈り": "祈り",
+    "考察": "考察",
+  } as Record<string, string>,
 
   // 検索
   searchTitle: "検索",
@@ -469,6 +476,13 @@ const en: typeof ja = {
   filterAnswered: "Answered",
   allBooks: "All books",
   allTags: "All tags",
+  tagNames: {
+    "感想": "Reflection",
+    "解説": "Commentary",
+    "証し": "Testimony",
+    "祈り": "Prayer",
+    "考察": "Analysis",
+  } as Record<string, string>,
 
   searchTitle: "Search",
   searchKeyword: "Enter keywords...",

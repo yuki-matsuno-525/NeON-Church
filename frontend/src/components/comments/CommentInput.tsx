@@ -134,7 +134,7 @@ export function CommentInput({
                   fontFamily: "inherit",
                 }}
               >
-                {tag.name}
+                {t.tagNames[tag.name] ?? tag.name}
               </button>
             );
           })}

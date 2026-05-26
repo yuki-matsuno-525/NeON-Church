@@ -171,7 +171,7 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
                   fontFamily: "inherit",
                 }}
               >
-                {tag.name}
+                {t.tagNames[tag.name] ?? tag.name}
               </button>
             );
           })}
