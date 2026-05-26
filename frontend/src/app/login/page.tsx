@@ -40,6 +40,7 @@ function LoginForm() {
         router.replace(safeRedirectTarget(from));
       }).catch(() => {});
     } else if (oauthResult === "error") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(t.oauthError);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
