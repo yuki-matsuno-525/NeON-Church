@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
 export const metadata: Metadata = {
   title: {
