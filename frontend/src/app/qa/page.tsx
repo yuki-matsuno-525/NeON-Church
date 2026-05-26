@@ -116,7 +116,8 @@ function QAContent() {
               setShowForm(true);
             }}
             style={{
-              padding: "7px 16px",
+              padding: "10px 16px",
+              minHeight: 44,
               border: "none",
               borderRadius: 8,
               background: "var(--accent)",
@@ -159,7 +160,8 @@ function QAContent() {
               aria-pressed={answeredFilter === f}
               style={{
                 fontSize: "var(--font-size-sm)",
-                padding: "4px 12px",
+                padding: "8px 12px",
+                minHeight: 36,
                 borderRadius: 999,
                 border: "1px solid var(--border)",
                 cursor: "pointer",
@@ -266,7 +268,8 @@ function QAContent() {
 
 function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
   return {
-    padding: "4px 12px",
+    padding: "8px 14px",
+    minHeight: 40,
     border: "1px solid var(--border)",
     borderRadius: 6,
     background: active ? "var(--accent)" : "transparent",
