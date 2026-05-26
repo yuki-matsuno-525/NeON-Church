@@ -106,6 +106,10 @@ const ja = {
   loggingIn: "ログイン中...",
   loginFailed: "ログインに失敗しました",
   noAccount: "アカウントをお持ちでない方は",
+  oauthOr: "または",
+  oauthGoogle: "Google でログイン",
+  oauthGithub: "GitHub でログイン",
+  oauthError: "ソーシャルログインに失敗しました。もう一度お試しください。",
 
   // 登録
   registerTitle: "新規登録",
@@ -475,6 +479,10 @@ const en: typeof ja = {
   loggingIn: "Signing in...",
   loginFailed: "Sign in failed",
   noAccount: "Don't have an account?",
+  oauthOr: "or",
+  oauthGoogle: "Sign in with Google",
+  oauthGithub: "Sign in with GitHub",
+  oauthError: "Social login failed. Please try again.",
 
   registerTitle: "Sign Up",
   email: "Email",
