@@ -39,7 +39,7 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   );
   await loginWithUI(page, userA.username, userA.password);
   await notifResponsePromise;
-  const notifLink = page.locator('a[href="/notifications"]');
+  const notifLink = page.locator('nav a[href="/notifications"]');
   await expect(notifLink.locator("span")).toHaveText("1");
 
   // 通知ページで確認
@@ -74,6 +74,6 @@ test("N-3: 自己返信では通知が来ない", async ({ page, request }) => {
   await expect(panel.getByText(`self_reply_${ts}`)).toBeVisible();
 
   // 通知バッジが表示されない
-  const badge = page.locator('a[href="/notifications"] span');
+  const badge = page.locator('nav a[href="/notifications"] span');
   await expect(badge).not.toBeVisible();
 });
