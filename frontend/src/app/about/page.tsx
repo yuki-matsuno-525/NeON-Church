@@ -5,6 +5,19 @@ export const metadata: Metadata = {
   title: "About NeON Church",
   description:
     "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha. Comment on verses and chapters, ask questions, and join collaborative translation projects.",
+  openGraph: {
+    title: "About NeON Church",
+    description:
+      "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha. Comment on verses and chapters, ask questions, and join collaborative translation projects.",
+    images: [{ url: "/img/logo.png", width: 512, height: 512, alt: "NeON Church" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About NeON Church",
+    description:
+      "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha.",
+    images: ["/img/logo.png"],
+  },
 };
 
 export default function AboutPage() {

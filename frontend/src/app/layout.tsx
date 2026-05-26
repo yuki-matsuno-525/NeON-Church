@@ -22,11 +22,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     alternateLocale: ["ja_JP"],
     type: "website",
+    images: [{ url: "/img/logo.png", width: 512, height: 512, alt: "NeON Church" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "NeON Church",
     description: "Read and discuss the Bible, Apocrypha, and Pseudepigrapha.",
+    images: ["/img/logo.png"],
   },
 };
 
