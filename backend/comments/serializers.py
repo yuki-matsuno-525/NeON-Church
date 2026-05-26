@@ -58,7 +58,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "parent", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
+        fields = ["id", "user", "verse", "chapter", "book", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "tags"]
 
     def get_vote_count(self, obj) -> int:
@@ -90,6 +90,12 @@ class CommentSerializer(serializers.ModelSerializer):
                 "verse, chapter, book のうち最大一つを指定してください。"
             )
 
+        # Q&A質問（parent=None, is_qa=True）はタイトル必須
+        if is_qa and not parent:
+            title = data.get("title", "").strip()
+            if not title:
+                raise serializers.ValidationError({"title": "Q&A質問にはタイトルが必要です。"})
+
         if parent:
             if verse and parent.verse_id != verse.pk:
                 raise serializers.ValidationError(
@@ -118,7 +124,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class CommentEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["body"]
+        fields = ["title", "body"]
 
     def validate_body(self, value):
         if not value or not value.strip():
@@ -127,7 +133,9 @@ class CommentEditSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         instance.body = validated_data["body"]
-        instance.save(update_fields=["body", "updated_at"])
+        if "title" in validated_data:
+            instance.title = validated_data["title"]
+        instance.save(update_fields=["title", "body", "updated_at"])
         return instance
 
 
@@ -172,7 +180,7 @@ class QACommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "body", "created_at", "vote_count",
+            "id", "user", "title", "body", "created_at", "vote_count",
             "tags", "location_label", "book_name", "chapter_number", "verse_number",
             "reply_count", "best_answer",
         ]

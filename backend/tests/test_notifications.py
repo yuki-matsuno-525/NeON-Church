@@ -185,7 +185,7 @@ class TestNotificationTarget:
         """is_qa=True のコメントへの返信は target_kind=qa を返す。"""
         qa = auth_client.post(
             COMMENTS_URL,
-            {"verse": str(verse.id), "body": "質問", "is_qa": True},
+            {"verse": str(verse.id), "body": "質問", "is_qa": True, "title": "通知テスト質問"},
             format="json",
         ).data
         reply = other_auth_client.post(

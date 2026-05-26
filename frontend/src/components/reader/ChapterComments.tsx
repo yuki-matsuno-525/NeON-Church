@@ -31,8 +31,8 @@ export function ChapterComments({ chapterId, label, commentBookmarkMap = {} }: P
     fetchTags().then(setTags).catch(() => {});
   }, []);
 
-  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
-    const comment = await createComment({ chapter: chapterId, body, is_qa: isQa, tag_ids: tagIds });
+  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
+    const comment = await createComment({ chapter: chapterId, title, body, is_qa: isQa, tag_ids: tagIds });
     setComments((prev) => [comment, ...prev]);
   };
 

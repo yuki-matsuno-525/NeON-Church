@@ -232,6 +232,7 @@ const ja = {
   kick: "除名",
 
   // コメント
+  qaTitleInputPlaceholder: "質問のタイトル（必須）",
   commentPlaceholder: "コメントを入力...",
   submitComment: "投稿する",
   loginToComment: "してコメントする",
@@ -298,7 +299,8 @@ const ja = {
   searchComments: "コメントを検索...",
 
   // Q&A 投稿フォーム
-  qaInputPlaceholder: "質問を入力...",
+  qaInputTitlePlaceholder: "質問のタイトル（必須）",
+  qaInputPlaceholder: "質問の詳細を入力...",
   qaSelectBookOptional: "書を選択（任意）",
   qaSelectChapterOptional: "章を選択（任意）",
   qaSelectVerseOptional: "節を選択（任意）",
@@ -613,6 +615,7 @@ const en: typeof ja = {
   readTranslation: "Read translation",
   kick: "Remove",
 
+  qaTitleInputPlaceholder: "Question title (required)",
   commentPlaceholder: "Write a comment...",
   submitComment: "Post",
   loginToComment: "to comment",
@@ -669,7 +672,8 @@ const en: typeof ja = {
   orderVotes: "Popular",
   searchComments: "Search comments...",
 
-  qaInputPlaceholder: "Enter your question...",
+  qaInputTitlePlaceholder: "Question title (required)",
+  qaInputPlaceholder: "Describe your question in detail...",
   qaSelectBookOptional: "Select a book (optional)",
   qaSelectChapterOptional: "Select a chapter (optional)",
   qaSelectVerseOptional: "Select a verse (optional)",

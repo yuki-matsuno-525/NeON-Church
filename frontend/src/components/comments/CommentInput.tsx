@@ -8,7 +8,7 @@ import { fetchTags, type Tag } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 
 type Props = {
-  onSubmit: (body: string, isQa?: boolean, tagIds?: string[]) => Promise<void>;
+  onSubmit: (body: string, isQa?: boolean, tagIds?: string[], title?: string) => Promise<void>;
   onCancel?: () => void;
   placeholder?: string;
   submitLabel?: string;
@@ -32,6 +32,7 @@ export function CommentInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
   const [isQa, setIsQa] = useState(false);
+  const [qaTitle, setQaTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -81,10 +82,12 @@ export function CommentInput({
       await onSubmit(
         body.trim(),
         showQaOption ? isQa : undefined,
-        showTagOption && selectedTags.length > 0 ? selectedTags : undefined
+        showTagOption && selectedTags.length > 0 ? selectedTags : undefined,
+        showQaOption && isQa ? qaTitle.trim() : undefined,
       );
       setBody("");
       setIsQa(false);
+      setQaTitle("");
       setSelectedTags([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.postFailed);
@@ -93,8 +96,31 @@ export function CommentInput({
     }
   };
 
+  const isSubmitDisabled = submitting || !body.trim() || (showQaOption && isQa && !qaTitle.trim());
+
   return (
     <form onSubmit={handleSubmit}>
+      {showQaOption && isQa && (
+        <input
+          type="text"
+          value={qaTitle}
+          onChange={(e) => setQaTitle(e.target.value)}
+          placeholder={t.qaTitleInputPlaceholder}
+          style={{
+            width: "100%",
+            padding: "8px 10px",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            background: "var(--bg)",
+            color: "var(--text)",
+            fontSize: 14,
+            fontFamily: "inherit",
+            outline: "none",
+            marginBottom: 8,
+            boxSizing: "border-box",
+          }}
+        />
+      )}
       <textarea
         ref={textareaRef}
         value={body}
@@ -177,15 +203,15 @@ export function CommentInput({
         )}
         <button
           type="submit"
-          disabled={submitting || !body.trim()}
+          disabled={isSubmitDisabled}
           style={{
             background: "var(--accent)",
             color: "var(--accent-text)",
             border: "none",
             borderRadius: 8,
             padding: "7px 16px",
-            cursor: submitting || !body.trim() ? "not-allowed" : "pointer",
-            opacity: submitting || !body.trim() ? 0.6 : 1,
+            cursor: isSubmitDisabled ? "not-allowed" : "pointer",
+            opacity: isSubmitDisabled ? 0.6 : 1,
             fontWeight: 700,
             fontSize: 13,
             fontFamily: "inherit",

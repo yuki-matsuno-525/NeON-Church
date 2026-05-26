@@ -72,8 +72,8 @@ export function CommentPanel({
     }
   };
 
-  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[]) => {
-    const comment = await createComment({ verse: verse.id, body, is_qa: isQa, tag_ids: tagIds });
+  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
+    const comment = await createComment({ verse: verse.id, title, body, is_qa: isQa, tag_ids: tagIds });
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);
   };

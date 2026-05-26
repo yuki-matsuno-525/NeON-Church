@@ -134,7 +134,10 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         )}
       </div>
 
-      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{comment.body}</p>
+      {comment.title && (
+        <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, lineHeight: 1.5 }}>{comment.title}</p>
+      )}
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{comment.body}</p>
 
       {comment.best_answer && (
         <div

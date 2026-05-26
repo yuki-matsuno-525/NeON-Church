@@ -81,6 +81,14 @@ COMMENT_BODIES_BOOK = [
     "ヨハネ書簡は他の福音書と視点が大きく異なり、神学的に非常に深いです。",
 ]
 
+QA_TITLES = [
+    "「山を動かす信仰」の解釈",
+    "「汝の敵を愛せよ」の実践方法",
+    "「道・真理・命」（ヨハネ14:6）の意味",
+    "旧約と新約の神様の違い",
+    "「聖霊に対する冒涜」とは何か",
+]
+
 QA_QUESTIONS = [
     "「山を動かす信仰」（マタイ17:20）は文字通りの意味ですか？比喩的な意味ですか？",
     "「汝の敵を愛せよ」を実践するための具体的な方法を教えてください。",
@@ -319,11 +327,12 @@ class Command(BaseCommand):
 
         # Q&Aコメント（5件）
         qa_verses = random.sample(verses[:20], min(5, len(verses)))
-        for verse, question, answer in zip(qa_verses, QA_QUESTIONS, QA_ANSWERS):
+        for verse, title, question, answer in zip(qa_verses, QA_TITLES, QA_QUESTIONS, QA_ANSWERS):
             asker = random.choice(users)
             qa_comment = Comment.objects.create(
                 user=asker,
                 verse=verse,
+                title=title,
                 body=question,
                 is_qa=True,
             )

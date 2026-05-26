@@ -327,19 +327,28 @@ class TestQAPost:
     def test_qa_without_location_allowed(self, auth_client):
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "場所なしQ&A", "is_qa": True},
+            {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["is_qa"] is True
+        assert res.data["title"] == "Q&Aタイトル"
         assert res.data["verse"] is None
         assert res.data["chapter"] is None
         assert res.data["book"] is None
 
+    def test_qa_without_title_rejected(self, auth_client):
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"body": "タイトルなしQ&A", "is_qa": True},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_qa_with_book_allowed(self, auth_client, book):
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "書付きQ&A", "is_qa": True, "book": str(book.id)},
+            {"body": "書付きQ&A", "is_qa": True, "title": "書付きタイトル", "book": str(book.id)},
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED
@@ -356,7 +365,7 @@ class TestQAPost:
     def test_reply_without_location_allowed(self, auth_client, verse):
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "場所なしQ&A", "is_qa": True},
+            {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         ).data
         res = auth_client.post(
@@ -369,7 +378,7 @@ class TestQAPost:
     def test_filter_by_parent_id(self, auth_client, db):
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         ).data
         auth_client.post(
@@ -400,7 +409,7 @@ class TestBestAnswer:
     def qa_question(self, auth_client):
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         )
         return res.data

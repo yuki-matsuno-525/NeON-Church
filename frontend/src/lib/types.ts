@@ -105,6 +105,7 @@ export type ReadingProgress = {
 export type QAComment = {
   id: string;
   user: CommentUser;
+  title: string;
   body: string;
   created_at: string;
   vote_count: number;

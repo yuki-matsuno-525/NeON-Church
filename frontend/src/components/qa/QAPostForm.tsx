@@ -23,11 +23,13 @@ const inputStyle: React.CSSProperties = {
 
 export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
   const t = useT();
+  const titleId = useId();
   const bodyId = useId();
   const bookSelectId = useId();
   const chapterSelectId = useId();
   const verseSelectId = useId();
   const errorId = useId();
+  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [bookId, setBookId] = useState("");
   const [chapterId, setChapterId] = useState("");
@@ -65,11 +67,12 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!body.trim()) return;
+    if (!title.trim() || !body.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
       await createComment({
+        title: title.trim(),
         body: body.trim(),
         is_qa: true,
         ...(verseId ? { verse: verseId } : chapterId ? { chapter: chapterId } : bookId ? { book: bookId } : {}),
@@ -94,6 +97,26 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
         background: "var(--bg-alt)",
       }}
     >
+      <label htmlFor={titleId} className="sr-only">{t.qaInputTitlePlaceholder}</label>
+      <input
+        id={titleId}
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder={t.qaInputTitlePlaceholder}
+        style={{
+          width: "100%",
+          padding: "8px 10px",
+          border: "1px solid var(--border)",
+          borderRadius: 8,
+          background: "var(--bg)",
+          color: "var(--text)",
+          fontSize: 14,
+          fontFamily: "inherit",
+          boxSizing: "border-box",
+          marginBottom: 8,
+        }}
+      />
       <label htmlFor={bodyId} className="sr-only">{t.qaInputPlaceholder}</label>
       <textarea
         id={bodyId}
@@ -208,15 +231,15 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
         </button>
         <button
           type="submit"
-          disabled={submitting || !body.trim()}
+          disabled={submitting || !title.trim() || !body.trim()}
           style={{
             padding: "7px 16px",
             border: "none",
             borderRadius: 8,
             background: "var(--accent)",
             color: "var(--accent-text)",
-            cursor: submitting || !body.trim() ? "not-allowed" : "pointer",
-            opacity: submitting || !body.trim() ? 0.6 : 1,
+            cursor: submitting || !title.trim() || !body.trim() ? "not-allowed" : "pointer",
+            opacity: submitting || !title.trim() || !body.trim() ? 0.6 : 1,
             fontWeight: 700,
             fontSize: 13,
             fontFamily: "inherit",

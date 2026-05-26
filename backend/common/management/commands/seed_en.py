@@ -116,6 +116,16 @@ COMMENT_BODIES_BOOK = [
     "Ecclesiastes is the Bible's great gift to honest skeptics. It belongs in every theology curriculum.",
 ]
 
+QA_TITLES = [
+    "Eye of a Needle: Literal or the Jerusalem Gate?",
+    "Reconciling Paul on Women's Role in the Church",
+    "Best Commentaries Without Original Languages",
+    "Book of Enoch and Its New Testament Connections",
+    "Engaging with the Imprecatory Psalms Today",
+    "Literacy in First-Century Palestine and the Gospels",
+    "Textual Traditions Behind the Ending of Mark",
+]
+
 QA_QUESTIONS = [
     "Does 'eye of a needle' (Matthew 19:24) refer to a literal needle or a gate in Jerusalem? What do the scholars say?",
     "How do we reconcile Paul's 'women should be silent' passages with his acknowledgment of female prophets and leaders elsewhere?",
@@ -374,11 +384,12 @@ class Command(BaseCommand):
 
         # Q&A threads
         qa_verses = random.sample(verses[:40], min(7, len(verses)))
-        for verse, question, answer in zip(qa_verses, QA_QUESTIONS, QA_ANSWERS):
+        for verse, title, question, answer in zip(qa_verses, QA_TITLES, QA_QUESTIONS, QA_ANSWERS):
             asker = random.choice(users)
             qa = Comment.objects.create(
                 user=asker,
                 verse=verse,
+                title=title,
                 body=question,
                 is_qa=True,
             )

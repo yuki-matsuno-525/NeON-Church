@@ -155,6 +155,7 @@ export function createComment(data: {
   verse?: string;
   chapter?: string;
   book?: string;
+  title?: string;
   body: string;
   parent?: string;
   is_qa?: boolean;
