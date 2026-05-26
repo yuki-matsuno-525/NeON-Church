@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -26,21 +25,11 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const { unreadCount } = useNotifications();
   const t = useT();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
-  const [isMobile, setIsMobile] = useState(false);
-
   const navItems = [
     { label: t.read, ...NAV_HREFS[0] },
     { label: t.qa, ...NAV_HREFS[1] },
     { label: t.translate, ...NAV_HREFS[2] },
   ];
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768);
-    check();
-    const mql = window.matchMedia("(max-width: 768px)");
-    mql.addEventListener("change", check);
-    return () => mql.removeEventListener("change", check);
-  }, []);
 
   const handleLogout = async () => {
     onClose?.();
@@ -82,7 +71,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           flexDirection: "column",
         }}
       >
-        {isMobile && <div style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
+        <div className="sidebar-mobile-auth" style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
           {user ? (
             <>
               <Link
@@ -180,7 +169,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               {t.login}
             </Link>
           )}
-        </div>}
+        </div>
 
         <div style={{ flex: 1 }}>
           <div style={{ padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
