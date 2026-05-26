@@ -228,8 +228,9 @@ export function fetchMyComments(): Promise<MyComment[]> {
   return apiFetch("/comments/mine/");
 }
 
-export function fetchVerseOfDay(): Promise<VerseOfDay> {
-  return apiFetch("/verse-of-the-day/");
+export function fetchVerseOfDay(translation?: string): Promise<VerseOfDay> {
+  const qs = translation ? `?translation=${encodeURIComponent(translation)}` : "";
+  return apiFetch(`/verse-of-the-day/${qs}`);
 }
 
 export function fetchNotifications(): Promise<Notification[]> {

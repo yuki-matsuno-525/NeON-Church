@@ -80,28 +80,51 @@ class SearchView(APIView):
 
 
 class VerseOfDayView(APIView):
-    """GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）"""
+    """GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）
+
+    ?translation=KJV を渡すと、同じ日付インデックスの節を KJV テキストで返す。
+    口語訳の節順序を基準にして、book.order / chapter.number / verse.number で対応節を引く。
+    """
 
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Django の TIME_ZONE 設定に基づいたローカル日付を使用する
+        translation = request.query_params.get("translation", "口語訳")
         today = timezone.localdate()
-        cache_key = f"verse_of_day_kougo_{today.isoformat()}"
+        cache_key = f"verse_of_day_{translation}_{today.isoformat()}"
         data = cache.get(cache_key)
         if data is None:
             day_of_year = today.timetuple().tm_yday
-            qs = Verse.objects.filter(chapter__book__translation="口語訳")
-            count = qs.count()
+            # 常に口語訳を基準に「今日の節」の位置を決める
+            base_qs = Verse.objects.filter(chapter__book__translation="口語訳")
+            count = base_qs.count()
             if count == 0:
                 return Response({"detail": "聖書データが未登録です。"}, status=503)
             index = (day_of_year - 1) % count
-            verse = (
-                qs.select_related("chapter__book")
+            base_verse = (
+                base_qs.select_related("chapter__book")
                 .order_by("chapter__book__order", "chapter__number", "number")[index]
             )
+
+            if translation == "口語訳":
+                verse = base_verse
+            else:
+                # 同じ書順・章・節番号で指定翻訳の節を探す
+                book_order = base_verse.chapter.book.order
+                chapter_num = base_verse.chapter.number
+                verse_num = base_verse.number
+                verse = (
+                    Verse.objects.filter(
+                        chapter__book__translation=translation,
+                        chapter__book__order=book_order,
+                        chapter__number=chapter_num,
+                        number=verse_num,
+                    )
+                    .select_related("chapter__book")
+                    .first()
+                ) or base_verse  # KJV に対応節がなければ口語訳にフォールバック
+
             data = VerseOfDaySerializer(verse).data
-            # キャッシュの有効期限を翌日の0時まで（ローカルタイム）に設定する
             tomorrow = today + datetime.timedelta(days=1)
             midnight = timezone.make_aware(datetime.datetime.combine(tomorrow, datetime.time.min))
             ttl = int((midnight - timezone.now()).total_seconds())

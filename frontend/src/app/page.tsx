@@ -5,13 +5,16 @@ import Link from "next/link";
 import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT, useRelativeTime } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { defaultTranslationForLang } from "@/lib/translations";
 
 function slugFromBookName(name: string): string {
-  return BOOKS.find((b) => b.name === name)?.slug ?? "";
+  return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? "";
 }
 
 export default function Home() {
   const t = useT();
+  const { lang } = useLang();
   const sections = [
     { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.png", featured: true },
     { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.png" },
@@ -23,10 +26,14 @@ export default function Home() {
   const [trending, setTrending] = useState<QAComment[]>([]);
 
   useEffect(() => {
-    fetchVerseOfDay()
+    setVerseLoading(true);
+    fetchVerseOfDay(defaultTranslationForLang(lang))
       .then(setVerseOfDay)
       .catch(() => {})
       .finally(() => setVerseLoading(false));
+  }, [lang]);
+
+  useEffect(() => {
     fetchQAComments()
       .then((qa) => setRecentQA(qa.slice(0, 4)))
       .catch(() => {});
