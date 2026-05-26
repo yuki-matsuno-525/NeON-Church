@@ -26,7 +26,6 @@ export default function Home() {
   const [trending, setTrending] = useState<QAComment[]>([]);
 
   useEffect(() => {
-    setVerseLoading(true);
     fetchVerseOfDay(defaultTranslationForLang(lang))
       .then(setVerseOfDay)
       .catch(() => {})
