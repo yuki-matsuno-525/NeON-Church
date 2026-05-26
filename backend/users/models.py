@@ -34,3 +34,20 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "users"
+
+
+class SocialAccount(models.Model):
+    """Google / GitHub などの OAuth プロバイダーと User を紐づけるテーブル。"""
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="social_accounts",
+    )
+    provider = models.CharField(max_length=50)   # "google" | "github"
+    provider_uid = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "social_accounts"
+        unique_together = ("provider", "provider_uid")

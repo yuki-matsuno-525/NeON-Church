@@ -1,5 +1,10 @@
+import secrets
+import urllib.parse
+
+import requests as http_requests
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.http import HttpResponseRedirect
 from rest_framework import generics, status
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -15,7 +20,7 @@ from .serializers import LoginSerializer, ProfileUpdateSerializer, PublicUserSer
 User = get_user_model()
 
 
-def _set_auth_cookies(response: Response, access: str, refresh: str | None = None) -> None:
+def _set_auth_cookies(response, access: str, refresh: str | None = None) -> None:
     """
     access_token と refresh_token を HTTP-only Cookie にセットする。
     secure フラグは本番（DEBUG=False）のみ有効にする。
@@ -232,3 +237,195 @@ class TokenRefreshView(APIView):
 
         except TokenError as e:
             raise AuthenticationFailed(str(e))
+
+
+# ---------------------------------------------------------------------------
+# OAuth ヘルパー
+# ---------------------------------------------------------------------------
+
+_GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+_GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+_GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+_GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
+_GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
+_GITHUB_USERINFO_URL = "https://api.github.com/user"
+_GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
+
+
+def _get_or_create_social_user(provider: str, provider_uid: str, email: str | None, name: str | None) -> "User":
+    """SocialAccount からユーザーを取得または新規作成する。"""
+    from .models import SocialAccount
+
+    try:
+        return SocialAccount.objects.select_related("user").get(
+            provider=provider, provider_uid=provider_uid
+        ).user
+    except SocialAccount.DoesNotExist:
+        pass
+
+    # メールが一致する既存ユーザーと連携
+    user = User.objects.filter(email=email).first() if email else None
+
+    if user is None:
+        base = (name or provider_uid)[:30].lower().replace(" ", "_")
+        base = "".join(c for c in base if c.isalnum() or c == "_") or f"{provider}_user"
+        username, suffix = base, 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base}_{suffix}"
+            suffix += 1
+        user = User.objects.create_user(username=username, email=email or "", password=None)
+
+    SocialAccount.objects.create(provider=provider, provider_uid=provider_uid, user=user)
+    return user
+
+
+def _oauth_error_redirect() -> HttpResponseRedirect:
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/login?oauth=error")
+
+
+# ---------------------------------------------------------------------------
+# Google OAuth
+# ---------------------------------------------------------------------------
+
+class GoogleOAuthView(APIView):
+    """GET /api/auth/oauth/google/ → Google 認証ページへリダイレクト"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> HttpResponseRedirect:
+        state = secrets.token_urlsafe(32)
+        request.session["oauth_state"] = state
+        request.session["oauth_next"] = request.GET.get("next", "")
+
+        params = {
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state,
+            "access_type": "online",
+        }
+        return HttpResponseRedirect(f"{_GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}")
+
+
+class GoogleCallbackView(APIView):
+    """GET /api/auth/oauth/google/callback/ → JWT Cookie 設定 → フロントへリダイレクト"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> HttpResponseRedirect:
+        code = request.GET.get("code")
+        state = request.GET.get("state")
+        if not code or state != request.session.get("oauth_state"):
+            return _oauth_error_redirect()
+
+        next_path = request.session.get("oauth_next", "") or ""
+
+        token_resp = http_requests.post(_GOOGLE_TOKEN_URL, data={
+            "code": code,
+            "client_id": settings.GOOGLE_CLIENT_ID,
+            "client_secret": settings.GOOGLE_CLIENT_SECRET,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        }, timeout=10)
+        if not token_resp.ok:
+            return _oauth_error_redirect()
+
+        access_token = token_resp.json().get("access_token")
+        userinfo_resp = http_requests.get(
+            _GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        if not userinfo_resp.ok:
+            return _oauth_error_redirect()
+
+        info = userinfo_resp.json()
+        user = _get_or_create_social_user("google", info["sub"], info.get("email"), info.get("name"))
+
+        redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
+        response = HttpResponseRedirect(redirect_to)
+        refresh = RefreshToken.for_user(user)
+        _set_auth_cookies(response, str(refresh.access_token), str(refresh))
+        return response
+
+
+# ---------------------------------------------------------------------------
+# GitHub OAuth
+# ---------------------------------------------------------------------------
+
+class GithubOAuthView(APIView):
+    """GET /api/auth/oauth/github/ → GitHub 認証ページへリダイレクト"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> HttpResponseRedirect:
+        state = secrets.token_urlsafe(32)
+        request.session["oauth_state"] = state
+        request.session["oauth_next"] = request.GET.get("next", "")
+
+        params = {
+            "client_id": settings.GITHUB_CLIENT_ID,
+            "redirect_uri": settings.GITHUB_REDIRECT_URI,
+            "scope": "read:user user:email",
+            "state": state,
+        }
+        return HttpResponseRedirect(f"{_GITHUB_AUTH_URL}?{urllib.parse.urlencode(params)}")
+
+
+class GithubCallbackView(APIView):
+    """GET /api/auth/oauth/github/callback/ → JWT Cookie 設定 → フロントへリダイレクト"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request: Request) -> HttpResponseRedirect:
+        code = request.GET.get("code")
+        state = request.GET.get("state")
+        if not code or state != request.session.get("oauth_state"):
+            return _oauth_error_redirect()
+
+        next_path = request.session.get("oauth_next", "") or ""
+
+        token_resp = http_requests.post(
+            _GITHUB_TOKEN_URL,
+            data={
+                "client_id": settings.GITHUB_CLIENT_ID,
+                "client_secret": settings.GITHUB_CLIENT_SECRET,
+                "code": code,
+                "redirect_uri": settings.GITHUB_REDIRECT_URI,
+            },
+            headers={"Accept": "application/json"},
+            timeout=10,
+        )
+        if not token_resp.ok:
+            return _oauth_error_redirect()
+
+        gh_token = token_resp.json().get("access_token")
+        gh_headers = {"Authorization": f"Bearer {gh_token}", "Accept": "application/vnd.github+json"}
+
+        userinfo_resp = http_requests.get(_GITHUB_USERINFO_URL, headers=gh_headers, timeout=10)
+        if not userinfo_resp.ok:
+            return _oauth_error_redirect()
+
+        info = userinfo_resp.json()
+        provider_uid = str(info["id"])
+        email = info.get("email")
+
+        # email が非公開の場合は emails API から取得
+        if not email:
+            emails_resp = http_requests.get(_GITHUB_EMAILS_URL, headers=gh_headers, timeout=10)
+            if emails_resp.ok:
+                primary = next(
+                    (e["email"] for e in emails_resp.json() if e.get("primary") and e.get("verified")),
+                    None,
+                )
+                email = primary
+
+        user = _get_or_create_social_user("github", provider_uid, email, info.get("login"))
+
+        redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
+        response = HttpResponseRedirect(redirect_to)
+        refresh = RefreshToken.for_user(user)
+        _set_auth_cookies(response, str(refresh.access_token), str(refresh))
+        return response

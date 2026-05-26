@@ -188,6 +188,21 @@ SPECTACULAR_SETTINGS = {
 }
 
 # ------------------------------------------------------------------
+# OAuth（Google / GitHub）
+# CLIENT_ID / SECRET は各プロバイダーの開発者コンソールで発行する。
+# 未設定のときは OAuth ログインボタンを表示しない（フロントが確認する）。
+# ------------------------------------------------------------------
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
+GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI", default="")
+
+GITHUB_CLIENT_ID = config("GITHUB_CLIENT_ID", default="")
+GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
+GITHUB_REDIRECT_URI = config("GITHUB_REDIRECT_URI", default="")
+
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
+
+# ------------------------------------------------------------------
 # CSRF
 # 書き込み系 API のみ CSRF を必須とする。
 # GET 系 API は CSRF なしでアクセス可能。
