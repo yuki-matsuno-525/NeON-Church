@@ -13,6 +13,7 @@ os.environ.setdefault("DJANGO_ALLOWED_HOSTS", "*")
 os.environ.setdefault("POSTGRES_DB", "test_db")
 os.environ.setdefault("POSTGRES_USER", "test_user")
 os.environ.setdefault("POSTGRES_PASSWORD", "test_pass")
+os.environ.setdefault("CSRF_TRUSTED_ORIGINS", "http://localhost")
 
 from .base import *  # noqa: F401, F403
 
