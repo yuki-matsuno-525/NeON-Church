@@ -141,8 +141,8 @@ export function VerseList({
                   style={{
                     border: "1px solid var(--border)",
                     borderRadius: 5,
-                    padding: "6px 14px",
-                    minHeight: 32,
+                    padding: "10px 14px",
+                    minHeight: 44,
                     background: isBookmarked ? "var(--accent-tint)" : "transparent",
                     color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
                     cursor: "pointer",

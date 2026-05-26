@@ -373,7 +373,7 @@ export default function ChapterPage() {
           aria-label={t.backToTop}
           style={{
             position: "fixed",
-            bottom: 24,
+            bottom: selectedVerseId ? "calc(70vh + 12px)" : 24,
             right: 24,
             background: "var(--accent)",
             color: "var(--accent-text)",
