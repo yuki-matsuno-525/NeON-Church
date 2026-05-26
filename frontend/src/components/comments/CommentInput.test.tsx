@@ -66,7 +66,7 @@ describe("CommentInput", () => {
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "テストコメント" } });
     fireEvent.click(screen.getByRole("button", { name: "投稿する" }));
 
-    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith("テストコメント", undefined, undefined));
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith("テストコメント", undefined, undefined, undefined));
     expect(screen.getByRole("textbox")).toHaveValue("");
   });
 
