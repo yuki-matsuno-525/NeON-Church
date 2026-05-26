@@ -1,4 +1,4 @@
-import type { CSSProperties, SVGProps } from "react";
+import type { CSSProperties, ReactElement, SVGProps } from "react";
 
 export type IconName =
   | "chevron-down"
@@ -24,7 +24,7 @@ type IconProps = Omit<SVGProps<SVGSVGElement>, "name"> & {
 
 // Stroke-based 24×24 アイコン。lucide-react のパスを採用。
 // 依存追加せずに必要な分だけ内蔵する方針 (Release 4)。
-const PATHS: Record<IconName, JSX.Element> = {
+const PATHS: Record<IconName, ReactElement> = {
   "chevron-down": <path d="m6 9 6 6 6-6" />,
   "chevron-right": <path d="m9 18 6-6-6-6" />,
   "chevron-up": <path d="m18 15-6-6-6 6" />,
