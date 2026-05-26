@@ -20,6 +20,18 @@ from .serializers import LoginSerializer, ProfileUpdateSerializer, PublicUserSer
 User = get_user_model()
 
 
+def _safe_next_path(raw: str | None) -> str:
+    """OAuth コールバック後のリダイレクト先を相対パスのみに限定する（open redirect 対策）。
+
+    フロントの safeRedirectTarget と同じガード:
+    - "/" で始まり、かつ "//"（プロトコル相対 URL）で始まらないものだけ許可
+    - 不正なら空文字を返し、呼び出し側で FRONTEND_URL のルートに飛ばす
+    """
+    if raw and raw.startswith("/") and not raw.startswith("//"):
+        return raw
+    return ""
+
+
 def _set_auth_cookies(response, access: str, refresh: str | None = None) -> None:
     """
     access_token と refresh_token を HTTP-only Cookie にセットする。
@@ -96,9 +108,12 @@ class LoginView(APIView):
 class LogoutView(APIView):
     """
     ログアウト。Cookie の refresh_token をブラックリストに追加し、両方の Cookie を削除する。
+
+    アクセストークン期限切れ時にもログアウトを成立させたいため AllowAny にしている。
+    refresh_token が無ければ blacklist をスキップして Cookie 削除のみ行う。
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request: Request) -> Response:
         raw_refresh = request.COOKIES.get("refresh_token")
@@ -235,8 +250,9 @@ class TokenRefreshView(APIView):
             _set_auth_cookies(response, access, str(refresh))
             return response
 
-        except TokenError as e:
-            raise AuthenticationFailed(str(e))
+        except TokenError:
+            # 詳細はログ / Sentry に上がっており、クライアントには汎用文言だけ返す
+            raise AuthenticationFailed("リフレッシュトークンが無効です。")
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +312,7 @@ class GoogleOAuthView(APIView):
     def get(self, request: Request) -> HttpResponseRedirect:
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
-        request.session["oauth_next"] = request.GET.get("next", "")
+        request.session["oauth_next"] = _safe_next_path(request.GET.get("next"))
 
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -320,7 +336,7 @@ class GoogleCallbackView(APIView):
         if not code or state != request.session.get("oauth_state"):
             return _oauth_error_redirect()
 
-        next_path = request.session.get("oauth_next", "") or ""
+        next_path = _safe_next_path(request.session.get("oauth_next"))
 
         token_resp = http_requests.post(_GOOGLE_TOKEN_URL, data={
             "code": code,
@@ -363,7 +379,7 @@ class GithubOAuthView(APIView):
     def get(self, request: Request) -> HttpResponseRedirect:
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
-        request.session["oauth_next"] = request.GET.get("next", "")
+        request.session["oauth_next"] = _safe_next_path(request.GET.get("next"))
 
         params = {
             "client_id": settings.GITHUB_CLIENT_ID,
@@ -385,7 +401,7 @@ class GithubCallbackView(APIView):
         if not code or state != request.session.get("oauth_state"):
             return _oauth_error_redirect()
 
-        next_path = request.session.get("oauth_next", "") or ""
+        next_path = _safe_next_path(request.session.get("oauth_next"))
 
         token_resp = http_requests.post(
             _GITHUB_TOKEN_URL,

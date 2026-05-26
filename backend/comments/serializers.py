@@ -5,6 +5,33 @@ from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
 
 User = get_user_model()
 
+# 投稿本文の上限。models.Comment.body の max_length=5000 と合わせる。
+# DB 制約より手前で弾くことで、サーバーエラーではなくフィールド単位のエラーを返す。
+_BODY_MAX_LENGTH = 5000
+
+
+def _clean_body(value: str | None) -> str:
+    """コメント本文を保存前に整える。
+
+    - None / 全空白は ValidationError
+    - NULL バイト等の制御文字を除去（ログ・通知メール埋め込み時の事故を防ぐ）
+    - 上限長を超える場合は ValidationError
+    """
+    if value is None:
+        raise serializers.ValidationError("本文を入力してください。")
+    # 改行・タブ以外の制御文字（U+0000-U+0008, U+000B, U+000C, U+000E-U+001F, U+007F）を削除
+    cleaned = "".join(
+        ch for ch in value if ch in ("\n", "\r", "\t") or ord(ch) >= 0x20 and ch != "\x7f"
+    )
+    cleaned = cleaned.strip()
+    if not cleaned:
+        raise serializers.ValidationError("本文を入力してください。")
+    if len(cleaned) > _BODY_MAX_LENGTH:
+        raise serializers.ValidationError(
+            f"本文は {_BODY_MAX_LENGTH} 文字以内で入力してください。"
+        )
+    return cleaned
+
 
 # ---------------------------------------------------------------------------
 # 位置情報ヘルパー
@@ -71,6 +98,9 @@ class CommentSerializer(serializers.ModelSerializer):
             data["body"] = DELETED_COMMENT_BODY
         return data
 
+    def validate_body(self, value):
+        return _clean_body(value)
+
     def validate(self, data):
         verse = data.get("verse")
         chapter = data.get("chapter")
@@ -127,9 +157,7 @@ class CommentEditSerializer(serializers.ModelSerializer):
         fields = ["title", "body"]
 
     def validate_body(self, value):
-        if not value or not value.strip():
-            raise serializers.ValidationError("本文を入力してください。")
-        return value
+        return _clean_body(value)
 
     def update(self, instance, validated_data):
         instance.body = validated_data["body"]

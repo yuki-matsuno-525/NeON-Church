@@ -98,9 +98,13 @@ class TestLogout:
 
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_requires_auth(self, api_client):
+    def test_without_cookie_clears_state(self, api_client):
+        # Cookie が無くてもログアウトは 204 で成立する（アクセストークン期限切れ救済）。
+        # Cookie が無いので blacklist 対象もなく、Set-Cookie で削除指示だけ返る。
         res = api_client.post(LOGOUT_URL)
-        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+        assert res.status_code == status.HTTP_204_NO_CONTENT
+        assert res.cookies["access_token"].value == ""
+        assert res.cookies["refresh_token"].value == ""
 
     def test_cookies_cleared_after_logout(self, api_client, user_payload):
         api_client.post(REGISTER_URL, user_payload, format="json")
