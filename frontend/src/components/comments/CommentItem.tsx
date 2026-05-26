@@ -212,7 +212,7 @@ export function CommentItem({
                   style={{
                     width: "100%",
                     padding: "8px",
-                    fontSize: 13,
+                    fontSize: 16,
                     border: "1px solid var(--border)",
                     borderRadius: 4,
                     background: "var(--bg)",
@@ -305,7 +305,8 @@ export function CommentItem({
                   cursor: user ? "pointer" : "default",
                   color: upvoted ? "var(--accent)" : "var(--text-faint)",
                   fontSize: 13,
-                  padding: 0,
+                  padding: "4px 6px",
+                  minHeight: 32,
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -324,7 +325,8 @@ export function CommentItem({
                     cursor: "pointer",
                     color: "var(--text-faint)",
                     fontSize: 13,
-                    padding: 0,
+                    padding: "4px 6px",
+                    minHeight: 32,
                     fontFamily: "inherit",
                   }}
                 >
@@ -341,7 +343,8 @@ export function CommentItem({
                     cursor: "pointer",
                     color: bookmarkId ? "var(--accent)" : "var(--text-faint)",
                     fontSize: 13,
-                    padding: 0,
+                    padding: "4px 6px",
+                    minHeight: 32,
                     fontFamily: "inherit",
                   }}
                 >
@@ -359,7 +362,8 @@ export function CommentItem({
                       cursor: "pointer",
                       color: "var(--text-faint)",
                       fontSize: 13,
-                      padding: 0,
+                      padding: "4px 6px",
+                      minHeight: 32,
                       fontFamily: "inherit",
                     }}
                   >
@@ -374,7 +378,8 @@ export function CommentItem({
                       cursor: "pointer",
                       color: "var(--text-faint)",
                       fontSize: 13,
-                      padding: 0,
+                      padding: "4px 6px",
+                      minHeight: 32,
                       fontFamily: "inherit",
                     }}
                   >
@@ -392,7 +397,8 @@ export function CommentItem({
                     cursor: "pointer",
                     color: "var(--text-faint)",
                     fontSize: 12,
-                    padding: 0,
+                    padding: "4px 6px",
+                    minHeight: 32,
                     fontFamily: "inherit",
                   }}
                 >
