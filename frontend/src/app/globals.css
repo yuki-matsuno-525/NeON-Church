@@ -336,6 +336,18 @@ select:focus-visible {
     padding: 16px !important;
   }
 
+  .navbar-search-input {
+    max-width: none !important;
+  }
+
+  .reader-sticky-header {
+    position: static !important;
+    margin-left: -16px !important;
+    margin-right: -16px !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
 }
 
 *,

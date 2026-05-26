@@ -192,7 +192,7 @@ export default function ChapterPage() {
           overflowY: "auto",
         }}
       >
-        <div style={{
+        <div className="reader-sticky-header" style={{
           position: "sticky",
           top: "var(--navbar-height)",
           zIndex: 10,
