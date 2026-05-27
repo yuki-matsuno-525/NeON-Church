@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | NeON Church",
   },
   description:
-    "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects. 聖書・外典・偽典を読み、語り合うプラットフォーム。",
+    "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects.",
   metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "NeON Church",

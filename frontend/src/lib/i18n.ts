@@ -398,6 +398,8 @@ const ja = {
   searchEmptyDesc: "別のキーワードを試すか、関連するページを開いて探してみてください。",
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
+
+  categoryNames: { "正典": "正典", "外典": "外典", "偽書": "偽書" } as Record<string, string>,
 };
 
 const en: typeof ja = {
@@ -755,6 +757,8 @@ const en: typeof ja = {
   searchEmptyDesc: "Try different keywords or browse related pages.",
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
+
+  categoryNames: { "正典": "Canon", "外典": "Apocrypha", "偽書": "Pseudepigrapha" } as Record<string, string>,
 };
 
 export type Translations = typeof ja;

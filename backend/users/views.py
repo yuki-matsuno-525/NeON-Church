@@ -99,7 +99,7 @@ class LoginView(APIView):
             password=serializer.validated_data["password"],
         )
         if user is None:
-            raise AuthenticationFailed("ユーザー名またはパスワードが正しくありません。")
+            raise AuthenticationFailed("Invalid username or password.")
 
         refresh = RefreshToken.for_user(user)
         response = Response(UserSerializer(user).data)
@@ -164,7 +164,7 @@ class UserProfileView(APIView):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise NotFound("ユーザーが見つかりません。")
+            raise NotFound("User not found.")
         return Response(PublicUserSerializer(user, context={"request": request}).data)
 
 
@@ -183,7 +183,7 @@ class UserCommentsView(generics.ListAPIView):
         from comments.models import Comment
         username = self.kwargs["username"]
         if not User.objects.filter(username=username).exists():
-            raise NotFound("ユーザーが見つかりません。")
+            raise NotFound("User not found.")
         return (
             Comment.objects.filter(user__username=username, is_deleted=False, parent=None)
             .select_related("user")
@@ -214,7 +214,7 @@ class UserBookmarksView(generics.ListAPIView):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise NotFound("ユーザーが見つかりません。")
+            raise NotFound("User not found.")
         if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
             return Bookmark.objects.none()
         return (
@@ -235,7 +235,7 @@ class TokenRefreshView(APIView):
     def post(self, request: Request) -> Response:
         raw_refresh = request.COOKIES.get("refresh_token")
         if not raw_refresh:
-            raise NotAuthenticated("refresh_token Cookie が見つかりません。")
+            raise NotAuthenticated("refresh_token cookie not found.")
 
         try:
             refresh = RefreshToken(raw_refresh)
@@ -250,13 +250,13 @@ class TokenRefreshView(APIView):
             refresh.set_exp()
             refresh.set_iat()
 
-            response = Response({"detail": "トークンを更新しました。"})
+            response = Response({"detail": "Token refreshed."})
             _set_auth_cookies(response, access, str(refresh))
             return response
 
         except TokenError:
             # 詳細はログ / Sentry に上がっており、クライアントには汎用文言だけ返す
-            raise AuthenticationFailed("リフレッシュトークンが無効です。")
+            raise AuthenticationFailed("Invalid refresh token.")
 
 
 # ---------------------------------------------------------------------------

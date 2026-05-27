@@ -16,9 +16,9 @@ class Notification(BaseModel):
     UPVOTE = "upvote"
     MENTION = "mention"
     TYPE_CHOICES = [
-        (REPLY, "返信"),
-        (UPVOTE, "いいね"),
-        (MENTION, "メンション"),
+        (REPLY, "Reply"),
+        (UPVOTE, "Upvote"),
+        (MENTION, "Mention"),
     ]
 
     recipient = models.ForeignKey(

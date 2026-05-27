@@ -29,12 +29,12 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         comment = serializer.validated_data.get("comment")
 
         if not verse and not comment:
-            raise ValidationError({"detail": "verse または comment を指定してください。"})
+            raise ValidationError({"detail": "Specify verse or comment."})
 
         if verse and Bookmark.objects.filter(user=user, verse=verse).exists():
-            raise ValidationError({"detail": "既にブックマーク済みです。"}, code="duplicate")
+            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
         if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
-            raise ValidationError({"detail": "既にブックマーク済みです。"}, code="duplicate")
+            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
 
         serializer.save(user=user)
 

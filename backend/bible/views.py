@@ -99,7 +99,7 @@ class VerseOfDayView(APIView):
             base_qs = Verse.objects.filter(chapter__book__translation="口語訳")
             count = base_qs.count()
             if count == 0:
-                return Response({"detail": "聖書データが未登録です。"}, status=503)
+                return Response({"detail": "Bible data not found."}, status=503)
             index = (day_of_year - 1) % count
             base_verse = (
                 base_qs.select_related("chapter__book")

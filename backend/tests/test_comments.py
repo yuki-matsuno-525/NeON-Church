@@ -187,7 +187,7 @@ class TestCommentList:
     def test_deleted_comment_body_is_masked(self, auth_client, comment, verse):
         auth_client.delete(comment_url(comment["id"]))
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
-        assert res.data["results"][0]["body"] == "このコメントは削除されました"
+        assert res.data["results"][0]["body"] == "This comment has been deleted."
         assert res.data["results"][0]["is_deleted"] is True
 
 

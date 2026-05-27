@@ -5,7 +5,7 @@ type Props = { params: Promise<{ username: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
   const title = `@${username}`;
-  const description = `${username} さんのコメント・お気に入りを見る。NeON Church では聖書・外典・偽典を読み、語り合うことができる。`;
+  const description = `See ${username}'s comments and bookmarks on NeON Church — read and discuss the Bible, Apocrypha, and Pseudepigrapha.`;
   return {
     title,
     description,

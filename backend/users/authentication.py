@@ -41,4 +41,4 @@ class CookieJWTAuthentication(JWTAuthentication):
         check.process_request(request)
         reason = check.process_view(request, None, (), {})
         if reason:
-            raise exceptions.PermissionDenied(f"CSRF チェック失敗: {reason}")
+            raise exceptions.PermissionDenied(f"CSRF check failed: {reason}")

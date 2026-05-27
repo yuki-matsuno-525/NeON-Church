@@ -5,7 +5,7 @@ from common.models import BaseModel
 
 # 論理削除済みコメントをフロントエンドに表示する際のプレースホルダー文字列。
 # serializers.py・bookmarks/serializers.py・notifications/serializers.py で共用する。
-DELETED_COMMENT_BODY = "このコメントは削除されました"
+DELETED_COMMENT_BODY = "This comment has been deleted."
 
 PREDEFINED_TAGS = [
     ("感想", "感想"),
@@ -121,10 +121,10 @@ class Report(BaseModel):
     MISINFORMATION = "misinformation"
     OTHER = "other"
     REASON_CHOICES = [
-        (SPAM, "スパム"),
-        (OFFENSIVE, "不快なコンテンツ"),
-        (MISINFORMATION, "誤情報"),
-        (OTHER, "その他"),
+        (SPAM, "Spam"),
+        (OFFENSIVE, "Offensive content"),
+        (MISINFORMATION, "Misinformation"),
+        (OTHER, "Other"),
     ]
 
     reporter = models.ForeignKey(

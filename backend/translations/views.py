@@ -175,7 +175,7 @@ class TranslationJoinView(APIView):
             defaults={"role": TranslationMembership.ROLE_MEMBER, "status": TranslationMembership.STATUS_PENDING},
         )
         if not created:
-            return Response({"detail": "すでに申請済みです。"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Already applied."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(TranslationMembershipSerializer(membership).data, status=status.HTTP_201_CREATED)
 
 
@@ -211,7 +211,7 @@ class TranslationMemberDetailView(APIView):
         new_status = request.data.get("status")
         if new_status not in [TranslationMembership.STATUS_APPROVED, TranslationMembership.STATUS_REJECTED]:
             return Response(
-                {"detail": "status は approved または rejected のみ指定可能です。"},
+                {"detail": 'status must be "approved" or "rejected".'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         membership.status = new_status
@@ -289,7 +289,7 @@ class TranslationUnitDetailView(generics.RetrieveUpdateAPIView):
         unit = self.get_object()
         project = unit.project
         if project.owner != request.user and unit.assigned_to != request.user:
-            return Response({"detail": "担当者またはオーナーのみ更新できます。"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the assignee or owner can update."}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
 
 
@@ -301,7 +301,7 @@ class TranslationUnitAssignView(APIView):
     def post(self, request, project_id, unit_id):
         project = get_object_or_404(TranslationProject, pk=project_id)
         if project.owner != request.user:
-            return Response({"detail": "オーナーのみ操作できます。"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project)
         user_id = request.data.get("user_id")
         if user_id is None:
@@ -311,7 +311,7 @@ class TranslationUnitAssignView(APIView):
                 project=project, user_id=user_id, status=TranslationMembership.STATUS_APPROVED
             ).exists():
                 return Response(
-                    {"detail": "承認済みメンバーのみ担当者に設定できます。"},
+                    {"detail": "Only approved members can be assigned."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             unit.assigned_to_id = user_id
@@ -362,7 +362,7 @@ class TranslationCommentDeleteView(APIView):
         comment = get_object_or_404(TranslationComment, pk=comment_id, project_id=project_id)
         project = comment.project
         if comment.user != request.user and project.owner != request.user:
-            return Response({"detail": "投稿者またはオーナーのみ削除できます。"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the author or owner can delete."}, status=status.HTTP_403_FORBIDDEN)
         comment.is_deleted = True
         comment.body = ""
         comment.save(update_fields=["is_deleted", "body", "updated_at"])
@@ -382,10 +382,10 @@ class TranslationAddBookView(APIView):
         from bible.models import Book, Verse
         project = get_object_or_404(TranslationProject, pk=project_id)
         if project.owner != request.user:
-            return Response({"detail": "オーナーのみ操作できます。"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         book_id = request.data.get("book_id")
         if not book_id:
-            return Response({"detail": "book_id は必須です。"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         book = get_object_or_404(Book, pk=book_id)
         verses = Verse.objects.filter(chapter__book=book)
         created = 0
@@ -408,10 +408,10 @@ class TranslationRemoveBookView(APIView):
         from bible.models import Book
         project = get_object_or_404(TranslationProject, pk=project_id)
         if project.owner != request.user:
-            return Response({"detail": "オーナーのみ操作できます。"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         book_id = request.data.get("book_id")
         if not book_id:
-            return Response({"detail": "book_id は必須です。"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         book = get_object_or_404(Book, pk=book_id)
         deleted, _ = TranslationUnit.objects.filter(project=project, verse__chapter__book=book).delete()
         return Response({"deleted": deleted, "book_name": book.name}, status=status.HTTP_200_OK)

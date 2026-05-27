@@ -104,7 +104,7 @@ class CommentUpvoteView(APIView):
         comment = get_object_or_404(Comment, pk=pk)
         _, created = Vote.objects.get_or_create(user=request.user, comment=comment)
         if not created:
-            return Response({"detail": "既に投票済みです。"}, status=status.HTTP_409_CONFLICT)
+            return Response({"detail": "Already voted."}, status=status.HTTP_409_CONFLICT)
         _notify(
             recipient=comment.user,
             actor=request.user,
@@ -117,7 +117,7 @@ class CommentUpvoteView(APIView):
         comment = get_object_or_404(Comment, pk=pk)
         deleted_count, _ = Vote.objects.filter(user=request.user, comment=comment).delete()
         if not deleted_count:
-            return Response({"detail": "投票が見つかりません。"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "Vote not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -141,7 +141,7 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.is_deleted:
-            return Response({"detail": "削除済みのコメントは編集できません。"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Cannot edit a deleted comment."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -284,7 +284,7 @@ class SetBestAnswerView(APIView):
         question = get_object_or_404(Comment, pk=pk, is_qa=True, parent=None)
         if question.user != request.user:
             return Response(
-                {"detail": "質問投稿者のみベストアンサーを設定できます。"},
+                {"detail": "Only the question author can set the best answer."},
                 status=status.HTTP_403_FORBIDDEN,
             )
         answer_id = request.data.get("answer_comment_id")
@@ -309,7 +309,7 @@ class ReportView(APIView):
     def post(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
         if comment.user == request.user:
-            return Response({"detail": "自分のコメントは通報できません。"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Cannot report your own comment."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = ReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         _, created = Report.objects.get_or_create(
@@ -318,7 +318,7 @@ class ReportView(APIView):
             defaults={"reason": serializer.validated_data["reason"]},
         )
         if not created:
-            return Response({"detail": "既に通報済みです。"}, status=status.HTTP_409_CONFLICT)
+            return Response({"detail": "Already reported."}, status=status.HTTP_409_CONFLICT)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

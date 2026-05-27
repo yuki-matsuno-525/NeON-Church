@@ -15,8 +15,8 @@ class User(AbstractUser):
     BOOKMARKS_PRIVATE = "private"
     BOOKMARKS_PUBLIC = "public"
     BOOKMARKS_VISIBILITY_CHOICES = [
-        (BOOKMARKS_PRIVATE, "非公開"),
-        (BOOKMARKS_PUBLIC, "公開"),
+        (BOOKMARKS_PRIVATE, "Private"),
+        (BOOKMARKS_PUBLIC, "Public"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

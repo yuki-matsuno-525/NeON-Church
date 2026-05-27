@@ -39,17 +39,17 @@ export default function NotFound() {
           margin: 0,
         }}
       >
-        ページが見つかりません
+        Page Not Found
       </h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0, maxWidth: 360 }}>
-        お探しのページは移動または削除された可能性があります。
+        The page you&apos;re looking for may have been moved or deleted.
       </p>
       <Link
         href="/"
         className="btn btn-primary"
         style={{ marginTop: 8 }}
       >
-        トップへ戻る
+        Back to Home
       </Link>
     </div>
   );

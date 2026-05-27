@@ -18,17 +18,17 @@ def _clean_body(value: str | None) -> str:
     - 上限長を超える場合は ValidationError
     """
     if value is None:
-        raise serializers.ValidationError("本文を入力してください。")
+        raise serializers.ValidationError("Body is required.")
     # 改行・タブ以外の制御文字（U+0000-U+0008, U+000B, U+000C, U+000E-U+001F, U+007F）を削除
     cleaned = "".join(
         ch for ch in value if ch in ("\n", "\r", "\t") or ord(ch) >= 0x20 and ch != "\x7f"
     )
     cleaned = cleaned.strip()
     if not cleaned:
-        raise serializers.ValidationError("本文を入力してください。")
+        raise serializers.ValidationError("Body is required.")
     if len(cleaned) > _BODY_MAX_LENGTH:
         raise serializers.ValidationError(
-            f"本文は {_BODY_MAX_LENGTH} 文字以内で入力してください。"
+            f"Body must be {_BODY_MAX_LENGTH} characters or fewer."
         )
     return cleaned
 
@@ -113,31 +113,31 @@ class CommentSerializer(serializers.ModelSerializer):
         if not parent and not is_qa:
             if len(targets) != 1:
                 raise serializers.ValidationError(
-                    "verse, chapter, book のうちいずれか一つを指定してください。"
+                    "Specify exactly one of verse, chapter, or book."
                 )
         elif len(targets) > 1:
             raise serializers.ValidationError(
-                "verse, chapter, book のうち最大一つを指定してください。"
+                "Specify at most one of verse, chapter, or book."
             )
 
         # Q&A質問（parent=None, is_qa=True）はタイトル必須
         if is_qa and not parent:
             title = data.get("title", "").strip()
             if not title:
-                raise serializers.ValidationError({"title": "Q&A質問にはタイトルが必要です。"})
+                raise serializers.ValidationError({"title": "A title is required for Q&A questions."})
 
         if parent:
             if verse and parent.verse_id != verse.pk:
                 raise serializers.ValidationError(
-                    {"parent": "返信先コメントは同じ節のものである必要があります。"}
+                    {"parent": "Reply must target the same verse."}
                 )
             elif chapter and parent.chapter_id != chapter.pk:
                 raise serializers.ValidationError(
-                    {"parent": "返信先コメントは同じ章のものである必要があります。"}
+                    {"parent": "Reply must target the same chapter."}
                 )
             elif book and parent.book_id != book.pk:
                 raise serializers.ValidationError(
-                    {"parent": "返信先コメントは同じ書のものである必要があります。"}
+                    {"parent": "Reply must target the same book."}
                 )
 
         return data
