@@ -26,10 +26,14 @@ export default function Home() {
   const [trending, setTrending] = useState<QAComment[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+    setVerseOfDay(null);
+    setVerseLoading(true);
     fetchVerseOfDay(defaultTranslationForLang(lang))
-      .then(setVerseOfDay)
+      .then((data) => { if (!cancelled) setVerseOfDay(data); })
       .catch(() => {})
-      .finally(() => setVerseLoading(false));
+      .finally(() => { if (!cancelled) setVerseLoading(false); });
+    return () => { cancelled = true; };
   }, [lang]);
 
   useEffect(() => {
