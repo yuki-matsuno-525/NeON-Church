@@ -27,7 +27,9 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseOfDay(null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseLoading(true);
     fetchVerseOfDay(defaultTranslationForLang(lang))
       .then((data) => { if (!cancelled) setVerseOfDay(data); })
