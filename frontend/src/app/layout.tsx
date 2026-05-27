@@ -1,7 +1,26 @@
 import type { Metadata } from "next";
+import { Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
+
+// CSS 変数として注入し、globals.css 側の font-family で利用する。
+// セルフホスティングで Google Fonts への外部リクエストを排除し、CLS を抑える。
+const notoSansJp = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-sans",
+  preload: false,
+});
+
+const notoSerifJp = Noto_Serif_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-serif",
+  preload: false,
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
@@ -38,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang="ja" className={`${notoSansJp.variable} ${notoSerifJp.variable}`} suppressHydrationWarning>
       <body>
         <Providers>
           <ClientLayout>{children}</ClientLayout>
