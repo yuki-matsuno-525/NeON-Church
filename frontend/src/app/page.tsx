@@ -22,6 +22,7 @@ export default function Home() {
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
+  const [verseError, setVerseError] = useState(false);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
   const [trending, setTrending] = useState<QAComment[]>([]);
 
@@ -31,9 +32,11 @@ export default function Home() {
     setVerseOfDay(null);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseLoading(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVerseError(false);
     fetchVerseOfDay(defaultTranslationForLang(lang))
       .then((data) => { if (!cancelled) setVerseOfDay(data); })
-      .catch(() => {})
+      .catch((err) => { console.error("fetchVerseOfDay failed:", err); if (!cancelled) setVerseError(true); })
       .finally(() => { if (!cancelled) setVerseLoading(false); });
     return () => { cancelled = true; };
   }, [lang]);
@@ -130,7 +133,7 @@ export default function Home() {
         </div>
 
         {/* 今日の聖句 */}
-        {(verseLoading || verseOfDay) && (
+        {(verseLoading || verseOfDay || verseError) && (
           verseLoading ? (
             <div
               style={{
@@ -179,6 +182,46 @@ export default function Home() {
                 }}
               >
                 {t.loading}
+              </p>
+            </div>
+          ) : verseError ? (
+            <div
+              style={{
+                display: "block",
+                position: "relative",
+                overflow: "hidden",
+                background: "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+                border: "3px solid rgba(190, 95, 255, 0.95)",
+                borderRadius: 20,
+                padding: "24px 28px",
+                boxShadow: [
+                  "0 0 6px  rgba(210, 110, 255, 0.90)",
+                  "0 0 18px rgba(185, 80,  255, 0.65)",
+                  "0 0 38px rgba(155, 55,  230, 0.40)",
+                ].join(", "),
+              }}
+            >
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.07em",
+                  color: "rgba(193, 143, 255, 0.88)",
+                  margin: "0 0 10px",
+                }}
+              >
+                {t.todayVerse}
+              </p>
+              <p
+                style={{
+                  position: "relative",
+                  fontSize: 14,
+                  color: "rgba(255, 255, 255, 0.30)",
+                  margin: 0,
+                }}
+              >
+                {t.verseUnavailable}
               </p>
             </div>
           ) : (
