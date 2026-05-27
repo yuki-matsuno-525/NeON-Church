@@ -17,6 +17,7 @@ class BookListView(generics.ListAPIView):
     """書一覧。認証不要。?translation=和訳 でフィルタ可能。"""
 
     permission_classes = [AllowAny]
+    authentication_classes: list = []
     serializer_class = BookSerializer
 
     def get_queryset(self):
@@ -31,6 +32,7 @@ class ChapterListView(generics.ListAPIView):
     """指定した書の章一覧。書が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
+    authentication_classes: list = []
     serializer_class = ChapterSerializer
 
     def get_queryset(self):
@@ -43,6 +45,7 @@ class VerseListView(generics.ListAPIView):
     """指定した章の節一覧。章が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
+    authentication_classes: list = []
     serializer_class = VerseSerializer
 
     def get_queryset(self):
@@ -54,6 +57,7 @@ class SearchView(APIView):
     """GET /api/search/?q=  節テキストと書名を icontains で検索（全翻訳対象）。"""
 
     permission_classes = [AllowAny]
+    authentication_classes: list = []
 
     def get(self, request):
         q = request.query_params.get("q", "").strip()

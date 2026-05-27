@@ -1,7 +1,6 @@
 from django.middleware.csrf import CsrfViewMiddleware
 from rest_framework import exceptions
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken
 
 
 class _CSRFCheck(CsrfViewMiddleware):
@@ -27,12 +26,19 @@ class CookieJWTAuthentication(JWTAuthentication):
         if raw_token is None:
             return None
 
+        # 無効/期限切れ/破損トークンはすべて「未認証」として黙殺する。
+        # 認証が必須のエンドポイントは permission_classes=[IsAuthenticated] で
+        # その後弾かれるため、書き込み系の安全性は維持される。
+        # iOS Safari の ITP で Cookie が部分破損する症状で 401 連鎖を防ぐ目的。
         try:
             validated_token = self.get_validated_token(raw_token)
-        except InvalidToken:
+        except Exception:
             return None
 
-        self._enforce_csrf(request)
+        try:
+            self._enforce_csrf(request)
+        except exceptions.PermissionDenied:
+            return None
 
         return self.get_user(validated_token), validated_token
 
