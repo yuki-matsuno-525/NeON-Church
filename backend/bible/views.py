@@ -87,6 +87,9 @@ class VerseOfDayView(APIView):
     """
 
     permission_classes = [AllowAny]
+    # 認証不要の公開エンドポイント。壊れた/期限切れの Cookie を送られても 401 にせず、
+    # トークンを完全に無視する（iOS Safari の ITP でクッキーが部分的に破損する症状対策）。
+    authentication_classes: list = []
 
     def get(self, request):
         translation = request.query_params.get("translation", "口語訳")
