@@ -119,12 +119,19 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
   }
 
   if (!res.ok) {
-    let message = res.statusText;
-    try {
-      const body = await res.json();
-      message = extractErrorMessage(body) ?? res.statusText;
-    } catch {
-      // ignore parse failure
+    let message: string;
+    if (res.status >= 500) {
+      // 5xx ではサーバー由来の詳細をユーザーに見せず、汎用文言に固定する。
+      // 実際のエラー詳細は Sentry / バックエンドログから追える。
+      message = "予期しないエラーが発生しました。時間を置いて再度お試しください。";
+    } else {
+      message = res.statusText;
+      try {
+        const body = await res.json();
+        message = extractErrorMessage(body) ?? res.statusText;
+      } catch {
+        // ignore parse failure
+      }
     }
     throw new ApiError(res.status, message);
   }

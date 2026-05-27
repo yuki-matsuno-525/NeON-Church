@@ -169,7 +169,8 @@ describe("apiFetch", () => {
     expect(err.message).toBe("Error");
   });
 
-  it("4xx エラーで JSON パース失敗 → statusText を message にする", async () => {
+  it("5xx エラーは詳細を露出せず固定文言を返す", async () => {
+    // サーバー由来のスタックトレース等を UI に漏らさない方針（情報漏洩対策）。
     mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -179,7 +180,7 @@ describe("apiFetch", () => {
     } as unknown as Response);
     const err = await fetchBooks().catch((e) => e);
     expect(err.status).toBe(500);
-    expect(err.message).toBe("Internal Server Error");
+    expect(err.message).toBe("予期しないエラーが発生しました。時間を置いて再度お試しください。");
   });
 
   it("401 → token refresh → リトライして成功", async () => {

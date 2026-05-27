@@ -49,3 +49,17 @@ jobs:
 
       - name: Validate OpenAPI schema
         run: python manage.py spectacular --file schema.yaml --validate
+
+      - name: Django deploy security check (prod settings)
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          DJANGO_SECRET_KEY: ci-only-secret-key-must-be-50-chars-or-longer-to-pass-security-check
+          DJANGO_ALLOWED_HOSTS: neon-church.com
+          CSRF_TRUSTED_ORIGINS: https://neon-church.com
+          CORS_ALLOWED_ORIGINS: https://neon-church.com
+          POSTGRES_DB: neon
+          POSTGRES_USER: neon
+          POSTGRES_PASSWORD: neon
+        # 本番設定でセキュリティ系チェック（HSTS / Secure Cookie / SSL Redirect 等）が通るかを確認する。
+        # 本番環境変数の取り違えで保護が外れるリグレッションを CI で検出する目的。
+        run: python manage.py check --deploy --tag security --fail-level WARNING
