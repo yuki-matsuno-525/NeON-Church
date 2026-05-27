@@ -83,7 +83,6 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           style={{
             height: 44,
             width: "auto",
-            mixBlendMode: "screen",
             display: "block",
           }}
         />

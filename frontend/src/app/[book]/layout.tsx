@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: meta.englishName,
       description: `Chapter list and comments for ${meta.englishName}.`,
       type: "website",
-      images: [{ url: "/img/logo.png", width: 512, height: 512, alt: "NeON Church" }],
+      images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
     },
     twitter: {
       card: "summary_large_image",
-      images: ["/img/logo.png"],
+      images: ["/img/logo-og.png"],
     },
   };
 }
