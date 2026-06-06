@@ -150,7 +150,7 @@ const ja = {
     "聖書・外典・偽書の節・章・書へのコメント投稿と返信",
     "Q&A — 疑問をコメントとして投稿し、ベストアンサーを選定",
     "全文検索 — 節テキスト・コメント・書名を横断検索",
-    "コメントや節のブックマーク保存",
+    "コメントや節をお気に入りに保存",
     "読書進捗の自動記録（前回の続きから読める）",
     "コメントへの投票（upvote）と通知機能",
     "共同翻訳プロジェクト — チームで聖書を翻訳",
@@ -248,7 +248,7 @@ const ja = {
   // VerseList
   comment: "コメント",
   bookmark: "お気に入り",
-  bookmarkFailed: "ブックマークの操作に失敗しました",
+  bookmarkFailed: "お気に入りの操作に失敗しました",
 
   // ログイン必須モーダル
   loginRequired: "ログインが必要です",
@@ -287,8 +287,6 @@ const ja = {
   // ブックマーク
   bookmarkAdd: "お気に入りに追加",
   bookmarkRemove: "お気に入りを解除",
-  bookmarkShort: "お気に入り",
-  removeShort: "解除",
 
   // 並び替え・検索
   orderNew: "新しい順",
@@ -661,8 +659,6 @@ const en: typeof ja = {
 
   bookmarkAdd: "Add bookmark",
   bookmarkRemove: "Remove bookmark",
-  bookmarkShort: "Bookmark",
-  removeShort: "Remove",
 
   orderNew: "Newest",
   orderVotes: "Popular",

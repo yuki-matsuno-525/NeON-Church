@@ -7,6 +7,7 @@ import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
 
 type Props = {
@@ -201,20 +202,25 @@ export function CommentPanel({
             <button
               onClick={handleBookmark}
               disabled={loadingBookmark}
+              aria-pressed={isBookmarked}
               aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+              title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
               style={{
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-                padding: "10px 14px",
-                minHeight: 44,
-                background: isBookmarked ? "var(--accent-tint)" : "transparent",
+                border: "none",
+                width: 44,
+                height: 44,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "transparent",
                 color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
                 cursor: "pointer",
-                fontSize: 12,
                 fontFamily: "inherit",
+                padding: 0,
+                filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
               }}
             >
-              {isBookmarked ? t.removeShort : t.bookmarkShort}
+              <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
             </button>
             <button
               onClick={onClose}

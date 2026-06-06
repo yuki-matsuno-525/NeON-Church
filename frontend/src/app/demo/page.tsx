@@ -173,7 +173,7 @@ export default function DemoPage() {
           label: "画面",
           items: [
             { value: "reading", label: "📖 読書", color: "#fab387" },
-            { value: "bookmarks", label: "🔖 ブックマーク", color: "#fab387" },
+            { value: "bookmarks", label: "🔖 お気に入り", color: "#fab387" },
             { value: "notifications", label: "🔔 通知", color: "#fab387" },
             { value: "login", label: "🔑 ログイン", color: "#fab387" },
           ] as { value: Screen; label: string; color: string }[],
@@ -225,7 +225,7 @@ export default function DemoPage() {
         <>
           <button onClick={() => setScreen("bookmarks")}
             style={{ background: "none", border: "none", cursor: "pointer", color: screen === "bookmarks" ? p.accent : p.textMuted, fontSize: "0.875rem", fontWeight: screen === "bookmarks" ? 700 : 400 }}>
-            ブックマーク
+            お気に入り
           </button>
           <button onClick={() => setScreen("notifications")}
             style={{ background: "none", border: "none", cursor: "pointer", position: "relative" as const }}>
@@ -401,7 +401,7 @@ export default function DemoPage() {
                   <button style={{
                     ...btn(p),
                     padding: "4px 12px", fontSize: "0.8125rem",
-                  }}>🔖 ブックマーク</button>
+                  }}>🔖 お気に入り</button>
                 </div>
               )}
             </div>
@@ -515,7 +515,7 @@ export default function DemoPage() {
       <h1 style={{
         fontFamily: theme === "B" ? "Georgia, serif" : "system-ui",
         fontSize: "1.5rem", fontWeight: 700, color: p.text, marginBottom: "24px",
-      }}>ブックマーク</h1>
+      }}>お気に入り</h1>
       <div style={{ display: "flex", flexDirection: "column" as const, gap: "12px" }}>
         {BOOKMARKS_DATA.map((bm, i) => (
           <div key={i} onClick={() => setScreen("reading")} style={{

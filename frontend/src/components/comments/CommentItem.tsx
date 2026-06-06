@@ -337,18 +337,23 @@ export function CommentItem({
               {user && !comment.is_deleted && (
                 <button
                   onClick={handleBookmark}
+                  aria-pressed={!!bookmarkId}
+                  aria-label={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
+                  title={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
                   style={{
                     background: "transparent",
                     border: "none",
                     cursor: "pointer",
                     color: bookmarkId ? "var(--accent)" : "var(--text-faint)",
-                    fontSize: 13,
+                    display: "inline-flex",
+                    alignItems: "center",
                     padding: "4px 6px",
                     minHeight: 32,
                     fontFamily: "inherit",
+                    filter: bookmarkId ? "drop-shadow(0 0 4px var(--accent))" : undefined,
                   }}
                 >
-                  {bookmarkId ? "★" : "☆"}
+                  <Icon name="bookmark" size={15} fill={bookmarkId ? "currentColor" : "none"} />
                 </button>
               )}
 
