@@ -35,11 +35,41 @@
       "Bash(npm test *)",
       "Bash(cd C:\\\\\\\\Users\\\\\\\\ymats\\\\\\\\NeON-Church)",
       "Bash(.venv\\\\Scripts\\\\python.exe manage.py migrate --settings=config.settings.test)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(docker exec *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\ymats\\\\NeON-Church\" -Recurse -Directory | Where-Object { $_.Name -match \"\\(frontend|src|components|pages|styles\\)\" } | Select-Object -ExpandProperty FullName | Select-Object -First 20)"
     ]
   },
   "hooks": {
     "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(*git push*)",
+            "asyncRewake": true,
+            "timeout": 600,
+            "statusMessage": "GitHub Actions を監視中...",
+            "shell": "powershell",
+            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0"
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "PowerShell(git push*)",
+            "asyncRewake": true,
+            "timeout": 600,
+            "statusMessage": "GitHub Actions を監視中...",
+            "shell": "powershell",
+            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0"
+          }
+        ]
+      },
       {
         "matcher": "Edit",
         "hooks": [
