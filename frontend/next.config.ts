@@ -2,12 +2,15 @@ import type { NextConfig } from "next";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+const isDev = process.env.NODE_ENV === "development";
+
 // CSP の connect-src には開発用の localhost、本番用 API、Sentry を許可する。
 // img-src は OGP プレビュー等の都合で https: を広めに許可している。
+// unsafe-eval は React 開発モードのスタックトレース再構築に必要なため開発時のみ許可する。
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "img-src 'self' data: https:",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   `connect-src 'self' ${API_BASE_URL} https://*.sentry.io https://*.ingest.sentry.io`,
