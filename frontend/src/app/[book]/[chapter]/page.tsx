@@ -270,14 +270,7 @@ export default function ChapterPage() {
           verses={verses}
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
-          bookmarks={verseBookmarks}
           highlightVerseNumber={highlightVerseNumber}
-          onBookmarksChange={(updated) =>
-            setBookmarks((prev) => [
-              ...prev.filter((bm) => bm.target_type === "comment"),
-              ...updated,
-            ])
-          }
         />
 
         {chapter && (
