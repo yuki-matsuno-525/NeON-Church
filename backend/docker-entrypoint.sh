@@ -7,10 +7,10 @@ python manage.py migrate
 if ! python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
-exit(0 if User.objects.filter(username='takeshi_yamada').exists() else 1)
+exit(0 if User.objects.filter(username='rev_james_whitfield').exists() else 1)
 "; then
     echo "シードデータを投入します..."
-    python manage.py seed
+    python manage.py seed_en
 fi
 
 exec python manage.py runserver 0.0.0.0:8000
