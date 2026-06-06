@@ -6,3 +6,4 @@
 
 1. テストを実行してパスを確認する（backend: pytest / frontend: npm test）
 2. `git push` まで実施する
+3. `gh run watch` または `gh run list --limit 5` で GitHub Actions のテストがグリーンになったことを確認する
