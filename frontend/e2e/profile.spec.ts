@@ -50,12 +50,11 @@ test("Pr-3: お気に入りタブにブックマーク一覧が表示される",
   const { username, password } = await registerUser(request, "_pr3");
   await loginWithUI(page, username, password);
 
-  // 事前にお気に入りを登録する
+  // 事前にお気に入りを登録する（CommentPanel のブックマークアイコン）
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
-  // VerseList と CommentPanel の両方に「お気に入り」ボタンがあるので exact:true で前者に限定
-  await page.getByRole("button", { name: "お気に入り", exact: true }).click();
-  await expect(page.getByRole("button", { name: "解除", exact: true })).toBeVisible();
+  await page.getByTestId("verse-bookmark").click();
+  await expect(page.getByTestId("verse-bookmark")).toHaveAttribute("aria-label", "お気に入りを解除");
 
   // プロフィールページのお気に入りタブを確認
   await page.goto("/profile");

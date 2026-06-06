@@ -199,29 +199,32 @@ export function CommentPanel({
             </p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <button
-              onClick={handleBookmark}
-              disabled={loadingBookmark}
-              aria-pressed={isBookmarked}
-              aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
-              title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
-              style={{
-                border: "none",
-                width: 44,
-                height: 44,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                padding: 0,
-                filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
-              }}
-            >
-              <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
-            </button>
+            {user && (
+              <button
+                onClick={handleBookmark}
+                disabled={loadingBookmark}
+                data-testid="verse-bookmark"
+                aria-pressed={isBookmarked}
+                aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+                title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+                style={{
+                  border: "none",
+                  width: 44,
+                  height: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "transparent",
+                  color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  padding: 0,
+                  filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
+                }}
+              >
+                <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
+              </button>
+            )}
             <button
               onClick={onClose}
               aria-label={t.closeCommentPanel}
