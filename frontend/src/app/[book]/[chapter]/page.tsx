@@ -179,36 +179,19 @@ export default function ChapterPage() {
   }
 
   return (
-    <div
-      className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
-      style={{ display: "flex", minHeight: "calc(100vh - var(--navbar-height))" }}
-    >
-      <div
-        className="reader-main"
-        style={{
-          flex: 1,
-          minWidth: 0,
-          padding: "32px 32px",
-          overflowY: "auto",
-        }}
-      >
-        <div className="reader-sticky-header" style={{
-          position: "sticky",
-          top: "var(--navbar-height)",
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 16,
-          padding: "8px 0",
-          background: "var(--glass-nav)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid var(--border)",
-          marginLeft: -32,
-          marginRight: -32,
-          paddingLeft: 32,
-          paddingRight: 32,
-        }}>
+    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+      <div className="reader-sticky-header" style={{
+        position: "sticky",
+        top: "var(--navbar-height)",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 32px",
+        background: "var(--glass-nav)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--border)",
+      }}>
           <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
             <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {t.bookList}
@@ -261,7 +244,21 @@ export default function ChapterPage() {
               </a>
             )}
           </div>
-        </div>
+      </div>
+
+      <div
+        className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
+        style={{ display: "flex" }}
+      >
+        <div
+          className="reader-main"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            padding: "32px 32px",
+            overflowY: "auto",
+          }}
+        >
 
         <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24 }}>
           {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
@@ -347,9 +344,9 @@ export default function ChapterPage() {
             </Link>
           ) : null}
         </nav>
-      </div>
+        </div>
 
-      {selectedVerse && (
+        {selectedVerse && (
         <div className="reader-panel">
           <CommentPanel
             verse={selectedVerse}
@@ -365,7 +362,8 @@ export default function ChapterPage() {
             }
           />
         </div>
-      )}
+        )}
+      </div>
 
       {showScrollTop && (
         <button

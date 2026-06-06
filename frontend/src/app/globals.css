@@ -342,10 +342,7 @@ select:focus-visible {
 
   .reader-sticky-header {
     position: static !important;
-    margin-left: -16px !important;
-    margin-right: -16px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding: 8px 16px !important;
   }
 
 }
@@ -358,7 +355,7 @@ select:focus-visible {
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
   scroll-padding-top: var(--navbar-height);
 }
 
