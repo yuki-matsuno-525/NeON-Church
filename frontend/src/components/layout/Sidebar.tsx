@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
@@ -24,6 +25,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const t = useT();
+  const { lang } = useLang();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
   const navItems = [
     { label: t.read, ...NAV_HREFS[0] },
@@ -224,7 +226,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                       background: isActive ? "var(--accent-tint)" : "transparent",
                     }}
                   >
-                    {meta.short}
+                    {lang === "en" ? meta.englishName : meta.short}
                   </Link>
                 );
               })}
