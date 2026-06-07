@@ -74,8 +74,8 @@ describe("ChapterPage - 章ナビゲーション", () => {
       expect(prevLink()).toBeInTheDocument();
       expect(nextLink()).toBeInTheDocument();
     });
-    expect(prevLink()).toHaveTextContent("3");
-    expect(nextLink()).toHaveTextContent("5");
+    expect(prevLink()).toHaveAttribute("aria-label", expect.stringContaining("3"));
+    expect(nextLink()).toHaveAttribute("aria-label", expect.stringContaining("5"));
   });
 
   it("前後のリンクが正しいURLを持つ", async () => {

@@ -281,62 +281,6 @@ export default function ChapterPage() {
           />
         )}
 
-        {/* 章 Prev/Next バー (本文末尾、左右 fixed のナビに代わる新配置) */}
-        <nav
-          aria-label={`${label?.short ?? meta.short} ${t.chapterFmt(chapterNum)} ${t.prevChapter} / ${t.nextChapter}`}
-          style={{
-            marginTop: 40,
-            paddingTop: 20,
-            borderTop: "1px solid var(--border)",
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          {chapterNum > 1 ? (
-            <Link
-              href={`/${slug}/${chapterNum - 1}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "10px 16px",
-                minHeight: 44,
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 14,
-              }}
-            >
-              <span aria-hidden="true">‹</span>
-              <span>{t.prevChapter} ({chapterNum - 1})</span>
-            </Link>
-          ) : <span />}
-          {chapterNum < meta.totalChapters ? (
-            <Link
-              href={`/${slug}/${chapterNum + 1}`}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "10px 16px",
-                minHeight: 44,
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 14,
-                marginLeft: "auto",
-              }}
-            >
-              <span>{t.nextChapter} ({chapterNum + 1})</span>
-              <span aria-hidden="true">›</span>
-            </Link>
-          ) : null}
-        </nav>
         </div>
 
         {selectedVerse && (
@@ -383,6 +327,78 @@ export default function ChapterPage() {
         >
           ↑
         </button>
+      )}
+
+      {!selectedVerse && (
+        <>
+          {chapterNum > 1 && (
+            <Link
+              href={`/${slug}/${chapterNum - 1}`}
+              title={t.chapterFmt(chapterNum - 1)}
+              aria-label={`${t.prevChapter} (${chapterNum - 1})`}
+              className="chapter-nav-prev"
+              style={{
+                position: "fixed",
+                left: "var(--sidebar-width)",
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "18px 10px",
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderLeft: "none",
+                borderRadius: "0 8px 8px 0",
+                color: "var(--text)",
+                textDecoration: "none",
+                fontSize: 20,
+                opacity: 0.75,
+                zIndex: 20,
+                transition: "opacity 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+            >
+              ‹
+            </Link>
+          )}
+
+          {chapterNum < meta.totalChapters && (
+            <Link
+              href={`/${slug}/${chapterNum + 1}`}
+              title={t.chapterFmt(chapterNum + 1)}
+              aria-label={`${t.nextChapter} (${chapterNum + 1})`}
+              className="chapter-nav-next"
+              style={{
+                position: "fixed",
+                right: 0,
+                top: "50%",
+                transform: "translateY(-50%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "18px 10px",
+                background: "var(--bg-alt)",
+                border: "1px solid var(--border)",
+                borderRight: "none",
+                borderRadius: "8px 0 0 8px",
+                color: "var(--text)",
+                textDecoration: "none",
+                fontSize: 20,
+                opacity: 0.75,
+                zIndex: 20,
+                transition: "opacity 0.15s",
+                lineHeight: 1,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+            >
+              ›
+            </Link>
+          )}
+        </>
       )}
     </div>
   );
