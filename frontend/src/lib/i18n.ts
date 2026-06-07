@@ -453,7 +453,7 @@ const en: typeof ja = {
   totalChapters: (n: number) => `${n} chapters`,
 
   bookList: "Book list",
-  toComments: "Go to comments ↓",
+  toComments: "Go to chapter comments ↓",
   switchTranslation: (label: string) => `Switch to ${label}`,
   translationNotFound: (name: string) => `"${name}" not found. Please switch to another translation.`,
 

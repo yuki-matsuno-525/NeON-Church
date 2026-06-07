@@ -37,7 +37,7 @@ export function VerseList({
               color: isSelected ? "var(--accent)" : "var(--text)",
               marginBottom: 2,
               transition: isHighlighted ? undefined : "background 0.1s",
-              animation: isHighlighted ? "verse-flash 2.5s ease-out forwards" : undefined,
+              animation: isHighlighted ? "verse-flash 5s ease-out forwards" : undefined,
             }}
             onMouseEnter={(e) => {
               if (!isSelected) {
