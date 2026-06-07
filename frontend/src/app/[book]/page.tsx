@@ -60,9 +60,9 @@ function BookContent() {
       .finally(() => setLoading(false));
   }, [slug, meta, router, searchParams, lang, t.bookNotFound]);
 
-  const handleCommentSubmit = async (body: string) => {
+  const handleCommentSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
     if (!bookId) return;
-    const comment = await createComment({ book: bookId, body });
+    const comment = await createComment({ book: bookId, title, body, is_qa: isQa, tag_ids: tagIds });
     setComments((prev) => [comment, ...prev]);
   };
 
@@ -89,14 +89,27 @@ function BookContent() {
   const tree = buildCommentTree(comments);
 
   return (
+    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+      <div className="reader-sticky-header" style={{
+        position: "sticky",
+        top: "var(--navbar-height)",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        padding: "8px 32px",
+        background: "var(--glass-nav)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+          <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            {t.bookList}
+          </Link>
+          {" › "}
+          <span>{label?.short ?? meta.short}</span>
+        </p>
+      </div>
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
-      <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 16px" }}>
-        <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {t.bookList}
-        </Link>
-        {" › "}
-        <span>{label?.short ?? meta.short}</span>
-      </p>
 
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
         {label?.name ?? meta.name}
@@ -181,7 +194,7 @@ function BookContent() {
       </h2>
 
       <div style={{ marginBottom: 24 }}>
-        <CommentInput onSubmit={handleCommentSubmit} />
+        <CommentInput onSubmit={handleCommentSubmit} showQaOption showTagOption />
       </div>
 
       {tree.length === 0 ? (
@@ -200,6 +213,7 @@ function BookContent() {
           />
         ))
       )}
+    </div>
     </div>
   );
 }
