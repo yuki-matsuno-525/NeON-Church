@@ -15,7 +15,7 @@ import {
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug } from "@/lib/books";
-import { DEFAULT_TRANSLATION } from "@/lib/translations";
+import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
@@ -44,11 +44,24 @@ export default function ChapterPage() {
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [translation, setTranslation] = useState<string>(() =>
-    typeof window !== "undefined"
+  // ?translation= が有効な翻訳を指していればそれを優先（今日の聖句などからの遷移用）。
+  const queryParam = searchParams.get("translation");
+  const queryTranslation =
+    queryParam && BIBLE_TRANSLATIONS.some((tr) => tr.id === queryParam) ? queryParam : null;
+  const [translation, setTranslation] = useState<string>(() => {
+    if (queryTranslation) return queryTranslation;
+    return typeof window !== "undefined"
       ? (localStorage.getItem("bible-translation") ?? DEFAULT_TRANSLATION)
-      : DEFAULT_TRANSLATION
-  );
+      : DEFAULT_TRANSLATION;
+  });
+
+  // クエリで指定された翻訳を以後の表示でも維持できるよう保存する。
+  useEffect(() => {
+    if (queryTranslation) {
+      localStorage.setItem("bible-translation", queryTranslation);
+      setTranslation(queryTranslation);
+    }
+  }, [queryTranslation]);
 
   useEffect(() => {
     if (!meta) {

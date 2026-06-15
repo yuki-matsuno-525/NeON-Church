@@ -109,3 +109,49 @@ class TestVerseList:
     def test_anonymous_access(self, api_client, verse):
         res = api_client.get(verse_url(verse.chapter.id))
         assert res.status_code == status.HTTP_200_OK
+
+
+# ------------------------------------------------------------------
+# 今日の聖句 GET /api/verse-of-the-day/
+# ------------------------------------------------------------------
+VERSE_OF_DAY_URL = "/api/verse-of-the-day/"
+
+
+@pytest.fixture
+def kjv_verse(book):
+    """口語訳マタイ1:1 と同じ書順・章・節の KJV 節。"""
+    from bible.models import Book, Chapter, Verse
+    kjv_book = Book.objects.create(name="Matthew", translation="KJV", order=1)
+    kjv_chapter = Chapter.objects.create(book=kjv_book, number=1)
+    return Verse.objects.create(
+        chapter=kjv_chapter,
+        number=1,
+        text="The book of the generation of Jesus Christ, the son of David, the son of Abraham.",
+    )
+
+
+@pytest.mark.django_db
+class TestVerseOfDay:
+    @pytest.fixture(autouse=True)
+    def _clear_cache(self):
+        from django.core.cache import cache
+        cache.clear()
+        yield
+        cache.clear()
+
+    def test_includes_translation_field(self, api_client, verse):
+        res = api_client.get(VERSE_OF_DAY_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["translation"] == "口語訳"
+
+    def test_kjv_returns_kjv_translation(self, api_client, verse, kjv_verse):
+        res = api_client.get(VERSE_OF_DAY_URL, {"translation": "KJV"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["translation"] == "KJV"
+        assert res.data["text"] == kjv_verse.text
+
+    def test_kjv_falls_back_to_kougo_translation(self, api_client, verse):
+        # KJV に対応節が無ければ口語訳へフォールバックし、translation も口語訳になる
+        res = api_client.get(VERSE_OF_DAY_URL, {"translation": "KJV"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["translation"] == "口語訳"

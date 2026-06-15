@@ -81,6 +81,7 @@ export type VerseOfDay = {
   text: string;
   book_name: string;
   chapter_number: number;
+  translation: string;
 };
 
 export type MyComment = {

@@ -24,10 +24,11 @@ class VerseSerializer(serializers.ModelSerializer):
 class VerseOfDaySerializer(serializers.ModelSerializer):
     book_name = serializers.CharField(source="chapter.book.name", read_only=True)
     chapter_number = serializers.IntegerField(source="chapter.number", read_only=True)
+    translation = serializers.CharField(source="chapter.book.translation", read_only=True)
 
     class Meta:
         model = Verse
-        fields = ["id", "number", "text", "book_name", "chapter_number"]
+        fields = ["id", "number", "text", "book_name", "chapter_number", "translation"]
 
 
 class VerseSearchSerializer(serializers.ModelSerializer):

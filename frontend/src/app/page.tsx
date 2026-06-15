@@ -50,7 +50,7 @@ export default function Home() {
 
   const slug = verseOfDay ? slugFromBookName(verseOfDay.book_name) : "";
   const verseHref = slug && verseOfDay
-    ? `/${slug}/${verseOfDay.chapter_number}#verse-${verseOfDay.number}`
+    ? `/${slug}/${verseOfDay.chapter_number}?translation=${encodeURIComponent(verseOfDay.translation)}#verse-${verseOfDay.number}`
     : "#";
 
   return (
