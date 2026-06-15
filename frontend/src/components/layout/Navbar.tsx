@@ -35,6 +35,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
   return (
     <nav
+      className="navbar-root"
       style={{
         height: "var(--navbar-height)",
         background: scrolled ? "rgba(8, 4, 24, 0.88)" : "var(--glass-nav)",
@@ -44,6 +45,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         borderBottom: "1px solid rgba(255, 255, 255, 0.07)",
         display: "flex",
         alignItems: "center",
+        flexWrap: "wrap",
         padding: "0 20px",
         gap: 20,
         position: "sticky",
@@ -88,6 +90,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         />
       </Link>
 
+      {/* 検索バー＋言語切替。モバイルでは2段目に「検索バー(左)＋言語切替(右)」で横並び。
+          デスクトップでは display:contents なので従来どおり個別配置になる。 */}
+      <div className="navbar-search-group" style={{ display: "contents" }}>
       {/* 検索バー */}
       <form
         onSubmit={(e) => {
@@ -95,6 +100,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
           if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
         }}
+        className="navbar-search-form"
         style={{ flex: 1, display: "flex", justifyContent: "center" }}
       >
         <input
@@ -117,7 +123,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       </form>
 
       {/* 言語切り替え */}
-      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+      <div className="navbar-lang" style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
         {(["ja", "en"] as const).map((l) => (
           <button
             key={l}
@@ -138,6 +144,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
             {l.toUpperCase()}
           </button>
         ))}
+      </div>
       </div>
 
       {!loading && (

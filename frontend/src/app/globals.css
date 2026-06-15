@@ -353,6 +353,34 @@ select:focus-visible {
     padding: 16px !important;
   }
 
+  /* 検索バーを2段目に折り返すぶん、ナビバーを2段の高さにする
+     （--navbar-height を上書きすると sticky な top 参照箇所も自動追従する） */
+  :root {
+    --navbar-height: 104px;
+  }
+
+  .navbar-root {
+    align-content: center;
+    row-gap: 8px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* 検索バー＋言語切替を2段目に全幅で折り返す（1段目: ☰・ロゴのみ）。
+     グループは通常 display:contents なので、inline 指定に勝つよう display:flex を !important で上書き。 */
+  .navbar-search-group {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    order: 10;
+    flex-basis: 100%;
+  }
+
+  /* グループ内で検索バーを伸ばし、言語切替をその右に置く */
+  .navbar-search-form {
+    flex: 1;
+  }
+
   .navbar-search-input {
     max-width: none !important;
   }
