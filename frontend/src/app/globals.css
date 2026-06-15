@@ -407,6 +407,9 @@ html,
 body {
   min-height: 100%;
   scroll-padding-top: var(--navbar-height);
+  /* 1要素のはみ出しでページ全体に横スクロールが出るのを防ぐ。
+     overflow-x:hidden と違い clip は position:sticky を壊さない。 */
+  overflow-x: clip;
 }
 
 body {

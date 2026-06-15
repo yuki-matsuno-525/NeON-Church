@@ -96,7 +96,8 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       onClick={onClose}
       style={{
         minWidth: 220,
-        maxWidth: 360,
+        // 狭幅画面でも左右 16px の余白を保ち、画面外へはみ出さない
+        maxWidth: "min(360px, calc(100vw - 32px))",
         background: "rgba(20, 12, 50, 0.95)",
         border: `1px solid var(--border)`,
         borderLeft: `3px solid ${accent}`,
