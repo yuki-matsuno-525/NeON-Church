@@ -55,11 +55,11 @@ export default function ChapterPage() {
       : DEFAULT_TRANSLATION;
   });
 
-  // クエリで指定された翻訳を以後の表示でも維持できるよう保存する。
+  // クエリで指定された翻訳を以後の表示でも維持できるよう保存する
+  // （初期stateで既に反映済みなので、ここでは localStorage への保存のみ）。
   useEffect(() => {
     if (queryTranslation) {
       localStorage.setItem("bible-translation", queryTranslation);
-      setTranslation(queryTranslation);
     }
   }, [queryTranslation]);
 
