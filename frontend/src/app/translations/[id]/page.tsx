@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -49,19 +49,21 @@ function MentionInput({
   onSubmit,
   members,
   placeholder,
+  sendLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   members: string[];
   placeholder: string;
+  sendLabel: string;
 }) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    onChange(v);
-    const match = v.match(/@([\w]*)$/);
+  // カーソルより前の部分の末尾にある @xxx を探して候補を更新する
+  const refreshSuggestions = (text: string, caret: number) => {
+    const match = text.slice(0, caret).match(/@([\w]*)$/);
     if (match) {
       const q = match[1].toLowerCase();
       setSuggestions(members.filter((m) => m.toLowerCase().startsWith(q) && m !== "").slice(0, 5));
@@ -70,28 +72,52 @@ function MentionInput({
     }
   };
 
-  const handleSelect = (username: string) => {
-    const replaced = value.replace(/@[\w]*$/, `@${username} `);
-    onChange(replaced);
-    setSuggestions([]);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(e.target.value);
+    refreshSuggestions(e.target.value, e.target.selectionStart);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleSelect = (username: string) => {
+    const el = textareaRef.current;
+    const caret = el ? el.selectionStart : value.length;
+    // カーソル位置の @xxx だけを置換し、後ろの文章はそのまま残す
+    const before = value.slice(0, caret).replace(/@[\w]*$/, `@${username} `);
+    const after = value.slice(caret);
+    onChange(before + after);
+    setSuggestions([]);
+    // 置換後、カーソルを挿入した直後に戻す
+    requestAnimationFrame(() => {
+      if (el) {
+        el.focus();
+        el.selectionStart = el.selectionEnd = before.length;
+      }
+    });
+  };
+
+  const handleSubmit = () => {
+    setSuggestions([]);
+    onSubmit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter は改行。Ctrl/Cmd+Enter で送信。
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      setSuggestions([]);
-      onSubmit();
+      handleSubmit();
     }
   };
 
   return (
     <div style={{ position: "relative", marginTop: 8 }}>
-      <input
+      <textarea
+        ref={textareaRef}
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onClick={(e) => refreshSuggestions(e.currentTarget.value, e.currentTarget.selectionStart)}
         placeholder={placeholder}
-        style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }}
+        rows={2}
+        style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
       />
       {suggestions.length > 0 && (
         <ul style={{ position: "absolute", bottom: "100%", left: 0, margin: 0, padding: 0, listStyle: "none", background: "var(--bg-alt)", border: "1px solid var(--border)", borderRadius: 8, width: "100%", zIndex: 10 }}>
@@ -108,6 +134,25 @@ function MentionInput({
           ))}
         </ul>
       )}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!value.trim()}
+          style={{
+            padding: "6px 16px",
+            border: "none",
+            borderRadius: 8,
+            background: value.trim() ? "var(--accent)" : "var(--bg-alt)",
+            color: value.trim() ? "var(--bg)" : "var(--text-muted)",
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: value.trim() ? "pointer" : "default",
+          }}
+        >
+          {sendLabel}
+        </button>
+      </div>
     </div>
   );
 }
@@ -404,7 +449,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <span>{project.done_count}/{project.unit_count} ({progressPct}%)</span>
           </div>
           <div style={{ height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
-            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--state-success)", borderRadius: 4, transition: "width 0.3s" }} />
+            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 4, transition: "width 0.3s" }} />
           </div>
         </div>
       )}
@@ -518,26 +563,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   <button
                     key={chNum}
                     onClick={() => setSelectedChapter(chNum)}
+                    className="card-glow card-glow-interactive"
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       height: 48,
-                      border: "1px solid var(--border)",
-                      borderRadius: 8,
-                      background: "var(--bg-alt)",
                       color: "var(--text)",
                       fontWeight: 700,
                       fontSize: 14,
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)";
-                      (e.currentTarget as HTMLElement).style.color = "var(--accent)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)";
-                      (e.currentTarget as HTMLElement).style.color = "var(--text)";
                     }}
                   >
                     {chNum}
@@ -558,7 +592,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{selectedChapter}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
-                <div key={unit.id} style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-alt)", overflow: "hidden" }}>
+                <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
                   <div style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -568,7 +602,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
                           )}
                         </div>
-                        <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.5 }}>
+                        <p style={{ margin: 0, fontSize: 13, color: "var(--text)", fontStyle: "italic", lineHeight: 1.5 }}>
                           {unit.verse_text}
                         </p>
                         {unit.body && (
@@ -671,6 +705,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             onSubmit={() => handlePostUnitComment(unit.id)}
                             members={members.filter((m) => m.status === "approved").map((m) => m.username)}
                             placeholder={t.mentionPlaceholder}
+                            sendLabel={t.sendComment}
                           />
                         )}
                       </div>
@@ -784,16 +819,29 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   );
 }
 
-function btnStyle(bg: string, small = false): React.CSSProperties {
+// resume バッジ風の淡いピル。色相で役割を残しつつ統一感を出す。
+// 緑(success)は統一感のためアクセント紫に寄せる。
+function btnStyle(color: string, small = false): React.CSSProperties {
+  const c = color === "var(--state-success)" ? "var(--accent)" : color;
+  const neutral = c === "var(--border)" || c === "var(--text-muted)";
+  const tint = neutral
+    ? "var(--bg-hover)"
+    : c === "var(--state-danger)"
+      ? "rgba(239, 68, 68, 0.15)"
+      : c === "var(--state-warning)"
+        ? "rgba(245, 158, 11, 0.15)"
+        : "var(--accent-tint)";
   return {
-    background: bg,
-    color: bg === "var(--border)" ? "var(--text)" : "#fff",
+    background: tint,
+    color: neutral ? "var(--text-muted)" : c,
     border: "none",
-    borderRadius: small ? 6 : 8,
-    padding: small ? "4px 10px" : "7px 14px",
+    borderRadius: 999,
+    padding: small ? "3px 10px" : "5px 14px",
     cursor: "pointer",
     fontWeight: 600,
     fontSize: small ? 12 : 13,
     whiteSpace: "nowrap" as const,
+    textDecoration: "none",
+    display: "inline-block",
   };
 }
