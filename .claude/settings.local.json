@@ -37,7 +37,24 @@
       "Bash(.venv\\\\Scripts\\\\python.exe manage.py migrate --settings=config.settings.test)",
       "Bash(python *)",
       "Bash(docker exec *)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\ymats\\\\NeON-Church\" -Recurse -Directory | Where-Object { $_.Name -match \"\\(frontend|src|components|pages|styles\\)\" } | Select-Object -ExpandProperty FullName | Select-Object -First 20)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\ymats\\\\NeON-Church\" -Recurse -Directory | Where-Object { $_.Name -match \"\\(frontend|src|components|pages|styles\\)\" } | Select-Object -ExpandProperty FullName | Select-Object -First 20)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(netstat *)",
+      "PowerShell($proc = Get-Process -Id 17676 -ErrorAction SilentlyContinue; if \\($proc\\) { \"$\\($proc.Id\\) $\\($proc.Name\\) $\\($proc.Path\\)\" } else { \"PID 17676 not found\" })",
+      "Read(//c/c/Users/ymats/NeON-Church/backend/config/**)",
+      "Read(//c/c/Users/ymats/NeON-Church/backend/config/settings/**)",
+      "Read(//c/c/Users/ymats/NeON-Church/**)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist)",
+      "Bash(taskkill //PID 22004 //F)",
+      "Bash(wmic process *)",
+      "Bash(rm -rf .next)",
+      "Bash(ls -d .next)",
+      "Bash(npx vitest *)",
+      "Bash(gh run *)",
+      "Bash(npx playwright *)",
+      "Bash(git diff *)",
+      "Read(//tmp/**)"
     ]
   },
   "hooks": {
@@ -47,12 +64,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0",
             "if": "Bash(*git push*)",
-            "asyncRewake": true,
+            "shell": "powershell",
             "timeout": 600,
             "statusMessage": "GitHub Actions を監視中...",
-            "shell": "powershell",
-            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0"
+            "asyncRewake": true
           }
         ]
       },
@@ -61,12 +78,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0",
             "if": "PowerShell(git push*)",
-            "asyncRewake": true,
+            "shell": "powershell",
             "timeout": 600,
             "statusMessage": "GitHub Actions を監視中...",
-            "shell": "powershell",
-            "command": "$gh = 'C:\\Program Files\\GitHub CLI\\gh.exe'; Start-Sleep -Seconds 5; $runId = ((& $gh run list --limit 1 --json databaseId | ConvertFrom-Json)[0].databaseId); if (-not $runId) { exit 0 }; & $gh run watch $runId --exit-status 2>$null; if ($LASTEXITCODE -ne 0) { $logs = (& $gh run view $runId --log-failed 2>$null | Select-Object -Last 80 | Out-String); Write-Output \"GitHub Actions failed (run #$runId):`n$logs\"; exit 2 }; exit 0"
+            "asyncRewake": true
           }
         ]
       },
