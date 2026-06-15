@@ -106,20 +106,10 @@ function TranslationsContent() {
                 style={{ textDecoration: "none", color: "inherit" }}
               >
                 <div
-                  className="card card-hover"
+                  className="card-glow card-glow-interactive"
                   style={{
-                    transition: "border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
                     height: "100%",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.borderColor = "var(--accent)";
-                    el.style.boxShadow = "var(--shadow-card)";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.borderColor = "var(--border)";
-                    el.style.boxShadow = "none";
+                    padding: "20px 18px",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: "var(--space-2)" }}>

@@ -87,11 +87,9 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
 
   return (
     <div
+      className="card-glow"
       style={{
         padding: "14px 16px",
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        background: "var(--bg-alt)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>

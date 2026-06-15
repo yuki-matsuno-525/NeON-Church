@@ -117,6 +117,23 @@
   transform: translateY(1px);
 }
 
+/* 紫グロー基調のカード (read / translations / qa で共通) */
+.card-glow {
+  border: 1px solid rgba(190, 95, 255, 0.70);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%);
+  box-shadow: 0 0 6px rgba(210, 110, 255, 0.40), 0 0 16px rgba(185, 80, 255, 0.20);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+/* クリックできるカード/ボタンに付けるとホバーで明るく光る */
+.card-glow-interactive {
+  cursor: pointer;
+}
+.card-glow-interactive:hover {
+  border-color: rgba(225, 135, 255, 1.0);
+  box-shadow: 0 0 8px rgba(230, 130, 255, 0.80), 0 0 22px rgba(185, 80, 255, 0.45);
+}
+
 /* ボタン */
 .btn {
   display: inline-flex;
