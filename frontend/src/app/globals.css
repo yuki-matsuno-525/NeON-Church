@@ -272,9 +272,10 @@ select:focus-visible {
   background: var(--bg-hover);
 }
 
-/* ハンバーガーボタン: デスクトップでは非表示 */
+/* ハンバーガーボタン: デスクトップでは非表示
+   （Navbar 側のインライン style に勝たせるため !important が必要） */
 .hamburger-btn {
-  display: none;
+  display: none !important;
 }
 
 /* ナビバー認証アイテム: モバイルでは非表示 */
