@@ -3,12 +3,16 @@
 import { type Verse } from "@/lib/api";
 
 // 日本語（かな・漢字）を含むか。含む本文は和文セリフ、英文はラテン体セリフを使う。
-// 和文フォント(Noto Serif JP)は校訂記号 ⌜⌝ 等を全角CJKグリフで描いてしまい、
-// 英語本文（KJV・エノク書）で崩れて見えるため言語で出し分ける。
+// 和文セリフ(Noto Serif JP)は校訂記号 ⌜⌝ 等を全角CJKグリフで描いて崩れて見えるため、
+// 英語本文（KJV・エノク書）では Latin セリフを使う。ただし ⌜⌝ は Latin フォントに無く
+// OS のフォールバック次第で再び崩れるので、正常に描ける --font-sans(Noto Sans JP) を
+// 明示的に最後の砦として挟む（側パネルと同じ描画になる）。
 const _JAPANESE = /[぀-ヿ一-鿿]/;
 
 function verseFontFamily(text: string): string {
-  return _JAPANESE.test(text) ? '"Noto Serif JP", serif' : 'Georgia, "Times New Roman", serif';
+  return _JAPANESE.test(text)
+    ? '"Noto Serif JP", serif'
+    : 'Georgia, "Times New Roman", var(--font-sans), serif';
 }
 
 type Props = {
