@@ -22,20 +22,22 @@ export default function ReadPage() {
   const t = useT();
   const { lang } = useLang();
   const resolved = useRef(false);
-  const [resume, setResume] = useState<ResumeTarget>(() => {
-    const localSlug = getLastBookSlug();
-    const localProgress = localSlug ? getLocalProgress(localSlug) : null;
-    if (localSlug && localProgress) {
-      const meta = BOOKS.find((b) => b.slug === localSlug);
-      if (meta) {
-        return { slug: localSlug, chapter: localProgress.chapterNumber, bookName: meta.short };
-      }
-    }
-    return null;
-  });
+  // 初期値は null 固定。localStorage はクライアントにしか無いため、初期 state で読むと
+  // サーバー描画（resume 無し）と食い違って hydration エラーになる。読み取りは effect で行う。
+  const [resume, setResume] = useState<ResumeTarget>(null);
 
   useEffect(() => {
-    if (getLastBookSlug()) return;
+    const localSlug = getLastBookSlug();
+    if (localSlug) {
+      const localProgress = getLocalProgress(localSlug);
+      const meta = BOOKS.find((b) => b.slug === localSlug);
+      if (localProgress && meta) {
+        // mount 後に localStorage から復元する意図的な更新（hydration 不一致を避けるため）。
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setResume({ slug: localSlug, chapter: localProgress.chapterNumber, bookName: meta.short });
+      }
+      return; // localStorage があればサーバーの読書履歴は見ない
+    }
     if (resolved.current || loading) return;
     resolved.current = true;
     if (!user) return;
