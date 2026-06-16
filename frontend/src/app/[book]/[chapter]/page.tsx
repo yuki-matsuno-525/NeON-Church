@@ -14,13 +14,14 @@ import {
   type Bookmark,
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug } from "@/lib/books";
-import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from "@/lib/translations";
+import { getBookBySlug, resolveTranslation } from "@/lib/books";
+import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
-import { useT, useBookLabel, useTranslationOptions } from "@/lib/i18n";
+import { useT, useBookLabel } from "@/lib/i18n";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -34,7 +35,12 @@ export default function ChapterPage() {
   const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
-  const translationOptions = useTranslationOptions();
+  const { lang } = useLang();
+  // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
+  const translationOptions = (meta?.translations ?? []).map((tr) => ({
+    id: tr.id,
+    label: translationLabel(tr.id, lang),
+  }));
 
   const [verses, setVerses] = useState<Verse[]>([]);
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -44,16 +50,19 @@ export default function ChapterPage() {
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  // ?translation= が有効な翻訳を指していればそれを優先（今日の聖句などからの遷移用）。
+  // ?translation= がこの本の訳を指していればそれを優先（今日の聖句などからの遷移用）。
   const queryParam = searchParams.get("translation");
   const queryTranslation =
-    queryParam && BIBLE_TRANSLATIONS.some((tr) => tr.id === queryParam) ? queryParam : null;
+    queryParam && (meta?.translations.some((tr) => tr.id === queryParam) ?? false) ? queryParam : null;
+  // translation は利用者の希望（localStorage の共通設定）。実際に使う訳は
+  // resolveTranslation でこの本が持つ訳に解決する（無ければその本の訳にフォールバック）。
   const [translation, setTranslation] = useState<string>(() => {
     if (queryTranslation) return queryTranslation;
     return typeof window !== "undefined"
       ? (localStorage.getItem("bible-translation") ?? DEFAULT_TRANSLATION)
       : DEFAULT_TRANSLATION;
   });
+  const activeTranslationId = resolveTranslation(slug, translation)?.id ?? translation;
 
   // クエリで指定された翻訳を以後の表示でも維持できるよう保存する
   // （初期stateで既に反映済みなので、ここでは localStorage への保存のみ）。
@@ -73,10 +82,11 @@ export default function ChapterPage() {
     setLoading(true);
     setError(null);
 
-    fetchBooks(translation)
+    // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
+    const active = resolveTranslation(slug, translation)!;
+    fetchBooks(active.id)
       .then((books) => {
-        const bookName = translation === "KJV" ? meta.englishName : meta.name;
-        const book = books.find((b) => b.name === bookName);
+        const book = books.find((b) => b.name === active.name);
         if (!book) throw new Error(t.bookNotFound);
         return fetchChapters(book.id).then((chapters) => {
           const ch = chapters.find((c) => c.number === chapterNum);
@@ -166,7 +176,7 @@ export default function ChapterPage() {
       <div style={{ padding: 32 }}>
         <p style={{ color: "var(--state-danger)", marginBottom: 16 }}>{error}</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {translationOptions.filter((trans) => trans.id !== translation).map((trans) => (
+          {translationOptions.filter((trans) => trans.id !== activeTranslationId).map((trans) => (
             <button
               key={trans.id}
               onClick={() => {
@@ -220,7 +230,7 @@ export default function ChapterPage() {
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
               <span>{t.translationLabel}</span>
               <select
-                value={translation}
+                value={activeTranslationId}
                 onChange={(e) => {
                   localStorage.setItem("bible-translation", e.target.value);
                   setTranslation(e.target.value);

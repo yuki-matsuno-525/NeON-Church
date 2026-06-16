@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug } from "@/lib/books";
+import { getBookBySlug, resolveTranslation } from "@/lib/books";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 import { useT, useBookLabel } from "@/lib/i18n";
@@ -41,11 +41,12 @@ function BookContent() {
       return;
     }
 
-    const translationId = defaultTranslationForLang(lang);
-    fetchBooks(translationId)
+    // UI 言語の既定訳をその本が持っていればそれを、無ければその本の訳（英訳のみの本など）を使う。
+    // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
+    const tr = resolveTranslation(slug, defaultTranslationForLang(lang))!;
+    fetchBooks(tr.id)
       .then((books) => {
-        const bookName = translationId === "KJV" ? meta.englishName : meta.name;
-        const book = books.find((b) => b.name === bookName);
+        const book = books.find((b) => b.name === tr.name);
         if (!book) throw new Error(t.bookNotFound);
         setBookId(book.id);
         return Promise.all([

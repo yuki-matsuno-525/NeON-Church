@@ -2,7 +2,7 @@
 
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
-import { BIBLE_TRANSLATIONS } from "@/lib/translations";
+import { BIBLE_TRANSLATIONS, translationLabel } from "@/lib/translations";
 
 const ja = {
   // 共通
@@ -399,7 +399,7 @@ const ja = {
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
 
-  categoryNames: { "正典": "正典", "外典": "外典", "偽書": "偽書" } as Record<string, string>,
+  genreNames: { "福音書": "福音書", "黙示": "黙示" } as Record<string, string>,
 };
 
 const en: typeof ja = {
@@ -758,7 +758,7 @@ const en: typeof ja = {
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
 
-  categoryNames: { "正典": "Canon", "外典": "Apocrypha", "偽書": "Pseudepigrapha" } as Record<string, string>,
+  genreNames: { "福音書": "Gospels", "黙示": "Apocalyptic" } as Record<string, string>,
 };
 
 export type Translations = typeof ja;
@@ -787,16 +787,10 @@ export function bookLabel(slug: string, lang: string): { name: string; short: st
     : { name: b.name, short: b.short };
 }
 
+// 全訳の一覧（翻訳プロジェクトの元訳選択など、本に依らない場面で使う）。
 export function useTranslationOptions(): { id: string; label: string }[] {
   const { lang } = useLang();
-  return BIBLE_TRANSLATIONS.map((t) =>
-    lang === "en"
-      ? {
-          id: t.id,
-          label: t.id === "口語訳" ? "Japanese (Kogoyaku)" : "KJV (English)",
-        }
-      : { id: t.id, label: t.label },
-  );
+  return BIBLE_TRANSLATIONS.map((tr) => ({ id: tr.id, label: translationLabel(tr.id, lang) }));
 }
 
 export function useRelativeTime(): (dateStr: string) => string {

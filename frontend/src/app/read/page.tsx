@@ -10,7 +10,7 @@ import {
   getLocalProgress,
   saveLocalProgress,
 } from "@/lib/readingProgress";
-import { BOOKS, CATEGORY_ORDER } from "@/lib/books";
+import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName } from "@/lib/books";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -43,7 +43,8 @@ export default function ReadPage() {
       .then((list) => {
         const latest = list[0];
         if (latest) {
-          const meta = BOOKS.find((b) => b.name === latest.book_name);
+          const slug = slugFromDbName(latest.book_name);
+          const meta = slug ? getBookBySlug(slug) : null;
           if (meta) {
             saveLocalProgress(meta.slug, {
               bookId: latest.book,
@@ -81,13 +82,13 @@ export default function ReadPage() {
         </div>
       )}
 
-      {CATEGORY_ORDER
-        .map((cat) => ({ cat, books: BOOKS.filter((b) => b.category === cat) }))
+      {GENRE_ORDER
+        .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
         .filter(({ books }) => books.length > 0)
-        .map(({ cat, books }) => (
-          <div key={cat} style={{ marginBottom: "var(--space-6)" }}>
+        .map(({ genre, books }) => (
+          <div key={genre} style={{ marginBottom: "var(--space-6)" }}>
             <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 var(--space-3)", color: "var(--text)" }}>
-              {t.categoryNames[cat] ?? cat}
+              {t.genreNames[genre] ?? genre}
             </h2>
             <div
               style={{
