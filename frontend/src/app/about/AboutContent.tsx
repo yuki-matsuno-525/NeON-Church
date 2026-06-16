@@ -11,7 +11,7 @@ export function AboutContent() {
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, fontFamily: '"Noto Serif JP", serif' }}>
         {t.aboutTitle}
       </h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 40 }}>
+      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 40, whiteSpace: "pre-line" }}>
         {t.aboutSubtitle}
       </p>
 
@@ -31,43 +31,6 @@ export function AboutContent() {
         </ul>
       </Section>
 
-      <nav
-        aria-label={t.footerNavLabel}
-        style={{
-          marginBottom: 32,
-          paddingTop: 16,
-          borderTop: "1px solid var(--border)",
-        }}
-      >
-        <ul
-          style={{
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "8px 18px",
-            fontSize: 13,
-          }}
-        >
-          <li>
-            <Link href="/guidelines" style={trustLinkStyle}>{t.footerGuidelines}</Link>
-          </li>
-          <li>
-            <Link href="/licenses" style={trustLinkStyle}>{t.footerLicenses}</Link>
-          </li>
-          <li>
-            <Link href="/terms" style={trustLinkStyle}>{t.footerTerms}</Link>
-          </li>
-          <li>
-            <Link href="/privacy" style={trustLinkStyle}>{t.footerPrivacy}</Link>
-          </li>
-          <li>
-            <Link href="/feedback" style={trustLinkStyle}>{t.footerFeedback}</Link>
-          </li>
-        </ul>
-      </nav>
-
       <div style={{ marginTop: 40 }}>
         <Link
           href="/"
@@ -85,18 +48,13 @@ export function AboutContent() {
   );
 }
 
-const trustLinkStyle: React.CSSProperties = {
-  color: "var(--accent)",
-  textDecoration: "none",
-};
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 32 }}>
       <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "var(--accent)" }}>
         {title}
       </h2>
-      <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)" }}>
+      <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", whiteSpace: "pre-line" }}>
         {children}
       </div>
     </div>

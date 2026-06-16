@@ -4,18 +4,18 @@ import { AboutContent } from "./AboutContent";
 export const metadata: Metadata = {
   title: "About NeON Church",
   description:
-    "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha. Comment on verses and chapters, ask questions, and join collaborative translation projects.",
+    "NeON Church is a new Christian platform where texts and interpretations intersect — bridging Non-Church Christianity, postmodern thought, and texts placed outside the canon.",
   openGraph: {
     title: "About NeON Church",
     description:
-      "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha. Comment on verses and chapters, ask questions, and join collaborative translation projects.",
+      "NeON Church is a new Christian platform where texts and interpretations intersect — bridging Non-Church Christianity, postmodern thought, and texts placed outside the canon.",
     images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "About NeON Church",
     description:
-      "NeON Church is a platform for reading and discussing the Bible, Apocrypha, and Pseudepigrapha.",
+      "NeON Church is a new Christian platform where texts and interpretations intersect — bridging Non-Church Christianity, postmodern thought, and texts placed outside the canon.",
     images: ["/img/logo-og.png"],
   },
 };
