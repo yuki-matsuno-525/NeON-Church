@@ -2,6 +2,15 @@
 
 import { type Verse } from "@/lib/api";
 
+// 日本語（かな・漢字）を含むか。含む本文は和文セリフ、英文はラテン体セリフを使う。
+// 和文フォント(Noto Serif JP)は校訂記号 ⌜⌝ 等を全角CJKグリフで描いてしまい、
+// 英語本文（KJV・エノク書）で崩れて見えるため言語で出し分ける。
+const _JAPANESE = /[぀-ヿ一-鿿]/;
+
+function verseFontFamily(text: string): string {
+  return _JAPANESE.test(text) ? '"Noto Serif JP", serif' : 'Georgia, "Times New Roman", serif';
+}
+
 type Props = {
   verses: Verse[];
   selectedVerseId: string | null;
@@ -54,7 +63,7 @@ export function VerseList({
               style={{
                 lineHeight: 1.9,
                 fontSize: 17,
-                fontFamily: '"Noto Serif JP", serif',
+                fontFamily: verseFontFamily(verse.text),
                 // 詩文（エノク書など）の節内改行を保持する。改行の無い訳には影響しない。
                 whiteSpace: "pre-line",
               }}
