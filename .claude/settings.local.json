@@ -54,7 +54,13 @@
       "Bash(gh run *)",
       "Bash(npx playwright *)",
       "Bash(git diff *)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(echo \"E2E exit=$?\")",
+      "Read(//c/Users/ymats/Downloads/pg77935-h/**)",
+      "Bash(.venv/Scripts/python.exe -c \"import bs4; print\\('bs4', bs4.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import lxml; print\\('lxml ok'\\)\")",
+      "Bash(PYTHONUTF8=1 .venv/Scripts/python.exe -)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 .venv/Scripts/python.exe -m bible.importers.cli all \"C:/Users/ymats/Downloads/pg77935-h/pg77935-images.html\" --outdir bible/importers/_artifacts)"
     ]
   },
   "hooks": {
