@@ -1,0 +1,117 @@
+"""取り込みパイプラインの CLI（DB 非依存）。
+
+backend ディレクトリで実行する:
+
+    python -m bible.importers.cli parse-enoch <html> -o out.json
+    python -m bible.importers.cli validate   out.json [--expect-chapters 108]
+    python -m bible.importers.cli preview     out.json -o out.preview.txt
+    python -m bible.importers.cli all         <html> [--expect-chapters 108]
+
+`all` は parse → validate → preview をまとめて実行し、JSON とプレビューを書き出す。
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from .enoch import parse_enoch
+from .preview import render_preview
+from .validate import summarize, validate
+
+
+def _load(path: str) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _print_issues(issues: list[tuple[str, str]]) -> int:
+    counts = summarize(issues)
+    for level in ("error", "warn", "info"):
+        for lv, msg in issues:
+            if lv == level:
+                print(f"  [{lv.upper():5}] {msg}")
+    print(f"\n  → error {counts['error']} / warn {counts['warn']} / info {counts['info']}")
+    return counts["error"]
+
+
+def cmd_parse_enoch(args) -> int:
+    html = Path(args.html).read_text(encoding="utf-8")
+    data, warnings = parse_enoch(html)
+    Path(args.output).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"JSON を書き出しました: {args.output}")
+    print(f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}")
+    for w in warnings:
+        print(f"  [PARSE] {w}")
+    return 0
+
+
+def cmd_validate(args) -> int:
+    data = _load(args.json)
+    issues = validate(data, expect_chapters=args.expect_chapters)
+    return 1 if _print_issues(issues) else 0
+
+
+def cmd_preview(args) -> int:
+    data = _load(args.json)
+    Path(args.output).write_text(render_preview(data), encoding="utf-8")
+    print(f"プレビューを書き出しました: {args.output}")
+    return 0
+
+
+def cmd_all(args) -> int:
+    html = Path(args.html).read_text(encoding="utf-8")
+    data, warnings = parse_enoch(html)
+
+    base = Path(args.outdir)
+    base.mkdir(parents=True, exist_ok=True)
+    json_path = base / "enoch.json"
+    preview_path = base / "enoch.preview.txt"
+    json_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    preview_path.write_text(render_preview(data), encoding="utf-8")
+
+    print(f"JSON     : {json_path}")
+    print(f"プレビュー: {preview_path}")
+    print(f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}\n")
+    if warnings:
+        print("[ パース時の気づき ]")
+        for w in warnings:
+            print(f"  {w}")
+        print()
+    print("[ バリデーション ]")
+    issues = validate(data, expect_chapters=args.expect_chapters)
+    return 1 if _print_issues(issues) else 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="書籍テキスト取り込みパイプライン（DB 非依存）")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("parse-enoch", help="エノク書 HTML を正規化 JSON に変換")
+    p.add_argument("html")
+    p.add_argument("-o", "--output", default="enoch.json")
+    p.set_defaults(func=cmd_parse_enoch)
+
+    p = sub.add_parser("validate", help="正規化 JSON を検査")
+    p.add_argument("json")
+    p.add_argument("--expect-chapters", type=int, default=None)
+    p.set_defaults(func=cmd_validate)
+
+    p = sub.add_parser("preview", help="正規化 JSON をプレビューテキストに変換")
+    p.add_argument("json")
+    p.add_argument("-o", "--output", default="preview.txt")
+    p.set_defaults(func=cmd_preview)
+
+    p = sub.add_parser("all", help="parse → validate → preview をまとめて実行")
+    p.add_argument("html")
+    p.add_argument("--outdir", default="_artifacts")
+    p.add_argument("--expect-chapters", type=int, default=108)
+    p.set_defaults(func=cmd_all)
+
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
