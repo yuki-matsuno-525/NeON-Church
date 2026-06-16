@@ -10,16 +10,14 @@ import {
   type QAComment,
   type Comment,
 } from "@/lib/api";
-import { BOOKS } from "@/lib/books";
+import { slugFromDbName } from "@/lib/books";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
 
-function getSlugByName(name: string): string | null {
-  return BOOKS.find((b) => b.name === name)?.slug ?? null;
-}
-
 function buildVerseUrl(comment: QAComment): string | null {
-  const slug = getSlugByName(comment.book_name);
+  // book_name はコメント対象の本の DB 名（訳ごとに日本語/英語が異なる）。
+  // どの訳の名前からでも slug を逆引きできる slugFromDbName を使う。
+  const slug = slugFromDbName(comment.book_name);
   if (!slug) return null;
   if (comment.chapter_number) {
     const hash = comment.verse_number ? `#verse-${comment.verse_number}` : "";
