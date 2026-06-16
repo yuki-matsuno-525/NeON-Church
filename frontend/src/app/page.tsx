@@ -405,27 +405,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* NeON Church について */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            paddingTop: 8,
-            borderTop: "1px solid rgba(255, 255, 255, 0.07)",
-          }}
-        >
-          <Link
-            href="/about"
-            style={{
-              fontSize: 13,
-              color: "var(--text-muted)",
-              textDecoration: "underline",
-              textDecorationColor: "var(--border)",
-            }}
-          >
-            {t.aboutLink}
-          </Link>
-        </div>
       </div>
 
       <style>{`

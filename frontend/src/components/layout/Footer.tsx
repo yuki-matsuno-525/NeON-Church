@@ -22,7 +22,8 @@ export function Footer() {
     <footer
       role="contentinfo"
       style={{
-        marginTop: 48,
+        position: "relative",
+        zIndex: 2,
         padding: "24px 16px 32px",
         borderTop: "1px solid var(--border)",
         background: "rgba(8, 4, 24, 0.55)",

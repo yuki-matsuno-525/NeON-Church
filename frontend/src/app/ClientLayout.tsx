@@ -35,11 +35,9 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
       <div style={{ display: "flex", position: "relative", zIndex: 2 }}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ flex: 1 }}>{children}</div>
-          <Footer />
-        </main>
+        <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
       </div>
+      <Footer />
     </ToastProvider>
   );
 }
