@@ -115,7 +115,10 @@ export function isValidSlug(slug: string): slug is BookSlug {
 
 /** slug と章番号から章名を返す。章名を持たない本・範囲外は null。 */
 export function chapterTitle(slug: string, chapterNumber: number): string | null {
-  const titles = getBookBySlug(slug)?.chapterTitles;
+  // BOOKS は as const のため、chapterTitles を持つ本と持たない本のユニオンになる。
+  // in で絞り込んでから参照する。
+  const book = getBookBySlug(slug);
+  const titles = book && "chapterTitles" in book ? book.chapterTitles : undefined;
   return titles?.[chapterNumber - 1] ?? null;
 }
 
