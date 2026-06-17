@@ -61,6 +61,26 @@ export const BOOKS = [
       "Jesus Heals a Builder",
       "Jesus in the Temple",
     ] },
+  // ペテロの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 章=セクション見出し、節=丸括弧 (n) で見出しをまたいで連続（Akhmim 写本の 1..60）。
+  { slug: "peter", name: "ペテロの福音書", englishName: "The Gospel of Peter", short: "ペテロ", totalChapters: 14, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Peter" }],
+    chapterTitles: [
+      "Pilate and Herod",
+      "Joseph Requests Jesus' Body",
+      "The Lord is Tortured and Mocked",
+      "The Lord is Crucified",
+      "The Lord Dies",
+      "The Lord is Buried",
+      "People React",
+      "The Tomb is Secured",
+      "Men Descend from Heaven",
+      "Emerging from the Tomb",
+      "Reporting to Pilate",
+      "Mary Magdalene Goes to the Tomb",
+      "Encounter at the Tomb",
+      "The Disciples Depart",
+    ] },
   // エノク書は R. H. Charles 英訳のみ（翻訳プロジェクトの元テキスト）。
   { slug: "enoch",   name: "エノク書",           englishName: "The Book of Enoch", short: "エノク書", totalChapters: 108, genre: "黙示" as BookGenre,
     translations: [{ id: "R. H. Charles (EN)", name: "The Book of Enoch" }] },
