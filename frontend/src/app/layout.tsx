@@ -30,12 +30,12 @@ export const metadata: Metadata = {
     template: "%s | NeON Church",
   },
   description:
-    "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects.",
+    "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text — from canon to Apocrypha and Pseudepigrapha.",
   metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "NeON Church",
     description:
-      "Read and discuss the Bible, Apocrypha, and Pseudepigrapha. Post comments on verses and chapters, ask questions, and join collaborative translation projects.",
+      "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text — from canon to Apocrypha and Pseudepigrapha.",
     url: SITE_URL,
     siteName: "NeON Church",
     locale: "en_US",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NeON Church",
-    description: "Read and discuss the Bible, Apocrypha, and Pseudepigrapha.",
+    description: "An open field where texts and interpretations intersect — from canon to Apocrypha and Pseudepigrapha.",
     images: ["/img/logo-og.png"],
   },
 };

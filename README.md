@@ -1,14 +1,14 @@
 # NeON Church
 
-**Read the Bible — including the Apocrypha and Pseudepigrapha — with Reddit-style comments.**
+**Not a church as an institution, but an open field where texts and interpretations intersect.**
 
-NeON Church is an online platform where you can read, annotate, and discuss biblical texts (canon, Apocrypha, and Pseudepigrapha) together. Every text is treated as equal — no second-class scriptures.
+NeON Church reimagines Christianity not as a single fixed authority, but as an open field where multiple texts, interpretations, histories, and fragments connect. It draws on Kanzo Uchimura's Non-Church Christianity and a "database-like" reading of faith after postmodernism, shedding light on texts placed outside the canon and interpretations long marginalized. Every text is treated as equal — no second-class scriptures. Here you can read, annotate, discuss, and collaboratively translate biblical texts (canon, Apocrypha, and Pseudepigrapha) together.
 
 **Live:** https://neon-church.com · **GitHub:** https://github.com/yuki-matsuno-525/NeON-Church
 
 ---
 
-聖書・外典・偽書をオンラインで読みながら、Reddit スタイルでコメント・議論できる Web サービス。
+制度としての教会ではなく、テキストと解釈が交差する「開かれた場」。キリスト教を、ひとつの固定された権威としてではなく、複数のテキスト・解釈・歴史・断片が接続される場として捉え直す試み。正典から外典・偽書まで、あらゆるテキストをオンラインで読み、コメント・議論し、共同で翻訳できる Web サービス。
 
 > コードベース解説は [`docs/codebase-guide.md`](docs/codebase-guide.md) を参照。
 

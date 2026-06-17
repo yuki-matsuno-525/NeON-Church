@@ -45,8 +45,8 @@ const ja = {
   books: "書",
 
   // ホーム
-  homeTagline: "すべての声を、\n等しく。",
-  homeDesc: "外典・偽書から正典まで。聖書のあらゆるテキストを読み、議論し、翻訳する場所。",
+  homeTagline: "ひとつの権威ではなく、\n開かれた場として。",
+  homeDesc: "複数のテキスト、解釈、歴史、断片が接続されるキリスト教へ。正典から外典・偽書まで、あらゆるテキストを読み、議論し、翻訳する。",
   todayVerse: "今日の聖句",
   verseUnavailable: "本日の聖句を取得できませんでした",
   trending: "トレンド",
@@ -440,8 +440,8 @@ const en: typeof ja = {
   searchPlaceholder: "Search...",
   books: "Books",
 
-  homeTagline: "Equal voice\nfor all.",
-  homeDesc: "From Apocrypha to canon. Read, discuss, and translate every text of the Bible.",
+  homeTagline: "Not one authority,\nbut an open field.",
+  homeDesc: "Toward a Christianity where multiple texts, interpretations, histories, and fragments connect. From canon to Apocrypha and Pseudepigrapha — read, discuss, and translate every text.",
   todayVerse: "Today's Verse",
   verseUnavailable: "Verse unavailable today.",
   trending: "Trending",
