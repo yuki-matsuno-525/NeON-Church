@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createBookmark, removeBookmark, createComment, buildCommentTree, type Verse, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -39,6 +39,7 @@ export function CommentPanel({
   const [loadingBookmark, setLoadingBookmark] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [verseExpanded, setVerseExpanded] = useState(false);
 
   const { comments, setComments, loading, reload } = useComments({
     verse_id: verse.id,
@@ -92,11 +93,22 @@ export function CommentPanel({
     setComments((prev) => [...prev, comment]);
   };
 
+  // 別の節を選び直したら本文の展開状態をリセットする（パネルは再利用される）。
+  useEffect(() => {
+    setVerseExpanded(false);
+  }, [verse.id]);
+
   const q = searchQuery.trim().toLowerCase();
   const filteredComments = q
     ? comments.filter((c) => c.body.toLowerCase().includes(q))
     : comments;
   const tree = buildCommentTree(filteredComments);
+
+  // 本文が長いときは省略しつつ、折り畳みで全文展開できるようにする。
+  const VERSE_PREVIEW_LEN = 90;
+  const verseIsLong = verse.text.length > VERSE_PREVIEW_LEN;
+  const verseShown =
+    verseExpanded || !verseIsLong ? verse.text : `${verse.text.slice(0, VERSE_PREVIEW_LEN)}…`;
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -143,8 +155,10 @@ export function CommentPanel({
         style={{
           width: panelWidth,
           minWidth: MIN_WIDTH,
-          background: "var(--bg-alt)",
-          borderLeft: "1px solid var(--border)",
+          background: "var(--glass-bg)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderLeft: "1px solid var(--glass-border)",
           height: "calc(100vh - var(--navbar-height))",
           position: "sticky",
           top: "var(--navbar-height)",
@@ -176,81 +190,117 @@ export function CommentPanel({
         <div
           style={{
             padding: "12px 16px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 8,
+            borderBottom: "1px solid var(--glass-border)",
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 13 }}>
-              {t.chapterVerseHeader(chapterNumber, verse.number)}
-            </p>
-            <p
+          {/* ラベルと操作ボタンを同じ行（同じ高さ）に置く。
+              本文はその下に全幅で広げ、展開時のスクロールバーをパネル右端に出す。 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+            }}
+          >
+            <span
+              className="badge"
               style={{
-                margin: "4px 0 0",
-                fontSize: 13,
-                color: "var(--text-muted)",
-                lineHeight: 1.5,
+                background: "var(--accent-tint)",
+                color: "var(--accent)",
+                fontSize: 12,
               }}
             >
-              「{verse.text.slice(0, 60)}{verse.text.length > 60 ? "…" : ""}」
-            </p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {user && (
+              {t.chapterVerseHeader(chapterNumber, verse.number)}
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+              {user && (
+                <button
+                  onClick={handleBookmark}
+                  disabled={loadingBookmark}
+                  data-testid="verse-bookmark"
+                  aria-pressed={isBookmarked}
+                  aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+                  title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+                  style={{
+                    border: "none",
+                    width: 36,
+                    height: 36,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "transparent",
+                    color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    padding: 0,
+                    filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
+                  }}
+                >
+                  <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
+                </button>
+              )}
               <button
-                onClick={handleBookmark}
-                disabled={loadingBookmark}
-                data-testid="verse-bookmark"
-                aria-pressed={isBookmarked}
-                aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
-                title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
+                onClick={onClose}
+                aria-label={t.closeCommentPanel}
                 style={{
+                  background: "transparent",
                   border: "none",
-                  width: 44,
-                  height: 44,
+                  cursor: "pointer",
+                  color: "var(--text-faint)",
+                  fontSize: 22,
+                  lineHeight: 1,
+                  width: 36,
+                  height: 36,
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  background: "transparent",
-                  color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
                   padding: 0,
-                  filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
+                  borderRadius: 6,
                 }}
               >
-                <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
+                ×
               </button>
-            )}
+            </div>
+          </div>
+
+          <p
+            style={{
+              margin: "8px 0 0",
+              fontSize: 13,
+              color: "var(--text-muted)",
+              lineHeight: 1.6,
+              maxHeight: verseExpanded ? "40vh" : undefined,
+              overflowY: verseExpanded ? "auto" : undefined,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            「{verseShown}」
+          </p>
+          {verseIsLong && (
             <button
-              onClick={onClose}
-              aria-label={t.closeCommentPanel}
+              type="button"
+              onClick={() => setVerseExpanded((v) => !v)}
+              aria-expanded={verseExpanded}
               style={{
+                marginTop: 4,
+                padding: 0,
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                color: "var(--text-faint)",
-                fontSize: 22,
-                lineHeight: 1,
-                width: 44,
-                height: 44,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-                borderRadius: 6,
+                color: "var(--accent)",
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: "inherit",
               }}
             >
-              ×
+              {verseExpanded ? t.readLessVerse : t.readMoreVerse}
             </button>
-          </div>
+          )}
         </div>
 
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
-        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
           {composeOpen ? (
             <CommentInput
               onSubmit={handleSubmit}
@@ -265,27 +315,30 @@ export function CommentPanel({
             <button
               type="button"
               onClick={handleOpenCompose}
+              className="card-glow card-glow-interactive"
               style={{
                 width: "100%",
-                padding: "10px 14px",
-                minHeight: 40,
-                background: "transparent",
-                border: "1px dashed var(--border)",
-                borderRadius: 8,
-                color: "var(--text-muted)",
+                padding: "11px 14px",
+                minHeight: 44,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                color: "var(--text)",
                 cursor: "pointer",
                 fontSize: 13,
+                fontWeight: 700,
                 fontFamily: "inherit",
-                textAlign: "left",
               }}
             >
+              <Icon name="message-square" size={16} />
               {t.writeCommentCta}
             </button>
           )}
         </div>
 
         {/* Ordering toggle */}
-        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)", display: "flex", gap: 8 }}>
+        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)", display: "flex", gap: 8 }}>
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
@@ -307,7 +360,7 @@ export function CommentPanel({
         </div>
 
         {/* Search */}
-        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)" }}>
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

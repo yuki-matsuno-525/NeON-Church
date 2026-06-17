@@ -13,6 +13,7 @@ export type IconName =
   | "alert-circle"
   | "refresh-cw"
   | "arrow-left"
+  | "message-square"
   | "bookmark";
 
 type IconProps = Omit<SVGProps<SVGSVGElement>, "name"> & {
@@ -88,6 +89,9 @@ const PATHS: Record<IconName, ReactElement> = {
       <path d="m12 19-7-7 7-7" />
       <path d="M19 12H5" />
     </>
+  ),
+  "message-square": (
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
   ),
   bookmark: <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />,
 };

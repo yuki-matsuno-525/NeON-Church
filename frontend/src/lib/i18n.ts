@@ -385,6 +385,8 @@ const ja = {
   // CommentPanel (UX-9)
   writeCommentCta: "コメントを書く",
   closeCommentPanel: "コメントパネルを閉じる",
+  readMoreVerse: "続きを読む",
+  readLessVerse: "折りたたむ",
 
   // 章ナビ / 翻訳切替 (UX-11)
   translationLabel: "翻訳",
@@ -746,6 +748,8 @@ const en: typeof ja = {
 
   writeCommentCta: "Write a comment",
   closeCommentPanel: "Close comment panel",
+  readMoreVerse: "Read more",
+  readLessVerse: "Show less",
 
   translationLabel: "Translation",
   prevChapter: "Previous chapter",
