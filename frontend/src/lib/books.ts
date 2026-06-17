@@ -6,7 +6,7 @@ import { translationLang } from "@/lib/translations";
 
 // 整理の軸はジャンル（文学種別）。正典/外典といった区分は設けない。
 // 本があるジャンルだけ表示される（read ページ側で空ジャンルを除外）。
-export const GENRE_ORDER = ["福音書", "黙示"] as const;
+export const GENRE_ORDER = ["福音書", "黙示", "旧約偽典"] as const;
 export type BookGenre = (typeof GENRE_ORDER)[number];
 
 // その本が持つ訳。id は DB の Book.translation、name は DB の Book.name。
@@ -97,6 +97,10 @@ export const BOOKS = [
   // エノク書は R. H. Charles 英訳のみ（翻訳プロジェクトの元テキスト）。
   { slug: "enoch",   name: "エノク書",           englishName: "The Book of Enoch", short: "エノク書", totalChapters: 108, genre: "黙示" as BookGenre,
     translations: [{ id: "R. H. Charles (EN)", name: "The Book of Enoch" }] },
+  // アダムとエバの生涯（Vita Adae et Evae）は L. S. A. Wells 英訳のみ（パブリックドメイン）。
+  // 章=ローマ数字 i..li、節=アラビア数字。章番号は持つが章名は無い。
+  { slug: "adam-and-eve", name: "アダムとエバの生涯", englishName: "The Life of Adam and Eve", short: "アダムとエバ", totalChapters: 51, genre: "旧約偽典" as BookGenre,
+    translations: [{ id: "L. S. A. Wells (EN)", name: "The Life of Adam and Eve" }] },
 ] as const;
 
 export type BookSlug = (typeof BOOKS)[number]["slug"];

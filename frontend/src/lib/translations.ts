@@ -10,6 +10,7 @@ export const BIBLE_TRANSLATIONS: { id: string }[] = [
   { id: "KJV" },
   { id: "R. H. Charles (EN)" },
   { id: "Mark M. Mattison (EN)" },
+  { id: "L. S. A. Wells (EN)" },
 ];
 
 export const DEFAULT_TRANSLATION = "口語訳";
@@ -20,6 +21,7 @@ const TRANSLATION_LANG: Record<string, "ja" | "en"> = {
   "KJV": "en",
   "R. H. Charles (EN)": "en",
   "Mark M. Mattison (EN)": "en",
+  "L. S. A. Wells (EN)": "en",
 };
 
 // 訳 id → その訳の言語（ja/en）。未知の id は ja 扱い。
@@ -37,6 +39,7 @@ const TRANSLATION_LABELS: Record<string, { ja: string; en: string }> = {
   "KJV": { ja: "KJV（英語）", en: "KJV (English)" },
   "R. H. Charles (EN)": { ja: "Charles 訳（英語）", en: "R. H. Charles (English)" },
   "Mark M. Mattison (EN)": { ja: "Mattison 訳（英語）", en: "Mark M. Mattison (English)" },
+  "L. S. A. Wells (EN)": { ja: "Wells 訳（英語）", en: "L. S. A. Wells (English)" },
 };
 
 export function translationLabel(id: string, lang: string): string {

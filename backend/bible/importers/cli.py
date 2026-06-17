@@ -21,6 +21,7 @@ from pathlib import Path
 from .enoch import parse_enoch
 from .infancy_thomas import parse_infancy_thomas
 from .judas import parse_judas
+from .life_of_adam_and_eve import parse_life_of_adam_and_eve
 from .mary import parse_mary
 from .peter import parse_peter
 from .preview import render_preview
@@ -33,6 +34,7 @@ PARSERS = {
     "infancy-thomas": (parse_infancy_thomas, 19),
     "peter": (parse_peter, 14),
     "judas": (parse_judas, 7),
+    "adam-and-eve": (parse_life_of_adam_and_eve, 51),
 }
 
 
@@ -84,6 +86,11 @@ def cmd_parse_peter(args) -> int:
 
 def cmd_parse_judas(args) -> int:
     _parse_to_json("judas", args.html, args.output)
+    return 0
+
+
+def cmd_parse_adam_and_eve(args) -> int:
+    _parse_to_json("adam-and-eve", args.html, args.output)
     return 0
 
 
@@ -154,6 +161,11 @@ def main(argv=None) -> int:
     p.add_argument("html")
     p.add_argument("-o", "--output", default="judas.json")
     p.set_defaults(func=cmd_parse_judas)
+
+    p = sub.add_parser("parse-adam-and-eve", help="アダムとエバの生涯 HTML を正規化 JSON に変換")
+    p.add_argument("html")
+    p.add_argument("-o", "--output", default="adam-and-eve.json")
+    p.set_defaults(func=cmd_parse_adam_and_eve)
 
     p = sub.add_parser("validate", help="正規化 JSON を検査")
     p.add_argument("json")

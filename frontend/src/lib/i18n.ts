@@ -401,7 +401,7 @@ const ja = {
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
 
-  genreNames: { "福音書": "福音書", "黙示": "黙示" } as Record<string, string>,
+  genreNames: { "福音書": "福音書", "黙示": "黙示", "旧約偽典": "旧約偽典" } as Record<string, string>,
 };
 
 const en: typeof ja = {
@@ -762,7 +762,7 @@ const en: typeof ja = {
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
 
-  genreNames: { "福音書": "Gospels", "黙示": "Apocalyptic" } as Record<string, string>,
+  genreNames: { "福音書": "Gospels", "黙示": "Apocalyptic", "旧約偽典": "Old Testament Pseudepigrapha" } as Record<string, string>,
 };
 
 export type Translations = typeof ja;
