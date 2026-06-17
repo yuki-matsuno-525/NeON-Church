@@ -82,9 +82,29 @@ docker-compose exec backend python manage.py import_gospel
 
 # KJV（英語）をインポート
 docker-compose exec backend python manage.py import_kjv
+
+# 外典・偽典（エノク書・マリア/ペテロ/ユダ/トマス幼児福音書・アダムとエバの生涯）を一括投入
+docker-compose exec backend python manage.py import_others
 ```
 
 テキストデータは `text/` ディレクトリに配置してある。
+
+#### 外典・偽典の取り込みパイプライン
+
+外典・偽典は「HTML → 正規化JSON → DB」の 2 段で取り込む。
+
+1. パース（ローカルのみ）: `bible/importers/` の書ごとのパーサが HTML を正規化 JSON に変換する。
+   確認用に `python -m bible.importers.cli all <book> <html>` で JSON とプレビューを出力できる。
+2. 投入: 確認済み JSON を `backend/bible/seed/others/` にコミットし、`import_others` が全 JSON を
+   まとめて DB へ投入する（冪等）。
+
+本番（Render）のイメージには `text/` が含まれないため、HTML ではなく `seed/others/` の
+確定 JSON を同梱し、`import_others` 一発で投入する。**デプロイ後に Render のシェルで実行**:
+
+```bash
+python manage.py migrate        # 未適用なら
+python manage.py import_others  # 外典・偽典を投入（冪等。何度実行しても安全）
+```
 
 ### シードデータの投入
 
