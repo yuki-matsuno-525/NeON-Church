@@ -20,6 +20,7 @@ from pathlib import Path
 
 from .enoch import parse_enoch
 from .infancy_thomas import parse_infancy_thomas
+from .judas import parse_judas
 from .mary import parse_mary
 from .peter import parse_peter
 from .preview import render_preview
@@ -31,6 +32,7 @@ PARSERS = {
     "mary": (parse_mary, 5),
     "infancy-thomas": (parse_infancy_thomas, 19),
     "peter": (parse_peter, 14),
+    "judas": (parse_judas, 7),
 }
 
 
@@ -77,6 +79,11 @@ def cmd_parse_infancy_thomas(args) -> int:
 
 def cmd_parse_peter(args) -> int:
     _parse_to_json("peter", args.html, args.output)
+    return 0
+
+
+def cmd_parse_judas(args) -> int:
+    _parse_to_json("judas", args.html, args.output)
     return 0
 
 
@@ -142,6 +149,11 @@ def main(argv=None) -> int:
     p.add_argument("html")
     p.add_argument("-o", "--output", default="peter.json")
     p.set_defaults(func=cmd_parse_peter)
+
+    p = sub.add_parser("parse-judas", help="ユダの福音書 HTML を正規化 JSON に変換")
+    p.add_argument("html")
+    p.add_argument("-o", "--output", default="judas.json")
+    p.set_defaults(func=cmd_parse_judas)
 
     p = sub.add_parser("validate", help="正規化 JSON を検査")
     p.add_argument("json")

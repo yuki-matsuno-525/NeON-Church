@@ -81,6 +81,19 @@ export const BOOKS = [
       "Encounter at the Tomb",
       "The Disciples Depart",
     ] },
+  // ユダの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 章=セクション見出し、節=Codex Tchacos のページ番号 33..58（見出しをまたいで連続）。
+  { slug: "judas", name: "ユダの福音書", englishName: "The Gospel of Judas", short: "ユダ", totalChapters: 7, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Judas" }],
+    chapterTitles: [
+      "Introduction",
+      "Jesus Criticizes the Disciples",
+      "Another Generation",
+      "The Disciples' Vision",
+      "Jesus and Judas",
+      "Jesus Reveals Everything to Judas",
+      "The Betrayal",
+    ] },
   // エノク書は R. H. Charles 英訳のみ（翻訳プロジェクトの元テキスト）。
   { slug: "enoch",   name: "エノク書",           englishName: "The Book of Enoch", short: "エノク書", totalChapters: 108, genre: "黙示" as BookGenre,
     translations: [{ id: "R. H. Charles (EN)", name: "The Book of Enoch" }] },
