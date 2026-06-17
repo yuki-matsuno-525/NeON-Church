@@ -80,16 +80,15 @@ function QAContent() {
     fetchTags().then(setTags).catch(() => {});
   }, []);
 
-  // 選んだ書（と任意の訳）から、絞り込み用の Book id 群を決める。
-  // 訳未指定ならその書の全訳 id をカンマ区切りで渡す（書だけで絞る）。
-  const entry = selectedSlug ? catalogEntry(catalog, selectedSlug) : null;
-  const bookIdParam = entry
-    ? selectedVersion
-      ? entry.translations.find((tr) => tr.id === selectedVersion)?.bookId
-      : entry.translations.map((tr) => tr.bookId).join(",")
-    : undefined;
-
   const loadComments = useCallback(() => {
+    // 選んだ書（と任意の訳）から絞り込み用の Book id 群を決める。
+    // 訳未指定ならその書の全訳 id をカンマ区切りで渡す（書だけで絞る）。
+    const entry = selectedSlug ? catalogEntry(catalog, selectedSlug) : null;
+    const bookIdParam = entry
+      ? selectedVersion
+        ? entry.translations.find((tr) => tr.id === selectedVersion)?.bookId
+        : entry.translations.map((tr) => tr.bookId).join(",")
+      : undefined;
     setLoading(true);
     fetchQAComments({
       book_id: bookIdParam || undefined,
@@ -99,7 +98,7 @@ function QAContent() {
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [bookIdParam, selectedTagId, answeredFilter]);
+  }, [catalog, selectedSlug, selectedVersion, selectedTagId, answeredFilter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

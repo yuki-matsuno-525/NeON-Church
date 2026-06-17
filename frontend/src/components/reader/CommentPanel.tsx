@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createBookmark, removeBookmark, createComment, buildCommentTree, type Verse, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -94,9 +94,12 @@ export function CommentPanel({
   };
 
   // 別の節を選び直したら本文の展開状態をリセットする（パネルは再利用される）。
-  useEffect(() => {
+  // 描画中に prop の変化を検知してリセットする（effect 内 setState を避ける）。
+  const [prevVerseId, setPrevVerseId] = useState(verse.id);
+  if (verse.id !== prevVerseId) {
+    setPrevVerseId(verse.id);
     setVerseExpanded(false);
-  }, [verse.id]);
+  }
 
   const q = searchQuery.trim().toLowerCase();
   const filteredComments = q
