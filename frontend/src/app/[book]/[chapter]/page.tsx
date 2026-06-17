@@ -14,7 +14,7 @@ import {
   type Bookmark,
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug, resolveTranslation } from "@/lib/books";
+import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -35,6 +35,8 @@ export default function ChapterPage() {
   const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
+  // セクション見出しで区切られる本（マリアの福音書など）の章名。無い本は null。
+  const chapterName = chapterTitle(slug, chapterNum);
   const { lang } = useLang();
   // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
   const translationOptions = (meta?.translations ?? []).map((tr) => ({
@@ -285,6 +287,11 @@ export default function ChapterPage() {
 
         <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24 }}>
           {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
+          {chapterName && (
+            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
+              {" — "}{chapterName}
+            </span>
+          )}
         </h1>
 
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />

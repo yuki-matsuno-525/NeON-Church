@@ -2,6 +2,8 @@
 // バックエンドは「本文置き場」で、本は (name, translation) で複数訳を持つ。
 // ここでは slug ごとに、表示名・ジャンル・その本が持つ訳（DB 上の name）を定義する。
 
+import { translationLang } from "@/lib/translations";
+
 // 整理の軸はジャンル（文学種別）。正典/外典といった区分は設けない。
 // 本があるジャンルだけ表示される（read ページ側で空ジャンルを除外）。
 export const GENRE_ORDER = ["福音書", "黙示"] as const;
@@ -9,6 +11,10 @@ export type BookGenre = (typeof GENRE_ORDER)[number];
 
 // その本が持つ訳。id は DB の Book.translation、name は DB の Book.name。
 export type BookTranslation = { id: string; name: string };
+
+// 章番号→章名（任意）。章が「番号」ではなく「見出し」で区切られる本のための表示名。
+// 例: マリアの福音書は章番号 1..5 がセクション見出しに対応する。
+// index 0 が第1章。定義しない本は章番号だけで表示される。
 
 export const BOOKS = [
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
@@ -19,6 +25,17 @@ export const BOOKS = [
     translations: [{ id: "口語訳", name: "ルカによる福音書" }, { id: "KJV", name: "Luke" }] },
   { slug: "john",    name: "ヨハネによる福音書", englishName: "John",    short: "ヨハネ", totalChapters: 21, genre: "福音書" as BookGenre,
     translations: [{ id: "口語訳", name: "ヨハネによる福音書" }, { id: "KJV", name: "John" }] },
+  // マリアの福音書は Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 章は写本のセクション見出し、節はページ番号（7〜19, 1〜6 と 11〜14 は欠落）。
+  { slug: "mary",    name: "マリアの福音書",     englishName: "The Gospel of Mary", short: "マリア", totalChapters: 5, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Mary" }],
+    chapterTitles: [
+      "An Eternal Perspective",
+      "The Gospel",
+      "Mary and Jesus",
+      "Overcoming the Powers",
+      "Conflict over Authority",
+    ] },
   // エノク書は R. H. Charles 英訳のみ（翻訳プロジェクトの元テキスト）。
   { slug: "enoch",   name: "エノク書",           englishName: "The Book of Enoch", short: "エノク書", totalChapters: 108, genre: "黙示" as BookGenre,
     translations: [{ id: "R. H. Charles (EN)", name: "The Book of Enoch" }] },
@@ -32,6 +49,12 @@ export function getBookBySlug(slug: string) {
 
 export function isValidSlug(slug: string): slug is BookSlug {
   return BOOKS.some((b) => b.slug === slug);
+}
+
+/** slug と章番号から章名を返す。章名を持たない本・範囲外は null。 */
+export function chapterTitle(slug: string, chapterNumber: number): string | null {
+  const titles = getBookBySlug(slug)?.chapterTitles;
+  return titles?.[chapterNumber - 1] ?? null;
 }
 
 /** slug とその本の訳 id から、DB 上の Book.name を返す。 */
@@ -53,4 +76,10 @@ export function resolveTranslation(slug: string, preferred: string): BookTransla
   const trs = getBookBySlug(slug)?.translations;
   if (!trs) return null;
   return trs.find((tr) => tr.id === preferred) ?? trs[0];
+}
+
+/** その本が指定言語（ja/en）の訳を持つか。エノク書は ja を持たない。 */
+export function bookHasLang(slug: string, lang: "ja" | "en"): boolean {
+  const trs = getBookBySlug(slug)?.translations;
+  return trs?.some((tr) => translationLang(tr.id) === lang) ?? false;
 }

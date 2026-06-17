@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug, resolveTranslation } from "@/lib/books";
+import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 import { useT, useBookLabel } from "@/lib/i18n";
@@ -134,6 +134,7 @@ function BookContent() {
             <Link
               key={ch.id}
               href={`/${slug}/${ch.number}`}
+              title={chapterTitle(slug, ch.number) ?? undefined}
               style={{
                 position: "relative",
                 display: "flex",

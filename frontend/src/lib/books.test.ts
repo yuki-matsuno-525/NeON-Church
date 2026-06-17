@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getBookBySlug, isValidSlug } from "./books";
+import { getBookBySlug, isValidSlug, chapterTitle } from "./books";
 
 describe("getBookBySlug", () => {
   it("有効なスラッグでbookオブジェクトを返す", () => {
@@ -19,6 +19,20 @@ describe("getBookBySlug", () => {
     expect(getBookBySlug("genesis")).toBeNull();
     expect(getBookBySlug("")).toBeNull();
     expect(getBookBySlug("MATTHEW")).toBeNull();
+  });
+});
+
+describe("chapterTitle", () => {
+  it("マリアの福音書はセクション見出しを章名として返す", () => {
+    expect(getBookBySlug("mary")?.name).toBe("マリアの福音書");
+    expect(chapterTitle("mary", 1)).toBe("An Eternal Perspective");
+    expect(chapterTitle("mary", 5)).toBe("Conflict over Authority");
+  });
+
+  it("章名を持たない本・範囲外は null", () => {
+    expect(chapterTitle("matthew", 1)).toBeNull();
+    expect(chapterTitle("mary", 6)).toBeNull();
+    expect(chapterTitle("mary", 0)).toBeNull();
   });
 });
 
