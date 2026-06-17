@@ -86,6 +86,7 @@ const ja = {
   filterUnanswered: "未解決",
   filterAnswered: "解決済み",
   allBooks: "すべての書",
+  allVersions: "すべての訳",
   allTags: "すべてのタグ",
   tagNames: {
     "感想": "感想",
@@ -478,6 +479,7 @@ const en: typeof ja = {
   filterUnanswered: "Unanswered",
   filterAnswered: "Answered",
   allBooks: "All books",
+  allVersions: "All versions",
   allTags: "All tags",
   tagNames: {
     "感想": "Reflection",

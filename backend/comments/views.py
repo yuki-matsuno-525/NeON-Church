@@ -188,7 +188,7 @@ class MyCommentListView(generics.ListAPIView):
 class QACommentListView(generics.ListAPIView):
     """GET /api/comments/qa/  Q&Aフラグ付きコメント一覧（認証不要）
 
-    ?book_id=   書で絞り込み
+    ?book_id=   書で絞り込み（カンマ区切りで複数指定可。同一書の複数訳をまとめて絞る用）
     ?tag_id=    タグで絞り込み
     """
 
@@ -224,10 +224,12 @@ class QACommentListView(generics.ListAPIView):
         book_id = params.get("book_id")
         tag_id = params.get("tag_id")
         if book_id:
+            # カンマ区切りで複数の Book id を受け付ける（同一書の複数訳をまとめて絞る）
+            book_ids = [b for b in book_id.split(",") if b]
             qs = qs.filter(
-                models.Q(book_id=book_id)
-                | models.Q(chapter__book_id=book_id)
-                | models.Q(verse__chapter__book_id=book_id)
+                models.Q(book_id__in=book_ids)
+                | models.Q(chapter__book_id__in=book_ids)
+                | models.Q(verse__chapter__book_id__in=book_ids)
             )
         if tag_id:
             qs = qs.filter(tags__id=tag_id).distinct()

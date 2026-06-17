@@ -2,43 +2,50 @@
 
 import { useId, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createTranslation, fetchBooks, fetchTranslationLanguages, type Book, type TranslationLanguage } from "@/lib/api";
+import { createTranslation, fetchTranslationLanguages, type TranslationLanguage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import { useT, useTranslationOptions } from "@/lib/i18n";
-import { BIBLE_TRANSLATIONS } from "@/lib/translations";
+import { useT, bookLabel } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { translationLabel } from "@/lib/translations";
+import { getBookBySlug } from "@/lib/books";
+import { useBookCatalog, catalogEntry } from "@/lib/bookCatalog";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const t = useT();
-  const translationOptions = useTranslationOptions();
+  const { lang } = useLang();
+  const catalog = useBookCatalog();
   const nameId = useId();
   const descriptionId = useId();
   const versionId = useId();
-  const bookId = useId();
+  const bookFieldId = useId();
   const languageId = useId();
   const errorId = useId();
-  const [books, setBooks] = useState<Book[]>([]);
   const [languages, setLanguages] = useState<TranslationLanguage[]>([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [sourceVersion, setSourceVersion] = useState(BIBLE_TRANSLATIONS[0]?.id ?? "");
-  const [sourceBook, setSourceBook] = useState("");
+  // まず書（slug）を選び、次にその書が持つ訳（version）を選ぶ。
+  const [sourceSlug, setSourceSlug] = useState("");
+  const [sourceVersion, setSourceVersion] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 元テキスト = 選んだ書 × 訳に対応する DB の Book id。
+  const sourceBook =
+    catalogEntry(catalog, sourceSlug)?.translations.find((tr) => tr.id === sourceVersion)?.bookId ?? "";
+
+  const handleSlugChange = (slug: string) => {
+    setSourceSlug(slug);
+    // その書の最初の訳を既定で選ぶ（訳が1つでも常に選択状態にする）。
+    setSourceVersion(getBookBySlug(slug)?.translations[0]?.id ?? "");
+  };
+
   useEffect(() => {
     fetchTranslationLanguages().then(setLanguages).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!sourceVersion) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSourceBook("");
-    fetchBooks(sourceVersion).then(setBooks).catch(() => {});
-  }, [sourceVersion]);
 
   if (!authLoading && !user) {
     router.replace("/login");
@@ -120,35 +127,37 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label htmlFor={versionId} style={labelStyle}>{t.bibleVersion}</label>
+          <label htmlFor={bookFieldId} style={labelStyle}>{t.sourceBook} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
           <select
-            id={versionId}
-            value={sourceVersion}
-            onChange={(e) => setSourceVersion(e.target.value)}
-            style={inputStyle}
-            required
-          >
-            {translationOptions.map(({ id, label }) => (
-              <option key={id} value={id}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor={bookId} style={labelStyle}>{t.sourceBook} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
-          <select
-            id={bookId}
-            value={sourceBook}
-            onChange={(e) => setSourceBook(e.target.value)}
+            id={bookFieldId}
+            value={sourceSlug}
+            onChange={(e) => handleSlugChange(e.target.value)}
             style={inputStyle}
             required
           >
             <option value="">{t.selectBookOption}</option>
-            {books.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
+            {catalog.map((e) => (
+              <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.name ?? e.slug}</option>
             ))}
           </select>
         </div>
+
+        {sourceSlug && (
+          <div>
+            <label htmlFor={versionId} style={labelStyle}>{t.bibleVersion}</label>
+            <select
+              id={versionId}
+              value={sourceVersion}
+              onChange={(e) => setSourceVersion(e.target.value)}
+              style={inputStyle}
+              required
+            >
+              {(getBookBySlug(sourceSlug)?.translations ?? []).map((tr) => (
+                <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label htmlFor={languageId} style={labelStyle}>{t.targetLanguage} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>

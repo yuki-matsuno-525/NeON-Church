@@ -1,11 +1,15 @@
 "use client";
 
 import { useId, useState } from "react";
-import { fetchChapters, fetchVerses, createComment, type Book, type Chapter, type Tag, type Verse } from "@/lib/api";
-import { useT } from "@/lib/i18n";
+import { fetchChapters, fetchVerses, createComment, type Chapter, type Tag, type Verse } from "@/lib/api";
+import { useT, bookLabel } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { getBookBySlug } from "@/lib/books";
+import { translationLabel } from "@/lib/translations";
+import { catalogEntry, type BookCatalogEntry } from "@/lib/bookCatalog";
 
 type Props = {
-  books: Book[];
+  catalog: BookCatalogEntry[];
   tags: Tag[];
   onSubmitted: () => void;
   onCancel: () => void;
@@ -21,17 +25,20 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
+export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
   const t = useT();
+  const { lang } = useLang();
   const titleId = useId();
   const bodyId = useId();
   const bookSelectId = useId();
+  const versionSelectId = useId();
   const chapterSelectId = useId();
   const verseSelectId = useId();
   const errorId = useId();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [bookId, setBookId] = useState("");
+  const [slug, setSlug] = useState("");
+  const [version, setVersion] = useState("");
   const [chapterId, setChapterId] = useState("");
   const [verseId, setVerseId] = useState("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -40,16 +47,32 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleBookChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newBookId = e.target.value;
-    setBookId(newBookId);
+  // 選んだ書（slug）＋訳（version）から DB の Book id を引く。
+  const resolveBookId = (s: string, v: string): string =>
+    catalogEntry(catalog, s)?.translations.find((tr) => tr.id === v)?.bookId ?? "";
+  const bookId = resolveBookId(slug, version);
+
+  const loadChaptersFor = (bid: string) => {
     setChapterId("");
-    setChapters([]);
     setVerses([]);
     setVerseId("");
-    if (newBookId) {
-      fetchChapters(newBookId).then(setChapters).catch(() => setChapters([]));
-    }
+    if (bid) fetchChapters(bid).then(setChapters).catch(() => setChapters([]));
+    else setChapters([]);
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSlug = e.target.value;
+    setSlug(newSlug);
+    // その書の最初の訳を既定で選び、章を読み込む（訳が1つでも常に選択状態にする）。
+    const firstVersion = getBookBySlug(newSlug)?.translations[0]?.id ?? "";
+    setVersion(firstVersion);
+    loadChaptersFor(resolveBookId(newSlug, firstVersion));
+  };
+
+  const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newVersion = e.target.value;
+    setVersion(newVersion);
+    loadChaptersFor(resolveBookId(slug, newVersion));
   };
 
   const handleChapterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -143,12 +166,22 @@ export function QAPostForm({ books, tags, onSubmitted, onCancel }: Props) {
       {/* 場所選択 */}
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
-        <select id={bookSelectId} value={bookId} onChange={handleBookChange} style={inputStyle}>
+        <select id={bookSelectId} value={slug} onChange={handleSlugChange} style={inputStyle}>
           <option value="">{t.qaSelectBookOptional}</option>
-          {books.map((b) => (
-            <option key={b.id} value={b.id}>{b.name}</option>
+          {catalog.map((e) => (
+            <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
           ))}
         </select>
+        {slug && (
+          <>
+            <label htmlFor={versionSelectId} className="sr-only">{t.bibleVersion}</label>
+            <select id={versionSelectId} value={version} onChange={handleVersionChange} style={inputStyle}>
+              {(getBookBySlug(slug)?.translations ?? []).map((tr) => (
+                <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
+              ))}
+            </select>
+          </>
+        )}
         {chapters.length > 0 && (
           <>
             <label htmlFor={chapterSelectId} className="sr-only">{t.qaSelectChapterOptional}</label>

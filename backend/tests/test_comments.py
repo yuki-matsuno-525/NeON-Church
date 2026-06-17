@@ -475,6 +475,44 @@ class TestBestAnswer:
 
 
 # ------------------------------------------------------------------
+# Q&A 一覧の書フィルタ（複数 book_id 対応）
+# ------------------------------------------------------------------
+QA_URL = "/api/comments/qa/"
+
+
+@pytest.mark.django_db
+class TestQAListBookFilter:
+    def _post_qa(self, client, book, title):
+        return client.post(
+            COMMENTS_URL,
+            {"body": "本文", "is_qa": True, "title": title, "book": str(book.id)},
+            format="json",
+        ).data
+
+    def test_single_book_id_filters(self, auth_client, api_client, book):
+        from bible.models import Book
+
+        other = Book.objects.create(name="Matthew", translation="KJV", order=2)
+        self._post_qa(auth_client, book, "口語訳の質問")
+        self._post_qa(auth_client, other, "KJVの質問")
+
+        res = api_client.get(QA_URL, {"book_id": str(book.id)})
+        titles = [c["title"] for c in res.data["results"]]
+        assert titles == ["口語訳の質問"]
+
+    def test_comma_separated_book_ids_filter_both(self, auth_client, api_client, book):
+        from bible.models import Book
+
+        other = Book.objects.create(name="Matthew", translation="KJV", order=2)
+        self._post_qa(auth_client, book, "口語訳の質問")
+        self._post_qa(auth_client, other, "KJVの質問")
+
+        res = api_client.get(QA_URL, {"book_id": f"{book.id},{other.id}"})
+        titles = sorted(c["title"] for c in res.data["results"])
+        assert titles == ["KJVの質問", "口語訳の質問"]
+
+
+# ------------------------------------------------------------------
 # トレンドコメント
 # ------------------------------------------------------------------
 TRENDING_URL = "/api/comments/trending/"

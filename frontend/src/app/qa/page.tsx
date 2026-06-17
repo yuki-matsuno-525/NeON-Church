@@ -3,14 +3,16 @@
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchQAComments, fetchBooks, fetchTags, type QAComment, type Book, type Tag } from "@/lib/api";
+import { fetchQAComments, fetchTags, type QAComment, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
-import { useT } from "@/lib/i18n";
+import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-import { defaultTranslationForLang } from "@/lib/translations";
+import { translationLabel } from "@/lib/translations";
+import { getBookBySlug } from "@/lib/books";
+import { useBookCatalog, catalogEntry } from "@/lib/bookCatalog";
 
 const PAGE_SIZE = 10;
 
@@ -37,13 +39,15 @@ function QAContent() {
   const { lang } = useLang();
 
   // URL を単一の真実とする。state は URL から派生。
-  const selectedBookId = searchParams.get("book") ?? "";
+  // book = slug、version = 訳 id（任意。未指定ならその書の全訳で絞る）。
+  const selectedSlug = searchParams.get("book") ?? "";
+  const selectedVersion = searchParams.get("version") ?? "";
   const selectedTagId = searchParams.get("tag") ?? "";
   const answeredFilter = parseAnswered(searchParams.get("answered"));
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
+  const catalog = useBookCatalog();
   const [comments, setComments] = useState<QAComment[]>([]);
-  const [books, setBooks] = useState<Book[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -64,32 +68,38 @@ function QAContent() {
     [searchParams, router]
   );
 
-  const setSelectedBookId = (id: string) => updateParams({ book: id || null, page: null });
+  // 書を切り替えたら訳とページはリセットする。
+  const setSelectedSlug = (slug: string) => updateParams({ book: slug || null, version: null, page: null });
+  const setSelectedVersion = (v: string) => updateParams({ version: v || null, page: null });
   const setSelectedTagId = (id: string) => updateParams({ tag: id || null, page: null });
   const setAnsweredFilter = (f: AnsweredFilter) =>
     updateParams({ answered: f === "all" ? null : f, page: null });
   const goToPage = (p: number) => updateParams({ page: p > 1 ? String(p) : null });
 
   useEffect(() => {
-    Promise.all([fetchBooks(defaultTranslationForLang(lang)), fetchTags()])
-      .then(([bks, tgs]) => {
-        setBooks(bks);
-        setTags(tgs);
-      })
-      .catch(() => {});
-  }, [lang]);
+    fetchTags().then(setTags).catch(() => {});
+  }, []);
+
+  // 選んだ書（と任意の訳）から、絞り込み用の Book id 群を決める。
+  // 訳未指定ならその書の全訳 id をカンマ区切りで渡す（書だけで絞る）。
+  const entry = selectedSlug ? catalogEntry(catalog, selectedSlug) : null;
+  const bookIdParam = entry
+    ? selectedVersion
+      ? entry.translations.find((tr) => tr.id === selectedVersion)?.bookId
+      : entry.translations.map((tr) => tr.bookId).join(",")
+    : undefined;
 
   const loadComments = useCallback(() => {
     setLoading(true);
     fetchQAComments({
-      book_id: selectedBookId || undefined,
+      book_id: bookIdParam || undefined,
       tag_id: selectedTagId || undefined,
       answered: answeredFilter === "all" ? undefined : answeredFilter === "answered",
     })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [selectedBookId, selectedTagId, answeredFilter]);
+  }, [bookIdParam, selectedTagId, answeredFilter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -138,7 +148,7 @@ function QAContent() {
 
       {showForm && (
         <QAPostForm
-          books={books}
+          catalog={catalog}
           tags={tags}
           onSubmitted={() => {
             setShowForm(false);
@@ -176,8 +186,8 @@ function QAContent() {
           <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
             <select
               aria-label={t.allBooks}
-              value={selectedBookId}
-              onChange={(e) => setSelectedBookId(e.target.value)}
+              value={selectedSlug}
+              onChange={(e) => setSelectedSlug(e.target.value)}
               style={{
                 padding: "6px 10px",
                 border: "1px solid var(--border)",
@@ -188,11 +198,34 @@ function QAContent() {
               }}
             >
               <option value="">{t.allBooks}</option>
-              {books.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+              {catalog.map((e) => (
+                <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
               ))}
             </select>
           </label>
+          {/* 訳（任意）。書を選んだときだけ出す。未指定ならその書の全訳が対象。 */}
+          {selectedSlug && (
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+              <select
+                aria-label={t.allVersions}
+                value={selectedVersion}
+                onChange={(e) => setSelectedVersion(e.target.value)}
+                style={{
+                  padding: "6px 10px",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--bg-alt)",
+                  color: "var(--text)",
+                  fontSize: "var(--font-size-sm)",
+                }}
+              >
+                <option value="">{t.allVersions}</option>
+                {(getBookBySlug(selectedSlug)?.translations ?? []).map((tr) => (
+                  <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
             <select
               aria-label={t.allTags}
