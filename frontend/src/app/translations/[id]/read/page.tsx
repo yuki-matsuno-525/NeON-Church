@@ -37,17 +37,30 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   const chapterNums = [...new Set(units.map((u) => u.chapter_number))].sort((a, b) => a - b);
 
   return (
+    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+      <div className="reader-sticky-header" style={{
+        position: "sticky",
+        top: "var(--navbar-height)",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        padding: "8px 32px",
+        background: "var(--glass-nav)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            {project?.name ?? t.projectFallback}
+          </Link>
+          {" › "}
+          <span>{t.selectChapterHeading}</span>
+        </p>
+      </div>
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
-      <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 8px" }}>
-        <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {project?.name ?? t.projectFallback}
-        </Link>
-        {" › "}
-        <span>{t.selectChapterHeading}</span>
-      </p>
 
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px" }}>{project?.name}</h1>
-      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 32px" }}>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{project?.name}</h1>
+      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
         {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
       </p>
 
@@ -61,8 +74,9 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
-              gap: 8,
+              gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
+              gap: "var(--space-2)",
+              marginBottom: 40,
             }}
           >
             {chapterNums.map((chNum) => (
@@ -70,34 +84,43 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
                 key={chNum}
                 href={`/translations/${id}/read/${chNum}`}
                 style={{
+                  position: "relative",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  height: 48,
+                  height: 44,
+                  minWidth: 44,
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-md)",
                   textDecoration: "none",
-                  color: "var(--text)",
+                  color: "var(--text-muted)",
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: "var(--font-size-sm)",
                   background: "var(--bg-alt)",
-                  transition: "background 0.1s",
+                  transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--accent-tint)";
-                  (e.currentTarget as HTMLElement).style.color = "var(--accent)";
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "var(--accent-tint)";
+                  el.style.color = "var(--accent)";
+                  el.style.borderColor = "var(--accent)";
+                  el.style.boxShadow = "var(--shadow-glow)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--bg-alt)";
-                  (e.currentTarget as HTMLElement).style.color = "var(--text)";
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = "var(--bg-alt)";
+                  el.style.color = "var(--text-muted)";
+                  el.style.borderColor = "var(--border)";
+                  el.style.boxShadow = "none";
                 }}
               >
-                {t.chapterFmt(chNum)}
+                {chNum}
               </Link>
             ))}
           </div>
         </>
       )}
+    </div>
     </div>
   );
 }

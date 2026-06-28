@@ -47,68 +47,153 @@ export default function TranslationReadChapterPage({
   const nextChapter = currentIndex < chapterNums.length - 1 ? chapterNums[currentIndex + 1] : null;
 
   return (
-    <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "32px 16px" }}>
-      {/* Breadcrumb */}
-      <p style={{ fontSize: 14, color: "var(--text-muted)", margin: "0 0 20px" }}>
-        <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {project?.name ?? t.projectFallback}
-        </Link>
-        {" › "}
-        <Link href={`/translations/${id}/read`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
-          {t.chapterList}
-        </Link>
-        {" › "}
-        <span>{t.chapterFmt(chapterNum)}</span>
-      </p>
+    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+      <div className="reader-sticky-header" style={{
+        position: "sticky",
+        top: "var(--navbar-height)",
+        zIndex: 10,
+        display: "flex",
+        alignItems: "center",
+        padding: "8px 32px",
+        background: "var(--glass-nav)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            {project?.name ?? t.projectFallback}
+          </Link>
+          {" › "}
+          <Link href={`/translations/${id}/read`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            {t.chapterList}
+          </Link>
+          {" › "}
+          <span>{t.chapterFmt(chapterNum)}</span>
+        </p>
+      </div>
 
-      <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>
-        {project?.name} — {t.chapterFmt(chapterNum)}
-      </h1>
-      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 28px" }}>
-        {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
-      </p>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 32px" }}>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 4 }}>
+          {project?.name} {t.chapterFmt(chapterNum)}
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+          {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
+        </p>
 
-      <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
-      {units.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {units.map((unit) => (
-            <div key={unit.id} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <span style={{ fontSize: 12, color: "var(--text-faint)", minWidth: 24, textAlign: "right", paddingTop: 2 }}>
-                {unit.verse_number}
-              </span>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: 0, fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-lg)", lineHeight: "var(--leading-reading)" }}>{unit.body}</p>
-                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
+        {units.length === 0 ? (
+          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
+        ) : (
+          <div>
+            {units.map((unit) => (
+              <div
+                key={unit.id}
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: 5,
+                  color: "var(--text)",
+                  marginBottom: 2,
+                }}
+              >
+                <span
+                  style={{
+                    lineHeight: 1.9,
+                    fontSize: 17,
+                    fontFamily: '"Noto Serif JP", serif',
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  <sup
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-faint)",
+                      marginRight: 4,
+                      verticalAlign: "super",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {unit.verse_number}
+                  </sup>
+                  {unit.body}
+                </span>
+                <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
                   {t.originalText} {unit.verse_text}
                 </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+
+      {prevChapter != null && (
+        <Link
+          href={`/translations/${id}/read/${prevChapter}`}
+          title={t.chapterFmt(prevChapter)}
+          aria-label={`${t.prevChapter} (${prevChapter})`}
+          className="chapter-nav-prev"
+          style={{
+            position: "fixed",
+            left: "var(--sidebar-width)",
+            top: "50%",
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "18px 10px",
+            background: "var(--bg-alt)",
+            border: "1px solid var(--border)",
+            borderLeft: "none",
+            borderRadius: "0 8px 8px 0",
+            color: "var(--text)",
+            textDecoration: "none",
+            fontSize: 20,
+            opacity: 0.75,
+            zIndex: 20,
+            transition: "opacity 0.15s",
+            lineHeight: 1,
+          }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+        >
+          ‹
+        </Link>
       )}
 
-      {/* 章ナビゲーション */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
-        {prevChapter != null ? (
-          <Link
-            href={`/translations/${id}/read/${prevChapter}`}
-            style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 8 }}
-          >
-            {t.prevChapterFmt(prevChapter)}
-          </Link>
-        ) : <span />}
-        {nextChapter != null ? (
-          <Link
-            href={`/translations/${id}/read/${nextChapter}`}
-            style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 8 }}
-          >
-            {t.nextChapterFmt(nextChapter)}
-          </Link>
-        ) : <span />}
-      </div>
+      {nextChapter != null && (
+        <Link
+          href={`/translations/${id}/read/${nextChapter}`}
+          title={t.chapterFmt(nextChapter)}
+          aria-label={`${t.nextChapter} (${nextChapter})`}
+          className="chapter-nav-next"
+          style={{
+            position: "fixed",
+            right: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "18px 10px",
+            background: "var(--bg-alt)",
+            border: "1px solid var(--border)",
+            borderRight: "none",
+            borderRadius: "8px 0 0 8px",
+            color: "var(--text)",
+            textDecoration: "none",
+            fontSize: 20,
+            opacity: 0.75,
+            zIndex: 20,
+            transition: "opacity 0.15s",
+            lineHeight: 1,
+          }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+        >
+          ›
+        </Link>
+      )}
     </div>
   );
 }
