@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notifications.models import Notification
-from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, Language
+from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, TranslationLibraryEntry, Language
 
 User = get_user_model()
 
@@ -423,6 +423,45 @@ class LanguageListView(generics.ListAPIView):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class TranslationLibraryListView(generics.ListAPIView):
+    """GET /api/translations/library/  自分が /read に追加した公開翻訳一覧（要認証）"""
+
+    serializer_class = TranslationProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return TranslationProject.objects.filter(
+            library_entries__user=self.request.user,
+            status=TranslationProject.STATUS_PUBLISHED,
+        ).select_related("owner", "source_book")
+
+
+class TranslationLibraryView(APIView):
+    """
+    POST   /api/translations/{id}/library/  自分の /read に追加（公開済みのみ・冪等）
+    DELETE /api/translations/{id}/library/  自分の /read から削除（冪等）
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, project_id):
+        project = get_object_or_404(TranslationProject, pk=project_id)
+        if project.status != TranslationProject.STATUS_PUBLISHED:
+            return Response(
+                {"detail": "公開されていないプロジェクトは追加できません。"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        TranslationLibraryEntry.objects.get_or_create(user=request.user, project=project)
+        return Response(
+            TranslationProjectSerializer(project, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def delete(self, request, project_id):
+        TranslationLibraryEntry.objects.filter(user=request.user, project_id=project_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TranslationReadView(APIView):

@@ -39,6 +39,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   unit_count: 100,
   done_count: 30,
   is_member: false,
+  is_in_library: false,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-10T00:00:00Z",
   ...overrides,

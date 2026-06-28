@@ -16,16 +16,17 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
     unit_count = serializers.SerializerMethodField()
     done_count = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
+    is_in_library = serializers.SerializerMethodField()
 
     class Meta:
         model = TranslationProject
         fields = [
             "id", "name", "description", "owner_username",
             "source_book", "source_book_name", "target_language",
-            "status", "unit_count", "done_count", "is_member",
+            "status", "unit_count", "done_count", "is_member", "is_in_library",
             "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "created_at", "updated_at"]
+        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "is_in_library", "created_at", "updated_at"]
 
     def get_unit_count(self, obj):
         return obj.units.count()
@@ -42,6 +43,12 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
             user=request.user,
             status__in=[TranslationMembership.STATUS_APPROVED, TranslationMembership.STATUS_PENDING],
         ).exists()
+
+    def get_is_in_library(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.library_entries.filter(user=request.user).exists()
 
 
 class TranslationMembershipSerializer(serializers.ModelSerializer):

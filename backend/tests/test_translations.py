@@ -514,3 +514,70 @@ class TestTranslationRemoveBook:
     def test_missing_book_id_returns_400(self, owner_client, active_project):
         res = owner_client.delete(remove_book_url(active_project["id"]), {}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ---------------------------------------------------------------------------
+# 本棚（/read に追加した公開翻訳）
+# ---------------------------------------------------------------------------
+
+LIBRARY_LIST_URL = "/api/translations/library/"
+
+
+def library_url(project_id):
+    return f"/api/translations/{project_id}/library/"
+
+
+@pytest.mark.django_db
+class TestTranslationLibrary:
+    def test_add_published_appears_in_library(self, auth_client, published_project):
+        res = auth_client.post(library_url(published_project["id"]))
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["is_in_library"] is True
+
+        list_res = auth_client.get(LIBRARY_LIST_URL)
+        assert list_res.status_code == status.HTTP_200_OK
+        ids = [p["id"] for p in list_res.data]
+        assert published_project["id"] in ids
+
+    def test_cannot_add_unpublished(self, auth_client, project):
+        # project は draft 状態
+        res = auth_client.post(library_url(project["id"]))
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_cannot_add_active(self, auth_client, active_project):
+        res = auth_client.post(library_url(active_project["id"]))
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_library_is_per_user(self, auth_client, member_client, published_project):
+        auth_client.post(library_url(published_project["id"]))
+        # 別ユーザーの本棚には出ない
+        res = member_client.get(LIBRARY_LIST_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data == []
+
+    def test_add_is_idempotent(self, auth_client, published_project):
+        auth_client.post(library_url(published_project["id"]))
+        auth_client.post(library_url(published_project["id"]))
+        res = auth_client.get(LIBRARY_LIST_URL)
+        ids = [p["id"] for p in res.data]
+        assert ids.count(published_project["id"]) == 1
+
+    def test_remove_from_library(self, auth_client, published_project):
+        auth_client.post(library_url(published_project["id"]))
+        del_res = auth_client.delete(library_url(published_project["id"]))
+        assert del_res.status_code == status.HTTP_204_NO_CONTENT
+        res = auth_client.get(LIBRARY_LIST_URL)
+        assert published_project["id"] not in [p["id"] for p in res.data]
+
+    def test_remove_is_idempotent(self, auth_client, published_project):
+        # 未登録でも 204（冪等）
+        res = auth_client.delete(library_url(published_project["id"]))
+        assert res.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_add_requires_auth(self, api_client, published_project):
+        res = api_client.post(library_url(published_project["id"]))
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_list_requires_auth(self, api_client):
+        res = api_client.get(LIBRARY_LIST_URL)
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED

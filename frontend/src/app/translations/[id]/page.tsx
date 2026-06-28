@@ -13,6 +13,8 @@ import {
   activateTranslation,
   publishTranslation,
   unpublishTranslation,
+  addTranslationToLibrary,
+  removeTranslationFromLibrary,
   updateMembershipStatus,
   removeMember,
   addTranslationUnit,
@@ -163,6 +165,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const router = useRouter();
   const t = useT();
   const [project, setProject] = useState<TranslationProject | null>(null);
+  // 公開翻訳を自分の /read に追加済みか（トグルボタンの状態）
+  const [inLibrary, setInLibrary] = useState(false);
   const [units, setUnits] = useState<TranslationUnit[]>([]);
   const [members, setMembers] = useState<TranslationMembership[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,6 +215,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       fetchTranslationUnits(id),
     ]).then(([proj, u]) => {
       setProject(proj);
+      setInLibrary(proj.is_in_library);
       setUnits(u);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
@@ -239,6 +244,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     else if (action === "publish") proj = await publishTranslation(id);
     else proj = await unpublishTranslation(id);
     setProject(proj);
+  };
+
+  const handleToggleLibrary = async () => {
+    if (inLibrary) {
+      setInLibrary(false);
+      await removeTranslationFromLibrary(id).catch(() => setInLibrary(true));
+    } else {
+      setInLibrary(true);
+      await addTranslationToLibrary(id).catch(() => setInLibrary(false));
+    }
   };
 
   const handleDelete = async () => {
@@ -433,6 +448,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           <Link href={`/translations/${id}/read`} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>
             {t.readTranslation}
           </Link>
+        )}
+        {user && project.status === "published" && (
+          <button
+            onClick={handleToggleLibrary}
+            style={btnStyle(inLibrary ? "var(--text-muted)" : "var(--accent)")}
+          >
+            {inLibrary ? t.removeFromLibrary : t.addToLibrary}
+          </button>
         )}
       </div>
 

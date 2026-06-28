@@ -481,6 +481,19 @@ export function fetchTranslationRead(projectId: string): Promise<TranslationUnit
   return apiFetch(`/translations/${projectId}/read/`);
 }
 
+// 自分が /read に追加した公開翻訳一覧（本棚）
+export function fetchTranslationLibrary(): Promise<TranslationProject[]> {
+  return apiFetch("/translations/library/");
+}
+
+export function addTranslationToLibrary(id: string): Promise<TranslationProject> {
+  return apiFetch(`/translations/${id}/library/`, { method: "POST" });
+}
+
+export function removeTranslationFromLibrary(id: string): Promise<void> {
+  return apiFetch(`/translations/${id}/library/`, { method: "DELETE" });
+}
+
 export function fetchUserProfile(username: string): Promise<PublicUser> {
   return apiFetch(`/users/${username}/`);
 }

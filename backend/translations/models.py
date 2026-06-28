@@ -152,6 +152,34 @@ class TranslationUnit(BaseModel):
         return f"{self.project.name} - {self.verse}"
 
 
+class TranslationLibraryEntry(BaseModel):
+    """
+    ユーザーが公開翻訳を自分の /read に追加した本棚エントリ。
+    公開（published）プロジェクトのみ追加でき、追加した本人の /read にのみ表示される。
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="translation_library",
+    )
+    project = models.ForeignKey(
+        TranslationProject,
+        on_delete=models.CASCADE,
+        related_name="library_entries",
+    )
+
+    class Meta:
+        db_table = "translation_library_entries"
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "project"], name="unique_user_project_library"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user.username} → {self.project.name}"
+
+
 class TranslationComment(BaseModel):
     """
     翻訳プロジェクトの議論コメント（フラット構造）。

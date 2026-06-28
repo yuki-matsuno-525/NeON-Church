@@ -58,6 +58,9 @@ const ja = {
   resumeReading: (bookName: string, chapter: number) => `続きから読む — ${bookName} 第${chapter}章 ›`,
   selectBook: "書を選択",
   totalChapters: (n: number) => `全${n}章`,
+  myTranslationsHeading: "マイ翻訳",
+  addToLibrary: "/read に追加",
+  removeFromLibrary: "/read から外す",
 
   // 章ページ
   bookList: "書一覧",
@@ -455,6 +458,9 @@ const en: typeof ja = {
   resumeReading: (bookName: string, chapter: number) => `Resume — ${bookName} Ch.${chapter} ›`,
   selectBook: "Select a book",
   totalChapters: (n: number) => `${n} chapters`,
+  myTranslationsHeading: "My translations",
+  addToLibrary: "Add to /read",
+  removeFromLibrary: "Remove from /read",
 
   bookList: "Book list",
   toComments: "Go to chapter comments ↓",

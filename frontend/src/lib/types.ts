@@ -142,6 +142,7 @@ export type TranslationProject = {
   unit_count: number;
   done_count: number;
   is_member: boolean;
+  is_in_library: boolean;
   created_at: string;
   updated_at: string;
 };

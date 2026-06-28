@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetchReadingProgress } from "@/lib/api";
+import { fetchReadingProgress, fetchTranslationLibrary, type TranslationProject } from "@/lib/api";
+import { languageLabel } from "@/lib/languages";
 import {
   getLastBookSlug,
   getLocalProgress,
@@ -25,6 +26,20 @@ export default function ReadPage() {
   // 初期値は null 固定。localStorage はクライアントにしか無いため、初期 state で読むと
   // サーバー描画（resume 無し）と食い違って hydration エラーになる。読み取りは effect で行う。
   const [resume, setResume] = useState<ResumeTarget>(null);
+  // ログインユーザーが /read に追加した公開翻訳（本棚）。未ログイン・0件なら何も出さない。
+  const [library, setLibrary] = useState<TranslationProject[]>([]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLibrary([]);
+      return;
+    }
+    fetchTranslationLibrary()
+      .then(setLibrary)
+      .catch(() => setLibrary([]));
+  }, [loading, user]);
 
   useEffect(() => {
     const localSlug = getLastBookSlug();
@@ -129,6 +144,41 @@ export default function ReadPage() {
             </div>
           </div>
         ))}
+
+      {library.length > 0 && (
+        <div style={{ marginBottom: "var(--space-6)" }}>
+          <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 var(--space-3)", color: "var(--text)" }}>
+            {t.myTranslationsHeading}
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {library.map((proj) => (
+              <Link
+                key={proj.id}
+                href={`/translations/${proj.id}/read`}
+                className="card-glow card-glow-interactive"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "20px 18px",
+                  textDecoration: "none",
+                  color: "var(--text)",
+                }}
+              >
+                <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
+                <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                  {proj.source_book_name} → {languageLabel(proj.target_language)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
