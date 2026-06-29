@@ -6,9 +6,12 @@ import { ClientLayout } from "./ClientLayout";
 
 // CSS 変数として注入し、globals.css 側の font-family で利用する。
 // セルフホスティングで Google Fonts への外部リクエストを排除し、CLS を抑える。
+// ウェイトは 400/700 のみ。日本語フォントは 1 ウェイトあたり 124 サブセットの
+// @font-face を生成するため、ウェイトを減らすと render-blocking な CSS が大きく減る。
+// 500（medium）は数箇所のみの使用で、未読込時は 400 にフォールバックする。
 const notoSansJp = Noto_Sans_JP({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "700"],
   display: "swap",
   variable: "--font-sans",
   preload: false,
@@ -16,7 +19,7 @@ const notoSansJp = Noto_Sans_JP({
 
 const notoSerifJp = Noto_Serif_JP({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "700"],
   display: "swap",
   variable: "--font-serif",
   preload: false,
