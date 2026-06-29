@@ -80,8 +80,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       {/* ロゴ */}
       <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
         <img
-          src="/img/logo.png"
+          src="/img/logo.webp"
           alt="NeON Church"
+          width={172}
+          height={44}
           style={{
             height: 44,
             width: "auto",

@@ -16,7 +16,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         style={{
           position: "fixed",
           inset: 0,
-          backgroundImage: "url('/img/background.png')",
+          backgroundImage: "url('/img/background.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           zIndex: 0,

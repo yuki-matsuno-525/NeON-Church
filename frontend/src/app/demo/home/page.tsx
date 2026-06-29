@@ -15,19 +15,19 @@ const SECTIONS = [
     title: "読む",
     description: "聖書の各章を読み、コメントを投稿・共有できます。",
     href: "/read",
-    icon: "/img/icon-read.png",
+    icon: "/img/icon-read.webp",
   },
   {
     title: "Q&A",
     description: "聖書に関する疑問を投稿し、回答をもらえる場所。",
     href: "/qa",
-    icon: "/img/icon-qa.png",
+    icon: "/img/icon-qa.webp",
   },
   {
     title: "翻訳",
     description: "聖書の共同翻訳プロジェクトを作成・参加できます。",
     href: "/translations",
-    icon: "/img/icon-translation.png",
+    icon: "/img/icon-translation.webp",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function DemoHomePage() {
           position: "fixed",
           inset: 0,
           zIndex: 0,
-          backgroundImage: "url('/img/background.png')",
+          backgroundImage: "url('/img/background.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center 28%",
           pointerEvents: "none",

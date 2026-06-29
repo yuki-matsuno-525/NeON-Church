@@ -16,9 +16,9 @@ export default function Home() {
   const t = useT();
   const { lang } = useLang();
   const sections = [
-    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.png", featured: true },
-    { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.png" },
-    { title: t.translate, description: t.sectionTranslateDesc, href: "/translations", icon: "/img/icon-translation.png" },
+    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.webp", featured: true },
+    { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.webp" },
+    { title: t.translate, description: t.sectionTranslateDesc, href: "/translations", icon: "/img/icon-translation.webp" },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
@@ -61,7 +61,7 @@ export default function Home() {
           position: "fixed",
           inset: 0,
           zIndex: 0,
-          backgroundImage: "url('/img/background.png')",
+          backgroundImage: "url('/img/background.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center 28%",
           pointerEvents: "none",
