@@ -441,8 +441,21 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         {user && !isOwner && !isMember && project.status === "active" && (
           <button onClick={handleJoin} style={btnStyle("var(--accent)")}>{t.applyMembership}</button>
         )}
-        {user && !isOwner && !isMember && project.status !== "active" && (
-          <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.notRecruiting}</span>
+        {user && !isOwner && !isMember && project.status !== "active" && project.status !== "published" && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              fontSize: 12,
+              color: "var(--text-muted)",
+              backgroundColor: "var(--bg-alt)",
+              border: "1px solid var(--border)",
+              borderRadius: 999,
+              padding: "4px 10px",
+            }}
+          >
+            {t.notRecruiting}
+          </span>
         )}
         {project.status === "published" && (
           <Link href={`/translations/${id}/read`} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>

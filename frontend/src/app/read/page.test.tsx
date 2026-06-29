@@ -57,7 +57,7 @@ describe("ReadPage マイ翻訳セクション", () => {
 
     render(<ReadPage />);
 
-    expect(screen.queryByText("マイ翻訳")).not.toBeInTheDocument();
+    expect(screen.queryByText("本棚")).not.toBeInTheDocument();
     expect(vi.mocked(fetchTranslationLibrary)).not.toHaveBeenCalled();
   });
 
@@ -69,7 +69,7 @@ describe("ReadPage マイ翻訳セクション", () => {
     render(<ReadPage />);
 
     await waitFor(() => expect(vi.mocked(fetchTranslationLibrary)).toHaveBeenCalled());
-    expect(screen.queryByText("マイ翻訳")).not.toBeInTheDocument();
+    expect(screen.queryByText("本棚")).not.toBeInTheDocument();
   });
 
   it("登録があるとカードを表示し /translations/{id}/read にリンクする", async () => {
@@ -79,7 +79,7 @@ describe("ReadPage マイ翻訳セクション", () => {
 
     render(<ReadPage />);
 
-    await screen.findByText("マイ翻訳");
+    await screen.findByText("本棚");
     const card = screen.getByText("マタイ英訳プロジェクト").closest("a");
     expect(card).toHaveAttribute("href", "/translations/tp1/read");
   });
