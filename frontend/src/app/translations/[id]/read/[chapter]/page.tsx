@@ -6,6 +6,7 @@ import { fetchTranslation, fetchTranslationRead, type TranslationProject, type T
 import { languageLabel } from "@/lib/languages";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { findSlugByBookName, resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
 
 export default function TranslationReadChapterPage({
@@ -23,6 +24,9 @@ export default function TranslationReadChapterPage({
   const [error, setError] = useState<string | null>(null);
   // コメントパネルを開いている節（翻訳ユニット）。null なら閉じている。
   const [selectedUnit, setSelectedUnit] = useState<TranslationUnit | null>(null);
+  // 全バージョン表示用：この章・選択中の節の、各訳のid。
+  const [allVersionChapterIds, setAllVersionChapterIds] = useState<string[]>([]);
+  const [allVersionVerseIds, setAllVersionVerseIds] = useState<string[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -35,6 +39,26 @@ export default function TranslationReadChapterPage({
       setError(t.notPublishedOrMissing);
     }).finally(() => setLoading(false));
   }, [id, t.notPublishedOrMissing]);
+
+  // 全バージョン表示用：元の書名から slug を逆引きし、この章の各訳の章idを集める。
+  useEffect(() => {
+    let cancelled = false;
+    const slug = project ? findSlugByBookName(project.source_book_name) : null;
+    const p = slug ? resolveVersionChapterIds(slug, chapterNum) : Promise.resolve<string[]>([]);
+    p.then((ids) => !cancelled && setAllVersionChapterIds(ids)).catch(() => !cancelled && setAllVersionChapterIds([]));
+    return () => { cancelled = true; };
+  }, [project, chapterNum]);
+
+  // 選択中の節の、各訳の節idを集める（節を選び直すたびに更新）。
+  useEffect(() => {
+    let cancelled = false;
+    const slug = project && selectedUnit ? findSlugByBookName(project.source_book_name) : null;
+    const p = slug && selectedUnit
+      ? resolveVersionVerseIds(slug, chapterNum, selectedUnit.verse_number)
+      : Promise.resolve<string[]>([]);
+    p.then((ids) => !cancelled && setAllVersionVerseIds(ids)).catch(() => !cancelled && setAllVersionVerseIds([]));
+    return () => { cancelled = true; };
+  }, [project, chapterNum, selectedUnit]);
 
   if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
   if (error) return (
@@ -155,6 +179,7 @@ export default function TranslationReadChapterPage({
                 translationProject={id}
                 label={`${project?.name ?? ""} ${t.chapterFmt(chapterNum)}`}
                 commentBookmarkMap={{}}
+                allVersionIds={allVersionChapterIds}
               />
             )}
           </div>
@@ -171,6 +196,7 @@ export default function TranslationReadChapterPage({
               }}
               chapterNumber={chapterNum}
               translationProject={id}
+              allVersionVerseIds={allVersionVerseIds}
               onClose={() => setSelectedUnit(null)}
             />
           </div>

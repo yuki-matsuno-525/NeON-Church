@@ -19,6 +19,8 @@ type Props = {
   onVerseBookmarksChange?: (bookmarks: Bookmark[]) => void;
   // 翻訳プロジェクトの読書ページから開いた場合、その翻訳専用のコメントとして扱う。
   translationProject?: string;
+  // 全バージョン表示用：この節の全バージョンの節id。2件以上でトグルを表示。
+  allVersionVerseIds?: string[];
 };
 
 const MIN_WIDTH = 280;
@@ -33,10 +35,12 @@ export function CommentPanel({
   verseBookmarks = [],
   onVerseBookmarksChange,
   translationProject,
+  allVersionVerseIds,
 }: Props) {
   const t = useT();
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
+  const [showAll, setShowAll] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
@@ -44,10 +48,16 @@ export function CommentPanel({
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
 
+  // 全バージョンが2件以上あるときだけ「すべて表示」が意味を持つ。
+  const canShowAll = (allVersionVerseIds?.length ?? 0) > 1;
+  const useAll = showAll && canShowAll;
+
   const { comments, setComments, loading, reload } = useComments({
-    verse_id: verse.id,
+    verse_id: useAll ? undefined : verse.id,
+    verse_ids: useAll ? allVersionVerseIds : undefined,
+    all_versions: useAll,
     ordering,
-    translation_project: translationProject,
+    translation_project: useAll ? undefined : translationProject,
   });
 
   const bookmarkMap = new Map(
@@ -103,6 +113,7 @@ export function CommentPanel({
   if (verse.id !== prevVerseId) {
     setPrevVerseId(verse.id);
     setVerseExpanded(false);
+    setShowAll(false);
   }
 
   const q = searchQuery.trim().toLowerCase();
@@ -346,6 +357,25 @@ export function CommentPanel({
 
         {/* Ordering toggle */}
         <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)", display: "flex", gap: 8 }}>
+          {canShowAll && (
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              aria-pressed={showAll}
+              style={{
+                fontSize: 12,
+                padding: "3px 10px",
+                borderRadius: 12,
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                background: showAll ? "var(--accent)" : "transparent",
+                color: showAll ? "var(--accent-text)" : "var(--text-faint)",
+                fontFamily: "inherit",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t.allVersionsToggle}
+            </button>
+          )}
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
@@ -405,6 +435,7 @@ export function CommentPanel({
                 onReply={handleReply}
                 onRefresh={reload}
                 initialBookmarkId={commentBookmarkMap[node.id]}
+                showVersionBadge={useAll}
               />
             ))
           )}

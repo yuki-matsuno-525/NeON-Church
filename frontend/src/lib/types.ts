@@ -9,6 +9,8 @@ export type Comment = {
   chapter: string | null;
   book: string | null;
   translation_project: string | null;
+  // どのバージョンのコメントか（聖書なら訳名・翻訳ならプロジェクト名）。全バージョン表示のバッジ用。
+  version_label: string;
   parent: string | null;
   body: string;
   is_qa: boolean;

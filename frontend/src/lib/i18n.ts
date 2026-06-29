@@ -296,6 +296,7 @@ const ja = {
   // 並び替え・検索
   orderNew: "新しい順",
   orderVotes: "人気順",
+  allVersionsToggle: "すべての訳",
   searchComments: "コメントを検索...",
 
   // Q&A 投稿フォーム
@@ -674,6 +675,7 @@ const en: typeof ja = {
 
   orderNew: "Newest",
   orderVotes: "Popular",
+  allVersionsToggle: "All versions",
   searchComments: "Search comments...",
 
   qaInputTitlePlaceholder: "Question title (required)",

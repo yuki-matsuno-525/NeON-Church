@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { fetchBooks, fetchChapters, fetchComments, createComment, buildCommentTree, type Chapter, type Comment } from "@/lib/api";
+import { fetchBooks, fetchChapters, type Chapter } from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
-import { CommentInput } from "@/components/comments/CommentInput";
-import { CommentItem } from "@/components/comments/CommentItem";
+import { resolveVersionBookIds } from "@/lib/versions";
+import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
@@ -24,7 +24,7 @@ function BookContent() {
 
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
@@ -49,29 +49,14 @@ function BookContent() {
         const book = books.find((b) => b.name === tr.name);
         if (!book) throw new Error(t.bookNotFound);
         setBookId(book.id);
-        return Promise.all([
-          fetchChapters(book.id),
-          fetchComments({ book_id: book.id }),
-        ]).then(([chs, cms]) => {
-          setChapters(chs);
-          setComments(cms);
-        });
+        return fetchChapters(book.id).then(setChapters);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    // 全バージョン表示トグル用に、この書の各訳の書idを集めておく。
+    resolveVersionBookIds(slug).then(setAllVersionBookIds).catch(() => {});
   }, [slug, meta, router, searchParams, lang, t.bookNotFound]);
-
-  const handleCommentSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
-    if (!bookId) return;
-    const comment = await createComment({ book: bookId, title, body, is_qa: isQa, tag_ids: tagIds });
-    setComments((prev) => [comment, ...prev]);
-  };
-
-  const handleReply = async (body: string, parentId: string) => {
-    if (!bookId) return;
-    const comment = await createComment({ book: bookId, body, parent: parentId });
-    setComments((prev) => [...prev, comment]);
-  };
 
   if (!meta) return null;
 
@@ -86,8 +71,6 @@ function BookContent() {
       <div style={{ padding: 32, color: "var(--state-danger)" }}>{error}</div>
     );
   }
-
-  const tree = buildCommentTree(comments);
 
   return (
     <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
@@ -186,34 +169,12 @@ function BookContent() {
         })}
       </div>
 
-      <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
-
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
-        {t.bookCommentsHeading}{" "}
-        <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
-          ({comments.length})
-        </span>
-      </h2>
-
-      <div style={{ marginBottom: 24 }}>
-        <CommentInput onSubmit={handleCommentSubmit} showQaOption showTagOption />
-      </div>
-
-      {tree.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.noCommentsYet}</p>
-      ) : (
-        tree.map((node) => (
-          <CommentItem
-            key={node.id}
-            comment={node}
-            onReply={handleReply}
-            onRefresh={() => {
-              if (bookId) {
-                fetchComments({ book_id: bookId }).then(setComments).catch(() => {});
-              }
-            }}
-          />
-        ))
+      {bookId && (
+        <ChapterComments
+          bookId={bookId}
+          label={t.bookCommentsHeading}
+          allVersionIds={allVersionBookIds}
+        />
       )}
     </div>
     </div>

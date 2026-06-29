@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { findSlugByBookName, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,6 +13,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   const t = useT();
   const [project, setProject] = useState<TranslationProject | null>(null);
   const [units, setUnits] = useState<TranslationUnit[]>([]);
+  const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,6 +24,9 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     ]).then(([proj, u]) => {
       setProject(proj);
       setUnits(u);
+      // 全バージョン表示用：元の書名から slug を逆引きし、各訳の書idを集める。
+      const slug = findSlugByBookName(proj.source_book_name);
+      if (slug) resolveVersionBookIds(slug).then(setAllVersionBookIds).catch(() => {});
     }).catch(() => {
       setError(t.notPublishedOrMissing);
     }).finally(() => setLoading(false));
@@ -128,6 +133,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
           translationProject={id}
           label={project.name}
           commentBookmarkMap={{}}
+          allVersionIds={allVersionBookIds}
         />
       )}
     </div>

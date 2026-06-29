@@ -14,6 +14,8 @@ type Props = {
   onRefresh?: () => void;
   initialBookmarkId?: string;
   depth?: number;
+  // 全バージョン表示のとき、どの版のコメントかをバッジで示す。
+  showVersionBadge?: boolean;
 };
 
 export function CommentItem({
@@ -22,6 +24,7 @@ export function CommentItem({
   onRefresh,
   initialBookmarkId,
   depth = 0,
+  showVersionBadge = false,
 }: Props) {
   const t = useT();
   const relTime = useRelativeTime();
@@ -189,6 +192,20 @@ export function CommentItem({
               }}
             >
               Q&A
+            </span>
+          )}
+          {showVersionBadge && comment.version_label && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                background: "var(--accent-tint)",
+                color: "var(--accent)",
+                padding: "1px 7px",
+                borderRadius: 999,
+              }}
+            >
+              {comment.version_label}
             </span>
           )}
           <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
@@ -461,6 +478,7 @@ export function CommentItem({
           onReply={onReply}
           onRefresh={onRefresh}
           depth={depth + 1}
+          showVersionBadge={showVersionBadge}
         />
       ))}
     </div>

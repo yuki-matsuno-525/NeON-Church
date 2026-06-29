@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
+import { resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -52,6 +53,9 @@ export default function ChapterPage() {
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  // 全バージョン表示トグル用：この章・選択中の節の、各訳のid。
+  const [allVersionChapterIds, setAllVersionChapterIds] = useState<string[]>([]);
+  const [allVersionVerseIds, setAllVersionVerseIds] = useState<string[]>([]);
   // ?translation= がこの本の訳を指していればそれを優先（今日の聖句などからの遷移用）。
   const queryParam = searchParams.get("translation");
   const queryTranslation =
@@ -121,6 +125,20 @@ export default function ChapterPage() {
     if (!user) return;
     fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
   }, [user]);
+
+  // 全バージョン表示用：この章の各訳の章idを集める。
+  useEffect(() => {
+    resolveVersionChapterIds(slug, chapterNum).then(setAllVersionChapterIds).catch(() => setAllVersionChapterIds([]));
+  }, [slug, chapterNum]);
+
+  // 選択中の節の、各訳の節idを集める（節を選び直すたびに更新）。
+  useEffect(() => {
+    let cancelled = false;
+    const v = verses.find((vv) => vv.id === selectedVerseId);
+    const p = v ? resolveVersionVerseIds(slug, chapterNum, v.number) : Promise.resolve<string[]>([]);
+    p.then((ids) => !cancelled && setAllVersionVerseIds(ids)).catch(() => !cancelled && setAllVersionVerseIds([]));
+    return () => { cancelled = true; };
+  }, [slug, chapterNum, selectedVerseId, verses]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -308,6 +326,7 @@ export default function ChapterPage() {
             chapterId={chapter.id}
             label={`${label?.short ?? meta.short} ${t.chapterFmt(chapterNum)}`}
             commentBookmarkMap={commentBookmarkMap}
+            allVersionIds={allVersionChapterIds}
           />
         )}
 
@@ -321,6 +340,7 @@ export default function ChapterPage() {
             onClose={() => router.back()}
             commentBookmarkMap={commentBookmarkMap}
             verseBookmarks={verseBookmarks}
+            allVersionVerseIds={allVersionVerseIds}
             onVerseBookmarksChange={(updated) =>
               setBookmarks((prev) => [
                 ...prev.filter((bm) => bm.target_type === "comment"),
