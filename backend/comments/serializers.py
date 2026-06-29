@@ -54,6 +54,23 @@ def _get_location_parts(obj: Comment) -> tuple[str, int | None, int | None]:
     return "", None, None
 
 
+def _get_version_label(obj: Comment) -> str:
+    """コメントがどのバージョンのものかを表すラベルを返す。
+
+    翻訳プロジェクト向けならプロジェクト名、聖書本体なら訳名（口語訳・KJV など）。
+    「全バージョン表示」でどの版のコメントかをバッジ表示するために使う。
+    """
+    if obj.translation_project_id and obj.translation_project:
+        return obj.translation_project.name
+    if obj.verse_id and obj.verse:
+        return obj.verse.chapter.book.translation
+    if obj.chapter_id and obj.chapter:
+        return obj.chapter.book.translation
+    if obj.book_id and obj.book:
+        return obj.book.translation
+    return ""
+
+
 def _format_location_label(book: str, chapter: int | None, verse: int | None) -> str:
     """書名・章番号・節番号を「マタイ 1章 1節」形式の文字列にする。"""
     if verse is not None:
@@ -78,6 +95,7 @@ class CommentAuthorSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
+    version_label = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, write_only=True, required=False, source="tags"
@@ -85,11 +103,14 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
-        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "tags"]
+        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
+        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "version_label", "tags"]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
+
+    def get_version_label(self, obj) -> str:
+        return _get_version_label(obj)
 
     def to_representation(self, instance: Comment) -> dict:
         """論理削除済みのコメントは body を差し替えて返す。"""

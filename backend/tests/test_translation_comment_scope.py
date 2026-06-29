@@ -61,6 +61,29 @@ class TestTranslationCommentScope:
         bodies_tr = [c["body"] for c in res_tr.data["results"]]
         assert "原文へのコメント" not in bodies_tr
 
+    def test_all_versions_merges_bible_and_translation(self, auth_client, verse, project):
+        # 同じ節に、聖書本体のコメントと翻訳プロジェクトのコメントを両方投稿
+        auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "原文コメント"},
+            format="json",
+        )
+        auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "訳文コメント", "translation_project": str(project.id)},
+            format="json",
+        )
+        # all_versions=true なら両方まとめて返り、バージョンラベルが付く
+        res = auth_client.get(
+            COMMENTS_URL, {"verse_ids": str(verse.id), "all_versions": "true"}
+        )
+        results = res.data["results"]
+        bodies = {c["body"]: c["version_label"] for c in results}
+        assert "原文コメント" in bodies
+        assert "訳文コメント" in bodies
+        assert bodies["原文コメント"] == "口語訳"  # 聖書本体は訳名
+        assert bodies["訳文コメント"] == project.name  # 翻訳はプロジェクト名
+
     def test_reply_inherits_parent_translation_project(self, auth_client, verse, project):
         parent = auth_client.post(
             COMMENTS_URL,

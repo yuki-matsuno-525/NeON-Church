@@ -59,15 +59,36 @@ class CommentListCreateView(generics.ListCreateAPIView):
             )
 
     def get_queryset(self):
-        qs = Comment.objects.select_related("user").prefetch_related("tags").annotate(vote_count=Count("votes"))
+        qs = (
+            Comment.objects.select_related(
+                "user", "translation_project", "verse__chapter__book", "chapter__book", "book"
+            )
+            .prefetch_related("tags")
+            .annotate(vote_count=Count("votes"))
+        )
         params = self.request.query_params
+
+        # 単一id（verse_id など）と複数id（verse_ids=a,b,c）の両方を受ける。
+        # 複数idは「全バージョン表示」（同じ箇所の各訳の節・章・書をまとめる）用。
+        def _ids(name):
+            raw = params.get(name)
+            return [x for x in raw.split(",") if x] if raw else []
 
         verse_id = params.get("verse_id")
         chapter_id = params.get("chapter_id")
         book_id = params.get("book_id")
+        verse_ids = _ids("verse_ids")
+        chapter_ids = _ids("chapter_ids")
+        book_ids = _ids("book_ids")
         parent_id = params.get("parent_id")
 
-        if verse_id:
+        if verse_ids:
+            qs = qs.filter(verse_id__in=verse_ids)
+        elif chapter_ids:
+            qs = qs.filter(chapter_id__in=chapter_ids)
+        elif book_ids:
+            qs = qs.filter(book_id__in=book_ids)
+        elif verse_id:
             qs = qs.filter(verse_id=verse_id)
         elif chapter_id:
             qs = qs.filter(chapter_id=chapter_id)
@@ -79,9 +100,13 @@ class CommentListCreateView(generics.ListCreateAPIView):
             return qs.none()
 
         # バージョン（翻訳プロジェクト／聖書本体）でコメントを分離する。
-        # translation_project 指定時はその翻訳専用、未指定時は聖書本体のコメントのみ。
+        # all_versions=true のときは区別せず全バージョンのコメントをまとめて返す。
+        # それ以外は translation_project 指定でその翻訳専用、未指定で聖書本体のみ。
+        all_versions = params.get("all_versions") == "true"
         translation_project = params.get("translation_project")
-        if translation_project:
+        if all_versions:
+            pass
+        elif translation_project:
             qs = qs.filter(translation_project_id=translation_project)
         else:
             qs = qs.filter(translation_project__isnull=True)
