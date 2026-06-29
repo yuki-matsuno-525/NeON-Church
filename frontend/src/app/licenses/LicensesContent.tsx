@@ -24,8 +24,8 @@ const content: Record<string, Content> = {
         body: "口語訳（日本聖書協会、1955）— パブリックドメイン。KJV（King James Version、1611 / 1769 改訂）— パブリックドメイン。これらの本文は本サービス内で閲覧・引用可能です。",
       },
       {
-        heading: "2. 外典・偽典・関連古代文献（今後の追加）",
-        body: "外典・偽典・関連古代文献を追加する際は、本文ライセンスを個別に確認し、パブリックドメインまたは利用許諾の明確な版に限定して収録します。各文献ページに翻訳者・原典・ライセンスを明示します。",
+        heading: "2. 外典・偽典・関連古代文献",
+        body: "エノク書（R. H. Charles 英訳、1917）— パブリックドメイン。すでに本サービス内で閲覧・引用できます。今後さらに外典・偽典・関連古代文献を追加する際は、本文ライセンスを個別に確認し、パブリックドメインまたは利用許諾の明確な版に限定して収録します。各文献ページに翻訳者・原典・ライセンスを明示します。",
       },
       {
         heading: "3. ユーザーによる共同翻訳",
@@ -55,8 +55,8 @@ const content: Record<string, Content> = {
         body: "Kougo-yaku (Japan Bible Society, 1955) — public domain. KJV (King James Version, 1611 / 1769 revision) — public domain. These texts can be read and quoted within the Service.",
       },
       {
-        heading: "2. Apocrypha, Pseudepigrapha, and Related Ancient Texts (Planned)",
-        body: "When adding Apocrypha, Pseudepigrapha, or other ancient texts, we will verify the license of each translation and only include editions that are clearly public domain or licensed for this use. Each text page will display its translator, source, and license.",
+        heading: "2. Apocrypha, Pseudepigrapha, and Related Ancient Texts",
+        body: "The Book of Enoch (R. H. Charles translation, 1917) — public domain. It is already available to read and quote within the Service. When adding further Apocrypha, Pseudepigrapha, or other ancient texts, we will verify the license of each translation and only include editions that are clearly public domain or licensed for this use. Each text page will display its translator, source, and license.",
       },
       {
         heading: "3. Collaborative Translations by Users",

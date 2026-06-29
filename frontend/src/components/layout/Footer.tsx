@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 
-const GITHUB_URL = "https://github.com/yuki-matsuno-525/NeON-Church";
-
 export function Footer() {
   const t = useT();
 
@@ -15,7 +13,6 @@ export function Footer() {
     { label: t.footerTerms, href: "/terms" },
     { label: t.footerPrivacy, href: "/privacy" },
     { label: t.footerFeedback, href: "/feedback" },
-    { label: t.footerGithub, href: GITHUB_URL, external: true },
   ];
 
   return (

@@ -23,14 +23,6 @@ describe("Footer", () => {
     expect(screen.getByRole("link", { name: "フィードバック" })).toHaveAttribute("href", "/feedback");
   });
 
-  it("GitHub リンクは外部リンクとして rel=noopener noreferrer が付く", () => {
-    render(<Footer />);
-    const github = screen.getByRole("link", { name: "GitHub" });
-    expect(github).toHaveAttribute("target", "_blank");
-    expect(github).toHaveAttribute("rel", "noopener noreferrer");
-    expect(github.getAttribute("href")).toMatch(/^https:\/\//);
-  });
-
   it("role=contentinfo を持ち nav に aria-label が付く", () => {
     render(<Footer />);
     expect(screen.getByRole("contentinfo")).toBeInTheDocument();

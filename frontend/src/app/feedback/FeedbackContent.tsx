@@ -14,6 +14,7 @@ type Content = {
 };
 
 const REPO_URL = "https://github.com/yuki-matsuno-525/NeON-Church";
+const CONTACT_EMAIL = "yuki.matsuno525@gmail.com";
 
 const content: Record<string, Content> = {
   ja: {
@@ -21,6 +22,12 @@ const content: Record<string, Content> = {
     intro:
       "ご意見・不具合報告・機能要望をお寄せください。本サービスはベータ版で、皆さまのフィードバックを反映しながら改善しています。",
     channels: [
+      {
+        heading: "メールでのご連絡",
+        body: "GitHub アカウントをお持ちでない方は、メールでお気軽にお寄せください。ご意見・ご感想・不具合報告など、どんな内容でも歓迎します。",
+        href: `mailto:${CONTACT_EMAIL}`,
+        cta: "メールを送る",
+      },
       {
         heading: "不具合・機能要望（GitHub Issues）",
         body: "再現手順や期待する動作を添えてご報告ください。返信に時間をいただく場合があります。",
@@ -44,6 +51,12 @@ const content: Record<string, Content> = {
     intro:
       "We welcome your feedback, bug reports, and feature requests. The Service is in beta and improves based on input from people like you.",
     channels: [
+      {
+        heading: "Email",
+        body: "If you don't have a GitHub account, feel free to reach us by email. Comments, impressions, and bug reports are all welcome.",
+        href: `mailto:${CONTACT_EMAIL}`,
+        cta: "Send an email",
+      },
       {
         heading: "Bugs and Feature Requests (GitHub Issues)",
         body: "Please include reproduction steps and the behavior you expected. Responses may take some time.",
