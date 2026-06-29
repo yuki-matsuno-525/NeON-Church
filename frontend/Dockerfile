@@ -20,4 +20,8 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+# ローカル docker 開発は webpack で起動する。
+# Turbopack だと read（一覧）と read/[chapter] が隣接するネストルートが
+# 再コンパイル時に時々404になるため、それを回避する。
+# （E2E CI は npm run dev = Turbopack を使うので影響しない）
+CMD ["npm", "run", "dev", "--", "--webpack"]
