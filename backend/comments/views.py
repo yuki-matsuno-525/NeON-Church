@@ -78,6 +78,14 @@ class CommentListCreateView(generics.ListCreateAPIView):
         else:
             return qs.none()
 
+        # バージョン（翻訳プロジェクト／聖書本体）でコメントを分離する。
+        # translation_project 指定時はその翻訳専用、未指定時は聖書本体のコメントのみ。
+        translation_project = params.get("translation_project")
+        if translation_project:
+            qs = qs.filter(translation_project_id=translation_project)
+        else:
+            qs = qs.filter(translation_project__isnull=True)
+
         tag_id = params.get("tag_id")
         if tag_id:
             # M2M JOIN による重複行を防ぐため distinct() を末尾に付ける
@@ -178,7 +186,7 @@ class MyCommentListView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            Comment.objects.filter(user=self.request.user, is_deleted=False)
+            Comment.objects.filter(user=self.request.user, is_deleted=False, translation_project__isnull=True)
             .select_related("verse__chapter__book", "chapter__book", "book")
             .annotate(vote_count=Count("votes"))
             .order_by("-created_at")
@@ -201,7 +209,7 @@ class QACommentListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = (
-            Comment.objects.filter(is_qa=True, is_deleted=False, parent=None)
+            Comment.objects.filter(is_qa=True, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related(
                 "user",
                 "verse__chapter__book",
@@ -252,7 +260,7 @@ class TrendingCommentView(generics.ListAPIView):
 
     def get_queryset(self):
         return (
-            Comment.objects.filter(is_deleted=False, parent=None)
+            Comment.objects.filter(is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related(
                 "user",
                 "verse__chapter__book",

@@ -17,6 +17,8 @@ type Props = {
   commentBookmarkMap?: Record<string, string>;
   verseBookmarks?: Bookmark[];
   onVerseBookmarksChange?: (bookmarks: Bookmark[]) => void;
+  // 翻訳プロジェクトの読書ページから開いた場合、その翻訳専用のコメントとして扱う。
+  translationProject?: string;
 };
 
 const MIN_WIDTH = 280;
@@ -30,6 +32,7 @@ export function CommentPanel({
   commentBookmarkMap = {},
   verseBookmarks = [],
   onVerseBookmarksChange,
+  translationProject,
 }: Props) {
   const t = useT();
   const { user } = useAuth();
@@ -44,6 +47,7 @@ export function CommentPanel({
   const { comments, setComments, loading, reload } = useComments({
     verse_id: verse.id,
     ordering,
+    translation_project: translationProject,
   });
 
   const bookmarkMap = new Map(
@@ -75,7 +79,7 @@ export function CommentPanel({
   };
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
-    const comment = await createComment({ verse: verse.id, title, body, is_qa: isQa, tag_ids: tagIds });
+    const comment = await createComment({ verse: verse.id, title, body, is_qa: isQa, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);
   };
@@ -89,7 +93,7 @@ export function CommentPanel({
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    const comment = await createComment({ verse: verse.id, body, parent: parentId });
+    const comment = await createComment({ verse: verse.id, body, parent: parentId, translation_project: translationProject });
     setComments((prev) => [...prev, comment]);
   };
 
@@ -217,7 +221,7 @@ export function CommentPanel({
               {t.chapterVerseHeader(chapterNumber, verse.number)}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-              {user && (
+              {user && onVerseBookmarksChange && (
                 <button
                   onClick={handleBookmark}
                   disabled={loadingBookmark}

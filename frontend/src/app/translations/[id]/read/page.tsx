@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
+import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useT } from "@/lib/i18n";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -119,6 +120,15 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
             ))}
           </div>
         </>
+      )}
+
+      {project?.source_book && (
+        <ChapterComments
+          bookId={project.source_book}
+          translationProject={id}
+          label={project.name}
+          commentBookmarkMap={{}}
+        />
       )}
     </div>
     </div>

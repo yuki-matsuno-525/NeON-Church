@@ -8,12 +8,16 @@ import { CommentItem } from "@/components/comments/CommentItem";
 import { useT } from "@/lib/i18n";
 
 type Props = {
-  chapterId: string;
+  // chapterId（章コメント）または bookId（書コメント）のどちらか一方を渡す。
+  chapterId?: string;
+  bookId?: string;
   label?: string;
   commentBookmarkMap?: Record<string, string>;
+  // 翻訳プロジェクトの読書ページから使う場合、その翻訳専用のコメントとして扱う。
+  translationProject?: string;
 };
 
-export function ChapterComments({ chapterId, label, commentBookmarkMap = {} }: Props) {
+export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap = {}, translationProject }: Props) {
   const t = useT();
   const heading = label ?? t.chapterCommentsHeading;
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
@@ -21,10 +25,15 @@ export function ChapterComments({ chapterId, label, commentBookmarkMap = {} }: P
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // コメントの紐付け先（章 or 書）。createComment / useComments で共用する。
+  const target = bookId ? { book: bookId } : { chapter: chapterId };
+
   const { comments, setComments, loading, reload } = useComments({
     chapter_id: chapterId,
+    book_id: bookId,
     ordering,
     tag_id: activeTagId,
+    translation_project: translationProject,
   });
 
   useEffect(() => {
@@ -32,12 +41,12 @@ export function ChapterComments({ chapterId, label, commentBookmarkMap = {} }: P
   }, []);
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
-    const comment = await createComment({ chapter: chapterId, title, body, is_qa: isQa, tag_ids: tagIds });
+    const comment = await createComment({ ...target, title, body, is_qa: isQa, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    const comment = await createComment({ chapter: chapterId, body, parent: parentId });
+    const comment = await createComment({ ...target, body, parent: parentId, translation_project: translationProject });
     setComments((prev) => [...prev, comment]);
   };
 

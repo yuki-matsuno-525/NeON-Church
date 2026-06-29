@@ -185,7 +185,7 @@ class UserCommentsView(generics.ListAPIView):
         if not User.objects.filter(username=username).exists():
             raise NotFound("User not found.")
         return (
-            Comment.objects.filter(user__username=username, is_deleted=False, parent=None)
+            Comment.objects.filter(user__username=username, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related("user")
             .prefetch_related("tags")
             .annotate(vote_count=Count("votes"))

@@ -63,17 +63,18 @@ class TranslationMembershipSerializer(serializers.ModelSerializer):
 class TranslationUnitSerializer(serializers.ModelSerializer):
     verse_number = serializers.IntegerField(source="verse.number", read_only=True)
     verse_text = serializers.CharField(source="verse.text", read_only=True)
+    chapter = serializers.UUIDField(source="verse.chapter_id", read_only=True)
     chapter_number = serializers.IntegerField(source="verse.chapter.number", read_only=True)
     assigned_to_username = serializers.CharField(source="assigned_to.username", read_only=True, allow_null=True)
 
     class Meta:
         model = TranslationUnit
         fields = [
-            "id", "verse", "verse_number", "verse_text", "chapter_number",
+            "id", "verse", "verse_number", "verse_text", "chapter", "chapter_number",
             "assigned_to", "assigned_to_username",
             "body", "status", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "verse_number", "verse_text", "chapter_number", "assigned_to_username", "created_at", "updated_at"]
+        read_only_fields = ["id", "verse_number", "verse_text", "chapter", "chapter_number", "assigned_to_username", "created_at", "updated_at"]
 
     def validate(self, attrs):
         # 作成時（instance なし）のみ重複チェック

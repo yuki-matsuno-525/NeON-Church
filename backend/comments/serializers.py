@@ -85,7 +85,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
+        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "tags"]
 
     def get_vote_count(self, obj) -> int:
@@ -139,6 +139,8 @@ class CommentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"parent": "Reply must target the same book."}
                 )
+            # 返信は親と同じバージョン（翻訳プロジェクト／聖書本体）に必ず属させる。
+            data["translation_project"] = parent.translation_project
 
         return data
 

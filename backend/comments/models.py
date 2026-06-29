@@ -59,6 +59,17 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
         related_name="comments",
     )
+    # どの翻訳プロジェクト向けのコメントか。null の場合は聖書本体（原文バージョン）への
+    # コメント。値がある場合は、その翻訳プロジェクト専用のコメントとして分離される。
+    # verse / chapter / book は翻訳の元になった聖書の節・章・書を指す。
+    translation_project = models.ForeignKey(
+        "translations.TranslationProject",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="bible_comments",
+        db_index=True,
+    )
     # 返信先コメント。null の場合はトップレベルコメント。
     parent = models.ForeignKey(
         "self",

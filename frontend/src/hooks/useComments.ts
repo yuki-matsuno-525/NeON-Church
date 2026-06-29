@@ -7,13 +7,14 @@ type Params = {
   book_id?: string;
   ordering?: "new" | "votes";
   tag_id?: string | null;
+  translation_project?: string;
 };
 
 export function useComments(params: Params) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { verse_id, chapter_id, book_id, ordering, tag_id } = params;
+  const { verse_id, chapter_id, book_id, ordering, tag_id, translation_project } = params;
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -23,11 +24,12 @@ export function useComments(params: Params) {
       book_id,
       ordering,
       tag_id: tag_id ?? undefined,
+      translation_project,
     })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [verse_id, chapter_id, book_id, ordering, tag_id]);
+  }, [verse_id, chapter_id, book_id, ordering, tag_id, translation_project]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

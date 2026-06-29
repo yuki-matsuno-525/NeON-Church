@@ -160,6 +160,7 @@ export function fetchComments(params: {
   book_id?: string;
   ordering?: "new" | "votes";
   tag_id?: string;
+  translation_project?: string;
 }): Promise<Comment[]> {
   const q = new URLSearchParams();
   if (params.verse_id) q.set("verse_id", params.verse_id);
@@ -167,6 +168,7 @@ export function fetchComments(params: {
   if (params.book_id) q.set("book_id", params.book_id);
   if (params.ordering) q.set("ordering", params.ordering);
   if (params.tag_id) q.set("tag_id", params.tag_id);
+  if (params.translation_project) q.set("translation_project", params.translation_project);
   // 1ページ最大100件まで取得（コメント数が多い節向け）
   q.set("page_size", "100");
   return apiFetchList(`/comments/?${q}`);
@@ -185,6 +187,7 @@ export function createComment(data: {
   parent?: string;
   is_qa?: boolean;
   tag_ids?: string[];
+  translation_project?: string;
 }): Promise<Comment> {
   return apiFetch("/comments/", {
     method: "POST",

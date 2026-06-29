@@ -4,6 +4,8 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
+import { CommentPanel } from "@/components/reader/CommentPanel";
+import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useT } from "@/lib/i18n";
 
 export default function TranslationReadChapterPage({
@@ -19,6 +21,8 @@ export default function TranslationReadChapterPage({
   const [allUnits, setAllUnits] = useState<TranslationUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // コメントパネルを開いている節（翻訳ユニット）。null なら閉じている。
+  const [selectedUnit, setSelectedUnit] = useState<TranslationUnit | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -72,62 +76,108 @@ export default function TranslationReadChapterPage({
         </p>
       </div>
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 32px" }}>
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 4 }}>
-          {project?.name} {t.chapterFmt(chapterNum)}
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
-          {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
-        </p>
+      <div
+        className={`reader-wrapper${selectedUnit ? " has-verse" : ""}`}
+        style={{ display: "flex" }}
+      >
+        <div className="reader-main" style={{ flex: 1, minWidth: 0, padding: "32px 32px", overflowY: "auto" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 4 }}>
+              {project?.name} {t.chapterFmt(chapterNum)}
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+              {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
+            </p>
 
-        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+            <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
-        {units.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
-        ) : (
-          <div>
-            {units.map((unit) => (
-              <div
-                key={unit.id}
-                style={{
-                  padding: "12px 16px",
-                  borderRadius: 5,
-                  color: "var(--text)",
-                  marginBottom: 2,
-                }}
-              >
-                <span
-                  style={{
-                    lineHeight: 1.9,
-                    fontSize: 17,
-                    fontFamily: '"Noto Serif JP", serif',
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  <sup
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-faint)",
-                      marginRight: 4,
-                      verticalAlign: "super",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {unit.verse_number}
-                  </sup>
-                  {unit.body}
-                </span>
-                <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
-                  {t.originalText} {unit.verse_text}
-                </p>
+            {units.length === 0 ? (
+              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
+            ) : (
+              <div>
+                {units.map((unit) => {
+                  const isSelected = selectedUnit?.id === unit.id;
+                  return (
+                    <div
+                      key={unit.id}
+                      onClick={() => setSelectedUnit(isSelected ? null : unit)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedUnit(isSelected ? null : unit);
+                        }
+                      }}
+                      className="verse-row"
+                      style={{
+                        padding: "12px 16px",
+                        borderRadius: 5,
+                        color: "var(--text)",
+                        marginBottom: 2,
+                        cursor: "pointer",
+                        background: isSelected ? "var(--accent-tint)" : "transparent",
+                      }}
+                    >
+                      <span
+                        style={{
+                          lineHeight: 1.9,
+                          fontSize: 17,
+                          fontFamily: '"Noto Serif JP", serif',
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        <sup
+                          style={{
+                            fontSize: 11,
+                            color: "var(--text-faint)",
+                            marginRight: 4,
+                            verticalAlign: "super",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {unit.verse_number}
+                        </sup>
+                        {unit.body}
+                      </span>
+                      <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
+                        {t.originalText} {unit.verse_text}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+
+            {units.length > 0 && units[0]?.chapter && (
+              <ChapterComments
+                chapterId={units[0].chapter}
+                translationProject={id}
+                label={`${project?.name ?? ""} ${t.chapterFmt(chapterNum)}`}
+                commentBookmarkMap={{}}
+              />
+            )}
+          </div>
+        </div>
+
+        {selectedUnit && (
+          <div className="reader-panel">
+            <CommentPanel
+              verse={{
+                id: selectedUnit.verse,
+                chapter: selectedUnit.chapter,
+                number: selectedUnit.verse_number,
+                text: selectedUnit.body,
+              }}
+              chapterNumber={chapterNum}
+              translationProject={id}
+              onClose={() => setSelectedUnit(null)}
+            />
           </div>
         )}
-
       </div>
 
-      {prevChapter != null && (
+      {!selectedUnit && prevChapter != null && (
         <Link
           href={`/translations/${id}/read/${prevChapter}`}
           title={t.chapterFmt(prevChapter)}
@@ -161,7 +211,7 @@ export default function TranslationReadChapterPage({
         </Link>
       )}
 
-      {nextChapter != null && (
+      {!selectedUnit && nextChapter != null && (
         <Link
           href={`/translations/${id}/read/${nextChapter}`}
           title={t.chapterFmt(nextChapter)}

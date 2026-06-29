@@ -8,6 +8,7 @@ export type Comment = {
   verse: string | null;
   chapter: string | null;
   book: string | null;
+  translation_project: string | null;
   parent: string | null;
   body: string;
   is_qa: boolean;
@@ -161,6 +162,7 @@ export type TranslationUnit = {
   verse: string;
   verse_number: number;
   verse_text: string;
+  chapter: string;
   chapter_number: number;
   assigned_to: string | null;
   assigned_to_username: string | null;
