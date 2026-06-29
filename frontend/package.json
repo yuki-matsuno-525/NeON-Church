@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:clean": "node -e \"try{require('fs').rmSync('.next/dev/lock')}catch(e){}\" && next dev",
+    "dev": "next dev --webpack",
+    "dev:clean": "node -e \"try{require('fs').rmSync('.next/dev/lock')}catch(e){}\" && next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
