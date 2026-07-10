@@ -1,0 +1,70 @@
+[
+  {
+    "slug": "matthew",
+    "books": [
+      { "translation": "口語訳", "name": "マタイによる福音書" },
+      { "translation": "KJV", "name": "Matthew" },
+      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }
+    ]
+  },
+  {
+    "slug": "mark",
+    "books": [
+      { "translation": "口語訳", "name": "マルコによる福音書" },
+      { "translation": "KJV", "name": "Mark" },
+      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΜΑΡΚΟΝ" }
+    ]
+  },
+  {
+    "slug": "luke",
+    "books": [
+      { "translation": "口語訳", "name": "ルカによる福音書" },
+      { "translation": "KJV", "name": "Luke" },
+      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΛΟΥΚΑΝ" }
+    ]
+  },
+  {
+    "slug": "john",
+    "books": [
+      { "translation": "口語訳", "name": "ヨハネによる福音書" },
+      { "translation": "KJV", "name": "John" },
+      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΙΩΑΝΗΝ" }
+    ]
+  },
+  {
+    "slug": "mary",
+    "books": [
+      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Mary" }
+    ]
+  },
+  {
+    "slug": "infancy-thomas",
+    "books": [
+      { "translation": "Mark M. Mattison (EN)", "name": "The Infancy Gospel of Thomas" }
+    ]
+  },
+  {
+    "slug": "peter",
+    "books": [
+      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Peter" }
+    ]
+  },
+  {
+    "slug": "judas",
+    "books": [
+      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Judas" }
+    ]
+  },
+  {
+    "slug": "enoch",
+    "books": [
+      { "translation": "R. H. Charles (EN)", "name": "The Book of Enoch" }
+    ]
+  },
+  {
+    "slug": "adam-and-eve",
+    "books": [
+      { "translation": "L. S. A. Wells (EN)", "name": "The Life of Adam and Eve" }
+    ]
+  }
+]

@@ -64,6 +64,9 @@ backend/e2e_test.sqlite3
 # ---------------------------------------------------------------
 # ローカルのボリュームデータ（DB データなど）
 data/
+# ただし聖書メタデータの正本（ソース）は追跡する
+!backend/bible/data/
+!backend/bible/data/**
 
 # ブラウザ保存 HTML の付随リソース（取り込みには不要）
 text/others/*_files/
