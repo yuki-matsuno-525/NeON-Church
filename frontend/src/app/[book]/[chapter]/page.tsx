@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -16,6 +16,7 @@ import {
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
+import { arrangeVerses, isMarkShorterEnding } from "@/lib/verses";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -176,6 +177,12 @@ export default function ChapterPage() {
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
 
+  // 表示用に並べ替えた節（マルコ16のギリシャ語のみ「短い結び」を8節直後へ移動）。
+  const displayVerses = useMemo(
+    () => arrangeVerses(slug, chapterNum, activeTranslationId, verses),
+    [slug, chapterNum, activeTranslationId, verses]
+  );
+
   const commentBookmarkMap: Record<string, string> = Object.fromEntries(
     bookmarks
       .filter((bm) => bm.target_type === "comment" && bm.comment_detail)
@@ -315,10 +322,15 @@ export default function ChapterPage() {
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
         <VerseList
-          verses={verses}
+          verses={displayVerses}
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
           highlightVerseNumber={highlightVerseNumber}
+          numberLabel={(v) =>
+            isMarkShorterEnding(slug, activeTranslationId, v.number)
+              ? t.markShorterEnding
+              : v.number
+          }
         />
 
         {chapter && (

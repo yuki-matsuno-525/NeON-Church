@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { type Verse } from "@/lib/api";
 
 type Props = {
@@ -7,6 +8,9 @@ type Props = {
   selectedVerseId: string | null;
   onSelectVerse: (verseId: string) => void;
   highlightVerseNumber?: number | null;
+  // 節番号の表示を差し替えたいとき（例: マルコの「短い結び」）に使う。
+  // 省略時は verse.number をそのまま表示する。
+  numberLabel?: (verse: Verse) => ReactNode;
 };
 
 export function VerseList({
@@ -14,6 +18,7 @@ export function VerseList({
   selectedVerseId,
   onSelectVerse,
   highlightVerseNumber,
+  numberLabel,
 }: Props) {
 
   return (
@@ -68,7 +73,7 @@ export function VerseList({
                   fontWeight: 700,
                 }}
               >
-                {verse.number}
+                {numberLabel ? numberLabel(verse) : verse.number}
               </sup>
               {verse.text}
             </span>

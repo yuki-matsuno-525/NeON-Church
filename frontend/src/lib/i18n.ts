@@ -65,6 +65,7 @@ const ja = {
   // 章ページ
   bookList: "書一覧",
   toComments: "章コメントへ ↓",
+  markShorterEnding: "短い結び",
   switchTranslation: (label: string) => `${label} に切り替え`,
   translationNotFound: (name: string) => `「${name}」のデータが見つかりません。別の翻訳に切り替えてください。`,
 
@@ -465,6 +466,7 @@ const en: typeof ja = {
 
   bookList: "Book list",
   toComments: "Go to chapter comments ↓",
+  markShorterEnding: "Shorter Ending",
   switchTranslation: (label: string) => `Switch to ${label}`,
   translationNotFound: (name: string) => `"${name}" not found. Please switch to another translation.`,
 
