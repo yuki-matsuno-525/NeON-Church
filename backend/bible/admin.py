@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Book, Chapter, Verse
+from .models import Book, CanonicalBook, Chapter, Verse
 
 
 class ChapterInline(admin.TabularInline):
@@ -14,9 +14,14 @@ class VerseInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(CanonicalBook)
+class CanonicalBookAdmin(admin.ModelAdmin):
+    list_display = ["slug"]
+
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ["name", "translation", "order"]
+    list_display = ["name", "translation", "order", "canonical_book"]
     ordering = ["order"]
     inlines = [ChapterInline]
 
