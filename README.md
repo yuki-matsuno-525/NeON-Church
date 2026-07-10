@@ -83,6 +83,9 @@ docker-compose exec backend python manage.py import_gospel
 # KJV（英語）をインポート
 docker-compose exec backend python manage.py import_kjv
 
+# Nestle 1904（ギリシャ語原文・4福音書）をインポート
+docker-compose exec backend python manage.py import_greek
+
 # 外典・偽典（エノク書・マリア/ペテロ/ユダ/トマス幼児福音書・アダムとエバの生涯）を一括投入
 docker-compose exec backend python manage.py import_others
 ```

@@ -18,13 +18,13 @@ export type BookTranslation = { id: string; name: string };
 
 export const BOOKS = [
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
-    translations: [{ id: "口語訳", name: "マタイによる福音書" }, { id: "KJV", name: "Matthew" }] },
+    translations: [{ id: "口語訳", name: "マタイによる福音書" }, { id: "KJV", name: "Matthew" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }] },
   { slug: "mark",    name: "マルコによる福音書", englishName: "Mark",    short: "マルコ", totalChapters: 16, genre: "福音書" as BookGenre,
-    translations: [{ id: "口語訳", name: "マルコによる福音書" }, { id: "KJV", name: "Mark" }] },
+    translations: [{ id: "口語訳", name: "マルコによる福音書" }, { id: "KJV", name: "Mark" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΜΑΡΚΟΝ" }] },
   { slug: "luke",    name: "ルカによる福音書",   englishName: "Luke",    short: "ルカ",   totalChapters: 24, genre: "福音書" as BookGenre,
-    translations: [{ id: "口語訳", name: "ルカによる福音書" }, { id: "KJV", name: "Luke" }] },
+    translations: [{ id: "口語訳", name: "ルカによる福音書" }, { id: "KJV", name: "Luke" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΛΟΥΚΑΝ" }] },
   { slug: "john",    name: "ヨハネによる福音書", englishName: "John",    short: "ヨハネ", totalChapters: 21, genre: "福音書" as BookGenre,
-    translations: [{ id: "口語訳", name: "ヨハネによる福音書" }, { id: "KJV", name: "John" }] },
+    translations: [{ id: "口語訳", name: "ヨハネによる福音書" }, { id: "KJV", name: "John" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΙΩΑΝΗΝ" }] },
   // マリアの福音書は Mark M. Mattison 英訳のみ（パブリックドメイン）。
   // 章は写本のセクション見出し、節はページ番号（7〜19, 1〜6 と 11〜14 は欠落）。
   { slug: "mary",    name: "マリアの福音書",     englishName: "The Gospel of Mary", short: "マリア", totalChapters: 5, genre: "福音書" as BookGenre,

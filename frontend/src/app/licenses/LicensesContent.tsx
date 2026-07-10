@@ -21,7 +21,7 @@ const content: Record<string, Content> = {
     sections: [
       {
         heading: "1. 聖書本文（収録済み）",
-        body: "口語訳（日本聖書協会、1955）— パブリックドメイン。KJV（King James Version、1611 / 1769 改訂）— パブリックドメイン。これらの本文は本サービス内で閲覧・引用可能です。",
+        body: "口語訳（日本聖書協会、1955）— パブリックドメイン。KJV（King James Version、1611 / 1769 改訂）— パブリックドメイン。Nestle 1904 ギリシャ語新約聖書（原語・4福音書）— パブリックドメイン。本文データは biblicalhumanities/Nestle1904（OSIS XML）に基づきます。これらの本文は本サービス内で閲覧・引用可能です。",
       },
       {
         heading: "2. 外典・偽典・関連古代文献",
@@ -52,7 +52,7 @@ const content: Record<string, Content> = {
     sections: [
       {
         heading: "1. Scripture Texts (Currently Available)",
-        body: "Kougo-yaku (Japan Bible Society, 1955) — public domain. KJV (King James Version, 1611 / 1769 revision) — public domain. These texts can be read and quoted within the Service.",
+        body: "Kougo-yaku (Japan Bible Society, 1955) — public domain. KJV (King James Version, 1611 / 1769 revision) — public domain. Nestle 1904 Greek New Testament (original language, four Gospels) — public domain; text data based on biblicalhumanities/Nestle1904 (OSIS XML). These texts can be read and quoted within the Service.",
       },
       {
         heading: "2. Apocrypha, Pseudepigrapha, and Related Ancient Texts",
