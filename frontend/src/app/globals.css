@@ -233,7 +233,9 @@ select:focus-visible {
 }
 
 @theme inline {
-  --font-sans: "Noto Sans JP", sans-serif;
+  /* 本文はシステム日本語フォント（Web フォントを読まず高速化）。見出しのみ Web フォントの明朝体。 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "YuGothic", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
   --font-serif: "Noto Serif JP", serif;
 }
 
@@ -416,7 +418,7 @@ body {
 body {
   background: #090516;
   color: var(--text);
-  font-family: var(--font-sans), "Noto Sans JP", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
 }

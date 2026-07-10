@@ -1,22 +1,14 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
+import { Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
 
-// CSS 変数として注入し、globals.css 側の font-family で利用する。
-// セルフホスティングで Google Fonts への外部リクエストを排除し、CLS を抑える。
-// ウェイトは 400/700 のみ。日本語フォントは 1 ウェイトあたり 124 サブセットの
-// @font-face を生成するため、ウェイトを減らすと render-blocking な CSS が大きく減る。
-// 500（medium）は数箇所のみの使用で、未読込時は 400 にフォールバックする。
-const notoSansJp = Noto_Sans_JP({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-  variable: "--font-sans",
-  preload: false,
-});
-
+// 本文はシステム日本語フォント（globals.css の --font-sans）を使い、Web フォントを読まない。
+// 見出しのみブランドの明朝体 Noto Serif JP を Web フォントで読む。
+// 日本語フォントは 1 ウェイトあたり多数のサブセット @font-face を生成するため、
+// 本文 Web フォントを廃止すると render-blocking CSS とフォントファイル数が大きく減る。
+// ウェイトは 400/700 のみ（500 は未読込時 400 にフォールバックする）。
 const notoSerifJp = Noto_Serif_JP({
   subsets: ["latin"],
   weight: ["400", "700"],
@@ -60,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${notoSansJp.variable} ${notoSerifJp.variable}`} suppressHydrationWarning>
+    <html lang="ja" className={notoSerifJp.variable} suppressHydrationWarning>
       <body>
         <Providers>
           <ClientLayout>{children}</ClientLayout>

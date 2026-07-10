@@ -37,7 +37,7 @@ const content: Record<string, Content> = {
       },
       {
         heading: "5. 素材（フォント・画像など）",
-        body: "本サービスでは Noto Sans JP / Noto Serif JP（SIL Open Font License 1.1）を使用しています。背景画像その他の素材は順次クレジットを整備しています。",
+        body: "本サービスでは見出しに Noto Serif JP（SIL Open Font License 1.1）を使用しています。背景画像その他の素材は順次クレジットを整備しています。",
       },
     ],
     sourceCodeLabel: "6. ソースコード",
@@ -68,7 +68,7 @@ const content: Record<string, Content> = {
       },
       {
         heading: "5. Assets (Fonts and Images)",
-        body: "We use Noto Sans JP and Noto Serif JP (SIL Open Font License 1.1). Credits for background images and other assets are being added.",
+        body: "We use Noto Serif JP for headings (SIL Open Font License 1.1). Credits for background images and other assets are being added.",
       },
     ],
     sourceCodeLabel: "6. Source Code",
