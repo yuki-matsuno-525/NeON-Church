@@ -27,11 +27,9 @@ class Book(BaseModel):
     同じ書の各訳は canonical_book で1つに束ねる（段階3で全件リンク後 NOT NULL 化予定）。
     """
 
-    # 訳非依存の書への参照。段階2では未投入のため nullable。
+    # 訳非依存の書への参照。段階3B（全環境バックフィル）・3C（作成経路対応）完了後、NOT NULL 化。
     canonical_book = models.ForeignKey(
         CanonicalBook,
-        null=True,
-        blank=True,
         on_delete=models.PROTECT,
         related_name="editions",
     )

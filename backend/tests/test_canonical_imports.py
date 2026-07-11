@@ -43,13 +43,14 @@ def test_book_helper_creates_with_canonical():
     assert book.canonical_book.slug == "matthew"
 
 
-def test_book_helper_backfills_null_canonical():
-    # 既存 Book が canonical=NULL のとき、再取り込みで正しく補完される
-    Book.objects.create(name="Matthew", translation="KJV", order=1)  # canonical NULL
-    book, created = get_or_create_book_with_canonical(name="Matthew", translation="KJV", order=1)
-    assert not created
-    book.refresh_from_db()
-    assert book.canonical_book.slug == "matthew"
+def test_book_helper_idempotent_on_existing():
+    # 既存の正しくリンク済み Book に対して再取り込みしても、作成せず同じ canonical を返す
+    first, created = get_or_create_book_with_canonical(name="Matthew", translation="KJV", order=1)
+    assert created
+    second, created2 = get_or_create_book_with_canonical(name="Matthew", translation="KJV", order=1)
+    assert not created2
+    assert second.pk == first.pk
+    assert second.canonical_book.slug == "matthew"
 
 
 def test_book_helper_errors_on_wrong_existing_link():

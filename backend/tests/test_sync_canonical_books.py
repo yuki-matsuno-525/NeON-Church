@@ -1,7 +1,8 @@
 """sync_canonical_books コマンドのテスト。
 
-一時 JSON と一時 Book で、リンク・冪等・dry-run・不一致/曖昧のエラーを確認する。
-併せて、実際の正本 canonical_books.json が構造的に妥当なことも確認する。
+段階3D で Book.canonical_book は NOT NULL のため、Book は必ず canonical 付きで作る
+（NULL の Book は作れない）。よって本コマンドの役割は「正本↔DB の完全一致検証」と
+「既リンクの冪等な再確認（スキップ）」になる。併せて実際の正本 JSON の妥当性も確認する。
 """
 
 import json
@@ -12,6 +13,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from bible.models import Book, CanonicalBook
+from tests.factories import make_book
 
 pytestmark = pytest.mark.django_db
 
@@ -24,10 +26,10 @@ def _write_json(tmp_path, data) -> str:
     return str(path)
 
 
-def _make_books(pairs):
-    """(translation, name) のリストから Book を作る（order は連番）。"""
-    for i, (translation, name) in enumerate(pairs, start=1):
-        Book.objects.create(name=name, translation=translation, order=i)
+def _make_books(triples):
+    """(translation, name, slug) のリストから canonical 付き Book を作る（order は連番）。"""
+    for i, (translation, name, slug) in enumerate(triples, start=1):
+        make_book(name, translation, i, slug=slug)
 
 
 def _sample_json():
@@ -42,16 +44,16 @@ def _sample_json():
     ]
 
 
-def _sample_pairs():
+def _sample_triples():
     return [
-        ("口語訳", "マタイによる福音書"),
-        ("KJV", "Matthew"),
-        ("口語訳", "マルコによる福音書"),
+        ("口語訳", "マタイによる福音書", "matthew"),
+        ("KJV", "Matthew", "matthew"),
+        ("口語訳", "マルコによる福音書", "mark"),
     ]
 
 
-def test_links_all_books(tmp_path):
-    _make_books(_sample_pairs())
+def test_syncs_consistent_db(tmp_path):
+    _make_books(_sample_triples())
     path = _write_json(tmp_path, _sample_json())
 
     call_command("sync_canonical_books", path=path)
@@ -64,7 +66,7 @@ def test_links_all_books(tmp_path):
 
 
 def test_idempotent(tmp_path):
-    _make_books(_sample_pairs())
+    _make_books(_sample_triples())
     path = _write_json(tmp_path, _sample_json())
 
     call_command("sync_canonical_books", path=path)
@@ -75,29 +77,29 @@ def test_idempotent(tmp_path):
 
 
 def test_dry_run_persists_nothing(tmp_path):
-    _make_books(_sample_pairs())
+    _make_books(_sample_triples())
     path = _write_json(tmp_path, _sample_json())
+    before = CanonicalBook.objects.count()
 
     call_command("sync_canonical_books", path=path, dry_run=True)
 
-    assert CanonicalBook.objects.count() == 0
-    assert Book.objects.filter(canonical_book__isnull=True).count() == 3
+    # dry-run 後も状態は不変（既に整合しているので作成・変更なし）
+    assert CanonicalBook.objects.count() == before
+    assert Book.objects.filter(canonical_book__isnull=True).count() == 0
 
 
 def test_db_book_without_json_entry_errors(tmp_path):
     # JSON に無い Book を1つ追加 → 完全一致を満たさずエラー
-    _make_books(_sample_pairs() + [("KJV", "Luke")])
+    _make_books(_sample_triples() + [("KJV", "Luke", "luke")])
     path = _write_json(tmp_path, _sample_json())
 
     with pytest.raises(CommandError, match="JSON に定義の無い DB Book"):
         call_command("sync_canonical_books", path=path)
-    # 失敗時に中途半端な状態を残さない
-    assert Book.objects.filter(canonical_book__isnull=False).count() == 0
 
 
 def test_json_book_missing_in_db_errors(tmp_path):
     # DB にはマルコが無いのに JSON にはある → エラー
-    _make_books([("口語訳", "マタイによる福音書"), ("KJV", "Matthew")])
+    _make_books([("口語訳", "マタイによる福音書", "matthew"), ("KJV", "Matthew", "matthew")])
     path = _write_json(tmp_path, _sample_json())
 
     with pytest.raises(CommandError, match="DB に存在しない Book"):
@@ -105,7 +107,7 @@ def test_json_book_missing_in_db_errors(tmp_path):
 
 
 def test_ambiguous_pair_errors(tmp_path):
-    _make_books([("口語訳", "マタイによる福音書")])
+    _make_books([("口語訳", "マタイによる福音書", "matthew")])
     # 同じ (translation, name) を2つの slug に割り当て → 曖昧
     data = [
         {"slug": "matthew", "books": [{"translation": "口語訳", "name": "マタイによる福音書"}]},
@@ -118,7 +120,7 @@ def test_ambiguous_pair_errors(tmp_path):
 
 
 def test_empty_books_array_errors(tmp_path):
-    _make_books([("口語訳", "マタイによる福音書")])
+    _make_books([("口語訳", "マタイによる福音書", "matthew")])
     data = [{"slug": "matthew", "books": []}]
     path = _write_json(tmp_path, data)
 
