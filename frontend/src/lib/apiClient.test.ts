@@ -7,6 +7,7 @@ import {
   deleteComment,
   upvoteComment,
   removeUpvote,
+  login,
 } from "./apiClient";
 import type { Comment } from "./types";
 
@@ -204,6 +205,41 @@ describe("apiFetch", () => {
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(401);
     expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("401 + refresh 失敗 → auth:session-expired イベントを発火", async () => {
+    // 先に成功させて多重発火防止フラグをリセットしておく
+    mockFetch.mockResolvedValueOnce(makeRes(200, []));
+    await fetchBooks();
+
+    const spy = vi.fn();
+    window.addEventListener("auth:session-expired", spy);
+    mockFetch
+      .mockResolvedValueOnce(makeRes(401, {})) // 初回 → 401
+      .mockResolvedValueOnce(makeRes(401, {})); // refresh → 失敗
+
+    const err = await fetchBooks().catch((e) => e);
+    window.removeEventListener("auth:session-expired", spy);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("auth 系パス(login)の 401 は refresh もセッション切れ通知もしない", async () => {
+    const spy = vi.fn();
+    window.addEventListener("auth:session-expired", spy);
+    mockFetch.mockResolvedValueOnce(
+      makeRes(401, { detail: "Invalid username or password." })
+    );
+
+    const err = await login("u", "p").catch((e) => e);
+    window.removeEventListener("auth:session-expired", spy);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(401);
+    expect(err.message).toBe("Invalid username or password."); // body メッセージが保持される
+    expect(spy).not.toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(1); // refresh を呼ばない
   });
 
   it("CSRF トークンが cookie にある → X-CSRFToken ヘッダーを付与", async () => {

@@ -59,6 +59,20 @@ function getCsrfToken(): string | undefined {
   return match ? decodeURIComponent(match[1]) : undefined;
 }
 
+// 認証不要／401 が通常の入力エラーとして起こり得るパス。ここでの 401 は
+// 「セッション切れ」として扱わない（refresh もしない）。
+const AUTH_EXEMPT_PATH = /^\/auth\/(login|register|logout|token\/refresh)\b/;
+
+// セッション切れ通知の多重発火を防ぐフラグ。認証済みリクエストが 401 かつ refresh も
+// 失敗したとき一度だけ window イベントを発火する。成功レスポンスで false に戻す。
+let sessionExpiredEmitted = false;
+
+function notifySessionExpired(): void {
+  if (sessionExpiredEmitted || typeof window === "undefined") return;
+  sessionExpiredEmitted = true;
+  window.dispatchEvent(new CustomEvent("auth:session-expired"));
+}
+
 // 複数リクエストが同時に 401 を受けても refresh は1回だけ実行する
 let refreshPromise: Promise<void> | null = null;
 
@@ -109,13 +123,21 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
     ...init,
   });
 
-  if (res.status === 401 && !isRetry) {
+  // 認証済みリクエストが 401 → refresh を1回試す。失敗したらセッション切れとして通知する。
+  // ログイン/登録などの auth 系パスは通常の 401（入力エラー等）なので巻き込まない。
+  if (res.status === 401 && !isRetry && !AUTH_EXEMPT_PATH.test(path)) {
     try {
       await refreshToken();
     } catch {
+      notifySessionExpired();
       throw new ApiError(401, "Unauthorized");
     }
     return apiFetch<T>(path, init, true);
+  }
+
+  if (res.ok) {
+    // セッションが生きていることが確認できたので次の切れを再び通知できるようにする。
+    sessionExpiredEmitted = false;
   }
 
   if (!res.ok) {
