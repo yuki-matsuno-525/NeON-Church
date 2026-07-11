@@ -58,4 +58,32 @@ class Bookmark(BaseModel):
                 condition=models.Q(comment__isnull=False),
                 name="unique_user_comment_bookmark",
             ),
+            # 段階5E: 同一ユーザー・同一箇所の重複栞を DB で禁止（箇所3列が揃う行だけ対象）。
+            models.UniqueConstraint(
+                fields=["user", "canonical_book", "chapter_number", "verse_number"],
+                condition=models.Q(canonical_book__isnull=False)
+                & models.Q(chapter_number__isnull=False)
+                & models.Q(verse_number__isnull=False),
+                name="unique_user_location_bookmark",
+            ),
+            # 段階5E: 各栞は「comment 栞（comment あり・箇所3列すべて NULL）」か
+            # 「箇所栞（comment なし・箇所3列すべて NOT NULL）」のどちらかだけを許可する。
+            # verse FK には依存しないので 5F で verse FK を削除しても残せる。
+            models.CheckConstraint(
+                condition=(
+                    (
+                        models.Q(comment__isnull=False)
+                        & models.Q(canonical_book__isnull=True)
+                        & models.Q(chapter_number__isnull=True)
+                        & models.Q(verse_number__isnull=True)
+                    )
+                    | (
+                        models.Q(comment__isnull=True)
+                        & models.Q(canonical_book__isnull=False)
+                        & models.Q(chapter_number__isnull=False)
+                        & models.Q(verse_number__isnull=False)
+                    )
+                ),
+                name="bookmark_comment_xor_location",
+            ),
         ]
