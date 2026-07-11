@@ -1,18 +1,22 @@
-// 「同じ箇所の全バージョン（口語訳・KJV・英訳など）」のid解決。
+// 「同じ箇所の全バージョン（口語訳・KJV・英訳など）」の id 解決。
 //
-// どの訳が同じ書かは books.ts の translations 配列（DBの Book.name 対応表）だけが知っている。
-// ここでは slug を起点に、各訳の 書id / 章id / 節id を集めて返す。
-// 「すべてのバージョンのコメントを表示」で、集めたidをまとめてコメント取得するために使う。
+// 箇所は canonical_book.slug で表される。backend の /references/<slug>/... エンドポイントが
+// その箇所に存在する各版の 書id / 章id / 節id を1回でまとめて返す（旧実装の N+1 を解消）。
+// 「すべてのバージョンのコメントを表示」で、集めた id をまとめてコメント取得するために使う。
 
-import { fetchBooks, fetchChapters, fetchVerses } from "@/lib/api";
-import { BOOKS, getBookBySlug } from "@/lib/books";
+import {
+  fetchReferenceBooks,
+  fetchReferenceChapters,
+  fetchReferenceVerses,
+} from "@/lib/api";
+import { BOOKS } from "@/lib/books";
 
 // 同じ取得を繰り返さないためのセッション内キャッシュ。
 const bookIdsCache = new Map<string, string[]>();
 const chapterIdsCache = new Map<string, string[]>();
 const verseIdsCache = new Map<string, string[]>();
 
-/** 翻訳の元の書名（DBの Book.name）から、対応する slug を逆引きする。無ければ null。 */
+/** 翻訳の元の書名（DB の Book.name）から、対応する slug を逆引きする。無ければ null。 */
 export function findSlugByBookName(name: string): string | null {
   const hit = BOOKS.find((b) => b.translations.some((tr) => tr.name === name));
   return hit?.slug ?? null;
@@ -22,17 +26,11 @@ export function findSlugByBookName(name: string): string | null {
 export async function resolveVersionBookIds(slug: string): Promise<string[]> {
   const cached = bookIdsCache.get(slug);
   if (cached) return cached;
-  const meta = getBookBySlug(slug);
-  if (!meta) return [];
-  const ids: string[] = [];
-  for (const tr of meta.translations) {
-    try {
-      const books = await fetchBooks(tr.id);
-      const book = books.find((b) => b.name === tr.name);
-      if (book) ids.push(book.id);
-    } catch {
-      // この訳が取得できなくても他の訳は集める
-    }
+  let ids: string[] = [];
+  try {
+    ids = (await fetchReferenceBooks(slug)).map((b) => b.id);
+  } catch {
+    // 取得できなくても画面は動かす（空で返す）
   }
   bookIdsCache.set(slug, ids);
   return ids;
@@ -43,16 +41,11 @@ export async function resolveVersionChapterIds(slug: string, chapterNumber: numb
   const key = `${slug}:${chapterNumber}`;
   const cached = chapterIdsCache.get(key);
   if (cached) return cached;
-  const bookIds = await resolveVersionBookIds(slug);
-  const ids: string[] = [];
-  for (const bookId of bookIds) {
-    try {
-      const chapters = await fetchChapters(bookId);
-      const ch = chapters.find((c) => c.number === chapterNumber);
-      if (ch) ids.push(ch.id);
-    } catch {
-      // スキップ
-    }
+  let ids: string[] = [];
+  try {
+    ids = (await fetchReferenceChapters(slug, chapterNumber)).map((c) => c.id);
+  } catch {
+    // スキップ
   }
   chapterIdsCache.set(key, ids);
   return ids;
@@ -67,16 +60,11 @@ export async function resolveVersionVerseIds(
   const key = `${slug}:${chapterNumber}:${verseNumber}`;
   const cached = verseIdsCache.get(key);
   if (cached) return cached;
-  const chapterIds = await resolveVersionChapterIds(slug, chapterNumber);
-  const ids: string[] = [];
-  for (const chapterId of chapterIds) {
-    try {
-      const verses = await fetchVerses(chapterId);
-      const v = verses.find((vv) => vv.number === verseNumber);
-      if (v) ids.push(v.id);
-    } catch {
-      // スキップ
-    }
+  let ids: string[] = [];
+  try {
+    ids = (await fetchReferenceVerses(slug, chapterNumber, verseNumber)).map((v) => v.id);
+  } catch {
+    // スキップ
   }
   verseIdsCache.set(key, ids);
   return ids;
