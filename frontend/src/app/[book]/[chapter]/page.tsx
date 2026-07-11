@@ -352,6 +352,7 @@ export default function ChapterPage() {
             onClose={() => router.back()}
             commentBookmarkMap={commentBookmarkMap}
             verseBookmarks={verseBookmarks}
+            bookSlug={slug}
             allVersionVerseIds={allVersionVerseIds}
             onVerseBookmarksChange={(updated) =>
               setBookmarks((prev) => [

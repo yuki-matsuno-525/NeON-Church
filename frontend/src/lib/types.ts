@@ -34,11 +34,17 @@ export type BookmarkCommentDetail = {
   username: string;
   created_at: string;
 };
+export type BookmarkReference = {
+  book: string; // canonical_book.slug
+  chapter: number;
+  verse: number;
+};
 export type Bookmark = {
   id: string;
   verse_detail: BookmarkVerseDetail | null;
   comment_detail: BookmarkCommentDetail | null;
   target_type: "verse" | "comment" | null;
+  reference: BookmarkReference | null; // 段階5D: 訳非依存の箇所（verse 栞のみ）
   created_at: string;
 };
 export type NotificationTargetKind =

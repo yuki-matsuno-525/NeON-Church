@@ -103,6 +103,19 @@ class TestBookmarkCreate:
         res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
 
+    def test_verse_bookmark_response_includes_reference(self, auth_client, verse):
+        # 段階5D: レスポンスに訳非依存の箇所 reference が入る
+        res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
+        assert res.data["reference"] == {
+            "book": "matthew",
+            "chapter": verse.chapter.number,
+            "verse": verse.number,
+        }
+
+    def test_comment_bookmark_reference_is_null(self, auth_client, comment):
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.data["reference"] is None
+
 
 # ------------------------------------------------------------------
 # ブックマーク一覧
