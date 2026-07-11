@@ -490,9 +490,9 @@ class TestQAListBookFilter:
         ).data
 
     def test_single_book_id_filters(self, auth_client, api_client, book):
-        from bible.models import Book
+        from tests.factories import make_book
 
-        other = Book.objects.create(name="Matthew", translation="KJV", order=2)
+        other = make_book("Matthew", "KJV", 2, slug="matthew")
         self._post_qa(auth_client, book, "口語訳の質問")
         self._post_qa(auth_client, other, "KJVの質問")
 
@@ -501,9 +501,9 @@ class TestQAListBookFilter:
         assert titles == ["口語訳の質問"]
 
     def test_comma_separated_book_ids_filter_both(self, auth_client, api_client, book):
-        from bible.models import Book
+        from tests.factories import make_book
 
-        other = Book.objects.create(name="Matthew", translation="KJV", order=2)
+        other = make_book("Matthew", "KJV", 2, slug="matthew")
         self._post_qa(auth_client, book, "口語訳の質問")
         self._post_qa(auth_client, other, "KJVの質問")
 

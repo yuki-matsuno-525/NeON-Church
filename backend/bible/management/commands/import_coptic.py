@@ -24,6 +24,7 @@ from typing import Iterator
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from bible.canonical import get_or_create_book_with_canonical
 from bible.models import Book, Chapter, Verse
 
 from .coptic_corpus_names import (
@@ -332,10 +333,12 @@ class Command(BaseCommand):
         return verses_added
 
     def _get_or_create_book(self, name: str, translation: str, order: int) -> Book:
-        book, created = Book.objects.get_or_create(
+        # Coptic 版は現状 canonical_books.json に未登録のため、共通解決で意図的にエラーになる。
+        # 収録する場合は書名・slug・出所・ライセンスを確認のうえ、先に正本へ登録すること。
+        book, created = get_or_create_book_with_canonical(
             name=name,
             translation=translation,
-            defaults={"order": order},
+            order=order,
         )
         if created:
             self.stdout.write(f"  書を作成: {name} ({translation})")

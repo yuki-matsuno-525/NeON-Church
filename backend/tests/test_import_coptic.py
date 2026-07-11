@@ -15,6 +15,15 @@ from django.core.management import call_command
 from bible.models import Book, Chapter, Verse
 from bible.management.commands.import_coptic import _parse_conllu
 
+# Coptic 版は canonical_books.json に未登録のため、段階3C で import_coptic は
+# 取り込み時にエラーになる（意図的に無効化）。書名・slug・出所・ライセンスを確認して
+# 正本へ登録する段階で、以下の統合テストを復活させる。パーサ単体テストは canonical に
+# 依存しないため有効なまま。
+_COPTIC_DISABLED = (
+    "import_coptic は Coptic が canonical_books.json 未登録のため段階3Cで無効化。"
+    "正本へ登録する段階で復活させる。"
+)
+
 
 # --- CoNLL-U テストデータ ---
 
@@ -104,6 +113,7 @@ def _build_corpus_dir(root: Path, meta_entries: dict) -> None:
     (root / "meta.json").write_text(_make_meta(meta_entries), encoding="utf-8")
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticMultiBook:
     """sahidica.nt 形式（多書コーパス）のインポートテスト。"""
@@ -182,6 +192,7 @@ class TestImportCopticMultiBook:
         assert Verse.objects.filter(chapter__book=book).count() == 2
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticNonCanonical:
     """AP 形式（非正典コーパス）のインポートテスト。"""
@@ -241,6 +252,7 @@ class TestImportCopticNonCanonical:
         assert Verse.objects.filter(chapter=ch2_en).count() == 0
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticSingleBook:
     """単一書コーパス（sahidic.jonah 形式）のインポートテスト。"""
@@ -267,6 +279,7 @@ class TestImportCopticSingleBook:
         assert Verse.objects.filter(chapter=ch1).count() == 1
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticZip:
     """ZIP 形式の CONLLU（sahidic.ot 方式）のインポートテスト。"""
@@ -305,6 +318,7 @@ class TestImportCopticZip:
         assert verse.text == "ϩⲛⲁⲣⲭⲏ ⲁⲡⲛⲟⲩⲧⲉ ⲧⲁⲙⲓⲉ ."
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticLicense:
     """--license フラグのテスト。"""
@@ -390,6 +404,7 @@ class TestImportCopticLicense:
         assert not Book.objects.filter(name="Apophthegmata Patrum").exists()
 
 
+@pytest.mark.skip(reason=_COPTIC_DISABLED)
 @pytest.mark.django_db
 class TestImportCopticCorpusFilter:
     """--corpus フラグで単一コーパスのみ処理できる。"""
@@ -414,3 +429,21 @@ class TestImportCopticCorpusFilter:
 
         assert Book.objects.filter(name="Apophthegmata Patrum").exists()
         assert not Book.objects.filter(name="Mark").exists()
+
+
+@pytest.mark.django_db
+def test_import_coptic_errors_when_not_in_canonical(tmp_path):
+    """Coptic は正本未登録のため、取り込み時に CanonicalDataError で止まる（意図的）。"""
+    from bible.canonical import CanonicalDataError
+
+    meta = {"41_Mark_01": {"corpus": "sahidica.nt", "languages": "Sahidic Coptic", "chapter": "1"}}
+    _build_corpus_dir(tmp_path, meta)
+    nt_dir = tmp_path / "sahidica.nt" / "sahidica.nt_CONLLU"
+    nt_dir.mkdir(parents=True)
+    (nt_dir / "41_Mark_01.conllu").write_text(MARK_CH1_CONTENT, encoding="utf-8")
+
+    with pytest.raises(CanonicalDataError):
+        call_command("import_coptic", str(tmp_path), "--skip-en")
+
+    # 中途半端に Book が作られていないこと
+    assert not Book.objects.filter(translation="Sahidic Coptic").exists()

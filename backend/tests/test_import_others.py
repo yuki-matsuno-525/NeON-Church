@@ -27,11 +27,17 @@ def _book(name, translation, order) -> dict:
     }
 
 
+# loader 経由で canonical が必須になったため、正本に実在する書名・訳を使う。
+_TRANSLATION = "Mark M. Mattison (EN)"
+_BOOK_A = "The Gospel of Mary"
+_BOOK_B = "The Gospel of Peter"
+
+
 def _seed_dir(tmp_path):
     d = tmp_path / "others"
     d.mkdir()
-    (d / "a.json").write_text(json.dumps(_book("Book A", "T (EN)", 1), ensure_ascii=False), encoding="utf-8")
-    (d / "b.json").write_text(json.dumps(_book("Book B", "T (EN)", 2), ensure_ascii=False), encoding="utf-8")
+    (d / "a.json").write_text(json.dumps(_book(_BOOK_A, _TRANSLATION, 1), ensure_ascii=False), encoding="utf-8")
+    (d / "b.json").write_text(json.dumps(_book(_BOOK_B, _TRANSLATION, 2), ensure_ascii=False), encoding="utf-8")
     return d
 
 
@@ -39,8 +45,8 @@ def test_import_others_loads_all_json(tmp_path):
     d = _seed_dir(tmp_path)
     call_command("import_others", "--dir", str(d))
 
-    assert Book.objects.filter(translation="T (EN)").count() == 2
-    assert Verse.objects.filter(chapter__book__name="Book A").count() == 2
+    assert Book.objects.filter(translation=_TRANSLATION).count() == 2
+    assert Verse.objects.filter(chapter__book__name=_BOOK_A).count() == 2
 
 
 def test_import_others_is_idempotent(tmp_path):
@@ -48,8 +54,8 @@ def test_import_others_is_idempotent(tmp_path):
     call_command("import_others", "--dir", str(d))
     call_command("import_others", "--dir", str(d))
 
-    assert Book.objects.filter(name="Book A").count() == 1
-    assert Verse.objects.filter(chapter__book__name="Book A").count() == 2
+    assert Book.objects.filter(name=_BOOK_A).count() == 1
+    assert Verse.objects.filter(chapter__book__name=_BOOK_A).count() == 2
 
 
 def test_import_others_empty_dir_raises(tmp_path):
