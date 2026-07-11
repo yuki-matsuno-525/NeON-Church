@@ -17,6 +17,8 @@ type Props = {
   commentBookmarkMap?: Record<string, string>;
   verseBookmarks?: Bookmark[];
   onVerseBookmarksChange?: (bookmarks: Bookmark[]) => void;
+  // 栞判定に使う訳非依存の書 slug（箇所一致に必要）。
+  bookSlug?: string;
   // 翻訳プロジェクトの読書ページから開いた場合、その翻訳専用のコメントとして扱う。
   translationProject?: string;
   // 全バージョン表示用：この節の全バージョンの節id。2件以上でトグルを表示。
@@ -34,6 +36,7 @@ export function CommentPanel({
   commentBookmarkMap = {},
   verseBookmarks = [],
   onVerseBookmarksChange,
+  bookSlug,
   translationProject,
   allVersionVerseIds,
 }: Props) {
@@ -60,12 +63,16 @@ export function CommentPanel({
     translation_project: useAll ? undefined : translationProject,
   });
 
-  const bookmarkMap = new Map(
+  // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
+  // KJV など別の訳を表示していても「ブックマーク済み」として扱われる（訳跨ぎハイライト）。
+  const bookmarkByLocation = new Map(
     verseBookmarks
-      .filter((bm): bm is typeof bm & { verse_detail: NonNullable<typeof bm.verse_detail> } => bm.verse_detail !== null)
-      .map((bm) => [bm.verse_detail.id, bm])
+      .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
+      .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
   );
-  const isBookmarked = bookmarkMap.has(verse.id);
+  const locationKey = bookSlug ? `${bookSlug}/${chapterNumber}/${verse.number}` : null;
+  const existingBookmark = locationKey ? bookmarkByLocation.get(locationKey) : undefined;
+  const isBookmarked = existingBookmark !== undefined;
 
   const handleBookmark = async () => {
     if (!user) {
@@ -75,10 +82,9 @@ export function CommentPanel({
     if (loadingBookmark || !onVerseBookmarksChange) return;
     setLoadingBookmark(true);
     try {
-      const existing = bookmarkMap.get(verse.id);
-      if (existing) {
-        await removeBookmark(existing.id);
-        onVerseBookmarksChange(verseBookmarks.filter((bm) => bm.id !== existing.id));
+      if (existingBookmark) {
+        await removeBookmark(existingBookmark.id);
+        onVerseBookmarksChange(verseBookmarks.filter((bm) => bm.id !== existingBookmark.id));
       } else {
         const bm = await createBookmark(verse.id);
         onVerseBookmarksChange([...verseBookmarks, bm]);
