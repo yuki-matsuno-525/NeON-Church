@@ -10,14 +10,9 @@ import {
   type Comment,
   type Bookmark,
 } from "@/lib/api";
-import { BOOKS } from "@/lib/books";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, bookLabel, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-
-function slugFromBookName(name: string): string {
-  return BOOKS.find((b) => b.name === name)?.slug ?? "";
-}
 
 type Tab = "favorites" | "comments";
 
@@ -151,18 +146,14 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   </div>
                 );
               }
-              if (!bm.verse_detail) return null;
-              const slug = slugFromBookName(bm.verse_detail.book_name);
-              const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}` : "#";
-              const bookDisplay = bookLabel(slug, lang)?.name ?? bm.verse_detail.book_name;
+              if (!bm.reference) return null;
+              const href = `/${bm.reference.book}/${bm.reference.chapter}`;
+              const bookDisplay = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
               return (
                 <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
                   <div style={{ ...cardStyle, cursor: "pointer" }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                      {bookDisplay} {t.verseFmt(bm.verse_detail.chapter_number, bm.verse_detail.number)}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                      {bm.verse_detail.text}
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                      {bookDisplay} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
                     </p>
                   </div>
                 </Link>

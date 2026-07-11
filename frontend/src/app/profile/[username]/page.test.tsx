@@ -63,15 +63,11 @@ const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
 
 const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   id: "bm1",
-  verse_detail: {
-    id: "v1",
-    number: 1,
-    text: "アブラハムの子であるダビデの子、イエス・キリストの系図。",
-    chapter_number: 1,
-    book_name: "マタイによる福音書",
-  },
+  // 一覧は verse_detail に依存せず reference（訳非依存の箇所）だけで表示する。
+  verse_detail: null,
   comment_detail: null,
   target_type: "verse",
+  reference: { book: "matthew", chapter: 1, verse: 1 },
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });
