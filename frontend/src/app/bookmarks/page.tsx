@@ -5,18 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { BOOKS } from "@/lib/books";
+import { bookLabel } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { resolveVersionVerseIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
-
-function slugFromBookName(name: string): string {
-  return BOOKS.find((b) => b.name === name)?.slug ?? "";
-}
 
 export default function BookmarksPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [fetching, setFetching] = useState(true);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
@@ -44,8 +43,11 @@ export default function BookmarksPage() {
     let newBm: Bookmark;
     if (bm.target_type === "comment" && bm.comment_detail) {
       newBm = await createCommentBookmark(bm.comment_detail.id);
-    } else if (bm.verse_detail) {
-      newBm = await createBookmark(bm.verse_detail.id);
+    } else if (bm.reference) {
+      // 箇所から verse_id を解決して再作成する（作成 API の入力は verse_id のまま）。
+      const ids = await resolveVersionVerseIds(bm.reference.book, bm.reference.chapter, bm.reference.verse);
+      if (!ids[0]) return;
+      newBm = await createBookmark(ids[0]);
     } else {
       return;
     }
@@ -125,9 +127,9 @@ export default function BookmarksPage() {
               );
             }
 
-            if (!bm.verse_detail) return null;
-            const slug = slugFromBookName(bm.verse_detail.book_name);
-            const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}#verse-${bm.verse_detail.number}` : "#";
+            if (!bm.reference) return null;
+            const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
+            const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
 
             return (
               <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
@@ -136,22 +138,8 @@ export default function BookmarksPage() {
                   onClick={(e) => isRemoved && e.preventDefault()}
                   style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
                 >
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
-                    {bm.verse_detail.book_name} {t.verseFmt(bm.verse_detail.chapter_number, bm.verse_detail.number)}
-                  </p>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      color: "var(--text-muted)",
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {bm.verse_detail.text}
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                    {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
                   </p>
                 </Link>
                 <div style={{ marginTop: 8 }}>

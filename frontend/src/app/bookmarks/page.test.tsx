@@ -29,15 +29,11 @@ vi.mock("@/contexts/AuthContext", () => ({
 
 const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   id: "bm1",
-  verse_detail: {
-    id: "v1",
-    number: 3,
-    text: "アブラハムの子であるダビデの子、イエス・キリストの系図。",
-    chapter_number: 1,
-    book_name: "マタイによる福音書",
-  },
+  // 一覧は verse_detail に依存せず reference（訳非依存の箇所）だけで表示する。
+  verse_detail: null,
   comment_detail: null,
   target_type: "verse",
+  reference: { book: "matthew", chapter: 1, verse: 3 },
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });
@@ -81,16 +77,6 @@ describe("BookmarksPage", () => {
     expect(screen.getByText(/3節/)).toBeInTheDocument();
   });
 
-  it("節テキストが表示される", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
-
-    render(<BookmarksPage />);
-
-    await screen.findByText("アブラハムの子であるダビデの子、イエス・キリストの系図。");
-  });
-
   it("ブックマークのリンクが正しい章URLを持つ", async () => {
     const { fetchBookmarks } = await import("@/lib/api");
     vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
@@ -108,13 +94,7 @@ describe("BookmarksPage", () => {
       makeBookmark({ id: "bm1" }),
       makeBookmark({
         id: "bm2",
-        verse_detail: {
-          id: "v2",
-          number: 5,
-          text: "別の節テキスト",
-          chapter_number: 2,
-          book_name: "マルコによる福音書",
-        },
+        reference: { book: "mark", chapter: 2, verse: 5 },
       }),
     ]);
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
