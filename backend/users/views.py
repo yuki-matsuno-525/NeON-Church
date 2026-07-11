@@ -4,6 +4,7 @@ import urllib.parse
 import requests as http_requests
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.core import signing
 from django.http import HttpResponseRedirect
 from rest_framework import generics, status
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound
@@ -305,6 +306,56 @@ def _oauth_error_redirect() -> HttpResponseRedirect:
 
 
 # ---------------------------------------------------------------------------
+# OAuth state（CSRF 対策）— Django サーバーセッションに依存しない方式
+#
+# 従来は request.session に oauth_state を保存して照合していたが、フロント(Vercel)／
+# バックエンド(Render)＋Next proxy の構成ではセッションの共有が不安定で、Google/GitHub
+# ログインが「たまに失敗」していた。そこで:
+#   - state = 署名付き（改ざん検知＋有効期限）で next パスと nonce を内包する文字列
+#   - nonce は短命 Cookie（フロントドメインで発行）にも入れ、コールバックで二重照合する
+# ことで、セッションに依存せずログイン CSRF も防ぐ。
+# ---------------------------------------------------------------------------
+
+_OAUTH_NONCE_COOKIE = "oauth_nonce"
+_OAUTH_STATE_SALT = "oauth-state"
+_OAUTH_STATE_MAX_AGE = 600  # 秒（10分）
+
+
+def _make_oauth_state(next_path: str) -> tuple[str, str]:
+    """(署名付き state, nonce) を返す。state は URL に載せ、nonce は Cookie に入れる。"""
+    nonce = secrets.token_urlsafe(24)
+    state = signing.dumps({"nonce": nonce, "next": next_path}, salt=_OAUTH_STATE_SALT)
+    return state, nonce
+
+
+def _set_oauth_nonce_cookie(response, nonce: str) -> None:
+    response.set_cookie(
+        _OAUTH_NONCE_COOKIE,
+        nonce,
+        max_age=_OAUTH_STATE_MAX_AGE,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="Lax",
+    )
+
+
+def _verify_oauth_state(request: Request) -> str:
+    """state の署名・有効期限・nonce Cookie 一致を検証し、next パスを返す。
+
+    不正なら signing.BadSignature を送出する（呼び出し側で error リダイレクト）。
+    """
+    state = request.GET.get("state")
+    cookie_nonce = request.COOKIES.get(_OAUTH_NONCE_COOKIE)
+    if not state or not cookie_nonce:
+        raise signing.BadSignature("missing state or nonce cookie")
+
+    data = signing.loads(state, salt=_OAUTH_STATE_SALT, max_age=_OAUTH_STATE_MAX_AGE)
+    if not secrets.compare_digest(str(data.get("nonce", "")), cookie_nonce):
+        raise signing.BadSignature("nonce mismatch")
+    return _safe_next_path(data.get("next"))
+
+
+# ---------------------------------------------------------------------------
 # Google OAuth
 # ---------------------------------------------------------------------------
 
@@ -314,9 +365,8 @@ class GoogleOAuthView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request: Request) -> HttpResponseRedirect:
-        state = secrets.token_urlsafe(32)
-        request.session["oauth_state"] = state
-        request.session["oauth_next"] = _safe_next_path(request.GET.get("next"))
+        next_path = _safe_next_path(request.GET.get("next"))
+        state, nonce = _make_oauth_state(next_path)
 
         params = {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -326,7 +376,9 @@ class GoogleOAuthView(APIView):
             "state": state,
             "access_type": "online",
         }
-        return HttpResponseRedirect(f"{_GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}")
+        response = HttpResponseRedirect(f"{_GOOGLE_AUTH_URL}?{urllib.parse.urlencode(params)}")
+        _set_oauth_nonce_cookie(response, nonce)
+        return response
 
 
 class GoogleCallbackView(APIView):
@@ -336,11 +388,12 @@ class GoogleCallbackView(APIView):
 
     def get(self, request: Request) -> HttpResponseRedirect:
         code = request.GET.get("code")
-        state = request.GET.get("state")
-        if not code or state != request.session.get("oauth_state"):
+        if not code:
             return _oauth_error_redirect()
-
-        next_path = _safe_next_path(request.session.get("oauth_next"))
+        try:
+            next_path = _verify_oauth_state(request)
+        except signing.BadSignature:
+            return _oauth_error_redirect()
 
         token_resp = http_requests.post(_GOOGLE_TOKEN_URL, data={
             "code": code,
@@ -368,6 +421,7 @@ class GoogleCallbackView(APIView):
         response = HttpResponseRedirect(redirect_to)
         refresh = RefreshToken.for_user(user)
         _set_auth_cookies(response, str(refresh.access_token), str(refresh))
+        response.delete_cookie(_OAUTH_NONCE_COOKIE)
         return response
 
 
@@ -381,9 +435,8 @@ class GithubOAuthView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request: Request) -> HttpResponseRedirect:
-        state = secrets.token_urlsafe(32)
-        request.session["oauth_state"] = state
-        request.session["oauth_next"] = _safe_next_path(request.GET.get("next"))
+        next_path = _safe_next_path(request.GET.get("next"))
+        state, nonce = _make_oauth_state(next_path)
 
         params = {
             "client_id": settings.GITHUB_CLIENT_ID,
@@ -391,7 +444,9 @@ class GithubOAuthView(APIView):
             "scope": "read:user user:email",
             "state": state,
         }
-        return HttpResponseRedirect(f"{_GITHUB_AUTH_URL}?{urllib.parse.urlencode(params)}")
+        response = HttpResponseRedirect(f"{_GITHUB_AUTH_URL}?{urllib.parse.urlencode(params)}")
+        _set_oauth_nonce_cookie(response, nonce)
+        return response
 
 
 class GithubCallbackView(APIView):
@@ -401,11 +456,12 @@ class GithubCallbackView(APIView):
 
     def get(self, request: Request) -> HttpResponseRedirect:
         code = request.GET.get("code")
-        state = request.GET.get("state")
-        if not code or state != request.session.get("oauth_state"):
+        if not code:
             return _oauth_error_redirect()
-
-        next_path = _safe_next_path(request.session.get("oauth_next"))
+        try:
+            next_path = _verify_oauth_state(request)
+        except signing.BadSignature:
+            return _oauth_error_redirect()
 
         token_resp = http_requests.post(
             _GITHUB_TOKEN_URL,
@@ -448,4 +504,5 @@ class GithubCallbackView(APIView):
         response = HttpResponseRedirect(redirect_to)
         refresh = RefreshToken.for_user(user)
         _set_auth_cookies(response, str(refresh.access_token), str(refresh))
+        response.delete_cookie(_OAUTH_NONCE_COOKIE)
         return response
