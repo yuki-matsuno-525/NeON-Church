@@ -50,6 +50,25 @@ class TestBookmarkCreate:
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_409_CONFLICT
 
+    def test_verse_bookmark_stores_canonical_location(self, auth_client, verse):
+        # 段階5C: verse から箇所（canonical_book/章番号/節番号）が backend 導出で保存される
+        res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        from bookmarks.models import Bookmark
+        bm = Bookmark.objects.get(verse=verse)
+        assert bm.canonical_book.slug == "matthew"
+        assert bm.chapter_number == verse.chapter.number
+        assert bm.verse_number == verse.number
+
+    def test_comment_bookmark_has_null_location(self, auth_client, comment):
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        from bookmarks.models import Bookmark
+        bm = Bookmark.objects.get(comment=comment)
+        assert bm.canonical_book_id is None
+        assert bm.chapter_number is None
+        assert bm.verse_number is None
+
 
 # ------------------------------------------------------------------
 # ブックマーク一覧
