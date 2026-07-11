@@ -5,12 +5,14 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Footer } from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui";
+import { SessionExpiredHandler } from "@/components/auth/SessionExpiredHandler";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <ToastProvider>
+      <SessionExpiredHandler />
       {/* 全ページ共通の背景（ホームページと同じ画像＋オーバーレイ） */}
       <div
         style={{
