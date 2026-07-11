@@ -1,8 +1,8 @@
-"""段階5E: Bookmark の箇所制約テスト。
+"""Bookmark の箇所制約テスト（段階5E で追加、5F で verse FK 撤去後の形）。
 
 - 部分ユニーク unique_user_location_bookmark（同一ユーザー・同一箇所の重複禁止）
 - CHECK bookmark_comment_xor_location（comment 栞 と 箇所栞 の排他・all-or-none）
-- 既存の (user, verse) / (user, comment) 部分ユニークが壊れていないこと
+- (user, comment) 部分ユニークが壊れていないこと
 """
 
 import pytest
@@ -39,13 +39,7 @@ def _comment(data) -> Comment:
 
 # --- 成功ケース ---
 
-def test_verse_bookmark_with_location_ok(data):
-    bm = _create(user=data["user"], verse=data["verse"],
-                 canonical_book=data["canon"], chapter_number=3, verse_number=16)
-    assert bm.pk
-
-
-def test_location_bookmark_without_verse_ok(data):
+def test_location_bookmark_ok(data):
     # 5F 後の形（verse FK なし・comment なし・箇所あり）
     bm = _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
     assert bm.pk
@@ -105,11 +99,3 @@ def test_user_comment_unique_still_enforced(data):
     _create(user=data["user"], comment=comment)
     with pytest.raises(IntegrityError):
         _create(user=data["user"], comment=comment)
-
-
-def test_user_verse_unique_still_enforced(data):
-    _create(user=data["user"], verse=data["verse"],
-            canonical_book=data["canon"], chapter_number=3, verse_number=16)
-    with pytest.raises(IntegrityError):
-        _create(user=data["user"], verse=data["verse"],
-                canonical_book=data["canon"], chapter_number=3, verse_number=16)

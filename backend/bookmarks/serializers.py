@@ -5,15 +5,6 @@ from bible.models import Verse
 from .models import Bookmark
 
 
-class VerseBriefSerializer(serializers.ModelSerializer):
-    chapter_number = serializers.IntegerField(source="chapter.number", read_only=True)
-    book_name = serializers.CharField(source="chapter.book.name", read_only=True)
-
-    class Meta:
-        model = Verse
-        fields = ["id", "number", "text", "chapter_number", "book_name"]
-
-
 class CommentBriefSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     body = serializers.SerializerMethodField()
@@ -27,31 +18,34 @@ class CommentBriefSerializer(serializers.Serializer):
 
 
 class BookmarkSerializer(serializers.ModelSerializer):
-    verse_detail = VerseBriefSerializer(source="verse", read_only=True)
+    # 段階5F: verse は「箇所を特定するための入力」であり保存しない write-only 入力。
+    # backend が verse から canonical_book/章/節を導出して保存する（view.perform_create）。
+    verse = serializers.PrimaryKeyRelatedField(
+        queryset=Verse.objects.all(), write_only=True, required=False
+    )
     comment_detail = CommentBriefSerializer(source="comment", read_only=True)
     target_type = serializers.SerializerMethodField()
-    # 段階5D: 訳非依存の箇所。フロントは Verse id ではなくこの箇所で栞判定する。
+    # 訳非依存の箇所。フロントは Verse id ではなくこの箇所で栞判定・表示する。
     reference = serializers.SerializerMethodField()
 
     class Meta:
         model = Bookmark
-        fields = ["id", "verse", "comment", "verse_detail", "comment_detail", "target_type", "reference", "created_at"]
+        fields = ["id", "verse", "comment", "comment_detail", "target_type", "reference", "created_at"]
         read_only_fields = ["id", "created_at"]
         extra_kwargs = {
-            "verse": {"write_only": True},
             "comment": {"write_only": True},
         }
 
     def get_target_type(self, obj):
-        if obj.verse_id:
-            return "verse"
         if obj.comment_id:
             return "comment"
+        if obj.canonical_book_id:
+            return "verse"
         return None
 
     def get_reference(self, obj):
-        # verse 栞で箇所が埋まっていれば {book: slug, chapter, verse} を返す。comment 栞は null。
-        if obj.verse_id and obj.canonical_book_id:
+        # 箇所栞なら {book: slug, chapter, verse} を返す。comment 栞は null。
+        if obj.canonical_book_id:
             return {
                 "book": obj.canonical_book.slug,
                 "chapter": obj.chapter_number,

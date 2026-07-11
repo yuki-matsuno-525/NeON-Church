@@ -220,7 +220,7 @@ class UserBookmarksView(generics.ListAPIView):
             return Bookmark.objects.none()
         return (
             Bookmark.objects.filter(user=user)
-            .select_related("verse__chapter__book", "comment__user")
+            .select_related("canonical_book", "comment__user")
         )
 
 

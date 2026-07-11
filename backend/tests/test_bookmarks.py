@@ -40,7 +40,8 @@ class TestBookmarkCreate:
     def test_authenticated_can_bookmark(self, auth_client, verse):
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
-        assert res.data["verse_detail"]["id"] == str(verse.id)
+        assert res.data["target_type"] == "verse"
+        assert res.data["reference"]["verse"] == verse.number
 
     def test_anonymous_cannot_bookmark(self, api_client, verse):
         res = api_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
@@ -51,11 +52,11 @@ class TestBookmarkCreate:
         assert res.status_code == status.HTTP_409_CONFLICT
 
     def test_verse_bookmark_stores_canonical_location(self, auth_client, verse):
-        # 段階5C: verse から箇所（canonical_book/章番号/節番号）が backend 導出で保存される
+        # 段階5F: verse_id 入力から箇所（canonical_book/章番号/節番号）が backend 導出で保存される
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
         from bookmarks.models import Bookmark
-        bm = Bookmark.objects.get(verse=verse)
+        bm = Bookmark.objects.get()
         assert bm.canonical_book.slug == "matthew"
         assert bm.chapter_number == verse.chapter.number
         assert bm.verse_number == verse.number
@@ -83,8 +84,8 @@ class TestBookmarkCreate:
 
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(kjv_verse.id)}, format="json")
         assert res.status_code == status.HTTP_409_CONFLICT
-        # 失敗時に不完全な Bookmark を残さない
-        assert not Bookmark.objects.filter(verse=kjv_verse).exists()
+        # 失敗時に不完全な Bookmark を残さない（最初の1件だけ）
+        assert Bookmark.objects.count() == 1
 
     def test_different_location_can_bookmark(self, auth_client, verse):
         # 同じ書の別の節（2:1）は別箇所なので登録できる
@@ -137,12 +138,12 @@ class TestBookmarkList:
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 0
 
-    def test_verse_detail_is_included(self, auth_client, bookmark, verse):
+    def test_reference_is_included(self, auth_client, bookmark, verse):
         res = auth_client.get(BOOKMARKS_URL)
-        detail = res.data["results"][0]["verse_detail"]
-        assert detail["id"] == str(verse.id)
-        assert "book_name" in detail
-        assert "chapter_number" in detail
+        ref = res.data["results"][0]["reference"]
+        assert ref["book"] == "matthew"
+        assert ref["chapter"] == verse.chapter.number
+        assert ref["verse"] == verse.number
 
 
 # ------------------------------------------------------------------

@@ -6,12 +6,11 @@ from common.models import BaseModel
 
 class Bookmark(BaseModel):
     """
-    節またはコメントへのブックマーク。
-    verse / comment のいずれか一方のみを持つ（両方 null は許容しない）。
+    箇所（訳非依存）またはコメントへのブックマーク。
+    箇所栞（canonical_book/chapter_number/verse_number）か comment 栞のどちらか一方のみを持つ。
 
-    段階5A: 訳非依存の箇所（canonical_book / chapter_number / verse_number）を nullable で追加。
-    まだ空の「箱」を用意するだけで、書き込み・読み取り・ユニーク制約・既存データは変えない。
-    バックフィルは段階5B、判定切替は5D、旧 verse FK 撤去は5F。
+    段階5F: 旧 verse FK を撤去。栞の同一性は訳非依存の箇所（canonical_book / 章 / 節）で決まる。
+    作成 API の入力は verse_id のままだが、それは「箇所を特定するための入力」であり保存はしない。
     """
 
     user = models.ForeignKey(
@@ -19,14 +18,7 @@ class Bookmark(BaseModel):
         on_delete=models.CASCADE,
         related_name="bookmarks",
     )
-    verse = models.ForeignKey(
-        "bible.Verse",
-        on_delete=models.CASCADE,
-        related_name="bookmarks",
-        null=True,
-        blank=True,
-    )
-    # 訳非依存の箇所（段階5A で nullable 追加。verse 栞用。5B でバックフィル）。
+    # 訳非依存の箇所（段階5A で追加、5B でバックフィル、5F で栞の同一性の実体に）。
     canonical_book = models.ForeignKey(
         "bible.CanonicalBook",
         on_delete=models.PROTECT,
@@ -48,11 +40,6 @@ class Bookmark(BaseModel):
         db_table = "bookmarks"
         ordering = ["-created_at"]
         constraints = [
-            models.UniqueConstraint(
-                fields=["user", "verse"],
-                condition=models.Q(verse__isnull=False),
-                name="unique_user_verse_bookmark",
-            ),
             models.UniqueConstraint(
                 fields=["user", "comment"],
                 condition=models.Q(comment__isnull=False),
