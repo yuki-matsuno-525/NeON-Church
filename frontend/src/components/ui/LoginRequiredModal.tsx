@@ -5,9 +5,12 @@ import { useT } from "@/lib/i18n";
 
 type Props = {
   onClose: () => void;
+  // 文言を差し替えたい場合（例: セッション切れ）に渡す。未指定なら「ログインが必要です」。
+  title?: string;
+  description?: string;
 };
 
-export function LoginRequiredModal({ onClose }: Props) {
+export function LoginRequiredModal({ onClose, title, description }: Props) {
   const pathname = usePathname();
   const t = useT();
   const loginHref = `/login?from=${encodeURIComponent(pathname)}`;
@@ -41,10 +44,10 @@ export function LoginRequiredModal({ onClose }: Props) {
         }}
       >
         <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
-          {t.loginRequired}
+          {title ?? t.loginRequired}
         </p>
         <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
-          {t.loginRequiredDesc}
+          {description ?? t.loginRequiredDesc}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button

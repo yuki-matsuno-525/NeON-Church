@@ -123,7 +123,8 @@ const ja = {
   oauthGoogle: "Google でログイン",
   oauthGithub: "GitHub でログイン",
   oauthError: "ソーシャルログインに失敗しました。もう一度お試しください。",
-  sessionExpired: "セッションが切れました。再度ログインしてください。",
+  sessionExpiredTitle: "セッションが切れました",
+  sessionExpiredDesc: "もう一度ログインしてください。",
 
   // 登録
   registerTitle: "新規登録",
@@ -520,7 +521,8 @@ const en: typeof ja = {
   oauthGoogle: "Sign in with Google",
   oauthGithub: "Sign in with GitHub",
   oauthError: "Social login failed. Please try again.",
-  sessionExpired: "Your session has expired. Please sign in again.",
+  sessionExpiredTitle: "Your session has expired",
+  sessionExpiredDesc: "Please sign in again.",
 
   registerTitle: "Sign Up",
   email: "Email",
