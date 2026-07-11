@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
@@ -32,11 +33,6 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         if not verse and not comment:
             raise ValidationError({"detail": "Specify verse or comment."})
 
-        if verse and Bookmark.objects.filter(user=user, verse=verse).exists():
-            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
-        if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
-            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
-
         # 段階5C: verse 栞は訳非依存の箇所（canonical_book/章番号/節番号）も一緒に保存する。
         # クライアントからは受け取らず、必ず verse から backend が導出する（偽装防止）。
         location = {}
@@ -47,6 +43,18 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
                 "chapter_number": chapter.number,
                 "verse_number": verse.number,
             }
+            # 重複は「旧 verse 一致」または「同一箇所（別訳含む）」で弾く。
+            # これにより、口語訳とKJVで同じ箇所を二重に栞できない（location 一意化の先取り）。
+            duplicate = (
+                Bookmark.objects.filter(user=user)
+                .filter(Q(verse=verse) | Q(**location))
+                .exists()
+            )
+            if duplicate:
+                raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+
+        if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
+            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
 
         with transaction.atomic():
             serializer.save(user=user, **location)
