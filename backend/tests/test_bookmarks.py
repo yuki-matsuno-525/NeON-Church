@@ -50,6 +50,59 @@ class TestBookmarkCreate:
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_409_CONFLICT
 
+    def test_verse_bookmark_stores_canonical_location(self, auth_client, verse):
+        # 段階5C: verse から箇所（canonical_book/章番号/節番号）が backend 導出で保存される
+        res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        from bookmarks.models import Bookmark
+        bm = Bookmark.objects.get(verse=verse)
+        assert bm.canonical_book.slug == "matthew"
+        assert bm.chapter_number == verse.chapter.number
+        assert bm.verse_number == verse.number
+
+    def test_comment_bookmark_has_null_location(self, auth_client, comment):
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        from bookmarks.models import Bookmark
+        bm = Bookmark.objects.get(comment=comment)
+        assert bm.canonical_book_id is None
+        assert bm.chapter_number is None
+        assert bm.verse_number is None
+
+    def test_same_location_other_translation_is_409(self, auth_client, verse):
+        # 口語訳マタイ1:1 を栞 → 同じ箇所の KJV 版 Verse は 409（別訳でも同一箇所は二重不可）
+        from bible.models import Chapter, Verse
+        from bookmarks.models import Bookmark
+        from tests.factories import make_book
+
+        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+
+        kjv = make_book("Matthew", "KJV", 1, slug="matthew")
+        kjv_ch = Chapter.objects.create(book=kjv, number=verse.chapter.number)
+        kjv_verse = Verse.objects.create(chapter=kjv_ch, number=verse.number, text="For God so loved")
+
+        res = auth_client.post(BOOKMARKS_URL, {"verse": str(kjv_verse.id)}, format="json")
+        assert res.status_code == status.HTTP_409_CONFLICT
+        # 失敗時に不完全な Bookmark を残さない
+        assert not Bookmark.objects.filter(verse=kjv_verse).exists()
+
+    def test_different_location_can_bookmark(self, auth_client, verse):
+        # 同じ書の別の節（2:1）は別箇所なので登録できる
+        from bible.models import Chapter, Verse
+
+        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+        ch2 = Chapter.objects.create(book=verse.chapter.book, number=2)
+        v2 = Verse.objects.create(chapter=ch2, number=1, text="x")
+
+        res = auth_client.post(BOOKMARKS_URL, {"verse": str(v2.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+
+    def test_comment_bookmark_not_blocked_by_verse_location(self, auth_client, verse, comment):
+        # 同じ箇所に verse 栞があっても、その節へのコメント栞は作成できる
+        auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
+        res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+
 
 # ------------------------------------------------------------------
 # ブックマーク一覧
