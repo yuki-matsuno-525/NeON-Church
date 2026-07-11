@@ -7,9 +7,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from rest_framework.exceptions import NotFound
+
 from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
-from .models import Book, Chapter, Verse
+from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
 
@@ -51,6 +53,70 @@ class VerseListView(generics.ListAPIView):
     def get_queryset(self):
         chapter = generics.get_object_or_404(Chapter, pk=self.kwargs["chapter_id"])
         return Verse.objects.filter(chapter=chapter)
+
+
+class _ReferenceView(APIView):
+    """箇所（canonical_book.slug）から、各版（訳）の書/章/節をまとめて返す基底。
+
+    フロントの N+1（訳ごとに書→章→節を取得）を1回の問い合わせに置き換えるための API。
+    未知の slug は 404、slug は在るが該当章・節が無ければ空配列（版によって節が無いのは正常）。
+    Comment/Bookmark の構造は変更しない（本 API は読み取り専用）。
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+
+    def _require_slug(self, slug: str) -> None:
+        if not CanonicalBook.objects.filter(slug=slug).exists():
+            raise NotFound("Unknown book.")
+
+
+class ReferenceBooksView(_ReferenceView):
+    """GET /api/references/<slug>/books/  その書の全版の書 id。"""
+
+    def get(self, request, slug):
+        self._require_slug(slug)
+        books = Book.objects.filter(canonical_book__slug=slug).order_by("order", "translation")
+        return Response({
+            "reference": {"book": slug},
+            "books": [{"id": str(b.id), "translation": b.translation} for b in books],
+        })
+
+
+class ReferenceChaptersView(_ReferenceView):
+    """GET /api/references/<slug>/chapters/<chapter>/  その章の全版の章 id。"""
+
+    def get(self, request, slug, chapter):
+        self._require_slug(slug)
+        chapters = (
+            Chapter.objects.filter(book__canonical_book__slug=slug, number=chapter)
+            .select_related("book")
+            .order_by("book__order", "book__translation")
+        )
+        return Response({
+            "reference": {"book": slug, "chapter": chapter},
+            "chapters": [{"id": str(c.id), "translation": c.book.translation} for c in chapters],
+        })
+
+
+class ReferenceVersesView(_ReferenceView):
+    """GET /api/references/<slug>/verses/<chapter>/<verse>/  その節の全版の節 id。"""
+
+    def get(self, request, slug, chapter, verse):
+        self._require_slug(slug)
+        verses = (
+            Verse.objects.filter(
+                chapter__book__canonical_book__slug=slug,
+                chapter__number=chapter,
+                number=verse,
+            )
+            .select_related("chapter__book")
+            .order_by("chapter__book__order", "chapter__book__translation")
+        )
+        return Response({
+            "reference": {"book": slug, "chapter": chapter, "verse": verse},
+            "verses": [{"id": str(v.id), "translation": v.chapter.book.translation} for v in verses],
+        })
 
 
 class SearchView(APIView):

@@ -154,6 +154,21 @@ export function fetchVerses(chapterId: string): Promise<Verse[]> {
   return apiFetch(`/chapters/${chapterId}/verses/`);
 }
 
+// 箇所（canonical slug）→ 各版の書/章/節をまとめて1回で取得する（N+1 解消）。
+export type ReferenceItem = { id: string; translation: string };
+
+export function fetchReferenceBooks(slug: string): Promise<ReferenceItem[]> {
+  return apiFetch<{ books: ReferenceItem[] }>(`/references/${slug}/books/`).then((r) => r.books);
+}
+
+export function fetchReferenceChapters(slug: string, chapter: number): Promise<ReferenceItem[]> {
+  return apiFetch<{ chapters: ReferenceItem[] }>(`/references/${slug}/chapters/${chapter}/`).then((r) => r.chapters);
+}
+
+export function fetchReferenceVerses(slug: string, chapter: number, verse: number): Promise<ReferenceItem[]> {
+  return apiFetch<{ verses: ReferenceItem[] }>(`/references/${slug}/verses/${chapter}/${verse}/`).then((r) => r.verses);
+}
+
 export function fetchComments(params: {
   verse_id?: string;
   chapter_id?: string;
