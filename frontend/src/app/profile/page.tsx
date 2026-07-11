@@ -6,13 +6,8 @@ import Link from "next/link";
 import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { useT } from "@/lib/i18n";
-import { BOOKS } from "@/lib/books";
+import { useT, bookLabel } from "@/lib/i18n";
 import { SkeletonList, EmptyState, Button, Toggle } from "@/components/ui";
-
-function slugFromBookName(name: string): string {
-  return BOOKS.find((b) => b.name === name)?.slug ?? "";
-}
 
 type Tab = "bookmarks" | "comments";
 
@@ -284,6 +279,7 @@ export default function ProfilePage() {
 
 function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
   const t = useT();
+  const { lang } = useLang();
   if (bookmarks.length === 0) {
     return (
       <EmptyState
@@ -312,17 +308,14 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
             </div>
           );
         }
-        if (!bm.verse_detail) return null;
-        const slug = slugFromBookName(bm.verse_detail.book_name);
-        const href = slug ? `/${slug}/${bm.verse_detail.chapter_number}` : "#";
+        if (!bm.reference) return null;
+        const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
+        const href = `/${bm.reference.book}/${bm.reference.chapter}`;
         return (
           <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
             <div style={{ ...cardStyle, cursor: "pointer" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                {bm.verse_detail.book_name} {t.verseFmt(bm.verse_detail.chapter_number, bm.verse_detail.number)}
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                {bm.verse_detail.text}
+              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
               </p>
             </div>
           </Link>
