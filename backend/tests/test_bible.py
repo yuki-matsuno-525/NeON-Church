@@ -17,8 +17,8 @@ def verse_url(chapter_id):
 # ------------------------------------------------------------------
 @pytest.fixture
 def book(db):
-    from bible.models import Book
-    return Book.objects.create(name="マタイによる福音書", translation="口語訳", order=1)
+    from tests.factories import make_book
+    return make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
 
 @pytest.fixture
@@ -56,9 +56,9 @@ class TestBookList:
         assert res.status_code == status.HTTP_200_OK
 
     def test_ordered_by_order_field(self, db, api_client):
-        from bible.models import Book
-        Book.objects.create(name="ヨハネによる福音書", translation="口語訳", order=4)
-        Book.objects.create(name="マタイによる福音書", translation="口語訳", order=1)
+        from tests.factories import make_book
+        make_book("ヨハネによる福音書", "口語訳", 4, slug="john")
+        make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
         res = api_client.get(BOOKS_URL)
 
@@ -120,8 +120,9 @@ VERSE_OF_DAY_URL = "/api/verse-of-the-day/"
 @pytest.fixture
 def kjv_verse(book):
     """口語訳マタイ1:1 と同じ書順・章・節の KJV 節。"""
-    from bible.models import Book, Chapter, Verse
-    kjv_book = Book.objects.create(name="Matthew", translation="KJV", order=1)
+    from bible.models import Chapter, Verse
+    from tests.factories import make_book
+    kjv_book = make_book("Matthew", "KJV", 1, slug="matthew")
     kjv_chapter = Chapter.objects.create(book=kjv_book, number=1)
     return Verse.objects.create(
         chapter=kjv_chapter,

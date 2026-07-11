@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from django.db import transaction
 
+from bible.canonical import get_or_create_book_with_canonical
 from bible.models import Book, Chapter, Verse
 
 REQUIRED_KEYS = ("book", "translation", "order", "chapters")
@@ -23,10 +24,10 @@ def load_book(data: dict) -> tuple[Book, bool, int]:
     if missing:
         raise ValueError(f"JSON に必須キーがありません: {missing}")
 
-    book, created = Book.objects.get_or_create(
+    book, created = get_or_create_book_with_canonical(
         name=data["book"],
         translation=data["translation"],
-        defaults={"order": data["order"]},
+        order=data["order"],
     )
 
     total_verses = 0

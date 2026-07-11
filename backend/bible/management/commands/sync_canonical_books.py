@@ -10,16 +10,11 @@
 本コマンドで各環境のバックフィルが済んだ後、別段階で行う（ここではしない）。
 """
 
-import json
-from pathlib import Path
-
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from bible.canonical import DATA_PATH, CanonicalDataError, load_canonical_index
 from bible.models import Book, CanonicalBook
-
-# backend/bible/data/canonical_books.json（このファイルから見た相対位置）
-DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "canonical_books.json"
 
 
 class Command(BaseCommand):
@@ -39,17 +34,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run: bool = options["dry_run"]
-        path = Path(options["path"])
-        if not path.exists():
-            raise CommandError(f"正本が見つかりません: {path}")
 
+        # 1) 正本を読み込み・検証して (translation, name) -> slug の索引を得る（共通ローダ）
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as e:
-            raise CommandError(f"JSON を読めません: {e}")
-
-        # 1) JSON 自体の妥当性検証 → (translation, name) -> slug の索引を得る
-        pair_to_slug = self._validate_and_index(data)
+            pair_to_slug = load_canonical_index(options["path"])
+        except CanonicalDataError as e:
+            raise CommandError(str(e))
 
         # 2) DB との完全一致を要求（片側だけに存在する Book はエラー）
         db_pairs = {(b.translation, b.name): b for b in Book.objects.all()}
@@ -99,42 +89,3 @@ class Command(BaseCommand):
                 f"既リンク(スキップ): {skipped} / Book 総数: {len(db_pairs)}"
             )
         )
-
-    def _validate_and_index(self, data) -> dict[tuple[str, str], str]:
-        """正本を検証し、(translation, name) -> slug の索引を返す。
-
-        検証: 配列が空でない / slug が空でなく重複しない / books が空でない /
-        translation・name が空でない / (translation, name) が全体で一意。
-        """
-        if not isinstance(data, list) or not data:
-            raise CommandError("正本は空でない配列である必要があります。")
-
-        seen_slugs: set[str] = set()
-        pair_to_slug: dict[tuple[str, str], str] = {}
-
-        for entry in data:
-            slug = entry.get("slug") if isinstance(entry, dict) else None
-            if not slug or not isinstance(slug, str):
-                raise CommandError(f"slug が空/不正のエントリがあります: {entry}")
-            if slug in seen_slugs:
-                raise CommandError(f"slug が重複しています: {slug}")
-            seen_slugs.add(slug)
-
-            books = entry.get("books")
-            if not isinstance(books, list) or not books:
-                raise CommandError(f"books 配列が空です: slug={slug}")
-
-            for bk in books:
-                translation = bk.get("translation") if isinstance(bk, dict) else None
-                name = bk.get("name") if isinstance(bk, dict) else None
-                if not translation or not name:
-                    raise CommandError(f"translation/name が空です: slug={slug}, {bk}")
-                key = (translation, name)
-                if key in pair_to_slug:
-                    raise CommandError(
-                        f"(translation, name) が重複しています: {translation}/{name} が "
-                        f"slug={pair_to_slug[key]} と slug={slug} の両方に存在します。"
-                    )
-                pair_to_slug[key] = slug
-
-        return pair_to_slug

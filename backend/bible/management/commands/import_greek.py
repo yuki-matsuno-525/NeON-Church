@@ -17,6 +17,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from bible.canonical import get_or_create_book_with_canonical
 from bible.models import Book, Chapter, Verse
 
 TRANSLATION = "Nestle 1904 (GRC)"
@@ -107,10 +108,10 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"  節が取得できませんでした: {path.name}"))
             return
 
-        book, created = Book.objects.get_or_create(
+        book, created = get_or_create_book_with_canonical(
             name=book_name,
             translation=TRANSLATION,
-            defaults={"order": order},
+            order=order,
         )
         if created:
             self.stdout.write(f"  書を作成: {book_name}")
