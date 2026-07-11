@@ -76,12 +76,11 @@ def target_user_comment(db, target_user, verse):
 
 
 def _make_verse_bookmark(user, verse):
-    """段階5E: verse 栞は箇所3列も揃えて作る（CHECK 制約を満たすため）。"""
+    """段階5F: 栞は訳非依存の箇所3列で作る（verse FK なし）。"""
     from bookmarks.models import Bookmark
     ch = verse.chapter
     return Bookmark.objects.create(
         user=user,
-        verse=verse,
         canonical_book=ch.book.canonical_book,
         chapter_number=ch.number,
         verse_number=verse.number,
@@ -209,13 +208,14 @@ class TestUserBookmarksView:
         res = api_client.get(user_bookmarks_url("nonexistentuser"))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_ブックマークにverse_detailが含まれる(self, api_client, target_user, target_user_bookmark, verse):
+    def test_ブックマークにreferenceが含まれる(self, api_client, target_user, target_user_bookmark, verse):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
         bm = res.data["results"][0]
-        assert "verse_detail" in bm
-        assert bm["verse_detail"]["id"] == str(verse.id)
+        assert bm["reference"]["book"] == "matthew"
+        assert bm["reference"]["chapter"] == verse.chapter.number
+        assert bm["reference"]["verse"] == verse.number
 
     def test_他ユーザーのブックマークは含まれない(self, api_client, auth_client, target_user, target_user_bookmark, verse):
         """auth_client (testuser) がブックマークしても targetuser の一覧には含まれない。"""

@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import Q
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
@@ -22,19 +21,20 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return (
             Bookmark.objects.filter(user=self.request.user)
-            .select_related("verse__chapter__book", "comment__user", "canonical_book")
+            .select_related("comment__user", "canonical_book")
         )
 
     def perform_create(self, serializer):
         user = self.request.user
-        verse = serializer.validated_data.get("verse")
+        # 段階5F: verse は保存しない入力。ここで箇所へ変換し、verse キー自体は取り除く。
+        verse = serializer.validated_data.pop("verse", None)
         comment = serializer.validated_data.get("comment")
 
         if not verse and not comment:
             raise ValidationError({"detail": "Specify verse or comment."})
 
-        # 段階5C: verse 栞は訳非依存の箇所（canonical_book/章番号/節番号）も一緒に保存する。
-        # クライアントからは受け取らず、必ず verse から backend が導出する（偽装防止）。
+        # verse 栞は訳非依存の箇所（canonical_book/章番号/節番号）を backend が導出して保存する
+        # （クライアントからは受け取らない＝偽装防止）。
         location = {}
         if verse:
             chapter = verse.chapter
@@ -43,14 +43,8 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
                 "chapter_number": chapter.number,
                 "verse_number": verse.number,
             }
-            # 重複は「旧 verse 一致」または「同一箇所（別訳含む）」で弾く。
-            # これにより、口語訳とKJVで同じ箇所を二重に栞できない（location 一意化の先取り）。
-            duplicate = (
-                Bookmark.objects.filter(user=user)
-                .filter(Q(verse=verse) | Q(**location))
-                .exists()
-            )
-            if duplicate:
+            # 同一ユーザー・同一箇所（別訳含む）の重複を弾く。
+            if Bookmark.objects.filter(user=user, **location).exists():
                 raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
 
         if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
