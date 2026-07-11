@@ -401,9 +401,17 @@ class Command(BaseCommand):
         for user in users:
             bookmarked_verses = random.sample(verses, min(5, len(verses)))
             for verse in bookmarked_verses:
-                _, created = Bookmark.objects.get_or_create(user=user, verse=verse)
-                if created:
-                    count += 1
+                # 段階5E: verse 栞は箇所も一緒に保存し、同一箇所（別訳含む）は1件に絞る。
+                chapter = verse.chapter
+                loc = {
+                    "canonical_book_id": chapter.book.canonical_book_id,
+                    "chapter_number": chapter.number,
+                    "verse_number": verse.number,
+                }
+                if Bookmark.objects.filter(user=user, **loc).exists():
+                    continue
+                Bookmark.objects.create(user=user, verse=verse, **loc)
+                count += 1
         # コメントブックマーク
         active_comments = [c for c in comments if not c.is_deleted][:40]
         for user in users:

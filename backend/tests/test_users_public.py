@@ -75,11 +75,23 @@ def target_user_comment(db, target_user, verse):
     )
 
 
+def _make_verse_bookmark(user, verse):
+    """段階5E: verse 栞は箇所3列も揃えて作る（CHECK 制約を満たすため）。"""
+    from bookmarks.models import Bookmark
+    ch = verse.chapter
+    return Bookmark.objects.create(
+        user=user,
+        verse=verse,
+        canonical_book=ch.book.canonical_book,
+        chapter_number=ch.number,
+        verse_number=verse.number,
+    )
+
+
 @pytest.fixture
 def target_user_bookmark(db, target_user, verse):
     """target_user が作成したブックマーク。"""
-    from bookmarks.models import Bookmark
-    return Bookmark.objects.create(user=target_user, verse=verse)
+    return _make_verse_bookmark(target_user, verse)
 
 
 # ------------------------------------------------------------------
@@ -233,8 +245,7 @@ class TestBookmarksVisibility:
     def test_private_user_bookmarks_returns_empty(
         self, api_client, private_target_user, verse
     ):
-        from bookmarks.models import Bookmark
-        Bookmark.objects.create(user=private_target_user, verse=verse)
+        _make_verse_bookmark(private_target_user, verse)
         res = api_client.get(user_bookmarks_url("privateuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 0
@@ -242,8 +253,7 @@ class TestBookmarksVisibility:
     def test_public_user_bookmarks_returns_data(
         self, api_client, target_user, verse
     ):
-        from bookmarks.models import Bookmark
-        Bookmark.objects.create(user=target_user, verse=verse)
+        _make_verse_bookmark(target_user, verse)
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
