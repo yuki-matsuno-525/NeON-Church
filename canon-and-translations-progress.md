@@ -67,18 +67,15 @@
 - [ ] 訳切替・コメント/栞の訳横断集約が新書でも動くことを本番で確認
 - [ ] **本番投入（Render シェル）**: `import_ibibles --txt {kjv,gtr,jcl}.txt --translation "KJV"/"TR (GRC)"/"文語訳"`（冪等）
 
-### Phase E. 段階8 versification 変換層 〔異番号対応〕
-- [ ] 版（edition）側に**体系コード**を持たせるスキーマ（基準版はコード無し）
-- [ ] 基準体系の確定（旧約は英語/プロテスタント番号を基準にする想定＝要判断）
-- [ ] ズレ箇所の静的 JSON（`backend/bible/data/versification/*.json`）: 状態は `exact / range / unmapped` の3値
-- [ ] 対訳・並列表示で `unmapped` は並列にせず単独表示に倒す
-- [ ] 変換層のテスト
+### Phase E. 段階8 versification 変換層 〔**不要と判明**〕
+- [x] **段階8は ibibles データには不要**と確認。ibibles の各本文行は「第1参照＝KJV基準に正規化された番号／第2参照＝ネイティブ番号」の2重表記で、importer は第1（正規化）参照を使うため、HWL/LXX も基準番号に自動整合する（例: 詩篇3篇のヘブライ番号ズレは第2参照側だけ・本文は基準番号で入る）。将来 ibibles 以外の生データ（ネイティブ番号のみ）を入れる場合に初めて段階8が必要。
 
 ### Phase F. 異番号テキスト投入 〔LXX / HWL〕
-- [ ] `hwl`（ヘブライ語旧約）投入＋対応表
-- [ ] `lxx`（七十人訳）投入＋対応表（第二正典の書も canonical へ）
-- [ ] 詩篇オフセット等の代表ズレで対訳表示が崩れないこと確認
-- [ ] CI green ＋ 本番投入
+- [x] `hwl`（ヘブライ語旧約・訳名 "WLC (HEB)"）39書 投入・ローカル検証済み（基準番号に整合）
+- [x] `lxx`（七十人訳ギリシャ語・訳名 "LXX (GRC)"）39書 投入・ローカル検証済み
+- [x] translations.ts に heb 言語＋ラベル（WLC=レニングラード写本/LXX=七十人訳）追加。canonical↔books.ts 整合0
+- [ ] **本番投入（Render シェル）**: `import_ibibles --txt {hwl,lxx}.txt --translation "WLC (HEB)"/"LXX (GRC)"`
+- 注: ibibles の LXX/HWL は**旧約39書のみ**で**第二正典（トビト書等）を含まない**。スコープB の第二正典は別データ源が必要（未対応の gap・第二正典カテゴリは当面空）。
 
 ### Phase G. 仕上げ
 - [ ] 段階9: `books.ts` の slug 重複整理（正を backend canonical へ、order/表示メタは残置可）

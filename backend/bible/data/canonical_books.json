@@ -163,6 +163,14 @@
       {
         "translation": "文語訳",
         "name": "創世記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "בְּרֵאשִׁית"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Γένεση"
       }
     ]
   },
@@ -176,6 +184,14 @@
       {
         "translation": "文語訳",
         "name": "出埃及記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "שְׁמוֹת"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Έξοδος"
       }
     ]
   },
@@ -189,6 +205,14 @@
       {
         "translation": "文語訳",
         "name": "利未記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "וַיִּקְרָא"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Λευιτικόν"
       }
     ]
   },
@@ -202,6 +226,14 @@
       {
         "translation": "文語訳",
         "name": "民數紀略"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "בְּמִדְבַּר"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Αριθμοί"
       }
     ]
   },
@@ -215,6 +247,14 @@
       {
         "translation": "文語訳",
         "name": "申命記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "דְּבָרִים"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Δευτερονόμιον"
       }
     ]
   },
@@ -228,6 +268,14 @@
       {
         "translation": "文語訳",
         "name": "約書亞記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יְהוֹשֻׁעַ"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἰησοῦς Nαυῆ"
       }
     ]
   },
@@ -241,6 +289,14 @@
       {
         "translation": "文語訳",
         "name": "士師記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "שׁוֹפְטִים"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Κριταί"
       }
     ]
   },
@@ -254,6 +310,14 @@
       {
         "translation": "文語訳",
         "name": "路得記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "רוּת"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ῥούθ"
       }
     ]
   },
@@ -267,6 +331,14 @@
       {
         "translation": "文語訳",
         "name": "撒母耳前書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "שְׁמוּאֵל א"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "1η Σαμουήλ"
       }
     ]
   },
@@ -280,6 +352,14 @@
       {
         "translation": "文語訳",
         "name": "撒母耳後書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "שְׁמוּאֵל ב"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "2η Σαμουήλ"
       }
     ]
   },
@@ -293,6 +373,14 @@
       {
         "translation": "文語訳",
         "name": "列王紀略上"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "מְלָכִים א"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Βασιλειῶν Γʹ"
       }
     ]
   },
@@ -306,6 +394,14 @@
       {
         "translation": "文語訳",
         "name": "列王紀略下"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "מְלָכִים ב"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Βασιλειῶν Δʹ"
       }
     ]
   },
@@ -319,6 +415,14 @@
       {
         "translation": "文語訳",
         "name": "歴代志略上"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "דִּבְרֵי הַיָּמִים א"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "1η Χρονικών"
       }
     ]
   },
@@ -332,6 +436,14 @@
       {
         "translation": "文語訳",
         "name": "歴代志略下"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "דִּבְרֵי הַיָּמִים ב"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "2η Χρονικών"
       }
     ]
   },
@@ -345,6 +457,14 @@
       {
         "translation": "文語訳",
         "name": "エズラ書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "עֶזְרָא"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἔσδρας"
       }
     ]
   },
@@ -358,6 +478,14 @@
       {
         "translation": "文語訳",
         "name": "尼希米亞記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "נְחֶמְיָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Νεεμίας"
       }
     ]
   },
@@ -371,6 +499,14 @@
       {
         "translation": "文語訳",
         "name": "以士帖書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "אֶסְתֵּר"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἐσθήρ"
       }
     ]
   },
@@ -384,6 +520,14 @@
       {
         "translation": "文語訳",
         "name": "ヨブ記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "אִיּוֹב"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἰώβ"
       }
     ]
   },
@@ -397,6 +541,14 @@
       {
         "translation": "文語訳",
         "name": "詩篇"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "תְּהִלִּים"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ψαλμοί"
       }
     ]
   },
@@ -410,6 +562,14 @@
       {
         "translation": "文語訳",
         "name": "箴言"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "מִשְׁלֵי"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Παροιμίαι"
       }
     ]
   },
@@ -423,6 +583,14 @@
       {
         "translation": "文語訳",
         "name": "傳道之書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "קֹהֶלֶת"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἐκκλησιαστής"
       }
     ]
   },
@@ -436,6 +604,14 @@
       {
         "translation": "文語訳",
         "name": "雅歌"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "שִׁיר הַשִּׁירִים"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἆσμα Ἀσμάτων"
       }
     ]
   },
@@ -449,6 +625,14 @@
       {
         "translation": "文語訳",
         "name": "以賽亞書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יְשַׁעְיָהוּ"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἠσαΐας"
       }
     ]
   },
@@ -462,6 +646,14 @@
       {
         "translation": "文語訳",
         "name": "耶利米亞記"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יִרְמְיָהוּ"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἱερεμίας"
       }
     ]
   },
@@ -475,6 +667,14 @@
       {
         "translation": "文語訳",
         "name": "耶利米亞哀歌"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "אֵיכָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Θρήνοι"
       }
     ]
   },
@@ -488,6 +688,14 @@
       {
         "translation": "文語訳",
         "name": "以西結書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יְחֶזְקֵאל"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἰεζεκιήλ"
       }
     ]
   },
@@ -501,6 +709,14 @@
       {
         "translation": "文語訳",
         "name": "但以理書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "דָּנִיֵּאל"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Δανιήλ"
       }
     ]
   },
@@ -514,6 +730,14 @@
       {
         "translation": "文語訳",
         "name": "何西阿書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "הוֹשֵׁעַ"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ὡσηέ"
       }
     ]
   },
@@ -527,6 +751,14 @@
       {
         "translation": "文語訳",
         "name": "約耳書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יוֹאֵל"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἰωήλ"
       }
     ]
   },
@@ -540,6 +772,14 @@
       {
         "translation": "文語訳",
         "name": "亞麽士書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "עָמוֹס"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἀμώς"
       }
     ]
   },
@@ -553,6 +793,14 @@
       {
         "translation": "文語訳",
         "name": "阿巴底亞書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "עֹבַדְיָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Οβαδια"
       }
     ]
   },
@@ -566,6 +814,14 @@
       {
         "translation": "文語訳",
         "name": "約拿書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "יוֹנָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ιώνας"
       }
     ]
   },
@@ -579,6 +835,14 @@
       {
         "translation": "文語訳",
         "name": "米迦書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "מִיכָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Μιχαίας"
       }
     ]
   },
@@ -592,6 +856,14 @@
       {
         "translation": "文語訳",
         "name": "拿翁書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "נַחוּם"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ναούμ"
       }
     ]
   },
@@ -605,6 +877,14 @@
       {
         "translation": "文語訳",
         "name": "哈巴谷書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "חֲבַקּוּק"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἀββακούμ"
       }
     ]
   },
@@ -618,6 +898,14 @@
       {
         "translation": "文語訳",
         "name": "西番雅書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "צְפַנְיָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Σοφονίας"
       }
     ]
   },
@@ -631,6 +919,14 @@
       {
         "translation": "文語訳",
         "name": "哈基書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "חַגַּי"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ἀγγαῖος"
       }
     ]
   },
@@ -644,6 +940,14 @@
       {
         "translation": "文語訳",
         "name": "撒加利亞書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "זְכַרְיָה"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Ζαχαρίας"
       }
     ]
   },
@@ -657,6 +961,14 @@
       {
         "translation": "文語訳",
         "name": "馬拉基書"
+      },
+      {
+        "translation": "WLC (HEB)",
+        "name": "מַלְאָכִי"
+      },
+      {
+        "translation": "LXX (GRC)",
+        "name": "Μαλαχίας"
       }
     ]
   },
