@@ -99,7 +99,7 @@
 - **番号ズレ**: LXX/HWL は詩篇番号・章分割・書の構成が英語と違う。ここを段階8の JSON で吸収しないと対訳・コメント集約が崩れる（コメントは基準体系保存なので安全側）
 - **冊数増**: 10→80冊超。フラットな書リストは UI 崩れの元 → Phase B を Phase A と近接で入れる
 - **データ量**: 各 zip 1〜5.5MB。import は get_or_create で冪等、複数回流しても壊れない
-- **本番反映**: Render は自動デプロイ後にマイグレーション。データ投入は Render シェルで import を流すか seed 経路
+- **本番反映**: Render は自動デプロイ後にマイグレーション。**本文データは `backend/bible/seed/ibibles/*.txt` として git 同梱済み**（イメージに載る）。デプロイ後に Render シェルで `import_ibibles --txt bible/seed/ibibles/{code}.txt --translation "…"` を5訳ぶん流す（冪等）。手順は `backend/bible/seed/ibibles/README.md` 参照
 
 ---
 
