@@ -8,7 +8,12 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ["id", "user", "verse", "parent", "is_deleted", "created_at"]
     list_filter = ["is_deleted"]
     ordering = ["-created_at"]
-    readonly_fields = ["id", "user", "verse", "parent", "created_at", "updated_at"]
+    # 段階6A: 追加した箇所列・投稿時訳を詳細画面で確認できるようにする（表示のみ）。
+    readonly_fields = [
+        "id", "user", "verse", "parent",
+        "canonical_book", "chapter_number", "verse_number", "source_translation",
+        "created_at", "updated_at",
+    ]
 
 
 @admin.register(Vote)
