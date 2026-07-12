@@ -321,27 +321,24 @@ class TestCommentUpdate:
 
 
 # ------------------------------------------------------------------
-# Q&A 投稿（場所なし許可）
+# Q&A 投稿（段階6: Q&A・返信も書・章・節のちょうど1つの粒度が必須）
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestQAPost:
-    def test_qa_without_location_allowed(self, auth_client):
+    def test_qa_without_location_rejected(self, auth_client):
+        # 段階6: Q&A も箇所必須。ターゲット無しは 400。
         res = auth_client.post(
             COMMENTS_URL,
             {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         )
-        assert res.status_code == status.HTTP_201_CREATED
-        assert res.data["is_qa"] is True
-        assert res.data["title"] == "Q&Aタイトル"
-        assert res.data["verse"] is None
-        assert res.data["chapter"] is None
-        assert res.data["book"] is None
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_qa_without_title_rejected(self, auth_client):
+    def test_qa_without_title_rejected(self, auth_client, book):
+        # ターゲット（book）は付けたうえで、タイトル欠落で 400 になることを確認する。
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "タイトルなしQ&A", "is_qa": True},
+            {"body": "タイトルなしQ&A", "is_qa": True, "book": str(book.id)},
             format="json",
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -363,10 +360,11 @@ class TestQAPost:
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reply_without_location_allowed(self, auth_client, verse):
+    def test_reply_without_location_rejected(self, auth_client, book):
+        # 段階6: 返信も箇所必須。ターゲット付き Q&A への、ターゲット無し返信は 400。
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "書付きQ&A", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         ).data
         res = auth_client.post(
@@ -374,22 +372,22 @@ class TestQAPost:
             {"body": "返信", "parent": parent["id"]},
             format="json",
         )
-        assert res.status_code == status.HTTP_201_CREATED
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_filter_by_parent_id(self, auth_client, db):
+    def test_filter_by_parent_id(self, auth_client, book):
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         ).data
         auth_client.post(
             COMMENTS_URL,
-            {"body": "返信1", "parent": parent["id"]},
+            {"body": "返信1", "parent": parent["id"], "book": str(book.id)},
             format="json",
         )
         auth_client.post(
             COMMENTS_URL,
-            {"body": "返信2", "parent": parent["id"]},
+            {"body": "返信2", "parent": parent["id"], "book": str(book.id)},
             format="json",
         )
         res = auth_client.get(COMMENTS_URL, {"parent_id": parent["id"]})
@@ -407,19 +405,19 @@ def best_answer_url(comment_id):
 @pytest.mark.django_db
 class TestBestAnswer:
     @pytest.fixture
-    def qa_question(self, auth_client):
+    def qa_question(self, auth_client, book):
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         )
         return res.data
 
     @pytest.fixture
-    def qa_reply(self, other_auth_client, qa_question):
+    def qa_reply(self, other_auth_client, qa_question, book):
         res = other_auth_client.post(
             COMMENTS_URL,
-            {"body": "返信", "parent": qa_question["id"]},
+            {"body": "返信", "parent": qa_question["id"], "book": str(book.id)},
             format="json",
         )
         return res.data
@@ -556,21 +554,6 @@ class TestTrendingComments:
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestCommentLocationFieldsExist:
-    def test_new_fields_default_null(self, auth_client, verse):
-        """6A ではまだ dual-write しないので、通常投稿では箇所列・投稿時訳は NULL のまま。"""
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"verse": str(verse.id), "body": "テストコメント"},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_201_CREATED
-        from comments.models import Comment
-        c = Comment.objects.get(id=res.data["id"])
-        assert c.canonical_book_id is None
-        assert c.chapter_number is None
-        assert c.verse_number is None
-        assert c.source_translation is None
-
     def test_new_fields_are_writable(self, db, verse, django_user_model):
         """箇所列・source_translation を直接保存でき、値が永続化される（列の存在確認）。"""
         from comments.models import Comment
@@ -587,6 +570,90 @@ class TestCommentLocationFieldsExist:
         )
         c.refresh_from_db()
         assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == verse.chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+
+# ------------------------------------------------------------------
+# 段階6C: 作成時に旧FKと箇所フィールドを dual-write する
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentDualWrite:
+    def _get(self, comment_id):
+        from comments.models import Comment
+        return Comment.objects.get(id=comment_id)
+
+    def test_verse_comment_dual_writes_location(self, auth_client, verse, chapter, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "節コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.verse_id == verse.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+    def test_chapter_comment_dual_writes_location(self, auth_client, chapter, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"chapter": str(chapter.id), "body": "章コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.chapter_id == chapter.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number is None
+        assert c.source_translation == book.translation
+
+    def test_book_comment_dual_writes_location(self, auth_client, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"book": str(book.id), "body": "書コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.book_id == book.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number is None
+        assert c.verse_number is None
+        assert c.source_translation == book.translation
+
+    def test_reply_derives_location_from_own_fk(self, auth_client, verse, chapter, book):
+        parent = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "親"}, format="json"
+        )
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "parent": parent.data["id"], "body": "返信"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        # 返信自身の旧FKから導出（親からのコピーではなく、返信の verse に基づく値）
+        assert str(c.parent_id) == parent.data["id"]
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+    def test_client_supplied_location_is_ignored(self, auth_client, verse, book):
+        # 新フィールドは serializer の入力フィールドではないため、偽値を送っても無視され、
+        # サーバー導出値が保存される。
+        res = auth_client.post(
+            COMMENTS_URL,
+            {
+                "verse": str(verse.id),
+                "body": "偽の箇所を送る",
+                "chapter_number": 999,
+                "verse_number": 888,
+                "source_translation": "FAKE",
+            },
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
         assert c.chapter_number == verse.chapter.number
         assert c.verse_number == verse.number
         assert c.source_translation == book.translation

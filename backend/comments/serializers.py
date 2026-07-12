@@ -130,15 +130,11 @@ class CommentSerializer(serializers.ModelSerializer):
         is_qa = data.get("is_qa", False)
 
         targets = [x for x in [verse, chapter, book] if x is not None]
-        # Q&A または返信は場所なしを許可（通常コメントは必ず1つ）
-        if not parent and not is_qa:
-            if len(targets) != 1:
-                raise serializers.ValidationError(
-                    "Specify exactly one of verse, chapter, or book."
-                )
-        elif len(targets) > 1:
+        # 段階6: Q&A・返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
+        # （箇所を実体にする移行の前提。3列すべて NULL は 6E の CHECK でも禁止する。）
+        if len(targets) != 1:
             raise serializers.ValidationError(
-                "Specify at most one of verse, chapter, or book."
+                "Specify exactly one of verse, chapter, or book."
             )
 
         # Q&A質問（parent=None, is_qa=True）はタイトル必須
@@ -168,10 +164,51 @@ class CommentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop("tags", [])
         validated_data["user"] = self.context["request"].user
+        # 段階6C: 旧ターゲット FK（verse/chapter/book）を維持したまま、訳非依存の箇所と投稿時訳も
+        # 同時に保存する（dual-write）。値はクライアント入力を信用せず、保存対象の旧 FK から
+        # サーバー側で導出する（4フィールドは serializer の入力フィールドではない）。
+        # 返信も返信自身の旧 FK から導出する（親からの継承はしない）。
+        validated_data.update(self._derive_location(validated_data))
         comment = super().create(validated_data)
         if tags:
             comment.tags.set(tags)
         return comment
+
+    @staticmethod
+    def _derive_location(validated_data) -> dict:
+        """保存対象の旧 FK（verse/chapter/book）から箇所と投稿時訳を導出する。
+
+        いずれの粒度にも該当しなければ（ターゲット無し）空 dict を返し、箇所列は NULL のまま。
+        source_translation は Book.translation の値をそのまま保存する（加工しない）。
+        """
+        verse = validated_data.get("verse")
+        chapter = validated_data.get("chapter")
+        book = validated_data.get("book")
+        if verse is not None:
+            b = verse.chapter.book
+            return {
+                "canonical_book": b.canonical_book,
+                "chapter_number": verse.chapter.number,
+                "verse_number": verse.number,
+                "source_translation": b.translation,
+            }
+        if chapter is not None:
+            b = chapter.book
+            return {
+                "canonical_book": b.canonical_book,
+                "chapter_number": chapter.number,
+                "verse_number": None,
+                "source_translation": b.translation,
+            }
+        if book is not None:
+            return {
+                "canonical_book": book.canonical_book,
+                "chapter_number": None,
+                "verse_number": None,
+                "source_translation": book.translation,
+            }
+        # validate() でちょうど1つの旧ターゲット FK があることを保証済み。ここへは到達しない。
+        raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
 
 
 class CommentEditSerializer(serializers.ModelSerializer):
