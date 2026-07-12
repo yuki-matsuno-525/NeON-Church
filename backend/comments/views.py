@@ -12,6 +12,44 @@ from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
 
+def _location_from_target(*, verse_id=None, chapter_id=None, book_id=None):
+    """旧ターゲット id（verse/chapter/book のいずれか）を箇所列フィルタへ解決する。
+
+    段階6D: コメントを訳横断の箇所で集約取得するために使う。存在しない id は None を返す。
+    返り値は Comment.objects.filter(**loc) に渡せる dict。
+    """
+    from bible.models import Book, Chapter, Verse
+
+    if verse_id:
+        v = Verse.objects.filter(id=verse_id).select_related("chapter__book").first()
+        if not v:
+            return None
+        return {
+            "canonical_book_id": v.chapter.book.canonical_book_id,
+            "chapter_number": v.chapter.number,
+            "verse_number": v.number,
+        }
+    if chapter_id:
+        ch = Chapter.objects.filter(id=chapter_id).select_related("book").first()
+        if not ch:
+            return None
+        return {
+            "canonical_book_id": ch.book.canonical_book_id,
+            "chapter_number": ch.number,
+            "verse_number__isnull": True,
+        }
+    if book_id:
+        b = Book.objects.filter(id=book_id).first()
+        if not b:
+            return None
+        return {
+            "canonical_book_id": b.canonical_book_id,
+            "chapter_number__isnull": True,
+            "verse_number__isnull": True,
+        }
+    return None
+
+
 def _notify(recipient, actor, notification_type, comment):
     """通知を作成するヘルパー。自己通知はスキップ。"""
     if recipient == actor:
@@ -82,18 +120,34 @@ class CommentListCreateView(generics.ListCreateAPIView):
         book_ids = _ids("book_ids")
         parent_id = params.get("parent_id")
 
-        if verse_ids:
+        # 段階6D: 箇所（book_slug + 章/節）での取得。訳非依存の箇所列で絞るため、同じ箇所への
+        # コメントは訳をまたいで1スレッドに集約される。粒度は指定の細かさで一意に決まる
+        # （book_slug のみ=書 / +章=章 / +章+節=節）。旧 verse_ids 等の集約は互換のため当面残す。
+        book_slug = params.get("book_slug")
+        chapter_number = params.get("chapter_number")
+        verse_number = params.get("verse_number")
+
+        if book_slug:
+            qs = qs.filter(canonical_book__slug=book_slug)
+            if verse_number:
+                qs = qs.filter(chapter_number=chapter_number, verse_number=verse_number)
+            elif chapter_number:
+                qs = qs.filter(chapter_number=chapter_number, verse_number__isnull=True)
+            else:
+                qs = qs.filter(chapter_number__isnull=True, verse_number__isnull=True)
+        elif verse_ids:
             qs = qs.filter(verse_id__in=verse_ids)
         elif chapter_ids:
             qs = qs.filter(chapter_id__in=chapter_ids)
         elif book_ids:
             qs = qs.filter(book_id__in=book_ids)
-        elif verse_id:
-            qs = qs.filter(verse_id=verse_id)
-        elif chapter_id:
-            qs = qs.filter(chapter_id=chapter_id)
-        elif book_id:
-            qs = qs.filter(book_id=book_id)
+        elif verse_id or chapter_id or book_id:
+            # 段階6D: 単一 id は「その id が指す箇所」へ解決し、箇所列で絞る。これにより訳を
+            # 指定して読んでいても、同じ箇所への他訳コメントも同じスレッドに集約表示される。
+            loc = _location_from_target(verse_id=verse_id, chapter_id=chapter_id, book_id=book_id)
+            if loc is None:
+                return qs.none()
+            qs = qs.filter(**loc)
         elif parent_id:
             qs = qs.filter(parent_id=parent_id)
         else:

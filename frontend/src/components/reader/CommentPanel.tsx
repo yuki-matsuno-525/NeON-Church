@@ -38,12 +38,10 @@ export function CommentPanel({
   onVerseBookmarksChange,
   bookSlug,
   translationProject,
-  allVersionVerseIds,
 }: Props) {
   const t = useT();
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
-  const [showAll, setShowAll] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
@@ -51,16 +49,12 @@ export function CommentPanel({
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
 
-  // 全バージョンが2件以上あるときだけ「すべて表示」が意味を持つ。
-  const canShowAll = (allVersionVerseIds?.length ?? 0) > 1;
-  const useAll = showAll && canShowAll;
-
+  // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
+  // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
   const { comments, setComments, loading, reload } = useComments({
-    verse_id: useAll ? undefined : verse.id,
-    verse_ids: useAll ? allVersionVerseIds : undefined,
-    all_versions: useAll,
+    verse_id: verse.id,
     ordering,
-    translation_project: useAll ? undefined : translationProject,
+    translation_project: translationProject,
   });
 
   // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
@@ -363,25 +357,6 @@ export function CommentPanel({
 
         {/* Ordering toggle */}
         <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)", display: "flex", gap: 8 }}>
-          {canShowAll && (
-            <button
-              onClick={() => setShowAll((v) => !v)}
-              aria-pressed={showAll}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: showAll ? "var(--accent)" : "transparent",
-                color: showAll ? "var(--accent-text)" : "var(--text-faint)",
-                fontFamily: "inherit",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {t.allVersionsToggle}
-            </button>
-          )}
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
@@ -441,7 +416,7 @@ export function CommentPanel({
                 onReply={handleReply}
                 onRefresh={reload}
                 initialBookmarkId={commentBookmarkMap[node.id]}
-                showVersionBadge={useAll}
+                showVersionBadge
               />
             ))
           )}

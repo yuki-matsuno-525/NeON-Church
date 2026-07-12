@@ -657,3 +657,44 @@ class TestCommentDualWrite:
         assert c.chapter_number == verse.chapter.number
         assert c.verse_number == verse.number
         assert c.source_translation == book.translation
+
+
+# ------------------------------------------------------------------
+# 段階6D: 箇所での訳横断集約・cross-translation 返信・version_label
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentLocationAggregation:
+    def _kjv_verse(self, chapter, verse):
+        # 同じ箇所（slug 共有 → 同一 canonical）の KJV 版 verse を作る。
+        from bible.models import Chapter, Verse
+        from tests.factories import make_book
+        kjv = make_book("Matthew", "KJV", 2, slug="matthew")
+        kjv_ch = Chapter.objects.create(book=kjv, number=chapter.number)
+        return Verse.objects.create(chapter=kjv_ch, number=verse.number, text="For God so loved")
+
+    def test_comments_aggregate_across_translations(self, auth_client, verse, chapter):
+        kjv_v = self._kjv_verse(chapter, verse)
+        auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "口語訳コメント"}, format="json")
+        auth_client.post(COMMENTS_URL, {"verse": str(kjv_v.id), "body": "KJVコメント"}, format="json")
+        # 口語訳の verse_id で取得しても、同じ箇所の KJV コメントも集約されて返る。
+        res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        bodies = {c["body"] for c in res.data["results"]}
+        assert "口語訳コメント" in bodies
+        assert "KJVコメント" in bodies
+
+    def test_version_label_is_source_translation(self, auth_client, verse, book):
+        res = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "コメント"}, format="json")
+        got = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        c = next(x for x in got.data["results"] if x["id"] == res.data["id"])
+        assert c["version_label"] == book.translation
+
+    def test_reply_across_translation_same_passage_allowed(self, auth_client, verse, chapter):
+        parent = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "親(口語訳)"}, format="json").data
+        kjv_v = self._kjv_verse(chapter, verse)
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(kjv_v.id), "parent": parent["id"], "body": "返信(KJV)"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        # 別箇所への返信が拒否されることは既存の test_reply_to_different_verse_is_rejected が担保。

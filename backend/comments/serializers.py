@@ -57,18 +57,13 @@ def _get_location_parts(obj: Comment) -> tuple[str, int | None, int | None]:
 def _get_version_label(obj: Comment) -> str:
     """コメントがどのバージョンのものかを表すラベルを返す。
 
-    翻訳プロジェクト向けならプロジェクト名、聖書本体なら訳名（口語訳・KJV など）。
-    「全バージョン表示」でどの版のコメントかをバッジ表示するために使う。
+    翻訳プロジェクト向けならプロジェクト名、聖書本体なら投稿時の訳名（source_translation）。
+    段階6D: コメントは箇所で訳横断に集約表示するため、これは「どの訳を見ながら投稿したか」の
+    文脈ラベルであって、公開範囲を表すものではない（フロントは「投稿時: 〜」と表示する）。
     """
     if obj.translation_project_id and obj.translation_project:
         return obj.translation_project.name
-    if obj.verse_id and obj.verse:
-        return obj.verse.chapter.book.translation
-    if obj.chapter_id and obj.chapter:
-        return obj.chapter.book.translation
-    if obj.book_id and obj.book:
-        return obj.book.translation
-    return ""
+    return obj.source_translation or ""
 
 
 def _format_location_label(book: str, chapter: int | None, verse: int | None) -> str:
@@ -144,19 +139,19 @@ class CommentSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"title": "A title is required for Q&A questions."})
 
         if parent:
-            if verse and parent.verse_id != verse.pk:
+            # 段階6D: 返信は親と「同じ箇所」であればよい（訳が違っても可）。旧 verse_id 一致から
+            # 箇所（canonical_book/章/節）一致へ緩める。これで KJV を見ながら口語訳コメントへ
+            # 返信できる（同じスレッドに集約される）。
+            loc = self._derive_location(data)
+            if (
+                loc["canonical_book"].id != parent.canonical_book_id
+                or loc["chapter_number"] != parent.chapter_number
+                or loc["verse_number"] != parent.verse_number
+            ):
                 raise serializers.ValidationError(
-                    {"parent": "Reply must target the same verse."}
+                    {"parent": "Reply must target the same passage."}
                 )
-            elif chapter and parent.chapter_id != chapter.pk:
-                raise serializers.ValidationError(
-                    {"parent": "Reply must target the same chapter."}
-                )
-            elif book and parent.book_id != book.pk:
-                raise serializers.ValidationError(
-                    {"parent": "Reply must target the same book."}
-                )
-            # 返信は親と同じバージョン（翻訳プロジェクト／聖書本体）に必ず属させる。
+            # 返信は親と同じスコープ（翻訳プロジェクト／聖書本体）に必ず属させる。
             data["translation_project"] = parent.translation_project
 
         return data
