@@ -64,11 +64,11 @@ test("Tr-4: /translations/new から新規プロジェクトを作成できる",
     .fill("E2Eテスト用プロジェクトです");
 
   // 翻訳元の書を選択（マタイによる福音書）。書を選ぶとバージョン欄が現れ、
-  // 既定で「口語訳」が選ばれる。
-  await page.locator("select").nth(0).selectOption({ label: "マタイによる福音書" });
+  // 既定で「口語訳」が選ばれる。カテゴリ絞り込みは未指定なので書=nth(1)。
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
 
-  // 翻訳先言語を選択（書=0, バージョン=1, 言語=2）
-  await page.locator("select").nth(2).selectOption({ label: "English" });
+  // 翻訳先言語を選択（カテゴリ=0, 書=1, バージョン=2, 言語=3）
+  await page.locator("select").nth(3).selectOption({ label: "English" });
 
   // フォーム送信
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
@@ -94,8 +94,8 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   const projectName = `E2E一覧確認_${ts}`;
 
   await page.locator('input[placeholder="例: マタイ英語翻訳"]').fill(projectName);
-  await page.locator("select").nth(0).selectOption({ label: "マタイによる福音書" });
-  await page.locator("select").nth(2).selectOption({ label: "English" });
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
+  await page.locator("select").nth(3).selectOption({ label: "English" });
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
   // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
@@ -123,8 +123,8 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
   await page.goto("/translations/new");
   const projectName = `E2E参加申請_${ts}`;
   await page.locator('input[placeholder="例: マタイ英語翻訳"]').fill(projectName);
-  await page.locator("select").nth(0).selectOption({ label: "マタイによる福音書" });
-  await page.locator("select").nth(2).selectOption({ label: "English" });
+  await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
+  await page.locator("select").nth(3).selectOption({ label: "English" });
   await page.getByRole("button", { name: "プロジェクトを作成" }).click();
 
   // 詳細ページに遷移（プロジェクト名見出しが表示されるまで待つ）
