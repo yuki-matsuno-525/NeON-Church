@@ -20,6 +20,7 @@ export default function NewTranslationPage() {
   const nameId = useId();
   const descriptionId = useId();
   const versionId = useId();
+  const genreFieldId = useId();
   const bookFieldId = useId();
   const languageId = useId();
   const errorId = useId();
@@ -27,6 +28,7 @@ export default function NewTranslationPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   // まず書（slug）を選び、次にその書が持つ訳（version）を選ぶ。
+  const [genreFilter, setGenreFilter] = useState("");
   const [sourceSlug, setSourceSlug] = useState("");
   const [sourceVersion, setSourceVersion] = useState("");
   const [targetLanguage, setTargetLanguage] = useState("");
@@ -127,6 +129,22 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
+          {/* カテゴリを先に選ぶと、元書プルダウンがそのカテゴリの書に絞られる。 */}
+          <label htmlFor={genreFieldId} style={labelStyle}>{t.searchKindBook}</label>
+          <select
+            id={genreFieldId}
+            value={genreFilter}
+            onChange={(e) => { setGenreFilter(e.target.value); handleSlugChange(""); }}
+            style={inputStyle}
+          >
+            <option value="">{t.all}</option>
+            {groupCatalogByGenre(catalog).map(({ genre }) => (
+              <option key={genre} value={genre}>{t.genreNames[genre] ?? genre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
           <label htmlFor={bookFieldId} style={labelStyle}>{t.sourceBook} <span style={{ color: "var(--state-danger)" }} aria-hidden="true">*</span></label>
           <select
             id={bookFieldId}
@@ -136,12 +154,11 @@ export default function NewTranslationPage() {
             required
           >
             <option value="">{t.selectBookOption}</option>
-            {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
-              <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
-                {entries.map((e) => (
-                  <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.name ?? e.slug}</option>
-                ))}
-              </optgroup>
+            {(genreFilter
+              ? groupCatalogByGenre(catalog).find((g) => g.genre === genreFilter)?.entries ?? []
+              : catalog
+            ).map((e) => (
+              <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.name ?? e.slug}</option>
             ))}
           </select>
         </div>
