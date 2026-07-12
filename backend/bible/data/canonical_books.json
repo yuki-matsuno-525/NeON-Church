@@ -2,69 +2,681 @@
   {
     "slug": "matthew",
     "books": [
-      { "translation": "口語訳", "name": "マタイによる福音書" },
-      { "translation": "KJV", "name": "Matthew" },
-      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }
+      {
+        "translation": "口語訳",
+        "name": "マタイによる福音書"
+      },
+      {
+        "translation": "KJV",
+        "name": "Matthew"
+      },
+      {
+        "translation": "Nestle 1904 (GRC)",
+        "name": "ΚΑΤΑ ΜΑΘΘΑΙΟΝ"
+      }
     ]
   },
   {
     "slug": "mark",
     "books": [
-      { "translation": "口語訳", "name": "マルコによる福音書" },
-      { "translation": "KJV", "name": "Mark" },
-      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΜΑΡΚΟΝ" }
+      {
+        "translation": "口語訳",
+        "name": "マルコによる福音書"
+      },
+      {
+        "translation": "KJV",
+        "name": "Mark"
+      },
+      {
+        "translation": "Nestle 1904 (GRC)",
+        "name": "ΚΑΤΑ ΜΑΡΚΟΝ"
+      }
     ]
   },
   {
     "slug": "luke",
     "books": [
-      { "translation": "口語訳", "name": "ルカによる福音書" },
-      { "translation": "KJV", "name": "Luke" },
-      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΛΟΥΚΑΝ" }
+      {
+        "translation": "口語訳",
+        "name": "ルカによる福音書"
+      },
+      {
+        "translation": "KJV",
+        "name": "Luke"
+      },
+      {
+        "translation": "Nestle 1904 (GRC)",
+        "name": "ΚΑΤΑ ΛΟΥΚΑΝ"
+      }
     ]
   },
   {
     "slug": "john",
     "books": [
-      { "translation": "口語訳", "name": "ヨハネによる福音書" },
-      { "translation": "KJV", "name": "John" },
-      { "translation": "Nestle 1904 (GRC)", "name": "ΚΑΤΑ ΙΩΑΝΗΝ" }
+      {
+        "translation": "口語訳",
+        "name": "ヨハネによる福音書"
+      },
+      {
+        "translation": "KJV",
+        "name": "John"
+      },
+      {
+        "translation": "Nestle 1904 (GRC)",
+        "name": "ΚΑΤΑ ΙΩΑΝΗΝ"
+      }
     ]
   },
   {
     "slug": "mary",
     "books": [
-      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Mary" }
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Mary"
+      }
     ]
   },
   {
     "slug": "infancy-thomas",
     "books": [
-      { "translation": "Mark M. Mattison (EN)", "name": "The Infancy Gospel of Thomas" }
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Infancy Gospel of Thomas"
+      }
     ]
   },
   {
     "slug": "peter",
     "books": [
-      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Peter" }
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Peter"
+      }
     ]
   },
   {
     "slug": "judas",
     "books": [
-      { "translation": "Mark M. Mattison (EN)", "name": "The Gospel of Judas" }
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Judas"
+      }
     ]
   },
   {
     "slug": "enoch",
     "books": [
-      { "translation": "R. H. Charles (EN)", "name": "The Book of Enoch" }
+      {
+        "translation": "R. H. Charles (EN)",
+        "name": "The Book of Enoch"
+      }
     ]
   },
   {
     "slug": "adam-and-eve",
     "books": [
-      { "translation": "L. S. A. Wells (EN)", "name": "The Life of Adam and Eve" }
+      {
+        "translation": "L. S. A. Wells (EN)",
+        "name": "The Life of Adam and Eve"
+      }
+    ]
+  },
+  {
+    "slug": "genesis",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Genesis"
+      }
+    ]
+  },
+  {
+    "slug": "exodus",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Exodus"
+      }
+    ]
+  },
+  {
+    "slug": "leviticus",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Leviticus"
+      }
+    ]
+  },
+  {
+    "slug": "numbers",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Numbers"
+      }
+    ]
+  },
+  {
+    "slug": "deuteronomy",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Deuteronomy"
+      }
+    ]
+  },
+  {
+    "slug": "joshua",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Joshua"
+      }
+    ]
+  },
+  {
+    "slug": "judges",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Judges"
+      }
+    ]
+  },
+  {
+    "slug": "ruth",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Ruth"
+      }
+    ]
+  },
+  {
+    "slug": "1-samuel",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Samuel"
+      }
+    ]
+  },
+  {
+    "slug": "2-samuel",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Samuel"
+      }
+    ]
+  },
+  {
+    "slug": "1-kings",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Kings"
+      }
+    ]
+  },
+  {
+    "slug": "2-kings",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Kings"
+      }
+    ]
+  },
+  {
+    "slug": "1-chronicles",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Chronicles"
+      }
+    ]
+  },
+  {
+    "slug": "2-chronicles",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Chronicles"
+      }
+    ]
+  },
+  {
+    "slug": "ezra",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Ezra"
+      }
+    ]
+  },
+  {
+    "slug": "nehemiah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Nehemiah"
+      }
+    ]
+  },
+  {
+    "slug": "esther",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Esther"
+      }
+    ]
+  },
+  {
+    "slug": "job",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Job"
+      }
+    ]
+  },
+  {
+    "slug": "psalms",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Psalms"
+      }
+    ]
+  },
+  {
+    "slug": "proverbs",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Proverbs"
+      }
+    ]
+  },
+  {
+    "slug": "ecclesiastes",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Ecclesiastes"
+      }
+    ]
+  },
+  {
+    "slug": "song-of-songs",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Song of Solomon"
+      }
+    ]
+  },
+  {
+    "slug": "isaiah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Isaiah"
+      }
+    ]
+  },
+  {
+    "slug": "jeremiah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Jeremiah"
+      }
+    ]
+  },
+  {
+    "slug": "lamentations",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Lamentations"
+      }
+    ]
+  },
+  {
+    "slug": "ezekiel",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Ezekiel"
+      }
+    ]
+  },
+  {
+    "slug": "daniel",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Daniel"
+      }
+    ]
+  },
+  {
+    "slug": "hosea",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Hosea"
+      }
+    ]
+  },
+  {
+    "slug": "joel",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Joel"
+      }
+    ]
+  },
+  {
+    "slug": "amos",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Amos"
+      }
+    ]
+  },
+  {
+    "slug": "obadiah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Obadiah"
+      }
+    ]
+  },
+  {
+    "slug": "jonah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Jonah"
+      }
+    ]
+  },
+  {
+    "slug": "micah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Micah"
+      }
+    ]
+  },
+  {
+    "slug": "nahum",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Nahum"
+      }
+    ]
+  },
+  {
+    "slug": "habakkuk",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Habakkuk"
+      }
+    ]
+  },
+  {
+    "slug": "zephaniah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Zephaniah"
+      }
+    ]
+  },
+  {
+    "slug": "haggai",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Haggai"
+      }
+    ]
+  },
+  {
+    "slug": "zechariah",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Zechariah"
+      }
+    ]
+  },
+  {
+    "slug": "malachi",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Malachi"
+      }
+    ]
+  },
+  {
+    "slug": "acts",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Acts"
+      }
+    ]
+  },
+  {
+    "slug": "romans",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Romans"
+      }
+    ]
+  },
+  {
+    "slug": "1-corinthians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Corinthians"
+      }
+    ]
+  },
+  {
+    "slug": "2-corinthians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Corinthians"
+      }
+    ]
+  },
+  {
+    "slug": "galatians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Galatians"
+      }
+    ]
+  },
+  {
+    "slug": "ephesians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Ephesians"
+      }
+    ]
+  },
+  {
+    "slug": "philippians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Philippians"
+      }
+    ]
+  },
+  {
+    "slug": "colossians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Colossians"
+      }
+    ]
+  },
+  {
+    "slug": "1-thessalonians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Thessalonians"
+      }
+    ]
+  },
+  {
+    "slug": "2-thessalonians",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Thessalonians"
+      }
+    ]
+  },
+  {
+    "slug": "1-timothy",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Timothy"
+      }
+    ]
+  },
+  {
+    "slug": "2-timothy",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Timothy"
+      }
+    ]
+  },
+  {
+    "slug": "titus",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Titus"
+      }
+    ]
+  },
+  {
+    "slug": "philemon",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Philemon"
+      }
+    ]
+  },
+  {
+    "slug": "hebrews",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Hebrews"
+      }
+    ]
+  },
+  {
+    "slug": "james",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "James"
+      }
+    ]
+  },
+  {
+    "slug": "1-peter",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 Peter"
+      }
+    ]
+  },
+  {
+    "slug": "2-peter",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 Peter"
+      }
+    ]
+  },
+  {
+    "slug": "1-john",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "1 John"
+      }
+    ]
+  },
+  {
+    "slug": "2-john",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "2 John"
+      }
+    ]
+  },
+  {
+    "slug": "3-john",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "3 John"
+      }
+    ]
+  },
+  {
+    "slug": "jude",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Jude"
+      }
+    ]
+  },
+  {
+    "slug": "revelation",
+    "books": [
+      {
+        "translation": "KJV",
+        "name": "Revelation"
+      }
     ]
   }
 ]

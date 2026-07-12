@@ -25,7 +25,11 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from bible.canonical import CanonicalDataError, get_or_create_book_with_canonical
+from bible.canonical import (
+    CanonicalDataError,
+    get_or_create_book_with_canonical,
+    load_canonical_index,
+)
 from bible.models import Chapter, Verse
 
 # ibibles の書索引 → 訳非依存の slug（プロテスタント66冊）。
@@ -104,25 +108,35 @@ class Command(BaseCommand):
         if not books:
             raise CommandError(f"書を1つも解析できませんでした: {path}")
 
+        # 書名は正本 canonical_books.json を単一ソースにする（この訳の slug -> 書名）。
+        # 未登録の書はスキップするので、正本に足したぶんだけ段階的に取り込める。
+        try:
+            index_map = load_canonical_index()
+        except CanonicalDataError as e:
+            raise CommandError(str(e))
+        slug_to_name = {slug: name for (t, name), slug in index_map.items() if t == translation}
+
         imported = skipped_books = 0
         for index, header_name, verses in books:
             slug = INDEX_TO_SLUG.get(index)
-            if slug is None:
-                self.stdout.write(f"  索引 {index}（{header_name}）は対象外のためスキップ")
+            name = slug_to_name.get(slug) if slug else None
+            if name is None:
                 skipped_books += 1
                 continue
-            self._import_book(index, header_name, translation, verses)
+            self._import_book(index, name, translation, verses)
             imported += 1
 
         self.stdout.write(
-            self.style.SUCCESS(f"{translation}: {imported} 書をインポート（対象外 {skipped_books} 書）")
+            self.style.SUCCESS(
+                f"{translation}: {imported} 書をインポート（正本未登録などでスキップ {skipped_books} 書）"
+            )
         )
 
     @transaction.atomic
-    def _import_book(self, index, header_name, translation, verses):
+    def _import_book(self, index, name, translation, verses):
         try:
             book, created = get_or_create_book_with_canonical(
-                name=header_name, translation=translation, order=int(index)
+                name=name, translation=translation, order=int(index)
             )
         except CanonicalDataError as e:
             raise CommandError(str(e))
@@ -136,4 +150,4 @@ class Command(BaseCommand):
             if v_created:
                 added += 1
         mark = "作成" if created else "既存"
-        self.stdout.write(f"  [{mark}] {header_name}（{translation}） 節+{added}")
+        self.stdout.write(f"  [{mark}] {name}（{translation}） 節+{added}")
