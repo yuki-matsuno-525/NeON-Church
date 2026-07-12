@@ -205,7 +205,7 @@ export function CommentItem({
                 borderRadius: 999,
               }}
             >
-              {t.postedIn(comment.version_label)}
+              {comment.version_label}
             </span>
           )}
           <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
