@@ -142,6 +142,7 @@ def test_real_canonical_books_json_is_valid():
     assert all(t and n for t, n in pairs), "空の translation/name がある"
     assert len(pairs) == len(set(pairs)), "(translation, name) が重複"
 
-    # 現行の収録: 10 canonical / 18 edition
-    assert len(slugs) == 10
-    assert len(pairs) == 18
+    # 全書追加プロジェクトで収録は増える。固定数ではなく、正典の主要書が揃っていることを確認する。
+    assert len(slugs) >= 66, "プロテスタント66冊ぶんの slug が揃っていない"
+    for slug in ("genesis", "psalms", "malachi", "matthew", "revelation"):
+        assert slug in slugs, f"canonical に {slug} が無い"

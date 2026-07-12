@@ -2,7 +2,6 @@
 
 import pytest
 from django.core.management import call_command
-from django.core.management.base import CommandError
 
 from bible.management.commands.import_ibibles import parse_ibibles_text
 
@@ -56,7 +55,8 @@ def test_import_is_idempotent(tmp_path):
 
 
 @pytest.mark.django_db
-def test_import_unregistered_translation_errors(tmp_path):
-    # canonical_books.json に無い訳名は解決できず CommandError。
-    with pytest.raises(CommandError):
-        call_command("import_ibibles", "--txt", _write(tmp_path, SAMPLE), "--translation", "NONEXISTENT (GRC)")
+def test_import_unregistered_translation_skips(tmp_path):
+    # canonical_books.json にこの訳の登録が無ければ、その書はスキップ（エラーにしない）。
+    call_command("import_ibibles", "--txt", _write(tmp_path, SAMPLE), "--translation", "NONEXISTENT (GRC)")
+    from bible.models import Book
+    assert not Book.objects.filter(translation="NONEXISTENT (GRC)").exists()

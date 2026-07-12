@@ -39,11 +39,13 @@
 >
 > **KJV 実データから導出済み（66冊・正確な章数）**: 旧約39（索引001-039）＋新約27（101-127）、計31,105節。章数例: Genesis 50 / Psalms 150 / Isaiah 66 / Matthew 28 / Revelation 22。ibibles txt は `=NNN 書名` 区切り＋`略号 章:節 略号 章:節 本文` 形式でパース容易。第二正典は KJV に無く LXX から取得。
 - [x] KJV 全66冊の書名・章数・節数を実データから導出（Phase C の importer の元データ）
+- [x] `canonical_books.json` に **KJV 66冊**を追加（旧約39＋新約27、slug 確定＝72 canonical/80 edition）
+- [ ] 他訳（GTR/文語訳/LXX/HWL）を canonical_books.json に追記（各 import とセット）
 - [ ] カテゴリ（genre）を正典向けに再設計（案: 律法/歴史書/詩歌・知恵/大預言書/小預言書/第二正典/福音書/使徒行伝/書簡/黙示録＋既存外典枠）
-- [ ] `backend/bible/data/canonical_books.json` に slug を追加（import 済みの訳×書とセットで）
-- [ ] `frontend/src/lib/books.ts` に各書のエントリ（slug/name/englishName/short/totalChapters/genre）を追加
-- [ ] `GENRE_ORDER` を新カテゴリ順へ更新
-- [ ] `sync_canonical_books` で CanonicalBook を投入・全件検証／backend/frontend テスト・CI green
+- [ ] `frontend/src/lib/books.ts` に各書のエントリ（slug/name/englishName/short/totalChapters/genre）を追加＋`GENRE_ORDER` 更新
+- [ ] `sync_canonical_books` で全件検証／CI green
+
+**Phase C/D 検証済み**: 汎用インポータ改良（書名は正本 canonical_books.json を単一ソースに）。ローカルで **KJV 全66冊を実データ投入して検証**（66書・31,105節＝KJV一致・canonical 全紐づけ・書名クリーン）。本番投入は Render シェルで `import_ibibles --txt kjv.txt --translation KJV`。
 
 ### Phase B. ナビをカテゴリ・ドリルダウン化 〔UI〕
 - [ ] `/read` を「カテゴリ選択 → 書一覧」または折りたたみに（既存はジャンル積み上げ）
