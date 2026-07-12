@@ -6,7 +6,7 @@ import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
 import { translationLabel } from "@/lib/translations";
-import { catalogEntry, type BookCatalogEntry } from "@/lib/bookCatalog";
+import { catalogEntry, groupCatalogByGenre, type BookCatalogEntry } from "@/lib/bookCatalog";
 
 type Props = {
   catalog: BookCatalogEntry[];
@@ -168,8 +168,12 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
         <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
         <select id={bookSelectId} value={slug} onChange={handleSlugChange} style={inputStyle}>
           <option value="">{t.qaSelectBookOptional}</option>
-          {catalog.map((e) => (
-            <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
+          {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
+            <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
+              {entries.map((e) => (
+                <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
+              ))}
+            </optgroup>
           ))}
         </select>
         {slug && (

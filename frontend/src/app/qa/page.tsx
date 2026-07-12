@@ -12,7 +12,7 @@ import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
-import { useBookCatalog, catalogEntry } from "@/lib/bookCatalog";
+import { useBookCatalog, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 
 const PAGE_SIZE = 10;
 
@@ -197,8 +197,12 @@ function QAContent() {
               }}
             >
               <option value="">{t.allBooks}</option>
-              {catalog.map((e) => (
-                <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
+              {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
+                <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
+                  {entries.map((e) => (
+                    <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
