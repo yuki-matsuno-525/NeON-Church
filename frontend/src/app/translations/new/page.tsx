@@ -9,7 +9,7 @@ import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
-import { useBookCatalog, catalogEntry } from "@/lib/bookCatalog";
+import { useBookCatalog, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 
 export default function NewTranslationPage() {
   const { user, loading: authLoading } = useAuth();
@@ -136,8 +136,12 @@ export default function NewTranslationPage() {
             required
           >
             <option value="">{t.selectBookOption}</option>
-            {catalog.map((e) => (
-              <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.name ?? e.slug}</option>
+            {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
+              <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
+                {entries.map((e) => (
+                  <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.name ?? e.slug}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

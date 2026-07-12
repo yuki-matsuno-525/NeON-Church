@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchBooks, type Book } from "@/lib/api";
-import { BOOKS, slugFromDbName } from "@/lib/books";
+import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName } from "@/lib/books";
 
 export type CatalogTranslation = { id: string; bookId: string };
 export type BookCatalogEntry = { slug: string; translations: CatalogTranslation[] };
@@ -47,4 +47,15 @@ export function useBookCatalog(): BookCatalogEntry[] {
 /** カタログから slug のエントリを返す。 */
 export function catalogEntry(catalog: BookCatalogEntry[], slug: string): BookCatalogEntry | null {
   return catalog.find((e) => e.slug === slug) ?? null;
+}
+
+/** カタログをカテゴリ（ジャンル）別にまとめる。書選択の <select> を optgroup で先にカテゴリで
+ *  絞るために使う。GENRE_ORDER 順・エントリのある genre だけ返す。 */
+export function groupCatalogByGenre(
+  catalog: BookCatalogEntry[],
+): { genre: string; entries: BookCatalogEntry[] }[] {
+  return GENRE_ORDER.map((genre) => ({
+    genre,
+    entries: catalog.filter((e) => getBookBySlug(e.slug)?.genre === genre),
+  })).filter((g) => g.entries.length > 0);
 }
