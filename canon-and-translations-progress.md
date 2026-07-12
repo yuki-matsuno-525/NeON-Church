@@ -60,11 +60,12 @@
 - [ ] importer のテスト（パース・冪等・canonical 紐づけ）
 
 ### Phase D. 同番号テキスト投入（段階8不要） 〔GTR / KJV / 文語訳〕
-- [ ] GTR（新約ギリシャ語）投入
-- [ ] KJV（全巻）投入
-- [ ] 文語訳 `jcl`（全巻）投入
-- [ ] 訳切替・コメント/栞の訳横断集約が新書でも動くことを確認
-- [ ] CI green ＋ 本番投入（Render シェル or seed 経路）
+- [x] KJV（全巻66）投入・ローカル検証済み（31,105節）
+- [x] GTR（新約ギリシャ語27・訳名 "TR (GRC)"）投入・ローカル検証済み
+- [x] 文語訳 `jcl`（全巻66・訳名 "文語訳"）投入・ローカル検証済み
+- [x] canonical_books.json↔books.ts 整合0、translations.ts にラベル追加（TR (GRC)=公認本文/文語訳）
+- [ ] 訳切替・コメント/栞の訳横断集約が新書でも動くことを本番で確認
+- [ ] **本番投入（Render シェル）**: `import_ibibles --txt {kjv,gtr,jcl}.txt --translation "KJV"/"TR (GRC)"/"文語訳"`（冪等）
 
 ### Phase E. 段階8 versification 変換層 〔異番号対応〕
 - [ ] 版（edition）側に**体系コード**を持たせるスキーマ（基準版はコード無し）
