@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from bible.models import Book, Chapter, Verse
 from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
 
 User = get_user_model()
@@ -40,18 +41,18 @@ def _clean_body(value: str | None) -> str:
 def _get_location_parts(obj: Comment) -> tuple[str, int | None, int | None]:
     """コメントの書名・章番号・節番号を返す。
 
-    verse / chapter / book のいずれかが FK で紐づく構造に対応する。
-    返り値: (book_name, chapter_number_or_None, verse_number_or_None)
+    段階6F: 箇所は訳非依存の canonical_book / chapter_number / verse_number から取る。
+    書名は投稿時訳（source_translation）に一致する Book 名で解決する（無ければ同一 canonical の
+    いずれかの版名、それも無ければ slug）。返り値: (book_name, chapter_number, verse_number)
     """
-    if obj.verse_id and obj.verse:
-        v = obj.verse
-        return v.chapter.book.name, v.chapter.number, v.number
-    if obj.chapter_id and obj.chapter:
-        ch = obj.chapter
-        return ch.book.name, ch.number, None
-    if obj.book_id and obj.book:
-        return obj.book.name, None, None
-    return "", None, None
+    if not obj.canonical_book_id:
+        return "", None, None
+    book = (
+        Book.objects.filter(canonical_book_id=obj.canonical_book_id, translation=obj.source_translation).first()
+        or Book.objects.filter(canonical_book_id=obj.canonical_book_id).first()
+    )
+    name = book.name if book else (obj.canonical_book.slug if obj.canonical_book else "")
+    return name, obj.chapter_number, obj.verse_number
 
 
 def _get_version_label(obj: Comment) -> str:
@@ -95,6 +96,11 @@ class CommentSerializer(serializers.ModelSerializer):
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, write_only=True, required=False, source="tags"
     )
+    # 段階6F: verse/chapter/book は「箇所を引くための write-only 入力」。保存はしない
+    # （Comment の実体は canonical_book/章/節）。レスポンスには含めない。
+    verse = serializers.PrimaryKeyRelatedField(queryset=Verse.objects.all(), write_only=True, required=False)
+    chapter = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), write_only=True, required=False)
+    book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all(), write_only=True, required=False)
 
     class Meta:
         model = Comment
@@ -159,11 +165,12 @@ class CommentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         tags = validated_data.pop("tags", [])
         validated_data["user"] = self.context["request"].user
-        # 段階6C: 旧ターゲット FK（verse/chapter/book）を維持したまま、訳非依存の箇所と投稿時訳も
-        # 同時に保存する（dual-write）。値はクライアント入力を信用せず、保存対象の旧 FK から
-        # サーバー側で導出する（4フィールドは serializer の入力フィールドではない）。
-        # 返信も返信自身の旧 FK から導出する（親からの継承はしない）。
+        # 段階6F: verse/chapter/book 入力から箇所（canonical_book/章/節）と投稿時訳を導出して保存する。
+        # 入力自体は保存しないので取り除く。値はクライアント入力を信用せず入力 FK から導出する。
+        # 返信も返信自身の入力 FK から導出する（親からの継承はしない）。
         validated_data.update(self._derive_location(validated_data))
+        for field in ("verse", "chapter", "book"):
+            validated_data.pop(field, None)
         comment = super().create(validated_data)
         if tags:
             comment.tags.set(tags)
@@ -171,9 +178,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _derive_location(validated_data) -> dict:
-        """保存対象の旧 FK（verse/chapter/book）から箇所と投稿時訳を導出する。
+        """入力の verse/chapter/book（いずれか1つ）から箇所と投稿時訳を導出する。
 
-        いずれの粒度にも該当しなければ（ターゲット無し）空 dict を返し、箇所列は NULL のまま。
         source_translation は Book.translation の値をそのまま保存する（加工しない）。
         """
         verse = validated_data.get("verse")

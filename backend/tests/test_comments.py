@@ -83,8 +83,6 @@ class TestCommentCreate:
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED
-        assert str(res.data["chapter"]) == str(chapter.id)
-        assert res.data["verse"] is None
 
     def test_book_comment_post(self, auth_client, book):
         res = auth_client.post(
@@ -93,8 +91,6 @@ class TestCommentCreate:
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED
-        assert str(res.data["book"]) == str(book.id)
-        assert res.data["verse"] is None
 
     def test_multiple_targets_rejected(self, auth_client, verse, chapter):
         res = auth_client.post(
@@ -350,7 +346,6 @@ class TestQAPost:
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED
-        assert str(res.data["book"]) == str(book.id)
 
     def test_non_qa_without_location_rejected(self, auth_client):
         res = auth_client.post(
@@ -496,7 +491,8 @@ class TestQAListBookFilter:
 
         res = api_client.get(QA_URL, {"book_id": str(book.id)})
         titles = [c["title"] for c in res.data["results"]]
-        assert titles == ["口語訳の質問"]
+        # 段階6F: book_id は canonical へ解決され、同じ書の全訳の Q&A が訳横断で集約される。
+        assert set(titles) == {"口語訳の質問", "KJVの質問"}
 
     def test_comma_separated_book_ids_filter_both(self, auth_client, api_client, book):
         from tests.factories import make_book
@@ -561,7 +557,6 @@ class TestCommentLocationFieldsExist:
         book = verse.chapter.book
         c = Comment.objects.create(
             user=user,
-            verse=verse,
             body="箇所付きコメント",
             canonical_book=book.canonical_book,
             chapter_number=verse.chapter.number,
@@ -590,7 +585,6 @@ class TestCommentDualWrite:
         )
         assert res.status_code == status.HTTP_201_CREATED
         c = self._get(res.data["id"])
-        assert c.verse_id == verse.id  # 旧FKは維持
         assert c.canonical_book_id == book.canonical_book_id
         assert c.chapter_number == chapter.number
         assert c.verse_number == verse.number
@@ -602,7 +596,6 @@ class TestCommentDualWrite:
         )
         assert res.status_code == status.HTTP_201_CREATED
         c = self._get(res.data["id"])
-        assert c.chapter_id == chapter.id  # 旧FKは維持
         assert c.canonical_book_id == book.canonical_book_id
         assert c.chapter_number == chapter.number
         assert c.verse_number is None
@@ -614,7 +607,6 @@ class TestCommentDualWrite:
         )
         assert res.status_code == status.HTTP_201_CREATED
         c = self._get(res.data["id"])
-        assert c.book_id == book.id  # 旧FKは維持
         assert c.canonical_book_id == book.canonical_book_id
         assert c.chapter_number is None
         assert c.verse_number is None

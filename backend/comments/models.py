@@ -38,31 +38,10 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
         related_name="comments",
     )
-    verse = models.ForeignKey(
-        "bible.Verse",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="comments",
-    )
-    chapter = models.ForeignKey(
-        "bible.Chapter",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="comments",
-    )
-    book = models.ForeignKey(
-        "bible.Book",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="comments",
-    )
-    # 段階6A: 訳非依存の箇所（canonical_book / chapter_number / verse_number）を nullable で追加。
-    # まだ空の「箱」を用意するだけ（列追加のみ）。書き込み・読み取り・制約・既存データは変えない。
-    # バックフィルは6B、dual-write は6C、読み取り切替は6D、旧 verse/chapter/book FK 撤去は6F。
-    # 粒度は null の組合せで表す（書=章節null／章=節null／節=両あり。整合 CHECK は6E）。
+    # 段階6F: 旧 verse/chapter/book FK は撤去。コメントの箇所は訳非依存の
+    # canonical_book / chapter_number / verse_number で表す（粒度は null の組合せ）。
+    # 作成 API の入力は verse_id/chapter_id/book_id のままだが、それは箇所を引くための入力で
+    # あって保存はしない（serializer で箇所へ導出）。
     canonical_book = models.ForeignKey(
         "bible.CanonicalBook",
         on_delete=models.PROTECT,
@@ -112,6 +91,21 @@ class Comment(BaseModel):
     class Meta:
         db_table = "comments"
         ordering = ["-created_at"]
+        constraints = [
+            # 段階6E: すべてのコメントは書・章・節のいずれかの粒度を必ず持つ。
+            # canonical_book は必須。粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) /
+            # (章あり・節あり=節) のみ許可し、章NULLで節だけある等の中途半端を禁止する。
+            models.CheckConstraint(
+                condition=(
+                    models.Q(canonical_book__isnull=False)
+                    & ~(
+                        models.Q(chapter_number__isnull=True)
+                        & models.Q(verse_number__isnull=False)
+                    )
+                ),
+                name="comment_location_grain_valid",
+            ),
+        ]
 
 
 class Vote(BaseModel):

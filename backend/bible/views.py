@@ -138,7 +138,7 @@ class SearchView(APIView):
         )
         comments = (
             Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
-            .select_related("user", "verse__chapter__book", "chapter__book", "book")
+            .select_related("user", "canonical_book")
             .order_by("-created_at")[:20]
         )
 

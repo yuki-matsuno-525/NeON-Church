@@ -33,8 +33,9 @@ def _create(**kwargs) -> Bookmark:
 
 
 def _comment(data) -> Comment:
+    from tests.factories import make_comment
     author = User.objects.create_user(username="author", password="pass12345")
-    return Comment.objects.create(user=author, verse=data["verse"], body="hi")
+    return make_comment(user=author, verse=data["verse"], body="hi")
 
 
 # --- 成功ケース ---

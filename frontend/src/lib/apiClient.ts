@@ -192,14 +192,11 @@ export function fetchReferenceVerses(slug: string, chapter: number, verse: numbe
 }
 
 export function fetchComments(params: {
+  // 段階6F: 単一 id（verse_id/chapter_id/book_id）は backend が「その箇所」へ解決し、
+  // 訳をまたいで同じ箇所のコメントを集約して返す（全訳 id の集約パラメータは廃止）。
   verse_id?: string;
   chapter_id?: string;
   book_id?: string;
-  // 全バージョン表示用：同じ箇所の各訳の節・章・書idをまとめて渡す。
-  verse_ids?: string[];
-  chapter_ids?: string[];
-  book_ids?: string[];
-  all_versions?: boolean;
   ordering?: "new" | "votes";
   tag_id?: string;
   translation_project?: string;
@@ -208,10 +205,6 @@ export function fetchComments(params: {
   if (params.verse_id) q.set("verse_id", params.verse_id);
   if (params.chapter_id) q.set("chapter_id", params.chapter_id);
   if (params.book_id) q.set("book_id", params.book_id);
-  if (params.verse_ids?.length) q.set("verse_ids", params.verse_ids.join(","));
-  if (params.chapter_ids?.length) q.set("chapter_ids", params.chapter_ids.join(","));
-  if (params.book_ids?.length) q.set("book_ids", params.book_ids.join(","));
-  if (params.all_versions) q.set("all_versions", "true");
   if (params.ordering) q.set("ordering", params.ordering);
   if (params.tag_id) q.set("tag_id", params.tag_id);
   if (params.translation_project) q.set("translation_project", params.translation_project);
