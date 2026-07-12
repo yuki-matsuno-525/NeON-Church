@@ -549,3 +549,44 @@ class TestTrendingComments:
             auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": f"コメント{i}"}, format="json")
         res = api_client.get(TRENDING_URL)
         assert len(res.data) <= 5
+
+
+# ------------------------------------------------------------------
+# 段階6A: 箇所列・投稿時訳フィールドの追加（列追加のみ・dual-write なし）
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentLocationFieldsExist:
+    def test_new_fields_default_null(self, auth_client, verse):
+        """6A ではまだ dual-write しないので、通常投稿では箇所列・投稿時訳は NULL のまま。"""
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "テストコメント"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        from comments.models import Comment
+        c = Comment.objects.get(id=res.data["id"])
+        assert c.canonical_book_id is None
+        assert c.chapter_number is None
+        assert c.verse_number is None
+        assert c.source_translation is None
+
+    def test_new_fields_are_writable(self, db, verse, django_user_model):
+        """箇所列・source_translation を直接保存でき、値が永続化される（列の存在確認）。"""
+        from comments.models import Comment
+        user = django_user_model.objects.create_user(username="loc_user", password="pass12345")
+        book = verse.chapter.book
+        c = Comment.objects.create(
+            user=user,
+            verse=verse,
+            body="箇所付きコメント",
+            canonical_book=book.canonical_book,
+            chapter_number=verse.chapter.number,
+            verse_number=verse.number,
+            source_translation=book.translation,
+        )
+        c.refresh_from_db()
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == verse.chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation

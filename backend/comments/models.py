@@ -59,6 +59,23 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
         related_name="comments",
     )
+    # 段階6A: 訳非依存の箇所（canonical_book / chapter_number / verse_number）を nullable で追加。
+    # まだ空の「箱」を用意するだけ（列追加のみ）。書き込み・読み取り・制約・既存データは変えない。
+    # バックフィルは6B、dual-write は6C、読み取り切替は6D、旧 verse/chapter/book FK 撤去は6F。
+    # 粒度は null の組合せで表す（書=章節null／章=節null／節=両あり。整合 CHECK は6E）。
+    canonical_book = models.ForeignKey(
+        "bible.CanonicalBook",
+        on_delete=models.PROTECT,
+        related_name="comments",
+        null=True,
+        blank=True,
+    )
+    chapter_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    verse_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    # 投稿時に表示していた聖書訳（Book.translation の値）のスナップショット。
+    # version_label 生成用の恒久的な補助情報で、6F 後も残す。コメントの同一性・スレッド分割・
+    # 一意制約・親子の同一ターゲット判定には使わない。NULL でもコメントは成立する。
+    source_translation = models.CharField(max_length=50, null=True, blank=True)
     # どの翻訳プロジェクト向けのコメントか。null の場合は聖書本体（原文バージョン）への
     # コメント。値がある場合は、その翻訳プロジェクト専用のコメントとして分離される。
     # verse / chapter / book は翻訳の元になった聖書の節・章・書を指す。
