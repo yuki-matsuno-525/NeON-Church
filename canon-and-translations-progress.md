@@ -48,10 +48,11 @@
 **Phase C/D 検証済み**: 汎用インポータ改良（書名は正本 canonical_books.json を単一ソースに）。ローカルで **KJV 全66冊を実データ投入して検証**（66書・31,105節＝KJV一致・canonical 全紐づけ・書名クリーン）。本番投入は Render シェルで `import_ibibles --txt kjv.txt --translation KJV`。
 
 ### Phase B. ナビをカテゴリ・ドリルダウン化 〔UI〕
-- [ ] `/read` を「カテゴリ選択 → 書一覧」または折りたたみに（既存はジャンル積み上げ）
-- [ ] サイドバーの書リスト（現状フラット `BOOKS.map`）をカテゴリ折りたたみに
+- [x] `books.ts` に62冊追加（旧約39＋新約27の非福音書）＋`GENRE_ORDER` を9カテゴリへ（律法/歴史/詩歌/預言/福音書/使徒・書簡/黙示/旧約偽典）＋genreNames i18n
+- [x] `/read` をカテゴリ選択チップ→その書のドリルダウンに
+- [x] サイドバーの書リストをカテゴリ折りたたみに（現在の書のカテゴリは自動展開）
 - [ ] （後回し可）QA 書フィルタ・検索・翻訳PJ 書選択のカテゴリ対応
-- [ ] frontend テスト・lint・型・build・CI green
+- [x] frontend 222 tests pass・lint 0 error（canonicalBooks は json↔books.ts 差分0 で整合確認済み。ローカルはイメージ焼込みの古い json を読むため要注意、CI は実ファイルで green）
 
 ### Phase C. 汎用 ibibles インポータ + 縦スライス検証 〔配管〕
 - [ ] `import_ibibles` 管理コマンド（`<small>章:節</small>` HTML パース、訳ごとに Book 作成、get_or_create で冪等）
