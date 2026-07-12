@@ -321,27 +321,24 @@ class TestCommentUpdate:
 
 
 # ------------------------------------------------------------------
-# Q&A 投稿（場所なし許可）
+# Q&A 投稿（段階6: Q&A・返信も書・章・節のちょうど1つの粒度が必須）
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestQAPost:
-    def test_qa_without_location_allowed(self, auth_client):
+    def test_qa_without_location_rejected(self, auth_client):
+        # 段階6: Q&A も箇所必須。ターゲット無しは 400。
         res = auth_client.post(
             COMMENTS_URL,
             {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
             format="json",
         )
-        assert res.status_code == status.HTTP_201_CREATED
-        assert res.data["is_qa"] is True
-        assert res.data["title"] == "Q&Aタイトル"
-        assert res.data["verse"] is None
-        assert res.data["chapter"] is None
-        assert res.data["book"] is None
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_qa_without_title_rejected(self, auth_client):
+    def test_qa_without_title_rejected(self, auth_client, book):
+        # ターゲット（book）は付けたうえで、タイトル欠落で 400 になることを確認する。
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "タイトルなしQ&A", "is_qa": True},
+            {"body": "タイトルなしQ&A", "is_qa": True, "book": str(book.id)},
             format="json",
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
@@ -363,10 +360,11 @@ class TestQAPost:
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_reply_without_location_allowed(self, auth_client, verse):
+    def test_reply_without_location_rejected(self, auth_client, book):
+        # 段階6: 返信も箇所必須。ターゲット付き Q&A への、ターゲット無し返信は 400。
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "書付きQ&A", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         ).data
         res = auth_client.post(
@@ -374,22 +372,22 @@ class TestQAPost:
             {"body": "返信", "parent": parent["id"]},
             format="json",
         )
-        assert res.status_code == status.HTTP_201_CREATED
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_filter_by_parent_id(self, auth_client, db):
+    def test_filter_by_parent_id(self, auth_client, book):
         parent = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         ).data
         auth_client.post(
             COMMENTS_URL,
-            {"body": "返信1", "parent": parent["id"]},
+            {"body": "返信1", "parent": parent["id"], "book": str(book.id)},
             format="json",
         )
         auth_client.post(
             COMMENTS_URL,
-            {"body": "返信2", "parent": parent["id"]},
+            {"body": "返信2", "parent": parent["id"], "book": str(book.id)},
             format="json",
         )
         res = auth_client.get(COMMENTS_URL, {"parent_id": parent["id"]})
@@ -407,19 +405,19 @@ def best_answer_url(comment_id):
 @pytest.mark.django_db
 class TestBestAnswer:
     @pytest.fixture
-    def qa_question(self, auth_client):
+    def qa_question(self, auth_client, book):
         res = auth_client.post(
             COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル"},
+            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
             format="json",
         )
         return res.data
 
     @pytest.fixture
-    def qa_reply(self, other_auth_client, qa_question):
+    def qa_reply(self, other_auth_client, qa_question, book):
         res = other_auth_client.post(
             COMMENTS_URL,
-            {"body": "返信", "parent": qa_question["id"]},
+            {"body": "返信", "parent": qa_question["id"], "book": str(book.id)},
             format="json",
         )
         return res.data

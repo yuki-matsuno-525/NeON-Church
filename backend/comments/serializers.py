@@ -130,15 +130,11 @@ class CommentSerializer(serializers.ModelSerializer):
         is_qa = data.get("is_qa", False)
 
         targets = [x for x in [verse, chapter, book] if x is not None]
-        # Q&A または返信は場所なしを許可（通常コメントは必ず1つ）
-        if not parent and not is_qa:
-            if len(targets) != 1:
-                raise serializers.ValidationError(
-                    "Specify exactly one of verse, chapter, or book."
-                )
-        elif len(targets) > 1:
+        # 段階6: Q&A・返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
+        # （箇所を実体にする移行の前提。3列すべて NULL は 6E の CHECK でも禁止する。）
+        if len(targets) != 1:
             raise serializers.ValidationError(
-                "Specify at most one of verse, chapter, or book."
+                "Specify exactly one of verse, chapter, or book."
             )
 
         # Q&A質問（parent=None, is_qa=True）はタイトル必須
@@ -211,7 +207,8 @@ class CommentSerializer(serializers.ModelSerializer):
                 "verse_number": None,
                 "source_translation": book.translation,
             }
-        return {}
+        # validate() でちょうど1つの旧ターゲット FK があることを保証済み。ここへは到達しない。
+        raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
 
 
 class CommentEditSerializer(serializers.ModelSerializer):
