@@ -10,6 +10,8 @@ export const BIBLE_TRANSLATIONS: { id: string }[] = [
   { id: "KJV" },
   { id: "Nestle 1904 (GRC)" },
   { id: "TR (GRC)" },
+  { id: "LXX (GRC)" },
+  { id: "WLC (HEB)" },
   { id: "文語訳" },
   { id: "R. H. Charles (EN)" },
   { id: "Mark M. Mattison (EN)" },
@@ -20,11 +22,13 @@ export const DEFAULT_TRANSLATION = "口語訳";
 
 // 各訳の言語。本文がどの言語かを判定する唯一の定義元。
 // grc = 古典/コイネー・ギリシャ語（原語）。UI 言語(ja/en)とは別軸。
-const TRANSLATION_LANG: Record<string, "ja" | "en" | "grc"> = {
+const TRANSLATION_LANG: Record<string, "ja" | "en" | "grc" | "heb"> = {
   "口語訳": "ja",
   "KJV": "en",
   "Nestle 1904 (GRC)": "grc",
   "TR (GRC)": "grc",
+  "LXX (GRC)": "grc",
+  "WLC (HEB)": "heb",
   "文語訳": "ja",
   "R. H. Charles (EN)": "en",
   "Mark M. Mattison (EN)": "en",
@@ -32,7 +36,7 @@ const TRANSLATION_LANG: Record<string, "ja" | "en" | "grc"> = {
 };
 
 // 訳 id → その訳の言語（ja/en/grc）。未知の id は ja 扱い。
-export function translationLang(id: string): "ja" | "en" | "grc" {
+export function translationLang(id: string): "ja" | "en" | "grc" | "heb" {
   return TRANSLATION_LANG[id] ?? "ja";
 }
 
@@ -46,6 +50,8 @@ const TRANSLATION_LABELS: Record<string, { ja: string; en: string }> = {
   "KJV": { ja: "KJV（英語）", en: "KJV (English)" },
   "Nestle 1904 (GRC)": { ja: "ネストレ1904（ギリシャ語）", en: "Nestle 1904 (Greek)" },
   "TR (GRC)": { ja: "公認本文（ギリシャ語）", en: "Textus Receptus (Greek)" },
+  "LXX (GRC)": { ja: "七十人訳（ギリシャ語）", en: "Septuagint (Greek)" },
+  "WLC (HEB)": { ja: "レニングラード写本（ヘブライ語）", en: "Leningrad Codex (Hebrew)" },
   "文語訳": { ja: "文語訳（日本語）", en: "Bungoyaku (Classical Japanese)" },
   "R. H. Charles (EN)": { ja: "Charles 訳（英語）", en: "R. H. Charles (English)" },
   "Mark M. Mattison (EN)": { ja: "Mattison 訳（英語）", en: "Mark M. Mattison (English)" },
