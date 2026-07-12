@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { BOOKS } from "@/lib/books";
+import { BOOKS, GENRE_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 
 const NAV_HREFS = [
@@ -27,6 +28,16 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const t = useT();
   const { lang } = useLang();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
+  const currentGenre = BOOKS.find((b) => b.slug === currentSlug)?.genre;
+  // 書が多いのでカテゴリ折りたたみ。現在の書のカテゴリは常に開く。
+  const [openGenres, setOpenGenres] = useState<Set<string>>(new Set());
+  const toggleGenre = (g: string) =>
+    setOpenGenres((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g);
+      else next.add(g);
+      return next;
+    });
   const navItems = [
     { label: t.read, ...NAV_HREFS[0] },
     { label: t.qa, ...NAV_HREFS[1] },
@@ -211,30 +222,62 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               <p style={{ fontSize: 11, color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {t.books}
               </p>
-              {BOOKS.map((meta) => {
-                const isActive = currentSlug === meta.slug;
-                return (
-                  <Link
-                    key={meta.slug}
-                    href={`/${meta.slug}?list=1`}
-                    onClick={onClose}
-                    aria-current={isActive ? "page" : undefined}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "10px 12px 10px 20px",
-                      minHeight: 40,
-                      textDecoration: "none",
-                      fontSize: 13,
-                      fontWeight: isActive ? 700 : 400,
-                      color: isActive ? "var(--accent)" : "var(--text)",
-                      background: isActive ? "var(--accent-tint)" : "transparent",
-                    }}
-                  >
-                    {lang === "en" ? meta.englishName : meta.short}
-                  </Link>
-                );
-              })}
+              {GENRE_ORDER
+                .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
+                .filter(({ books }) => books.length > 0)
+                .map(({ genre, books }) => {
+                  const expanded = openGenres.has(genre) || currentGenre === genre;
+                  return (
+                    <div key={genre}>
+                      <button
+                        onClick={() => toggleGenre(genre)}
+                        aria-expanded={expanded}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          padding: "8px 12px 8px 20px",
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          fontFamily: "inherit",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        <span>{t.genreNames[genre] ?? genre}</span>
+                        <span style={{ fontSize: 10, opacity: 0.7 }}>{expanded ? "▾" : "▸"}</span>
+                      </button>
+                      {expanded &&
+                        books.map((meta) => {
+                          const isActive = currentSlug === meta.slug;
+                          return (
+                            <Link
+                              key={meta.slug}
+                              href={`/${meta.slug}?list=1`}
+                              onClick={onClose}
+                              aria-current={isActive ? "page" : undefined}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "8px 12px 8px 32px",
+                                minHeight: 36,
+                                textDecoration: "none",
+                                fontSize: 13,
+                                fontWeight: isActive ? 700 : 400,
+                                color: isActive ? "var(--accent)" : "var(--text)",
+                                background: isActive ? "var(--accent-tint)" : "transparent",
+                              }}
+                            >
+                              {lang === "en" ? meta.englishName : meta.short}
+                            </Link>
+                          );
+                        })}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

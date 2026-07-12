@@ -28,6 +28,8 @@ export default function ReadPage() {
   const [resume, setResume] = useState<ResumeTarget>(null);
   // ログインユーザーが /read に追加した公開翻訳（本棚）。未ログイン・0件なら何も出さない。
   const [library, setLibrary] = useState<TranslationProject[]>([]);
+  // 書が多いのでカテゴリ（ジャンル）を選んでから、その書だけ表示するドリルダウン。
+  const [activeGenre, setActiveGenre] = useState<string>("");
 
   useEffect(() => {
     if (loading) return;
@@ -99,51 +101,83 @@ export default function ReadPage() {
         </div>
       )}
 
-      {GENRE_ORDER
-        .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
-        .filter(({ books }) => books.length > 0)
-        .map(({ genre, books }) => (
-          <div key={genre} style={{ marginBottom: "var(--space-6)" }}>
-            <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 var(--space-3)", color: "var(--text)" }}>
-              {t.genreNames[genre] ?? genre}
-            </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                gap: 14,
-              }}
-            >
-              {books.map((book) => {
-                const lb = bookLabel(book.slug, lang);
+      {(() => {
+        const groups = GENRE_ORDER
+          .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
+          .filter(({ books }) => books.length > 0);
+        const active = groups.find((g) => g.genre === activeGenre) ?? groups[0];
+        return (
+          <>
+            {/* カテゴリ選択（チップ） */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "var(--space-5)" }}>
+              {groups.map(({ genre, books }) => {
+                const isActive = active?.genre === genre;
                 return (
-                  <Link
-                    key={book.slug}
-                    href={`/${book.slug}?list=1`}
-                    className="card-glow card-glow-interactive"
+                  <button
+                    key={genre}
+                    onClick={() => setActiveGenre(genre)}
+                    aria-pressed={isActive}
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      padding: "20px 18px",
-                      textDecoration: "none",
-                      color: "var(--text)",
+                      fontSize: "var(--font-size-sm)",
+                      padding: "6px 14px",
+                      borderRadius: 999,
+                      border: "1px solid var(--border)",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      background: isActive ? "var(--accent)" : "transparent",
+                      color: isActive ? "var(--accent-text)" : "var(--text-muted)",
                     }}
                   >
-                    <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{lb?.short ?? book.short}</span>
-                    {lb?.name !== lb?.short && (
-                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-1)" }}>
-                        {lb?.name ?? book.name}
-                      </span>
-                    )}
-                    <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
-                      {t.totalChapters(book.totalChapters)}
-                    </span>
-                  </Link>
+                    {t.genreNames[genre] ?? genre}{" "}
+                    <span style={{ opacity: 0.7 }}>({books.length})</span>
+                  </button>
                 );
               })}
             </div>
-          </div>
-        ))}
+
+            {/* 選択カテゴリの書 */}
+            {active && (
+              <div style={{ marginBottom: "var(--space-6)" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                    gap: 14,
+                  }}
+                >
+                  {active.books.map((book) => {
+                    const lb = bookLabel(book.slug, lang);
+                    return (
+                      <Link
+                        key={book.slug}
+                        href={`/${book.slug}?list=1`}
+                        className="card-glow card-glow-interactive"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: "20px 18px",
+                          textDecoration: "none",
+                          color: "var(--text)",
+                        }}
+                      >
+                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{lb?.short ?? book.short}</span>
+                        {lb?.name !== lb?.short && (
+                          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-1)" }}>
+                            {lb?.name ?? book.name}
+                          </span>
+                        )}
+                        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                          {t.totalChapters(book.totalChapters)}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {library.length > 0 && (
         <div style={{ marginBottom: "var(--space-6)" }}>

@@ -16,7 +16,7 @@ describe("getBookBySlug", () => {
   });
 
   it("無効なスラッグでnullを返す", () => {
-    expect(getBookBySlug("genesis")).toBeNull();
+    expect(getBookBySlug("not-a-real-book")).toBeNull();
     expect(getBookBySlug("")).toBeNull();
     expect(getBookBySlug("MATTHEW")).toBeNull();
   });
@@ -41,7 +41,7 @@ describe("isValidSlug", () => {
     expect(isValidSlug(slug)).toBe(true);
   });
 
-  it.each(["genesis", "", "MATTHEW", "マタイ"])("%s はfalse", (slug) => {
+  it.each(["not-a-real-book", "", "MATTHEW", "マタイ"])("%s はfalse", (slug) => {
     expect(isValidSlug(slug)).toBe(false);
   });
 });
