@@ -556,21 +556,6 @@ class TestTrendingComments:
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestCommentLocationFieldsExist:
-    def test_new_fields_default_null(self, auth_client, verse):
-        """6A ではまだ dual-write しないので、通常投稿では箇所列・投稿時訳は NULL のまま。"""
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"verse": str(verse.id), "body": "テストコメント"},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_201_CREATED
-        from comments.models import Comment
-        c = Comment.objects.get(id=res.data["id"])
-        assert c.canonical_book_id is None
-        assert c.chapter_number is None
-        assert c.verse_number is None
-        assert c.source_translation is None
-
     def test_new_fields_are_writable(self, db, verse, django_user_model):
         """箇所列・source_translation を直接保存でき、値が永続化される（列の存在確認）。"""
         from comments.models import Comment
@@ -587,6 +572,90 @@ class TestCommentLocationFieldsExist:
         )
         c.refresh_from_db()
         assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == verse.chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+
+# ------------------------------------------------------------------
+# 段階6C: 作成時に旧FKと箇所フィールドを dual-write する
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestCommentDualWrite:
+    def _get(self, comment_id):
+        from comments.models import Comment
+        return Comment.objects.get(id=comment_id)
+
+    def test_verse_comment_dual_writes_location(self, auth_client, verse, chapter, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "節コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.verse_id == verse.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+    def test_chapter_comment_dual_writes_location(self, auth_client, chapter, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"chapter": str(chapter.id), "body": "章コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.chapter_id == chapter.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number is None
+        assert c.source_translation == book.translation
+
+    def test_book_comment_dual_writes_location(self, auth_client, book):
+        res = auth_client.post(
+            COMMENTS_URL, {"book": str(book.id), "body": "書コメント"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        assert c.book_id == book.id  # 旧FKは維持
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number is None
+        assert c.verse_number is None
+        assert c.source_translation == book.translation
+
+    def test_reply_derives_location_from_own_fk(self, auth_client, verse, chapter, book):
+        parent = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "親"}, format="json"
+        )
+        res = auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "parent": parent.data["id"], "body": "返信"},
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
+        # 返信自身の旧FKから導出（親からのコピーではなく、返信の verse に基づく値）
+        assert str(c.parent_id) == parent.data["id"]
+        assert c.canonical_book_id == book.canonical_book_id
+        assert c.chapter_number == chapter.number
+        assert c.verse_number == verse.number
+        assert c.source_translation == book.translation
+
+    def test_client_supplied_location_is_ignored(self, auth_client, verse, book):
+        # 新フィールドは serializer の入力フィールドではないため、偽値を送っても無視され、
+        # サーバー導出値が保存される。
+        res = auth_client.post(
+            COMMENTS_URL,
+            {
+                "verse": str(verse.id),
+                "body": "偽の箇所を送る",
+                "chapter_number": 999,
+                "verse_number": 888,
+                "source_translation": "FAKE",
+            },
+            format="json",
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+        c = self._get(res.data["id"])
         assert c.chapter_number == verse.chapter.number
         assert c.verse_number == verse.number
         assert c.source_translation == book.translation
