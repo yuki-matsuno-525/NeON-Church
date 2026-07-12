@@ -300,7 +300,6 @@ const ja = {
   orderNew: "新しい順",
   orderVotes: "人気順",
   allVersionsToggle: "すべての訳",
-  postedIn: (label: string) => `投稿時: ${label}`,
   searchComments: "コメントを検索...",
 
   // Q&A 投稿フォーム
@@ -683,7 +682,6 @@ const en: typeof ja = {
   orderNew: "Newest",
   orderVotes: "Popular",
   allVersionsToggle: "All versions",
-  postedIn: (label: string) => `Posted in: ${label}`,
   searchComments: "Search comments...",
 
   qaInputTitlePlaceholder: "Question title (required)",
