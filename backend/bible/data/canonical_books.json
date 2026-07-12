@@ -13,6 +13,14 @@
       {
         "translation": "Nestle 1904 (GRC)",
         "name": "ΚΑΤΑ ΜΑΘΘΑΙΟΝ"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Κατα Ματθαιον"
+      },
+      {
+        "translation": "文語訳",
+        "name": "マタイ傳福音書"
       }
     ]
   },
@@ -30,6 +38,14 @@
       {
         "translation": "Nestle 1904 (GRC)",
         "name": "ΚΑΤΑ ΜΑΡΚΟΝ"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Κατα Μαρκον"
+      },
+      {
+        "translation": "文語訳",
+        "name": "マルコ傳福音書"
       }
     ]
   },
@@ -47,6 +63,14 @@
       {
         "translation": "Nestle 1904 (GRC)",
         "name": "ΚΑΤΑ ΛΟΥΚΑΝ"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Κατα Λουκαν"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ルカ傳福音書"
       }
     ]
   },
@@ -64,6 +88,14 @@
       {
         "translation": "Nestle 1904 (GRC)",
         "name": "ΚΑΤΑ ΙΩΑΝΗΝ"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Κατα Ιωαννην"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨハネ傳福音書"
       }
     ]
   },
@@ -127,6 +159,10 @@
       {
         "translation": "KJV",
         "name": "Genesis"
+      },
+      {
+        "translation": "文語訳",
+        "name": "創世記"
       }
     ]
   },
@@ -136,6 +172,10 @@
       {
         "translation": "KJV",
         "name": "Exodus"
+      },
+      {
+        "translation": "文語訳",
+        "name": "出埃及記"
       }
     ]
   },
@@ -145,6 +185,10 @@
       {
         "translation": "KJV",
         "name": "Leviticus"
+      },
+      {
+        "translation": "文語訳",
+        "name": "利未記"
       }
     ]
   },
@@ -154,6 +198,10 @@
       {
         "translation": "KJV",
         "name": "Numbers"
+      },
+      {
+        "translation": "文語訳",
+        "name": "民數紀略"
       }
     ]
   },
@@ -163,6 +211,10 @@
       {
         "translation": "KJV",
         "name": "Deuteronomy"
+      },
+      {
+        "translation": "文語訳",
+        "name": "申命記"
       }
     ]
   },
@@ -172,6 +224,10 @@
       {
         "translation": "KJV",
         "name": "Joshua"
+      },
+      {
+        "translation": "文語訳",
+        "name": "約書亞記"
       }
     ]
   },
@@ -181,6 +237,10 @@
       {
         "translation": "KJV",
         "name": "Judges"
+      },
+      {
+        "translation": "文語訳",
+        "name": "士師記"
       }
     ]
   },
@@ -190,6 +250,10 @@
       {
         "translation": "KJV",
         "name": "Ruth"
+      },
+      {
+        "translation": "文語訳",
+        "name": "路得記"
       }
     ]
   },
@@ -199,6 +263,10 @@
       {
         "translation": "KJV",
         "name": "1 Samuel"
+      },
+      {
+        "translation": "文語訳",
+        "name": "撒母耳前書"
       }
     ]
   },
@@ -208,6 +276,10 @@
       {
         "translation": "KJV",
         "name": "2 Samuel"
+      },
+      {
+        "translation": "文語訳",
+        "name": "撒母耳後書"
       }
     ]
   },
@@ -217,6 +289,10 @@
       {
         "translation": "KJV",
         "name": "1 Kings"
+      },
+      {
+        "translation": "文語訳",
+        "name": "列王紀略上"
       }
     ]
   },
@@ -226,6 +302,10 @@
       {
         "translation": "KJV",
         "name": "2 Kings"
+      },
+      {
+        "translation": "文語訳",
+        "name": "列王紀略下"
       }
     ]
   },
@@ -235,6 +315,10 @@
       {
         "translation": "KJV",
         "name": "1 Chronicles"
+      },
+      {
+        "translation": "文語訳",
+        "name": "歴代志略上"
       }
     ]
   },
@@ -244,6 +328,10 @@
       {
         "translation": "KJV",
         "name": "2 Chronicles"
+      },
+      {
+        "translation": "文語訳",
+        "name": "歴代志略下"
       }
     ]
   },
@@ -253,6 +341,10 @@
       {
         "translation": "KJV",
         "name": "Ezra"
+      },
+      {
+        "translation": "文語訳",
+        "name": "エズラ書"
       }
     ]
   },
@@ -262,6 +354,10 @@
       {
         "translation": "KJV",
         "name": "Nehemiah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "尼希米亞記"
       }
     ]
   },
@@ -271,6 +367,10 @@
       {
         "translation": "KJV",
         "name": "Esther"
+      },
+      {
+        "translation": "文語訳",
+        "name": "以士帖書"
       }
     ]
   },
@@ -280,6 +380,10 @@
       {
         "translation": "KJV",
         "name": "Job"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨブ記"
       }
     ]
   },
@@ -289,6 +393,10 @@
       {
         "translation": "KJV",
         "name": "Psalms"
+      },
+      {
+        "translation": "文語訳",
+        "name": "詩篇"
       }
     ]
   },
@@ -298,6 +406,10 @@
       {
         "translation": "KJV",
         "name": "Proverbs"
+      },
+      {
+        "translation": "文語訳",
+        "name": "箴言"
       }
     ]
   },
@@ -307,6 +419,10 @@
       {
         "translation": "KJV",
         "name": "Ecclesiastes"
+      },
+      {
+        "translation": "文語訳",
+        "name": "傳道之書"
       }
     ]
   },
@@ -316,6 +432,10 @@
       {
         "translation": "KJV",
         "name": "Song of Solomon"
+      },
+      {
+        "translation": "文語訳",
+        "name": "雅歌"
       }
     ]
   },
@@ -325,6 +445,10 @@
       {
         "translation": "KJV",
         "name": "Isaiah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "以賽亞書"
       }
     ]
   },
@@ -334,6 +458,10 @@
       {
         "translation": "KJV",
         "name": "Jeremiah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "耶利米亞記"
       }
     ]
   },
@@ -343,6 +471,10 @@
       {
         "translation": "KJV",
         "name": "Lamentations"
+      },
+      {
+        "translation": "文語訳",
+        "name": "耶利米亞哀歌"
       }
     ]
   },
@@ -352,6 +484,10 @@
       {
         "translation": "KJV",
         "name": "Ezekiel"
+      },
+      {
+        "translation": "文語訳",
+        "name": "以西結書"
       }
     ]
   },
@@ -361,6 +497,10 @@
       {
         "translation": "KJV",
         "name": "Daniel"
+      },
+      {
+        "translation": "文語訳",
+        "name": "但以理書"
       }
     ]
   },
@@ -370,6 +510,10 @@
       {
         "translation": "KJV",
         "name": "Hosea"
+      },
+      {
+        "translation": "文語訳",
+        "name": "何西阿書"
       }
     ]
   },
@@ -379,6 +523,10 @@
       {
         "translation": "KJV",
         "name": "Joel"
+      },
+      {
+        "translation": "文語訳",
+        "name": "約耳書"
       }
     ]
   },
@@ -388,6 +536,10 @@
       {
         "translation": "KJV",
         "name": "Amos"
+      },
+      {
+        "translation": "文語訳",
+        "name": "亞麽士書"
       }
     ]
   },
@@ -397,6 +549,10 @@
       {
         "translation": "KJV",
         "name": "Obadiah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "阿巴底亞書"
       }
     ]
   },
@@ -406,6 +562,10 @@
       {
         "translation": "KJV",
         "name": "Jonah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "約拿書"
       }
     ]
   },
@@ -415,6 +575,10 @@
       {
         "translation": "KJV",
         "name": "Micah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "米迦書"
       }
     ]
   },
@@ -424,6 +588,10 @@
       {
         "translation": "KJV",
         "name": "Nahum"
+      },
+      {
+        "translation": "文語訳",
+        "name": "拿翁書"
       }
     ]
   },
@@ -433,6 +601,10 @@
       {
         "translation": "KJV",
         "name": "Habakkuk"
+      },
+      {
+        "translation": "文語訳",
+        "name": "哈巴谷書"
       }
     ]
   },
@@ -442,6 +614,10 @@
       {
         "translation": "KJV",
         "name": "Zephaniah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "西番雅書"
       }
     ]
   },
@@ -451,6 +627,10 @@
       {
         "translation": "KJV",
         "name": "Haggai"
+      },
+      {
+        "translation": "文語訳",
+        "name": "哈基書"
       }
     ]
   },
@@ -460,6 +640,10 @@
       {
         "translation": "KJV",
         "name": "Zechariah"
+      },
+      {
+        "translation": "文語訳",
+        "name": "撒加利亞書"
       }
     ]
   },
@@ -469,6 +653,10 @@
       {
         "translation": "KJV",
         "name": "Malachi"
+      },
+      {
+        "translation": "文語訳",
+        "name": "馬拉基書"
       }
     ]
   },
@@ -478,6 +666,14 @@
       {
         "translation": "KJV",
         "name": "Acts"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Πραξεις Των Αποστολων"
+      },
+      {
+        "translation": "文語訳",
+        "name": "使徒行傳"
       }
     ]
   },
@@ -487,6 +683,14 @@
       {
         "translation": "KJV",
         "name": "Romans"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Ρωμαιους"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ロマ人への書"
       }
     ]
   },
@@ -496,6 +700,14 @@
       {
         "translation": "KJV",
         "name": "1 Corinthians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς κορινθιους Α΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "コリント人への前の書"
       }
     ]
   },
@@ -505,6 +717,14 @@
       {
         "translation": "KJV",
         "name": "2 Corinthians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς κορινθιους Β΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "コリント人への後の書"
       }
     ]
   },
@@ -514,6 +734,14 @@
       {
         "translation": "KJV",
         "name": "Galatians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Γαλατας"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ガラテヤ人への書"
       }
     ]
   },
@@ -523,6 +751,14 @@
       {
         "translation": "KJV",
         "name": "Ephesians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Εφεσιους"
+      },
+      {
+        "translation": "文語訳",
+        "name": "エペソ人への書"
       }
     ]
   },
@@ -532,6 +768,14 @@
       {
         "translation": "KJV",
         "name": "Philippians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Φιλιππησιους"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ピリピ人への書"
       }
     ]
   },
@@ -541,6 +785,14 @@
       {
         "translation": "KJV",
         "name": "Colossians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Κολοσσαεις"
+      },
+      {
+        "translation": "文語訳",
+        "name": "コロサイ人への書"
       }
     ]
   },
@@ -550,6 +802,14 @@
       {
         "translation": "KJV",
         "name": "1 Thessalonians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Θεσσαλονικεις Α΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "テサロニケ人への前の書"
       }
     ]
   },
@@ -559,6 +819,14 @@
       {
         "translation": "KJV",
         "name": "2 Thessalonians"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Θεσσαλονικεις Β΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "テサロニケ人への後の書"
       }
     ]
   },
@@ -568,6 +836,14 @@
       {
         "translation": "KJV",
         "name": "1 Timothy"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Τιμοθεον Α΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "テモテへの前の書"
       }
     ]
   },
@@ -577,6 +853,14 @@
       {
         "translation": "KJV",
         "name": "2 Timothy"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Τιμοθεον Β΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "テモテへの後の書"
       }
     ]
   },
@@ -586,6 +870,14 @@
       {
         "translation": "KJV",
         "name": "Titus"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Τιτον"
+      },
+      {
+        "translation": "文語訳",
+        "name": "テトスへの書"
       }
     ]
   },
@@ -595,6 +887,14 @@
       {
         "translation": "KJV",
         "name": "Philemon"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Φιλημονα"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ピレモンへの書"
       }
     ]
   },
@@ -604,6 +904,14 @@
       {
         "translation": "KJV",
         "name": "Hebrews"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Προς Εβραιους"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヘブル人への書"
       }
     ]
   },
@@ -613,6 +921,14 @@
       {
         "translation": "KJV",
         "name": "James"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Ιακωβου"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヤコブの書"
       }
     ]
   },
@@ -622,6 +938,14 @@
       {
         "translation": "KJV",
         "name": "1 Peter"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Πετρου Α΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ペテロの前の書"
       }
     ]
   },
@@ -631,6 +955,14 @@
       {
         "translation": "KJV",
         "name": "2 Peter"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Πετρου Β΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ペテロの後の書"
       }
     ]
   },
@@ -640,6 +972,14 @@
       {
         "translation": "KJV",
         "name": "1 John"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Ιωαννου Α΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨハネの第一の書"
       }
     ]
   },
@@ -649,6 +989,14 @@
       {
         "translation": "KJV",
         "name": "2 John"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Ιωαννου Β΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨハネの第二の書"
       }
     ]
   },
@@ -658,6 +1006,14 @@
       {
         "translation": "KJV",
         "name": "3 John"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Ιωαννου Γ΄"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨハネの第三の書"
       }
     ]
   },
@@ -667,6 +1023,14 @@
       {
         "translation": "KJV",
         "name": "Jude"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Ιουδα"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ユダの書"
       }
     ]
   },
@@ -676,6 +1040,14 @@
       {
         "translation": "KJV",
         "name": "Revelation"
+      },
+      {
+        "translation": "TR (GRC)",
+        "name": "Αποκαλυψις Ιωαννου"
+      },
+      {
+        "translation": "文語訳",
+        "name": "ヨハネの默示録"
       }
     ]
   }
