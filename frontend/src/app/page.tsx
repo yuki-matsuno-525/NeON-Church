@@ -468,6 +468,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
         style={{
           display: "flex",
           alignItems: "center",
+          flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
           color: "rgba(255, 255, 255, 0.32)",
@@ -475,7 +476,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
       >
         <span>{qa.user.username}</span>
         <span>·</span>
-        <span>{qa.location_label}</span>
+        <span style={{ whiteSpace: "nowrap" }}>{qa.location_label}</span>
         <span>·</span>
         <span>{relTime(qa.created_at)}</span>
         {qa.reply_count > 0 && (
@@ -538,6 +539,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
         style={{
           display: "flex",
           alignItems: "center",
+          flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
           color: "rgba(255, 255, 255, 0.32)",
@@ -547,7 +549,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
         <span>·</span>
         <span>{comment.user.username}</span>
         <span>·</span>
-        <span>{comment.location_label}</span>
+        <span style={{ whiteSpace: "nowrap" }}>{comment.location_label}</span>
         {comment.reply_count > 0 && (
           <>
             <span>·</span>
