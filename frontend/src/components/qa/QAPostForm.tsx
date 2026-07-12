@@ -30,6 +30,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
   const { lang } = useLang();
   const titleId = useId();
   const bodyId = useId();
+  const genreSelectId = useId();
   const bookSelectId = useId();
   const versionSelectId = useId();
   const chapterSelectId = useId();
@@ -37,6 +38,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
   const errorId = useId();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [genreFilter, setGenreFilter] = useState("");
   const [slug, setSlug] = useState("");
   const [version, setVersion] = useState("");
   const [chapterId, setChapterId] = useState("");
@@ -60,14 +62,14 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
     else setChapters([]);
   };
 
-  const handleSlugChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSlug = e.target.value;
+  const selectBook = (newSlug: string) => {
     setSlug(newSlug);
     // その書の最初の訳を既定で選び、章を読み込む（訳が1つでも常に選択状態にする）。
     const firstVersion = getBookBySlug(newSlug)?.translations[0]?.id ?? "";
     setVersion(firstVersion);
     loadChaptersFor(resolveBookId(newSlug, firstVersion));
   };
+  const handleSlugChange = (e: React.ChangeEvent<HTMLSelectElement>) => selectBook(e.target.value);
 
   const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newVersion = e.target.value;
@@ -165,15 +167,26 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
 
       {/* 場所選択 */}
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+        <label htmlFor={genreSelectId} className="sr-only">{t.allBooks}</label>
+        <select
+          id={genreSelectId}
+          value={genreFilter}
+          onChange={(e) => { setGenreFilter(e.target.value); selectBook(""); }}
+          style={inputStyle}
+        >
+          <option value="">{t.allBooks}</option>
+          {groupCatalogByGenre(catalog).map(({ genre }) => (
+            <option key={genre} value={genre}>{t.genreNames[genre] ?? genre}</option>
+          ))}
+        </select>
         <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
         <select id={bookSelectId} value={slug} onChange={handleSlugChange} style={inputStyle}>
           <option value="">{t.qaSelectBookOptional}</option>
-          {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
-            <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
-              {entries.map((e) => (
-                <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
-              ))}
-            </optgroup>
+          {(genreFilter
+            ? groupCatalogByGenre(catalog).find((g) => g.genre === genreFilter)?.entries ?? []
+            : catalog
+          ).map((e) => (
+            <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
           ))}
         </select>
         {slug && (

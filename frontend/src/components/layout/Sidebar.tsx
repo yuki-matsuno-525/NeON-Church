@@ -29,8 +29,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const { lang } = useLang();
   const currentSlug = pathname.split("/").filter(Boolean)[0] ?? "";
   const currentGenre = BOOKS.find((b) => b.slug === currentSlug)?.genre;
-  // 書が多いのでカテゴリ折りたたみ。現在の書のカテゴリは常に開く。
-  const [openGenres, setOpenGenres] = useState<Set<string>>(new Set());
+  // 書が多いのでカテゴリ折りたたみ。現在の書のカテゴリは初期表示で開くが、閉じることもできる。
+  const [openGenres, setOpenGenres] = useState<Set<string>>(
+    () => new Set(currentGenre ? [currentGenre] : []),
+  );
   const toggleGenre = (g: string) =>
     setOpenGenres((prev) => {
       const next = new Set(prev);
@@ -226,7 +228,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                 .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
                 .filter(({ books }) => books.length > 0)
                 .map(({ genre, books }) => {
-                  const expanded = openGenres.has(genre) || currentGenre === genre;
+                  const expanded = openGenres.has(genre);
                   return (
                     <div key={genre}>
                       <button

@@ -47,6 +47,7 @@ function QAContent() {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
   const catalog = useBookCatalog();
+  const [genreFilter, setGenreFilter] = useState("");
   const [comments, setComments] = useState<QAComment[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,30 +183,49 @@ function QAContent() {
               {filterLabel(f)}
             </button>
           ))}
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
-            <select
-              aria-label={t.allBooks}
-              value={selectedSlug}
-              onChange={(e) => setSelectedSlug(e.target.value)}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-alt)",
-                color: "var(--text)",
-                fontSize: "var(--font-size-sm)",
-              }}
-            >
-              <option value="">{t.allBooks}</option>
-              {groupCatalogByGenre(catalog).map(({ genre, entries }) => (
-                <optgroup key={genre} label={t.genreNames[genre] ?? genre}>
-                  {entries.map((e) => (
-                    <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
+          {(() => {
+            const selectStyle = {
+              padding: "6px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-md)",
+              background: "var(--bg-alt)",
+              color: "var(--text)",
+              fontSize: "var(--font-size-sm)",
+            } as const;
+            const groups = groupCatalogByGenre(catalog);
+            const bookEntries = genreFilter ? groups.find((g) => g.genre === genreFilter)?.entries ?? [] : catalog;
+            return (
+              <>
+                {/* カテゴリを先に選ぶと、次の書プルダウンがそのカテゴリの書に絞られる。 */}
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                  <select
+                    aria-label={t.allBooks}
+                    value={genreFilter}
+                    onChange={(e) => { setGenreFilter(e.target.value); setSelectedSlug(""); }}
+                    style={selectStyle}
+                  >
+                    <option value="">{t.all}</option>
+                    {groups.map(({ genre }) => (
+                      <option key={genre} value={genre}>{t.genreNames[genre] ?? genre}</option>
+                    ))}
+                  </select>
+                </label>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                  <select
+                    aria-label={t.allBooks}
+                    value={selectedSlug}
+                    onChange={(e) => setSelectedSlug(e.target.value)}
+                    style={selectStyle}
+                  >
+                    <option value="">{t.allBooks}</option>
+                    {bookEntries.map((e) => (
+                      <option key={e.slug} value={e.slug}>{bookLabel(e.slug, lang)?.short ?? e.slug}</option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            );
+          })()}
           {/* 訳（任意）。書を選んだときだけ出す。未指定ならその書の全訳が対象。 */}
           {selectedSlug && (
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
