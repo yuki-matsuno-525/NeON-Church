@@ -113,7 +113,6 @@ export function CommentPanel({
   if (verse.id !== prevVerseId) {
     setPrevVerseId(verse.id);
     setVerseExpanded(false);
-    setShowAll(false);
   }
 
   const q = searchQuery.trim().toLowerCase();
