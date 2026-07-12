@@ -19,31 +19,25 @@ type Props = {
   allVersionIds?: string[];
 };
 
-export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap = {}, translationProject, allVersionIds }: Props) {
+export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap = {}, translationProject }: Props) {
   const t = useT();
   const heading = label ?? t.chapterCommentsHeading;
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAll, setShowAll] = useState(false);
 
   // コメントの紐付け先（章 or 書）。createComment / useComments で共用する。
   const target = bookId ? { book: bookId } : { chapter: chapterId };
 
-  // 全バージョンが2件以上あるときだけ「すべて表示」が意味を持つ。
-  const canShowAll = (allVersionIds?.length ?? 0) > 1;
-  const useAll = showAll && canShowAll;
-
+  // 段階6D: 単一 id を backend が箇所へ解決し、訳をまたいで同じ章/書のコメントを集約する。
+  // 各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
   const { comments, setComments, loading, reload } = useComments({
-    chapter_id: useAll ? undefined : chapterId,
-    book_id: useAll ? undefined : bookId,
-    chapter_ids: useAll && chapterId ? allVersionIds : undefined,
-    book_ids: useAll && bookId ? allVersionIds : undefined,
-    all_versions: useAll,
+    chapter_id: chapterId,
+    book_id: bookId,
     ordering,
     tag_id: activeTagId,
-    translation_project: useAll ? undefined : translationProject,
+    translation_project: translationProject,
   });
 
   useEffect(() => {
@@ -79,25 +73,6 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         </h2>
 
         <div style={{ display: "flex", gap: 8 }}>
-          {canShowAll && (
-            <button
-              onClick={() => setShowAll((v) => !v)}
-              aria-pressed={showAll}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: showAll ? "var(--accent)" : "transparent",
-                color: showAll ? "var(--accent-text)" : "var(--text-faint)",
-                fontFamily: "inherit",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {t.allVersionsToggle}
-            </button>
-          )}
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
@@ -196,7 +171,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
             onReply={handleReply}
             onRefresh={reload}
             initialBookmarkId={commentBookmarkMap[node.id]}
-            showVersionBadge={useAll}
+            showVersionBadge
           />
         ))
       )}

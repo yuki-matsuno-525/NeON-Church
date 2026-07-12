@@ -141,7 +141,7 @@ class TestThrottle:
 
     def test_report_throttle(self, monkeypatch, other_auth_client, comment, db, verse):
         from rest_framework.throttling import SimpleRateThrottle
-        from comments.models import Comment as CommentModel
+        from tests.factories import make_comment
         monkeypatch.setattr(SimpleRateThrottle, "THROTTLE_RATES", {
             "comment_create": "10/min",
             "report": "1/min",
@@ -152,7 +152,7 @@ class TestThrottle:
         User = django.contrib.auth.get_user_model()
         reporter = User.objects.get(username="otheruser")
         owner = User.objects.get(username="testuser")
-        second_comment = CommentModel.objects.create(user=owner, verse=verse, body="2件目通報対象")
+        second_comment = make_comment(user=owner, verse=verse, body="2件目通報対象")
         other_auth_client.post(report_url(comment["id"]), {"reason": "spam"}, format="json")
         res = other_auth_client.post(report_url(str(second_comment.id)), {"reason": "offensive"}, format="json")
         assert res.status_code == status.HTTP_429_TOO_MANY_REQUESTS

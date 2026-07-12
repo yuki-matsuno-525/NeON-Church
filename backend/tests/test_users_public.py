@@ -67,8 +67,8 @@ def target_auth_client(db, target_user) -> APIClient:
 @pytest.fixture
 def target_user_comment(db, target_user, verse):
     """target_user が作成したコメント。"""
-    from comments.models import Comment
-    return Comment.objects.create(
+    from tests.factories import make_comment
+    return make_comment(
         user=target_user,
         verse=verse,
         body="ターゲットユーザーのコメントです。",

@@ -24,6 +24,25 @@ from translations.models import (
 
 User = get_user_model()
 
+
+# 段階6F: Comment は箇所（canonical_book/章/節）＋投稿時訳で保存する（旧 verse/chapter/book FK は撤去）。
+def _loc_from_verse(v):
+    b = v.chapter.book
+    return {"canonical_book": b.canonical_book, "chapter_number": v.chapter.number, "verse_number": v.number, "source_translation": b.translation}
+
+
+def _loc_from_chapter(ch):
+    b = ch.book
+    return {"canonical_book": b.canonical_book, "chapter_number": ch.number, "verse_number": None, "source_translation": b.translation}
+
+
+def _loc_from_book(b):
+    return {"canonical_book": b.canonical_book, "chapter_number": None, "verse_number": None, "source_translation": b.translation}
+
+
+def _loc_from_comment(c):
+    return {"canonical_book_id": c.canonical_book_id, "chapter_number": c.chapter_number, "verse_number": c.verse_number, "source_translation": c.source_translation}
+
 # ── シードデータ定義 ──────────────────────────────────────────────────────
 
 USERS = [
@@ -261,7 +280,7 @@ class Command(BaseCommand):
                 body = random.choice(COMMENT_BODIES_VERSE)
                 comment = Comment.objects.create(
                     user=user,
-                    verse=verse,
+                    **_loc_from_verse(verse),
                     body=body,
                     is_qa=False,
                 )
@@ -276,7 +295,7 @@ class Command(BaseCommand):
                 user = random.choice(users)
                 comment = Comment.objects.create(
                     user=user,
-                    chapter=chapter,
+                    **_loc_from_chapter(chapter),
                     body=random.choice(COMMENT_BODIES_CHAPTER),
                 )
                 if tags and random.random() < 0.5:
@@ -287,20 +306,20 @@ class Command(BaseCommand):
         for book in books[:5]:
             comment = Comment.objects.create(
                 user=random.choice(users),
-                book=book,
+                **_loc_from_book(book),
                 body=random.choice(COMMENT_BODIES_BOOK),
             )
             all_comments.append(comment)
 
         # 返信ツリー（depth 3）
-        top_level = [c for c in all_comments if c.verse is not None][:20]
+        top_level = [c for c in all_comments if c.verse_number is not None][:20]
         for parent in top_level:
             num_replies = random.randint(1, 4)
             for _ in range(num_replies):
                 replier = random.choice([u for u in users if u != parent.user])
                 reply = Comment.objects.create(
                     user=replier,
-                    verse=parent.verse,
+                    **_loc_from_comment(parent),
                     body=random.choice(COMMENT_BODIES_VERSE),
                     parent=parent,
                 )
@@ -310,7 +329,7 @@ class Command(BaseCommand):
                     depth2_replier = random.choice(users)
                     depth2 = Comment.objects.create(
                         user=depth2_replier,
-                        verse=parent.verse,
+                        **_loc_from_comment(parent),
                         body=random.choice(COMMENT_BODIES_VERSE),
                         parent=reply,
                     )
@@ -319,7 +338,7 @@ class Command(BaseCommand):
                     if random.random() < 0.3:
                         depth3 = Comment.objects.create(
                             user=random.choice(users),
-                            verse=parent.verse,
+                            **_loc_from_comment(parent),
                             body=random.choice(COMMENT_BODIES_VERSE),
                             parent=depth2,
                         )
@@ -331,7 +350,7 @@ class Command(BaseCommand):
             asker = random.choice(users)
             qa_comment = Comment.objects.create(
                 user=asker,
-                verse=verse,
+                **_loc_from_verse(verse),
                 title=title,
                 body=question,
                 is_qa=True,
@@ -340,7 +359,7 @@ class Command(BaseCommand):
             answerer = random.choice([u for u in users if u != asker])
             best = Comment.objects.create(
                 user=answerer,
-                verse=verse,
+                **_loc_from_verse(verse),
                 body=answer,
                 parent=qa_comment,
             )
@@ -353,7 +372,7 @@ class Command(BaseCommand):
                 extra_answerer = random.choice(users)
                 extra = Comment.objects.create(
                     user=extra_answerer,
-                    verse=verse,
+                    **_loc_from_verse(verse),
                     body=random.choice(COMMENT_BODIES_VERSE),
                     parent=qa_comment,
                 )

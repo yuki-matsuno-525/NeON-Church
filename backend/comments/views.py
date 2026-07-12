@@ -12,6 +12,44 @@ from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
 
+def _location_from_target(*, verse_id=None, chapter_id=None, book_id=None):
+    """旧ターゲット id（verse/chapter/book のいずれか）を箇所列フィルタへ解決する。
+
+    段階6D: コメントを訳横断の箇所で集約取得するために使う。存在しない id は None を返す。
+    返り値は Comment.objects.filter(**loc) に渡せる dict。
+    """
+    from bible.models import Book, Chapter, Verse
+
+    if verse_id:
+        v = Verse.objects.filter(id=verse_id).select_related("chapter__book").first()
+        if not v:
+            return None
+        return {
+            "canonical_book_id": v.chapter.book.canonical_book_id,
+            "chapter_number": v.chapter.number,
+            "verse_number": v.number,
+        }
+    if chapter_id:
+        ch = Chapter.objects.filter(id=chapter_id).select_related("book").first()
+        if not ch:
+            return None
+        return {
+            "canonical_book_id": ch.book.canonical_book_id,
+            "chapter_number": ch.number,
+            "verse_number__isnull": True,
+        }
+    if book_id:
+        b = Book.objects.filter(id=book_id).first()
+        if not b:
+            return None
+        return {
+            "canonical_book_id": b.canonical_book_id,
+            "chapter_number__isnull": True,
+            "verse_number__isnull": True,
+        }
+    return None
+
+
 def _notify(recipient, actor, notification_type, comment):
     """通知を作成するヘルパー。自己通知はスキップ。"""
     if recipient == actor:
@@ -61,52 +99,48 @@ class CommentListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         qs = (
             Comment.objects.select_related(
-                "user", "translation_project", "verse__chapter__book", "chapter__book", "book"
+                "user", "translation_project", "canonical_book"
             )
             .prefetch_related("tags")
             .annotate(vote_count=Count("votes"))
         )
         params = self.request.query_params
 
-        # 単一id（verse_id など）と複数id（verse_ids=a,b,c）の両方を受ける。
-        # 複数idは「全バージョン表示」（同じ箇所の各訳の節・章・書をまとめる）用。
-        def _ids(name):
-            raw = params.get(name)
-            return [x for x in raw.split(",") if x] if raw else []
-
         verse_id = params.get("verse_id")
         chapter_id = params.get("chapter_id")
         book_id = params.get("book_id")
-        verse_ids = _ids("verse_ids")
-        chapter_ids = _ids("chapter_ids")
-        book_ids = _ids("book_ids")
         parent_id = params.get("parent_id")
 
-        if verse_ids:
-            qs = qs.filter(verse_id__in=verse_ids)
-        elif chapter_ids:
-            qs = qs.filter(chapter_id__in=chapter_ids)
-        elif book_ids:
-            qs = qs.filter(book_id__in=book_ids)
-        elif verse_id:
-            qs = qs.filter(verse_id=verse_id)
-        elif chapter_id:
-            qs = qs.filter(chapter_id=chapter_id)
-        elif book_id:
-            qs = qs.filter(book_id=book_id)
+        # 段階6D/6F: 箇所での取得。訳非依存の箇所列で絞るため、同じ箇所へのコメントは訳をまたいで
+        # 1スレッドに集約される。book_slug(+章+節) で直接指定するか、旧 verse_id/chapter_id/book_id を
+        # その id が指す箇所へ解決して絞る。粒度は指定の細かさで一意（book=書 / +章=章 / +章+節=節）。
+        book_slug = params.get("book_slug")
+        chapter_number = params.get("chapter_number")
+        verse_number = params.get("verse_number")
+
+        if book_slug:
+            qs = qs.filter(canonical_book__slug=book_slug)
+            if verse_number:
+                qs = qs.filter(chapter_number=chapter_number, verse_number=verse_number)
+            elif chapter_number:
+                qs = qs.filter(chapter_number=chapter_number, verse_number__isnull=True)
+            else:
+                qs = qs.filter(chapter_number__isnull=True, verse_number__isnull=True)
+        elif verse_id or chapter_id or book_id:
+            loc = _location_from_target(verse_id=verse_id, chapter_id=chapter_id, book_id=book_id)
+            if loc is None:
+                return qs.none()
+            qs = qs.filter(**loc)
         elif parent_id:
             qs = qs.filter(parent_id=parent_id)
         else:
             return qs.none()
 
-        # バージョン（翻訳プロジェクト／聖書本体）でコメントを分離する。
-        # all_versions=true のときは区別せず全バージョンのコメントをまとめて返す。
-        # それ以外は translation_project 指定でその翻訳専用、未指定で聖書本体のみ。
-        all_versions = params.get("all_versions") == "true"
+        # スコープ（翻訳プロジェクト／聖書本体）で分離する。混ぜない（訳横断集約は箇所で行い、
+        # 本体コメントと特定PJコメントは別スレッド）。translation_project 指定でその PJ 専用、
+        # 未指定で聖書本体（translation_project IS NULL）。
         translation_project = params.get("translation_project")
-        if all_versions:
-            pass
-        elif translation_project:
+        if translation_project:
             qs = qs.filter(translation_project_id=translation_project)
         else:
             qs = qs.filter(translation_project__isnull=True)
@@ -212,7 +246,7 @@ class MyCommentListView(generics.ListAPIView):
     def get_queryset(self):
         return (
             Comment.objects.filter(user=self.request.user, is_deleted=False, translation_project__isnull=True)
-            .select_related("verse__chapter__book", "chapter__book", "book")
+            .select_related("canonical_book")
             .annotate(vote_count=Count("votes"))
             .order_by("-created_at")
         )
@@ -237,9 +271,7 @@ class QACommentListView(generics.ListAPIView):
             Comment.objects.filter(is_qa=True, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related(
                 "user",
-                "verse__chapter__book",
-                "chapter__book",
-                "book",
+                "canonical_book",
                 "best_answer__user",
             )
             .prefetch_related("tags")
@@ -257,13 +289,14 @@ class QACommentListView(generics.ListAPIView):
         book_id = params.get("book_id")
         tag_id = params.get("tag_id")
         if book_id:
-            # カンマ区切りで複数の Book id を受け付ける（同一書の複数訳をまとめて絞る）
+            # カンマ区切りで複数の Book id を受け付ける（同一書の複数訳をまとめて絞る）。
+            # 段階6F: 各コメントは canonical_book で保持するので、Book id を canonical へ解決して絞る。
             book_ids = [b for b in book_id.split(",") if b]
-            qs = qs.filter(
-                models.Q(book_id__in=book_ids)
-                | models.Q(chapter__book_id__in=book_ids)
-                | models.Q(verse__chapter__book_id__in=book_ids)
+            from bible.models import Book
+            canonical_ids = list(
+                Book.objects.filter(id__in=book_ids).values_list("canonical_book_id", flat=True)
             )
+            qs = qs.filter(canonical_book_id__in=canonical_ids)
         if tag_id:
             qs = qs.filter(tags__id=tag_id).distinct()
         answered = params.get("answered")
@@ -288,9 +321,7 @@ class TrendingCommentView(generics.ListAPIView):
             Comment.objects.filter(is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related(
                 "user",
-                "verse__chapter__book",
-                "chapter__book",
-                "book",
+                "canonical_book",
                 "best_answer__user",
             )
             .prefetch_related("tags")

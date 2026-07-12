@@ -75,11 +75,12 @@ class NotificationSerializer(serializers.ModelSerializer):
             root = root.parent
         if root.is_qa:
             return "qa"
-        if root.verse_id:
+        # 段階6F: 箇所は canonical_book/章/節の列で判定する（旧 verse/chapter/book FK は撤去済み）。
+        if root.verse_number is not None:
             return "verse_comment"
-        if root.chapter_id:
+        if root.chapter_number is not None:
             return "chapter_comment"
-        if root.book_id:
+        if root.canonical_book_id:
             return "book_comment"
         return None
 
@@ -93,31 +94,22 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_book_name(self, obj) -> str | None:
         root = self._root_comment(obj)
-        if not root:
+        if not root or not root.canonical_book_id:
             return None
-        if root.verse_id:
-            return root.verse.chapter.book.name
-        if root.chapter_id:
-            return root.chapter.book.name
-        if root.book_id:
-            return root.book.name
-        return None
+        from bible.models import Book
+        book = (
+            Book.objects.filter(canonical_book_id=root.canonical_book_id, translation=root.source_translation).first()
+            or Book.objects.filter(canonical_book_id=root.canonical_book_id).first()
+        )
+        return book.name if book else (root.canonical_book.slug if root.canonical_book else None)
 
     def get_chapter_number(self, obj) -> int | None:
         root = self._root_comment(obj)
-        if not root:
-            return None
-        if root.verse_id:
-            return root.verse.chapter.number
-        if root.chapter_id:
-            return root.chapter.number
-        return None
+        return root.chapter_number if root else None
 
     def get_verse_number(self, obj) -> int | None:
         root = self._root_comment(obj)
-        if not root or not root.verse_id:
-            return None
-        return root.verse.number
+        return root.verse_number if root else None
 
     def get_translation_unit_id(self, obj) -> str | None:
         if obj.translation_comment_id:

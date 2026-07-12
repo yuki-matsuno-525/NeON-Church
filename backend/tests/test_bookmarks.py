@@ -26,10 +26,10 @@ def bookmark(db, auth_client, verse):
 @pytest.fixture
 def comment(db, auth_client, verse):
     from django.contrib.auth import get_user_model
-    from comments.models import Comment
+    from tests.factories import make_comment
     User = get_user_model()
     user = User.objects.get(username="testuser")
-    return Comment.objects.create(user=user, verse=verse, body="テストコメント")
+    return make_comment(user=user, verse=verse, body="テストコメント")
 
 
 # ------------------------------------------------------------------
