@@ -171,6 +171,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Γένεση"
+      },
+      {
+        "translation": "口語訳",
+        "name": "創世記"
       }
     ]
   },
@@ -192,6 +196,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Έξοδος"
+      },
+      {
+        "translation": "口語訳",
+        "name": "出エジプト記"
       }
     ]
   },
@@ -213,6 +221,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Λευιτικόν"
+      },
+      {
+        "translation": "口語訳",
+        "name": "レビ記"
       }
     ]
   },
@@ -234,6 +246,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Αριθμοί"
+      },
+      {
+        "translation": "口語訳",
+        "name": "民数記"
       }
     ]
   },
@@ -255,6 +271,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Δευτερονόμιον"
+      },
+      {
+        "translation": "口語訳",
+        "name": "申命記"
       }
     ]
   },
@@ -276,6 +296,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἰησοῦς Nαυῆ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨシュア記"
       }
     ]
   },
@@ -297,6 +321,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Κριταί"
+      },
+      {
+        "translation": "口語訳",
+        "name": "士師記"
       }
     ]
   },
@@ -318,6 +346,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ῥούθ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ルツ記"
       }
     ]
   },
@@ -339,6 +371,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "1η Σαμουήλ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "サムエル記上"
       }
     ]
   },
@@ -360,6 +396,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "2η Σαμουήλ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "サムエル記下"
       }
     ]
   },
@@ -381,6 +421,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Βασιλειῶν Γʹ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "列王紀上"
       }
     ]
   },
@@ -402,6 +446,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Βασιλειῶν Δʹ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "列王紀下"
       }
     ]
   },
@@ -423,6 +471,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "1η Χρονικών"
+      },
+      {
+        "translation": "口語訳",
+        "name": "歴代志上"
       }
     ]
   },
@@ -444,6 +496,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "2η Χρονικών"
+      },
+      {
+        "translation": "口語訳",
+        "name": "歴代志下"
       }
     ]
   },
@@ -465,6 +521,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἔσδρας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "エズラ記"
       }
     ]
   },
@@ -486,6 +546,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Νεεμίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ネヘミヤ記"
       }
     ]
   },
@@ -507,6 +571,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἐσθήρ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "エステル記"
       }
     ]
   },
@@ -528,6 +596,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἰώβ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨブ記"
       }
     ]
   },
@@ -549,6 +621,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ψαλμοί"
+      },
+      {
+        "translation": "口語訳",
+        "name": "詩篇"
       }
     ]
   },
@@ -570,6 +646,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Παροιμίαι"
+      },
+      {
+        "translation": "口語訳",
+        "name": "箴言"
       }
     ]
   },
@@ -591,6 +671,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἐκκλησιαστής"
+      },
+      {
+        "translation": "口語訳",
+        "name": "伝道の書"
       }
     ]
   },
@@ -612,6 +696,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἆσμα Ἀσμάτων"
+      },
+      {
+        "translation": "口語訳",
+        "name": "雅歌"
       }
     ]
   },
@@ -633,6 +721,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἠσαΐας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "イザヤ書"
       }
     ]
   },
@@ -654,6 +746,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἱερεμίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "エレミヤ書"
       }
     ]
   },
@@ -675,6 +771,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Θρήνοι"
+      },
+      {
+        "translation": "口語訳",
+        "name": "哀歌"
       }
     ]
   },
@@ -696,6 +796,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἰεζεκιήλ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "エゼキエル書"
       }
     ]
   },
@@ -717,6 +821,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Δανιήλ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ダニエル書"
       }
     ]
   },
@@ -738,6 +846,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ὡσηέ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ホセア書"
       }
     ]
   },
@@ -759,6 +871,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἰωήλ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨエル書"
       }
     ]
   },
@@ -780,6 +896,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἀμώς"
+      },
+      {
+        "translation": "口語訳",
+        "name": "アモス書"
       }
     ]
   },
@@ -801,6 +921,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Οβαδια"
+      },
+      {
+        "translation": "口語訳",
+        "name": "オバデヤ書"
       }
     ]
   },
@@ -822,6 +946,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ιώνας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨナ書"
       }
     ]
   },
@@ -843,6 +971,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Μιχαίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ミカ書"
       }
     ]
   },
@@ -864,6 +996,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ναούμ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ナホム書"
       }
     ]
   },
@@ -885,6 +1021,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἀββακούμ"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ハバクク書"
       }
     ]
   },
@@ -906,6 +1046,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Σοφονίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ゼパニヤ書"
       }
     ]
   },
@@ -927,6 +1071,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ἀγγαῖος"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ハガイ書"
       }
     ]
   },
@@ -948,6 +1096,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Ζαχαρίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ゼカリヤ書"
       }
     ]
   },
@@ -969,6 +1121,10 @@
       {
         "translation": "LXX (GRC)",
         "name": "Μαλαχίας"
+      },
+      {
+        "translation": "口語訳",
+        "name": "マラキ書"
       }
     ]
   },
@@ -986,6 +1142,10 @@
       {
         "translation": "文語訳",
         "name": "使徒行傳"
+      },
+      {
+        "translation": "口語訳",
+        "name": "使徒行伝"
       }
     ]
   },
@@ -1003,6 +1163,10 @@
       {
         "translation": "文語訳",
         "name": "ロマ人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ローマ人への手紙"
       }
     ]
   },
@@ -1020,6 +1184,10 @@
       {
         "translation": "文語訳",
         "name": "コリント人への前の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "コリント人への第一の手紙"
       }
     ]
   },
@@ -1037,6 +1205,10 @@
       {
         "translation": "文語訳",
         "name": "コリント人への後の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "コリント人への第二の手紙"
       }
     ]
   },
@@ -1054,6 +1226,10 @@
       {
         "translation": "文語訳",
         "name": "ガラテヤ人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ガラテヤ人への手紙"
       }
     ]
   },
@@ -1071,6 +1247,10 @@
       {
         "translation": "文語訳",
         "name": "エペソ人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "エペソ人への手紙"
       }
     ]
   },
@@ -1088,6 +1268,10 @@
       {
         "translation": "文語訳",
         "name": "ピリピ人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ピリピ人への手紙"
       }
     ]
   },
@@ -1105,6 +1289,10 @@
       {
         "translation": "文語訳",
         "name": "コロサイ人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "コロサイ人への手紙"
       }
     ]
   },
@@ -1122,6 +1310,10 @@
       {
         "translation": "文語訳",
         "name": "テサロニケ人への前の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "テサロニケ人への第一の手紙"
       }
     ]
   },
@@ -1139,6 +1331,10 @@
       {
         "translation": "文語訳",
         "name": "テサロニケ人への後の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "テサロニケ人への第二の手紙"
       }
     ]
   },
@@ -1156,6 +1352,10 @@
       {
         "translation": "文語訳",
         "name": "テモテへの前の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "テモテヘの第一の手紙"
       }
     ]
   },
@@ -1173,6 +1373,10 @@
       {
         "translation": "文語訳",
         "name": "テモテへの後の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "テモテヘの第二の手紙"
       }
     ]
   },
@@ -1190,6 +1394,10 @@
       {
         "translation": "文語訳",
         "name": "テトスへの書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "テトスヘの手紙"
       }
     ]
   },
@@ -1207,6 +1415,10 @@
       {
         "translation": "文語訳",
         "name": "ピレモンへの書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ピレモンヘの手紙"
       }
     ]
   },
@@ -1224,6 +1436,10 @@
       {
         "translation": "文語訳",
         "name": "ヘブル人への書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヘブル人への手紙"
       }
     ]
   },
@@ -1241,6 +1457,10 @@
       {
         "translation": "文語訳",
         "name": "ヤコブの書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヤコブの手紙"
       }
     ]
   },
@@ -1258,6 +1478,10 @@
       {
         "translation": "文語訳",
         "name": "ペテロの前の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ペテロの第一の手紙"
       }
     ]
   },
@@ -1275,6 +1499,10 @@
       {
         "translation": "文語訳",
         "name": "ペテロの後の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ペテロの第二の手紙"
       }
     ]
   },
@@ -1292,6 +1520,10 @@
       {
         "translation": "文語訳",
         "name": "ヨハネの第一の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨハネの第一の手紙"
       }
     ]
   },
@@ -1309,6 +1541,10 @@
       {
         "translation": "文語訳",
         "name": "ヨハネの第二の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨハネの第二の手紙"
       }
     ]
   },
@@ -1326,6 +1562,10 @@
       {
         "translation": "文語訳",
         "name": "ヨハネの第三の書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨハネの第三の手紙"
       }
     ]
   },
@@ -1343,6 +1583,10 @@
       {
         "translation": "文語訳",
         "name": "ユダの書"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ユダの手紙"
       }
     ]
   },
@@ -1360,6 +1604,10 @@
       {
         "translation": "文語訳",
         "name": "ヨハネの默示録"
+      },
+      {
+        "translation": "口語訳",
+        "name": "ヨハネの黙示録"
       }
     ]
   }
