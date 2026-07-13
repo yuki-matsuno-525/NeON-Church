@@ -124,6 +124,7 @@ export default function TranslationReadChapterPage({
                   return (
                     <div
                       key={unit.id}
+                      id={`verse-${unit.verse_number}`}
                       onClick={() => setSelectedUnit(isSelected ? null : unit)}
                       role="button"
                       tabIndex={0}
@@ -141,6 +142,7 @@ export default function TranslationReadChapterPage({
                         marginBottom: 2,
                         cursor: "pointer",
                         background: isSelected ? "var(--accent-tint)" : "transparent",
+                        scrollMarginTop: "calc(var(--navbar-height) + 56px)",
                       }}
                     >
                       <span
