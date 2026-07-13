@@ -116,7 +116,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
       onSubmit={handleSubmit}
       style={{
         border: "1px solid var(--border)",
-        borderRadius: 10,
+        borderRadius: 8,
         padding: "16px 18px",
         marginBottom: 24,
         background: "var(--bg-alt)",
@@ -232,9 +232,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
               <button
                 key={tag.id}
                 type="button"
+                aria-pressed={active}
                 onClick={() => toggleTag(tag.id)}
                 style={{
                   fontSize: 12,
+                  minHeight: 30,
                   padding: "3px 10px",
                   borderRadius: 999,
                   border: "1px solid var(--border)",

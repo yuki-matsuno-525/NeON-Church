@@ -87,51 +87,47 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
     <div
       className="card-glow"
       style={{
-        padding: "14px 16px",
+        padding: "16px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-        <span style={{ fontWeight: 600, fontSize: 13 }}>{comment.user.username}</span>
-        <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
-          {formatRelativeTime(comment.created_at)}
-        </span>
-        {comment.best_answer ? (
-          <span
-            className="badge"
-            style={{ background: "rgba(34,197,94,0.15)", color: "var(--state-success)", display: "inline-flex", alignItems: "center", gap: 3 }}
-            aria-label={t.filterAnswered}
-          >
-            <Icon name="check-circle" size={11} />
-            {t.filterAnswered}
+      <div style={qaCardHeaderStyle}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 13 }}>{comment.user.username}</span>
+          <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
+            {formatRelativeTime(comment.created_at)}
           </span>
-        ) : (
-          <span
-            className="badge"
-            style={{ background: "rgba(245,158,11,0.15)", color: "var(--state-warning)", display: "inline-flex", alignItems: "center", gap: 3 }}
-            aria-label={t.filterUnanswered}
-          >
-            <Icon name="help-circle" size={11} />
-            {t.filterUnanswered}
-          </span>
-        )}
-        {url && (
-          <Link
-            href={url}
-            style={{
-              marginLeft: "auto",
-              fontSize: 12,
-              color: "var(--accent)",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {comment.location_label} →
-          </Link>
-        )}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {comment.best_answer ? (
+            <span
+              className="badge"
+              style={{ background: "rgba(34,197,94,0.15)", color: "var(--state-success)", display: "inline-flex", alignItems: "center", gap: 3 }}
+              aria-label={t.filterAnswered}
+            >
+              <Icon name="check-circle" size={11} />
+              {t.filterAnswered}
+            </span>
+          ) : (
+            <span
+              className="badge"
+              style={{ background: "rgba(245,158,11,0.15)", color: "var(--state-warning)", display: "inline-flex", alignItems: "center", gap: 3 }}
+              aria-label={t.filterUnanswered}
+            >
+              <Icon name="help-circle" size={11} />
+              {t.filterUnanswered}
+            </span>
+          )}
+          {url && (
+            <Link href={url} style={qaLocationLinkStyle}>
+              {comment.location_label}
+              <Icon name="chevron-right" size={12} />
+            </Link>
+          )}
+        </div>
       </div>
 
       {comment.title && (
-        <p style={{ margin: "0 0 4px", fontSize: 15, fontWeight: 700, lineHeight: 1.5 }}>{comment.title}</p>
+        <h2 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, lineHeight: 1.45 }}>{comment.title}</h2>
       )}
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{comment.body}</p>
 
@@ -155,32 +151,15 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-        {comment.tags.map((tag) => (
-          <span
-            key={tag.id}
-            style={{
-              fontSize: 11,
-              padding: "2px 7px",
-              borderRadius: 999,
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              color: "var(--text-muted)",
-            }}
-          >
-            {t.tagNames[tag.name] ?? tag.name}
-          </span>
-        ))}
-        <span
-          style={{
-            marginLeft: "auto",
-            fontSize: 12,
-            color: "var(--text-faint)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
+      <div style={qaCardFooterStyle}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", minWidth: 0 }}>
+          {comment.tags.map((tag) => (
+            <span key={tag.id} style={qaTagStyle}>
+              {t.tagNames[tag.name] ?? tag.name}
+            </span>
+          ))}
+        </div>
+        <span style={qaCountPillStyle}>
           <Icon name="chevron-up" size={12} />
           {comment.vote_count}
         </span>
@@ -190,10 +169,11 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
           style={{
             fontSize: 12,
             color: "var(--text-muted)",
-            background: "none",
-            border: "none",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            borderRadius: 999,
             cursor: "pointer",
-            padding: 0,
+            padding: "3px 8px",
             fontFamily: "inherit",
             display: "inline-flex",
             alignItems: "center",
@@ -314,3 +294,54 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
     </div>
   );
 }
+
+const qaCardHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 12,
+  marginBottom: 8,
+  flexWrap: "wrap",
+};
+
+const qaLocationLinkStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 2,
+  maxWidth: "100%",
+  fontSize: 12,
+  color: "var(--accent)",
+  textDecoration: "none",
+  whiteSpace: "nowrap",
+};
+
+const qaCardFooterStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 8,
+  marginTop: 10,
+  flexWrap: "wrap",
+  alignItems: "center",
+};
+
+const qaTagStyle: React.CSSProperties = {
+  fontSize: 11,
+  padding: "2px 7px",
+  borderRadius: 999,
+  background: "var(--bg)",
+  border: "1px solid var(--border)",
+  color: "var(--text-muted)",
+};
+
+const qaCountPillStyle: React.CSSProperties = {
+  marginLeft: "auto",
+  minHeight: 24,
+  padding: "2px 8px",
+  borderRadius: 999,
+  border: "1px solid var(--border)",
+  background: "var(--bg)",
+  fontSize: 12,
+  color: "var(--text-faint)",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
