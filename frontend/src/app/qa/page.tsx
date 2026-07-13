@@ -8,6 +8,7 @@ import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { Icon } from "@/components/ui/Icon";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
@@ -113,33 +114,23 @@ function QAContent() {
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 16px" }}>
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.qaTitle}</h1>
         {!showForm && (
-          <button
+          <Button
+            variant="secondary"
+            leftIcon={<Icon name="help-circle" size={14} />}
             onClick={() => {
               if (!user) { setShowLoginModal(true); return; }
               setShowForm(true);
             }}
-            style={{
-              padding: "10px 16px",
-              minHeight: 44,
-              border: "none",
-              borderRadius: 8,
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-              fontFamily: "inherit",
-            }}
           >
             {t.askQuestion}
-          </button>
+          </Button>
         )}
       </div>
       <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 24 }}>
@@ -158,12 +149,18 @@ function QAContent() {
         />
       )}
 
-      <fieldset style={{ border: "none", padding: 0, margin: "0 0 24px" }}>
+      <fieldset style={filterPanelStyle}>
         {/* フィルタの見出しは各ボタンのラベルと重複するため画面には出さない（スクリーンリーダー用に残す）。 */}
         <legend className="sr-only">
           {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
         </legend>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={filterPanelHeaderStyle}>
+          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>{t.qaFilters}</span>
+          {!loading && (
+            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.qaQuestionCount(comments.length)}</span>
+          )}
+        </div>
+        <div style={filterRowStyle}>
           {(["all", "unanswered", "answered"] as const).map((f) => (
             <button
               key={f}
@@ -185,14 +182,6 @@ function QAContent() {
             </button>
           ))}
           {(() => {
-            const selectStyle = {
-              padding: "6px 10px",
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-alt)",
-              color: "var(--text)",
-              fontSize: "var(--font-size-sm)",
-            } as const;
             const groups = groupCatalogByGenre(catalog);
             const bookEntries = genreFilter ? groups.find((g) => g.genre === genreFilter)?.entries ?? [] : catalog;
             return (
@@ -203,7 +192,7 @@ function QAContent() {
                     aria-label={t.allBooks}
                     value={genreFilter}
                     onChange={(e) => { setGenreFilter(e.target.value); setSelectedSlug(""); }}
-                    style={selectStyle}
+                    style={qaSelectStyle}
                   >
                     <option value="">{t.all}</option>
                     {groups.map(({ genre }) => (
@@ -216,7 +205,7 @@ function QAContent() {
                     aria-label={t.allBooks}
                     value={selectedSlug}
                     onChange={(e) => setSelectedSlug(e.target.value)}
-                    style={selectStyle}
+                    style={qaSelectStyle}
                   >
                     <option value="">{t.allBooks}</option>
                     {bookEntries.map((e) => (
@@ -234,14 +223,7 @@ function QAContent() {
                 aria-label={t.allVersions}
                 value={selectedVersion}
                 onChange={(e) => setSelectedVersion(e.target.value)}
-                style={{
-                  padding: "6px 10px",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  background: "var(--bg-alt)",
-                  color: "var(--text)",
-                  fontSize: "var(--font-size-sm)",
-                }}
+                style={qaSelectStyle}
               >
                 <option value="">{t.allVersions}</option>
                 {(getBookBySlug(selectedSlug)?.translations ?? []).map((tr) => (
@@ -255,14 +237,7 @@ function QAContent() {
               aria-label={t.allTags}
               value={selectedTagId}
               onChange={(e) => setSelectedTagId(e.target.value)}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-alt)",
-                color: "var(--text)",
-                fontSize: "var(--font-size-sm)",
-              }}
+              style={qaSelectStyle}
             >
               <option value="">{t.allTags}</option>
               {tags.map((tag) => (
@@ -337,3 +312,37 @@ function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
     opacity: disabled ? 0.5 : 1,
   };
 }
+
+const filterPanelStyle: React.CSSProperties = {
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  padding: 12,
+  margin: "0 0 24px",
+  background: "var(--bg-alt)",
+};
+
+const filterPanelHeaderStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 10,
+};
+
+const filterRowStyle: React.CSSProperties = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+  alignItems: "center",
+};
+
+const qaSelectStyle: React.CSSProperties = {
+  minHeight: 36,
+  padding: "6px 10px",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "var(--bg)",
+  color: "var(--text)",
+  fontSize: "var(--font-size-sm)",
+  fontFamily: "inherit",
+};
