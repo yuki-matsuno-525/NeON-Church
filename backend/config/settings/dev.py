@@ -5,6 +5,8 @@
 # 本番環境では絶対に使わないこと。
 # ==============================================================
 
+from decouple import config as env_config
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True
@@ -35,8 +37,9 @@ LOGGING["loggers"]["django"]["level"] = "DEBUG"  # noqa: F405
 # ------------------------------------------------------------------
 # スロットリング（開発・E2E テスト用に緩める）
 # ------------------------------------------------------------------
+DEV_THROTTLE_RATE = env_config("DJANGO_DEV_THROTTLE_RATE", default="60/min")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
-    "auth": "60/min",
-    "comment_create": "60/min",
-    "report": "60/min",
+    "auth": DEV_THROTTLE_RATE,
+    "comment_create": DEV_THROTTLE_RATE,
+    "report": DEV_THROTTLE_RATE,
 }
