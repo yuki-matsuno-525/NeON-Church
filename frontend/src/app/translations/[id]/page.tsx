@@ -391,6 +391,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     return t.members;
   };
 
+  const reviewUnits = units.filter((u) => u.status === "review");
+  const reviewTargetHref = (unit: TranslationUnit) =>
+    `/translations/${id}/read/${unit.chapter_number}#verse-${unit.verse_number}`;
+
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ marginBottom: 6 }}>
@@ -757,11 +761,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
       {tab === "review" && (
         <div>
-          {units.filter((u) => u.status === "review").length === 0 ? (
+          {reviewUnits.length === 0 ? (
             <EmptyState title={t.noReviewUnits} description={t.emptyReviewUnitsDesc} />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {units.filter((u) => u.status === "review").map((unit) => (
+              {reviewUnits.map((unit) => (
                 <div key={unit.id} style={{ border: "1px solid #f59e0b", borderRadius: 10, background: "var(--bg-alt)", padding: "12px 16px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -778,14 +782,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
                       )}
                     </div>
-                    {isOwner && (
-                      <button
-                        onClick={() => handleUnitStatusChange(unit.id, "done")}
-                        style={btnStyle("var(--state-success)")}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <Link
+                        href={reviewTargetHref(unit)}
+                        style={btnStyle("var(--accent)")}
                       >
-                        {t.approve}
-                      </button>
-                    )}
+                        {t.openReviewTarget}
+                      </Link>
+                      {isOwner && (
+                        <button
+                          onClick={() => handleUnitStatusChange(unit.id, "done")}
+                          style={btnStyle("var(--state-success)")}
+                        >
+                          {t.approve}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
