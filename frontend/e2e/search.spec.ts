@@ -7,12 +7,12 @@ import { test, expect } from "@playwright/test";
  * SearchContent コンポーネントが Suspense でラップされている。
  */
 
-test("S-1: 2文字未満入力で警告メッセージが表示される", async ({ page }) => {
-  // 1文字だけのクエリで /search にアクセス
-  await page.goto("/search?q=あ");
+test("S-1: 1文字の日本語（神）でも検索が実行される", async ({ page }) => {
+  // CJK は1文字でも検索できる（2文字未満で弾かない）
+  await page.goto("/search?q=神");
 
-  // 「2文字以上入力してください。」が表示される
-  await expect(page.getByText("2文字以上入力してください。")).toBeVisible();
+  // 検索結果の見出しが出る＝検索が実行されている
+  await expect(page.getByText(/「神」の検索結果/)).toBeVisible({ timeout: 10000 });
 });
 
 test("S-2: キーワード「イエス」で検索すると節結果が表示される", async ({ page }) => {
@@ -22,8 +22,8 @@ test("S-2: キーワード「イエス」で検索すると節結果が表示さ
   // 検索結果の見出しが表示される（節セクション）
   await expect(page.getByText(/「イエス」の検索結果/)).toBeVisible({ timeout: 10000 });
 
-  // 節ヒットセクションが表示される
-  await expect(page.getByText("節（最大30件）")).toBeVisible();
+  // 節ヒットセクションの見出しが表示される
+  await expect(page.getByRole("heading", { name: "節", exact: true })).toBeVisible();
 });
 
 test("S-3: 存在しないキーワードで「一致する結果が見つかりませんでした」が表示される", async ({ page }) => {
