@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, type Bookmark } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { bookLabel } from "@/lib/i18n";
+import { bookLabel, formatBookLocation } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { resolveVersionVerseIds } from "@/lib/versions";
+import { passageHref } from "@/lib/passage";
 import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
 
@@ -104,14 +105,24 @@ export default function BookmarksPage() {
             const isRemoved = removedIds.has(bm.id);
 
             if (bm.target_type === "comment" && bm.comment_detail) {
+              const cd = bm.comment_detail;
+              // コメント栞も、その節（書・章・節）へ飛べるようにする。ラベルは表示言語の書名で出す。
+              const commentHref = cd.book_slug ? passageHref(cd) : "";
+              const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
               return (
                 <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
-                    {t.commentBy(bm.comment_detail.username)}
-                  </p>
-                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                    {bm.comment_detail.body}
-                  </p>
+                  <Link
+                    href={isRemoved || !commentHref ? "#" : commentHref}
+                    onClick={(e) => (isRemoved || !commentHref) && e.preventDefault()}
+                    style={{ display: "block", textDecoration: "none", color: "inherit" }}
+                  >
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
+                      {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
+                      {cd.body}
+                    </p>
+                  </Link>
                   <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
                     {isRemoved ? (
                       <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>
@@ -141,6 +152,11 @@ export default function BookmarksPage() {
                   <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
                     {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
                   </p>
+                  {bm.verse_text && (
+                    <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
+                      {bm.verse_text}
+                    </p>
+                  )}
                 </Link>
                 <div style={{ marginTop: 8 }}>
                   {isRemoved ? (
