@@ -159,7 +159,8 @@ function QAContent() {
       )}
 
       <fieldset style={{ border: "none", padding: 0, margin: "0 0 24px" }}>
-        <legend style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginBottom: "var(--space-2)", fontWeight: 600, letterSpacing: "0.04em" }}>
+        {/* フィルタの見出しは各ボタンのラベルと重複するため画面には出さない（スクリーンリーダー用に残す）。 */}
+        <legend className="sr-only">
           {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
         </legend>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
