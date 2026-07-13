@@ -45,7 +45,7 @@ describe("SearchPage", () => {
     vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
     mockSearchParams = new URLSearchParams({ q: "神" });
     render(<SearchPage />);
-    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("神", expect.anything(), 1));
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("神", expect.anything(), 1, "all", ""));
   });
 
   it("q が空のとき検索を実行しない", async () => {
@@ -134,9 +134,41 @@ describe("SearchPage", () => {
     const moreBtn = await screen.findByRole("button", { name: /もっと見る/ });
     fireEvent.click(moreBtn);
 
-    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("テスト", expect.anything(), 2));
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("テスト", expect.anything(), 2, "all", ""));
     await screen.findByText("結果B");
     expect(screen.getByText("結果A")).toBeInTheDocument();
+  });
+
+  it("URL の種別・書フィルタを searchBible に渡す", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
+    mockSearchParams = new URLSearchParams({ q: "イエス", kind: "comments", book: "mark" });
+    render(<SearchPage />);
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("イエス", expect.anything(), 1, "comments", "mark"));
+  });
+
+  it("種別フィルタを押すと URL が更新される", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
+    mockSearchParams = new URLSearchParams({ q: "イエス" });
+    render(<SearchPage />);
+
+    await screen.findByText(/「イエス」の検索結果/);
+    fireEvent.click(screen.getByRole("button", { name: "節" }));
+
+    expect(mockPush).toHaveBeenCalledWith("/search?q=%E3%82%A4%E3%82%A8%E3%82%B9&kind=verses");
+  });
+
+  it("書フィルタを選ぶと URL が更新される", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
+    mockSearchParams = new URLSearchParams({ q: "イエス" });
+    render(<SearchPage />);
+
+    const select = await screen.findByRole("combobox", { name: "すべての書" });
+    fireEvent.change(select, { target: { value: "mark" } });
+
+    expect(mockPush).toHaveBeenCalledWith("/search?q=%E3%82%A4%E3%82%A8%E3%82%B9&book=mark");
   });
 
   it("0件のとき「一致する結果が見つかりませんでした。」が表示される", async () => {

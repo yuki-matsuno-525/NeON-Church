@@ -26,6 +26,8 @@ LANG_TRANSLATIONS = {
     "heb": ["WLC (HEB)"],
 }
 
+SEARCH_KINDS = {"all", "verses", "books", "comments"}
+
 
 def _min_query_len(q: str) -> int:
     """検索クエリの最小文字数。CJK（かな・漢字）は1文字でも語として成立するため1、
@@ -142,10 +144,12 @@ class ReferenceVersesView(_ReferenceView):
 
 
 class SearchView(APIView):
-    """GET /api/search/?q=&lang=&page=  節テキスト・書名・コメントを icontains で検索。
+    """GET /api/search/?q=&lang=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
 
     - lang（既定 ja）で節の検索対象を UI 言語の訳に絞り、同じ箇所が訳ごとに重複しないよう
       代表訳1件に集約する（例: 口語訳と文語訳の両方に当たる箇所は口語訳だけ返す）。
+    - kind（all/verses/books/comments）で返すセクションを絞る。
+    - book（canonical_book.slug）で書を絞る。
     - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
       books / comments は1ページ目のプレビュー用（ページングしない）。
     """
@@ -157,6 +161,10 @@ class SearchView(APIView):
     def get(self, request):
         q = request.query_params.get("q", "").strip()
         lang = request.query_params.get("lang", "ja")
+        kind = request.query_params.get("kind", "all")
+        if kind not in SEARCH_KINDS:
+            kind = "all"
+        book_slug = request.query_params.get("book", "").strip()
         try:
             page = max(1, int(request.query_params.get("page", "1")))
         except ValueError:
@@ -172,18 +180,31 @@ class SearchView(APIView):
             .select_related("chapter__book", "chapter__book__canonical_book")
             .order_by("chapter__book__order", "chapter__number", "number")
         )
-        verse_total = verses_qs.count()
-        start = (page - 1) * self.VERSE_PAGE_SIZE
-        verses = verses_qs[start : start + self.VERSE_PAGE_SIZE]
-        has_more = start + self.VERSE_PAGE_SIZE < verse_total
+        if book_slug:
+            verses_qs = verses_qs.filter(chapter__book__canonical_book__slug=book_slug)
+
+        if kind in ("all", "verses"):
+            verse_total = verses_qs.count()
+            start = (page - 1) * self.VERSE_PAGE_SIZE
+            verses = verses_qs[start : start + self.VERSE_PAGE_SIZE]
+            has_more = start + self.VERSE_PAGE_SIZE < verse_total
+        else:
+            verse_total = 0
+            verses = []
+            has_more = False
 
         # 書名・コメントは1ページ目のプレビュー（ページングしない）。書名は UI 言語の訳に絞る。
-        books = Book.objects.filter(name__icontains=q, translation__in=translations).order_by("order")[:20]
-        comments = (
+        books_qs = Book.objects.filter(name__icontains=q, translation__in=translations).order_by("order")
+        comments_qs = (
             Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related("user", "canonical_book")
-            .order_by("-created_at")[:20]
+            .order_by("-created_at")
         )
+        if book_slug:
+            books_qs = books_qs.filter(canonical_book__slug=book_slug)
+            comments_qs = comments_qs.filter(canonical_book__slug=book_slug)
+        books = books_qs[:20] if kind in ("all", "books") else []
+        comments = comments_qs[:20] if kind in ("all", "comments") else []
 
         return Response({
             "verses": VerseSearchSerializer(verses, many=True).data,

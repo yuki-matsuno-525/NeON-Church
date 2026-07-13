@@ -17,9 +17,21 @@ def book_kjv(db):
 
 
 @pytest.fixture
+def book_mark(db):
+    from tests.factories import make_book
+    return make_book("マルコによる福音書", "口語訳", 2, slug="mark")
+
+
+@pytest.fixture
 def chapter(book):
     from bible.models import Chapter
     return Chapter.objects.create(book=book, number=1)
+
+
+@pytest.fixture
+def chapter_mark(book_mark):
+    from bible.models import Chapter
+    return Chapter.objects.create(book=book_mark, number=1)
 
 
 @pytest.fixture
@@ -49,6 +61,16 @@ def verse_kjv(chapter_kjv):
 
 
 @pytest.fixture
+def verse_mark(chapter_mark):
+    from bible.models import Verse
+    return Verse.objects.create(
+        chapter=chapter_mark,
+        number=1,
+        text="神の子イエス・キリストの福音のはじめ。",
+    )
+
+
+@pytest.fixture
 def verse_bungo(db):
     # 口語訳と同じ箇所（matthew 1:1）を文語訳で作る（同一 canonical・章・節）。
     from bible.models import Chapter, Verse
@@ -56,6 +78,23 @@ def verse_bungo(db):
     b = make_book("マタイ傳福音書", "文語訳", 1, slug="matthew")
     ch = Chapter.objects.create(book=b, number=1)
     return Verse.objects.create(chapter=ch, number=1, text="アブラハムの子イエス・キリストの系圖。")
+
+
+@pytest.fixture
+def search_user(db, django_user_model):
+    return django_user_model.objects.create_user(username="searchuser", password="testpass123")
+
+
+@pytest.fixture
+def search_comment(search_user, verse):
+    from tests.factories import make_comment
+    return make_comment(user=search_user, verse=verse, body="イエスについてのコメント")
+
+
+@pytest.fixture
+def search_comment_mark(search_user, verse_mark):
+    from tests.factories import make_comment
+    return make_comment(user=search_user, verse=verse_mark, body="イエスに関するマルコのコメント")
 
 
 @pytest.mark.django_db
@@ -176,3 +215,46 @@ class TestSearchView:
     def test_verse_result_includes_book_slug(self, api_client, verse):
         res = api_client.get(SEARCH_URL, {"q": "アブラハム"})
         assert res.data["verses"][0]["book_slug"] == "matthew"
+
+    def test_kind_filter_books_only(self, api_client, book, verse, search_comment):
+        res = api_client.get(SEARCH_URL, {"q": "マタイ", "kind": "books"})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data["books"]) == 1
+        assert res.data["books"][0]["name"] == "マタイによる福音書"
+        assert res.data["verses"] == []
+        assert res.data["comments"] == []
+        assert res.data["verse_total"] == 0
+        assert res.data["has_more"] is False
+
+    def test_kind_filter_verses_only(self, api_client, verse, search_comment):
+        res = api_client.get(SEARCH_URL, {"q": "イエス", "kind": "verses"})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data["verses"]) == 1
+        assert res.data["comments"] == []
+        assert res.data["books"] == []
+        assert res.data["verse_total"] == 1
+
+    def test_kind_filter_comments_only(self, api_client, verse, search_comment):
+        res = api_client.get(SEARCH_URL, {"q": "イエス", "kind": "comments"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["verses"] == []
+        assert res.data["books"] == []
+        assert res.data["verse_total"] == 0
+        assert len(res.data["comments"]) == 1
+        assert res.data["comments"][0]["id"] == str(search_comment.id)
+
+    def test_book_filter_limits_verse_results_by_slug(self, api_client, verse, verse_mark):
+        res = api_client.get(SEARCH_URL, {"q": "イエス", "book": "mark"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["verse_total"] == 1
+        assert len(res.data["verses"]) == 1
+        assert res.data["verses"][0]["id"] == str(verse_mark.id)
+        assert res.data["verses"][0]["book_slug"] == "mark"
+
+    def test_book_filter_limits_comment_results_by_slug(
+        self, api_client, verse, verse_mark, search_comment, search_comment_mark
+    ):
+        res = api_client.get(SEARCH_URL, {"q": "イエス", "kind": "comments", "book": "mark"})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data["comments"]) == 1
+        assert res.data["comments"][0]["id"] == str(search_comment_mark.id)
