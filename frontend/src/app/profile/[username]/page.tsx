@@ -11,7 +11,8 @@ import {
   type Bookmark,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT, bookLabel, useRelativeTime } from "@/lib/i18n";
+import { useT, bookLabel, useRelativeTime, formatBookLocation } from "@/lib/i18n";
+import { passageHref } from "@/lib/passage";
 import { useLang } from "@/contexts/LanguageContext";
 
 type Tab = "favorites" | "comments";
@@ -135,19 +136,29 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
             {bookmarks.map((bm) => {
               if (bm.target_type === "comment" && bm.comment_detail) {
-                return (
-                  <div key={bm.id} style={cardStyle}>
+                const cd = bm.comment_detail;
+                const commentPassageHref = passageHref(cd);
+                const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
+                const card = (
+                  <>
                     <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                      {t.commentBy(bm.comment_detail.username)}
+                      {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
                     </p>
                     <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                      {bm.comment_detail.body}
+                      {cd.body}
                     </p>
-                  </div>
+                  </>
+                );
+                return commentPassageHref ? (
+                  <Link key={bm.id} href={commentPassageHref} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+                    {card}
+                  </Link>
+                ) : (
+                  <div key={bm.id} style={cardStyle}>{card}</div>
                 );
               }
               if (!bm.reference) return null;
-              const href = `/${bm.reference.book}/${bm.reference.chapter}`;
+              const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
               const bookDisplay = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
               return (
                 <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>

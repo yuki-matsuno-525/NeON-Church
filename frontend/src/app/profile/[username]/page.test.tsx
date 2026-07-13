@@ -68,6 +68,7 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   comment_detail: null,
   target_type: "verse",
   reference: { book: "matthew", chapter: 1, verse: 1 },
+  verse_text: null,
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });

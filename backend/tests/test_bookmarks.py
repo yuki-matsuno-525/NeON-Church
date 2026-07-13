@@ -145,6 +145,13 @@ class TestBookmarkList:
         assert ref["chapter"] == verse.chapter.number
         assert ref["verse"] == verse.number
 
+    def test_verse_bookmark_list_includes_verse_text(self, auth_client, bookmark, verse):
+        # 一覧では表示用に節本文（verse_text）を返す（プロフィールで内容が分かるようにするため）。
+        res = auth_client.get(BOOKMARKS_URL)
+        item = res.data["results"][0]
+        assert item["target_type"] == "verse"
+        assert item["verse_text"] == verse.text
+
 
 # ------------------------------------------------------------------
 # ブックマーク削除

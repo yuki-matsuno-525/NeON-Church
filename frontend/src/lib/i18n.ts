@@ -807,6 +807,22 @@ export function bookLabel(slug: string, lang: string): { name: string; short: st
     : { name: b.name, short: b.short };
 }
 
+// 箇所（slug/章/節）を表示言語の書名でラベル化する（例: "マタイ 1章1節"）。
+// バックエンドの location_label は投稿時訳の書名（ギリシャ語名など）で出るため、
+// 表示側ではこのヘルパーで UI 言語の書名に揃える。
+export function formatBookLocation(
+  slug: string,
+  chapter: number | null,
+  verse: number | null,
+  lang: string,
+): string {
+  const t = translations[lang] ?? translations.ja;
+  const name = bookLabel(slug, lang)?.name ?? slug;
+  if (chapter != null && verse != null) return `${name} ${t.verseFmt(chapter, verse)}`;
+  if (chapter != null) return `${name} ${t.chapterFmt(chapter)}`;
+  return name;
+}
+
 // 全訳の一覧（翻訳プロジェクトの元訳選択など、本に依らない場面で使う）。
 export function useTranslationOptions(): { id: string; label: string }[] {
   const { lang } = useLang();

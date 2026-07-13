@@ -30,6 +30,12 @@ export type BookmarkCommentDetail = {
   body: string;
   username: string;
   created_at: string;
+  // コメント栞から「どの箇所へのコメントか」を表示・リンクするための素材。
+  location_label: string;
+  book_slug: string;
+  chapter_number: number | null;
+  verse_number: number | null;
+  source_translation: string;
 };
 export type BookmarkReference = {
   book: string; // canonical_book.slug
@@ -42,6 +48,7 @@ export type Bookmark = {
   comment_detail: BookmarkCommentDetail | null;
   target_type: "verse" | "comment" | null;
   reference: BookmarkReference | null; // 段階5D: 訳非依存の箇所（verse 栞のみ）
+  verse_text: string | null; // 節栞の表示用本文（口語訳優先。comment 栞では null）
   created_at: string;
 };
 export type NotificationTargetKind =
@@ -97,6 +104,11 @@ export type MyComment = {
   created_at: string;
   vote_count: number;
   location_label: string;
+  // 箇所へのリンク組み立て用（訳非依存 slug＋章／節＋投稿時訳）。
+  book_slug: string;
+  chapter_number: number | null;
+  verse_number: number | null;
+  source_translation: string;
 };
 
 export type ReadingProgress = {

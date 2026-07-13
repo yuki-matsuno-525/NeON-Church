@@ -45,6 +45,7 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   comment_detail: null,
   target_type: "verse",
   reference: { book: "matthew", chapter: 1, verse: 3 },
+  verse_text: null,
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });
@@ -56,6 +57,10 @@ const makeMyComment = (overrides: Partial<MyComment> = {}): MyComment => ({
   created_at: "2024-01-01T00:00:00Z",
   vote_count: 2,
   location_label: "マタイによる福音書 1章 1節",
+  book_slug: "matthew",
+  chapter_number: 1,
+  verse_number: 1,
+  source_translation: "口語訳",
   ...overrides,
 });
 
@@ -153,6 +158,44 @@ describe("ProfilePage", () => {
     await waitFor(() => {
       expect(screen.getByText(/マタイによる福音書/)).toBeInTheDocument();
     });
+    // 章までではなくその節（#verse-3）まで飛ぶリンクになっている。
+    expect(screen.getByRole("link", { name: /マタイによる福音書/ })).toHaveAttribute(
+      "href",
+      "/matthew/1#verse-3",
+    );
+  });
+
+  it("コメントの栞は箇所ラベル付きでその節へリンクする", async () => {
+    const user = makeUser();
+    mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
+
+    const { fetchBookmarks } = await import("@/lib/api");
+    vi.mocked(fetchBookmarks).mockResolvedValue([
+      makeBookmark({
+        target_type: "comment",
+        reference: null,
+        comment_detail: {
+          id: "cm1",
+          body: "栞したコメント本文",
+          username: "someone",
+          created_at: "2024-01-01T00:00:00Z",
+          location_label: "マタイによる福音書 1章 3節",
+          book_slug: "matthew",
+          chapter_number: 1,
+          verse_number: 3,
+          source_translation: "口語訳",
+        },
+      }),
+    ]);
+
+    render(<ProfilePage />);
+
+    const link = await screen.findByRole("link", { name: /栞したコメント本文/ });
+    expect(link).toHaveAttribute(
+      "href",
+      "/matthew/1?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3#verse-3",
+    );
+    expect(screen.getByText(/マタイによる福音書 1章3節/)).toBeInTheDocument();
   });
 
   it("コメントタブに自分のコメントが表示される", async () => {
@@ -168,5 +211,22 @@ describe("ProfilePage", () => {
     await waitFor(() => {
       expect(screen.getByText("テストコメント")).toBeInTheDocument();
     });
+  });
+
+  it("コメントがその節へのリンクになっている", async () => {
+    const user = makeUser();
+    mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
+
+    const { fetchMyComments } = await import("@/lib/api");
+    vi.mocked(fetchMyComments).mockResolvedValue([makeMyComment()]);
+
+    render(<ProfilePage />);
+    fireEvent.click(screen.getByRole("button", { name: /コメント/ }));
+
+    const link = await screen.findByRole("link", { name: /テストコメント/ });
+    expect(link).toHaveAttribute(
+      "href",
+      "/matthew/1?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3#verse-1",
+    );
   });
 });
