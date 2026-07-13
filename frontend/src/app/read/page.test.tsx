@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ReadPage from "./page";
 import type { TranslationProject } from "@/lib/api";
 
@@ -72,14 +72,19 @@ describe("ReadPage マイ翻訳セクション", () => {
     expect(screen.queryByText("本棚")).not.toBeInTheDocument();
   });
 
-  it("登録があるとカードを表示し /translations/{id}/read にリンクする", async () => {
+  it("登録があると翻訳本棚カテゴリを選ぶとカードを表示し /translations/{id}/read にリンクする", async () => {
     const { fetchTranslationLibrary } = await import("@/lib/api");
     vi.mocked(fetchTranslationLibrary).mockResolvedValue([makeProject()]);
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
 
     render(<ReadPage />);
 
-    await screen.findByText("本棚");
+    // 翻訳本棚はカテゴリチップとして現れる。既定では別ジャンルが選択されているのでカードはまだ出ない。
+    const libraryChip = await screen.findByRole("button", { name: /本棚/ });
+    expect(screen.queryByText("マタイ英訳プロジェクト")).not.toBeInTheDocument();
+
+    fireEvent.click(libraryChip);
+
     const card = screen.getByText("マタイ英訳プロジェクト").closest("a");
     expect(card).toHaveAttribute("href", "/translations/tp1/read");
   });

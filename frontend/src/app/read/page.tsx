@@ -17,6 +17,9 @@ import { useLang } from "@/contexts/LanguageContext";
 
 type ResumeTarget = { slug: string; chapter: number; bookName: string } | null;
 
+// 翻訳本棚カテゴリ用の擬似ジャンルキー。実ジャンル名と衝突しない値にする。
+const TRANSLATION_TAB = "__translation_library__";
+
 export default function ReadPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -105,34 +108,49 @@ export default function ReadPage() {
         const groups = GENRE_ORDER
           .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
           .filter(({ books }) => books.length > 0);
-        const active = groups.find((g) => g.genre === activeGenre) ?? groups[0];
+        // 翻訳本棚は本棚に何かある（ログイン＋追加済み）ときだけカテゴリとして出す。
+        const hasLibrary = library.length > 0;
+        const isLibraryTab = activeGenre === TRANSLATION_TAB && hasLibrary;
+        const active = isLibraryTab ? null : (groups.find((g) => g.genre === activeGenre) ?? groups[0]);
+        const chipStyle = (isActive: boolean): React.CSSProperties => ({
+          fontSize: "var(--font-size-sm)",
+          padding: "6px 14px",
+          borderRadius: 999,
+          border: "1px solid var(--border)",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          background: isActive ? "var(--accent)" : "transparent",
+          color: isActive ? "var(--accent-text)" : "var(--text-muted)",
+        });
         return (
           <>
-            {/* カテゴリ選択（チップ） */}
+            {/* カテゴリ選択（チップ）。ジャンルに加えて翻訳本棚も1カテゴリとして並べる。 */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "var(--space-5)" }}>
               {groups.map(({ genre, books }) => {
-                const isActive = active?.genre === genre;
+                const isActive = !isLibraryTab && active?.genre === genre;
                 return (
                   <button
                     key={genre}
                     onClick={() => setActiveGenre(genre)}
                     aria-pressed={isActive}
-                    style={{
-                      fontSize: "var(--font-size-sm)",
-                      padding: "6px 14px",
-                      borderRadius: 999,
-                      border: "1px solid var(--border)",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      background: isActive ? "var(--accent)" : "transparent",
-                      color: isActive ? "var(--accent-text)" : "var(--text-muted)",
-                    }}
+                    style={chipStyle(isActive)}
                   >
                     {t.genreNames[genre] ?? genre}{" "}
                     <span style={{ opacity: 0.7 }}>({books.length})</span>
                   </button>
                 );
               })}
+              {hasLibrary && (
+                <button
+                  key={TRANSLATION_TAB}
+                  onClick={() => setActiveGenre(TRANSLATION_TAB)}
+                  aria-pressed={isLibraryTab}
+                  style={chipStyle(isLibraryTab)}
+                >
+                  {t.myTranslationsHeading}{" "}
+                  <span style={{ opacity: 0.7 }}>({library.length})</span>
+                </button>
+              )}
             </div>
 
             {/* 選択カテゴリの書 */}
@@ -175,44 +193,42 @@ export default function ReadPage() {
                 </div>
               </div>
             )}
+
+            {/* 翻訳本棚カテゴリ：本棚に追加した公開翻訳を書と同じグリッドで並べる。 */}
+            {isLibraryTab && (
+              <div style={{ marginBottom: "var(--space-6)" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                    gap: 14,
+                  }}
+                >
+                  {library.map((proj) => (
+                    <Link
+                      key={proj.id}
+                      href={`/translations/${proj.id}/read`}
+                      className="card-glow card-glow-interactive"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        padding: "20px 18px",
+                        textDecoration: "none",
+                        color: "var(--text)",
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
+                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                        {proj.source_book_name} → {languageLabel(proj.target_language)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         );
       })()}
-
-      {library.length > 0 && (
-        <div style={{ marginBottom: "var(--space-6)" }}>
-          <h2 style={{ fontSize: "var(--font-size-lg)", fontWeight: 700, margin: "0 0 var(--space-3)", color: "var(--text)" }}>
-            {t.myTranslationsHeading}
-          </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {library.map((proj) => (
-              <Link
-                key={proj.id}
-                href={`/translations/${proj.id}/read`}
-                className="card-glow card-glow-interactive"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: "20px 18px",
-                  textDecoration: "none",
-                  color: "var(--text)",
-                }}
-              >
-                <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
-                <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
-                  {proj.source_book_name} → {languageLabel(proj.target_language)}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
