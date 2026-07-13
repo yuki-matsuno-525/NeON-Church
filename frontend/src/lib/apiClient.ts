@@ -386,8 +386,8 @@ export function setBestAnswer(questionId: string, answerCommentId: string | null
   });
 }
 
-export function searchBible(q: string): Promise<SearchResult> {
-  return apiFetch(`/search/?q=${encodeURIComponent(q)}`);
+export function searchBible(q: string, lang: string, page = 1): Promise<SearchResult> {
+  return apiFetch(`/search/?q=${encodeURIComponent(q)}&lang=${encodeURIComponent(lang)}&page=${page}`);
 }
 
 // ---------------------------------------------------------------------------

@@ -108,8 +108,9 @@ const ja = {
   searchResults: (q: string, n: number) => `「${q}」の検索結果: ${n} 件`,
   searchEmpty: (q: string) => `「${q}」に一致する結果が見つかりませんでした。`,
   sectionBooks: "書名",
-  sectionVerses: "節（最大30件）",
+  sectionVerses: "節",
   sectionComments: "コメント（最大20件）",
+  searchLoadMore: (n: number) => `もっと見る（残り${n}件）`,
   readLink: "読む →",
 
   // ログイン
@@ -507,8 +508,9 @@ const en: typeof ja = {
   searchResults: (q: string, n: number) => `Results for "${q}": ${n} found`,
   searchEmpty: (q: string) => `No results found for "${q}".`,
   sectionBooks: "Books",
-  sectionVerses: "Verses (up to 30)",
+  sectionVerses: "Verses",
   sectionComments: "Comments (up to 20)",
+  searchLoadMore: (n: number) => `Show more (${n} remaining)`,
   readLink: "Read →",
 
   loginTitle: "Sign In",

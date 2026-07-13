@@ -6,6 +6,7 @@ import Link from "next/link";
 import { searchBible, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
 import { EmptyState, Button } from "@/components/ui";
 
 const KIND_BADGE_STYLE: React.CSSProperties = {
@@ -36,25 +37,46 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
   const inputId = useId();
   const q = searchParams.get("q") ?? "";
   const [inputValue, setInputValue] = useState(q);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(q);
-    if (q.length < 2) {
+    if (q.length < 1) {
       setResult(null);
       return;
     }
+    // 新しいクエリ／言語では1ページ目から取り直す。件数の最小判定（CJKは1文字可）は backend に任せる。
+    setPage(1);
     setLoading(true);
-    searchBible(q)
+    searchBible(q, lang, 1)
       .then(setResult)
-      .catch(() => setResult({ verses: [], books: [], comments: [] }))
+      .catch(() => setResult({ verses: [], books: [], comments: [], verse_total: 0, has_more: false }))
       .finally(() => setLoading(false));
-  }, [q]);
+  }, [q, lang]);
+
+  // 節の続きを読み込んで追記する（1冊が上位を占めても後続ページで全書に到達できる）。
+  const loadMoreVerses = async () => {
+    if (!result || loadingMore) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    try {
+      const more = await searchBible(q, lang, next);
+      setResult({ ...result, verses: [...result.verses, ...more.verses], has_more: more.has_more });
+      setPage(next);
+    } catch {
+      // 失敗時は現状維持
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,7 +85,7 @@ function SearchContent() {
     if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   };
 
-  const totalHits = (result?.verses.length ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
+  const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
@@ -126,10 +148,6 @@ function SearchContent() {
         </button>
       </form>
 
-      {q.length > 0 && q.length < 2 && (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.searchMinChars}</p>
-      )}
-
       {loading && <div style={{ color: "var(--text-muted)" }}>{t.searching}</div>}
 
       {result && !loading && (
@@ -177,7 +195,7 @@ function SearchContent() {
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
                 {result.verses.map((v) => {
-                  const slug = getSlugByName(v.book_name);
+                  const slug = v.book_slug || getSlugByName(v.book_name);
                   const url = slug ? `/${slug}/${v.chapter_number}#verse-${v.number}` : null;
                   const parts = highlight(v.text, q).split("**");
                   return (
@@ -215,6 +233,13 @@ function SearchContent() {
                   );
                 })}
               </div>
+              {result.has_more && (
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                  <Button variant="ghost" onClick={loadMoreVerses} disabled={loadingMore}>
+                    {loadingMore ? t.searching : t.searchLoadMore(result.verse_total - result.verses.length)}
+                  </Button>
+                </div>
+              )}
             </section>
           )}
 
