@@ -195,7 +195,7 @@ describe("ProfilePage", () => {
       "href",
       "/matthew/1?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3#verse-3",
     );
-    expect(screen.getByText(/マタイによる福音書 1章 3節/)).toBeInTheDocument();
+    expect(screen.getByText(/マタイによる福音書 1章3節/)).toBeInTheDocument();
   });
 
   it("コメントタブに自分のコメントが表示される", async () => {

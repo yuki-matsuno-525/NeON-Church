@@ -6,7 +6,7 @@ import Link from "next/link";
 import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { useT, bookLabel } from "@/lib/i18n";
+import { useT, bookLabel, formatBookLocation } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
 import { SkeletonList, EmptyState, Button, Toggle } from "@/components/ui";
 
@@ -301,10 +301,11 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
           const cd = bm.comment_detail;
           // コメント栞も、そのコメントが付いた箇所（書・章・節）へ飛べるようにする。
           const commentPassageHref = passageHref(cd);
+          const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
           const card = (
             <>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                {cd.location_label ? `${cd.location_label} · ` : ""}{t.commentBy(cd.username)}
+                {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
               </p>
               <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
                 {cd.body}
@@ -344,6 +345,7 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
 
 function CommentList({ comments }: { comments: MyComment[] }) {
   const t = useT();
+  const { lang } = useLang();
   if (comments.length === 0) {
     return (
       <EmptyState
@@ -364,7 +366,7 @@ function CommentList({ comments }: { comments: MyComment[] }) {
         const inner = (
           <>
             <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-              {c.location_label}
+              {formatBookLocation(c.book_slug, c.chapter_number, c.verse_number, lang)}
             </p>
             <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
               {c.body}
