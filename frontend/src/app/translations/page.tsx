@@ -130,8 +130,8 @@ function TranslationsContent() {
                   )}
 
                   <div style={{ display: "flex", gap: 16, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap" }}>
-                    <span>📖 {p.source_book_name}</span>
-                    <span>🌐 {languageLabel(p.target_language)}</span>
+                    <span>{p.source_book_name}</span>
+                    <span>{languageLabel(p.target_language)}</span>
                     <span>{t.createdBy} {p.owner_username}</span>
                     <span>
                       {t.progress} {p.done_count}/{p.unit_count}
