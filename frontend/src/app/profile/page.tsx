@@ -329,6 +329,11 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
                 {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
               </p>
+              {bm.verse_text && (
+                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  {bm.verse_text}
+                </p>
+              )}
             </div>
           </Link>
         );

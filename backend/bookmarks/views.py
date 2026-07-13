@@ -1,7 +1,9 @@
 from django.db import transaction
+from django.db.models import Case, IntegerField, OuterRef, Subquery, When
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
+from bible.models import Verse
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 from .models import Bookmark
@@ -19,9 +21,27 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
     pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
+        # 節栞は訳非依存の箇所しか持たないので、一覧で本文を見せるために表示用の節本文を
+        # サブクエリで引く（口語訳を優先し、無ければ任意の訳）。N+1 を避けるため本体クエリに含める。
+        verse_text_subq = (
+            Verse.objects.filter(
+                chapter__book__canonical_book=OuterRef("canonical_book"),
+                chapter__number=OuterRef("chapter_number"),
+                number=OuterRef("verse_number"),
+            )
+            .order_by(
+                Case(
+                    When(chapter__book__translation="口語訳", then=0),
+                    default=1,
+                    output_field=IntegerField(),
+                )
+            )
+            .values("text")[:1]
+        )
         return (
             Bookmark.objects.filter(user=self.request.user)
             .select_related("comment__user", "comment__canonical_book", "canonical_book")
+            .annotate(verse_text=Subquery(verse_text_subq))
         )
 
     def perform_create(self, serializer):

@@ -48,6 +48,7 @@ export type Bookmark = {
   comment_detail: BookmarkCommentDetail | null;
   target_type: "verse" | "comment" | null;
   reference: BookmarkReference | null; // 段階5D: 訳非依存の箇所（verse 栞のみ）
+  verse_text: string | null; // 節栞の表示用本文（口語訳優先。comment 栞では null）
   created_at: string;
 };
 export type NotificationTargetKind =
