@@ -76,6 +76,25 @@ describe("TranslationDetailPage", () => {
     vi.clearAllMocks();
   });
 
+  it("プロジェクト概要に状態・進捗・レビュー待ち件数が表示される", async () => {
+    const { fetchTranslation, fetchTranslationUnits } = await import("@/lib/api");
+    vi.mocked(fetchTranslation).mockResolvedValue(makeProject({ done_count: 1, unit_count: 3 }));
+    vi.mocked(fetchTranslationUnits).mockResolvedValue([
+      makeUnit(),
+      makeUnit({ id: "u2", verse_number: 4, status: "done" }),
+      makeUnit({ id: "u3", verse_number: 5, status: "todo" }),
+    ]);
+
+    render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
+
+    await screen.findByText("マタイ英訳プロジェクト");
+    expect(screen.getByText("状態")).toBeInTheDocument();
+    expect(screen.getByText("進行中")).toBeInTheDocument();
+    expect(screen.getByText("1/3 (33%)")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /進捗/ })).toHaveAttribute("aria-valuenow", "33");
+    expect(screen.getByRole("button", { name: "レビュー (1)" })).toBeInTheDocument();
+  });
+
   it("レビュー中ユニットから翻訳読書ページの該当節へ移動できる", async () => {
     const { fetchTranslation, fetchTranslationUnits } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(makeProject());
