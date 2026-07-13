@@ -386,8 +386,22 @@ export function setBestAnswer(questionId: string, answerCommentId: string | null
   });
 }
 
-export function searchBible(q: string, lang: string, page = 1): Promise<SearchResult> {
-  return apiFetch(`/search/?q=${encodeURIComponent(q)}&lang=${encodeURIComponent(lang)}&page=${page}`);
+export type SearchKind = "all" | "verses" | "books" | "comments";
+
+export function searchBible(
+  q: string,
+  lang: string,
+  page = 1,
+  kind: SearchKind = "all",
+  bookSlug = "",
+): Promise<SearchResult> {
+  const qs = new URLSearchParams();
+  qs.set("q", q);
+  qs.set("lang", lang);
+  qs.set("page", String(page));
+  if (kind !== "all") qs.set("kind", kind);
+  if (bookSlug) qs.set("book", bookSlug);
+  return apiFetch(`/search/?${qs.toString()}`);
 }
 
 // ---------------------------------------------------------------------------

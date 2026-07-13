@@ -3,7 +3,7 @@
 import { useEffect, useId, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { searchBible, type SearchResult } from "@/lib/api";
+import { searchBible, type SearchKind, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -23,6 +23,17 @@ const KIND_BADGE_STYLE: React.CSSProperties = {
   marginRight: 8,
 };
 
+const SEARCH_KIND_OPTIONS: { value: SearchKind; labelKey: "all" | "searchKindVerse" | "searchKindBook" | "searchKindComment" }[] = [
+  { value: "all", labelKey: "all" },
+  { value: "verses", labelKey: "searchKindVerse" },
+  { value: "books", labelKey: "searchKindBook" },
+  { value: "comments", labelKey: "searchKindComment" },
+];
+
+function isSearchKind(value: string | null): value is SearchKind {
+  return value === "all" || value === "verses" || value === "books" || value === "comments";
+}
+
 function getSlugByName(name: string): string | null {
   return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? null;
 }
@@ -39,7 +50,11 @@ function SearchContent() {
   const t = useT();
   const { lang } = useLang();
   const inputId = useId();
+  const bookFilterId = useId();
   const q = searchParams.get("q") ?? "";
+  const kindParam = searchParams.get("kind");
+  const kind: SearchKind = isSearchKind(kindParam) ? kindParam : "all";
+  const bookSlug = searchParams.get("book") ?? "";
   const [inputValue, setInputValue] = useState(q);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,11 +71,11 @@ function SearchContent() {
     // 新しいクエリ／言語では1ページ目から取り直す。件数の最小判定（CJKは1文字可）は backend に任せる。
     setPage(1);
     setLoading(true);
-    searchBible(q, lang, 1)
+    searchBible(q, lang, 1, kind, bookSlug)
       .then(setResult)
       .catch(() => setResult({ verses: [], books: [], comments: [], verse_total: 0, has_more: false }))
       .finally(() => setLoading(false));
-  }, [q, lang]);
+  }, [q, lang, kind, bookSlug]);
 
   // 節の続きを読み込んで追記する（1冊が上位を占めても後続ページで全書に到達できる）。
   const loadMoreVerses = async () => {
@@ -68,7 +83,7 @@ function SearchContent() {
     const next = page + 1;
     setLoadingMore(true);
     try {
-      const more = await searchBible(q, lang, next);
+      const more = await searchBible(q, lang, next, kind, bookSlug);
       setResult({ ...result, verses: [...result.verses, ...more.verses], has_more: more.has_more });
       setPage(next);
     } catch {
@@ -82,7 +97,25 @@ function SearchContent() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const trimmed = ((formData.get("search-q") as string) ?? inputValue).trim();
-    if (trimmed) router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    const params = new URLSearchParams(searchParams.toString());
+    if (trimmed) params.set("q", trimmed);
+    else params.delete("q");
+    const nextUrl = params.toString() ? `/search?${params.toString()}` : "/search";
+    router.push(nextUrl);
+  };
+
+  const updateFilters = (next: { kind?: SearchKind; book?: string }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next.kind) {
+      if (next.kind === "all") params.delete("kind");
+      else params.set("kind", next.kind);
+    }
+    if (next.book !== undefined) {
+      if (next.book) params.set("book", next.book);
+      else params.delete("book");
+    }
+    const nextUrl = params.toString() ? `/search?${params.toString()}` : "/search";
+    router.push(nextUrl);
   };
 
   const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
@@ -147,6 +180,59 @@ function SearchContent() {
           {t.searchTitle}
         </button>
       </form>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+        <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
+          {SEARCH_KIND_OPTIONS.map((option) => {
+            const active = option.value === kind;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => updateFilters({ kind: option.value })}
+                style={{
+                  padding: "6px 11px",
+                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                  borderRadius: 999,
+                  background: active ? "var(--accent-tint)" : "var(--bg-alt)",
+                  color: active ? "var(--accent)" : "var(--text-muted)",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: active ? 700 : 600,
+                  fontFamily: "inherit",
+                }}
+              >
+                {t[option.labelKey]}
+              </button>
+            );
+          })}
+        </div>
+        <label htmlFor={bookFilterId} className="sr-only">{t.allBooks}</label>
+        <select
+          id={bookFilterId}
+          value={bookSlug}
+          onChange={(e) => updateFilters({ book: e.target.value })}
+          style={{
+            minHeight: 32,
+            maxWidth: "100%",
+            padding: "5px 10px",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            background: "var(--bg-alt)",
+            color: "var(--text)",
+            fontSize: 12,
+            fontFamily: "inherit",
+          }}
+        >
+          <option value="">{t.allBooks}</option>
+          {BOOKS.map((book) => (
+            <option key={book.slug} value={book.slug}>
+              {lang === "en" ? book.englishName : book.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {loading && <div style={{ color: "var(--text-muted)" }}>{t.searching}</div>}
 
