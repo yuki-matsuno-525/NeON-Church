@@ -156,3 +156,16 @@ class TestVerseOfDay:
         res = api_client.get(VERSE_OF_DAY_URL, {"translation": "KJV"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["translation"] == "口語訳"
+
+    def test_kjv_matches_by_canonical_book_not_order(self, api_client, verse):
+        # A-3 回帰: 対応節は book.order ではなく canonical_book で引く。
+        # KJV の book.order を口語訳とズラしても、同じ箇所（canonical_book/章/節）の KJV 節を返す。
+        from bible.models import Chapter, Verse
+        from tests.factories import make_book
+        kjv_book = make_book("Matthew", "KJV", 99, slug="matthew")  # order を意図的にズラす
+        kjv_chapter = Chapter.objects.create(book=kjv_book, number=1)
+        kjv_verse = Verse.objects.create(chapter=kjv_chapter, number=1, text="KJV Matthew 1:1")
+        res = api_client.get(VERSE_OF_DAY_URL, {"translation": "KJV"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["translation"] == "KJV"
+        assert res.data["text"] == kjv_verse.text

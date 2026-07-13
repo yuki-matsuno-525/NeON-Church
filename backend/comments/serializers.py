@@ -229,15 +229,24 @@ class CommentEditSerializer(serializers.ModelSerializer):
 
 
 class MyCommentSerializer(serializers.ModelSerializer):
-    """自分のコメント一覧用。投稿先の書名・章番号を含む。"""
+    """自分のコメント一覧用。投稿先の書名・章番号に加え、
+    プロフィールからその箇所へリンクするための slug/章/節/訳も返す。"""
 
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
     location_label = serializers.SerializerMethodField()
+    # フロントで箇所リンク（/{slug}/{章}?translation={訳}#verse-{節}）を組み立てるための素材。
+    book_slug = serializers.SerializerMethodField()
+    chapter_number = serializers.IntegerField(read_only=True)
+    verse_number = serializers.IntegerField(read_only=True)
+    source_translation = serializers.CharField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "body", "created_at", "vote_count", "location_label"]
+        fields = [
+            "id", "user", "body", "created_at", "vote_count", "location_label",
+            "book_slug", "chapter_number", "verse_number", "source_translation",
+        ]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
@@ -245,6 +254,9 @@ class MyCommentSerializer(serializers.ModelSerializer):
     def get_location_label(self, obj) -> str:
         book, chapter, verse = _get_location_parts(obj)
         return _format_location_label(book, chapter, verse)
+
+    def get_book_slug(self, obj) -> str:
+        return obj.canonical_book.slug if obj.canonical_book_id else ""
 
 
 class BestAnswerSerializer(serializers.ModelSerializer):

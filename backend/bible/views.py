@@ -153,7 +153,7 @@ class VerseOfDayView(APIView):
     """GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）
 
     ?translation=KJV を渡すと、同じ日付インデックスの節を KJV テキストで返す。
-    口語訳の節順序を基準にして、book.order / chapter.number / verse.number で対応節を引く。
+    口語訳の節順序を基準に日付で節を選び、canonical_book / chapter.number / verse.number で対応節を引く。
     """
 
     permission_classes = [AllowAny]
@@ -182,20 +182,22 @@ class VerseOfDayView(APIView):
             if translation == "口語訳":
                 verse = base_verse
             else:
-                # 同じ書順・章・節番号で指定翻訳の節を探す
-                book_order = base_verse.chapter.book.order
+                # 同じ「箇所」を指定翻訳で探す。書の同一性は訳非依存の canonical_book で判定する
+                # （book.order はインポート方法により訳ごとにズレうるため基準に使わない）。
+                canonical_book = base_verse.chapter.book.canonical_book
                 chapter_num = base_verse.chapter.number
                 verse_num = base_verse.number
                 verse = (
                     Verse.objects.filter(
                         chapter__book__translation=translation,
-                        chapter__book__order=book_order,
+                        chapter__book__canonical_book=canonical_book,
                         chapter__number=chapter_num,
                         number=verse_num,
                     )
                     .select_related("chapter__book")
                     .first()
-                ) or base_verse  # KJV に対応節がなければ口語訳にフォールバック
+                ) if canonical_book else None
+                verse = verse or base_verse  # 指定訳に対応節が無ければ口語訳にフォールバック
 
             data = VerseOfDaySerializer(verse).data
             tomorrow = today + datetime.timedelta(days=1)

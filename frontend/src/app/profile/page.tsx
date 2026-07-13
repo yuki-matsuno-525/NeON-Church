@@ -7,6 +7,7 @@ import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmar
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT, bookLabel } from "@/lib/i18n";
+import { passageHref } from "@/lib/passage";
 import { SkeletonList, EmptyState, Button, Toggle } from "@/components/ui";
 
 type Tab = "bookmarks" | "comments";
@@ -297,20 +298,31 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {bookmarks.map((bm) => {
         if (bm.target_type === "comment" && bm.comment_detail) {
-          return (
-            <div key={bm.id} style={cardStyle}>
+          const cd = bm.comment_detail;
+          // コメント栞も、そのコメントが付いた箇所（書・章・節）へ飛べるようにする。
+          const commentPassageHref = passageHref(cd);
+          const card = (
+            <>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                {t.commentBy(bm.comment_detail.username)}
+                {cd.location_label ? `${cd.location_label} · ` : ""}{t.commentBy(cd.username)}
               </p>
               <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                {bm.comment_detail.body}
+                {cd.body}
               </p>
-            </div>
+            </>
+          );
+          return commentPassageHref ? (
+            <Link key={bm.id} href={commentPassageHref} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+              {card}
+            </Link>
+          ) : (
+            <div key={bm.id} style={cardStyle}>{card}</div>
           );
         }
         if (!bm.reference) return null;
         const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-        const href = `/${bm.reference.book}/${bm.reference.chapter}`;
+        // 章までではなく、その節（#verse-N）まで飛ぶようにする。
+        const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
         return (
           <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
             <div style={{ ...cardStyle, cursor: "pointer" }}>
@@ -342,22 +354,34 @@ function CommentList({ comments }: { comments: MyComment[] }) {
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {comments.map((c) => (
-        <div key={c.id} style={cardStyle}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-            {c.location_label}
-          </p>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-            {c.body}
-          </p>
-          <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
-            {formatRelativeTime(c.created_at)} · ▲ {c.vote_count}
-          </p>
-        </div>
-      ))}
+      {comments.map((c) => {
+        const href = passageHref(c);
+        const inner = (
+          <>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
+              {c.location_label}
+            </p>
+            <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+              {c.body}
+            </p>
+            <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+              {formatRelativeTime(c.created_at)} · ▲ {c.vote_count}
+            </p>
+          </>
+        );
+        // 箇所が分かるコメントは該当節へのリンクにする（クリックで読書画面のその節へ飛ぶ）。
+        return href ? (
+          <Link key={c.id} href={href} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+            {inner}
+          </Link>
+        ) : (
+          <div key={c.id} style={cardStyle}>{inner}</div>
+        );
+      })}
     </div>
   );
 }
+
 
 const cardStyle: React.CSSProperties = {
   background: "var(--bg-alt)",

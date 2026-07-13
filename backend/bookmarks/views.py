@@ -21,7 +21,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return (
             Bookmark.objects.filter(user=self.request.user)
-            .select_related("comment__user", "canonical_book")
+            .select_related("comment__user", "comment__canonical_book", "canonical_book")
         )
 
     def perform_create(self, serializer):
