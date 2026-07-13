@@ -90,3 +90,6 @@ Thumbs.db
 # ---------------------------------------------------------------
 contrast-demo.html
 *AppDataLocalTemp*.png
+
+# Design review screenshots (local artifacts)
+artifacts/design-review/
