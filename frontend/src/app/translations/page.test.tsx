@@ -91,6 +91,18 @@ describe("TranslationsPage", () => {
     expect(screen.getByText(/English/)).toBeInTheDocument();
   });
 
+  it("プロジェクトカードに進捗バーと進捗数が表示される", async () => {
+    const { fetchTranslations } = await import("@/lib/api");
+    vi.mocked(fetchTranslations).mockResolvedValue([makeProject()]);
+    mockUseAuth.mockReturnValue({ user: null });
+
+    render(<TranslationsPage />);
+
+    await screen.findByText("マタイ英訳プロジェクト");
+    expect(screen.getByText("30/100 (30%)")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /マタイ英訳プロジェクト.*進捗/ })).toHaveAttribute("aria-valuenow", "30");
+  });
+
   it("fetchTranslations 失敗でもクラッシュしない", async () => {
     const { fetchTranslations } = await import("@/lib/api");
     vi.mocked(fetchTranslations).mockRejectedValue(new Error("Network Error"));

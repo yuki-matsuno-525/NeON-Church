@@ -99,6 +99,10 @@ function TranslationsContent() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
           {pageItems.map((p) => {
             const st = STATUS_STYLE[p.status] ?? { bg: "var(--bg-hover)", color: "var(--text-muted)", icon: "lock" as IconName };
+            const progressPct = p.unit_count > 0 ? Math.round((p.done_count / p.unit_count) * 100) : 0;
+            const progressText = p.unit_count > 0
+              ? `${p.done_count}/${p.unit_count} (${progressPct}%)`
+              : `${p.done_count}/${p.unit_count}`;
             return (
               <Link
                 key={p.id}
@@ -110,6 +114,8 @@ function TranslationsContent() {
                   style={{
                     height: "100%",
                     padding: "20px 18px",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: "var(--space-2)" }}>
@@ -129,18 +135,28 @@ function TranslationsContent() {
                     </p>
                   )}
 
-                  <div style={{ display: "flex", gap: 16, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap" }}>
-                    <span>{p.source_book_name}</span>
-                    <span>{languageLabel(p.target_language)}</span>
-                    <span>{t.createdBy} {p.owner_username}</span>
-                    <span>
-                      {t.progress} {p.done_count}/{p.unit_count}
-                      {p.unit_count > 0 && (
-                        <span style={{ marginLeft: 6 }}>
-                          ({Math.round((p.done_count / p.unit_count) * 100)}%)
-                        </span>
-                      )}
-                    </span>
+                  <div style={{ marginTop: "auto" }}>
+                    <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap", marginBottom: 10 }}>
+                      <span style={metaPillStyle}>{p.source_book_name}</span>
+                      <span style={metaPillStyle}>{languageLabel(p.target_language)}</span>
+                      <span style={metaPillStyle}>{t.createdBy} {p.owner_username}</span>
+                    </div>
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: 5 }}>
+                        <span>{t.progress}</span>
+                        <span>{progressText}</span>
+                      </div>
+                      <div
+                        role="progressbar"
+                        aria-label={`${p.name} ${t.progress}`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={progressPct}
+                        style={progressTrackStyle}
+                      >
+                        <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999 }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -177,3 +193,22 @@ function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
     opacity: disabled ? 0.4 : 1,
   };
 }
+
+const metaPillStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 24,
+  padding: "2px 8px",
+  borderRadius: 6,
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  color: "var(--text-faint)",
+};
+
+const progressTrackStyle: React.CSSProperties = {
+  height: 7,
+  width: "100%",
+  borderRadius: 999,
+  overflow: "hidden",
+  background: "rgba(255,255,255,0.12)",
+};

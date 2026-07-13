@@ -203,6 +203,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     return status;
   };
 
+  const projectStatusLabel = (status: string) => {
+    if (status === "active") return t.statusActive;
+    if (status === "published") return t.statusPublished;
+    if (status === "draft") return t.statusPending;
+    return status;
+  };
+
   const memberStatusLabel = (status: string) => {
     if (status === "approved") return t.statusApproved;
     if (status === "pending") return t.statusPendingApproval;
@@ -381,17 +388,20 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const progressPct = project.unit_count > 0
     ? Math.round((project.done_count / project.unit_count) * 100)
     : 0;
+  const progressText = project.unit_count > 0
+    ? `${project.done_count}/${project.unit_count} (${progressPct}%)`
+    : `${project.done_count}/${project.unit_count}`;
+  const reviewUnits = units.filter((u) => u.status === "review");
+  const reviewCount = reviewUnits.length;
 
   const tabLabel = (tabKey: "units" | "review" | "members") => {
     if (tabKey === "units") return t.units;
     if (tabKey === "review") {
-      const reviewCount = units.filter((u) => u.status === "review").length;
       return `${t.review}${reviewCount > 0 ? ` (${reviewCount})` : ""}`;
     }
     return t.members;
   };
 
-  const reviewUnits = units.filter((u) => u.status === "review");
   const reviewTargetHref = (unit: TranslationUnit) =>
     `/translations/${id}/read/${unit.chapter_number}#verse-${unit.verse_number}`;
 
@@ -482,17 +492,34 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </p>
       )}
 
-      {project.unit_count > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-            <span>{t.progress}</span>
-            <span>{project.done_count}/{project.unit_count} ({progressPct}%)</span>
-          </div>
-          <div style={{ height: 8, background: "var(--border)", borderRadius: 4, overflow: "hidden" }}>
-            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 4, transition: "width 0.3s" }} />
+      <div style={projectSummaryGridStyle}>
+        <div style={projectSummaryItemStyle}>
+          <span style={projectSummaryLabelStyle}>{t.status}</span>
+          <strong style={projectSummaryValueStyle}>{projectStatusLabel(project.status)}</strong>
+        </div>
+        <div style={projectSummaryItemStyle}>
+          <span style={projectSummaryLabelStyle}>{t.progress}</span>
+          <strong style={projectSummaryValueStyle}>{progressText}</strong>
+          <div
+            role="progressbar"
+            aria-label={t.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPct}
+            style={detailProgressTrackStyle}
+          >
+            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s" }} />
           </div>
         </div>
-      )}
+        <div style={projectSummaryItemStyle}>
+          <span style={projectSummaryLabelStyle}>{t.review}</span>
+          <strong style={projectSummaryValueStyle}>{reviewCount}</strong>
+        </div>
+        <div style={projectSummaryItemStyle}>
+          <span style={projectSummaryLabelStyle}>{t.units}</span>
+          <strong style={projectSummaryValueStyle}>{project.unit_count}</strong>
+        </div>
+      </div>
 
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 24, gap: 0 }}>
         {(["units", "review", "members"] as const).map((tabKey) => (
@@ -893,3 +920,44 @@ function btnStyle(color: string, small = false): React.CSSProperties {
     display: "inline-block",
   };
 }
+
+const projectSummaryGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+  gap: 8,
+  marginBottom: 24,
+};
+
+const projectSummaryItemStyle: React.CSSProperties = {
+  minHeight: 70,
+  padding: "10px 12px",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "var(--bg-alt)",
+  boxSizing: "border-box",
+};
+
+const projectSummaryLabelStyle: React.CSSProperties = {
+  display: "block",
+  marginBottom: 6,
+  color: "var(--text-muted)",
+  fontSize: 12,
+  fontWeight: 600,
+};
+
+const projectSummaryValueStyle: React.CSSProperties = {
+  display: "block",
+  color: "var(--text)",
+  fontSize: 16,
+  fontWeight: 700,
+  lineHeight: 1.3,
+};
+
+const detailProgressTrackStyle: React.CSSProperties = {
+  height: 6,
+  width: "100%",
+  marginTop: 8,
+  borderRadius: 999,
+  overflow: "hidden",
+  background: "var(--border)",
+};
