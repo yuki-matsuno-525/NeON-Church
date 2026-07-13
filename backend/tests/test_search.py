@@ -48,6 +48,16 @@ def verse_kjv(chapter_kjv):
     )
 
 
+@pytest.fixture
+def verse_bungo(db):
+    # 口語訳と同じ箇所（matthew 1:1）を文語訳で作る（同一 canonical・章・節）。
+    from bible.models import Chapter, Verse
+    from tests.factories import make_book
+    b = make_book("マタイ傳福音書", "文語訳", 1, slug="matthew")
+    ch = Chapter.objects.create(book=b, number=1)
+    return Verse.objects.create(chapter=ch, number=1, text="アブラハムの子イエス・キリストの系圖。")
+
+
 @pytest.mark.django_db
 class TestSearchView:
     def test_empty_query_returns_empty(self, api_client):
@@ -56,11 +66,18 @@ class TestSearchView:
         assert res.data["verses"] == []
         assert res.data["books"] == []
 
-    def test_short_query_returns_empty(self, api_client, verse):
-        res = api_client.get(SEARCH_URL, {"q": "ア"})
+    def test_short_latin_query_returns_empty(self, api_client, verse):
+        # ラテン1文字はノイズが多いので弾く
+        res = api_client.get(SEARCH_URL, {"q": "a"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["verses"] == []
         assert res.data["books"] == []
+
+    def test_single_cjk_char_searches(self, api_client, verse):
+        # CJK は1文字でも語として成立するので検索する（例: 「ア」で本文にヒット）
+        res = api_client.get(SEARCH_URL, {"q": "ア"})
+        assert res.status_code == status.HTTP_200_OK
+        assert len(res.data["verses"]) == 1
 
     def test_verse_text_search(self, api_client, verse):
         res = api_client.get(SEARCH_URL, {"q": "アブラハム"})
@@ -89,18 +106,24 @@ class TestSearchView:
         assert res.data["books"] == []
 
     def test_search_includes_kjv_verses(self, api_client, verse, verse_kjv):
-        # KJV 節も検索対象に含まれる
-        res = api_client.get(SEARCH_URL, {"q": "Jesus"})
+        # lang=en では KJV 節が検索対象
+        res = api_client.get(SEARCH_URL, {"q": "Jesus", "lang": "en"})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["verses"]) == 1
         assert res.data["verses"][0]["id"] == str(verse_kjv.id)
 
     def test_search_includes_kjv_books(self, api_client, book, book_kjv):
-        # KJV 書名も検索対象に含まれる
-        res = api_client.get(SEARCH_URL, {"q": "Matthew"})
+        # lang=en では KJV 書名が検索対象
+        res = api_client.get(SEARCH_URL, {"q": "Matthew", "lang": "en"})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["books"]) == 1
         assert res.data["books"][0]["name"] == "Matthew"
+
+    def test_lang_scopes_out_other_language(self, api_client, verse, verse_kjv):
+        # 既定 lang=ja では英語(KJV)の節は返らない（言語スコープ）
+        res = api_client.get(SEARCH_URL, {"q": "Jesus"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["verses"] == []
 
     def test_anonymous_access_allowed(self, api_client, verse):
         res = api_client.get(SEARCH_URL, {"q": "アブラハム"})
@@ -118,13 +141,23 @@ class TestSearchView:
         assert "book_name" in v
         assert "book_id" in v
 
-    def test_max_30_verses_returned(self, db, api_client, chapter):
+    def test_page_size_and_pagination(self, db, api_client, chapter):
+        # 1ページ100件。超えたら has_more=True で次ページに残りが出る。
         from bible.models import Verse
-        for i in range(1, 36):
+        for i in range(1, 121):
             Verse.objects.create(chapter=chapter, number=i, text=f"イエス・キリスト {i}")
-        res = api_client.get(SEARCH_URL, {"q": "イエス"})
-        assert res.status_code == status.HTTP_200_OK
-        assert len(res.data["verses"]) <= 30
+        res1 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 1})
+        assert res1.status_code == status.HTTP_200_OK
+        assert len(res1.data["verses"]) == 100
+        assert res1.data["verse_total"] == 120
+        assert res1.data["has_more"] is True
+        res2 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 2})
+        assert len(res2.data["verses"]) == 20
+        assert res2.data["has_more"] is False
+        # ページ間で重複しない
+        ids1 = {v["id"] for v in res1.data["verses"]}
+        ids2 = {v["id"] for v in res2.data["verses"]}
+        assert ids1.isdisjoint(ids2)
 
     def test_returns_both_verses_and_books(self, api_client, verse, book):
         # 「マタイ」は書名にも節テキストにも（系図という意味では）合致しないが、
@@ -132,3 +165,14 @@ class TestSearchView:
         res = api_client.get(SEARCH_URL, {"q": "マタイ"})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["books"]) >= 1
+
+    def test_dedup_same_passage_across_translations(self, api_client, verse, verse_bungo):
+        # 口語訳と文語訳の同一箇所は代表訳(口語訳)1件に集約される（lang=ja）
+        res = api_client.get(SEARCH_URL, {"q": "イエス"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["verse_total"] == 1
+        assert res.data["verses"][0]["id"] == str(verse.id)
+
+    def test_verse_result_includes_book_slug(self, api_client, verse):
+        res = api_client.get(SEARCH_URL, {"q": "アブラハム"})
+        assert res.data["verses"][0]["book_slug"] == "matthew"

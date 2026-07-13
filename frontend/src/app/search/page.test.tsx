@@ -29,6 +29,8 @@ const makeSearchResult = (overrides: Partial<SearchResult> = {}): SearchResult =
   verses: [],
   books: [],
   comments: [],
+  verse_total: 0,
+  has_more: false,
   ...overrides,
 });
 
@@ -38,18 +40,20 @@ describe("SearchPage", () => {
     mockSearchParams = new URLSearchParams();
   });
 
-  it("q が1文字のとき「2文字以上入力してください。」が表示される", async () => {
-    mockSearchParams = new URLSearchParams({ q: "あ" });
+  it("1文字の日本語でも検索を実行する（CJKは1文字可・件数判定は backend）", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
+    mockSearchParams = new URLSearchParams({ q: "神" });
     render(<SearchPage />);
-    await screen.findByText("2文字以上入力してください。");
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("神", expect.anything(), 1));
   });
 
-  it("q が空のとき「2文字以上入力してください。」は表示されない", async () => {
+  it("q が空のとき検索を実行しない", async () => {
+    const { searchBible } = await import("@/lib/api");
     mockSearchParams = new URLSearchParams();
     render(<SearchPage />);
-    // Suspense が解決するまで待機
     await act(async () => {});
-    expect(screen.queryByText("2文字以上入力してください。")).not.toBeInTheDocument();
+    expect(vi.mocked(searchBible)).not.toHaveBeenCalled();
   });
 
   it("searchBible 成功: 節結果が表示される", async () => {
@@ -65,6 +69,7 @@ describe("SearchPage", () => {
             chapter_id: "ch1",
             book_name: "マタイによる福音書",
             book_id: "b1",
+            book_slug: "matthew",
           },
         ],
       })
@@ -111,6 +116,27 @@ describe("SearchPage", () => {
     await screen.findByText("alice");
     // p要素全体のテキストコンテンツに本文が含まれることを確認
     expect(screen.getByText("alice")).toBeInTheDocument();
+  });
+
+  it("has_more のとき「もっと見る」で次ページの節を追記する", async () => {
+    const { searchBible } = await import("@/lib/api");
+    // クエリ（テスト）を本文に含めない＝ハイライト分割されず1つのテキストノードになる
+    const verse = (id: string, ch: number) => ({
+      id, number: 1, text: `結果${id}`, chapter_number: ch, chapter_id: `c${id}`,
+      book_name: "マタイによる福音書", book_id: "b1", book_slug: "matthew",
+    });
+    vi.mocked(searchBible)
+      .mockResolvedValueOnce(makeSearchResult({ verses: [verse("A", 1)], verse_total: 2, has_more: true }))
+      .mockResolvedValueOnce(makeSearchResult({ verses: [verse("B", 2)], verse_total: 2, has_more: false }));
+    mockSearchParams = new URLSearchParams({ q: "テスト" });
+    render(<SearchPage />);
+
+    const moreBtn = await screen.findByRole("button", { name: /もっと見る/ });
+    fireEvent.click(moreBtn);
+
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("テスト", expect.anything(), 2));
+    await screen.findByText("結果B");
+    expect(screen.getByText("結果A")).toBeInTheDocument();
   });
 
   it("0件のとき「一致する結果が見つかりませんでした。」が表示される", async () => {

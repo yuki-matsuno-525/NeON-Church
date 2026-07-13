@@ -14,6 +14,28 @@ from comments.serializers import CommentSearchSerializer
 from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
+# 検索の言語スコープ。UI 言語ごとに検索対象の訳を絞る。
+# 同一箇所が訳ごとに重複しないよう、**同じ書を重複して持つ訳は入れない**（＝各言語1訳で代表させる）。
+# 日本語は口語訳（現代語）を代表とし、文語訳は検索対象から外す。
+# 英語(KJVと外典)・ギリシャ語(TR=新約/LXX=旧約)は書が重ならないので複数訳でも重複しない。
+# 未知の言語は日本語にフォールバックする。
+LANG_TRANSLATIONS = {
+    "ja": ["口語訳"],
+    "en": ["KJV", "Mark M. Mattison (EN)", "R. H. Charles (EN)", "L. S. A. W ells (EN)"],
+    "grc": ["TR (GRC)", "LXX (GRC)"],
+    "heb": ["WLC (HEB)"],
+}
+
+
+def _min_query_len(q: str) -> int:
+    """検索クエリの最小文字数。CJK（かな・漢字）は1文字でも語として成立するため1、
+    ラテン等はノイズを抑えるため2を要求する（例: 「神」は1文字で検索可能）。"""
+    for ch in q:
+        # ひらがな・カタカナ(぀-ヿ) または CJK統合漢字(一-鿿)
+        if "぀" <= ch <= "ヿ" or "一" <= ch <= "鿿":
+            return 1
+    return 2
+
 
 class BookListView(generics.ListAPIView):
     """書一覧。認証不要。?translation=和訳 でフィルタ可能。"""
@@ -120,22 +142,43 @@ class ReferenceVersesView(_ReferenceView):
 
 
 class SearchView(APIView):
-    """GET /api/search/?q=  節テキストと書名を icontains で検索（全翻訳対象）。"""
+    """GET /api/search/?q=&lang=&page=  節テキスト・書名・コメントを icontains で検索。
+
+    - lang（既定 ja）で節の検索対象を UI 言語の訳に絞り、同じ箇所が訳ごとに重複しないよう
+      代表訳1件に集約する（例: 口語訳と文語訳の両方に当たる箇所は口語訳だけ返す）。
+    - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
+      books / comments は1ページ目のプレビュー用（ページングしない）。
+    """
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
+    VERSE_PAGE_SIZE = 100
 
     def get(self, request):
         q = request.query_params.get("q", "").strip()
-        if len(q) < 2:
-            return Response({"verses": [], "books": [], "comments": []})
+        lang = request.query_params.get("lang", "ja")
+        try:
+            page = max(1, int(request.query_params.get("page", "1")))
+        except ValueError:
+            page = 1
+        if len(q) < _min_query_len(q):
+            return Response({"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False})
 
-        books = Book.objects.filter(name__icontains=q).order_by("order")
-        verses = (
-            Verse.objects.filter(text__icontains=q)
-            .select_related("chapter__book")
-            .order_by("chapter__book__order", "chapter__number", "number")[:30]
+        translations = LANG_TRANSLATIONS.get(lang, LANG_TRANSLATIONS["ja"])
+
+        # UI 言語の訳に絞って書順で並べる（言語ごとに書が重ならない訳だけなので重複しない）。
+        verses_qs = (
+            Verse.objects.filter(text__icontains=q, chapter__book__translation__in=translations)
+            .select_related("chapter__book", "chapter__book__canonical_book")
+            .order_by("chapter__book__order", "chapter__number", "number")
         )
+        verse_total = verses_qs.count()
+        start = (page - 1) * self.VERSE_PAGE_SIZE
+        verses = verses_qs[start : start + self.VERSE_PAGE_SIZE]
+        has_more = start + self.VERSE_PAGE_SIZE < verse_total
+
+        # 書名・コメントは1ページ目のプレビュー（ページングしない）。書名は UI 言語の訳に絞る。
+        books = Book.objects.filter(name__icontains=q, translation__in=translations).order_by("order")[:20]
         comments = (
             Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related("user", "canonical_book")
@@ -146,6 +189,8 @@ class SearchView(APIView):
             "verses": VerseSearchSerializer(verses, many=True).data,
             "books": BookSerializer(books, many=True).data,
             "comments": CommentSearchSerializer(comments, many=True).data,
+            "verse_total": verse_total,
+            "has_more": has_more,
         })
 
 

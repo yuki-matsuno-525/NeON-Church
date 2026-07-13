@@ -208,6 +208,7 @@ export type SearchResult = {
     chapter_id: string;
     book_name: string;
     book_id: string;
+    book_slug: string;
   }[];
   books: Book[];
   comments: {
@@ -217,6 +218,8 @@ export type SearchResult = {
     created_at: string;
     location: string;
   }[];
+  verse_total: number; // 集約後の節ヒット総数（ページングの母数）
+  has_more: boolean; // さらに次ページの節があるか
 };
 
 export type BookmarksVisibility = "private" | "public";
