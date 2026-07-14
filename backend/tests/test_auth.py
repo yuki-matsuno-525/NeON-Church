@@ -84,6 +84,29 @@ class TestLogin:
         )
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
+    def test_stale_cookie_for_deleted_user_does_not_block_login(self, api_client, user_payload):
+        """DB リセットやアカウント削除で消えたユーザーの古い access_token Cookie が
+        残っていても、ログインが 401 で塞がれないこと。
+
+        トークン自体は正しくても指すユーザーが存在しないと SimpleJWT は
+        user_not_found を投げる。CookieJWTAuthentication がこれを黙殺し、
+        再認証（ログイン）を妨げないことを保証する回帰テスト。
+        """
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        # 1) 登録して access_token Cookie を得る（クライアントに保持される）
+        api_client.post(REGISTER_URL, user_payload, format="json")
+        assert "access_token" in api_client.cookies
+        # 2) そのユーザーを削除 → Cookie のトークンは存在しないユーザーを指す
+        User.objects.filter(username=user_payload["username"]).delete()
+        # 3) 別の実在ユーザーで、古い Cookie を保持したままログイン → 200 で通る
+        User.objects.create_user(username="other", email="o@b.com", password="pass1234")
+        res = api_client.post(
+            LOGIN_URL, {"username": "other", "password": "pass1234"}, format="json"
+        )
+        assert res.status_code == status.HTTP_200_OK
+
 
 # ------------------------------------------------------------------
 # ログアウト

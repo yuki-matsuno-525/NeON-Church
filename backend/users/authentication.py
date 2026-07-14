@@ -40,7 +40,15 @@ class CookieJWTAuthentication(JWTAuthentication):
         except exceptions.PermissionDenied:
             return None
 
-        return self.get_user(validated_token), validated_token
+        # トークンは正しくても、指すユーザーが既に存在しないことがある
+        # （DB リセットやアカウント削除後に古い Cookie が残るケース）。
+        # これも「未認証」として黙殺し、ログイン等の再認証を妨げないようにする。
+        try:
+            user = self.get_user(validated_token)
+        except exceptions.AuthenticationFailed:
+            return None
+
+        return user, validated_token
 
     def _enforce_csrf(self, request) -> None:
         check = _CSRFCheck(lambda req: None)
