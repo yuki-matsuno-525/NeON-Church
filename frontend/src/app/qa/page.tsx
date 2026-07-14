@@ -14,14 +14,14 @@ import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
 import { useBookCatalog, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
+import type { IconName } from "@/components/ui/Icon";
 
-const PAGE_SIZE = 10;
-
-type AnsweredFilter = "all" | "answered" | "unanswered";
-
-function parseAnswered(value: string | null): AnsweredFilter {
-  return value === "answered" || value === "unanswered" ? value : "all";
-}
+// 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
+type QAColumnKey = "answered" | "unanswered";
+const QA_COLUMNS: { key: QAColumnKey; icon: IconName; color: string; tint: string }[] = [
+  { key: "answered",   icon: "check-circle", color: "var(--state-success)", tint: "rgba(34,197,94,0.15)" },
+  { key: "unanswered", icon: "help-circle",  color: "var(--state-warning)", tint: "rgba(245,158,11,0.15)" },
+];
 
 export default function QAPage() {
   const t = useT();
@@ -44,8 +44,6 @@ function QAContent() {
   const selectedSlug = searchParams.get("book") ?? "";
   const selectedVersion = searchParams.get("version") ?? "";
   const selectedTagId = searchParams.get("tag") ?? "";
-  const answeredFilter = parseAnswered(searchParams.get("answered"));
-  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
   const catalog = useBookCatalog();
   const [genreFilter, setGenreFilter] = useState("");
@@ -70,13 +68,10 @@ function QAContent() {
     [searchParams, router]
   );
 
-  // 書を切り替えたら訳とページはリセットする。
-  const setSelectedSlug = (slug: string) => updateParams({ book: slug || null, version: null, page: null });
-  const setSelectedVersion = (v: string) => updateParams({ version: v || null, page: null });
-  const setSelectedTagId = (id: string) => updateParams({ tag: id || null, page: null });
-  const setAnsweredFilter = (f: AnsweredFilter) =>
-    updateParams({ answered: f === "all" ? null : f, page: null });
-  const goToPage = (p: number) => updateParams({ page: p > 1 ? String(p) : null });
+  // 書を切り替えたら訳はリセットする。
+  const setSelectedSlug = (slug: string) => updateParams({ book: slug || null, version: null });
+  const setSelectedVersion = (v: string) => updateParams({ version: v || null });
+  const setSelectedTagId = (id: string) => updateParams({ tag: id || null });
 
   useEffect(() => {
     fetchTags().then(setTags).catch(() => {});
@@ -95,26 +90,24 @@ function QAContent() {
     fetchQAComments({
       book_id: bookIdParam || undefined,
       tag_id: selectedTagId || undefined,
-      answered: answeredFilter === "all" ? undefined : answeredFilter === "answered",
     })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [catalog, selectedSlug, selectedVersion, selectedTagId, answeredFilter]);
+  }, [catalog, selectedSlug, selectedVersion, selectedTagId]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadComments();
   }, [loadComments]);
 
-  const filterLabel = (f: AnsweredFilter) => {
-    if (f === "all") return t.filterAll;
-    if (f === "unanswered") return t.filterUnanswered;
-    return t.filterAnswered;
-  };
+  const columnLabel = (key: QAColumnKey) =>
+    key === "answered" ? t.filterAnswered : t.filterUnanswered;
+  const columnDesc = (key: QAColumnKey) =>
+    key === "answered" ? t.qaColAnsweredDesc : t.qaColUnansweredDesc;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 16px" }}>
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
@@ -161,26 +154,6 @@ function QAContent() {
           )}
         </div>
         <div style={filterRowStyle}>
-          {(["all", "unanswered", "answered"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setAnsweredFilter(f)}
-              aria-pressed={answeredFilter === f}
-              style={{
-                fontSize: "var(--font-size-sm)",
-                padding: "8px 12px",
-                minHeight: 36,
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: answeredFilter === f ? "var(--accent)" : "transparent",
-                color: answeredFilter === f ? "var(--accent-text)" : "var(--text-muted)",
-                fontFamily: "inherit",
-              }}
-            >
-              {filterLabel(f)}
-            </button>
-          ))}
           {(() => {
             const groups = groupCatalogByGenre(catalog);
             const bookEntries = genreFilter ? groups.find((g) => g.genre === genreFilter)?.entries ?? [] : catalog;
@@ -266,52 +239,73 @@ function QAContent() {
             </Button>
           }
         />
-      ) : (() => {
-        const totalPages = Math.ceil(comments.length / PAGE_SIZE);
-        const safePage = Math.min(page, totalPages);
-        const pageItems = comments.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-        return (
-          <>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {pageItems.map((c) => (
-                <QACard
-                  key={c.id}
-                  comment={c}
-                  currentUserId={user?.id ?? null}
-                  onBestAnswerChange={loadComments}
-                />
-              ))}
-            </div>
-            {totalPages > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-                <button onClick={() => goToPage(safePage - 1)} disabled={safePage <= 1} style={pageBtnStyle(safePage <= 1)}>{t.prev}</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => goToPage(p)} aria-current={p === safePage ? "page" : undefined} style={pageBtnStyle(false, p === safePage)}>{p}</button>
-                ))}
-                <button onClick={() => goToPage(safePage + 1)} disabled={safePage >= totalPages} style={pageBtnStyle(safePage >= totalPages)}>{t.next}</button>
-              </div>
-            )}
-          </>
-        );
-      })()}
+      ) : (
+        <div style={boardGridStyle}>
+          {QA_COLUMNS.map((col) => {
+            const items = comments.filter((c) =>
+              col.key === "answered" ? !!c.best_answer : !c.best_answer
+            );
+            return (
+              <section key={col.key} style={columnStyle}>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: col.color, display: "inline-flex" }}>
+                      <Icon name={col.icon} size={18} />
+                    </span>
+                    <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{columnLabel(col.key)}</h2>
+                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{items.length}</span>
+                  </div>
+                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{columnDesc(col.key)}</p>
+                </div>
+
+                {items.length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.qaEmptyColumn}</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {items.map((c) => (
+                      <QACard
+                        key={c.id}
+                        comment={c}
+                        currentUserId={user?.id ?? null}
+                        onBestAnswerChange={loadComments}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function pageBtnStyle(disabled: boolean, active = false): React.CSSProperties {
-  return {
-    padding: "8px 14px",
-    minHeight: 40,
-    border: "1px solid var(--border)",
-    borderRadius: 6,
-    background: active ? "var(--accent)" : "transparent",
-    color: active ? "var(--accent-text)" : disabled ? "var(--text-faint)" : "var(--text-muted)",
-    cursor: disabled ? "default" : "pointer",
-    fontSize: 13,
-    fontFamily: "inherit",
-    opacity: disabled ? 0.5 : 1,
-  };
-}
+const boardGridStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+  gap: 16,
+  alignItems: "start",
+};
+
+const columnStyle: React.CSSProperties = {
+  padding: "18px 16px",
+  border: "1px solid var(--border)",
+  borderRadius: 14,
+  background: "rgba(255,255,255,0.02)",
+};
+
+const countBadgeStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: 22,
+  height: 22,
+  padding: "0 7px",
+  borderRadius: 999,
+  fontSize: 12,
+  fontWeight: 700,
+};
 
 const filterPanelStyle: React.CSSProperties = {
   border: "1px solid var(--border)",

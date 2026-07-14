@@ -112,7 +112,7 @@ export default function TranslationsPage() {
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     {items.map((p) => (
-                      <ProjectCard key={p.id} project={p} accent={col.color} tint={col.tint} icon={col.icon} label={columnLabel(col.key)} />
+                      <ProjectCard key={p.id} project={p} accent={col.color} tint={col.tint} label={columnLabel(col.key)} />
                     ))}
                   </div>
                 )}
@@ -129,13 +129,11 @@ function ProjectCard({
   project: p,
   accent,
   tint,
-  icon,
   label,
 }: {
   project: TranslationProject;
   accent: string;
   tint: string;
-  icon: IconName;
   label: string;
 }) {
   const t = useT();
@@ -147,10 +145,7 @@ function ProjectCard({
   return (
     <Link href={`/translations/${p.id}`} style={{ textDecoration: "none", color: "inherit" }}>
       <div className="card-glow card-glow-interactive" style={{ padding: "16px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-          <span style={{ ...iconBoxStyle, background: tint, color: accent }}>
-            <Icon name={icon} size={18} />
-          </span>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-end", gap: 10, marginBottom: 12 }}>
           <span className="badge" style={{ background: tint, color: accent, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
             {label}
           </span>
@@ -209,16 +204,6 @@ const countBadgeStyle: React.CSSProperties = {
   fontWeight: 700,
 };
 
-const iconBoxStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: 34,
-  height: 34,
-  borderRadius: 10,
-  flexShrink: 0,
-};
-
 const metaPillStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -227,7 +212,7 @@ const metaPillStyle: React.CSSProperties = {
   borderRadius: 6,
   background: "rgba(255,255,255,0.06)",
   border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-faint)",
+  color: "var(--text-muted)",
 };
 
 const progressTrackStyle: React.CSSProperties = {
