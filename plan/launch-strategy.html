@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeON Church — 公開・宣伝戦略メモ</title>
+<style>
+  :root {
+    --bg: #0b0820;
+    --panel: #15102e;
+    --panel2: #1c1640;
+    --text: #e8e6f5;
+    --muted: #a6a0c8;
+    --accent: #8b7bff;
+    --accent2: #ff5cae;
+    --border: #2c2550;
+    --good: #4fd18b;
+    --warn: #ffb454;
+    --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+    line-height: 1.8; padding: 40px 20px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 {
+    font-size: 30px; margin: 0 0 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 36px; }
+  h2 {
+    font-size: 20px; margin: 40px 0 14px; padding-left: 12px;
+    border-left: 4px solid var(--accent);
+  }
+  h3 { font-size: 16px; color: var(--accent); margin: 24px 0 10px; }
+  p { margin: 8px 0; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 22px; margin: 14px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  .fit { font-weight: 700; white-space: nowrap; }
+  .pick { color: var(--good); }
+  .star { font-size: 12px; color: var(--accent2); font-weight: 700; }
+  code, pre {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px;
+  }
+  pre {
+    background: #0a0718; border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; overflow-x: auto; color: #cfcaf0; line-height: 1.6;
+  }
+  .note { color: var(--muted); font-size: 13px; }
+  ol li, ul li { margin: 6px 0; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-right: 6px; }
+  .tag.good { background: rgba(79,209,139,.15); color: var(--good); }
+  .tag.warn { background: rgba(255,180,84,.15); color: var(--warn); }
+  .tag.bad { background: rgba(255,107,107,.15); color: var(--bad); }
+  .callout {
+    border-left: 4px solid var(--warn); background: rgba(255,180,84,.08);
+    padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>NeON Church — 公開・宣伝戦略メモ</h1>
+  <div class="sub">HN / Reddit でのローンチ戦略と、フィードバックを集めるための板選び。</div>
+
+  <h2>1. 基本方針：HN は一発、Reddit は多発</h2>
+  <div class="card">
+    <h3>Show HN は実質1回きり</h3>
+    <ul>
+      <li><b>ルール上：</b>同じ製品の再投稿は重複として抑制・削除される。許されるのは「前回から大きく変わった」場合のみ。</li>
+      <li><b>仕組み上：</b>トップ露出は最初の1〜2時間の初速でほぼ決定。沈むと二度と浮上しない＝「様子見で出し直し」が効かない。</li>
+      <li><b>印象が固定：</b>読者層が重複しており、辛口コメントが上位に残ると第一印象として定着する。</li>
+    </ul>
+    <p class="note">→ 出す時点で土台が固まっている必要がある。</p>
+    <h3>Reddit は事情が違う</h3>
+    <p>サブが多く層も分かれる。サブごとに何度か出せて、失敗してもダメージは局所的。</p>
+  </div>
+
+  <div class="callout">
+    <b>推奨シーケンス：</b>
+    ① まず小さいサブ（r/SideProject）で恥ずかしいバグ出し →
+    ② 直す →
+    ③ 仕上がったら本番の Show HN ＋ 大きめサブ。原文導入は「Coming next、どれが欲しい?」として添える。
+  </div>
+
+  <h2>2. 投稿前にやる土台（ブロッカー）</h2>
+  <div class="card">
+    <ul>
+      <li><span class="tag bad">高</span><b>Render スリープ対策</b> … 無料プランは復帰に約50秒。バズの初動を取りこぼす。有料化 or keep-alive。</li>
+      <li><span class="tag bad">高</span><b>過疎に見えない</b> … 有名な数節にコメント/Q&amp;A を数件シード。空の議論サイトは離脱される。</li>
+      <li><span class="tag bad">高</span><b>ログイン無しで読める導線</b> … 「まず読む → 気が向いたらログイン」をトップで明示。</li>
+      <li><span class="tag warn">中</span><b>アクセス解析</b>（Plausible 等）… バズの効果測定。5分で導入。</li>
+      <li><span class="tag warn">中</span><b>パスワード再設定</b> … 当面は Google ログインを主役にしてしのぐ。</li>
+    </ul>
+    <p class="note">原文導入（聖書/外典/偽書）は土台ではなく大型機能 → ロードマップとして語る。詳細は <code>pre-launch-and-original-texts.md</code>。</p>
+  </div>
+
+  <h2>3. 目的別の板（サブレディット）</h2>
+
+  <h3>① 技術的な意見</h3>
+  <table>
+    <tr><th>サブ</th><th>相性</th><th>メモ</th></tr>
+    <tr><td class="pick">r/SideProject <span class="star">最初の一手</span></td><td class="fit">◎</td><td>作り手が集まる。「作った、感想ちょうだい」がそのまま通る</td></tr>
+    <tr><td>r/webdev</td><td class="fit">○</td><td>自己宣伝は基本「Showoff Saturday」スレ限定</td></tr>
+    <tr><td>r/InternetIsBeautiful</td><td class="fit">○</td><td>大リーチだが厳格。Webサイト限定・投稿規則/アカウント年齢など条件多い</td></tr>
+    <tr><td>r/django, r/reactjs</td><td class="fit">△</td><td>「このスタックで作った」系。宣伝制限あり、技術の話に寄せる</td></tr>
+    <tr><td>r/roastmyapp, r/alphaandbetausers</td><td class="fit">○</td><td>フィードバック目的の場。辛口歓迎</td></tr>
+  </table>
+
+  <h3>② テーマ・コンセプト（ポストモダン／“テキストのデータベース”／外典を同等に）</h3>
+  <table>
+    <tr><th>サブ</th><th>相性</th><th>メモ</th></tr>
+    <tr><td class="pick">r/RadicalChristianity <span class="star">大本命</span></td><td class="fit">◎</td><td>神学×批評理論/ポストモダンが土壌。無教会＋東浩紀の文脈が刺さる</td></tr>
+    <tr><td>r/AcademicBiblical</td><td class="fit">◎*</td><td>外典/偽典を真面目に扱う最高の層。ただし<b>自己宣伝禁止＋学術ソース必須</b>。リンク投下は即削除 → 参加・議論で関わる用</td></tr>
+    <tr><td>r/OpenChristian</td><td class="fit">○</td><td>進歩派。非伝統的な枠組みに寛容</td></tr>
+    <tr><td>r/Apocrypha</td><td class="fit">○</td><td>まさに主題。小規模</td></tr>
+    <tr><td>r/religion</td><td class="fit">○</td><td>宗教一般の概念議論</td></tr>
+  </table>
+
+  <h3>③ キリスト教的な意見</h3>
+  <table>
+    <tr><th>サブ</th><th>相性</th><th>メモ</th></tr>
+    <tr><td class="pick">r/Christianity <span class="star">最大・多様</span></td><td class="fit">◎</td><td>賛否両方来る。宣伝より「議論の問い」として。要ルール確認</td></tr>
+    <tr><td>r/TrueChristian</td><td class="fit">△</td><td>保守的。外典同等扱いに反発必至＝コンセプトの耐久テストに有用</td></tr>
+    <tr><td>r/Catholicism, r/OrthodoxChristianity</td><td class="fit">○*</td><td>第二正典は彼らには“正典”。<b>「Apocrypha」呼びは地雷</b>。用語配慮で関心は高い</td></tr>
+    <tr><td>r/Bible</td><td class="fit">○</td><td>本文中心</td></tr>
+  </table>
+
+  <h2>4. 共通の注意</h2>
+  <div class="card">
+    <ul>
+      <li>各サブの <b>rules を必ず読む</b>。多くは自己宣伝に制限。リンクだけは消される。</li>
+      <li>サブごとに<b>文面を変える</b>（技術sub＝作った話／信仰sub＝問いかけ）。</li>
+      <li>カトリック/正教向けは <b>「外典」ではなく「第二正典(deuterocanonical)」</b> と呼ぶ。</li>
+      <li>“遅い/壊れてる”を聞くのではなく <b>“方向性・深さ・欲しいテキスト”</b> を聞く。明白な不備は自分で潰す。</li>
+    </ul>
+  </div>
+
+  <h2>5. 投稿テンプレ</h2>
+
+  <h3>Hacker News（Show HN）</h3>
+  <p class="note">タイトル（80字以内）：</p>
+  <pre>Show HN: NeON Church – a Reddit-style commentary layer for the Bible and Apocrypha</pre>
+  <pre>Hi HN. I built NeON Church (https://neon-church.com), a platform for reading
+scripture and discussing it Reddit-style: comment and reply at the level of
+individual verses, chapters, or whole books, upvote, ask questions with
+accepted answers, and search across verse text and comments.
+
+The idea came from two places. One is Uchimura Kanzo's "Non-Church" (Mukyokai)
+Christianity. The other is Hiroaki Azuma's writing on "database consumption"
+in postmodern culture. I wanted to treat Christianity less as a fixed
+institution and more as an open database of texts, interpretations, and
+fragments.
+
+One consequence: the app drops the canonical / non-canonical distinction.
+Apocrypha and Pseudepigrapha (e.g. the Book of Enoch) sit alongside the
+canonical books, organized by genre. There's also a collaborative translation
+feature.
+
+Solo project, very much a beta. Texts so far: Japanese Kougo-yaku, English KJV,
+and the Book of Enoch (Charles, public domain). Bilingual JP/EN.
+
+Stack: Next.js (App Router) on Vercel, Django REST on Render, Postgres.
+Open source: https://github.com/yuki-matsuno-525/NeON-Church
+
+I'd love feedback on the concept, the reading/commenting UX, or anything
+technical. Thanks.</pre>
+
+  <h3>Reddit（汎用ベース・サブごとに改変）</h3>
+  <pre>Title: I built a Reddit-style platform for reading and discussing the Bible —
+with the Apocrypha treated as equals, not footnotes
+
+I've been building NeON Church (https://neon-church.com): read scripture and
+discuss it thread-by-thread like Reddit — comments on individual verses,
+chapters, or whole books, plus Q&A, full-text search, bookmarks, reading
+progress.
+
+What's a bit different: it drops the canonical / non-canonical line. The Book
+of Enoch and other apocryphal/pseudepigraphal texts sit right next to the
+canonical books, organized by genre. There's also a collaborative translation
+feature.
+
+Early solo beta (KJV + Japanese Kougo-yaku + the Book of Enoch, bilingual
+EN/JP), open source. I'd value feedback on whether the reading + discussion
+experience works for you, and which texts you'd want next.</pre>
+
+  <hr>
+  <p class="note">関連メモ：<code>plan/pre-launch-and-original-texts.md</code>（追加機能の優先順位・原文導入の入手/ライセンス）</p>
+
+</div>
+</body>
+</html>
