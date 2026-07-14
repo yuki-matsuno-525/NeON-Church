@@ -322,6 +322,10 @@ const ja = {
   bookmarkKindChapter: "章",
   bookmarkKindBook: "書",
   bookmarkKindProject: "翻訳プロジェクト",
+  // ページネーション
+  paginationLabel: "ページ送り",
+  paginationPrev: "前のページ",
+  paginationNext: "次のページ",
 
   // 並び替え・検索
   orderNew: "新しい順",
@@ -731,6 +735,9 @@ const en: typeof ja = {
   bookmarkKindChapter: "Chapter",
   bookmarkKindBook: "Book",
   bookmarkKindProject: "Translation project",
+  paginationLabel: "Pagination",
+  paginationPrev: "Previous page",
+  paginationNext: "Next page",
 
   orderNew: "Newest",
   orderVotes: "Popular",

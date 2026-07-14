@@ -8,6 +8,10 @@ import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { EmptyState, Button } from "@/components/ui";
+import { Pagination } from "@/components/ui/Pagination";
+
+// 検索結果（節）は50件ずつページ送りする。backend の VERSE_PAGE_SIZE と揃える。
+const VERSE_PAGE_SIZE = 50;
 
 const KIND_BADGE_STYLE: React.CSSProperties = {
   display: "inline-block",
@@ -55,11 +59,10 @@ function SearchContent() {
   const kindParam = searchParams.get("kind");
   const kind: SearchKind = isSearchKind(kindParam) ? kindParam : "all";
   const bookSlug = searchParams.get("book") ?? "";
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const [inputValue, setInputValue] = useState(q);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -68,30 +71,14 @@ function SearchContent() {
       setResult(null);
       return;
     }
-    // 新しいクエリ／言語では1ページ目から取り直す。件数の最小判定（CJKは1文字可）は backend に任せる。
-    setPage(1);
+    // クエリ・言語・絞り込み・ページのいずれかが変わったら、そのページを取り直す（追記ではなく置換）。
+    // 件数の最小判定（CJKは1文字可）は backend に任せる。
     setLoading(true);
-    searchBible(q, lang, 1, kind, bookSlug)
+    searchBible(q, lang, page, kind, bookSlug)
       .then(setResult)
       .catch(() => setResult({ verses: [], books: [], comments: [], verse_total: 0, has_more: false }))
       .finally(() => setLoading(false));
-  }, [q, lang, kind, bookSlug]);
-
-  // 節の続きを読み込んで追記する（1冊が上位を占めても後続ページで全書に到達できる）。
-  const loadMoreVerses = async () => {
-    if (!result || loadingMore) return;
-    const next = page + 1;
-    setLoadingMore(true);
-    try {
-      const more = await searchBible(q, lang, next, kind, bookSlug);
-      setResult({ ...result, verses: [...result.verses, ...more.verses], has_more: more.has_more });
-      setPage(next);
-    } catch {
-      // 失敗時は現状維持
-    } finally {
-      setLoadingMore(false);
-    }
-  };
+  }, [q, lang, kind, bookSlug, page]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,6 +87,7 @@ function SearchContent() {
     const params = new URLSearchParams(searchParams.toString());
     if (trimmed) params.set("q", trimmed);
     else params.delete("q");
+    params.delete("page"); // 新しい検索は1ページ目から
     const nextUrl = params.toString() ? `/search?${params.toString()}` : "/search";
     router.push(nextUrl);
   };
@@ -114,8 +102,18 @@ function SearchContent() {
       if (next.book) params.set("book", next.book);
       else params.delete("book");
     }
+    params.delete("page"); // 絞り込みを変えたら1ページ目に戻す
     const nextUrl = params.toString() ? `/search?${params.toString()}` : "/search";
     router.push(nextUrl);
+  };
+
+  const goToPage = (next: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next <= 1) params.delete("page");
+    else params.set("page", String(next));
+    const nextUrl = params.toString() ? `/search?${params.toString()}` : "/search";
+    router.push(nextUrl);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
 
   const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
@@ -242,7 +240,7 @@ function SearchContent() {
             {t.searchResults(q, totalHits)}
           </p>
 
-          {result.books.length > 0 && (
+          {page === 1 && result.books.length > 0 && (
             <section style={{ marginBottom: 28 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionBooks}
@@ -319,17 +317,15 @@ function SearchContent() {
                   );
                 })}
               </div>
-              {result.has_more && (
-                <div style={{ textAlign: "center", marginTop: 16 }}>
-                  <Button variant="ghost" onClick={loadMoreVerses} disabled={loadingMore}>
-                    {loadingMore ? t.searching : t.searchLoadMore(result.verse_total - result.verses.length)}
-                  </Button>
-                </div>
-              )}
+              <Pagination
+                page={page}
+                totalPages={Math.ceil(result.verse_total / VERSE_PAGE_SIZE)}
+                onChange={goToPage}
+              />
             </section>
           )}
 
-          {result.comments.length > 0 && (
+          {page === 1 && result.comments.length > 0 && (
             <section style={{ marginBottom: 28 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionComments}

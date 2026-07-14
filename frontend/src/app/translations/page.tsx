@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchTranslations, type TranslationProject } from "@/lib/api";
+import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
-import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { SkeletonList } from "@/components/ui";
+import { Pagination } from "@/components/ui/Pagination";
 import { Icon, type IconName } from "@/components/ui/Icon";
 
-type StatusKey = "published" | "active" | "draft";
+type StatusKey = TranslationStatus;
+
+const PAGE_SIZE = 20;
 
 // ステータスごとのカラム。色はステータスの意味に合わせる（公開=緑 / 進行中=アクセント / 下書き=琥珀）。
 const COLUMNS: { key: StatusKey; icon: IconName; color: string; tint: string }[] = [
@@ -21,15 +25,9 @@ const COLUMNS: { key: StatusKey; icon: IconName; color: string; tint: string }[]
 export default function TranslationsPage() {
   const { user } = useAuth();
   const t = useT();
-  const [projects, setProjects] = useState<TranslationProject[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchTranslations()
-      .then(setProjects)
-      .catch(() => setProjects([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const isMobile = useIsMobile();
+  // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
+  const [activeTab, setActiveTab] = useState<StatusKey>("published");
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -69,59 +67,136 @@ export default function TranslationsPage() {
         )}
       </div>
 
-      {loading ? (
-        <SkeletonList count={3} />
-      ) : projects.length === 0 ? (
-        <EmptyState
-          title={t.noProjects}
-          description={t.emptyTranslationsDesc}
-          action={
-            user ? (
-              <Link href="/translations/new" style={{ textDecoration: "none" }}>
-                <Button variant="primary">{t.emptyTranslationsCta}</Button>
-              </Link>
-            ) : undefined
-          }
-        />
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 16,
-            alignItems: "start",
-          }}
-        >
+      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
+      {isMobile && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           {COLUMNS.map((col) => {
-            const items = projects.filter((p) => p.status === col.key);
+            const active = col.key === activeTab;
             return (
-              <section key={col.key} style={columnStyle}>
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: col.color, display: "inline-flex" }}>
-                      <Icon name={col.icon} size={18} />
-                    </span>
-                    <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{columnLabel(col.key)}</h2>
-                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{items.length}</span>
-                  </div>
-                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{columnDesc(col.key)}</p>
-                </div>
-
-                {items.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.emptyColumn}</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {items.map((p) => (
-                      <ProjectCard key={p.id} project={p} accent={col.color} tint={col.tint} label={columnLabel(col.key)} />
-                    ))}
-                  </div>
-                )}
-              </section>
+              <button
+                key={col.key}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setActiveTab(col.key)}
+                style={{
+                  flex: 1,
+                  padding: "8px 6px",
+                  border: `1px solid ${active ? col.color : "var(--border)"}`,
+                  borderRadius: 8,
+                  background: active ? col.tint : "var(--bg-alt)",
+                  color: active ? col.color : "var(--text-muted)",
+                  fontWeight: active ? 700 : 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {columnLabel(col.key)}
+              </button>
             );
           })}
         </div>
       )}
+
+      <div
+        style={
+          isMobile
+            ? { display: "block" }
+            : { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }
+        }
+      >
+        {COLUMNS.map((col) => (
+          <div
+            key={col.key}
+            style={{ display: isMobile && col.key !== activeTab ? "none" : "block" }}
+          >
+            <TranslationColumn
+              statusKey={col.key}
+              icon={col.icon}
+              color={col.color}
+              tint={col.tint}
+              label={columnLabel(col.key)}
+              desc={columnDesc(col.key)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
+  );
+}
+
+function TranslationColumn({
+  statusKey,
+  icon,
+  color,
+  tint,
+  label,
+  desc,
+}: {
+  statusKey: StatusKey;
+  icon: IconName;
+  color: string;
+  tint: string;
+  label: string;
+  desc: string;
+}) {
+  const t = useT();
+  const [items, setItems] = useState<TranslationProject[]>([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    fetchTranslations(statusKey, page)
+      .then((res) => {
+        if (!active) return;
+        setItems(res.results);
+        setCount(res.count);
+      })
+      .catch(() => {
+        if (!active) return;
+        setItems([]);
+        setCount(0);
+      })
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [statusKey, page]);
+
+  const totalPages = Math.ceil(count / PAGE_SIZE);
+
+  return (
+    <section style={columnStyle}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color, display: "inline-flex" }}>
+            <Icon name={icon} size={18} />
+          </span>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{label}</h2>
+          <span style={{ ...countBadgeStyle, background: tint, color }}>{count}</span>
+        </div>
+        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{desc}</p>
+      </div>
+
+      {loading ? (
+        <SkeletonList count={2} />
+      ) : items.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.emptyColumn}</p>
+      ) : (
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {items.map((p) => (
+              <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+        </>
+      )}
+    </section>
   );
 }
 

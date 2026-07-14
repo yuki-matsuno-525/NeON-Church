@@ -97,7 +97,7 @@ function refreshToken(): Promise<void> {
 
 // バックエンドのページネーション付きレスポンス形式。
 // 中身を全部取り切るだけのフロントでは next/previous は使わず results だけ取り出す。
-interface PaginatedResponse<T> {
+export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
@@ -433,8 +433,17 @@ export function fetchTranslationLanguages(): Promise<TranslationLanguage[]> {
   return apiFetch("/translations/languages/");
 }
 
-export function fetchTranslations(): Promise<TranslationProject[]> {
-  return apiFetch("/translations/");
+export type TranslationStatus = "published" | "active" | "draft";
+
+// 翻訳一覧はステータス列ごとに 20 件ページング（ボードの各カラム用）。count で総ページ数を出す。
+export function fetchTranslations(
+  status?: TranslationStatus,
+  page = 1,
+): Promise<PaginatedResponse<TranslationProject>> {
+  const qs = new URLSearchParams();
+  if (status) qs.set("status", status);
+  qs.set("page", String(page));
+  return apiFetch(`/translations/?${qs.toString()}`);
 }
 
 export function fetchTranslation(id: string): Promise<TranslationProject> {

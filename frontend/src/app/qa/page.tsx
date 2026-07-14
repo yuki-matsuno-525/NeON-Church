@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { fetchQAComments, fetchTags, type QAComment, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
@@ -46,6 +47,9 @@ function QAContent() {
   const selectedTagId = searchParams.get("tag") ?? "";
 
   const catalog = useBookCatalog();
+  const isMobile = useIsMobile();
+  // スマホでは1カラムずつタブ切り替え。既定は「未解決」（回答が必要な列）。
+  const [activeTab, setActiveTab] = useState<QAColumnKey>("unanswered");
   const [genreFilter, setGenreFilter] = useState("");
   const [comments, setComments] = useState<QAComment[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -240,13 +244,50 @@ function QAContent() {
           }
         />
       ) : (
-        <div style={boardGridStyle}>
+        <>
+        {/* スマホだけカラム切り替えタブを出す。PC はタブなしで2カラムを横並び。 */}
+        {isMobile && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+            {QA_COLUMNS.map((col) => {
+              const active = col.key === activeTab;
+              const num = comments.filter((c) =>
+                col.key === "answered" ? !!c.best_answer : !c.best_answer
+              ).length;
+              return (
+                <button
+                  key={col.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setActiveTab(col.key)}
+                  style={{
+                    flex: 1,
+                    padding: "8px 6px",
+                    border: `1px solid ${active ? col.color : "var(--border)"}`,
+                    borderRadius: 8,
+                    background: active ? col.tint : "var(--bg-alt)",
+                    color: active ? col.color : "var(--text-muted)",
+                    fontWeight: active ? 700 : 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {columnLabel(col.key)} ({num})
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div style={isMobile ? { display: "block" } : boardGridStyle}>
           {QA_COLUMNS.map((col) => {
             const items = comments.filter((c) =>
               col.key === "answered" ? !!c.best_answer : !c.best_answer
             );
             return (
-              <section key={col.key} style={columnStyle}>
+              <section
+                key={col.key}
+                style={{ ...columnStyle, display: isMobile && col.key !== activeTab ? "none" : undefined }}
+              >
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: col.color, display: "inline-flex" }}>
@@ -276,6 +317,7 @@ function QAContent() {
             );
           })}
         </div>
+        </>
       )}
     </div>
   );

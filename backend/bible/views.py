@@ -156,7 +156,7 @@ class SearchView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    VERSE_PAGE_SIZE = 100
+    VERSE_PAGE_SIZE = 50
 
     def get(self, request):
         q = request.query_params.get("q", "").strip()
