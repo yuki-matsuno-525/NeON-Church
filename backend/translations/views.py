@@ -6,6 +6,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.pagination import StandardPageNumberPagination
 from notifications.models import Notification
 from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, TranslationLibraryEntry, Language
 
@@ -64,11 +65,14 @@ class IsApprovedMember(permissions.BasePermission):
 
 class TranslationProjectListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/translations/  公開中・進行中プロジェクト一覧（認証不要）
+    GET  /api/translations/  プロジェクト一覧（認証不要・20件ページング）
+        ?status=published|active|draft でステータス列ごとに、?page=N でページ送りできる。
+        一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
     POST /api/translations/  プロジェクト作成（要認証）
     """
 
     serializer_class = TranslationProjectSerializer
+    pagination_class = StandardPageNumberPagination
 
     def get_permissions(self):
         if self.request.method == "POST":
@@ -80,10 +84,20 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         if user.is_authenticated:
             from django.db.models import Q
-            return qs.filter(
-                Q(owner=user) | ~Q(status=TranslationProject.STATUS_DRAFT)
-            )
-        return qs.exclude(status=TranslationProject.STATUS_DRAFT)
+            qs = qs.filter(Q(owner=user) | ~Q(status=TranslationProject.STATUS_DRAFT))
+        else:
+            qs = qs.exclude(status=TranslationProject.STATUS_DRAFT)
+
+        # ボードの1カラム分だけ欲しいときは status で絞る（未知の値は無視して全件）。
+        status_param = self.request.query_params.get("status")
+        valid_statuses = {
+            TranslationProject.STATUS_PUBLISHED,
+            TranslationProject.STATUS_ACTIVE,
+            TranslationProject.STATUS_DRAFT,
+        }
+        if status_param in valid_statuses:
+            qs = qs.filter(status=status_param)
+        return qs
 
     def perform_create(self, serializer):
         project = serializer.save(owner=self.request.user, status=TranslationProject.STATUS_DRAFT)

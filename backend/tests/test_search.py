@@ -181,22 +181,28 @@ class TestSearchView:
         assert "book_id" in v
 
     def test_page_size_and_pagination(self, db, api_client, chapter):
-        # 1ページ100件。超えたら has_more=True で次ページに残りが出る。
+        # 1ページ50件。超えたら has_more=True で次ページに残りが出る。
         from bible.models import Verse
         for i in range(1, 121):
             Verse.objects.create(chapter=chapter, number=i, text=f"イエス・キリスト {i}")
         res1 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 1})
         assert res1.status_code == status.HTTP_200_OK
-        assert len(res1.data["verses"]) == 100
+        assert len(res1.data["verses"]) == 50
         assert res1.data["verse_total"] == 120
         assert res1.data["has_more"] is True
         res2 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 2})
-        assert len(res2.data["verses"]) == 20
-        assert res2.data["has_more"] is False
+        assert len(res2.data["verses"]) == 50
+        assert res2.data["has_more"] is True
+        res3 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 3})
+        assert len(res3.data["verses"]) == 20
+        assert res3.data["has_more"] is False
         # ページ間で重複しない
         ids1 = {v["id"] for v in res1.data["verses"]}
         ids2 = {v["id"] for v in res2.data["verses"]}
+        ids3 = {v["id"] for v in res3.data["verses"]}
         assert ids1.isdisjoint(ids2)
+        assert ids2.isdisjoint(ids3)
+        assert ids1.isdisjoint(ids3)
 
     def test_returns_both_verses_and_books(self, api_client, verse, book):
         # 「マタイ」は書名にも節テキストにも（系図という意味では）合致しないが、

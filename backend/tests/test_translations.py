@@ -148,20 +148,51 @@ class TestTranslationProjectList:
     def test_list_excludes_draft(self, anon_client, project):
         res = anon_client.get(LIST_URL)
         assert res.status_code == status.HTTP_200_OK
-        ids = [p["id"] for p in res.data]
+        ids = [p["id"] for p in res.data["results"]]
         assert project["id"] not in ids
 
     def test_list_includes_active(self, anon_client, active_project):
         res = anon_client.get(LIST_URL)
         assert res.status_code == status.HTTP_200_OK
-        ids = [p["id"] for p in res.data]
+        ids = [p["id"] for p in res.data["results"]]
         assert active_project["id"] in ids
 
     def test_list_includes_published(self, anon_client, published_project):
         res = anon_client.get(LIST_URL)
         assert res.status_code == status.HTTP_200_OK
-        ids = [p["id"] for p in res.data]
+        ids = [p["id"] for p in res.data["results"]]
         assert published_project["id"] in ids
+
+    def test_status_filter_returns_only_that_column(self, db, anon_client, owner_client, book, published_project):
+        # published_project とは別に、進行中プロジェクトを1件つくる。
+        res_c = owner_client.post(LIST_URL, {
+            "name": "進行中P", "source_book": str(book.id), "target_language": "en",
+        }, format="json")
+        active_id = res_c.data["id"]
+        owner_client.post(activate_url(active_id))
+
+        res = anon_client.get(LIST_URL, {"status": "published"})
+        assert res.status_code == status.HTTP_200_OK
+        statuses = {p["status"] for p in res.data["results"]}
+        assert statuses == {"published"}
+        ids = [p["id"] for p in res.data["results"]]
+        assert published_project["id"] in ids
+        assert active_id not in ids
+
+    def test_list_is_paginated_20_per_page(self, db, anon_client, owner_client, book):
+        # 公開列を21件つくると、1ページ目20件・2ページ目1件になる。
+        for i in range(21):
+            res = owner_client.post(LIST_URL, {
+                "name": f"公開P{i}", "source_book": str(book.id), "target_language": "en",
+            }, format="json")
+            pid = res.data["id"]
+            owner_client.post(activate_url(pid))
+            owner_client.post(publish_url(pid))
+        res1 = anon_client.get(LIST_URL, {"status": "published", "page": 1})
+        assert res1.data["count"] == 21
+        assert len(res1.data["results"]) == 20
+        res2 = anon_client.get(LIST_URL, {"status": "published", "page": 2})
+        assert len(res2.data["results"]) == 1
 
     def test_create_requires_auth(self, anon_client, book):
         res = anon_client.post(LIST_URL, {"name": "X", "source_book": str(book.id), "target_language": "en"}, format="json")
