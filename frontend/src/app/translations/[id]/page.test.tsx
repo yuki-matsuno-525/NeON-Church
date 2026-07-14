@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import TranslationDetailPage from "./page";
 import type { TranslationProject, TranslationUnit } from "@/lib/api";
 
@@ -30,6 +30,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     fetchTranslation: vi.fn(),
     fetchTranslationUnits: vi.fn(),
+    updateTranslationUnit: vi.fn(),
   };
 });
 
@@ -95,7 +96,7 @@ describe("TranslationDetailPage", () => {
     expect(screen.getByRole("button", { name: "レビュー (1)" })).toBeInTheDocument();
   });
 
-  it("レビュー中ユニットから翻訳読書ページの該当節へ移動できる", async () => {
+  it("レビュー中ユニットの「該当ユニットへ」でユニット一覧の該当カードへ移動する", async () => {
     const { fetchTranslation, fetchTranslationUnits } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(makeProject());
     vi.mocked(fetchTranslationUnits).mockResolvedValue([
@@ -108,7 +109,32 @@ describe("TranslationDetailPage", () => {
     await screen.findByText("マタイ英訳プロジェクト");
     fireEvent.click(screen.getByRole("button", { name: "レビュー (1)" }));
 
-    const targetLink = screen.getByRole("link", { name: "該当箇所へ" });
-    expect(targetLink).toHaveAttribute("href", "/translations/p1/read/5#verse-3");
+    fireEvent.click(screen.getByRole("button", { name: "該当ユニットへ" }));
+
+    // ユニットタブに切り替わり、該当ユニットのカードが表示される
+    expect(screen.getByRole("button", { name: "ユニット" })).toHaveAttribute("aria-current", "page");
+    expect(document.getElementById("unit-u1")).toBeInTheDocument();
+  });
+
+  it("レビュー承認は確認モーダルを挟む", async () => {
+    const { fetchTranslation, fetchTranslationUnits, updateTranslationUnit } = await import("@/lib/api");
+    vi.mocked(fetchTranslation).mockResolvedValue(makeProject());
+    vi.mocked(fetchTranslationUnits).mockResolvedValue([makeUnit()]);
+    vi.mocked(updateTranslationUnit).mockResolvedValue(makeUnit({ status: "done" }));
+
+    render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
+
+    await screen.findByText("マタイ英訳プロジェクト");
+    fireEvent.click(screen.getByRole("button", { name: "レビュー (1)" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "承認" }));
+    // モーダルが出るまで API は呼ばれない
+    expect(updateTranslationUnit).not.toHaveBeenCalled();
+    expect(screen.getByText("この訳を承認しますか？")).toBeInTheDocument();
+
+    // モーダル内の確認ボタンで承認が実行される
+    const dialog = screen.getByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "承認" }));
+    expect(updateTranslationUnit).toHaveBeenCalledWith("p1", "u1", { status: "done" });
   });
 });

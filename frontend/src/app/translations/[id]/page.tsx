@@ -182,6 +182,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [unitVerseId, setUnitVerseId] = useState("");
 
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+  // 「該当ユニットへ」で切り替えた後に、ユニット一覧の該当カードまでスクロール＆一時ハイライトする対象。
+  const [scrollTargetUnit, setScrollTargetUnit] = useState<string | null>(null);
+  const [confirmApproveUnit, setConfirmApproveUnit] = useState<string | null>(null);
 
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [unitComments, setUnitComments] = useState<Record<string, TranslationComment[]>>({});
@@ -239,6 +242,23 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       fetchMembers(id).then(setMembers).catch(() => {});
     }
   }, [isMember, id]);
+
+  // タブ・章の切り替えでカードが描画された後に、対象ユニットへスクロールしてハイライトする。
+  useEffect(() => {
+    if (!scrollTargetUnit) return;
+    const el = document.getElementById(`unit-${scrollTargetUnit}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timer = setTimeout(() => setScrollTargetUnit(null), 2000);
+    return () => clearTimeout(timer);
+  }, [scrollTargetUnit, tab, selectedChapter]);
+
+  // レビューの「該当ユニットへ」。読書ページではなくユニット一覧の該当カードへ移動する。
+  const handleOpenReviewTarget = (unit: TranslationUnit) => {
+    setTab("units");
+    setSelectedChapter(unit.chapter_number);
+    setScrollTargetUnit(unit.id);
+  };
 
   const handleJoin = async () => {
     await joinTranslation(id);
@@ -434,9 +454,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
     return t.members;
   };
-
-  const reviewTargetHref = (unit: TranslationUnit) =>
-    `/translations/${id}/read/${unit.chapter_number}#verse-${unit.verse_number}`;
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
@@ -690,7 +707,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{selectedChapter}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
-                <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
+                <div
+                  key={unit.id}
+                  id={`unit-${unit.id}`}
+                  className="card-glow"
+                  style={{
+                    overflow: "hidden",
+                    boxShadow: scrollTargetUnit === unit.id ? "0 0 0 2px var(--accent)" : undefined,
+                    transition: "box-shadow 0.3s",
+                  }}
+                >
                   <div style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
                       <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
@@ -848,46 +874,59 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {reviewUnits.map((unit) => (
-                <div key={unit.id} style={{ border: "1px solid #f59e0b", borderRadius: 10, background: "var(--bg-alt)", padding: "12px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
-                      {unit.chapter_number}:{unit.verse_number}
-                      {unit.assigned_to_username && (
-                        <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
-                      )}
+                <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                        {unit.chapter_number}:{unit.verse_number}
+                        {unit.assigned_to_username && (
+                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
+                        )}
+                      </div>
+                      <span
+                        className="badge"
+                        style={{
+                          background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
+                          color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
+                        }}
+                      >
+                        {statusLabel(unit.status)}
+                      </span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <Link
-                        href={reviewTargetHref(unit)}
+
+                    {/* ユニットタブと同じ枠付きカードで元テキストと訳文を並べる。 */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+                      <div style={subCardStyle}>
+                        <div style={colLabelStyle}>{t.sourceText}</div>
+                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                          {unit.verse_text}
+                        </p>
+                      </div>
+                      <div style={subCardStyle}>
+                        <div style={colLabelStyle}>{t.translationText}</div>
+                        {unit.body ? (
+                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                        ) : (
+                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReviewTarget(unit)}
                         style={btnStyle("var(--accent)")}
                       >
                         {t.openReviewTarget}
-                      </Link>
+                      </button>
                       {isOwner && (
                         <button
-                          onClick={() => handleUnitStatusChange(unit.id, "done")}
+                          onClick={() => setConfirmApproveUnit(unit.id)}
                           style={btnStyle("var(--state-success)")}
                         >
                           {t.approve}
                         </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* レビューでも元テキストと訳文を並べて見比べられるようにする。 */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-                    <div>
-                      <div style={colLabelStyle}>{t.sourceText}</div>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.6 }}>
-                        {unit.verse_text}
-                      </p>
-                    </div>
-                    <div>
-                      <div style={colLabelStyle}>{t.translationText}</div>
-                      {unit.body ? (
-                        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
-                      ) : (
-                        <p style={{ margin: 0, fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
                       )}
                     </div>
                   </div>
@@ -954,6 +993,18 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         destructive
         onConfirm={handleConfirmDeleteAllUnits}
         onCancel={() => setConfirmDeleteAllUnits(false)}
+      />
+      <ConfirmDialog
+        open={confirmApproveUnit !== null}
+        title={t.confirmApproveTitle}
+        description={t.confirmApproveDesc}
+        confirmText={t.approve}
+        onConfirm={() => {
+          const unitId = confirmApproveUnit;
+          setConfirmApproveUnit(null);
+          if (unitId) handleUnitStatusChange(unitId, "done");
+        }}
+        onCancel={() => setConfirmApproveUnit(null)}
       />
     </div>
   );
