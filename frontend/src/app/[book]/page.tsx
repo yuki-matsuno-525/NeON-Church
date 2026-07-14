@@ -141,8 +141,10 @@ function BookContent() {
       </div>
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
 
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
-        <span>{label?.name ?? meta.name}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+          {label?.name ?? meta.name}
+        </h1>
         {user && bookId && (
           <BookmarkStar
             active={!!bookBookmark}
@@ -151,7 +153,7 @@ function BookContent() {
             size={18}
           />
         )}
-      </h1>
+      </div>
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
         {t.selectChapterHeading}

@@ -506,8 +506,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 4 }}>
-            <span>{project.name}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, margin: "0 0 4px" }}>
+            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>{project.name}</h1>
             {user && (
               <BookmarkStar
                 active={!!projectBookmark}
@@ -516,7 +516,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 size={18}
               />
             )}
-          </h1>
+          </div>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
             {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>

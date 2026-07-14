@@ -337,15 +337,15 @@ export default function ChapterPage() {
           }}
         >
 
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
-          <span>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
+          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>
             {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
             {chapterName && (
               <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
                 {" — "}{chapterName}
               </span>
             )}
-          </span>
+          </h1>
           {user && chapter && (
             <BookmarkStar
               active={!!chapterBookmark}
@@ -354,7 +354,7 @@ export default function ChapterPage() {
               size={18}
             />
           )}
-        </h1>
+        </div>
 
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
