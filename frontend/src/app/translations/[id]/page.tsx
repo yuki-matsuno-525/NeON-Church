@@ -35,7 +35,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, ConfirmDialog, useToast } from "@/components/ui";
+import { SkeletonList, EmptyState, ConfirmDialog, Button, useToast } from "@/components/ui";
 import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
@@ -186,8 +186,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
   const [unitComments, setUnitComments] = useState<Record<string, TranslationComment[]>>({});
   const [unitCommentBody, setUnitCommentBody] = useState<Record<string, string>>({});
-  const [editingUnit, setEditingUnit] = useState<string | null>(null);
-  const [editBody, setEditBody] = useState("");
+  // 訳文は常時入力できる。ユニットごとの下書きを保持し、保存すると unit.body に反映する。
+  const [unitDrafts, setUnitDrafts] = useState<Record<string, string>>({});
+  const [savingUnit, setSavingUnit] = useState<string | null>(null);
 
   const isOwner = user?.username === project?.owner_username;
 
@@ -285,6 +286,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   };
 
+  // 空プロジェクトのガイドと上部ボタンで共用する「全章を一括追加」。
+  const handleAddAllChapters = async () => {
+    if (!project) return;
+    setAddingBook(true);
+    try {
+      const res = await addBookToTranslation(id, project.source_book);
+      toast.show(t.unitsAdded(res.created), { type: "success" });
+      const u = await fetchTranslationUnits(id);
+      setUnits(u);
+    } catch {
+      /* ignore */
+    } finally {
+      setAddingBook(false);
+    }
+  };
+
   const handleMemberAction = async (membershipId: string, action: "approved" | "rejected" | "remove") => {
     if (action === "remove") {
       await removeMember(id, membershipId);
@@ -340,11 +357,27 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleSaveBody = async (unitId: string) => {
-    const updated = await updateTranslationUnit(id, unitId, { body: editBody });
-    setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
-    const proj = await fetchTranslation(id);
-    setProject(proj);
-    setEditingUnit(null);
+    const current = units.find((u) => u.id === unitId);
+    if (!current) return;
+    const body = unitDrafts[unitId] ?? current.body;
+    setSavingUnit(unitId);
+    try {
+      // 未着手のまま訳文を保存したら、自動で「進行中」に進める。
+      const data: { body: string; status?: TranslationUnit["status"] } = { body };
+      if (current.status === "todo") data.status = "in_progress";
+      const updated = await updateTranslationUnit(id, unitId, data);
+      setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
+      // 保存後は下書きを破棄し、表示ソースを updated.body に戻す（未保存マークも消える）。
+      setUnitDrafts((prev) => {
+        const next = { ...prev };
+        delete next[unitId];
+        return next;
+      });
+      const proj = await fetchTranslation(id);
+      setProject(proj);
+    } finally {
+      setSavingUnit(null);
+    }
   };
 
   const renderCommentBody = (body: string) => {
@@ -549,16 +582,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
               <button
                 disabled={addingBook}
-                onClick={async () => {
-                  if (!project) return;
-                  setAddingBook(true);
-                  try {
-                    const res = await addBookToTranslation(id, project.source_book);
-                    toast.show(t.unitsAdded(res.created), { type: "success" });
-                    const u = await fetchTranslationUnits(id);
-                    setUnits(u);
-                  } catch { /* ignore */ } finally { setAddingBook(false); }
-                }}
+                onClick={handleAddAllChapters}
                 style={btnStyle("var(--accent)")}
               >
                 {addingBook ? t.adding : t.addAllChapters}
@@ -617,6 +641,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               <EmptyState
                 title={t.noUnits}
                 description={isOwner ? t.emptyUnitsDesc : t.noUnitsMsg}
+                action={
+                  isOwner ? (
+                    <Button variant="primary" onClick={handleAddAllChapters} disabled={addingBook}>
+                      {addingBook ? t.adding : t.addAllChapters}
+                    </Button>
+                  ) : undefined
+                }
               />
             ) : (
               <div
@@ -661,89 +692,113 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
                 <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
                   <div style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-                          {unit.chapter_number}:{unit.verse_number}
-                          {unit.assigned_to_username && (
-                            <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
-                          )}
-                        </div>
-                        <p style={{ margin: 0, fontSize: 13, color: "var(--text)", fontStyle: "italic", lineHeight: 1.5 }}>
-                          {unit.verse_text}
-                        </p>
-                        {unit.body && (
-                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                        {unit.chapter_number}:{unit.verse_number}
+                        {unit.assigned_to_username && (
+                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
                         )}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        <span
-                          className="badge"
-                          style={{
-                            background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
-                            color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
-                          }}
-                        >
-                          {statusLabel(unit.status)}
-                        </span>
+                      <span
+                        className="badge"
+                        style={{
+                          background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
+                          color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
+                        }}
+                      >
+                        {statusLabel(unit.status)}
+                      </span>
+                    </div>
+
+                    {(() => {
+                      const canEdit = isOwner || unit.assigned_to_username === user?.username;
+                      const draft = unitDrafts[unit.id] ?? unit.body;
+                      const dirty = draft !== unit.body;
+                      const saving = savingUnit === unit.id;
+                      return (
+                    <>
+                    {/* 元テキスト（左）と訳文（右）を枠付きカードで並べ、見比べながら翻訳できるようにする。狭い画面では自動で縦に積む。 */}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+                      <div style={subCardStyle}>
+                        <div style={colLabelStyle}>{t.sourceText}</div>
+                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                          {unit.verse_text}
+                        </p>
+                      </div>
+                      <div style={subCardStyle}>
+                        <div style={colLabelStyle}>{t.translationText}</div>
+                        {canEdit ? (
+                          // 訳文欄は常時編集可能。「訳文編集」ボタンを押さずに直接入力できる。
+                          <textarea
+                            value={draft}
+                            onChange={(e) => setUnitDrafts((prev) => ({ ...prev, [unit.id]: e.target.value }))}
+                            rows={5}
+                            placeholder={t.translationPlaceholder}
+                            style={{ flex: 1, width: "100%", minHeight: 96, marginTop: 6, padding: 0, border: "none", background: "transparent", color: "var(--text)", fontSize: 14, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6, outline: "none" }}
+                          />
+                        ) : unit.body ? (
+                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                        ) : (
+                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
+                        )}
                       </div>
                     </div>
 
-                    {isOwner && (
-                      <div style={{ marginTop: 8 }}>
-                        <select
-                          value={unit.assigned_to ?? ""}
-                          onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
-                          style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
-                        >
-                          <option value="">{t.noAssignee}</option>
-                          {members.filter((m) => m.status === "approved").map((m) => (
-                            <option key={m.id} value={m.user}>{m.username}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {(isOwner || unit.assigned_to_username === user?.username) && (
-                      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                        {editingUnit === unit.id ? (
-                          <>
-                            <textarea
-                              value={editBody}
-                              onChange={(e) => setEditBody(e.target.value)}
-                              rows={3}
-                              style={{ flex: 1, padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, resize: "vertical", minWidth: 200 }}
-                            />
-                            <button onClick={() => handleSaveBody(unit.id)} style={btnStyle("var(--accent)")}>{t.save}</button>
-                            <button onClick={() => setEditingUnit(null)} style={btnStyle("var(--border)")}>{t.cancel}</button>
-                          </>
-                        ) : (
+                    {canEdit && (
+                      // 元テキスト側の下に担当者/ステータス、訳文側の下に保存ボタン（画像の構成に合わせる）。
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+                          {isOwner && (
+                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                              <span style={fieldLabelStyle}>{t.assigneeLabel}</span>
+                              <select
+                                value={unit.assigned_to ?? ""}
+                                onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
+                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                              >
+                                <option value="">{t.noAssignee}</option>
+                                {members.filter((m) => m.status === "approved").map((m) => (
+                                  <option key={m.id} value={m.user}>{m.username}</option>
+                                ))}
+                              </select>
+                            </label>
+                          )}
+                          {unit.status !== "done" && (
+                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                              <span style={fieldLabelStyle}>{t.statusFieldLabel}</span>
+                              <select
+                                value={unit.status}
+                                onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
+                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                              >
+                                <option value="todo">{t.statusPending}</option>
+                                <option value="in_progress">{t.statusInProgress}</option>
+                                <option value="review">{t.statusInReview}</option>
+                                {isOwner && <option value="done">{t.statusDone}</option>}
+                              </select>
+                            </label>
+                          )}
+                          {isOwner && unit.status === "done" && (
+                            <button onClick={() => handleUnitStatusChange(unit.id, "review")} style={btnStyle("var(--state-warning)")}>
+                              {t.sendBack}
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
+                          {/* 未保存の変更があるときだけ押せる。 */}
                           <button
-                            onClick={() => { setEditingUnit(unit.id); setEditBody(unit.body); }}
-                            style={btnStyle("var(--border)")}
+                            onClick={() => handleSaveBody(unit.id)}
+                            disabled={saving || !dirty}
+                            style={{ ...btnStyle("var(--accent)"), opacity: saving || !dirty ? 0.5 : 1, cursor: saving || !dirty ? "default" : "pointer" }}
                           >
-                            {t.editTranslation}
+                            {saving ? t.saving : t.save}
                           </button>
-                        )}
-                        {unit.status !== "done" && (
-                          <select
-                            value={unit.status}
-                            onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
-                            style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
-                          >
-                            <option value="todo">{t.statusPending}</option>
-                            <option value="in_progress">{t.statusInProgress}</option>
-                            <option value="review">{t.statusInReview}</option>
-                            {isOwner && <option value="done">{t.statusDone}</option>}
-                          </select>
-                        )}
-                        {isOwner && unit.status === "done" && (
-                          <button onClick={() => handleUnitStatusChange(unit.id, "review")} style={btnStyle("var(--state-warning)")}>
-                            {t.sendBack}
-                          </button>
-                        )}
+                        </div>
                       </div>
                     )}
+                    </>
+                      );
+                    })()}
                   </div>
 
                   <div style={{ borderTop: "1px solid var(--border)", padding: "6px 16px" }}>
@@ -794,19 +849,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {reviewUnits.map((unit) => (
                 <div key={unit.id} style={{ border: "1px solid #f59e0b", borderRadius: 10, background: "var(--bg-alt)", padding: "12px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-                        {unit.chapter_number}:{unit.verse_number}
-                        {unit.assigned_to_username && (
-                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
-                        )}
-                      </div>
-                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.5 }}>
-                        {unit.verse_text}
-                      </p>
-                      {unit.body && (
-                        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                      {unit.chapter_number}:{unit.verse_number}
+                      {unit.assigned_to_username && (
+                        <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
                       )}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -823,6 +870,24 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         >
                           {t.approve}
                         </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* レビューでも元テキストと訳文を並べて見比べられるようにする。 */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+                    <div>
+                      <div style={colLabelStyle}>{t.sourceText}</div>
+                      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", fontStyle: "italic", lineHeight: 1.6 }}>
+                        {unit.verse_text}
+                      </p>
+                    </div>
+                    <div>
+                      <div style={colLabelStyle}>{t.translationText}</div>
+                      {unit.body ? (
+                        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
                       )}
                     </div>
                   </div>
@@ -920,6 +985,32 @@ function btnStyle(color: string, small = false): React.CSSProperties {
     display: "inline-block",
   };
 }
+
+const subCardStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  padding: "12px 14px",
+  border: "1px solid var(--border)",
+  borderRadius: 10,
+  background: "var(--bg-alt)",
+  minWidth: 0,
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: "var(--text-faint)",
+  marginBottom: 4,
+};
+
+const colLabelStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: "var(--text-faint)",
+  marginBottom: 4,
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
+};
 
 const projectSummaryGridStyle: React.CSSProperties = {
   display: "grid",
