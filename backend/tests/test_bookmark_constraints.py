@@ -1,8 +1,9 @@
-"""Bookmark の箇所制約テスト（段階5E で追加、5F で verse FK 撤去後の形）。
+"""Bookmark の対象制約テスト（書/章/節・コメント・翻訳プロジェクトの排他）。
 
-- 部分ユニーク unique_user_location_bookmark（同一ユーザー・同一箇所の重複禁止）
-- CHECK bookmark_comment_xor_location（comment 栞 と 箇所栞 の排他・all-or-none）
-- (user, comment) 部分ユニークが壊れていないこと
+- 部分ユニーク: 節（unique_user_location_bookmark）/ 章（unique_user_chapter_bookmark）/
+  書（unique_user_book_bookmark）/ コメント / プロジェクト
+- CHECK bookmark_single_target: 3種（箇所 / comment / project）の排他と、
+  箇所栞の入れ子（節があれば章も必須）
 """
 
 import pytest
@@ -12,6 +13,7 @@ from django.db import IntegrityError, transaction
 from bible.models import Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import Comment
+from translations.models import TranslationProject
 from tests.factories import make_book
 
 pytestmark = pytest.mark.django_db
@@ -24,7 +26,10 @@ def data():
     book = make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
     ch = Chapter.objects.create(book=book, number=3)
     verse = Verse.objects.create(chapter=ch, number=16, text="x")
-    return {"user": user, "canon": book.canonical_book, "verse": verse}
+    project = TranslationProject.objects.create(
+        name="エノク書 私訳", owner=user, source_book=book, target_language="ja"
+    )
+    return {"user": user, "canon": book.canonical_book, "verse": verse, "project": project}
 
 
 def _create(**kwargs) -> Bookmark:
@@ -40,16 +45,43 @@ def _comment(data) -> Comment:
 
 # --- 成功ケース ---
 
-def test_location_bookmark_ok(data):
-    # 5F 後の形（verse FK なし・comment なし・箇所あり）
+def test_verse_bookmark_ok(data):
     bm = _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
     assert bm.pk
+
+
+def test_chapter_bookmark_ok(data):
+    # 章栞: 書+章、節は NULL
+    bm = _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
+    assert bm.pk
+    assert bm.verse_number is None
+
+
+def test_book_bookmark_ok(data):
+    # 書栞: 書のみ、章・節は NULL
+    bm = _create(user=data["user"], canonical_book=data["canon"])
+    assert bm.pk
+    assert bm.chapter_number is None
 
 
 def test_comment_bookmark_ok(data):
     bm = _create(user=data["user"], comment=_comment(data))
     assert bm.pk
     assert bm.canonical_book_id is None
+
+
+def test_project_bookmark_ok(data):
+    bm = _create(user=data["user"], translation_project=data["project"])
+    assert bm.pk
+    assert bm.canonical_book_id is None
+
+
+def test_verse_chapter_book_coexist(data):
+    # 同じ書の節栞・章栞・書栞は別粒度なので共存できる
+    _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
+    _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
+    _create(user=data["user"], canonical_book=data["canon"])
+    assert Bookmark.objects.filter(user=data["user"]).count() == 3
 
 
 def test_same_location_different_users_ok(data):
@@ -59,27 +91,38 @@ def test_same_location_different_users_ok(data):
     assert bm2.pk
 
 
-# --- 失敗ケース（IntegrityError） ---
+# --- 重複（部分ユニーク）失敗ケース ---
 
-def test_duplicate_location_same_user_fails(data):
+def test_duplicate_verse_same_user_fails(data):
     _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
     with pytest.raises(IntegrityError):
         _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
 
 
-def test_only_canonical_fails(data):
-    with pytest.raises(IntegrityError):
-        _create(user=data["user"], canonical_book=data["canon"])
-
-
-def test_canonical_and_chapter_only_fails(data):
+def test_duplicate_chapter_same_user_fails(data):
+    _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
     with pytest.raises(IntegrityError):
         _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
 
 
-def test_one_location_col_null_fails(data):
+def test_duplicate_book_same_user_fails(data):
+    _create(user=data["user"], canonical_book=data["canon"])
     with pytest.raises(IntegrityError):
-        _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=None)
+        _create(user=data["user"], canonical_book=data["canon"])
+
+
+def test_duplicate_project_same_user_fails(data):
+    _create(user=data["user"], translation_project=data["project"])
+    with pytest.raises(IntegrityError):
+        _create(user=data["user"], translation_project=data["project"])
+
+
+# --- CHECK（排他・入れ子）失敗ケース ---
+
+def test_verse_without_chapter_fails(data):
+    # 節があるのに章が NULL は不正（書→章→節の入れ子違反）
+    with pytest.raises(IntegrityError):
+        _create(user=data["user"], canonical_book=data["canon"], verse_number=16)
 
 
 def test_comment_and_location_both_fails(data):
@@ -88,9 +131,20 @@ def test_comment_and_location_both_fails(data):
                 canonical_book=data["canon"], chapter_number=3, verse_number=16)
 
 
-def test_no_comment_no_location_fails(data):
+def test_project_and_location_both_fails(data):
     with pytest.raises(IntegrityError):
-        _create(user=data["user"])  # comment なし・箇所3列すべて NULL
+        _create(user=data["user"], translation_project=data["project"],
+                canonical_book=data["canon"], chapter_number=3, verse_number=16)
+
+
+def test_comment_and_project_both_fails(data):
+    with pytest.raises(IntegrityError):
+        _create(user=data["user"], comment=_comment(data), translation_project=data["project"])
+
+
+def test_no_target_fails(data):
+    with pytest.raises(IntegrityError):
+        _create(user=data["user"])  # 対象なし
 
 
 # --- 既存制約が壊れていない ---

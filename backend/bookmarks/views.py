@@ -40,34 +40,55 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         )
         return (
             Bookmark.objects.filter(user=self.request.user)
-            .select_related("comment__user", "comment__canonical_book", "canonical_book")
+            .select_related(
+                "comment__user", "comment__canonical_book", "canonical_book",
+                "translation_project",
+            )
             .annotate(verse_text=Subquery(verse_text_subq))
         )
 
     def perform_create(self, serializer):
         user = self.request.user
-        # 段階5F: verse は保存しない入力。ここで箇所へ変換し、verse キー自体は取り除く。
+        # verse(節栞)/chapter(章栞)/book(書栞) は保存しない入力。ここで箇所へ変換し、キー自体は取り除く。
         verse = serializer.validated_data.pop("verse", None)
+        chapter = serializer.validated_data.pop("chapter", None)
+        book = serializer.validated_data.pop("book", None)
         comment = serializer.validated_data.get("comment")
+        project = serializer.validated_data.get("translation_project")
 
-        if not verse and not comment:
-            raise ValidationError({"detail": "Specify verse or comment."})
+        if not any([verse, chapter, book, comment, project]):
+            raise ValidationError({"detail": "Specify verse, chapter, book, comment or project."})
 
-        # verse 栞は訳非依存の箇所（canonical_book/章番号/節番号）を backend が導出して保存する
-        # （クライアントからは受け取らない＝偽装防止）。
+        # 箇所栞は訳非依存の箇所（canonical_book/章番号/節番号）を backend が導出して保存する
+        # （クライアントからは受け取らない＝偽装防止）。節栞=章+節、章栞=章のみ、書栞=書のみ。
+        # verse_number/chapter_number は明示的に None を入れて「粒度」を確定させる（重複判定も IS NULL で一致）。
         location = {}
         if verse:
-            chapter = verse.chapter
+            ch = verse.chapter
+            location = {
+                "canonical_book_id": ch.book.canonical_book_id,
+                "chapter_number": ch.number,
+                "verse_number": verse.number,
+            }
+        elif chapter:
             location = {
                 "canonical_book_id": chapter.book.canonical_book_id,
                 "chapter_number": chapter.number,
-                "verse_number": verse.number,
+                "verse_number": None,
             }
-            # 同一ユーザー・同一箇所（別訳含む）の重複を弾く。
-            if Bookmark.objects.filter(user=user, **location).exists():
-                raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+        elif book:
+            location = {
+                "canonical_book_id": book.canonical_book_id,
+                "chapter_number": None,
+                "verse_number": None,
+            }
 
+        # 同一ユーザー・同一対象の重複を弾く（章栞/書栞は verse/chapter が NULL の行だけを対象に一致）。
+        if location and Bookmark.objects.filter(user=user, **location).exists():
+            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
         if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
+            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+        if project and Bookmark.objects.filter(user=user, translation_project=project).exists():
             raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
 
         with transaction.atomic():

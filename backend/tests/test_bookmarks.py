@@ -208,3 +208,95 @@ class TestCommentBookmark:
         bm_id = res.data["id"]
         del_res = auth_client.delete(bookmark_url(bm_id))
         assert del_res.status_code == status.HTTP_204_NO_CONTENT
+
+
+# ------------------------------------------------------------------
+# 章・書ブックマーク（粒度）
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestLocationGranularityBookmark:
+    def test_can_bookmark_chapter(self, auth_client, chapter):
+        res = auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["target_type"] == "chapter"
+        assert res.data["reference"] == {
+            "book": "matthew", "chapter": chapter.number, "verse": None,
+        }
+
+    def test_can_bookmark_book(self, auth_client, book):
+        res = auth_client.post(BOOKMARKS_URL, {"book": str(book.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["target_type"] == "book"
+        assert res.data["reference"] == {
+            "book": "matthew", "chapter": None, "verse": None,
+        }
+
+    def test_chapter_stores_null_verse(self, auth_client, chapter):
+        auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        from bookmarks.models import Bookmark
+        bm = Bookmark.objects.get()
+        assert bm.canonical_book.slug == "matthew"
+        assert bm.chapter_number == chapter.number
+        assert bm.verse_number is None
+
+    def test_duplicate_chapter_is_409(self, auth_client, chapter):
+        auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        res = auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        assert res.status_code == status.HTTP_409_CONFLICT
+
+    def test_chapter_and_verse_coexist(self, auth_client, verse, chapter):
+        # 節栞と章栞は別粒度なので両方付けられる
+        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+        res = auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+
+    def test_chapter_bookmark_has_no_verse_text(self, auth_client, chapter):
+        auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+        res = auth_client.get(BOOKMARKS_URL)
+        item = res.data["results"][0]
+        assert item["target_type"] == "chapter"
+        assert item["verse_text"] is None
+
+
+# ------------------------------------------------------------------
+# 翻訳プロジェクトブックマーク
+# ------------------------------------------------------------------
+@pytest.fixture
+def project(db, book):
+    from django.contrib.auth import get_user_model
+    from translations.models import TranslationProject
+    User = get_user_model()
+    owner = User.objects.create_user(username="proj_owner", password="pass12345")
+    return TranslationProject.objects.create(
+        name="エノク書 私訳", owner=owner, source_book=book, target_language="ja"
+    )
+
+
+@pytest.mark.django_db
+class TestProjectBookmark:
+    def test_can_bookmark_project(self, auth_client, project):
+        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["target_type"] == "project"
+        assert res.data["project_detail"]["id"] == str(project.id)
+        assert res.data["project_detail"]["name"] == "エノク書 私訳"
+
+    def test_project_reference_is_null(self, auth_client, project):
+        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        assert res.data["reference"] is None
+
+    def test_duplicate_project_is_409(self, auth_client, project):
+        auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        assert res.status_code == status.HTTP_409_CONFLICT
+
+    def test_project_bookmark_appears_in_list(self, auth_client, project):
+        auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.get(BOOKMARKS_URL)
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == "project"
+
+    def test_can_delete_project_bookmark(self, auth_client, project):
+        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        del_res = auth_client.delete(bookmark_url(res.data["id"]))
+        assert del_res.status_code == status.HTTP_204_NO_CONTENT
