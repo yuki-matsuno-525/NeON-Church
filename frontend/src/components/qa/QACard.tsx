@@ -90,46 +90,50 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
         padding: "16px",
       }}
     >
+      {/* ヘッダーは翻訳カードに合わせ、ステータスバッジと箇所リンクを右寄せで並べる。 */}
       <div style={qaCardHeaderStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <span style={{ fontWeight: 700, fontSize: 13 }}>{comment.user.username}</span>
-          <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
-            {formatRelativeTime(comment.created_at)}
+        {comment.best_answer ? (
+          <span
+            className="badge"
+            style={{ background: "rgba(34,197,94,0.15)", color: "var(--state-success)", display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}
+            aria-label={t.filterAnswered}
+          >
+            <Icon name="check-circle" size={11} />
+            {t.filterAnswered}
           </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {comment.best_answer ? (
-            <span
-              className="badge"
-              style={{ background: "rgba(34,197,94,0.15)", color: "var(--state-success)", display: "inline-flex", alignItems: "center", gap: 3 }}
-              aria-label={t.filterAnswered}
-            >
-              <Icon name="check-circle" size={11} />
-              {t.filterAnswered}
-            </span>
-          ) : (
-            <span
-              className="badge"
-              style={{ background: "rgba(245,158,11,0.15)", color: "var(--state-warning)", display: "inline-flex", alignItems: "center", gap: 3 }}
-              aria-label={t.filterUnanswered}
-            >
-              <Icon name="help-circle" size={11} />
-              {t.filterUnanswered}
-            </span>
-          )}
-          {url && (
-            <Link href={url} style={qaLocationLinkStyle}>
-              {comment.location_label}
-              <Icon name="chevron-right" size={12} />
-            </Link>
-          )}
-        </div>
+        ) : (
+          <span
+            className="badge"
+            style={{ background: "rgba(245,158,11,0.15)", color: "var(--state-warning)", display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}
+            aria-label={t.filterUnanswered}
+          >
+            <Icon name="help-circle" size={11} />
+            {t.filterUnanswered}
+          </span>
+        )}
+        {url && (
+          <Link href={url} style={qaLocationLinkStyle}>
+            {comment.location_label}
+            <Icon name="chevron-right" size={12} />
+          </Link>
+        )}
       </div>
 
       {comment.title && (
-        <h2 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 700, lineHeight: 1.45 }}>{comment.title}</h2>
+        <h2 style={qaTitleStyle}>{comment.title}</h2>
       )}
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{comment.body}</p>
+
+      {/* 投稿者・日時・タグは翻訳カードの meta ピルと同じ見た目に揃える。 */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
+        <span style={metaPillStyle}>{comment.user.username}</span>
+        <span style={metaPillStyle}>{formatRelativeTime(comment.created_at)}</span>
+        {comment.tags.map((tag) => (
+          <span key={tag.id} style={metaPillStyle}>
+            {t.tagNames[tag.name] ?? tag.name}
+          </span>
+        ))}
+      </div>
 
       {comment.best_answer && (
         <div
@@ -152,13 +156,6 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
       )}
 
       <div style={qaCardFooterStyle}>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", minWidth: 0 }}>
-          {comment.tags.map((tag) => (
-            <span key={tag.id} style={qaTagStyle}>
-              {t.tagNames[tag.name] ?? tag.name}
-            </span>
-          ))}
-        </div>
         <span style={qaCountPillStyle}>
           <Icon name="chevron-up" size={12} />
           {comment.vote_count}
@@ -297,11 +294,19 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
 
 const qaCardHeaderStyle: React.CSSProperties = {
   display: "flex",
-  alignItems: "flex-start",
-  justifyContent: "space-between",
-  gap: 12,
-  marginBottom: 8,
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: 6,
+  marginBottom: 12,
   flexWrap: "wrap",
+};
+
+const qaTitleStyle: React.CSSProperties = {
+  fontFamily: '"Noto Serif JP", serif',
+  fontSize: "var(--font-size-md)",
+  fontWeight: 700,
+  lineHeight: 1.45,
+  margin: "0 0 var(--space-2)",
 };
 
 const qaLocationLinkStyle: React.CSSProperties = {
@@ -323,13 +328,17 @@ const qaCardFooterStyle: React.CSSProperties = {
   alignItems: "center",
 };
 
-const qaTagStyle: React.CSSProperties = {
-  fontSize: 11,
-  padding: "2px 7px",
-  borderRadius: 999,
-  background: "var(--bg)",
-  border: "1px solid var(--border)",
+// 翻訳カードの metaPill と揃えた投稿者・日時・タグ用のピル。
+const metaPillStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 24,
+  padding: "2px 8px",
+  borderRadius: 6,
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.10)",
   color: "var(--text-muted)",
+  fontSize: "var(--font-size-xs)",
 };
 
 const qaCountPillStyle: React.CSSProperties = {
@@ -340,7 +349,7 @@ const qaCountPillStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
   background: "var(--bg)",
   fontSize: 12,
-  color: "var(--text-faint)",
+  color: "var(--text-muted)",
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
