@@ -6,11 +6,17 @@ from common.models import BaseModel
 
 class Bookmark(BaseModel):
     """
-    箇所（訳非依存）またはコメントへのブックマーク。
-    箇所栞（canonical_book/chapter_number/verse_number）か comment 栞のどちらか一方のみを持つ。
+    箇所（訳非依存）・コメント・翻訳プロジェクトのいずれかへのブックマーク。
+    各栞は次の3種のうち **どれか1つ** の対象だけを持つ（排他）。
 
-    段階5F: 旧 verse FK を撤去。栞の同一性は訳非依存の箇所（canonical_book / 章 / 節）で決まる。
-    作成 API の入力は verse_id のままだが、それは「箇所を特定するための入力」であり保存はしない。
+    - 箇所栞: canonical_book を必ず持ち、粒度で章・節を埋める。
+        - 書栞  : canonical_book のみ（chapter/verse は NULL）
+        - 章栞  : canonical_book + chapter_number（verse は NULL）
+        - 節栞  : canonical_book + chapter_number + verse_number（全て NOT NULL）
+      栞の同一性は訳非依存の箇所で決まる。作成 API の入力は verse_id/chapter_id だが、
+      それらは「箇所を特定するための入力」であり、保存するのは canonical_book と章・節の番号。
+    - comment 栞             : comment のみ。
+    - translation_project 栞 : translation_project のみ。
     """
 
     user = models.ForeignKey(
@@ -35,6 +41,13 @@ class Bookmark(BaseModel):
         null=True,
         blank=True,
     )
+    translation_project = models.ForeignKey(
+        "translations.TranslationProject",
+        on_delete=models.CASCADE,
+        related_name="bookmarks",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "bookmarks"
@@ -45,7 +58,12 @@ class Bookmark(BaseModel):
                 condition=models.Q(comment__isnull=False),
                 name="unique_user_comment_bookmark",
             ),
-            # 段階5E: 同一ユーザー・同一箇所の重複栞を DB で禁止（箇所3列が揃う行だけ対象）。
+            models.UniqueConstraint(
+                fields=["user", "translation_project"],
+                condition=models.Q(translation_project__isnull=False),
+                name="unique_user_project_bookmark",
+            ),
+            # 節栞: 同一ユーザー・同一節の重複を禁止（箇所3列が揃う行だけ対象）。
             models.UniqueConstraint(
                 fields=["user", "canonical_book", "chapter_number", "verse_number"],
                 condition=models.Q(canonical_book__isnull=False)
@@ -53,24 +71,50 @@ class Bookmark(BaseModel):
                 & models.Q(verse_number__isnull=False),
                 name="unique_user_location_bookmark",
             ),
-            # 段階5E: 各栞は「comment 栞（comment あり・箇所3列すべて NULL）」か
-            # 「箇所栞（comment なし・箇所3列すべて NOT NULL）」のどちらかだけを許可する。
-            # verse FK には依存しないので 5F で verse FK を削除しても残せる。
+            # 章栞: 同一ユーザー・同一章（節なし）の重複を禁止。
+            models.UniqueConstraint(
+                fields=["user", "canonical_book", "chapter_number"],
+                condition=models.Q(canonical_book__isnull=False)
+                & models.Q(chapter_number__isnull=False)
+                & models.Q(verse_number__isnull=True),
+                name="unique_user_chapter_bookmark",
+            ),
+            # 書栞: 同一ユーザー・同一書（章・節なし）の重複を禁止。
+            models.UniqueConstraint(
+                fields=["user", "canonical_book"],
+                condition=models.Q(canonical_book__isnull=False)
+                & models.Q(chapter_number__isnull=True)
+                & models.Q(verse_number__isnull=True),
+                name="unique_user_book_bookmark",
+            ),
+            # 各栞は「comment 栞」「translation_project 栞」「箇所栞」のいずれか1種のみ。
+            # 箇所栞は canonical_book 必須で、節があれば章も必須（書→章→節の入れ子）。
             models.CheckConstraint(
                 condition=(
                     (
                         models.Q(comment__isnull=False)
+                        & models.Q(translation_project__isnull=True)
                         & models.Q(canonical_book__isnull=True)
                         & models.Q(chapter_number__isnull=True)
                         & models.Q(verse_number__isnull=True)
                     )
                     | (
-                        models.Q(comment__isnull=True)
-                        & models.Q(canonical_book__isnull=False)
-                        & models.Q(chapter_number__isnull=False)
-                        & models.Q(verse_number__isnull=False)
+                        models.Q(translation_project__isnull=False)
+                        & models.Q(comment__isnull=True)
+                        & models.Q(canonical_book__isnull=True)
+                        & models.Q(chapter_number__isnull=True)
+                        & models.Q(verse_number__isnull=True)
+                    )
+                    | (
+                        models.Q(canonical_book__isnull=False)
+                        & models.Q(comment__isnull=True)
+                        & models.Q(translation_project__isnull=True)
+                        & (
+                            models.Q(verse_number__isnull=True)
+                            | models.Q(chapter_number__isnull=False)
+                        )
                     )
                 ),
-                name="bookmark_comment_xor_location",
+                name="bookmark_single_target",
             ),
         ]

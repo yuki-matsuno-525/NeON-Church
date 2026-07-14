@@ -317,6 +317,11 @@ const ja = {
   // ブックマーク
   bookmarkAdd: "お気に入りに追加",
   bookmarkRemove: "お気に入りを解除",
+  // お気に入り一覧での種別バッジ
+  bookmarkKindVerse: "節",
+  bookmarkKindChapter: "章",
+  bookmarkKindBook: "書",
+  bookmarkKindProject: "翻訳プロジェクト",
 
   // 並び替え・検索
   orderNew: "新しい順",
@@ -722,6 +727,10 @@ const en: typeof ja = {
 
   bookmarkAdd: "Add bookmark",
   bookmarkRemove: "Remove bookmark",
+  bookmarkKindVerse: "Verse",
+  bookmarkKindChapter: "Chapter",
+  bookmarkKindBook: "Book",
+  bookmarkKindProject: "Translation project",
 
   orderNew: "Newest",
   orderVotes: "Popular",

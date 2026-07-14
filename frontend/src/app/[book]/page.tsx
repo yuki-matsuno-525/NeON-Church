@@ -3,11 +3,21 @@
 import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { fetchBooks, fetchChapters, type Chapter } from "@/lib/api";
+import {
+  fetchBooks,
+  fetchChapters,
+  fetchBookmarks,
+  createBookBookmark,
+  removeBookmark,
+  type Chapter,
+  type Bookmark,
+} from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { resolveVersionBookIds } from "@/lib/versions";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { BookmarkStar } from "@/components/ui/BookmarkStar";
+import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
@@ -22,12 +32,48 @@ function BookContent() {
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
 
+  const { user } = useAuth();
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookBookmark, setBookBookmark] = useState<Bookmark | null>(null);
+  const [bookBusy, setBookBusy] = useState(false);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
+
+  // この書の書栞（reference が同じ書で、章・節を持たないもの）を拾っておく。
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    fetchBookmarks()
+      .then((bms) => {
+        if (!active) return;
+        const found = bms.find(
+          (bm) => bm.target_type === "book" && bm.reference?.book === slug
+        );
+        setBookBookmark(found ?? null);
+      })
+      .catch(() => active && setBookBookmark(null));
+    return () => {
+      active = false;
+    };
+  }, [user, slug]);
+
+  const toggleBookBookmark = async () => {
+    if (bookBusy || !bookId) return;
+    setBookBusy(true);
+    try {
+      if (bookBookmark) {
+        await removeBookmark(bookBookmark.id);
+        setBookBookmark(null);
+      } else {
+        setBookBookmark(await createBookBookmark(bookId));
+      }
+    } finally {
+      setBookBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!meta) {
@@ -95,9 +141,19 @@ function BookContent() {
       </div>
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
 
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>
-        {label?.name ?? meta.name}
-      </h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+          {label?.name ?? meta.name}
+        </h1>
+        {user && bookId && (
+          <BookmarkStar
+            active={!!bookBookmark}
+            busy={bookBusy}
+            onToggle={toggleBookBookmark}
+            size={18}
+          />
+        )}
+      </div>
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
         {t.selectChapterHeading}

@@ -320,15 +320,39 @@ function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
             <div key={bm.id} style={cardStyle}>{card}</div>
           );
         }
+        // 翻訳プロジェクト栞：プロジェクトのページへ。
+        if (bm.target_type === "project" && bm.project_detail) {
+          const pd = bm.project_detail;
+          return (
+            <Link key={bm.id} href={`/translations/${pd.id}`} style={{ textDecoration: "none" }}>
+              <div style={{ ...cardStyle, cursor: "pointer" }}>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                  {pd.name}
+                </p>
+              </div>
+            </Link>
+          );
+        }
         if (!bm.reference) return null;
+        // 箇所栞（節／章／書）。粒度に応じてラベルとリンク先を変える。節はその節（#verse-N）まで飛ぶ。
         const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-        // 章までではなく、その節（#verse-N）まで飛ぶようにする。
-        const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+        let locationText: string;
+        let href: string;
+        if (bm.reference.verse != null && bm.reference.chapter != null) {
+          locationText = `${label} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
+          href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+        } else if (bm.reference.chapter != null) {
+          locationText = `${label} ${t.chapterFmt(bm.reference.chapter)}`;
+          href = `/${bm.reference.book}/${bm.reference.chapter}`;
+        } else {
+          locationText = label;
+          href = `/${bm.reference.book}?list=1`;
+        }
         return (
           <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
             <div style={{ ...cardStyle, cursor: "pointer" }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
+                {locationText}
               </p>
               {bm.verse_text && (
                 <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
