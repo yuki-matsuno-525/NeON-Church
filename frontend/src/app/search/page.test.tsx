@@ -118,25 +118,23 @@ describe("SearchPage", () => {
     expect(screen.getByText("alice")).toBeInTheDocument();
   });
 
-  it("has_more のとき「もっと見る」で次ページの節を追記する", async () => {
+  it("結果が50件を超えるとページネーションが出て、番号を押すと page 付きで遷移する", async () => {
     const { searchBible } = await import("@/lib/api");
-    // クエリ（テスト）を本文に含めない＝ハイライト分割されず1つのテキストノードになる
     const verse = (id: string, ch: number) => ({
       id, number: 1, text: `結果${id}`, chapter_number: ch, chapter_id: `c${id}`,
       book_name: "マタイによる福音書", book_id: "b1", book_slug: "matthew",
     });
-    vi.mocked(searchBible)
-      .mockResolvedValueOnce(makeSearchResult({ verses: [verse("A", 1)], verse_total: 2, has_more: true }))
-      .mockResolvedValueOnce(makeSearchResult({ verses: [verse("B", 2)], verse_total: 2, has_more: false }));
+    // verse_total=120 → 50件ずつで3ページ。
+    vi.mocked(searchBible).mockResolvedValue(
+      makeSearchResult({ verses: [verse("A", 1)], verse_total: 120, has_more: true })
+    );
     mockSearchParams = new URLSearchParams({ q: "テスト" });
     render(<SearchPage />);
 
-    const moreBtn = await screen.findByRole("button", { name: /もっと見る/ });
-    fireEvent.click(moreBtn);
-
-    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("テスト", expect.anything(), 2, "all", ""));
-    await screen.findByText("結果B");
-    expect(screen.getByText("結果A")).toBeInTheDocument();
+    await screen.findByText("結果A");
+    // 2ページ目のボタンを押すと URL に page=2 が付く。
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(mockPush).toHaveBeenCalledWith("/search?q=%E3%83%86%E3%82%B9%E3%83%88&page=2");
   });
 
   it("URL の種別・書フィルタを searchBible に渡す", async () => {
