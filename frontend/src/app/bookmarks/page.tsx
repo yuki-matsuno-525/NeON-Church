@@ -3,11 +3,20 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchBookmarks, removeBookmark, createBookmark, createCommentBookmark, type Bookmark } from "@/lib/api";
+import {
+  fetchBookmarks,
+  removeBookmark,
+  createBookmark,
+  createChapterBookmark,
+  createBookBookmark,
+  createCommentBookmark,
+  createProjectBookmark,
+  type Bookmark,
+} from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookLabel, formatBookLocation } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-import { resolveVersionVerseIds } from "@/lib/versions";
+import { resolveVersionVerseIds, resolveVersionChapterIds, resolveVersionBookIds } from "@/lib/versions";
 import { passageHref } from "@/lib/passage";
 import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
@@ -41,14 +50,25 @@ export default function BookmarksPage() {
   };
 
   const handleUndo = async (bm: Bookmark) => {
+    // 削除を取り消して同じ対象の栞を作り直す。作成 API の入力は箇所を特定する id なので、
+    // 栞の種類ごとに元の id を解決してから再作成する。
     let newBm: Bookmark;
     if (bm.target_type === "comment" && bm.comment_detail) {
       newBm = await createCommentBookmark(bm.comment_detail.id);
-    } else if (bm.reference) {
-      // 箇所から verse_id を解決して再作成する（作成 API の入力は verse_id のまま）。
+    } else if (bm.target_type === "project" && bm.project_detail) {
+      newBm = await createProjectBookmark(bm.project_detail.id);
+    } else if (bm.target_type === "verse" && bm.reference?.chapter && bm.reference?.verse) {
       const ids = await resolveVersionVerseIds(bm.reference.book, bm.reference.chapter, bm.reference.verse);
       if (!ids[0]) return;
       newBm = await createBookmark(ids[0]);
+    } else if (bm.target_type === "chapter" && bm.reference?.chapter) {
+      const ids = await resolveVersionChapterIds(bm.reference.book, bm.reference.chapter);
+      if (!ids[0]) return;
+      newBm = await createChapterBookmark(ids[0]);
+    } else if (bm.target_type === "book" && bm.reference) {
+      const ids = await resolveVersionBookIds(bm.reference.book);
+      if (!ids[0]) return;
+      newBm = await createBookBookmark(ids[0]);
     } else {
       return;
     }
@@ -138,9 +158,53 @@ export default function BookmarksPage() {
               );
             }
 
+            // 翻訳プロジェクト栞：プロジェクトのページへ。
+            if (bm.target_type === "project" && bm.project_detail) {
+              const pd = bm.project_detail;
+              return (
+                <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
+                  <Link
+                    href={isRemoved ? "#" : `/translations/${pd.id}`}
+                    onClick={(e) => isRemoved && e.preventDefault()}
+                    style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
+                  >
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-faint)", margin: "0 0 4px" }}>
+                      {t.bookmarkKindProject}
+                    </p>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                      {pd.name}
+                    </p>
+                  </Link>
+                  <div style={{ marginTop: 8 }}>
+                    {isRemoved ? (
+                      <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>{t.undo}</button>
+                    ) : (
+                      <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>{t.remove}</button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
             if (!bm.reference) return null;
+            // 箇所栞（節／章／書）。粒度に応じてラベル・リンク先・種別バッジを変える。
             const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-            const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+            let locationText: string;
+            let href: string;
+            let kindLabel: string;
+            if (bm.reference.verse != null && bm.reference.chapter != null) {
+              locationText = `${label} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
+              href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+              kindLabel = t.bookmarkKindVerse;
+            } else if (bm.reference.chapter != null) {
+              locationText = `${label} ${t.chapterFmt(bm.reference.chapter)}`;
+              href = `/${bm.reference.book}/${bm.reference.chapter}`;
+              kindLabel = t.bookmarkKindChapter;
+            } else {
+              locationText = label;
+              href = `/${bm.reference.book}?list=1`;
+              kindLabel = t.bookmarkKindBook;
+            }
 
             return (
               <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
@@ -149,8 +213,11 @@ export default function BookmarksPage() {
                   onClick={(e) => isRemoved && e.preventDefault()}
                   style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
                 >
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-faint)", margin: "0 0 4px" }}>
+                    {kindLabel}
+                  </p>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                    {label} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
+                    {locationText}
                   </p>
                   {bm.verse_text && (
                     <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>

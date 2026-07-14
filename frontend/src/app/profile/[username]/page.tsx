@@ -157,14 +157,39 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
                   <div key={bm.id} style={cardStyle}>{card}</div>
                 );
               }
+              // 翻訳プロジェクト栞：プロジェクトのページへ。
+              if (bm.target_type === "project" && bm.project_detail) {
+                const pd = bm.project_detail;
+                return (
+                  <Link key={bm.id} href={`/translations/${pd.id}`} style={{ textDecoration: "none" }}>
+                    <div style={{ ...cardStyle, cursor: "pointer" }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+                        {pd.name}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              }
               if (!bm.reference) return null;
-              const href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+              // 箇所栞（節／章／書）。粒度に応じてラベルとリンク先を変える。
               const bookDisplay = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
+              let locationText: string;
+              let href: string;
+              if (bm.reference.verse != null && bm.reference.chapter != null) {
+                locationText = `${bookDisplay} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
+                href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
+              } else if (bm.reference.chapter != null) {
+                locationText = `${bookDisplay} ${t.chapterFmt(bm.reference.chapter)}`;
+                href = `/${bm.reference.book}/${bm.reference.chapter}`;
+              } else {
+                locationText = bookDisplay;
+                href = `/${bm.reference.book}?list=1`;
+              }
               return (
                 <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
                   <div style={{ ...cardStyle, cursor: "pointer" }}>
                     <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                      {bookDisplay} {t.verseFmt(bm.reference.chapter, bm.reference.verse)}
+                      {locationText}
                     </p>
                   </div>
                 </Link>

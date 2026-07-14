@@ -26,16 +26,21 @@ import {
   fetchTranslationMembers as fetchMembers,
   assignTranslationUnit,
   formatRelativeTime,
+  fetchBookmarks,
+  createProjectBookmark,
+  removeBookmark,
   type TranslationProject,
   type TranslationUnit,
   type TranslationMembership,
   type TranslationComment,
   type Chapter,
   type Verse,
+  type Bookmark,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, ConfirmDialog, Button, useToast } from "@/components/ui";
+import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
 
 const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
@@ -194,6 +199,42 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [savingUnit, setSavingUnit] = useState<string | null>(null);
 
   const isOwner = user?.username === project?.owner_username;
+
+  // このプロジェクトのお気に入り（プロジェクト栞）。
+  const [projectBookmark, setProjectBookmark] = useState<Bookmark | null>(null);
+  const [projectBusy, setProjectBusy] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    fetchBookmarks()
+      .then((bms) => {
+        if (!active) return;
+        const found = bms.find(
+          (bm) => bm.target_type === "project" && bm.project_detail?.id === id
+        );
+        setProjectBookmark(found ?? null);
+      })
+      .catch(() => active && setProjectBookmark(null));
+    return () => {
+      active = false;
+    };
+  }, [user, id]);
+
+  const toggleProjectBookmark = async () => {
+    if (projectBusy) return;
+    setProjectBusy(true);
+    try {
+      if (projectBookmark) {
+        await removeBookmark(projectBookmark.id);
+        setProjectBookmark(null);
+      } else {
+        setProjectBookmark(await createProjectBookmark(id));
+      }
+    } finally {
+      setProjectBusy(false);
+    }
+  };
 
   const [addingBook, setAddingBook] = useState(false);
   const [removingBook, setRemovingBook] = useState(false);
@@ -465,7 +506,17 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: "0 0 4px" }}>{project.name}</h1>
+          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 4 }}>
+            <span>{project.name}</span>
+            {user && (
+              <BookmarkStar
+                active={!!projectBookmark}
+                busy={projectBusy}
+                onToggle={toggleProjectBookmark}
+                size={18}
+              />
+            )}
+          </h1>
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
             {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>

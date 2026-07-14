@@ -39,16 +39,22 @@ export type BookmarkCommentDetail = {
 };
 export type BookmarkReference = {
   book: string; // canonical_book.slug
-  chapter: number;
-  verse: number;
+  chapter: number | null; // 章栞・書栞では粒度に応じて null
+  verse: number | null; // 章栞・書栞では null
+};
+export type BookmarkProjectDetail = {
+  id: string;
+  name: string;
 };
 export type Bookmark = {
   id: string;
   verse_detail: BookmarkVerseDetail | null;
   comment_detail: BookmarkCommentDetail | null;
-  target_type: "verse" | "comment" | null;
-  reference: BookmarkReference | null; // 段階5D: 訳非依存の箇所（verse 栞のみ）
-  verse_text: string | null; // 節栞の表示用本文（口語訳優先。comment 栞では null）
+  project_detail: BookmarkProjectDetail | null;
+  // verse=節 / chapter=章 / book=書 / comment=コメント / project=翻訳プロジェクト
+  target_type: "verse" | "chapter" | "book" | "comment" | "project" | null;
+  reference: BookmarkReference | null; // 訳非依存の箇所（箇所栞のみ。comment/project では null）
+  verse_text: string | null; // 節栞の表示用本文（口語訳優先。それ以外の栞では null）
   created_at: string;
 };
 export type NotificationTargetKind =

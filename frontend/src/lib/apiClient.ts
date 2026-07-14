@@ -280,10 +280,31 @@ export function createBookmark(verseId: string): Promise<Bookmark> {
   });
 }
 
+export function createChapterBookmark(chapterId: string): Promise<Bookmark> {
+  return apiFetch("/bookmarks/", {
+    method: "POST",
+    body: JSON.stringify({ chapter: chapterId }),
+  });
+}
+
+export function createBookBookmark(bookId: string): Promise<Bookmark> {
+  return apiFetch("/bookmarks/", {
+    method: "POST",
+    body: JSON.stringify({ book: bookId }),
+  });
+}
+
 export function createCommentBookmark(commentId: string): Promise<Bookmark> {
   return apiFetch("/bookmarks/", {
     method: "POST",
     body: JSON.stringify({ comment: commentId }),
+  });
+}
+
+export function createProjectBookmark(projectId: string): Promise<Bookmark> {
+  return apiFetch("/bookmarks/", {
+    method: "POST",
+    body: JSON.stringify({ translation_project: projectId }),
   });
 }
 

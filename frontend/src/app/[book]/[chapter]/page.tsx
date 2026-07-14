@@ -8,11 +8,14 @@ import {
   fetchChapters,
   fetchVerses,
   fetchBookmarks,
+  createChapterBookmark,
+  removeBookmark,
   saveReadingProgress,
   type Verse,
   type Chapter,
   type Bookmark,
 } from "@/lib/api";
+import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { saveLocalProgress } from "@/lib/readingProgress";
 import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
@@ -49,6 +52,7 @@ export default function ChapterPage() {
   const [verses, setVerses] = useState<Verse[]>([]);
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [chapterBusy, setChapterBusy] = useState(false);
   const selectedVerseId = searchParams.get("verse");
   const [loading, setLoading] = useState(true);
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
@@ -190,6 +194,29 @@ export default function ChapterPage() {
   );
   const verseBookmarks = bookmarks.filter((bm) => bm.target_type === "verse" || bm.target_type === null);
 
+  // この章そのものの栞（章栞）。reference が同じ書・同じ章で、節を持たないものが該当。
+  const chapterBookmark = bookmarks.find(
+    (bm) =>
+      bm.target_type === "chapter" &&
+      bm.reference?.book === slug &&
+      bm.reference?.chapter === chapterNum
+  );
+  const toggleChapterBookmark = async () => {
+    if (chapterBusy || !chapter) return;
+    setChapterBusy(true);
+    try {
+      if (chapterBookmark) {
+        await removeBookmark(chapterBookmark.id);
+        setBookmarks((prev) => prev.filter((bm) => bm.id !== chapterBookmark.id));
+      } else {
+        const bm = await createChapterBookmark(chapter.id);
+        setBookmarks((prev) => [...prev, bm]);
+      }
+    } finally {
+      setChapterBusy(false);
+    }
+  };
+
   if (!meta) return null;
 
   if (loading) {
@@ -310,12 +337,22 @@ export default function ChapterPage() {
           }}
         >
 
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24 }}>
-          {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
-          {chapterName && (
-            <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
-              {" — "}{chapterName}
-            </span>
+        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 24, display: "flex", alignItems: "center", gap: 4 }}>
+          <span>
+            {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
+            {chapterName && (
+              <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
+                {" — "}{chapterName}
+              </span>
+            )}
+          </span>
+          {user && chapter && (
+            <BookmarkStar
+              active={!!chapterBookmark}
+              busy={chapterBusy}
+              onToggle={toggleChapterBookmark}
+              size={18}
+            />
           )}
         </h1>
 
@@ -355,8 +392,9 @@ export default function ChapterPage() {
             bookSlug={slug}
             allVersionVerseIds={allVersionVerseIds}
             onVerseBookmarksChange={(updated) =>
+              // 節栞だけ差し替え、コメント・章・書・プロジェクト栞はそのまま保持する。
               setBookmarks((prev) => [
-                ...prev.filter((bm) => bm.target_type === "comment"),
+                ...prev.filter((bm) => bm.target_type !== "verse" && bm.target_type !== null),
                 ...updated,
               ])
             }
