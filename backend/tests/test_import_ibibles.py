@@ -25,6 +25,15 @@ def test_parse_extracts_books_verses_and_strips_dup_ref():
     assert verses[(2, 1)] == "Now when Jesus was born in Bethlehem."
 
 
+def test_parse_strips_multiword_greek_reference():
+    # gtr.txt 形式: 略号参照のあとに多語のフル書名参照が続く（"Mat 1:1 Κατα Ματθαιον 1:1 本文"）。
+    # 多語の書名（Κατα Ματθαιον）でも重複参照を取り除けること。
+    sample = "=101 Matthew\nMat 1:1 Κατα Ματθαιον 1:1 βιβλος γενεσεως\n"
+    books = parse_ibibles_text(sample)
+    _, _, verses = books[0]
+    assert verses[(1, 1)] == "βιβλος γενεσεως"
+
+
 def _write(tmp_path, text):
     p = tmp_path / "sample.txt"
     p.write_text(text, encoding="utf-8")

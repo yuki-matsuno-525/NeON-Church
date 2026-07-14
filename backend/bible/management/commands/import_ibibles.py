@@ -56,8 +56,10 @@ INDEX_TO_SLUG = {
 
 _HEADER_RE = re.compile(r"^=(\d+)\s+(.+?)\s*$")
 _VERSE_RE = re.compile(r"^\S+\s+(\d+):(\d+)\s+(.*)$")
-# 本文の先頭に重複した参照（例: "Ge 1:1 "）が付く場合に取り除く。
-_DUP_REF_RE = re.compile(r"^\S+\s+\d+:\d+\s+")
+# 本文の先頭に重複した参照が付く場合に取り除く。書名は1語（"Ge 1:1 "）とは
+# 限らず、多語（ギリシャ語の "Κατα Ματθαιον 1:1 " 等）もあるため、
+# 章:節 の直前にある1語以上の書名トークンをまとめて除去する。
+_DUP_REF_RE = re.compile(r"^(?:\S+\s+)+?\d+:\d+\s+")
 
 
 def parse_ibibles_text(text: str):
