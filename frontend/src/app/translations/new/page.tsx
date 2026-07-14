@@ -8,7 +8,6 @@ import Link from "next/link";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
-import { getBookBySlug } from "@/lib/books";
 import { useBookCatalog, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 
 export default function NewTranslationPage() {
@@ -41,8 +40,9 @@ export default function NewTranslationPage() {
 
   const handleSlugChange = (slug: string) => {
     setSourceSlug(slug);
-    // その書の最初の訳を既定で選ぶ（訳が1つでも常に選択状態にする）。
-    setSourceVersion(getBookBySlug(slug)?.translations[0]?.id ?? "");
+    // その書の最初の訳を既定で選ぶ。DB に実在する訳（カタログ）から選ばないと
+    // sourceBook が引けず作成できないため、カタログ基準で既定値を決める。
+    setSourceVersion(catalogEntry(catalog, slug)?.translations[0]?.id ?? "");
   };
 
   useEffect(() => {
@@ -56,7 +56,11 @@ export default function NewTranslationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !sourceBook || !targetLanguage) return;
+    if (!name.trim() || !sourceBook || !targetLanguage) {
+      // 無言で止まると原因が分からないため、不足項目を明示する。
+      setError(t.createMissingFields);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -173,7 +177,7 @@ export default function NewTranslationPage() {
               style={inputStyle}
               required
             >
-              {(getBookBySlug(sourceSlug)?.translations ?? []).map((tr) => (
+              {(catalogEntry(catalog, sourceSlug)?.translations ?? []).map((tr) => (
                 <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
               ))}
             </select>
