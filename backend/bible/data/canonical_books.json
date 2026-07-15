@@ -181,6 +181,42 @@
     ]
   },
   {
+    "slug": "thomas",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Thomas"
+      }
+    ]
+  },
+  {
+    "slug": "poxy5575",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "Sayings of Jesus: P.Oxy 5575"
+      }
+    ]
+  },
+  {
+    "slug": "egerton",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Unknown Gospel: Egerton Papyrus 2"
+      }
+    ]
+  },
+  {
+    "slug": "infancy-james",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Infancy Gospel of James"
+      }
+    ]
+  },
+  {
     "slug": "enoch",
     "books": [
       {

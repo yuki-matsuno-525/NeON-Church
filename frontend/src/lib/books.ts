@@ -15,6 +15,10 @@ export type BookTranslation = { id: string; name: string };
 // 章番号→章名（任意）。章が「番号」ではなく「見出し」で区切られる本のための表示名。
 // 例: マリアの福音書は章番号 1..5 がセクション見出しに対応する。
 // index 0 が第1章。定義しない本は章番号だけで表示される。
+//
+// firstChapter は最初の章番号（既定 1）。トマスの福音書だけは "トマス114" のように
+// 語番号で引用されるため章番号を語番号に一致させており、冒頭の Prologue が第0章になる。
+// その本では chapterTitles の index 0 が第0章を指す。
 
 export const BOOKS = [
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
@@ -93,6 +97,178 @@ export const BOOKS = [
       "Jesus and Judas",
       "Jesus Reveals Everything to Judas",
       "The Betrayal",
+    ] },
+  // トマスの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。底本は NHC II,2。
+  // 語録集で "トマス114" のように語番号で引用されるため、章番号＝語番号にしている。
+  // そのため冒頭の Prologue だけが第0章（firstChapter: 0）。節は段落の連番。
+  { slug: "thomas", name: "トマスの福音書", englishName: "The Gospel of Thomas", short: "トマス", totalChapters: 114, firstChapter: 0, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Thomas" }],
+    chapterTitles: [
+      "Prologue",
+      "True Meaning",
+      "Seek and Find",
+      "Seeking Within",
+      "First and Last",
+      "Hidden and Revealed",
+      "Public Ritual",
+      "The Lion and the Human",
+      "The Parable of the Fish",
+      "The Parable of the Sower",
+      "Jesus and Fire (1)",
+      "Those Who Are Living Won't Die (1)",
+      "James the Just",
+      "Thomas' Confession",
+      "Public Ministry",
+      "Worship",
+      "Not Peace, but War",
+      "Divine Gift",
+      "Beginning and End",
+      "Five Trees in Paradise",
+      "The Parable of the Mustard Seed",
+      "The Parables of the Field, the Bandits, and the Reaper",
+      "Making the Two into One",
+      "Those Who are Chosen (1)",
+      "Light",
+      "Love and Protect",
+      "Speck and Beam",
+      "Fasting and Sabbath",
+      "The World is Drunk",
+      "Spirit and Body",
+      "Divine Presence",
+      "Prophet and Doctor",
+      "The Parable of the Fortified City",
+      "The Parable of the Lamp",
+      "The Parable of Those Who Can't See",
+      "The Parable of Binding the Strong",
+      "Anxiety",
+      "Seeing Jesus",
+      "Finding Jesus",
+      "The Keys of Knowledge",
+      "A Grapevine",
+      "More and Less",
+      "Passing By",
+      "The Tree and the Fruit",
+      "Blasphemy",
+      "Good and Evil",
+      "Greater than John the Baptizer",
+      "The Parables of Divided Loyalties, New Wine in Old Wineskins, and New Patch on Old Cloth",
+      "Unity (1)",
+      "Those Who Are Chosen (2)",
+      "Our Origin and Identity",
+      "The New World",
+      "Twenty-Four Prophets",
+      "True Circumcision",
+      "Those Who Are Poor",
+      "Discipleship (1)",
+      "The World is a Corpse",
+      "The Parable of the Weeds",
+      "Finding Life",
+      "The Living One",
+      "Don't Become a Corpse",
+      "Jesus and Salome",
+      "Mysteries",
+      "The Parable of the Rich Fool",
+      "The Parable of the Dinner Party",
+      "The Parable of the Sharecroppers",
+      "The Rejected Cornerstone",
+      "Knowing Isn't Everything",
+      "Persecution",
+      "Those Who Are Persecuted",
+      "Salvation is Within",
+      "Destroying the Temple",
+      "Not a Divider",
+      "Workers for the Harvest",
+      "The Empty Well",
+      "The Bridal Chamber",
+      "The Parable of the Pearl",
+      "Jesus is the All",
+      "Into the Desert",
+      "Listening to the Message",
+      "The World is a Body",
+      "Riches and Renunciation (1)",
+      "Jesus and Fire (2)",
+      "Light and Images",
+      "Our Previous Images",
+      "Adam Wasn't Worthy",
+      "Foxes and Birds",
+      "Body and Soul",
+      "Angels and Prophets",
+      "Inside and Outside",
+      "Jesus' Yoke is Easy",
+      "Reading the Signs",
+      "Look and Find",
+      "Don't Throw Pearls to Pigs",
+      "Knock and It Will Be Opened",
+      "Giving Money",
+      "The Parable of the Yeast",
+      "The Parable of the Jar of Flour",
+      "The Parable of the Assassin",
+      "Jesus' True Family",
+      "Give to Caesar What Belongs to Caesar",
+      "Discipleship (2)",
+      "The Dog in the Feeding Trough",
+      "The Parable of the Bandits",
+      "Prayer and Fasting",
+      "Knowing Father and Mother",
+      "Unity (2)",
+      "The Parable of the Lost Sheep",
+      "Becoming Like Jesus",
+      "The Parable of the Hidden Treasure",
+      "Riches and Renunciation (2)",
+      "Those Who are Living Won't Die (2)",
+      "Flesh and Soul",
+      "The Kingdom is Already Present",
+      "Peter and Mary",
+    ] },
+  // イエスの語録・P.Oxy 5575 も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 2024年公刊のオクシュリンコス断片。章=断片の表裏、節=段落の連番（原文に番号が無い）。
+  { slug: "poxy5575", name: "イエスの語録 P.Oxy 5575", englishName: "Sayings of Jesus: P.Oxy 5575", short: "P.Oxy 5575", totalChapters: 2, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "Sayings of Jesus: P.Oxy 5575" }],
+    chapterTitles: [
+      "recto (→)",
+      "verso (↓)",
+    ] },
+  // 知られざる福音書・エゲルトン・パピルス2 も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 章=断片の表裏、節=段落の連番（原文に番号が無い）。
+  { slug: "egerton", name: "知られざる福音書（エゲルトン・パピルス2）", englishName: "The Unknown Gospel: Egerton Papyrus 2", short: "エゲルトン", totalChapters: 4, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Unknown Gospel: Egerton Papyrus 2" }],
+    chapterTitles: [
+      "Fragment 1, verso (↓)",
+      "Fragment 1, recto (→)",
+      "Fragment 2, recto (→)",
+      "Fragment 2, verso (↓)",
+    ] },
+  // ヤコブによる幼児福音書（原始福音書）も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // 章="Chapter N: タイトル"、節=段落先頭の (1)(2)…（章ごとに 1 へ戻る）。
+  // 巻末の「第18〜21章の短い異版」の付録は本文と混ざるため取り込んでいない。
+  { slug: "infancy-james", name: "ヤコブによる幼児福音書", englishName: "The Infancy Gospel of James", short: "幼児ヤコブ", totalChapters: 25, genre: "福音書" as BookGenre,
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Infancy Gospel of James" }],
+    chapterTitles: [
+      "Joachim's Plight",
+      "Anna's Plight",
+      "Anna's Lament",
+      "The Lord's Promise",
+      "Mary's Birth",
+      "Mary's First Year",
+      "Mary Goes to the Temple",
+      "Mary Turns Twelve",
+      "Joseph Protects Mary",
+      "The Veil of the Temple",
+      "The Annunciation",
+      "Mary Visits Elizabeth",
+      "Joseph Questions Mary",
+      "Joseph's Dream",
+      "The Chief Priest Questions Mary and Joseph",
+      "The Test",
+      "The Census",
+      "Time Stands Still",
+      "Jesus' Birth",
+      "Salome's Examination",
+      "The Magi",
+      "The Slaughter of the Infants",
+      "The Murder of Zechariah",
+      "Mourning for Zechariah",
+      "Conclusion",
     ] },
   // ピリポの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。
   // 章=セクション見出し、節=Nag Hammadi 写本のページ番号 51..86（見出しをまたいで連続）。
@@ -323,13 +499,20 @@ export function isValidSlug(slug: string): slug is BookSlug {
   return BOOKS.some((b) => b.slug === slug);
 }
 
+/** slug の最初の章番号を返す（既定 1、トマスの福音書だけ 0）。 */
+export function firstChapterOf(slug: string): number {
+  const book = getBookBySlug(slug);
+  return book && "firstChapter" in book ? book.firstChapter : 1;
+}
+
 /** slug と章番号から章名を返す。章名を持たない本・範囲外は null。 */
 export function chapterTitle(slug: string, chapterNumber: number): string | null {
   // BOOKS は as const のため、chapterTitles を持つ本と持たない本のユニオンになる。
   // in で絞り込んでから参照する。
   const book = getBookBySlug(slug);
   const titles = book && "chapterTitles" in book ? book.chapterTitles : undefined;
-  return titles?.[chapterNumber - 1] ?? null;
+  const index = chapterNumber - firstChapterOf(slug);
+  return index < 0 ? null : (titles?.[index] ?? null);
 }
 
 /** slug とその本の訳 id から、DB 上の Book.name を返す。 */

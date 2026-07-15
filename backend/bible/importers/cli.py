@@ -23,12 +23,17 @@ from .infancy_thomas import parse_infancy_thomas
 from .judas import parse_judas
 from .life_of_adam_and_eve import parse_life_of_adam_and_eve
 from .mary import parse_mary
+from .egerton import parse_egerton
+from .infancy_james import parse_infancy_james
 from .peter import parse_peter
+from .poxy5575 import parse_poxy5575
+from .quelle import parse_quelle
 from .philip import parse_philip
 from .preview import render_preview
 from .secret_james import parse_secret_james
 from .secret_mark import parse_secret_mark
 from .stranger import parse_stranger
+from .thomas import parse_thomas
 from .truth import parse_truth
 from .validate import summarize, validate
 
@@ -45,6 +50,11 @@ PARSERS = {
     "secret-james": (parse_secret_james, 12),
     "stranger": (parse_stranger, 5),
     "secret-mark": (parse_secret_mark, 5),
+    "thomas": (parse_thomas, 114),
+    "infancy-james": (parse_infancy_james, 25),
+    "egerton": (parse_egerton, 4),
+    "poxy5575": (parse_poxy5575, 2),
+    "quelle": (parse_quelle, 22),
 }
 
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getBookBySlug, isValidSlug, chapterTitle } from "./books";
+import { getBookBySlug, isValidSlug, chapterTitle, firstChapterOf } from "./books";
 
 describe("getBookBySlug", () => {
   it("有効なスラッグでbookオブジェクトを返す", () => {
@@ -33,6 +33,22 @@ describe("chapterTitle", () => {
     expect(chapterTitle("matthew", 1)).toBeNull();
     expect(chapterTitle("mary", 6)).toBeNull();
     expect(chapterTitle("mary", 0)).toBeNull();
+  });
+
+  it("トマスの福音書は Prologue が第0章、語番号と章番号が一致する", () => {
+    expect(chapterTitle("thomas", 0)).toBe("Prologue");
+    expect(chapterTitle("thomas", 1)).toBe("True Meaning");
+    expect(chapterTitle("thomas", 114)).toBe("Peter and Mary");
+    expect(chapterTitle("thomas", 115)).toBeNull();
+    expect(chapterTitle("thomas", -1)).toBeNull();
+  });
+});
+
+describe("firstChapterOf", () => {
+  it("既定は 1、トマスの福音書だけ 0", () => {
+    expect(firstChapterOf("mary")).toBe(1);
+    expect(firstChapterOf("matthew")).toBe(1);
+    expect(firstChapterOf("thomas")).toBe(0);
   });
 });
 
