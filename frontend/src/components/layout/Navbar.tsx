@@ -162,6 +162,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               <Link href="/translations" aria-current={pathname.startsWith("/translations") ? "page" : undefined} style={{ color: pathname.startsWith("/translations") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.translate}
               </Link>
+              <Link href="/compilations" aria-current={pathname.startsWith("/compilations") ? "page" : undefined} style={{ color: pathname.startsWith("/compilations") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+                編纂
+              </Link>
               <Link href="/bookmarks" aria-current={pathname.startsWith("/bookmarks") ? "page" : undefined} style={{ color: pathname.startsWith("/bookmarks") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.bookmarks}
               </Link>

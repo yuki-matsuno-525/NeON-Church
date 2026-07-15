@@ -1,7 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { createBookmark, removeBookmark, createComment, buildCommentTree, type Verse, type Bookmark } from "@/lib/api";
+import {
+  createBookmark,
+  removeBookmark,
+  createComment,
+  buildCommentTree,
+  fetchMyCompiledBooks,
+  createCompiledVerse,
+  type Verse,
+  type Bookmark,
+  type CompiledBook,
+} from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
@@ -48,6 +58,12 @@ export function CommentPanel({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
+  const [compilationOpen, setCompilationOpen] = useState(false);
+  const [compilations, setCompilations] = useState<CompiledBook[]>([]);
+  const [selectedCompilationId, setSelectedCompilationId] = useState("");
+  const [compilationNote, setCompilationNote] = useState("");
+  const [compilationBusy, setCompilationBusy] = useState(false);
+  const [compilationMessage, setCompilationMessage] = useState<string | null>(null);
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
@@ -100,6 +116,42 @@ export function CommentPanel({
       return;
     }
     setComposeOpen(true);
+  };
+
+  const handleOpenCompilation = async () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    setCompilationMessage(null);
+    setCompilationOpen((open) => !open);
+    if (compilations.length === 0) {
+      try {
+        const list = await fetchMyCompiledBooks();
+        setCompilations(list);
+        setSelectedCompilationId((current) => current || list[0]?.id || "");
+      } catch {
+        setCompilationMessage("編纂書を取得できませんでした。");
+      }
+    }
+  };
+
+  const handleAddToCompilation = async () => {
+    if (!selectedCompilationId || compilationBusy) return;
+    setCompilationBusy(true);
+    setCompilationMessage(null);
+    try {
+      await createCompiledVerse(selectedCompilationId, {
+        source_verse: verse.id,
+        curator_note: compilationNote,
+      });
+      setCompilationNote("");
+      setCompilationMessage("未整理トレイへ追加しました。");
+    } catch {
+      setCompilationMessage("追加できませんでした。");
+    } finally {
+      setCompilationBusy(false);
+    }
   };
 
   const handleReply = async (body: string, parentId: string) => {
@@ -318,6 +370,122 @@ export function CommentPanel({
 
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
+          <div style={{ marginBottom: 10 }}>
+            <button
+              data-testid="open-add-to-compilation"
+              type="button"
+              onClick={handleOpenCompilation}
+              className="card-glow card-glow-interactive"
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                minHeight: 42,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                color: "var(--text)",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: "inherit",
+              }}
+            >
+              <Icon name="book-open" size={16} />
+              編纂に追加
+            </button>
+            {compilationOpen && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: 10,
+                  border: "1px solid var(--border)",
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.04)",
+                }}
+              >
+                {compilations.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
+                    編纂書がまだありません。{" "}
+                    <a href="/compilations/new" style={{ color: "var(--accent)", fontWeight: 700 }}>
+                      新しく作成
+                    </a>
+                  </p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <label style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: 4 }}>
+                      追加先
+                      <select
+                        data-testid="compilation-select"
+                        value={selectedCompilationId}
+                        onChange={(e) => setSelectedCompilationId(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 8px",
+                          borderRadius: 6,
+                          border: "1px solid var(--border)",
+                          background: "var(--bg)",
+                          color: "var(--text)",
+                          fontFamily: "inherit",
+                          fontSize: 13,
+                        }}
+                      >
+                        {compilations.map((book) => (
+                          <option key={book.id} value={book.id}>
+                            {book.title}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <textarea
+                      data-testid="compilation-note-input"
+                      value={compilationNote}
+                      onChange={(e) => setCompilationNote(e.target.value)}
+                      rows={3}
+                      placeholder="この節への注釈（任意）"
+                      style={{
+                        width: "100%",
+                        boxSizing: "border-box",
+                        padding: "7px 8px",
+                        borderRadius: 6,
+                        border: "1px solid var(--border)",
+                        background: "var(--bg)",
+                        color: "var(--text)",
+                        fontFamily: "inherit",
+                        fontSize: 13,
+                        resize: "vertical",
+                      }}
+                    />
+                    <button
+                      data-testid="add-to-compilation-button"
+                      type="button"
+                      onClick={handleAddToCompilation}
+                      disabled={!selectedCompilationId || compilationBusy}
+                      style={{
+                        border: "none",
+                        borderRadius: 6,
+                        background: "var(--accent)",
+                        color: "var(--accent-text)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        padding: "8px 10px",
+                        cursor: compilationBusy ? "default" : "pointer",
+                        opacity: compilationBusy ? 0.7 : 1,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {compilationBusy ? "追加中..." : "未整理トレイへ追加"}
+                    </button>
+                  </div>
+                )}
+                {compilationMessage && (
+                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                    {compilationMessage}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
           {composeOpen ? (
             <CommentInput
               onSubmit={handleSubmit}

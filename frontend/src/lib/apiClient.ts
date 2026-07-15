@@ -19,6 +19,11 @@ import type {
   TranslationComment,
   SearchResult,
   PublicUser,
+  CompiledBook,
+  CompiledChapter,
+  CompiledComment,
+  CompiledVerse,
+  CompiledVisibility,
 } from "./types";
 
 export class ApiError extends Error {
@@ -387,11 +392,12 @@ export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
 }
 
-export function fetchQAComments(params?: { book_id?: string; tag_id?: string; answered?: boolean }): Promise<QAComment[]> {
+export function fetchQAComments(params?: { book_id?: string; tag_id?: string; answered?: boolean; q?: string }): Promise<QAComment[]> {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
   qs.set("page_size", "100");
   return apiFetchList(`/comments/qa/?${qs}`);
 }
@@ -438,9 +444,11 @@ export type TranslationStatus = "published" | "active" | "draft";
 export function fetchTranslations(
   status?: TranslationStatus,
   page = 1,
+  q = "",
 ): Promise<PaginatedResponse<TranslationProject>> {
   const qs = new URLSearchParams();
   if (status) qs.set("status", status);
+  if (q.trim()) qs.set("q", q.trim());
   qs.set("page", String(page));
   return apiFetch(`/translations/?${qs.toString()}`);
 }
@@ -600,4 +608,131 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
     method: "POST",
     body: JSON.stringify({ reason }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// 編纂書
+// ---------------------------------------------------------------------------
+
+export function fetchCompiledBooks(params?: { mine?: boolean; page?: number }): Promise<PaginatedResponse<CompiledBook>> {
+  const qs = new URLSearchParams();
+  if (params?.mine) qs.set("mine", "1");
+  if (params?.page) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetch(`/compilations/${suffix}`);
+}
+
+export function fetchMyCompiledBooks(): Promise<CompiledBook[]> {
+  return apiFetchList("/compilations/?mine=1&page_size=100");
+}
+
+export function fetchCompiledBook(id: string): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${id}/`);
+}
+
+export function createCompiledBook(data: {
+  title: string;
+  description?: string;
+  annotation?: string;
+  visibility?: CompiledVisibility;
+  motif_names?: string[];
+}): Promise<CompiledBook> {
+  return apiFetch("/compilations/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCompiledBook(id: string, data: Partial<Pick<CompiledBook, "title" | "description" | "annotation" | "visibility">> & { motif_names?: string[] }): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCompiledBook(id: string): Promise<void> {
+  return apiFetch(`/compilations/${id}/`, { method: "DELETE" });
+}
+
+export function publishCompiledBook(id: string): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${id}/publish/`, { method: "POST" });
+}
+
+export function unpublishCompiledBook(id: string): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${id}/unpublish/`, { method: "POST" });
+}
+
+export function createCompiledChapter(bookId: string, data: {
+  title?: string;
+  introduction?: string;
+  annotation?: string;
+}): Promise<CompiledChapter> {
+  return apiFetch(`/compilations/${bookId}/chapters/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCompiledChapter(bookId: string, chapterId: string, data: Partial<Pick<CompiledChapter, "title" | "introduction" | "annotation" | "order" | "number">>): Promise<CompiledChapter> {
+  return apiFetch(`/compilations/${bookId}/chapters/${chapterId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCompiledChapter(bookId: string, chapterId: string): Promise<void> {
+  return apiFetch(`/compilations/${bookId}/chapters/${chapterId}/`, { method: "DELETE" });
+}
+
+export function createCompiledVerse(bookId: string, data: {
+  chapter?: string | null;
+  source_kind?: "bible_verse" | "translation_unit" | "compiled_verse" | "note";
+  source_verse?: string;
+  source_translation_unit?: string;
+  source_compiled_verse?: string;
+  body_snapshot?: string;
+  curator_note?: string;
+  motif_names?: string[];
+}): Promise<CompiledVerse> {
+  return apiFetch(`/compilations/${bookId}/verses/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCompiledVerse(bookId: string, verseId: string, data: Partial<Pick<CompiledVerse, "chapter" | "verse_number" | "order" | "body_snapshot" | "curator_note">>): Promise<CompiledVerse> {
+  return apiFetch(`/compilations/${bookId}/verses/${verseId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCompiledVerse(bookId: string, verseId: string): Promise<void> {
+  return apiFetch(`/compilations/${bookId}/verses/${verseId}/`, { method: "DELETE" });
+}
+
+export function fetchCompiledComments(params: { book?: string; chapter?: string; verse?: string }): Promise<CompiledComment[]> {
+  const qs = new URLSearchParams();
+  if (params.book) qs.set("book", params.book);
+  if (params.chapter) qs.set("chapter", params.chapter);
+  if (params.verse) qs.set("verse", params.verse);
+  qs.set("page_size", "100");
+  return apiFetchList(`/compilations/comments/?${qs}`);
+}
+
+export function createCompiledComment(data: {
+  book?: string;
+  chapter?: string;
+  verse?: string;
+  body: string;
+  parent?: string;
+}): Promise<CompiledComment> {
+  return apiFetch("/compilations/comments/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteCompiledComment(commentId: string): Promise<void> {
+  return apiFetch(`/compilations/comments/${commentId}/`, { method: "DELETE" });
 }

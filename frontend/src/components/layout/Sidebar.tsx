@@ -13,6 +13,7 @@ const NAV_HREFS = [
   { href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
   { href: "/qa", matchPrefixes: ["/qa"] },
   { href: "/translations", matchPrefixes: ["/translations"] },
+  { href: "/compilations", matchPrefixes: ["/compilations"] },
 ];
 
 type SidebarProps = {
@@ -44,6 +45,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     { label: t.read, ...NAV_HREFS[0] },
     { label: t.qa, ...NAV_HREFS[1] },
     { label: t.translate, ...NAV_HREFS[2] },
+    { label: "編纂", ...NAV_HREFS[3] },
   ];
 
   const handleLogout = async () => {

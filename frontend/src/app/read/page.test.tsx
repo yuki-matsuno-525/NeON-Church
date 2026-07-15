@@ -88,4 +88,18 @@ describe("ReadPage マイ翻訳セクション", () => {
     const card = screen.getByText("マタイ英訳プロジェクト").closest("a");
     expect(card).toHaveAttribute("href", "/translations/tp1/read");
   });
+
+  it("書名検索でカテゴリーをまたいだ書を表示する", async () => {
+    const { fetchTranslationLibrary } = await import("@/lib/api");
+    vi.mocked(fetchTranslationLibrary).mockResolvedValue([]);
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+    render(<ReadPage />);
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "書を検索" }), {
+      target: { value: "Peter" },
+    });
+
+    expect(screen.getByText("ペテロの福音書")).toBeInTheDocument();
+  });
 });

@@ -238,3 +238,78 @@ export type PublicUser = {
   bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };
+
+export type MotifTag = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+};
+
+export type CompiledVisibility = "private" | "unlisted" | "public";
+export type CompiledSourceKind = "bible_verse" | "translation_unit" | "compiled_verse" | "note";
+
+export type CompiledVerse = {
+  id: string;
+  book: string;
+  chapter: string | null;
+  verse_number: number | null;
+  order: number;
+  source_kind: CompiledSourceKind;
+  source_verse: string | null;
+  source_translation_unit: string | null;
+  source_compiled_verse: string | null;
+  body_snapshot: string;
+  source_label: string;
+  source_reference: Record<string, unknown> | null;
+  curator_note: string;
+  motif_tags: MotifTag[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompiledChapter = {
+  id: string;
+  book: string;
+  number: number;
+  title: string;
+  introduction: string;
+  annotation: string;
+  order: number;
+  motif_tags: MotifTag[];
+  verse_count: number;
+  verses: CompiledVerse[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompiledBook = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  annotation: string;
+  owner_username: string;
+  visibility: CompiledVisibility;
+  motif_tags: MotifTag[];
+  chapter_count: number;
+  verse_count: number;
+  forked_from?: string | null;
+  forked_from_title?: string | null;
+  chapters?: CompiledChapter[];
+  tray?: CompiledVerse[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type CompiledComment = {
+  id: string;
+  user: CommentUser;
+  book: string | null;
+  chapter: string | null;
+  verse: string | null;
+  parent: string | null;
+  body: string;
+  is_deleted: boolean;
+  created_at: string;
+};

@@ -97,6 +97,15 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         }
         if status_param in valid_statuses:
             qs = qs.filter(status=status_param)
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(source_book__name__icontains=q)
+                | Q(owner__username__icontains=q)
+            )
         return qs
 
     def perform_create(self, serializer):

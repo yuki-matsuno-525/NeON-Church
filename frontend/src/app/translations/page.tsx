@@ -28,6 +28,7 @@ export default function TranslationsPage() {
   const isMobile = useIsMobile();
   // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
+  const [projectSearch, setProjectSearch] = useState("");
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -68,6 +69,18 @@ export default function TranslationsPage() {
       </div>
 
       {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
+      <label style={{ display: "block", marginBottom: 16 }}>
+        <span className="sr-only">{t.projectSearchLabel}</span>
+        <input
+          type="search"
+          value={projectSearch}
+          onChange={(e) => setProjectSearch(e.target.value)}
+          placeholder={t.projectSearchPlaceholder}
+          aria-label={t.projectSearchLabel}
+          style={projectSearchInputStyle}
+        />
+      </label>
+
       {isMobile && (
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
           {COLUMNS.map((col) => {
@@ -117,6 +130,7 @@ export default function TranslationsPage() {
               tint={col.tint}
               label={columnLabel(col.key)}
               desc={columnDesc(col.key)}
+              search={projectSearch}
             />
           </div>
         ))}
@@ -132,6 +146,7 @@ function TranslationColumn({
   tint,
   label,
   desc,
+  search,
 }: {
   statusKey: StatusKey;
   icon: IconName;
@@ -139,6 +154,7 @@ function TranslationColumn({
   tint: string;
   label: string;
   desc: string;
+  search: string;
 }) {
   const t = useT();
   const [items, setItems] = useState<TranslationProject[]>([]);
@@ -150,7 +166,7 @@ function TranslationColumn({
     let active = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    fetchTranslations(statusKey, page)
+    fetchTranslations(statusKey, page, search)
       .then((res) => {
         if (!active) return;
         setItems(res.results);
@@ -165,7 +181,11 @@ function TranslationColumn({
     return () => {
       active = false;
     };
-  }, [statusKey, page]);
+  }, [statusKey, page, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
@@ -288,6 +308,20 @@ const metaPillStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.06)",
   border: "1px solid rgba(255,255,255,0.10)",
   color: "var(--text-muted)",
+};
+
+const projectSearchInputStyle: React.CSSProperties = {
+  width: "100%",
+  minHeight: 40,
+  padding: "8px 12px",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "var(--bg)",
+  color: "var(--text)",
+  fontSize: "var(--font-size-sm)",
+  fontFamily: "inherit",
+  outline: "none",
+  boxSizing: "border-box",
 };
 
 const progressTrackStyle: React.CSSProperties = {

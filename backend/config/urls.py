@@ -43,4 +43,5 @@ urlpatterns += [
     path("api/", include("notifications.urls")),
     path("api/", include("reading_progress.urls")),
     path("api/", include("translations.urls")),
+    path("api/", include("compilations.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -509,6 +509,18 @@ class TestQAListBookFilter:
 # ------------------------------------------------------------------
 # トレンドコメント
 # ------------------------------------------------------------------
+    def test_search_filters_questions(self, auth_client, api_client, book):
+        first = self._post_qa(auth_client, book, "Database Christianity")
+        second = self._post_qa(auth_client, book, "Ordinary question")
+
+        res = api_client.get(QA_URL, {"q": "Database"})
+
+        assert res.status_code == status.HTTP_200_OK
+        ids = [c["id"] for c in res.data["results"]]
+        assert first["id"] in ids
+        assert second["id"] not in ids
+
+
 TRENDING_URL = "/api/comments/trending/"
 
 

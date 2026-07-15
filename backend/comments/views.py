@@ -299,6 +299,15 @@ class QACommentListView(generics.ListAPIView):
             qs = qs.filter(canonical_book_id__in=canonical_ids)
         if tag_id:
             qs = qs.filter(tags__id=tag_id).distinct()
+        q = (params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(
+                models.Q(title__icontains=q)
+                | models.Q(body__icontains=q)
+                | models.Q(user__username__icontains=q)
+                | models.Q(tags__name__icontains=q)
+                | models.Q(canonical_book__slug__icontains=q)
+            ).distinct()
         answered = params.get("answered")
         if answered == "true":
             qs = qs.filter(best_answer__isnull=False)

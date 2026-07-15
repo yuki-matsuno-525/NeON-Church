@@ -30,14 +30,17 @@ type Props = {
   comment: QAComment;
   currentUserId: string | null;
   onBestAnswerChange: () => void;
+  onAnswerPosted?: () => void;
+  onLoginRequired?: () => void;
 };
 
-export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
+export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPosted, onLoginRequired }: Props) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [replyBody, setReplyBody] = useState("");
+  const [answering, setAnswering] = useState(false);
   const [submittingReply, setSubmittingReply] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
 
@@ -65,12 +68,26 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
     try {
       await createComment({ parent: comment.id, body: replyBody.trim() });
       setReplyBody("");
+      setAnswering(false);
       loadReplies();
+      onAnswerPosted?.();
     } catch (err) {
       setReplyError(err instanceof Error ? err.message : t.postFailed);
     } finally {
       setSubmittingReply(false);
     }
+  };
+
+  const handleAnswerClick = () => {
+    if (!currentUserId) {
+      onLoginRequired?.();
+      return;
+    }
+    if (!expanded) {
+      loadReplies();
+      setExpanded(true);
+    }
+    setAnswering(true);
   };
 
   const handleSetBestAnswer = async (answerId: string) => {
@@ -180,6 +197,26 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
           <span>{t.repliesCount(comment.reply_count)}</span>
           <Icon name={expanded ? "chevron-up" : "chevron-down"} size={12} />
         </button>
+        <button
+          type="button"
+          onClick={handleAnswerClick}
+          style={{
+            fontSize: 12,
+            color: "var(--accent)",
+            background: "var(--accent-tint)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 999,
+            cursor: "pointer",
+            padding: "3px 8px",
+            fontFamily: "inherit",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          <Icon name="message-square" size={12} />
+          {t.answerQuestion}
+        </button>
       </div>
 
       {expanded && (
@@ -240,7 +277,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange }: Props) {
             </div>
           )}
 
-          {currentUserId && (
+          {currentUserId && (answering || expanded) && (
             <form onSubmit={handleReplySubmit} style={{ marginTop: 10 }}>
               <textarea
                 value={replyBody}

@@ -51,6 +51,7 @@ function QAContent() {
   // スマホでは1カラムずつタブ切り替え。既定は「未解決」（回答が必要な列）。
   const [activeTab, setActiveTab] = useState<QAColumnKey>("unanswered");
   const [genreFilter, setGenreFilter] = useState("");
+  const [questionSearch, setQuestionSearch] = useState("");
   const [comments, setComments] = useState<QAComment[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,11 +95,12 @@ function QAContent() {
     fetchQAComments({
       book_id: bookIdParam || undefined,
       tag_id: selectedTagId || undefined,
+      q: questionSearch,
     })
       .then(setComments)
       .catch(() => setComments([]))
       .finally(() => setLoading(false));
-  }, [catalog, selectedSlug, selectedVersion, selectedTagId]);
+  }, [catalog, selectedSlug, selectedVersion, selectedTagId, questionSearch]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -158,6 +160,14 @@ function QAContent() {
           )}
         </div>
         <div style={filterRowStyle}>
+          <input
+            type="search"
+            value={questionSearch}
+            onChange={(e) => setQuestionSearch(e.target.value)}
+            placeholder={t.qaSearchPlaceholder}
+            aria-label={t.qaSearchLabel}
+            style={qaSearchInputStyle}
+          />
           {(() => {
             const groups = groupCatalogByGenre(catalog);
             const bookEntries = genreFilter ? groups.find((g) => g.genre === genreFilter)?.entries ?? [] : catalog;
@@ -309,6 +319,8 @@ function QAContent() {
                         comment={c}
                         currentUserId={user?.id ?? null}
                         onBestAnswerChange={loadComments}
+                        onAnswerPosted={loadComments}
+                        onLoginRequired={() => setShowLoginModal(true)}
                       />
                     ))}
                   </div>
@@ -381,4 +393,18 @@ const qaSelectStyle: React.CSSProperties = {
   color: "var(--text)",
   fontSize: "var(--font-size-sm)",
   fontFamily: "inherit",
+};
+
+const qaSearchInputStyle: React.CSSProperties = {
+  minHeight: 36,
+  minWidth: 220,
+  flex: "1 1 240px",
+  padding: "6px 10px",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "var(--bg)",
+  color: "var(--text)",
+  fontSize: "var(--font-size-sm)",
+  fontFamily: "inherit",
+  outline: "none",
 };

@@ -179,6 +179,23 @@ class TestTranslationProjectList:
         assert published_project["id"] in ids
         assert active_id not in ids
 
+    def test_search_filters_projects(self, db, anon_client, owner_client, book):
+        matched = owner_client.post(LIST_URL, {
+            "name": "Azuma database reading", "source_book": str(book.id), "target_language": "en",
+        }, format="json").data["id"]
+        owner_client.post(activate_url(matched))
+        missed = owner_client.post(LIST_URL, {
+            "name": "Quiet liturgy project", "source_book": str(book.id), "target_language": "en",
+        }, format="json").data["id"]
+        owner_client.post(activate_url(missed))
+
+        res = anon_client.get(LIST_URL, {"status": "active", "q": "Azuma"})
+
+        assert res.status_code == status.HTTP_200_OK
+        ids = [p["id"] for p in res.data["results"]]
+        assert matched in ids
+        assert missed not in ids
+
     def test_list_is_paginated_20_per_page(self, db, anon_client, owner_client, book):
         # 公開列を21件つくると、1ページ目20件・2ページ目1件になる。
         for i in range(21):
