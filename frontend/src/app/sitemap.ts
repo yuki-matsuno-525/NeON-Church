@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BOOKS } from "@/lib/books";
+import { BOOKS, firstChapterOf } from "@/lib/books";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
@@ -13,14 +13,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.4 },
   ];
 
-  const bookPages: MetadataRoute.Sitemap = BOOKS.flatMap((book) => [
-    { url: `${SITE_URL}/${book.slug}`, changeFrequency: "weekly" as const, priority: 0.7 },
-    ...Array.from({ length: book.totalChapters }, (_, i) => ({
-      url: `${SITE_URL}/${book.slug}/${i + 1}`,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    })),
-  ]);
+  // 章番号は first..totalChapters（トマスの福音書だけ Prologue が第0章なので 0 始まり）。
+  const bookPages: MetadataRoute.Sitemap = BOOKS.flatMap((book) => {
+    const first = firstChapterOf(book.slug);
+    return [
+      { url: `${SITE_URL}/${book.slug}`, changeFrequency: "weekly" as const, priority: 0.7 },
+      ...Array.from({ length: book.totalChapters - first + 1 }, (_, i) => ({
+        url: `${SITE_URL}/${book.slug}/${i + first}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      })),
+    ];
+  });
 
   return [...staticPages, ...bookPages];
 }

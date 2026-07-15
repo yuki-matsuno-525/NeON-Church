@@ -172,3 +172,81 @@ def test_missing_section_heading_is_warned():
     _, warnings = parse_sectioned(html, _spec())
 
     assert any("Second Section" in w for w in warnings)
+
+
+# --- heading_pattern 型（見出し自身が章番号を持つ書）---
+
+
+def _numbered_spec(**kw) -> BookSpec:
+    base = dict(
+        book="Test Book",
+        translation="Tester (EN)",
+        order=1,
+        source="test",
+        heading_pattern=re.compile(r"^Chapter\s+(?P<number>\d+)\s*:\s*(?P<title>.*)$"),
+        verse_marker=PARENTHESIZED,
+        verses_restart_each_chapter=True,
+    )
+    base.update(kw)
+    return BookSpec(**base)
+
+
+def test_chapter_number_comes_from_the_heading():
+    html = _page(
+        "<p>Preface that should be ignored because it is long enough.</p>"
+        "<p>Chapter 1: Joachim's Plight</p>"
+        "<p>(1) Joachim was a very rich man.</p>"
+        "<p>Chapter 2: Anna's Plight</p>"
+        "<p>(1) Anna mourned.</p>"
+    )
+    data, _ = parse_sectioned(html, _numbered_spec())
+    chapters = data["chapters"]
+
+    assert [c["number"] for c in chapters] == [1, 2]
+    # 節番号は章ごとに 1 へ戻る
+    assert [v["number"] for v in chapters[1]["verses"]] == [1]
+
+
+def test_special_heading_gets_its_own_chapter_number():
+    """トマスの福音書の Prologue は第0章（章番号と語番号を一致させる）。"""
+    spec = _numbered_spec(
+        heading_pattern=re.compile(r"^Saying\s+(?P<number>\d+)\s*:\s*(?P<title>.*)$"),
+        special_headings={"Prologue": 0},
+        verse_marker=None,
+    )
+    html = _page(
+        "<p>Prologue</p>"
+        "<p>These are the hidden sayings.</p>"
+        "<p>Saying 1: True Meaning</p>"
+        "<p>Whoever discovers the meaning won't taste death.</p>"
+    )
+    data, _ = parse_sectioned(html, spec)
+
+    assert [c["number"] for c in data["chapters"]] == [0, 1]
+    assert data["chapters"][0]["verses"][0]["text"].startswith("These are the hidden")
+
+
+def test_duplicate_chapter_heading_is_skipped():
+    """異版・付録の2度目の "Chapter 18:" を本文に混ぜない（ヤコブによる幼児福音書）。"""
+    html = _page(
+        "<p>Chapter 1: First</p>"
+        "<p>(1) The real body text.</p>"
+        "<p>Chapter 1: A Shorter Version</p>"
+        "<p>(1) The appendix variant must not be imported.</p>"
+    )
+    data, warnings = parse_sectioned(html, _numbered_spec())
+    chapters = data["chapters"]
+
+    assert [c["number"] for c in chapters] == [1]
+    assert "appendix variant" not in chapters[0]["verses"][0]["text"]
+    assert any("重複" in w for w in warnings)
+
+
+def test_chapters_are_sorted_by_number():
+    html = _page(
+        "<p>Chapter 2: Second</p><p>(1) Second chapter.</p>"
+        "<p>Chapter 1: First</p><p>(1) First chapter.</p>"
+    )
+    data, _ = parse_sectioned(html, _numbered_spec())
+
+    assert [c["number"] for c in data["chapters"]] == [1, 2]
