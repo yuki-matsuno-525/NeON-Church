@@ -24,7 +24,12 @@ from .judas import parse_judas
 from .life_of_adam_and_eve import parse_life_of_adam_and_eve
 from .mary import parse_mary
 from .peter import parse_peter
+from .philip import parse_philip
 from .preview import render_preview
+from .secret_james import parse_secret_james
+from .secret_mark import parse_secret_mark
+from .stranger import parse_stranger
+from .truth import parse_truth
 from .validate import summarize, validate
 
 # `all` / 各 parse コマンドで使う書ごとのパーサと既定の期待章数。
@@ -35,6 +40,11 @@ PARSERS = {
     "peter": (parse_peter, 14),
     "judas": (parse_judas, 7),
     "adam-and-eve": (parse_life_of_adam_and_eve, 51),
+    "philip": (parse_philip, 18),
+    "truth": (parse_truth, 16),
+    "secret-james": (parse_secret_james, 12),
+    "stranger": (parse_stranger, 5),
+    "secret-mark": (parse_secret_mark, 5),
 }
 
 

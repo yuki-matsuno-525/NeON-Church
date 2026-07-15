@@ -136,6 +136,51 @@
     ]
   },
   {
+    "slug": "philip",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Philip"
+      }
+    ]
+  },
+  {
+    "slug": "truth",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Truth"
+      }
+    ]
+  },
+  {
+    "slug": "secret-james",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Secret Book of James"
+      }
+    ]
+  },
+  {
+    "slug": "stranger",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Stranger's Book"
+      }
+    ]
+  },
+  {
+    "slug": "secret-mark",
+    "books": [
+      {
+        "translation": "Samuel Zinner (EN)",
+        "name": "The Secret Gospel of Mark"
+      }
+    ]
+  },
+  {
     "slug": "enoch",
     "books": [
       {
