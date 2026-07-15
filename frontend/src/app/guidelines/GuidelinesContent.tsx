@@ -15,7 +15,7 @@ const content: Record<string, Content> = {
   ja: {
     title: "コミュニティガイドライン",
     intro:
-      "NeON Church は、聖書、外典、偽典、関連古代文献を読み、問い、共に学ぶ場です。多様な伝統や信仰背景を持つ人々が安心して参加できるよう、以下のガイドラインに沿って投稿してください。",
+      "NeON Church は、古代の諸文書を読み、問い、共に学ぶ場です。多様な伝統や信仰背景を持つ人々が安心して参加できるよう、以下のガイドラインに沿って投稿してください。",
     sections: [
       {
         heading: "1. 敬意ある対話",
@@ -51,7 +51,7 @@ const content: Record<string, Content> = {
   en: {
     title: "Community Guidelines",
     intro:
-      "NeON Church is a place to read, ask questions about, and learn from the Bible, Apocrypha, Pseudepigrapha, and related ancient texts. To make it a safe place for people from many traditions and backgrounds, please follow these guidelines.",
+      "NeON Church is a place to read, ask questions about, and learn from the ancient texts in its collection. To make it a safe place for people from many traditions and backgrounds, please follow these guidelines.",
     sections: [
       {
         heading: "1. Respectful Dialogue",

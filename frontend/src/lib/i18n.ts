@@ -47,7 +47,7 @@ const ja = {
 
   // ホーム
   homeTagline: "ひとつの権威ではなく、\n開かれた場として。",
-  homeDesc: "複数のテキスト、解釈、歴史、断片が接続されるキリスト教へ。正典から外典・偽書まで、あらゆるテキストを読み、議論し、翻訳する。",
+  homeDesc: "複数のテキスト、解釈、歴史、断片が接続されるキリスト教へ。あらゆるテキストを、隔てなく読み、議論し、翻訳する。",
   todayVerse: "今日の聖句",
   verseUnavailable: "本日の聖句を取得できませんでした",
   trending: "トレンド",
@@ -161,7 +161,7 @@ const ja = {
   aboutSection1Body: "「日本的なキリスト教」とは何か。\nその問いについて考えるなかで、私は内村鑑三の「無教会主義（Non-Church）」にたどり着きました。\n\n一方で、もともとポストモダン思想にも関心があり、東浩紀の『動物化するポストモダン』から影響を受けるなかで、「データベース的なキリスト教」という構想を抱くようになりました。キリスト教を、ひとつの固定された制度や権威としてではなく、複数のテキスト、解釈、歴史、断片が接続される開かれた場として捉えることはできないか。NeON Churchは、その問いから生まれたプロジェクトです。\n\nこの構想によって、保守的なキリスト教と、ポストモダン以後の思想とのあいだに、新しい接点を見出せるのではないかと考えています。また、歴史のなかで正典の外に置かれてきた文書や、周縁化されてきた解釈にも光を当てることを目指しています。\n\n「NeON」という名前は、ギリシャ語で「新しい」を意味する neos に由来する元素名 “neon” から来ています。そして同時に、大文字で記された N・O・N が示すように、それは冒頭で触れた「無教会（Non-Church）」の “Non” からも来ています。「新しさ」と「無教会」——この名前は、その二つの含意を重ね持っているのです。さらにそれは、背景画像が示唆するように、東京のネオン街に象徴される雑種性、人工性、混沌、そして新しさのイメージとも重なっています。\n\nNeON Churchは、制度としての教会ではなく、テキストと解釈が交差する、新しいキリスト教的プラットフォームです。",
   aboutSection2Title: "主な機能",
   aboutFeatures: [
-    "聖書・外典・偽書の節・章・書へのコメント投稿と返信",
+    "収録するすべての文書の節・章・書へのコメント投稿と返信",
     "Q&A — 疑問をコメントとして投稿し、ベストアンサーを選定",
     "全文検索 — 節テキスト・コメント・書名を横断検索",
     "コメントや節をお気に入りに保存",
@@ -170,7 +170,7 @@ const ja = {
     "共同翻訳プロジェクト — チームで聖書を翻訳",
   ],
   aboutSection3Title: "今後の予定",
-  aboutPlanned: ["外典・偽書のコンテンツ拡充", "翻訳対訳ビュー — 複数翻訳を並べて読む", "プロフィール画像"],
+  aboutPlanned: ["収録文書の拡充", "翻訳対訳ビュー — 複数翻訳を並べて読む", "プロフィール画像"],
   backToHome: "← トップへ戻る",
 
   // 翻訳プロジェクト一覧
@@ -444,7 +444,7 @@ const ja = {
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
 
-  genreNames: { "律法": "律法", "歴史": "歴史", "詩歌": "詩歌", "預言": "預言", "第二正典": "第二正典", "福音書": "福音書", "使徒・書簡": "使徒・書簡", "黙示": "黙示", "旧約偽典": "旧約偽典" } as Record<string, string>,
+  genreNames: { "律法": "律法", "歴史": "歴史", "詩歌": "詩歌", "預言": "預言", "福音書": "福音書", "使徒・書簡": "使徒・書簡", "黙示": "黙示" } as Record<string, string>,
 };
 
 const en: typeof ja = {
@@ -487,7 +487,7 @@ const en: typeof ja = {
   books: "Books",
 
   homeTagline: "Not one authority,\nbut an open field.",
-  homeDesc: "Toward a Christianity where multiple texts, interpretations, histories, and fragments connect. From canon to Apocrypha and Pseudepigrapha — read, discuss, and translate every text.",
+  homeDesc: "Toward a Christianity where multiple texts, interpretations, histories, and fragments connect. Read, discuss, and translate every text, without ranking one above another.",
   todayVerse: "Today's Verse",
   verseUnavailable: "Verse unavailable today.",
   trending: "Trending",
@@ -591,7 +591,7 @@ const en: typeof ja = {
   aboutSection1Body: "What does it mean for Christianity to be “Japanese”?\n\nAs I reflected on this question, I found my way to Kanzo Uchimura’s idea of Non-Church Christianity.\n\nAt the same time, I have long been interested in postmodern thought, and through the influence of Hiroki Azuma’s Otaku: Japan’s Database Animals, I began to imagine what might be called a database-like Christianity. Rather than understanding Christianity as a single fixed institution or authority, could it instead be seen as an open field where multiple texts, interpretations, histories, and fragments are connected?\n\nNeON Church was born from this question.\n\nThrough this project, I hope to discover new points of contact between conservative Christianity and thought after postmodernism. I also hope to shed light on texts that were placed outside the canon throughout history, as well as interpretations that have been marginalized.\n\nThe name NeON comes from neon, the name of the chemical element derived from the Greek word neos, meaning “new.” And at the same time, as its capital letters N-O-N reveal, it also comes from the “Non” of the Non-Church Christianity mentioned at the outset. “Newness” and “Non-Church” — the name carries both meanings at once. It also resonates, as suggested by the background image, with the neon-lit streets of Tokyo: their hybridity, artificiality, chaos, and sense of newness.\n\nNeON Church is not a church as an institution, but a new Christian platform where texts and interpretations intersect.",
   aboutSection2Title: "Features",
   aboutFeatures: [
-    "Comment on verses, chapters, and books — including Apocrypha & Pseudepigrapha",
+    "Comment on any verse, chapter, or book in the collection",
     "Q&A — post questions and mark the best answer",
     "Full-text search across verses, comments, and book titles",
     "Bookmark comments and verses",
@@ -600,7 +600,7 @@ const en: typeof ja = {
     "Collaborative translation projects — translate the Bible as a team",
   ],
   aboutSection3Title: "Coming soon",
-  aboutPlanned: ["More Apocrypha & Pseudepigrapha texts", "Side-by-side translation view", "Profile photos"],
+  aboutPlanned: ["More texts", "Side-by-side translation view", "Profile photos"],
   backToHome: "← Back to home",
 
   translationsTitle: "Translation Projects",
@@ -844,7 +844,7 @@ const en: typeof ja = {
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
 
-  genreNames: { "律法": "Law (Torah)", "歴史": "History", "詩歌": "Poetry & Wisdom", "預言": "Prophets", "第二正典": "Deuterocanon", "福音書": "Gospels", "使徒・書簡": "Acts & Epistles", "黙示": "Apocalyptic", "旧約偽典": "Old Testament Pseudepigrapha" } as Record<string, string>,
+  genreNames: { "律法": "Law (Torah)", "歴史": "History", "詩歌": "Poetry & Wisdom", "預言": "Prophets", "福音書": "Gospels", "使徒・書簡": "Acts & Epistles", "黙示": "Apocalyptic" } as Record<string, string>,
 };
 
 export type Translations = typeof ja;

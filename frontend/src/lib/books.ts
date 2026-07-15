@@ -4,9 +4,11 @@
 
 import { translationLang } from "@/lib/translations";
 
-// 整理の軸はジャンル（文学種別）。正典/外典といった区分は設けない。
+// 整理の軸はジャンル（文学種別）だけ。どの伝統がどの書を正典に数えるかという区分は設けない。
+// 「第二正典」「旧約偽典」も、書そのものの性質ではなく後世の格付けを表す名前なので置かない。
+// トビト記は物語だから歴史、シラ書は知恵文学だから詩歌、というように中身で並べる。
 // 本があるジャンルだけ表示される（read ページ側で空ジャンルを除外）。
-export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "第二正典", "福音書", "使徒・書簡", "黙示", "旧約偽典"] as const;
+export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "福音書", "使徒・書簡", "黙示"] as const;
 export type BookGenre = (typeof GENRE_ORDER)[number];
 
 // その本が持つ訳。id は DB の Book.translation、name は DB の Book.name。
@@ -20,38 +22,10 @@ export type BookTranslation = { id: string; name: string };
 // 語番号で引用されるため章番号を語番号に一致させており、冒頭の Prologue が第0章になる。
 // その本では chapterTitles の index 0 が第0章を指す。
 
+// 七十人訳（LXX）が含む書は、底本・訳ともパブリックドメインの Brenton 英訳（1851）から取り込んでいる。
+// 章・節は原文が番号を持つ。枝番の節（トビト 4:7a など）は親の節に本文をつないである。
+// これらの書は一箇所にまとめず、それぞれの文学種別のジャンルへ、近い書の隣に置く。
 export const BOOKS = [
-  // --- 第二正典（七十人訳が含む書）---
-  // 底本・訳ともパブリックドメインの Brenton 七十人訳英訳（1851）。
-  // 章・節は原文が番号を持つ。枝番の節（トビト 4:7a など）は親の節に本文をつないである。
-  { slug: "tobit", name: "トビト記", englishName: "Tobit", short: "トビト", totalChapters: 14, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Tobit" }] },
-  { slug: "judith", name: "ユディト記", englishName: "Judith", short: "ユディト", totalChapters: 16, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Judith" }] },
-  { slug: "wisdom", name: "知恵の書", englishName: "Wisdom Of Solomon", short: "知恵", totalChapters: 19, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Wisdom Of Solomon" }] },
-  { slug: "sirach", name: "シラ書（集会の書）", englishName: "Sirach", short: "シラ", totalChapters: 51, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Sirach" }] },
-  { slug: "baruch", name: "バルク書", englishName: "Baruch", short: "バルク", totalChapters: 5, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Baruch" }] },
-  { slug: "epistle-of-jeremy", name: "エレミヤの手紙", englishName: "Epistle of Jeremy", short: "エレミヤ書簡", totalChapters: 1, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Epistle of Jeremy" }] },
-  { slug: "susanna", name: "スザンナ", englishName: "Susanna", short: "スザンナ", totalChapters: 1, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Susanna" }] },
-  { slug: "bel-and-the-dragon", name: "ベルと竜", englishName: "Bel and the Dragon", short: "ベルと竜", totalChapters: 1, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Bel and the Dragon" }] },
-  { slug: "1-maccabees", name: "マカバイ記一", englishName: "Maccabees I", short: "マカバイ一", totalChapters: 16, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees I" }] },
-  { slug: "2-maccabees", name: "マカバイ記二", englishName: "Maccabees II", short: "マカバイ二", totalChapters: 15, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees II" }] },
-  { slug: "1-esdras", name: "エズラ記（ギリシア語）", englishName: "Esdras I", short: "エズラ一", totalChapters: 9, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Esdras I" }] },
-  { slug: "prayer-of-manasseh", name: "マナセの祈り", englishName: "Prayer of Manasses", short: "マナセ", totalChapters: 1, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Prayer of Manasses" }] },
-  { slug: "3-maccabees", name: "マカバイ記三", englishName: "Maccabees III", short: "マカバイ三", totalChapters: 7, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees III" }] },
-  { slug: "4-maccabees", name: "マカバイ記四", englishName: "Maccabees IV", short: "マカバイ四", totalChapters: 18, genre: "第二正典" as BookGenre,
-    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees IV" }] },
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
     translations: [{ id: "口語訳", name: "マタイによる福音書" }, { id: "KJV", name: "Matthew" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }, { id: "TR (GRC)", name: "Κατα Ματθαιον" }, { id: "文語訳", name: "マタイ傳福音書" }] },
   { slug: "mark",    name: "マルコによる福音書", englishName: "Mark",    short: "マルコ", totalChapters: 16, genre: "福音書" as BookGenre,
@@ -397,10 +371,6 @@ export const BOOKS = [
   // エノク書は R. H. Charles 英訳のみ（翻訳プロジェクトの元テキスト）。
   { slug: "enoch",   name: "エノク書",           englishName: "The Book of Enoch", short: "エノク書", totalChapters: 108, genre: "黙示" as BookGenre,
     translations: [{ id: "R. H. Charles (EN)", name: "The Book of Enoch" }] },
-  // アダムとエバの生涯（Vita Adae et Evae）は L. S. A. Wells 英訳のみ（パブリックドメイン）。
-  // 章=ローマ数字 i..li、節=アラビア数字。章番号は持つが章名は無い。
-  { slug: "adam-and-eve", name: "アダムとエバの生涯", englishName: "The Life of Adam and Eve", short: "アダムとエバ", totalChapters: 51, genre: "旧約偽典" as BookGenre,
-    translations: [{ id: "L. S. A. Wells (EN)", name: "The Life of Adam and Eve" }] },
   { slug: "genesis", name: "創世記", englishName: "Genesis", short: "創世記", totalChapters: 50, genre: "律法" as BookGenre,
     translations: [{ id: "KJV", name: "Genesis" }, { id: "文語訳", name: "創世記" }, { id: "WLC (HEB)", name: "בְּרֵאשִׁית" }, { id: "LXX (GRC)", name: "Γένεση" }, { id: "口語訳", name: "創世記" }] },
   { slug: "exodus", name: "出エジプト記", englishName: "Exodus", short: "出エジプト", totalChapters: 40, genre: "律法" as BookGenre,
@@ -433,8 +403,28 @@ export const BOOKS = [
     translations: [{ id: "KJV", name: "Ezra" }, { id: "文語訳", name: "エズラ書" }, { id: "WLC (HEB)", name: "עֶזְרָא" }, { id: "LXX (GRC)", name: "Ἔσδρας" }, { id: "口語訳", name: "エズラ記" }] },
   { slug: "nehemiah", name: "ネヘミヤ記", englishName: "Nehemiah", short: "ネヘミヤ", totalChapters: 13, genre: "歴史" as BookGenre,
     translations: [{ id: "KJV", name: "Nehemiah" }, { id: "文語訳", name: "尼希米亞記" }, { id: "WLC (HEB)", name: "נְחֶמְיָה" }, { id: "LXX (GRC)", name: "Νεεμίας" }, { id: "口語訳", name: "ネヘミヤ記" }] },
+  // エズラ記（ギリシア語）はエズラ記・ネヘミヤ記と重なる並行版なので、その隣に置く。
+  { slug: "1-esdras", name: "エズラ記（ギリシア語）", englishName: "Esdras I", short: "エズラ一", totalChapters: 9, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Esdras I" }] },
   { slug: "esther", name: "エステル記", englishName: "Esther", short: "エステル", totalChapters: 10, genre: "歴史" as BookGenre,
     translations: [{ id: "KJV", name: "Esther" }, { id: "文語訳", name: "以士帖書" }, { id: "WLC (HEB)", name: "אֶסְתֵּר" }, { id: "LXX (GRC)", name: "Ἐσθήρ" }, { id: "口語訳", name: "エステル記" }] },
+  // トビト記・ユディト記は短編物語、マカバイ記はハスモン朝の戦いを綴った史書。
+  { slug: "tobit", name: "トビト記", englishName: "Tobit", short: "トビト", totalChapters: 14, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Tobit" }] },
+  { slug: "judith", name: "ユディト記", englishName: "Judith", short: "ユディト", totalChapters: 16, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Judith" }] },
+  { slug: "1-maccabees", name: "マカバイ記一", englishName: "Maccabees I", short: "マカバイ一", totalChapters: 16, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees I" }] },
+  { slug: "2-maccabees", name: "マカバイ記二", englishName: "Maccabees II", short: "マカバイ二", totalChapters: 15, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees II" }] },
+  { slug: "3-maccabees", name: "マカバイ記三", englishName: "Maccabees III", short: "マカバイ三", totalChapters: 7, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees III" }] },
+  { slug: "4-maccabees", name: "マカバイ記四", englishName: "Maccabees IV", short: "マカバイ四", totalChapters: 18, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees IV" }] },
+  // アダムとエバの生涯（Vita Adae et Evae）は L. S. A. Wells 英訳のみ（パブリックドメイン）。
+  // 創世記の続きを語る物語。章=ローマ数字 i..li、節=アラビア数字。章番号は持つが章名は無い。
+  { slug: "adam-and-eve", name: "アダムとエバの生涯", englishName: "The Life of Adam and Eve", short: "アダムとエバ", totalChapters: 51, genre: "歴史" as BookGenre,
+    translations: [{ id: "L. S. A. Wells (EN)", name: "The Life of Adam and Eve" }] },
   { slug: "job", name: "ヨブ記", englishName: "Job", short: "ヨブ", totalChapters: 42, genre: "詩歌" as BookGenre,
     translations: [{ id: "KJV", name: "Job" }, { id: "文語訳", name: "ヨブ記" }, { id: "WLC (HEB)", name: "אִיּוֹב" }, { id: "LXX (GRC)", name: "Ἰώβ" }, { id: "口語訳", name: "ヨブ記" }] },
   { slug: "psalms", name: "詩篇", englishName: "Psalms", short: "詩篇", totalChapters: 150, genre: "詩歌" as BookGenre,
@@ -445,16 +435,33 @@ export const BOOKS = [
     translations: [{ id: "KJV", name: "Ecclesiastes" }, { id: "文語訳", name: "傳道之書" }, { id: "WLC (HEB)", name: "קֹהֶלֶת" }, { id: "LXX (GRC)", name: "Ἐκκλησιαστής" }, { id: "口語訳", name: "伝道の書" }] },
   { slug: "song-of-songs", name: "雅歌", englishName: "Song of Solomon", short: "雅歌", totalChapters: 8, genre: "詩歌" as BookGenre,
     translations: [{ id: "KJV", name: "Song of Solomon" }, { id: "文語訳", name: "雅歌" }, { id: "WLC (HEB)", name: "שִׁיר הַשִּׁירִים" }, { id: "LXX (GRC)", name: "Ἆσμα Ἀσμάτων" }, { id: "口語訳", name: "雅歌" }] },
+  // 知恵の書とシラ書は箴言・伝道の書と同じ知恵文学。マナセの祈りは詩篇に近い悔い改めの祈り。
+  { slug: "wisdom", name: "知恵の書", englishName: "Wisdom Of Solomon", short: "知恵", totalChapters: 19, genre: "詩歌" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Wisdom Of Solomon" }] },
+  { slug: "sirach", name: "シラ書（集会の書）", englishName: "Sirach", short: "シラ", totalChapters: 51, genre: "詩歌" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Sirach" }] },
+  { slug: "prayer-of-manasseh", name: "マナセの祈り", englishName: "Prayer of Manasses", short: "マナセ", totalChapters: 1, genre: "詩歌" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Prayer of Manasses" }] },
   { slug: "isaiah", name: "イザヤ書", englishName: "Isaiah", short: "イザヤ", totalChapters: 66, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Isaiah" }, { id: "文語訳", name: "以賽亞書" }, { id: "WLC (HEB)", name: "יְשַׁעְיָהוּ" }, { id: "LXX (GRC)", name: "Ἠσαΐας" }, { id: "口語訳", name: "イザヤ書" }] },
   { slug: "jeremiah", name: "エレミヤ書", englishName: "Jeremiah", short: "エレミヤ", totalChapters: 52, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Jeremiah" }, { id: "文語訳", name: "耶利米亞記" }, { id: "WLC (HEB)", name: "יִרְמְיָהוּ" }, { id: "LXX (GRC)", name: "Ἱερεμίας" }, { id: "口語訳", name: "エレミヤ書" }] },
   { slug: "lamentations", name: "哀歌", englishName: "Lamentations", short: "哀歌", totalChapters: 5, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Lamentations" }, { id: "文語訳", name: "耶利米亞哀歌" }, { id: "WLC (HEB)", name: "אֵיכָה" }, { id: "LXX (GRC)", name: "Θρήνοι" }, { id: "口語訳", name: "哀歌" }] },
+  // バルク書とエレミヤの手紙はエレミヤに連なる書として伝えられてきたので、哀歌の隣に置く。
+  { slug: "baruch", name: "バルク書", englishName: "Baruch", short: "バルク", totalChapters: 5, genre: "預言" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Baruch" }] },
+  { slug: "epistle-of-jeremy", name: "エレミヤの手紙", englishName: "Epistle of Jeremy", short: "エレミヤ書簡", totalChapters: 1, genre: "預言" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Epistle of Jeremy" }] },
   { slug: "ezekiel", name: "エゼキエル書", englishName: "Ezekiel", short: "エゼキエル", totalChapters: 48, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Ezekiel" }, { id: "文語訳", name: "以西結書" }, { id: "WLC (HEB)", name: "יְחֶזְקֵאל" }, { id: "LXX (GRC)", name: "Ἰεζεκιήλ" }, { id: "口語訳", name: "エゼキエル書" }] },
   { slug: "daniel", name: "ダニエル書", englishName: "Daniel", short: "ダニエル", totalChapters: 12, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Daniel" }, { id: "文語訳", name: "但以理書" }, { id: "WLC (HEB)", name: "דָּנִיֵּאל" }, { id: "LXX (GRC)", name: "Δανιήλ" }, { id: "口語訳", name: "ダニエル書" }] },
+  // スザンナとベルと竜はギリシア語のダニエル書に含まれる挿話なので、ダニエル書の隣に置く。
+  { slug: "susanna", name: "スザンナ", englishName: "Susanna", short: "スザンナ", totalChapters: 1, genre: "預言" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Susanna" }] },
+  { slug: "bel-and-the-dragon", name: "ベルと竜", englishName: "Bel and the Dragon", short: "ベルと竜", totalChapters: 1, genre: "預言" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Bel and the Dragon" }] },
   { slug: "hosea", name: "ホセア書", englishName: "Hosea", short: "ホセア", totalChapters: 14, genre: "預言" as BookGenre,
     translations: [{ id: "KJV", name: "Hosea" }, { id: "文語訳", name: "何西阿書" }, { id: "WLC (HEB)", name: "הוֹשֵׁעַ" }, { id: "LXX (GRC)", name: "Ὡσηέ" }, { id: "口語訳", name: "ホセア書" }] },
   { slug: "joel", name: "ヨエル書", englishName: "Joel", short: "ヨエル", totalChapters: 3, genre: "預言" as BookGenre,

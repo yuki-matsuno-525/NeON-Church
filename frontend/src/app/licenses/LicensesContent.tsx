@@ -20,27 +20,23 @@ const content: Record<string, Content> = {
       "NeON Church で扱う本文・ユーザー投稿・ソースコード・素材の取り扱い方針を明記します。各文献のライセンスは順次精査しており、追加・修正が必要な場合はフィードバックページからお知らせください。",
     sections: [
       {
-        heading: "1. 聖書本文（収録済み）",
-        body: "口語訳（日本聖書協会、1955）— パブリックドメイン。KJV（King James Version、1611 / 1769 改訂）— パブリックドメイン。Nestle 1904 ギリシャ語新約聖書（原語・4福音書）— パブリックドメイン。本文データは biblicalhumanities/Nestle1904（OSIS XML）に基づきます。これらの本文は本サービス内で閲覧・引用可能です。",
+        heading: "1. 収録している本文",
+        body: "収録している本文は、底本・翻訳ともすべてパブリックドメインです。本サービス内で閲覧・引用できます。文書ごとの訳者・出典は各書のページに表示しています。今後さらに文書を追加する際も、ライセンスを個別に確認し、パブリックドメインまたは利用許諾の明確な版に限定して収録します。",
       },
       {
-        heading: "2. 外典・偽典・関連古代文献",
-        body: "エノク書（R. H. Charles 英訳、1917）— パブリックドメイン。すでに本サービス内で閲覧・引用できます。今後さらに外典・偽典・関連古代文献を追加する際は、本文ライセンスを個別に確認し、パブリックドメインまたは利用許諾の明確な版に限定して収録します。各文献ページに翻訳者・原典・ライセンスを明示します。",
-      },
-      {
-        heading: "3. ユーザーによる共同翻訳",
+        heading: "2. ユーザーによる共同翻訳",
         body: "ユーザーが本サービスの共同翻訳機能で作成した翻訳の著作権は、プロジェクトオーナーおよび参加者に帰属します。公開設定にした翻訳は、本サービス内および検索エンジンから閲覧可能となり、本サービスは表示・配信・保存のために必要な範囲で利用します。既定は All Rights Reserved 相当です。今後、CC BY / CC BY-SA など明示的なオープンライセンスを選択可能にする方針です。",
       },
       {
-        heading: "4. ユーザー投稿（コメント・Q&A）",
+        heading: "3. ユーザー投稿（コメント・Q&A）",
         body: "コメント・Q&A の著作権は投稿者に帰属します。本サービスはこれらを表示・引用・配信するために必要な範囲で利用します。",
       },
       {
-        heading: "5. 素材（フォント・画像など）",
+        heading: "4. 素材（フォント・画像など）",
         body: "本サービスでは見出しに Noto Serif JP（SIL Open Font License 1.1）を使用しています。背景画像その他の素材は順次クレジットを整備しています。",
       },
     ],
-    sourceCodeLabel: "6. ソースコード",
+    sourceCodeLabel: "5. ソースコード",
     sourceCodeBody:
       "本サービスのソースコードは GitHub で公開しています。ライセンス条件はリポジトリの LICENSE ファイルを参照してください。",
     back: "← トップへ戻る",
@@ -51,27 +47,23 @@ const content: Record<string, Content> = {
       "This page describes how scripture texts, user-submitted content, source code, and assets are handled in NeON Church. We review text licenses on an ongoing basis. Please contact us via Feedback if anything needs correction.",
     sections: [
       {
-        heading: "1. Scripture Texts (Currently Available)",
-        body: "Kougo-yaku (Japan Bible Society, 1955) — public domain. KJV (King James Version, 1611 / 1769 revision) — public domain. Nestle 1904 Greek New Testament (original language, four Gospels) — public domain; text data based on biblicalhumanities/Nestle1904 (OSIS XML). These texts can be read and quoted within the Service.",
+        heading: "1. Texts in the Collection",
+        body: "Every text in the collection is public domain, both the source text and the translation, and can be read and quoted within the Service. The translator and source for each text are shown on that book's page. As we add further texts, we will verify the license of each one and only include editions that are clearly public domain or licensed for this use.",
       },
       {
-        heading: "2. Apocrypha, Pseudepigrapha, and Related Ancient Texts",
-        body: "The Book of Enoch (R. H. Charles translation, 1917) — public domain. It is already available to read and quote within the Service. When adding further Apocrypha, Pseudepigrapha, or other ancient texts, we will verify the license of each translation and only include editions that are clearly public domain or licensed for this use. Each text page will display its translator, source, and license.",
-      },
-      {
-        heading: "3. Collaborative Translations by Users",
+        heading: "2. Collaborative Translations by Users",
         body: "Translations produced by users via the collaborative translation feature are owned by the project owner and contributors. Published translations become visible within the Service and may be indexed by search engines; the Service uses them as needed for display, distribution, and storage. The default is All Rights Reserved. Selecting explicit open licenses such as CC BY or CC BY-SA is planned.",
       },
       {
-        heading: "4. User-Submitted Content (Comments and Q&A)",
+        heading: "3. User-Submitted Content (Comments and Q&A)",
         body: "Comments and Q&A are owned by their authors. The Service uses them as needed for display, quotation, and distribution.",
       },
       {
-        heading: "5. Assets (Fonts and Images)",
+        heading: "4. Assets (Fonts and Images)",
         body: "We use Noto Serif JP for headings (SIL Open Font License 1.1). Credits for background images and other assets are being added.",
       },
     ],
-    sourceCodeLabel: "6. Source Code",
+    sourceCodeLabel: "5. Source Code",
     sourceCodeBody:
       "The source code of the Service is published on GitHub. See the LICENSE file in the repository for license terms.",
     back: "← Back to home",

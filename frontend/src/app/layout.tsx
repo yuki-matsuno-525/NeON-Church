@@ -25,12 +25,12 @@ export const metadata: Metadata = {
     template: "%s | NeON Church",
   },
   description:
-    "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text — from canon to Apocrypha and Pseudepigrapha.",
+    "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text, without ranking one above another.",
   metadataBase: new URL(SITE_URL),
   openGraph: {
     title: "NeON Church",
     description:
-      "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text — from canon to Apocrypha and Pseudepigrapha.",
+      "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text, without ranking one above another.",
     url: SITE_URL,
     siteName: "NeON Church",
     locale: "en_US",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NeON Church",
-    description: "An open field where texts and interpretations intersect — from canon to Apocrypha and Pseudepigrapha.",
+    description: "An open field where texts and interpretations intersect — every text read on equal footing.",
     images: ["/img/logo-og.png"],
   },
 };
