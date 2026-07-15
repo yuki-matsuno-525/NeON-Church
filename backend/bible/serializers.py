@@ -36,12 +36,14 @@ class VerseSearchSerializer(serializers.ModelSerializer):
     chapter_number = serializers.IntegerField(source="chapter.number", read_only=True)
     chapter_id = serializers.UUIDField(source="chapter.id", read_only=True)
     book_id = serializers.UUIDField(source="chapter.book.id", read_only=True)
+    # 検索は全訳を横断するため、どの訳の本文に当たったかを返す（UI 言語では絞らない）。
+    translation = serializers.CharField(source="chapter.book.translation", read_only=True)
     # 訳非依存の書 slug。フロントは book_name の逆引きではなくこれでリンクを組み立てる。
     book_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = Verse
-        fields = ["id", "number", "text", "chapter_number", "chapter_id", "book_name", "book_id", "book_slug"]
+        fields = ["id", "number", "text", "chapter_number", "chapter_id", "book_name", "book_id", "book_slug", "translation"]
 
     def get_book_slug(self, obj) -> str:
         cb = obj.chapter.book.canonical_book

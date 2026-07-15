@@ -145,24 +145,29 @@ class TestSearchView:
         assert res.data["books"] == []
 
     def test_search_includes_kjv_verses(self, api_client, verse, verse_kjv):
-        # lang=en では KJV 節が検索対象
-        res = api_client.get(SEARCH_URL, {"q": "Jesus", "lang": "en"})
+        res = api_client.get(SEARCH_URL, {"q": "Jesus"})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["verses"]) == 1
         assert res.data["verses"][0]["id"] == str(verse_kjv.id)
 
     def test_search_includes_kjv_books(self, api_client, book, book_kjv):
-        # lang=en では KJV 書名が検索対象
-        res = api_client.get(SEARCH_URL, {"q": "Matthew", "lang": "en"})
+        res = api_client.get(SEARCH_URL, {"q": "Matthew"})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["books"]) == 1
         assert res.data["books"][0]["name"] == "Matthew"
 
-    def test_lang_scopes_out_other_language(self, api_client, verse, verse_kjv):
-        # 既定 lang=ja では英語(KJV)の節は返らない（言語スコープ）
-        res = api_client.get(SEARCH_URL, {"q": "Jesus"})
-        assert res.status_code == status.HTTP_200_OK
-        assert res.data["verses"] == []
+    def test_search_is_not_scoped_by_ui_language(self, api_client, verse, verse_kjv):
+        # UI 言語は検索対象を変えない。lang を渡しても・渡さなくても同じ結果になる
+        # （以前は lang=en だと日本語の節が母集団から消え、「神」が 0 件になっていた）。
+        for params in ({"q": "イエス"}, {"q": "イエス", "lang": "en"}):
+            res = api_client.get(SEARCH_URL, params)
+            assert res.status_code == status.HTTP_200_OK
+            assert [v["id"] for v in res.data["verses"]] == [str(verse.id)]
+
+    def test_search_finds_both_languages_for_same_query(self, api_client, verse, verse_kjv):
+        # 検索語そのものが言語を選ぶので、全訳を対象にしても結果は混ざらない。
+        assert api_client.get(SEARCH_URL, {"q": "Jesus"}).data["verse_total"] == 1
+        assert api_client.get(SEARCH_URL, {"q": "イエス"}).data["verse_total"] == 1
 
     def test_anonymous_access_allowed(self, api_client, verse):
         res = api_client.get(SEARCH_URL, {"q": "アブラハム"})
@@ -179,6 +184,8 @@ class TestSearchView:
         assert "chapter_id" in v
         assert "book_name" in v
         assert "book_id" in v
+        # 全訳を横断するので、どの訳の本文に当たったかを返す
+        assert v["translation"] == "口語訳"
 
     def test_page_size_and_pagination(self, db, api_client, chapter):
         # 1ページ50件。超えたら has_more=True で次ページに残りが出る。
@@ -212,7 +219,8 @@ class TestSearchView:
         assert len(res.data["books"]) >= 1
 
     def test_dedup_same_passage_across_translations(self, api_client, verse, verse_bungo):
-        # 口語訳と文語訳の同一箇所は代表訳(口語訳)1件に集約される（lang=ja）
+        # 同じ言語で同じ書を持つ訳は代表1訳に絞ってあるため、口語訳と文語訳の同一箇所は
+        # 口語訳の1件に集約される（全訳を対象にしても重複しない）。
         res = api_client.get(SEARCH_URL, {"q": "イエス"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["verse_total"] == 1

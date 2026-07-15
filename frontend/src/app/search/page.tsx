@@ -6,6 +6,7 @@ import Link from "next/link";
 import { searchBible, type SearchKind, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { translationLabel } from "@/lib/translations";
 import { useLang } from "@/contexts/LanguageContext";
 import { EmptyState, Button } from "@/components/ui";
 import { Pagination } from "@/components/ui/Pagination";
@@ -71,14 +72,15 @@ function SearchContent() {
       setResult(null);
       return;
     }
-    // クエリ・言語・絞り込み・ページのいずれかが変わったら、そのページを取り直す（追記ではなく置換）。
+    // クエリ・絞り込み・ページのいずれかが変わったら、そのページを取り直す（追記ではなく置換）。
+    // UI 言語は依存に入れない。言語を切り替えても検索結果は変わらない。
     // 件数の最小判定（CJKは1文字可）は backend に任せる。
     setLoading(true);
-    searchBible(q, lang, page, kind, bookSlug)
+    searchBible(q, page, kind, bookSlug)
       .then(setResult)
       .catch(() => setResult({ verses: [], books: [], comments: [], verse_total: 0, has_more: false }))
       .finally(() => setLoading(false));
-  }, [q, lang, kind, bookSlug, page]);
+  }, [q, kind, bookSlug, page]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -296,6 +298,8 @@ function SearchContent() {
                         <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
                           <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
+                          {/* 検索は全訳を横断するので、どの訳の本文に当たったかを添える。 */}
+                          <span style={{ color: "var(--text-faint)" }}> · {translationLabel(v.translation, lang)}</span>
                         </span>
                         {url && (
                           <Link

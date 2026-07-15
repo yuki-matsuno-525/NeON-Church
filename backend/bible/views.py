@@ -14,17 +14,31 @@ from comments.serializers import CommentSearchSerializer
 from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
-# 検索の言語スコープ。UI 言語ごとに検索対象の訳を絞る。
-# 同一箇所が訳ごとに重複しないよう、**同じ書を重複して持つ訳は入れない**（＝各言語1訳で代表させる）。
-# 日本語は口語訳（現代語）を代表とし、文語訳は検索対象から外す。
-# 英語(KJVと外典)・ギリシャ語(TR=新約/LXX=旧約)は書が重ならないので複数訳でも重複しない。
-# 未知の言語は日本語にフォールバックする。
-LANG_TRANSLATIONS = {
-    "ja": ["口語訳"],
-    "en": ["KJV", "Mark M. Mattison (EN)", "R. H. Charles (EN)", "L. S. A. W ells (EN)"],
-    "grc": ["TR (GRC)", "LXX (GRC)"],
-    "heb": ["WLC (HEB)"],
-}
+# 検索対象の訳。UI 言語では絞らない。
+#
+# 以前は UI 言語ごとに訳を絞っていたため、日本語 UI で「神」を検索してから英語 UI に
+# 切り替えると、検索対象が KJV だけになって 0 件になっていた。UI のボタンが何語かという
+# 話と、どの言語の本文を探したいかは別の希望なので、両者を切り離す。
+#
+# 代わりに検索語そのものが言語を選ぶ。「神」は日本語の本文にしか、"god" は英語の本文にしか
+# 当たらないので、全訳を対象にしても結果は混ざらない。副次的に、英訳しか無いエノク書などが
+# 日本語 UI からも探せるようになる。
+#
+# ただし同じ言語で同じ書を持つ訳を並べると同一箇所が重複するため、その組は代表1訳に絞る:
+#   - 日本語: 口語訳（現代語）を代表とし、文語訳は外す
+#   - ギリシャ語新約: TR を代表とし、Nestle 1904 は外す
+SEARCH_TRANSLATIONS = [
+    "口語訳",
+    "KJV",
+    "Mark M. Mattison (EN)",
+    "R. H. Charles (EN)",
+    "L. S. A. Wells (EN)",
+    "Samuel Zinner (EN)",
+    "L. C. L. Brenton (EN)",
+    "TR (GRC)",
+    "LXX (GRC)",
+    "WLC (HEB)",
+]
 
 SEARCH_KINDS = {"all", "verses", "books", "comments"}
 
@@ -144,10 +158,9 @@ class ReferenceVersesView(_ReferenceView):
 
 
 class SearchView(APIView):
-    """GET /api/search/?q=&lang=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
+    """GET /api/search/?q=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
 
-    - lang（既定 ja）で節の検索対象を UI 言語の訳に絞り、同じ箇所が訳ごとに重複しないよう
-      代表訳1件に集約する（例: 口語訳と文語訳の両方に当たる箇所は口語訳だけ返す）。
+    - 検索対象は SEARCH_TRANSLATIONS の全訳。UI 言語では絞らない（検索語が言語を選ぶ）。
     - kind（all/verses/books/comments）で返すセクションを絞る。
     - book（canonical_book.slug）で書を絞る。
     - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
@@ -160,7 +173,6 @@ class SearchView(APIView):
 
     def get(self, request):
         q = request.query_params.get("q", "").strip()
-        lang = request.query_params.get("lang", "ja")
         kind = request.query_params.get("kind", "all")
         if kind not in SEARCH_KINDS:
             kind = "all"
@@ -172,11 +184,9 @@ class SearchView(APIView):
         if len(q) < _min_query_len(q):
             return Response({"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False})
 
-        translations = LANG_TRANSLATIONS.get(lang, LANG_TRANSLATIONS["ja"])
-
-        # UI 言語の訳に絞って書順で並べる（言語ごとに書が重ならない訳だけなので重複しない）。
+        # 代表訳に絞って書順で並べる（同じ書を重複して持つ訳は除いてあるので重複しない）。
         verses_qs = (
-            Verse.objects.filter(text__icontains=q, chapter__book__translation__in=translations)
+            Verse.objects.filter(text__icontains=q, chapter__book__translation__in=SEARCH_TRANSLATIONS)
             .select_related("chapter__book", "chapter__book__canonical_book")
             .order_by("chapter__book__order", "chapter__number", "number")
         )
@@ -193,8 +203,8 @@ class SearchView(APIView):
             verses = []
             has_more = False
 
-        # 書名・コメントは1ページ目のプレビュー（ページングしない）。書名は UI 言語の訳に絞る。
-        books_qs = Book.objects.filter(name__icontains=q, translation__in=translations).order_by("order")
+        # 書名・コメントは1ページ目のプレビュー（ページングしない）。
+        books_qs = Book.objects.filter(name__icontains=q, translation__in=SEARCH_TRANSLATIONS).order_by("order")
         comments_qs = (
             Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related("user", "canonical_book")

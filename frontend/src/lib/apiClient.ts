@@ -409,16 +409,15 @@ export function setBestAnswer(questionId: string, answerCommentId: string | null
 
 export type SearchKind = "all" | "verses" | "books" | "comments";
 
+// 検索対象は UI 言語で絞らない（検索語そのものが言語を選ぶ）ため lang は送らない。
 export function searchBible(
   q: string,
-  lang: string,
   page = 1,
   kind: SearchKind = "all",
   bookSlug = "",
 ): Promise<SearchResult> {
   const qs = new URLSearchParams();
   qs.set("q", q);
-  qs.set("lang", lang);
   qs.set("page", String(page));
   if (kind !== "all") qs.set("kind", kind);
   if (bookSlug) qs.set("book", bookSlug);

@@ -215,6 +215,7 @@ export type SearchResult = {
     book_name: string;
     book_id: string;
     book_slug: string;
+    translation: string;
   }[];
   books: Book[];
   comments: {

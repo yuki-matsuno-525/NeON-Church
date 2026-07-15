@@ -45,7 +45,17 @@ describe("SearchPage", () => {
     vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
     mockSearchParams = new URLSearchParams({ q: "神" });
     render(<SearchPage />);
-    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("神", expect.anything(), 1, "all", ""));
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("神", 1, "all", ""));
+  });
+
+  it("UI 言語を検索に渡さない（言語を切り替えても結果が変わらない）", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
+    mockSearchParams = new URLSearchParams({ q: "神" });
+    render(<SearchPage />);
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalled());
+    // 引数は q/page/kind/book だけ。lang が混じっていると英語 UI で「神」が 0 件になる。
+    expect(vi.mocked(searchBible).mock.calls[0]).toEqual(["神", 1, "all", ""]);
   });
 
   it("q が空のとき検索を実行しない", async () => {
@@ -70,6 +80,7 @@ describe("SearchPage", () => {
             book_name: "マタイによる福音書",
             book_id: "b1",
             book_slug: "matthew",
+            translation: "口語訳",
           },
         ],
       })
@@ -80,6 +91,30 @@ describe("SearchPage", () => {
     await screen.findByText(/マタイによる福音書/);
     // ハイライトされたキーワードは mark 要素に入るため getAllByText を使用
     expect(screen.getAllByText(/アブラハム/).length).toBeGreaterThan(0);
+  });
+
+  it("節結果に、当たった本文の訳が表示される", async () => {
+    const { searchBible } = await import("@/lib/api");
+    vi.mocked(searchBible).mockResolvedValue(
+      makeSearchResult({
+        verses: [
+          {
+            id: "v1",
+            number: 1,
+            text: "The book of the generation of Jesus Christ.",
+            chapter_number: 1,
+            chapter_id: "ch1",
+            book_name: "Matthew",
+            book_id: "b1",
+            book_slug: "matthew",
+            translation: "KJV",
+          },
+        ],
+      })
+    );
+    mockSearchParams = new URLSearchParams({ q: "Jesus" });
+    render(<SearchPage />);
+    await screen.findByText(/KJV（英語）/);
   });
 
   it("searchBible 成功: 書名結果が表示される", async () => {
@@ -122,7 +157,7 @@ describe("SearchPage", () => {
     const { searchBible } = await import("@/lib/api");
     const verse = (id: string, ch: number) => ({
       id, number: 1, text: `結果${id}`, chapter_number: ch, chapter_id: `c${id}`,
-      book_name: "マタイによる福音書", book_id: "b1", book_slug: "matthew",
+      book_name: "マタイによる福音書", book_id: "b1", book_slug: "matthew", translation: "口語訳",
     });
     // verse_total=120 → 50件ずつで3ページ。
     vi.mocked(searchBible).mockResolvedValue(
@@ -142,7 +177,7 @@ describe("SearchPage", () => {
     vi.mocked(searchBible).mockResolvedValue(makeSearchResult());
     mockSearchParams = new URLSearchParams({ q: "イエス", kind: "comments", book: "mark" });
     render(<SearchPage />);
-    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("イエス", expect.anything(), 1, "comments", "mark"));
+    await waitFor(() => expect(vi.mocked(searchBible)).toHaveBeenCalledWith("イエス", 1, "comments", "mark"));
   });
 
   it("種別フィルタを押すと URL が更新される", async () => {
