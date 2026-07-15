@@ -371,9 +371,6 @@ const ja = {
   switchToDark: "ダークモードに切り替え",
 
   // ホーム セクション説明
-  sectionReadDesc: "聖書全章を読む。読書進捗は自動保存。",
-  sectionQaDesc: "聖書に関する質問・回答のコミュニティ。",
-  sectionTranslateDesc: "外典・偽書も含めた共同翻訳プロジェクト。",
   replyLabel: "返信",
 
   // 相対時刻 / 日付ロケール
@@ -777,9 +774,6 @@ const en: typeof ja = {
   switchToLight: "Switch to light mode",
   switchToDark: "Switch to dark mode",
 
-  sectionReadDesc: "Read all chapters of the Bible. Reading progress auto-saved.",
-  sectionQaDesc: "Community for Bible questions and answers.",
-  sectionTranslateDesc: "Collaborative translation including Apocrypha and Pseudepigrapha.",
   replyLabel: "replies",
 
   relJustNow: "Just now",

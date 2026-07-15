@@ -16,9 +16,9 @@ export default function Home() {
   const t = useT();
   const { lang } = useLang();
   const sections = [
-    { title: t.read, description: t.sectionReadDesc, href: "/read", icon: "/img/icon-read.webp", featured: true },
-    { title: t.qa, description: t.sectionQaDesc, href: "/qa", icon: "/img/icon-qa.webp" },
-    { title: t.translate, description: t.sectionTranslateDesc, href: "/translations", icon: "/img/icon-translation.webp" },
+    { title: t.read, href: "/read", icon: "/img/icon-read.webp", featured: true },
+    { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
+    { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
@@ -327,7 +327,6 @@ export default function Home() {
             <SectionCard
               key={s.href}
               title={s.title}
-              description={s.description}
               href={s.href}
               icon={s.icon}
               featured={s.featured}
@@ -563,13 +562,11 @@ function TrendingCard({ comment }: { comment: QAComment }) {
 
 function SectionCard({
   title,
-  description,
   href,
   icon,
   featured = false,
 }: {
   title: string;
-  description: string;
   href: string;
   icon: string;
   featured?: boolean;
@@ -580,6 +577,7 @@ function SectionCard({
       style={{
         display: "flex",
         flexDirection: "column",
+        justifyContent: "center",
         gap: 10,
         background: featured
           ? "linear-gradient(160deg, rgba(125, 45, 215, 0.44) 0%, rgba(80, 20, 168, 0.56) 100%)"
@@ -665,17 +663,6 @@ function SectionCard({
           {title}
         </p>
       </div>
-      <p
-        style={{
-          fontSize: 13,
-          color: "rgba(255, 255, 255, 0.44)",
-          lineHeight: 1.7,
-          margin: 0,
-          position: "relative",
-        }}
-      >
-        {description}
-      </p>
     </Link>
   );
 }
