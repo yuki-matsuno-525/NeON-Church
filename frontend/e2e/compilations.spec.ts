@@ -85,8 +85,10 @@ test("compiled book can be drafted, edited, published, commented, and read publi
   await page.getByTestId("open-add-to-compilation").click();
   await page.getByTestId("compilation-select").selectOption({ label: title });
   await page.getByTestId("compilation-note-input").fill(sourceVerseNote);
-  await page.getByTestId("add-to-compilation-button").click();
-  await expect(page.getByText(sourceVerseNote)).toBeVisible();
+  await Promise.all([
+    page.waitForResponse((r) => new URL(r.url()).pathname === `/api/compilations/${bookId}/verses/` && r.request().method() === "POST" && r.ok()),
+    page.getByTestId("add-to-compilation-button").click(),
+  ]);
 
   await page.goto(editUrl);
   await expect(page.getByText(sourceVerseNote)).toBeVisible();

@@ -1,12 +1,26 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 import { useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { Icon, type IconName } from "@/components/ui/Icon";
+
+type HomeSection = {
+  title: string;
+  href: string;
+  icon?: string;
+  iconName?: IconName;
+  featured?: boolean;
+  requiresAuth?: boolean;
+};
 
 function slugFromBookName(name: string): string {
   return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? "";
@@ -15,16 +29,20 @@ function slugFromBookName(name: string): string {
 export default function Home() {
   const t = useT();
   const { lang } = useLang();
-  const sections = [
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const sections: HomeSection[] = [
     { title: t.read, href: "/read", icon: "/img/icon-read.webp", featured: true },
     { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
     { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
+    { title: t.compilation, href: "/compilations", iconName: "book-open", requiresAuth: true },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
   const [verseError, setVerseError] = useState(false);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
   const [trending, setTrending] = useState<QAComment[]>([]);
+  const [showCompilationLogin, setShowCompilationLogin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,8 +71,25 @@ export default function Home() {
     ? `/${slug}/${verseOfDay.chapter_number}?translation=${encodeURIComponent(verseOfDay.translation)}#verse-${verseOfDay.number}`
     : "#";
 
+  const openCompilation = () => {
+    if (authLoading) return;
+    if (!user) {
+      setShowCompilationLogin(true);
+      return;
+    }
+    router.push("/compilations");
+  };
+
   return (
     <>
+      {showCompilationLogin && (
+        <LoginRequiredModal
+          onClose={() => setShowCompilationLogin(false)}
+          from="/compilations"
+          title={t.compilationLoginTitle}
+          description={t.compilationLoginDesc}
+        />
+      )}
       {/* 背景（固定・全画面） */}
       <div
         style={{
@@ -319,7 +354,7 @@ export default function Home() {
           className="home-cards"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: 16,
           }}
         >
@@ -329,7 +364,10 @@ export default function Home() {
               title={s.title}
               href={s.href}
               icon={s.icon}
+              iconName={s.iconName}
               featured={s.featured}
+              onClick={s.requiresAuth ? openCompilation : undefined}
+              disabled={s.requiresAuth && authLoading}
             />
           ))}
         </div>
@@ -415,6 +453,11 @@ export default function Home() {
         @media (max-width: 768px) {
           .home-cards {
             grid-template-columns: 1fr !important;
+          }
+        }
+        @media (min-width: 769px) and (max-width: 980px) {
+          .home-cards {
+            grid-template-columns: repeat(2, 1fr) !important;
           }
         }
       `}</style>
@@ -564,61 +607,48 @@ function SectionCard({
   title,
   href,
   icon,
+  iconName,
   featured = false,
+  onClick,
+  disabled = false,
 }: {
   title: string;
   href: string;
-  icon: string;
+  icon?: string;
+  iconName?: IconName;
   featured?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 }) {
-  return (
-    <Link
-      href={href}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 10,
-        background: featured
-          ? "linear-gradient(160deg, rgba(125, 45, 215, 0.44) 0%, rgba(80, 20, 168, 0.56) 100%)"
-          : "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
-        border: featured
-          ? "3px solid rgba(210, 130, 255, 1.0)"
-          : "3px solid rgba(190, 95, 255, 0.95)",
-        borderRadius: 20,
-        padding: "24px 22px",
-        textDecoration: "none",
-        color: "inherit",
-        cursor: "pointer",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: [
-          "0 0 6px  rgba(210, 110, 255, 0.90)",
-          "0 0 18px rgba(185, 80,  255, 0.65)",
-          "0 0 38px rgba(155, 55,  230, 0.40)",
-        ].join(", "),
-        transition: "box-shadow 0.2s, border-color 0.2s",
-        minHeight: 140,
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = "rgba(225, 135, 255, 1.0)";
-        el.style.boxShadow = [
-          "0 0 8px  rgba(230, 130, 255, 1.00)",
-          "0 0 22px rgba(205, 100, 255, 0.82)",
-          "0 0 46px rgba(170, 68,  240, 0.55)",
-        ].join(", ");
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget as HTMLElement;
-        el.style.borderColor = featured ? "rgba(210, 130, 255, 1.0)" : "rgba(190, 95, 255, 0.95)";
-        el.style.boxShadow = [
-          "0 0 6px  rgba(210, 110, 255, 0.90)",
-          "0 0 18px rgba(185, 80,  255, 0.65)",
-          "0 0 38px rgba(155, 55,  230, 0.40)",
-        ].join(", ");
-      }}
-    >
+  const cardStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 10,
+    background: featured
+      ? "linear-gradient(160deg, rgba(125, 45, 215, 0.44) 0%, rgba(80, 20, 168, 0.56) 100%)"
+      : "linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%)",
+    border: featured
+      ? "3px solid rgba(210, 130, 255, 1.0)"
+      : "3px solid rgba(190, 95, 255, 0.95)",
+    borderRadius: 20,
+    padding: "24px 22px",
+    textDecoration: "none",
+    color: "inherit",
+    cursor: disabled ? "default" : "pointer",
+    position: "relative",
+    overflow: "hidden",
+    boxShadow: [
+      "0 0 6px  rgba(210, 110, 255, 0.90)",
+      "0 0 18px rgba(185, 80,  255, 0.65)",
+      "0 0 38px rgba(155, 55,  230, 0.40)",
+    ].join(", "),
+    transition: "box-shadow 0.2s, border-color 0.2s",
+    minHeight: 140,
+    opacity: disabled ? 0.72 : 1,
+  };
+  const content = (
+    <>
       <div
         style={{
           position: "absolute",
@@ -639,21 +669,40 @@ function SectionCard({
           position: "relative",
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={icon}
-          alt=""
-          style={{
-            width: 52,
-            height: 52,
-            objectFit: "contain",
-            flexShrink: 0,
-          }}
-        />
+        {icon ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={icon}
+            alt=""
+            style={{
+              width: 52,
+              height: 52,
+              objectFit: "contain",
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              width: 52,
+              height: 52,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 14,
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.20)",
+              color: "rgba(255,255,255,0.90)",
+              flexShrink: 0,
+            }}
+          >
+            <Icon name={iconName ?? "book-open"} size={32} />
+          </span>
+        )}
         <p
           style={{
             fontFamily: '"Noto Serif JP", serif',
-            fontSize: 40,
+            fontSize: 30,
             fontWeight: 700,
             color: "rgba(255, 255, 255, 0.94)",
             margin: 0,
@@ -663,6 +712,53 @@ function SectionCard({
           {title}
         </p>
       </div>
+    </>
+  );
+  const hoverOn = (el: HTMLElement) => {
+    if (disabled) return;
+    el.style.borderColor = "rgba(225, 135, 255, 1.0)";
+    el.style.boxShadow = [
+      "0 0 8px  rgba(230, 130, 255, 1.00)",
+      "0 0 22px rgba(205, 100, 255, 0.82)",
+      "0 0 46px rgba(170, 68,  240, 0.55)",
+    ].join(", ");
+  };
+  const hoverOff = (el: HTMLElement) => {
+    el.style.borderColor = featured ? "rgba(210, 130, 255, 1.0)" : "rgba(190, 95, 255, 0.95)";
+    el.style.boxShadow = [
+      "0 0 6px  rgba(210, 110, 255, 0.90)",
+      "0 0 18px rgba(185, 80,  255, 0.65)",
+      "0 0 38px rgba(155, 55,  230, 0.40)",
+    ].join(", ");
+  };
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        style={{ ...cardStyle, width: "100%", textAlign: "left", fontFamily: "inherit" }}
+        onMouseEnter={(e) => hoverOn(e.currentTarget as HTMLElement)}
+        onMouseLeave={(e) => hoverOff(e.currentTarget as HTMLElement)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      style={cardStyle}
+      onMouseEnter={(e) => {
+        hoverOn(e.currentTarget as HTMLElement);
+      }}
+      onMouseLeave={(e) => {
+        hoverOff(e.currentTarget as HTMLElement);
+      }}
+    >
+      {content}
     </Link>
   );
 }

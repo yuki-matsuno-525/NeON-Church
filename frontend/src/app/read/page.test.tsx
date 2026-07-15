@@ -96,10 +96,15 @@ describe("ReadPage マイ翻訳セクション", () => {
 
     render(<ReadPage />);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "書を検索" }), {
+    const searchBox = screen.getByRole("searchbox", { name: "書を検索" });
+    fireEvent.change(searchBox, {
       target: { value: "Peter" },
     });
 
     expect(screen.getByText("ペテロの福音書")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
+
+    expect(searchBox).toHaveValue("");
   });
 });

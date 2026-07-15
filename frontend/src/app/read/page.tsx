@@ -14,6 +14,7 @@ import {
 import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName, chapterNumbersOf } from "@/lib/books";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
+import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 
 type ResumeTarget = { slug: string; chapter: number; bookName: string } | null;
 
@@ -115,13 +116,13 @@ export default function ReadPage() {
 
       <label style={{ display: "block", marginBottom: "var(--space-5)" }}>
         <span className="sr-only">{t.bookSearchLabel}</span>
-        <input
-          type="search"
+        <ClearableSearchInput
           value={bookSearch}
-          onChange={(e) => setBookSearch(e.target.value)}
+          onChange={setBookSearch}
           placeholder={t.bookSearchPlaceholder}
-          aria-label={t.bookSearchLabel}
-          style={readSearchInputStyle}
+          ariaLabel={t.bookSearchLabel}
+          inputStyle={readSearchInputStyle}
+          wrapperStyle={{ width: "100%" }}
         />
       </label>
 

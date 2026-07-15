@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createCompiledBook } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 
 export default function NewCompilationPage() {
   const { user, loading } = useAuth();
@@ -14,10 +15,6 @@ export default function NewCompilationPage() {
   const [annotation, setAnnotation] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!loading && !user) router.push("/login?from=/compilations/new");
-  }, [loading, user, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +35,19 @@ export default function NewCompilationPage() {
     }
   };
 
-  if (loading || !user) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
+  if (loading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
+  if (!user) {
+    return (
+      <main style={{ padding: 32 }}>
+        <LoginRequiredModal
+          onClose={() => router.push("/compilations")}
+          from="/compilations/new"
+          title="ログインして編纂を始める"
+          description="新しい編纂書を作成するにはログインが必要です。"
+        />
+      </main>
+    );
+  }
 
   return (
     <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 20px" }}>

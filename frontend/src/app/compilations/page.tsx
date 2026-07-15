@@ -5,12 +5,16 @@ import Link from "next/link";
 import { fetchCompiledBooks, type CompiledBook } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon } from "@/components/ui/Icon";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { useT } from "@/lib/i18n";
 
 export default function CompilationsPage() {
   const { user } = useAuth();
+  const t = useT();
   const [publicBooks, setPublicBooks] = useState<CompiledBook[]>([]);
   const [myBooks, setMyBooks] = useState<CompiledBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -32,6 +36,14 @@ export default function CompilationsPage() {
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
+      {showLoginModal && (
+        <LoginRequiredModal
+          onClose={() => setShowLoginModal(false)}
+          from="/compilations/new"
+          title={t.compilationLoginTitle}
+          description={t.compilationLoginDesc}
+        />
+      )}
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 28, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>編纂書</h1>
@@ -39,11 +51,16 @@ export default function CompilationsPage() {
             既存の節や自分の本文を集め、章に編み、自分の読みの書として公開します。
           </p>
         </div>
-        {user && (
+        {user ? (
           <Link href="/compilations/new" className="btn btn-primary" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
             <Icon name="book-open" size={16} />
             新しい編纂書
           </Link>
+        ) : (
+          <button type="button" className="btn btn-primary" onClick={() => setShowLoginModal(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Icon name="book-open" size={16} />
+            ログインして編纂を始める
+          </button>
         )}
       </header>
 
@@ -81,7 +98,7 @@ function BookSection({ title, books, empty, editable = false }: { title: string;
                 <span>{book.owner_username}</span>
                 <span>{book.chapter_count}章</span>
                 <span>{book.verse_count}節</span>
-                <span>{book.visibility}</span>
+                <span>{visibilityLabel(book.visibility)}</span>
                 {editable && (
                   <Link href={`/compilations/${book.id}/edit`} style={{ color: "var(--accent)", fontWeight: 700, textDecoration: "none" }}>
                     編集
@@ -94,4 +111,10 @@ function BookSection({ title, books, empty, editable = false }: { title: string;
       )}
     </section>
   );
+}
+
+function visibilityLabel(visibility: CompiledBook["visibility"]) {
+  if (visibility === "public") return "公開";
+  if (visibility === "unlisted") return "限定公開";
+  return "非公開";
 }

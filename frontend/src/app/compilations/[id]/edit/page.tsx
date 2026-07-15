@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon } from "@/components/ui/Icon";
+import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 
 export default function CompilationEditPage() {
   const params = useParams();
@@ -40,10 +41,7 @@ export default function CompilationEditPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push(`/login?from=/compilations/${id}/edit`);
-      return;
-    }
+    if (!authLoading && !user) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user) reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,7 +52,20 @@ export default function CompilationEditPage() {
     setTimeout(() => setMessage(""), 2400);
   };
 
-  if (authLoading || loading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
+  if (authLoading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
+  if (!user) {
+    return (
+      <main style={{ padding: 32 }}>
+        <LoginRequiredModal
+          onClose={() => router.push("/compilations")}
+          from={`/compilations/${id}/edit`}
+          title="ログインして編纂を続ける"
+          description="編纂書を編集するにはログインが必要です。"
+        />
+      </main>
+    );
+  }
+  if (loading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
   if (error || !book) return <main style={{ padding: 32, color: "var(--state-danger)" }}>{error || "見つかりません。"}</main>;
 
   return (
@@ -84,7 +95,7 @@ export default function CompilationEditPage() {
 
       {message && <p role="status" style={{ color: "var(--accent)", fontSize: 13, fontWeight: 700 }}>{message}</p>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
+      <div className="compilation-editor-grid" style={{ display: "grid", gridTemplateColumns: "minmax(260px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
         <aside style={panelStyle}>
           <BookForm book={book} onSaved={(next) => { setBook(next); showMessage("書を保存しました。"); }} />
           <AddTextForm bookId={book.id} onAdded={() => { reload(); showMessage("本文を追加しました。"); }} />
@@ -98,6 +109,13 @@ export default function CompilationEditPage() {
           ))}
         </section>
       </div>
+      <style>{`
+        @media (max-width: 820px) {
+          .compilation-editor-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
@@ -127,9 +145,9 @@ function BookForm({ book, onSaved }: { book: CompiledBook; onSaved: (book: Compi
       <label style={labelStyle}>
         公開範囲
         <select value={visibility} onChange={(e) => setVisibility(e.target.value as CompiledVisibility)} style={inputStyle}>
-          <option value="private">private</option>
-          <option value="unlisted">unlisted</option>
-          <option value="public">public</option>
+          <option value="private">非公開</option>
+          <option value="unlisted">限定公開</option>
+          <option value="public">公開</option>
         </select>
       </label>
       <button data-testid="book-save-button" type="button" style={primaryButtonStyle} onClick={save} disabled={saving || !title.trim()}>

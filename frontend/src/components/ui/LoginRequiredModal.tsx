@@ -8,12 +8,13 @@ type Props = {
   // 文言を差し替えたい場合（例: セッション切れ）に渡す。未指定なら「ログインが必要です」。
   title?: string;
   description?: string;
+  from?: string;
 };
 
-export function LoginRequiredModal({ onClose, title, description }: Props) {
+export function LoginRequiredModal({ onClose, title, description, from }: Props) {
   const pathname = usePathname();
   const t = useT();
-  const loginHref = `/login?from=${encodeURIComponent(pathname)}`;
+  const loginHref = `/login?from=${encodeURIComponent(from ?? pathname)}`;
 
   return (
     <>

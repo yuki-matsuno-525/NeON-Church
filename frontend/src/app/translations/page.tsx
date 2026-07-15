@@ -10,6 +10,7 @@ import { languageLabel } from "@/lib/languages";
 import { SkeletonList } from "@/components/ui";
 import { Pagination } from "@/components/ui/Pagination";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 
 type StatusKey = TranslationStatus;
 
@@ -71,13 +72,13 @@ export default function TranslationsPage() {
       {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
       <label style={{ display: "block", marginBottom: 16 }}>
         <span className="sr-only">{t.projectSearchLabel}</span>
-        <input
-          type="search"
+        <ClearableSearchInput
           value={projectSearch}
-          onChange={(e) => setProjectSearch(e.target.value)}
+          onChange={setProjectSearch}
           placeholder={t.projectSearchPlaceholder}
-          aria-label={t.projectSearchLabel}
-          style={projectSearchInputStyle}
+          ariaLabel={t.projectSearchLabel}
+          inputStyle={projectSearchInputStyle}
+          wrapperStyle={{ width: "100%" }}
         />
       </label>
 

@@ -58,13 +58,21 @@ describe("TranslationsPage search", () => {
   it("passes the project search term to each status column request", async () => {
     render(<TranslationsPage />);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: "プロジェクトを検索" }), {
+    const searchBox = screen.getByRole("searchbox", { name: "プロジェクトを検索" });
+    fireEvent.change(searchBox, {
       target: { value: "Matthew" },
     });
 
     const { fetchTranslations } = await import("@/lib/api");
     await waitFor(() => {
       expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "Matthew");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
+
+    expect(searchBox).toHaveValue("");
+    await waitFor(() => {
+      expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "");
     });
   });
 });

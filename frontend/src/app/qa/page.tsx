@@ -10,6 +10,7 @@ import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { SkeletonList, EmptyState, Button } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
+import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
@@ -160,13 +161,13 @@ function QAContent() {
           )}
         </div>
         <div style={filterRowStyle}>
-          <input
-            type="search"
+          <ClearableSearchInput
             value={questionSearch}
-            onChange={(e) => setQuestionSearch(e.target.value)}
+            onChange={setQuestionSearch}
             placeholder={t.qaSearchPlaceholder}
-            aria-label={t.qaSearchLabel}
-            style={qaSearchInputStyle}
+            ariaLabel={t.qaSearchLabel}
+            inputStyle={qaSearchInputStyle}
+            wrapperStyle={{ minWidth: 220, flex: "1 1 240px" }}
           />
           {(() => {
             const groups = groupCatalogByGenre(catalog);
