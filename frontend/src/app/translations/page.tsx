@@ -184,6 +184,7 @@ function TranslationColumn({
   }, [statusKey, page, search]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [search]);
 

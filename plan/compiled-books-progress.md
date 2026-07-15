@@ -69,3 +69,4 @@ NeON Church上の既存テキストから節を集め、普通の本文も追加
 - 2026-07-16: Q&A一覧から直接回答できるようにし、フロントエンドテストを追加。
 - 2026-07-16: Playwright E2Eで、編纂書の作成、下書き保存、章作成、節移動、既存節取り込み、公開、コメント、匿名閲覧、デスクトップ/モバイル表示を確認。
 - 2026-07-16: 最終確認として `npm test` が256件パス、`npm run build` が成功、`pytest` が425件パス/13件skip。
+- 2026-07-16: GitHub Actions の Frontend CI lint 失敗を修正。再確認として `npm run lint`、`npm test`、`npm run build`、編纂書Playwright E2Eがパス。

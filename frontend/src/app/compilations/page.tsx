@@ -14,6 +14,7 @@ export default function CompilationsPage() {
 
   useEffect(() => {
     let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     Promise.all([
       fetchCompiledBooks().then((r) => r.results).catch(() => []),

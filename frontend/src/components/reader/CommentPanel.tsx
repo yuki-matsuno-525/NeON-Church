@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   createBookmark,
@@ -407,9 +408,9 @@ export function CommentPanel({
                 {compilations.length === 0 ? (
                   <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
                     編纂書がまだありません。{" "}
-                    <a href="/compilations/new" style={{ color: "var(--accent)", fontWeight: 700 }}>
+                    <Link href="/compilations/new" style={{ color: "var(--accent)", fontWeight: 700 }}>
                       新しく作成
-                    </a>
+                    </Link>
                   </p>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

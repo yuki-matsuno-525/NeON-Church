@@ -35,6 +35,7 @@ export function CompiledComments({ target, title }: Props) {
 
   useEffect(() => {
     let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchCompiledComments(query)
       .then((items) => alive && setComments(items))

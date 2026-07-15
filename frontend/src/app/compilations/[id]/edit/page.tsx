@@ -44,6 +44,7 @@ export default function CompilationEditPage() {
       router.push(`/login?from=/compilations/${id}/edit`);
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user) reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user, authLoading, router]);
