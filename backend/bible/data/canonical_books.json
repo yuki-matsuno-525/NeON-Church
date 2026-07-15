@@ -1210,6 +1210,132 @@
     ]
   },
   {
+    "slug": "tobit",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Tobit"
+      }
+    ]
+  },
+  {
+    "slug": "judith",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Judith"
+      }
+    ]
+  },
+  {
+    "slug": "wisdom",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Wisdom Of Solomon"
+      }
+    ]
+  },
+  {
+    "slug": "sirach",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Sirach"
+      }
+    ]
+  },
+  {
+    "slug": "baruch",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Baruch"
+      }
+    ]
+  },
+  {
+    "slug": "epistle-of-jeremy",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Epistle of Jeremy"
+      }
+    ]
+  },
+  {
+    "slug": "susanna",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Susanna"
+      }
+    ]
+  },
+  {
+    "slug": "bel-and-the-dragon",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Bel and the Dragon"
+      }
+    ]
+  },
+  {
+    "slug": "1-maccabees",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Maccabees I"
+      }
+    ]
+  },
+  {
+    "slug": "2-maccabees",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Maccabees II"
+      }
+    ]
+  },
+  {
+    "slug": "1-esdras",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Esdras I"
+      }
+    ]
+  },
+  {
+    "slug": "prayer-of-manasseh",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Prayer of Manasses"
+      }
+    ]
+  },
+  {
+    "slug": "3-maccabees",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Maccabees III"
+      }
+    ]
+  },
+  {
+    "slug": "4-maccabees",
+    "books": [
+      {
+        "translation": "L. C. L. Brenton (EN)",
+        "name": "Maccabees IV"
+      }
+    ]
+  },
+  {
     "slug": "acts",
     "books": [
       {

@@ -6,7 +6,7 @@ import { translationLang } from "@/lib/translations";
 
 // 整理の軸はジャンル（文学種別）。正典/外典といった区分は設けない。
 // 本があるジャンルだけ表示される（read ページ側で空ジャンルを除外）。
-export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "福音書", "使徒・書簡", "黙示", "旧約偽典"] as const;
+export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "第二正典", "福音書", "使徒・書簡", "黙示", "旧約偽典"] as const;
 export type BookGenre = (typeof GENRE_ORDER)[number];
 
 // その本が持つ訳。id は DB の Book.translation、name は DB の Book.name。
@@ -21,6 +21,37 @@ export type BookTranslation = { id: string; name: string };
 // その本では chapterTitles の index 0 が第0章を指す。
 
 export const BOOKS = [
+  // --- 第二正典（七十人訳が含む書）---
+  // 底本・訳ともパブリックドメインの Brenton 七十人訳英訳（1851）。
+  // 章・節は原文が番号を持つ。枝番の節（トビト 4:7a など）は親の節に本文をつないである。
+  { slug: "tobit", name: "トビト記", englishName: "Tobit", short: "トビト", totalChapters: 14, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Tobit" }] },
+  { slug: "judith", name: "ユディト記", englishName: "Judith", short: "ユディト", totalChapters: 16, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Judith" }] },
+  { slug: "wisdom", name: "知恵の書", englishName: "Wisdom Of Solomon", short: "知恵", totalChapters: 19, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Wisdom Of Solomon" }] },
+  { slug: "sirach", name: "シラ書（集会の書）", englishName: "Sirach", short: "シラ", totalChapters: 51, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Sirach" }] },
+  { slug: "baruch", name: "バルク書", englishName: "Baruch", short: "バルク", totalChapters: 5, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Baruch" }] },
+  { slug: "epistle-of-jeremy", name: "エレミヤの手紙", englishName: "Epistle of Jeremy", short: "エレミヤ書簡", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Epistle of Jeremy" }] },
+  { slug: "susanna", name: "スザンナ", englishName: "Susanna", short: "スザンナ", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Susanna" }] },
+  { slug: "bel-and-the-dragon", name: "ベルと竜", englishName: "Bel and the Dragon", short: "ベルと竜", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Bel and the Dragon" }] },
+  { slug: "1-maccabees", name: "マカバイ記一", englishName: "Maccabees I", short: "マカバイ一", totalChapters: 16, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees I" }] },
+  { slug: "2-maccabees", name: "マカバイ記二", englishName: "Maccabees II", short: "マカバイ二", totalChapters: 15, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees II" }] },
+  { slug: "1-esdras", name: "エズラ記（ギリシア語）", englishName: "Esdras I", short: "エズラ一", totalChapters: 9, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Esdras I" }] },
+  { slug: "prayer-of-manasseh", name: "マナセの祈り", englishName: "Prayer of Manasses", short: "マナセ", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Prayer of Manasses" }] },
+  { slug: "3-maccabees", name: "マカバイ記三", englishName: "Maccabees III", short: "マカバイ三", totalChapters: 7, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees III" }] },
+  { slug: "4-maccabees", name: "マカバイ記四", englishName: "Maccabees IV", short: "マカバイ四", totalChapters: 18, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees IV" }] },
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
     translations: [{ id: "口語訳", name: "マタイによる福音書" }, { id: "KJV", name: "Matthew" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }, { id: "TR (GRC)", name: "Κατα Ματθαιον" }, { id: "文語訳", name: "マタイ傳福音書" }] },
   { slug: "mark",    name: "マルコによる福音書", englishName: "Mark",    short: "マルコ", totalChapters: 16, genre: "福音書" as BookGenre,
