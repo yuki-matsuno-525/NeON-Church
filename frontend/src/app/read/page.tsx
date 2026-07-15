@@ -11,7 +11,7 @@ import {
   getLocalProgress,
   saveLocalProgress,
 } from "@/lib/readingProgress";
-import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName } from "@/lib/books";
+import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName, chapterNumbersOf } from "@/lib/books";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -185,7 +185,7 @@ export default function ReadPage() {
                           </span>
                         )}
                         <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
-                          {t.totalChapters(book.totalChapters)}
+                          {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
                       </Link>
                     );

@@ -181,6 +181,15 @@
     ]
   },
   {
+    "slug": "quelle",
+    "books": [
+      {
+        "translation": "Mark M. Mattison (EN)",
+        "name": "The Gospel of Q"
+      }
+    ]
+  },
+  {
     "slug": "thomas",
     "books": [
       {

@@ -129,6 +129,13 @@ export const BOOKS = [
       "Jesus Reveals Everything to Judas",
       "The Betrayal",
     ] },
+  // Q資料も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // Q は写本が1つも残っていない（マタイとルカから復元された仮説上の書）ため、章節は
+  // 慣例に従いルカの番号をそのまま使う。Q はルカ全体には対応しないので章は飛び飛びで、
+  // 1 からも始まらない。chapterNumbers に実在する章だけを持たせている。
+  { slug: "quelle", name: "Q資料", englishName: "The Gospel of Q", short: "Q", totalChapters: 22, genre: "福音書" as BookGenre,
+    chapterNumbers: [3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 22],
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Q" }] },
   // トマスの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。底本は NHC II,2。
   // 語録集で "トマス114" のように語番号で引用されるため、章番号＝語番号にしている。
   // そのため冒頭の Prologue だけが第0章（firstChapter: 0）。節は段落の連番。
@@ -533,7 +540,37 @@ export function isValidSlug(slug: string): slug is BookSlug {
 /** slug の最初の章番号を返す（既定 1、トマスの福音書だけ 0）。 */
 export function firstChapterOf(slug: string): number {
   const book = getBookBySlug(slug);
+  if (book && "chapterNumbers" in book) return book.chapterNumbers[0];
   return book && "firstChapter" in book ? book.firstChapter : 1;
+}
+
+/**
+ * その本の章番号を昇順で全て返す。
+ *
+ * ほとんどの本は firstChapter..totalChapters の連番だが、Q資料のように章番号が
+ * 飛び飛びの本もある（Q はルカの章番号を使うので 3,4,6,7…22）。章送り・章数の
+ * 表示・sitemap はこの関数を通して、連番を前提にしないようにする。
+ */
+export function chapterNumbersOf(slug: string): number[] {
+  const book = getBookBySlug(slug);
+  if (!book) return [];
+  if ("chapterNumbers" in book) return [...book.chapterNumbers];
+  const first = firstChapterOf(slug);
+  return Array.from({ length: book.totalChapters - first + 1 }, (_, i) => i + first);
+}
+
+/** その本の中で、指定した章の 1 つ前／次の章番号を返す。端なら null。 */
+export function adjacentChapter(slug: string, chapterNumber: number): {
+  prev: number | null;
+  next: number | null;
+} {
+  const numbers = chapterNumbersOf(slug);
+  const i = numbers.indexOf(chapterNumber);
+  if (i === -1) return { prev: null, next: null };
+  return {
+    prev: i > 0 ? numbers[i - 1] : null,
+    next: i < numbers.length - 1 ? numbers[i + 1] : null,
+  };
 }
 
 /** slug と章番号から章名を返す。章名を持たない本・範囲外は null。 */
@@ -542,8 +579,13 @@ export function chapterTitle(slug: string, chapterNumber: number): string | null
   // in で絞り込んでから参照する。
   const book = getBookBySlug(slug);
   const titles = book && "chapterTitles" in book ? book.chapterTitles : undefined;
-  const index = chapterNumber - firstChapterOf(slug);
-  return index < 0 ? null : (titles?.[index] ?? null);
+  if (!titles) return null;
+  // 章番号が飛び飛びの本は「何番目の章か」で章名を引く（連番の本は差で引ける）。
+  const index =
+    book && "chapterNumbers" in book
+      ? book.chapterNumbers.indexOf(chapterNumber)
+      : chapterNumber - firstChapterOf(slug);
+  return index < 0 ? null : (titles[index] ?? null);
 }
 
 /** slug とその本の訳 id から、DB 上の Book.name を返す。 */
