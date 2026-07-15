@@ -1,20 +1,49 @@
+<div align="center">
+
+<img src="frontend/public/img/icon-512.png" alt="NeON Church" width="120" />
+
 # NeON Church
 
 **Not a church as an institution, but an open field where texts and interpretations intersect.**
 
-NeON Church reimagines Christianity not as a single fixed authority, but as an open field where multiple texts, interpretations, histories, and fragments connect. It draws on Kanzo Uchimura's Non-Church Christianity and a "database-like" reading of faith after postmodernism, shedding light on texts placed outside the canon and interpretations long marginalized. Every text is treated as equal — no second-class scriptures. Here you can read, annotate, discuss, and collaboratively translate biblical texts (canon, Apocrypha, and Pseudepigrapha) together.
+[![Frontend CI](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/frontend.yml/badge.svg)](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/frontend.yml)
+[![Backend CI](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/backend.yml/badge.svg)](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/backend.yml)
+[![E2E Tests](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/e2e.yml/badge.svg)](https://github.com/yuki-matsuno-525/NeON-Church/actions/workflows/e2e.yml)
 
-**Live:** https://neon-church.com · **GitHub:** https://github.com/yuki-matsuno-525/NeON-Church
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.2-092E20?style=flat-square&logo=django&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+
+**[Live: neon-church.com](https://neon-church.com)** · [コードベース解説](docs/codebase-guide.md)
+
+</div>
 
 ---
 
+NeON Church reimagines Christianity not as a single fixed authority, but as an open field where multiple texts, interpretations, histories, and fragments connect. It draws on Kanzo Uchimura's Non-Church Christianity and a "database-like" reading of faith after postmodernism, shedding light on texts placed outside the canon and interpretations long marginalized. Every text is treated as equal — no second-class scriptures. Here you can read, annotate, discuss, and collaboratively translate biblical texts (canon, Apocrypha, and Pseudepigrapha) together.
+
 制度としての教会ではなく、テキストと解釈が交差する「開かれた場」。キリスト教を、ひとつの固定された権威としてではなく、複数のテキスト・解釈・歴史・断片が接続される場として捉え直す試み。正典から外典・偽書まで、あらゆるテキストをオンラインで読み、コメント・議論し、共同で翻訳できる Web サービス。
 
-> コードベース解説は [`docs/codebase-guide.md`](docs/codebase-guide.md) を参照。
+<div align="center">
+<img src="docs/assets/screenshot-read.webp" alt="読書画面 — 節を選ぶとコメントパネルが開く" width="860" />
+<p><sub>節を選ぶとコメントパネルが開く（創世記 第1章）</sub></p>
+</div>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/assets/screenshot-qa.webp" alt="Q&A ボード" /></td>
+<td width="50%"><img src="docs/assets/screenshot-translation.webp" alt="翻訳プロジェクト" /></td>
+</tr>
+<tr>
+<td align="center"><sub>Q&A — 解決済み / 未解決の2列ボード</sub></td>
+<td align="center"><sub>共同翻訳プロジェクト</sub></td>
+</tr>
+</table>
 
 ## 機能
 
-- **聖書閲覧** — 書 → 章 → 節の階層ナビゲーション。ライト/ダークモード対応。
+- **聖書閲覧** — 書 → 章 → 節の階層ナビゲーション。
 - **コメント** — 節・章・書それぞれにコメント投稿。ツリー返信・Upvote・編集・削除・タグ付け。
 - **Q&A** — `is_qa` フラグ付きコメントを一覧表示。ベストアンサー設定・解決済みフィルタ付き。
 - **全文検索** — 節テキスト・コメント本文・書名を横断検索。
@@ -47,34 +76,29 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 | Uptime 監視 | Better Stack |
 | CI/CD | GitHub Actions |
 
-## ローカル開発
+## クイックスタート
 
-### 前提
-
-- Docker & Docker Compose がインストールされていること
-- Git
-
-### セットアップ
+前提: Docker & Docker Compose、Git。
 
 ```bash
-# リポジトリをクローン
 git clone https://github.com/yuki-matsuno-525/NeON-Church.git
 cd NeON-Church
-
-# 環境変数ファイルを作成
-cp .env.example .env
-# .env の内容は基本そのままで動作する（必要に応じて編集）
-
-# コンテナを起動（初回はビルドに数分かかる）
-docker-compose up --build
+cp .env.example .env          # 内容は基本そのままで動作する
+docker-compose up --build     # 初回はビルドに数分かかる
 ```
 
 起動後:
-- フロントエンド: http://localhost:3000
-- バックエンド API: http://localhost:8000
-- OpenAPI スキーマ: http://localhost:8000/api/schema/swagger-ui/
 
-### 聖書テキストのインポート
+| | URL |
+|---|---|
+| フロントエンド | http://localhost:3000 |
+| バックエンド API | http://localhost:8000 |
+| OpenAPI スキーマ | http://localhost:8000/api/schema/swagger-ui/ |
+
+<details>
+<summary><b>聖書テキストのインポート</b></summary>
+
+<br/>
 
 ```bash
 # 口語訳（4福音書）をインポート
@@ -92,7 +116,7 @@ docker-compose exec backend python manage.py import_others
 
 テキストデータは `text/` ディレクトリに配置してある。
 
-#### 外典・偽典の取り込みパイプライン
+### 外典・偽典の取り込みパイプライン
 
 外典・偽典は「HTML → 正規化JSON → DB」の 2 段で取り込む。
 
@@ -109,7 +133,12 @@ python manage.py migrate        # 未適用なら
 python manage.py import_others  # 外典・偽典を投入（冪等。何度実行しても安全）
 ```
 
-### シードデータの投入
+</details>
+
+<details>
+<summary><b>シードデータの投入</b></summary>
+
+<br/>
 
 実際にサービスが使われた状態を再現するための豊富なサンプルデータを投入できる。
 
@@ -146,17 +175,17 @@ DJANGO_SETTINGS_MODULE=config.settings.e2e python manage.py seed --clear
 
 > シードユーザーのパスワードはすべて `Seed@pass123`。
 
-### 管理ユーザーの作成
+</details>
+
+<details>
+<summary><b>管理ユーザー・コンテナの停止 / リセット</b></summary>
+
+<br/>
 
 ```bash
+# 管理ユーザーの作成（Django Admin: http://localhost:8000/admin/）
 docker-compose exec backend python manage.py createsuperuser
-```
 
-Django Admin: http://localhost:8000/admin/
-
-### コンテナの停止 / リセット
-
-```bash
 # 停止
 docker-compose down
 
@@ -164,22 +193,28 @@ docker-compose down
 docker-compose down -v
 ```
 
-## テスト
+</details>
 
-### バックエンド
+<details>
+<summary><b>テスト</b></summary>
+
+<br/>
 
 ```bash
+# バックエンド
 docker-compose exec backend pytest
-```
 
-### フロントエンド
-
-```bash
+# フロントエンド
 cd frontend
 npm test
 ```
 
-## 環境変数
+</details>
+
+<details>
+<summary><b>環境変数</b></summary>
+
+<br/>
 
 `.env.example` を参照。主要な変数:
 
@@ -197,7 +232,12 @@ npm test
 | `NEXT_PUBLIC_OAUTH_*_ENABLED` | OAuth ボタンの表示フラグ |
 | `SENTRY_DSN` | Sentry DSN（省略可） |
 
-## API 概要
+</details>
+
+<details>
+<summary><b>API 概要</b></summary>
+
+<br/>
 
 ベース URL: `http://localhost:8000/api/`
 
@@ -221,7 +261,12 @@ npm test
 
 完全なスキーマは `/api/schema/swagger-ui/` で確認できる。
 
-## プロジェクト構成
+</details>
+
+<details>
+<summary><b>プロジェクト構成</b></summary>
+
+<br/>
 
 ```
 NeON-Church/
@@ -239,7 +284,7 @@ NeON-Church/
 │   └── src/
 │       ├── app/         # App Router ページ
 │       ├── components/  # UI コンポーネント
-│       ├── contexts/    # AuthContext・ThemeContext
+│       ├── contexts/    # AuthContext・LanguageContext・NotificationContext
 │       ├── hooks/       # useComments 等カスタムフック
 │       └── lib/         # API クライアント・型定義
 ├── text/                # 聖書テキストデータ（インポート用）
@@ -248,12 +293,19 @@ NeON-Church/
 └── docker-compose.yml
 ```
 
-## 認証フロー
+</details>
+
+<details>
+<summary><b>認証フロー</b></summary>
+
+<br/>
 
 1. `POST /api/auth/login/` でアクセストークン（20分）とリフレッシュトークン（20日）を HTTP-only Cookie にセット
 2. 以降のリクエストは Cookie を自動送信
 3. アクセストークン期限切れ時は自動でリフレッシュ（refresh token rotation）
 4. ログアウト時は Cookie 削除 + リフレッシュトークン失効
+
+</details>
 
 ## ライセンス
 
