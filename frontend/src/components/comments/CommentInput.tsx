@@ -75,7 +75,15 @@ export function CommentInput({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!body.trim()) return;
+    // 未入力のまま押せたときは、何が足りないのかを名指しする。
+    // ボタンを押せなくして黙って止めると、理由が伝わらない。
+    const missing: string[] = [];
+    if (showQaOption && isQa && !qaTitle.trim()) missing.push(t.fieldTitle);
+    if (!body.trim()) missing.push(t.fieldBody);
+    if (missing.length > 0) {
+      setError(t.missingFields(missing));
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -96,7 +104,8 @@ export function CommentInput({
     }
   };
 
-  const isSubmitDisabled = submitting || !body.trim() || (showQaOption && isQa && !qaTitle.trim());
+  // 送信中だけ止める。未入力でも押せるようにして、押したら理由を出す。
+  const isSubmitDisabled = submitting;
 
   return (
     <form onSubmit={handleSubmit}>
@@ -167,7 +176,7 @@ export function CommentInput({
         </div>
       )}
       {error && (
-        <p style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
           {error}
         </p>
       )}

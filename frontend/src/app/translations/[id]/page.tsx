@@ -57,6 +57,7 @@ function MentionInput({
   members,
   placeholder,
   sendLabel,
+  requiredMessage,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -64,8 +65,10 @@ function MentionInput({
   members: string[];
   placeholder: string;
   sendLabel: string;
+  requiredMessage: string;
 }) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // カーソルより前の部分の末尾にある @xxx を探して候補を更新する
@@ -102,6 +105,12 @@ function MentionInput({
   };
 
   const handleSubmit = () => {
+    // 空のまま押せたときは理由を出す。押せなくして黙って止めると理由が伝わらない。
+    if (!value.trim()) {
+      setError(requiredMessage);
+      return;
+    }
+    setError(null);
     setSuggestions([]);
     onSubmit();
   };
@@ -141,20 +150,24 @@ function MentionInput({
           ))}
         </ul>
       )}
+      {error && (
+        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+          {error}
+        </p>
+      )}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!value.trim()}
           style={{
             padding: "6px 16px",
             border: "none",
             borderRadius: 8,
-            background: value.trim() ? "var(--accent)" : "var(--bg-alt)",
-            color: value.trim() ? "var(--bg)" : "var(--text-muted)",
+            background: "var(--accent)",
+            color: "var(--bg)",
             fontWeight: 700,
             fontSize: 13,
-            cursor: value.trim() ? "pointer" : "default",
+            cursor: "pointer",
           }}
         >
           {sendLabel}
@@ -691,7 +704,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       ))}
                     </select>
                   )}
-                  <button type="submit" disabled={!unitChapterId} style={btnStyle("var(--accent)")}>{t.add}</button>
+                  {/* 未選択でも押せるようにする。select の required でブラウザが理由を出す。
+                      押せなくすると、なぜ押せないのかが伝わらない。 */}
+                  <button type="submit" style={btnStyle("var(--accent)")}>{t.add}</button>
                   <button
                     type="button"
                     onClick={() => { setAddingUnit(false); setUnitChapterId(""); setUnitVerseId(""); setUnitVerses([]); }}
@@ -905,6 +920,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             members={members.filter((m) => m.status === "approved").map((m) => m.username)}
                             placeholder={t.mentionPlaceholder}
                             sendLabel={t.sendComment}
+                            requiredMessage={t.missingFields([t.fieldBody])}
                           />
                         )}
                       </div>

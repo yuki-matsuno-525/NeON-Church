@@ -207,6 +207,13 @@ const ja = {
   createFailed: "作成に失敗しました。もう一度お試しください。",
   createMissingFields: "プロジェクト名・元書・翻訳先の言語をすべて入力してください。",
 
+  // 必須項目の未入力メッセージ。無言で止まったり、ボタンが押せないだけだと
+  // 何が足りないのか分からないため、送信時に不足している項目を名指しする。
+  missingFields: (fields: string[]) => `${fields.join("・")}を入力してください。`,
+  fieldTitle: "タイトル",
+  fieldBody: "本文",
+  fieldChapter: "章",
+
   // 翻訳詳細
   units: "ユニット",
   review: "レビュー",
@@ -627,6 +634,11 @@ const en: typeof ja = {
   createProject: "Create project",
   createFailed: "Failed to create. Please try again.",
   createMissingFields: "Please fill in the project name, source book, and target language.",
+
+  missingFields: (fields: string[]) => `Please fill in: ${fields.join(", ")}.`,
+  fieldTitle: "Title",
+  fieldBody: "Body",
+  fieldChapter: "Chapter",
 
   units: "Units",
   review: "Review",

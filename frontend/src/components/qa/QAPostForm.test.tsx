@@ -17,7 +17,8 @@ describe("QAPostForm", () => {
     vi.clearAllMocks();
   });
 
-  it("必須入力がそろうまで投稿ボタンを無効にする", () => {
+  it("必須入力が空のまま投稿すると、足りない項目を名指しする", async () => {
+    const { createComment } = await import("@/lib/api");
     render(
       <QAPostForm
         catalog={[]}
@@ -27,13 +28,18 @@ describe("QAPostForm", () => {
       />
     );
 
+    // ボタンは押せる。押せなくすると「なぜ押せないのか」が伝わらない。
     const submit = screen.getByRole("button", { name: "質問を投稿する" });
-    expect(submit).toBeDisabled();
-
-    fireEvent.change(screen.getByPlaceholderText("質問のタイトル（必須）"), { target: { value: "質問タイトル" } });
-    fireEvent.change(screen.getByPlaceholderText("質問の詳細を入力..."), { target: { value: "質問本文" } });
-
     expect(submit).toBeEnabled();
+
+    fireEvent.click(submit);
+    expect(await screen.findByRole("alert")).toHaveTextContent("タイトル・本文を入力してください。");
+    expect(vi.mocked(createComment)).not.toHaveBeenCalled();
+
+    // 片方だけ埋めたら、残っている方だけを名指しする。
+    fireEvent.change(screen.getByPlaceholderText("質問のタイトル（必須）"), { target: { value: "質問タイトル" } });
+    fireEvent.click(submit);
+    expect(await screen.findByRole("alert")).toHaveTextContent("本文を入力してください。");
   });
 
   it("タグ選択状態を aria-pressed に反映して投稿する", async () => {

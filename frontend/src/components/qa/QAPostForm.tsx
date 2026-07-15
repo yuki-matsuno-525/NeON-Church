@@ -92,7 +92,15 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !body.trim()) return;
+    // 未入力のまま押せたときは、何が足りないのかを名指しする。
+    // ボタンを押せなくして黙って止めると、理由が伝わらない。
+    const missing: string[] = [];
+    if (!title.trim()) missing.push(t.fieldTitle);
+    if (!body.trim()) missing.push(t.fieldBody);
+    if (missing.length > 0) {
+      setError(t.missingFields(missing));
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -283,15 +291,16 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
         </button>
         <button
           type="submit"
-          disabled={submitting || !title.trim() || !body.trim()}
+          // 送信中だけ止める。未入力でも押せるようにして、押したら理由を出す。
+          disabled={submitting}
           style={{
             padding: "7px 16px",
             border: "none",
             borderRadius: 8,
             background: "var(--accent)",
             color: "var(--accent-text)",
-            cursor: submitting || !title.trim() || !body.trim() ? "not-allowed" : "pointer",
-            opacity: submitting || !title.trim() || !body.trim() ? 0.6 : 1,
+            cursor: submitting ? "not-allowed" : "pointer",
+            opacity: submitting ? 0.6 : 1,
             fontWeight: 700,
             fontSize: 13,
             fontFamily: "inherit",

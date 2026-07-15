@@ -49,15 +49,23 @@ describe("CommentInput", () => {
     expect(screen.getByRole("button", { name: "返信する" })).toBeInTheDocument();
   });
 
-  it("空のボディでは投稿ボタンが disabled", () => {
+  it("空のまま投稿すると、本文が要ることを伝える", async () => {
     render(<CommentInput onSubmit={mockOnSubmit} />);
-    expect(screen.getByRole("button", { name: "投稿する" })).toBeDisabled();
+    // ボタンは押せる。押せなくすると「なぜ押せないのか」が伝わらない。
+    const submit = screen.getByRole("button", { name: "投稿する" });
+    expect(submit).toBeEnabled();
+
+    fireEvent.click(submit);
+    expect(await screen.findByRole("alert")).toHaveTextContent("本文を入力してください。");
+    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it("ボディ入力後に投稿ボタンが有効になる", () => {
-    render(<CommentInput onSubmit={mockOnSubmit} />);
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "テストコメント" } });
-    expect(screen.getByRole("button", { name: "投稿する" })).not.toBeDisabled();
+  it("Q&A のタイトルが空のときは、タイトルも名指しする", async () => {
+    render(<CommentInput onSubmit={mockOnSubmit} showQaOption />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "投稿する" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("タイトル・本文を入力してください。");
+    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it("投稿成功時に onSubmit が呼ばれてフォームがリセットされる", async () => {
