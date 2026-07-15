@@ -178,12 +178,9 @@ export default function ReadPage() {
                           color: "var(--text)",
                         }}
                       >
-                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{lb?.short ?? book.short}</span>
-                        {lb?.name !== lb?.short && (
-                          <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-1)" }}>
-                            {lb?.name ?? book.name}
-                          </span>
-                        )}
+                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
+                          {lb?.name ?? book.name}
+                        </span>
                         <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
                           {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
