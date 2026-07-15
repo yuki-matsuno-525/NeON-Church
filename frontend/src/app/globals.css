@@ -290,6 +290,15 @@ select:focus-visible {
   display: none;
 }
 
+/* サイドバー内の文字サイズ。Sidebar.tsx はこの変数だけを参照し、px を直接持たない。
+   モバイルではドロワーとして指で操作するため、下のメディアクエリで一段大きくする。 */
+.sidebar {
+  --sidebar-font-item: var(--font-size-sm);
+  --sidebar-font-genre: var(--font-size-xs);
+  --sidebar-font-label: var(--font-size-xs);
+  --sidebar-item-min-height: 36px;
+}
+
 @media (max-width: 768px) {
   .hamburger-btn {
     display: flex !important;
@@ -304,6 +313,13 @@ select:focus-visible {
   }
 
   .sidebar {
+    /* 文字を大きくするぶん、ドロワーの幅も広げないと書名が折り返す */
+    --sidebar-width: 260px;
+    --sidebar-font-item: var(--font-size-md);
+    --sidebar-font-genre: var(--font-size-sm);
+    --sidebar-font-label: var(--font-size-sm);
+    --sidebar-item-min-height: 44px;
+
     position: fixed !important;
     top: var(--navbar-height) !important;
     left: calc(-1 * var(--sidebar-width)) !important;

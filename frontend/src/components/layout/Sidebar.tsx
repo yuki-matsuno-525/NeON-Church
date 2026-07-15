@@ -103,7 +103,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   gap: 8,
                   padding: "10px 12px",
                   textDecoration: "none",
-                  fontSize: 13,
+                  fontSize: "var(--sidebar-font-item)",
                   color: "var(--text)",
                   position: "relative",
                 }}
@@ -115,7 +115,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                       background: "var(--accent)",
                       color: "var(--accent-text)",
                       borderRadius: "999px",
-                      fontSize: 9,
+                      fontSize: "0.7em",
                       padding: "1px 5px",
                       fontWeight: 700,
                       lineHeight: 1.4,
@@ -132,7 +132,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   display: "block",
                   padding: "10px 12px",
                   textDecoration: "none",
-                  fontSize: 13,
+                  fontSize: "var(--sidebar-font-item)",
                   color: "var(--text)",
                 }}
               >
@@ -145,7 +145,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   display: "block",
                   padding: "10px 12px",
                   textDecoration: "none",
-                  fontSize: 13,
+                  fontSize: "var(--sidebar-font-item)",
                   color: "var(--text)",
                 }}
               >
@@ -160,7 +160,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   padding: "10px 12px",
                   background: "transparent",
                   border: "none",
-                  fontSize: 13,
+                  fontSize: "var(--sidebar-font-item)",
                   color: "var(--text-muted)",
                   cursor: "pointer",
                   fontFamily: "inherit",
@@ -182,7 +182,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                 borderRadius: 8,
                 textDecoration: "none",
                 fontWeight: 700,
-                fontSize: 13,
+                fontSize: "var(--sidebar-font-item)",
                 textAlign: "center",
               }}
             >
@@ -207,7 +207,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                     padding: "12px 12px",
                     minHeight: 44,
                     textDecoration: "none",
-                    fontSize: 13,
+                    fontSize: "var(--sidebar-font-item)",
                     fontWeight: isActive ? 700 : 400,
                     color: isActive ? "var(--accent)" : "var(--text)",
                     background: isActive ? "var(--accent-tint)" : "transparent",
@@ -221,7 +221,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
           {(pathname === "/read" || BOOKS.some((b) => pathname === `/${b.slug}` || pathname.startsWith(`/${b.slug}/`))) && (
             <div style={{ padding: "8px 0" }}>
-              <p style={{ fontSize: 11, color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              <p style={{ fontSize: "var(--sidebar-font-label)", color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {t.books}
               </p>
               {GENRE_ORDER
@@ -244,13 +244,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                           border: "none",
                           cursor: "pointer",
                           fontFamily: "inherit",
-                          fontSize: 12,
+                          fontSize: "var(--sidebar-font-genre)",
                           fontWeight: 700,
                           color: "var(--text-muted)",
                         }}
                       >
                         <span>{t.genreNames[genre] ?? genre}</span>
-                        <span style={{ fontSize: 10, opacity: 0.7 }}>{expanded ? "▾" : "▸"}</span>
+                        <span style={{ fontSize: "0.85em", opacity: 0.7 }}>{expanded ? "▾" : "▸"}</span>
                       </button>
                       {expanded &&
                         books.map((meta) => {
@@ -265,9 +265,9 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                                 display: "flex",
                                 alignItems: "center",
                                 padding: "8px 12px 8px 32px",
-                                minHeight: 36,
+                                minHeight: "var(--sidebar-item-min-height)",
                                 textDecoration: "none",
-                                fontSize: 13,
+                                fontSize: "var(--sidebar-font-item)",
                                 fontWeight: isActive ? 700 : 400,
                                 color: isActive ? "var(--accent)" : "var(--text)",
                                 background: isActive ? "var(--accent-tint)" : "transparent",
