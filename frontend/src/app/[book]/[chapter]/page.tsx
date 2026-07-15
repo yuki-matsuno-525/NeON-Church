@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { saveLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
+import { getBookBySlug, resolveTranslation, chapterTitle, adjacentChapter } from "@/lib/books";
 import { resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
 import { arrangeVerses, isMarkShorterEnding } from "@/lib/verses";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
@@ -42,6 +42,8 @@ export default function ChapterPage() {
   const label = useBookLabel(slug);
   // セクション見出しで区切られる本（マリアの福音書など）の章名。無い本は null。
   const chapterName = chapterTitle(slug, chapterNum);
+  // 章送りの行き先。章番号は連番とは限らない（トマスは第0章から、Q資料は飛び飛び）。
+  const nav = adjacentChapter(slug, chapterNum);
   const { lang } = useLang();
   // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
   const translationOptions = (meta?.translations ?? []).map((tr) => ({
@@ -432,11 +434,11 @@ export default function ChapterPage() {
 
       {!selectedVerse && (
         <>
-          {chapterNum > 1 && (
+          {nav.prev !== null && (
             <Link
-              href={`/${slug}/${chapterNum - 1}`}
-              title={t.chapterFmt(chapterNum - 1)}
-              aria-label={`${t.prevChapter} (${chapterNum - 1})`}
+              href={`/${slug}/${nav.prev}`}
+              title={t.chapterFmt(nav.prev)}
+              aria-label={`${t.prevChapter} (${nav.prev})`}
               className="chapter-nav-prev"
               style={{
                 position: "fixed",
@@ -466,11 +468,11 @@ export default function ChapterPage() {
             </Link>
           )}
 
-          {chapterNum < meta.totalChapters && (
+          {nav.next !== null && (
             <Link
-              href={`/${slug}/${chapterNum + 1}`}
-              title={t.chapterFmt(chapterNum + 1)}
-              aria-label={`${t.nextChapter} (${chapterNum + 1})`}
+              href={`/${slug}/${nav.next}`}
+              title={t.chapterFmt(nav.next)}
+              aria-label={`${t.nextChapter} (${nav.next})`}
               className="chapter-nav-next"
               style={{
                 position: "fixed",

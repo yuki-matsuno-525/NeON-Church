@@ -17,6 +17,7 @@ export const BIBLE_TRANSLATIONS: { id: string }[] = [
   { id: "Mark M. Mattison (EN)" },
   { id: "L. S. A. Wells (EN)" },
   { id: "Samuel Zinner (EN)" },
+  { id: "L. C. L. Brenton (EN)" },
 ];
 
 export const DEFAULT_TRANSLATION = "口語訳";
@@ -35,6 +36,7 @@ const TRANSLATION_LANG: Record<string, "ja" | "en" | "grc" | "heb"> = {
   "Mark M. Mattison (EN)": "en",
   "L. S. A. Wells (EN)": "en",
   "Samuel Zinner (EN)": "en",
+  "L. C. L. Brenton (EN)": "en",
 };
 
 // 訳 id → その訳の言語（ja/en/grc）。未知の id は ja 扱い。
@@ -59,6 +61,7 @@ const TRANSLATION_LABELS: Record<string, { ja: string; en: string }> = {
   "Mark M. Mattison (EN)": { ja: "Mattison 訳（英語）", en: "Mark M. Mattison (English)" },
   "L. S. A. Wells (EN)": { ja: "Wells 訳（英語）", en: "L. S. A. Wells (English)" },
   "Samuel Zinner (EN)": { ja: "Zinner 訳（英語）", en: "Samuel Zinner (English)" },
+  "L. C. L. Brenton (EN)": { ja: "Brenton 訳・七十人訳から（英語）", en: "Brenton, from the Septuagint (English)" },
 };
 
 export function translationLabel(id: string, lang: string): string {

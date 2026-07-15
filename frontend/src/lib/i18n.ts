@@ -440,7 +440,7 @@ const ja = {
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
 
-  genreNames: { "律法": "律法", "歴史": "歴史", "詩歌": "詩歌", "預言": "預言", "福音書": "福音書", "使徒・書簡": "使徒・書簡", "黙示": "黙示", "旧約偽典": "旧約偽典" } as Record<string, string>,
+  genreNames: { "律法": "律法", "歴史": "歴史", "詩歌": "詩歌", "預言": "預言", "第二正典": "第二正典", "福音書": "福音書", "使徒・書簡": "使徒・書簡", "黙示": "黙示", "旧約偽典": "旧約偽典" } as Record<string, string>,
 };
 
 const en: typeof ja = {
@@ -838,7 +838,7 @@ const en: typeof ja = {
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
 
-  genreNames: { "律法": "Law (Torah)", "歴史": "History", "詩歌": "Poetry & Wisdom", "預言": "Prophets", "福音書": "Gospels", "使徒・書簡": "Acts & Epistles", "黙示": "Apocalyptic", "旧約偽典": "Old Testament Pseudepigrapha" } as Record<string, string>,
+  genreNames: { "律法": "Law (Torah)", "歴史": "History", "詩歌": "Poetry & Wisdom", "預言": "Prophets", "第二正典": "Deuterocanon", "福音書": "Gospels", "使徒・書簡": "Acts & Epistles", "黙示": "Apocalyptic", "旧約偽典": "Old Testament Pseudepigrapha" } as Record<string, string>,
 };
 
 export type Translations = typeof ja;

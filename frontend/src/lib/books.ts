@@ -6,7 +6,7 @@ import { translationLang } from "@/lib/translations";
 
 // 整理の軸はジャンル（文学種別）。正典/外典といった区分は設けない。
 // 本があるジャンルだけ表示される（read ページ側で空ジャンルを除外）。
-export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "福音書", "使徒・書簡", "黙示", "旧約偽典"] as const;
+export const GENRE_ORDER = ["律法", "歴史", "詩歌", "預言", "第二正典", "福音書", "使徒・書簡", "黙示", "旧約偽典"] as const;
 export type BookGenre = (typeof GENRE_ORDER)[number];
 
 // その本が持つ訳。id は DB の Book.translation、name は DB の Book.name。
@@ -21,6 +21,37 @@ export type BookTranslation = { id: string; name: string };
 // その本では chapterTitles の index 0 が第0章を指す。
 
 export const BOOKS = [
+  // --- 第二正典（七十人訳が含む書）---
+  // 底本・訳ともパブリックドメインの Brenton 七十人訳英訳（1851）。
+  // 章・節は原文が番号を持つ。枝番の節（トビト 4:7a など）は親の節に本文をつないである。
+  { slug: "tobit", name: "トビト記", englishName: "Tobit", short: "トビト", totalChapters: 14, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Tobit" }] },
+  { slug: "judith", name: "ユディト記", englishName: "Judith", short: "ユディト", totalChapters: 16, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Judith" }] },
+  { slug: "wisdom", name: "知恵の書", englishName: "Wisdom Of Solomon", short: "知恵", totalChapters: 19, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Wisdom Of Solomon" }] },
+  { slug: "sirach", name: "シラ書（集会の書）", englishName: "Sirach", short: "シラ", totalChapters: 51, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Sirach" }] },
+  { slug: "baruch", name: "バルク書", englishName: "Baruch", short: "バルク", totalChapters: 5, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Baruch" }] },
+  { slug: "epistle-of-jeremy", name: "エレミヤの手紙", englishName: "Epistle of Jeremy", short: "エレミヤ書簡", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Epistle of Jeremy" }] },
+  { slug: "susanna", name: "スザンナ", englishName: "Susanna", short: "スザンナ", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Susanna" }] },
+  { slug: "bel-and-the-dragon", name: "ベルと竜", englishName: "Bel and the Dragon", short: "ベルと竜", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Bel and the Dragon" }] },
+  { slug: "1-maccabees", name: "マカバイ記一", englishName: "Maccabees I", short: "マカバイ一", totalChapters: 16, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees I" }] },
+  { slug: "2-maccabees", name: "マカバイ記二", englishName: "Maccabees II", short: "マカバイ二", totalChapters: 15, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees II" }] },
+  { slug: "1-esdras", name: "エズラ記（ギリシア語）", englishName: "Esdras I", short: "エズラ一", totalChapters: 9, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Esdras I" }] },
+  { slug: "prayer-of-manasseh", name: "マナセの祈り", englishName: "Prayer of Manasses", short: "マナセ", totalChapters: 1, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Prayer of Manasses" }] },
+  { slug: "3-maccabees", name: "マカバイ記三", englishName: "Maccabees III", short: "マカバイ三", totalChapters: 7, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees III" }] },
+  { slug: "4-maccabees", name: "マカバイ記四", englishName: "Maccabees IV", short: "マカバイ四", totalChapters: 18, genre: "第二正典" as BookGenre,
+    translations: [{ id: "L. C. L. Brenton (EN)", name: "Maccabees IV" }] },
   { slug: "matthew", name: "マタイによる福音書", englishName: "Matthew", short: "マタイ", totalChapters: 28, genre: "福音書" as BookGenre,
     translations: [{ id: "口語訳", name: "マタイによる福音書" }, { id: "KJV", name: "Matthew" }, { id: "Nestle 1904 (GRC)", name: "ΚΑΤΑ ΜΑΘΘΑΙΟΝ" }, { id: "TR (GRC)", name: "Κατα Ματθαιον" }, { id: "文語訳", name: "マタイ傳福音書" }] },
   { slug: "mark",    name: "マルコによる福音書", englishName: "Mark",    short: "マルコ", totalChapters: 16, genre: "福音書" as BookGenre,
@@ -98,6 +129,13 @@ export const BOOKS = [
       "Jesus Reveals Everything to Judas",
       "The Betrayal",
     ] },
+  // Q資料も Mark M. Mattison 英訳のみ（パブリックドメイン）。
+  // Q は写本が1つも残っていない（マタイとルカから復元された仮説上の書）ため、章節は
+  // 慣例に従いルカの番号をそのまま使う。Q はルカ全体には対応しないので章は飛び飛びで、
+  // 1 からも始まらない。chapterNumbers に実在する章だけを持たせている。
+  { slug: "quelle", name: "Q資料", englishName: "The Gospel of Q", short: "Q", totalChapters: 22, genre: "福音書" as BookGenre,
+    chapterNumbers: [3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 22],
+    translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Q" }] },
   // トマスの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。底本は NHC II,2。
   // 語録集で "トマス114" のように語番号で引用されるため、章番号＝語番号にしている。
   // そのため冒頭の Prologue だけが第0章（firstChapter: 0）。節は段落の連番。
@@ -502,7 +540,37 @@ export function isValidSlug(slug: string): slug is BookSlug {
 /** slug の最初の章番号を返す（既定 1、トマスの福音書だけ 0）。 */
 export function firstChapterOf(slug: string): number {
   const book = getBookBySlug(slug);
+  if (book && "chapterNumbers" in book) return book.chapterNumbers[0];
   return book && "firstChapter" in book ? book.firstChapter : 1;
+}
+
+/**
+ * その本の章番号を昇順で全て返す。
+ *
+ * ほとんどの本は firstChapter..totalChapters の連番だが、Q資料のように章番号が
+ * 飛び飛びの本もある（Q はルカの章番号を使うので 3,4,6,7…22）。章送り・章数の
+ * 表示・sitemap はこの関数を通して、連番を前提にしないようにする。
+ */
+export function chapterNumbersOf(slug: string): number[] {
+  const book = getBookBySlug(slug);
+  if (!book) return [];
+  if ("chapterNumbers" in book) return [...book.chapterNumbers];
+  const first = firstChapterOf(slug);
+  return Array.from({ length: book.totalChapters - first + 1 }, (_, i) => i + first);
+}
+
+/** その本の中で、指定した章の 1 つ前／次の章番号を返す。端なら null。 */
+export function adjacentChapter(slug: string, chapterNumber: number): {
+  prev: number | null;
+  next: number | null;
+} {
+  const numbers = chapterNumbersOf(slug);
+  const i = numbers.indexOf(chapterNumber);
+  if (i === -1) return { prev: null, next: null };
+  return {
+    prev: i > 0 ? numbers[i - 1] : null,
+    next: i < numbers.length - 1 ? numbers[i + 1] : null,
+  };
 }
 
 /** slug と章番号から章名を返す。章名を持たない本・範囲外は null。 */
@@ -511,8 +579,14 @@ export function chapterTitle(slug: string, chapterNumber: number): string | null
   // in で絞り込んでから参照する。
   const book = getBookBySlug(slug);
   const titles = book && "chapterTitles" in book ? book.chapterTitles : undefined;
-  const index = chapterNumber - firstChapterOf(slug);
-  return index < 0 ? null : (titles?.[index] ?? null);
+  if (!titles) return null;
+  // 章番号が飛び飛びの本は「何番目の章か」で章名を引く（連番の本は差で引ける）。
+  // BOOKS は as const なので chapterNumbers はリテラルのタプル。number で引くため広げる。
+  const index =
+    book && "chapterNumbers" in book
+      ? (book.chapterNumbers as readonly number[]).indexOf(chapterNumber)
+      : chapterNumber - firstChapterOf(slug);
+  return index < 0 ? null : (titles[index] ?? null);
 }
 
 /** slug とその本の訳 id から、DB 上の Book.name を返す。 */
