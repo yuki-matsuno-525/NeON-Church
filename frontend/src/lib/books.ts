@@ -581,9 +581,10 @@ export function chapterTitle(slug: string, chapterNumber: number): string | null
   const titles = book && "chapterTitles" in book ? book.chapterTitles : undefined;
   if (!titles) return null;
   // 章番号が飛び飛びの本は「何番目の章か」で章名を引く（連番の本は差で引ける）。
+  // BOOKS は as const なので chapterNumbers はリテラルのタプル。number で引くため広げる。
   const index =
     book && "chapterNumbers" in book
-      ? book.chapterNumbers.indexOf(chapterNumber)
+      ? (book.chapterNumbers as readonly number[]).indexOf(chapterNumber)
       : chapterNumber - firstChapterOf(slug);
   return index < 0 ? null : (titles[index] ?? null);
 }
