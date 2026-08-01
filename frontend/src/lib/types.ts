@@ -14,10 +14,11 @@ export type Comment = {
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
+  // このコメントへの返信の数（削除済みは含まない）。返信を開く前に件数だけ出すのに使う。
+  reply_count: number;
   tags: Tag[];
 };
 
-export type CommentNode = Comment & { children: CommentNode[] };
 export type BookmarkVerseDetail = {
   id: string;
   number: number;
@@ -67,7 +68,7 @@ export type NotificationTargetKind =
 
 export type Notification = {
   id: string;
-  notification_type: "reply" | "upvote";
+  notification_type: "reply" | "upvote" | "mention";
   actor_username: string;
   comment_id: string | null;
   comment_body_snippet: string;

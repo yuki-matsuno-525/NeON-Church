@@ -21,6 +21,11 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
   const [loading, setLoading] = useState(true);
   // 2ページ目以降の読み込み（ボタンだけを待ち状態にする）
   const [loadingMore, setLoadingMore] = useState(false);
+  // reload() のたびに増やして、下の useEffect を1ページ目から走らせ直す。
+  const [reloadToken, setReloadToken] = useState(0);
+
+  /** 1ページ目から読み直す。投稿・削除のあとなど、中身が変わったときに呼ぶ。 */
+  const reload = useCallback(() => setReloadToken((n) => n + 1), []);
 
   useEffect(() => {
     // タブを切り替えた直後に前のタブの結果が遅れて届いても、上書きしないようにする。
@@ -48,7 +53,7 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
     return () => {
       cancelled = true;
     };
-  }, [fetchPage]);
+  }, [fetchPage, reloadToken]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -68,5 +73,5 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
     }
   }, [fetchPage, page, hasMore, loadingMore]);
 
-  return { items, setItems, counts, total, loading, loadingMore, hasMore, loadMore };
+  return { items, setItems, counts, total, loading, loadingMore, hasMore, loadMore, reload };
 }

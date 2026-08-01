@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CommentItem } from "./CommentItem";
-import type { CommentNode } from "@/lib/api";
+import type { Comment } from "@/lib/api";
 
 // next/link をシンプルな <a> にスタブ
 vi.mock("next/link", () => ({
@@ -19,6 +19,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     deleteComment: vi.fn().mockResolvedValue(undefined),
     upvoteComment: vi.fn().mockResolvedValue(undefined),
     removeUpvote: vi.fn().mockResolvedValue(undefined),
+    fetchCommentReplies: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -28,7 +29,7 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-const makeComment = (overrides: Partial<CommentNode> = {}): CommentNode => ({
+const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   id: "c1",
   user: { id: "u1", username: "alice" },
   verse: "v1",
@@ -39,7 +40,8 @@ const makeComment = (overrides: Partial<CommentNode> = {}): CommentNode => ({
   is_deleted: false,
   created_at: new Date().toISOString(),
   vote_count: 3,
-  children: [],
+  // 返信は持たず件数だけ。開いたときに fetchCommentReplies で取りに行く。
+  reply_count: 0,
   ...overrides,
 });
 
@@ -127,5 +129,73 @@ describe("CommentItem", () => {
     const onReply = vi.fn();
     render(<CommentItem comment={makeComment()} onReply={onReply} depth={2} />);
     expect(screen.queryByRole("button", { name: "返信" })).not.toBeInTheDocument();
+  });
+});
+
+// ------------------------------------------------------------------
+// 返信は親を開いたときに取る
+//
+// 以前は親と返信をまとめて受け取って画面側で組み直していたため、ページで区切ると
+// 親と返信が別ページに分かれ、親が見つからない返信が何も言わずに消えていた。
+// ------------------------------------------------------------------
+describe("CommentItem の返信", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: null });
+  });
+
+  const makeReply = (id: string, body: string): Comment =>
+    makeComment({ id, body, parent: "c1", reply_count: 0 });
+
+  it("返信が無いときは「返信を表示」を出さない", () => {
+    render(<CommentItem comment={makeComment({ reply_count: 0 })} />);
+    expect(screen.queryByRole("button", { name: /返信を表示/ })).not.toBeInTheDocument();
+  });
+
+  it("返信の件数を先に出し、最初は取りに行かない", async () => {
+    const { fetchCommentReplies } = await import("@/lib/api");
+    render(<CommentItem comment={makeComment({ reply_count: 2 })} />);
+
+    expect(screen.getByRole("button", { name: "返信を表示（2件）" })).toBeInTheDocument();
+    expect(fetchCommentReplies).not.toHaveBeenCalled();
+  });
+
+  it("押すと返信を取って表示する", async () => {
+    const { fetchCommentReplies } = await import("@/lib/api");
+    vi.mocked(fetchCommentReplies).mockResolvedValue([
+      makeReply("r1", "ひとつめの返信"),
+      makeReply("r2", "ふたつめの返信"),
+    ]);
+
+    render(<CommentItem comment={makeComment({ reply_count: 2 })} />);
+    fireEvent.click(screen.getByRole("button", { name: "返信を表示（2件）" }));
+
+    await screen.findByText("ひとつめの返信");
+    expect(screen.getByText("ふたつめの返信")).toBeInTheDocument();
+    expect(fetchCommentReplies).toHaveBeenCalledWith("c1");
+  });
+
+  it("2回目の開閉では取り直さない", async () => {
+    const { fetchCommentReplies } = await import("@/lib/api");
+    vi.mocked(fetchCommentReplies).mockResolvedValue([makeReply("r1", "返信本文")]);
+
+    render(<CommentItem comment={makeComment({ reply_count: 1 })} />);
+    fireEvent.click(screen.getByRole("button", { name: "返信を表示（1件）" }));
+    await screen.findByText("返信本文");
+
+    // 折りたたみトグルで閉じて開く
+    fireEvent.click(screen.getByRole("button", { name: "折り畳む" }));
+    await waitFor(() => expect(fetchCommentReplies).toHaveBeenCalledTimes(1));
+  });
+
+  it("返信の取得に失敗しても本体は消えない", async () => {
+    const { fetchCommentReplies } = await import("@/lib/api");
+    vi.mocked(fetchCommentReplies).mockRejectedValue(new Error("Network Error"));
+
+    render(<CommentItem comment={makeComment({ reply_count: 1 })} />);
+    fireEvent.click(screen.getByRole("button", { name: "返信を表示（1件）" }));
+
+    await waitFor(() => expect(fetchCommentReplies).toHaveBeenCalled());
+    expect(screen.getByText("テストコメント本文")).toBeInTheDocument();
   });
 });

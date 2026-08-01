@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { fetchQAComments, fetchTags, type QAComment, type Tag } from "@/lib/api";
+import { fetchQACommentPage, fetchTags, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
-import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { SkeletonList, EmptyState, Button, LoadMoreButton } from "@/components/ui";
+import { useLoadMore } from "@/hooks/useLoadMore";
 import { Icon } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useT, bookLabel } from "@/lib/i18n";
@@ -53,9 +54,7 @@ function QAContent() {
   const [activeTab, setActiveTab] = useState<QAColumnKey>("unanswered");
   const [genreFilter, setGenreFilter] = useState("");
   const [questionSearch, setQuestionSearch] = useState("");
-  const [comments, setComments] = useState<QAComment[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -83,30 +82,46 @@ function QAContent() {
     fetchTags().then(setTags).catch(() => {});
   }, []);
 
-  const loadComments = useCallback(() => {
-    // 選んだ書（と任意の訳）から絞り込み用の Book id 群を決める。
-    // 訳未指定ならその書の全訳 id をカンマ区切りで渡す（書だけで絞る）。
-    const entry = selectedSlug ? catalogEntry(catalog, selectedSlug) : null;
-    const bookIdParam = entry
-      ? selectedVersion
-        ? entry.translations.find((tr) => tr.id === selectedVersion)?.bookId
-        : entry.translations.map((tr) => tr.bookId).join(",")
-      : undefined;
-    setLoading(true);
-    fetchQAComments({
-      book_id: bookIdParam || undefined,
-      tag_id: selectedTagId || undefined,
-      q: questionSearch,
-    })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [catalog, selectedSlug, selectedVersion, selectedTagId, questionSearch]);
+  // 選んだ書（と任意の訳）から絞り込み用の Book id 群を決める。
+  // 訳未指定ならその書の全訳 id をカンマ区切りで渡す（書だけで絞る）。
+  const entry = selectedSlug ? catalogEntry(catalog, selectedSlug) : null;
+  const bookIdParam = entry
+    ? selectedVersion
+      ? entry.translations.find((tr) => tr.id === selectedVersion)?.bookId
+      : entry.translations.map((tr) => tr.bookId).join(",")
+    : undefined;
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadComments();
-  }, [loadComments]);
+  // 列ごとに独立して読み足す。全件取ってから画面側で2列に振り分けていた頃は、
+  // 件数バッジが「読み込めた分」の数になり、片方の列だけ増えるといった破綻が起きる。
+  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: questionSearch };
+  const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
+
+  const fetchAnswered = useCallback(
+    (page: number) => fetchQACommentPage({ ...filters, answered: true, page }),
+    // filters は毎回作り直されるので、中身を表す filterKey を依存に使う
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterKey]
+  );
+  const fetchUnanswered = useCallback(
+    (page: number) => fetchQACommentPage({ ...filters, answered: false, page }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterKey]
+  );
+  const answeredList = useLoadMore(fetchAnswered);
+  const unansweredList = useLoadMore(fetchUnanswered);
+
+  const columnList = (key: QAColumnKey) => (key === "answered" ? answeredList : unansweredList);
+
+  const reloadAnswered = answeredList.reload;
+  const reloadUnanswered = unansweredList.reload;
+  // ベストアンサーの設定・解除で質問が列をまたぐので、両方を取り直す。
+  const loadComments = useCallback(() => {
+    reloadAnswered();
+    reloadUnanswered();
+  }, [reloadAnswered, reloadUnanswered]);
+
+  const loading = answeredList.loading || unansweredList.loading;
+  const totalCount = answeredList.total + unansweredList.total;
 
   const columnLabel = (key: QAColumnKey) =>
     key === "answered" ? t.filterAnswered : t.filterUnanswered;
@@ -156,8 +171,9 @@ function QAContent() {
         </legend>
         <div style={filterPanelHeaderStyle}>
           <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>{t.qaFilters}</span>
+          {/* 表示中の件数ではなく、絞り込み後の総数（2列の合計） */}
           {!loading && (
-            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.qaQuestionCount(comments.length)}</span>
+            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.qaQuestionCount(totalCount)}</span>
           )}
         </div>
         <div style={filterRowStyle}>
@@ -238,7 +254,7 @@ function QAContent() {
 
       {loading ? (
         <SkeletonList count={3} />
-      ) : comments.length === 0 ? (
+      ) : totalCount === 0 ? (
         <EmptyState
           title={t.qaEmpty}
           description={t.emptyQaDesc}
@@ -261,9 +277,8 @@ function QAContent() {
           <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {QA_COLUMNS.map((col) => {
               const active = col.key === activeTab;
-              const num = comments.filter((c) =>
-                col.key === "answered" ? !!c.best_answer : !c.best_answer
-              ).length;
+              // 表示中の件数ではなく、サーバーが数えたその列の総数
+              const num = columnList(col.key).total;
               return (
                 <button
                   key={col.key}
@@ -291,9 +306,8 @@ function QAContent() {
         )}
         <div style={isMobile ? { display: "block" } : boardGridStyle}>
           {QA_COLUMNS.map((col) => {
-            const items = comments.filter((c) =>
-              col.key === "answered" ? !!c.best_answer : !c.best_answer
-            );
+            const list = columnList(col.key);
+            const items = list.items;
             return (
               <section
                 key={col.key}
@@ -305,7 +319,8 @@ function QAContent() {
                       <Icon name={col.icon} size={18} />
                     </span>
                     <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{columnLabel(col.key)}</h2>
-                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{items.length}</span>
+                    {/* 表示中の件数ではなく、サーバーが数えたその列の総数 */}
+                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{list.total}</span>
                   </div>
                   <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{columnDesc(col.key)}</p>
                 </div>
@@ -313,18 +328,26 @@ function QAContent() {
                 {items.length === 0 ? (
                   <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.qaEmptyColumn}</p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {items.map((c) => (
-                      <QACard
-                        key={c.id}
-                        comment={c}
-                        currentUserId={user?.id ?? null}
-                        onBestAnswerChange={loadComments}
-                        onAnswerPosted={loadComments}
-                        onLoginRequired={() => setShowLoginModal(true)}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {items.map((c) => (
+                        <QACard
+                          key={c.id}
+                          comment={c}
+                          currentUserId={user?.id ?? null}
+                          onBestAnswerChange={loadComments}
+                          onAnswerPosted={loadComments}
+                          onLoginRequired={() => setShowLoginModal(true)}
+                        />
+                      ))}
+                    </div>
+                    {/* 列ごとに独立して読み足す */}
+                    <LoadMoreButton
+                      hasMore={list.hasMore}
+                      loading={list.loadingMore}
+                      onClick={list.loadMore}
+                    />
+                  </>
                 )}
               </section>
             );

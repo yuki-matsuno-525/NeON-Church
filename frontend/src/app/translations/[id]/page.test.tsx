@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import TranslationDetailPage from "./page";
-import type { TranslationProject, TranslationUnit } from "@/lib/api";
+import type { TranslationProject, TranslationUnit, TranslationUnitSummary } from "@/lib/api";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -30,6 +30,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     fetchTranslation: vi.fn(),
     fetchTranslationUnits: vi.fn(),
+    fetchTranslationUnitSummary: vi.fn(),
     updateTranslationUnit: vi.fn(),
   };
 });
@@ -72,19 +73,27 @@ const makeUnit = (overrides: Partial<TranslationUnit> = {}): TranslationUnit => 
   ...overrides,
 });
 
+/** 章一覧と状態ごとの件数。画面はこれで章ボタンとレビュー件数を出す。 */
+const makeSummary = (overrides: Partial<TranslationUnitSummary> = {}): TranslationUnitSummary => ({
+  chapters: [5],
+  status_counts: { todo: 0, in_progress: 0, review: 1, done: 0 },
+  total: 1,
+  ...overrides,
+});
+
 describe("TranslationDetailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("プロジェクト概要に状態・進捗・レビュー待ち件数が表示される", async () => {
-    const { fetchTranslation, fetchTranslationUnits } = await import("@/lib/api");
+    const { fetchTranslation, fetchTranslationUnits, fetchTranslationUnitSummary } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(makeProject({ done_count: 1, unit_count: 3 }));
-    vi.mocked(fetchTranslationUnits).mockResolvedValue([
-      makeUnit(),
-      makeUnit({ id: "u2", verse_number: 4, status: "done" }),
-      makeUnit({ id: "u3", verse_number: 5, status: "todo" }),
-    ]);
+    // レビュー件数は表示中の章ではなく企画全体の数（summary）から出す
+    vi.mocked(fetchTranslationUnitSummary).mockResolvedValue(
+      makeSummary({ status_counts: { todo: 1, in_progress: 0, review: 1, done: 1 }, total: 3 })
+    );
+    vi.mocked(fetchTranslationUnits).mockResolvedValue([makeUnit()]);
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
@@ -97,37 +106,37 @@ describe("TranslationDetailPage", () => {
   });
 
   it("レビュー中ユニットの「該当ユニットへ」でユニット一覧の該当カードへ移動する", async () => {
-    const { fetchTranslation, fetchTranslationUnits } = await import("@/lib/api");
+    const { fetchTranslation, fetchTranslationUnits, fetchTranslationUnitSummary } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(makeProject());
-    vi.mocked(fetchTranslationUnits).mockResolvedValue([
-      makeUnit(),
-      makeUnit({ id: "u2", verse_number: 4, status: "done" }),
-    ]);
+    vi.mocked(fetchTranslationUnitSummary).mockResolvedValue(makeSummary());
+    vi.mocked(fetchTranslationUnits).mockResolvedValue([makeUnit()]);
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
     await screen.findByText("マタイ英訳プロジェクト");
-    fireEvent.click(screen.getByRole("button", { name: "レビュー (1)" }));
+    fireEvent.click(await screen.findByRole("button", { name: "レビュー (1)" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "該当ユニットへ" }));
+    fireEvent.click(await screen.findByRole("button", { name: "該当ユニットへ" }));
 
-    // ユニットタブに切り替わり、該当ユニットのカードが表示される
+    // ユニットタブに切り替わり、その章のユニットを取り直して該当カードが表示される
     expect(screen.getByRole("button", { name: "ユニット" })).toHaveAttribute("aria-current", "page");
-    expect(document.getElementById("unit-u1")).toBeInTheDocument();
+    await waitFor(() => expect(document.getElementById("unit-u1")).toBeInTheDocument());
+    expect(fetchTranslationUnits).toHaveBeenCalledWith("p1", { chapter: 5 });
   });
 
   it("レビュー承認は確認モーダルを挟む", async () => {
-    const { fetchTranslation, fetchTranslationUnits, updateTranslationUnit } = await import("@/lib/api");
+    const { fetchTranslation, fetchTranslationUnits, fetchTranslationUnitSummary, updateTranslationUnit } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(makeProject());
+    vi.mocked(fetchTranslationUnitSummary).mockResolvedValue(makeSummary());
     vi.mocked(fetchTranslationUnits).mockResolvedValue([makeUnit()]);
     vi.mocked(updateTranslationUnit).mockResolvedValue(makeUnit({ status: "done" }));
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
     await screen.findByText("マタイ英訳プロジェクト");
-    fireEvent.click(screen.getByRole("button", { name: "レビュー (1)" }));
+    fireEvent.click(await screen.findByRole("button", { name: "レビュー (1)" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "承認" }));
+    fireEvent.click(await screen.findByRole("button", { name: "承認" }));
     // モーダルが出るまで API は呼ばれない
     expect(updateTranslationUnit).not.toHaveBeenCalled();
     expect(screen.getByText("この訳を承認しますか？")).toBeInTheDocument();

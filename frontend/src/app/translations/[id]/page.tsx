@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useCallback, useEffect, useState, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   fetchTranslation,
   fetchTranslationUnits,
+  fetchTranslationUnitSummary,
   fetchUnitComments,
   fetchChapters,
   fetchVerses,
@@ -31,6 +32,7 @@ import {
   removeBookmark,
   type TranslationProject,
   type TranslationUnit,
+  type TranslationUnitSummary,
   type TranslationMembership,
   type TranslationComment,
   type Chapter,
@@ -185,7 +187,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [project, setProject] = useState<TranslationProject | null>(null);
   // 公開翻訳を自分の /read に追加済みか（トグルボタンの状態）
   const [inLibrary, setInLibrary] = useState(false);
+  // units は「いま開いている章」の分だけ。企画全体は summary（章一覧と件数）で扱う。
   const [units, setUnits] = useState<TranslationUnit[]>([]);
+  const [unitsLoading, setUnitsLoading] = useState(false);
+  const [reviewUnits, setReviewUnits] = useState<TranslationUnit[]>([]);
+  const [summary, setSummary] = useState<TranslationUnitSummary | null>(null);
   const [members, setMembers] = useState<TranslationMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"units" | "review" | "members">("units");
@@ -274,16 +280,50 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     return t.statusRejected;
   };
 
+  // 企画全体のユニットは取らない。章ボタンとレビュー件数は summary から出し、
+  // 節そのものは章を開いたときにその章の分だけ取る。書を丸ごと追加できるので、
+  // 全件取ると詩篇なら2400件超が画面を開くたびに飛んでいた。
+  const reloadSummary = useCallback(
+    () => fetchTranslationUnitSummary(id).then(setSummary).catch(() => {}),
+    [id]
+  );
+
   useEffect(() => {
     Promise.all([
       fetchTranslation(id),
-      fetchTranslationUnits(id),
-    ]).then(([proj, u]) => {
+      fetchTranslationUnitSummary(id),
+    ]).then(([proj, s]) => {
       setProject(proj);
       setInLibrary(proj.is_in_library);
-      setUnits(u);
+      setSummary(s);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [id]);
+
+  // 章を開いたら、その章のユニットだけ取る。
+  useEffect(() => {
+    if (selectedChapter === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUnits([]);
+      return;
+    }
+    let cancelled = false;
+    setUnitsLoading(true);
+    fetchTranslationUnits(id, { chapter: selectedChapter })
+      .then((u) => { if (!cancelled) setUnits(u); })
+      .catch(() => { if (!cancelled) setUnits([]); })
+      .finally(() => { if (!cancelled) setUnitsLoading(false); });
+    return () => { cancelled = true; };
+  }, [id, selectedChapter]);
+
+  // レビュータブは章をまたぐので、状態で絞って別に取る。
+  useEffect(() => {
+    if (tab !== "review") return;
+    let cancelled = false;
+    fetchTranslationUnits(id, { status: "review" })
+      .then((u) => { if (!cancelled) setReviewUnits(u); })
+      .catch(() => { if (!cancelled) setReviewUnits([]); });
+    return () => { cancelled = true; };
+  }, [id, tab, summary]);
 
   useEffect(() => {
     if (tab === "members" && isMember) {
@@ -351,8 +391,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     try {
       const res = await removeBookFromTranslation(id, project.source_book);
       toast.show(t.unitsDeleted(res.deleted), { type: "success" });
-      const u = await fetchTranslationUnits(id);
-      setUnits(u);
+      setSelectedChapter(null);
+      await reloadSummary();
     } catch {
       /* ignore */
     } finally {
@@ -367,8 +407,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     try {
       const res = await addBookToTranslation(id, project.source_book);
       toast.show(t.unitsAdded(res.created), { type: "success" });
-      const u = await fetchTranslationUnits(id);
-      setUnits(u);
+      await reloadSummary();
     } catch {
       /* ignore */
     } finally {
@@ -409,12 +448,17 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     setAddingUnit(false);
     if (unitVerseId) {
       const unit = await addTranslationUnit(id, unitVerseId).catch(() => null);
-      if (unit) setUnits((prev) => [...prev, unit]);
+      if (unit && unit.chapter_number === selectedChapter) setUnits((prev) => [...prev, unit]);
     } else {
       const verses = unitVerses.length > 0 ? unitVerses : await fetchVerses(unitChapterId).catch(() => []);
       const results = await Promise.all(verses.map((v) => addTranslationUnit(id, v.id).catch(() => null)));
-      setUnits((prev) => [...prev, ...results.filter((u): u is TranslationUnit => u !== null)]);
+      setUnits((prev) => [
+        ...prev,
+        ...results.filter((u): u is TranslationUnit => u !== null && u.chapter_number === selectedChapter),
+      ]);
     }
+    // 章一覧と件数が変わるので取り直す
+    await reloadSummary();
     setUnitChapterId("");
     setUnitVerseId("");
     setUnitVerses([]);
@@ -428,6 +472,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const handleUnitStatusChange = async (unitId: string, newStatus: TranslationUnit["status"]) => {
     const updated = await updateTranslationUnit(id, unitId, { status: newStatus });
     setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
+    setReviewUnits((prev) => prev.filter((u) => u.id !== unitId));
+    // レビュー件数のバッジを合わせる
+    await reloadSummary();
   };
 
   const handleSaveBody = async (unitId: string) => {
@@ -498,8 +545,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const progressText = project.unit_count > 0
     ? `${project.done_count}/${project.unit_count} (${progressPct}%)`
     : `${project.done_count}/${project.unit_count}`;
-  const reviewUnits = units.filter((u) => u.status === "review");
-  const reviewCount = reviewUnits.length;
+  // レビュー件数は表示中の章ではなく企画全体の数（summary）から出す。
+  const reviewCount = summary?.status_counts.review ?? 0;
 
   const tabLabel = (tabKey: "units" | "review" | "members") => {
     if (tabKey === "units") return t.units;
@@ -720,7 +767,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           )}
 
           {selectedChapter === null && (
-            units.length === 0 ? (
+            (summary?.total ?? 0) === 0 ? (
               <EmptyState
                 title={t.noUnits}
                 description={isOwner ? t.emptyUnitsDesc : t.noUnitsMsg}
@@ -740,7 +787,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   gap: 8,
                 }}
               >
-                {[...new Set(units.map((u) => u.chapter_number))].sort((a, b) => a - b).map((chNum) => (
+                {(summary?.chapters ?? []).map((chNum) => (
                   <button
                     key={chNum}
                     onClick={() => setSelectedChapter(chNum)}
@@ -771,8 +818,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 {t.backToChapters}
               </button>
               <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{selectedChapter}</h3>
+              {unitsLoading && <SkeletonList count={3} />}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {units.filter((u) => u.chapter_number === selectedChapter).map((unit) => (
+              {/* units はこの章の分だけ取ってあるので、ここでの絞り込みは不要 */}
+              {units.map((unit) => (
                 <div
                   key={unit.id}
                   id={`unit-${unit.id}`}

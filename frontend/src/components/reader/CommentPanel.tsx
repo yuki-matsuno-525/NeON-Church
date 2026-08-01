@@ -6,7 +6,6 @@ import {
   createBookmark,
   removeBookmark,
   createComment,
-  buildCommentTree,
   fetchMyCompiledBooks,
   createCompiledVerse,
   type Verse,
@@ -20,6 +19,7 @@ import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
+import { LoadMoreButton } from "@/components/ui";
 
 type Props = {
   verse: Verse;
@@ -68,7 +68,7 @@ export function CommentPanel({
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
-  const { comments, setComments, loading, reload } = useComments({
+  const { comments, setComments, loading, loadingMore, hasMore, loadMore, reload } = useComments({
     verse_id: verse.id,
     ordering,
     translation_project: translationProject,
@@ -156,8 +156,9 @@ export function CommentPanel({
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    const comment = await createComment({ verse: verse.id, body, parent: parentId, translation_project: translationProject });
-    setComments((prev) => [...prev, comment]);
+    // 返信は親コメントの中に出るので、親一覧（comments）には足さない。
+    // 投稿後の表示は CommentItem 側がその親の返信を取り直して行う。
+    await createComment({ verse: verse.id, body, parent: parentId, translation_project: translationProject });
   };
 
   // 別の節を選び直したら本文の展開状態をリセットする（パネルは再利用される）。
@@ -168,11 +169,12 @@ export function CommentPanel({
     setVerseExpanded(false);
   }
 
+  // 絞り込みは読み込み済みのコメントにだけ効く（サーバー検索ではない）。
+  // 入力欄の説明文でもそう伝えている。
   const q = searchQuery.trim().toLowerCase();
-  const filteredComments = q
+  const visibleComments = q
     ? comments.filter((c) => c.body.toLowerCase().includes(q))
     : comments;
-  const tree = buildCommentTree(filteredComments);
 
   // 本文が長いときは省略しつつ、折り畳みで全文展開できるようにする。
   const VERSE_PREVIEW_LEN = 90;
@@ -550,7 +552,7 @@ export function CommentPanel({
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t.searchComments}
+            placeholder={t.searchLoadedComments}
             style={{
               width: "100%",
               padding: "5px 10px",
@@ -572,21 +574,24 @@ export function CommentPanel({
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
               {t.loading}
             </p>
-          ) : tree.length === 0 ? (
+          ) : visibleComments.length === 0 ? (
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
               {t.noCommentsYet}
             </p>
           ) : (
-            tree.map((node) => (
-              <CommentItem
-                key={node.id}
-                comment={node}
-                onReply={handleReply}
-                onRefresh={reload}
-                initialBookmarkId={commentBookmarkMap[node.id]}
-                showVersionBadge
-              />
-            ))
+            <>
+              {visibleComments.map((node) => (
+                <CommentItem
+                  key={node.id}
+                  comment={node}
+                  onReply={handleReply}
+                  onRefresh={reload}
+                  initialBookmarkId={commentBookmarkMap[node.id]}
+                  showVersionBadge
+                />
+              ))}
+              <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+            </>
           )}
         </div>
       </div>

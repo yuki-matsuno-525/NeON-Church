@@ -314,6 +314,7 @@ const ja = {
   expand: "展開",
   collapse: "折り畳む",
   numReplies: (n: number) => `${n}件の返信`,
+  showReplies: (n: number) => `返信を表示（${n}件）`,
 
   // 章/書/ユーザー not found
   bookNotFound: "書が見つかりません",
@@ -355,6 +356,8 @@ const ja = {
   orderVotes: "人気順",
   allVersionsToggle: "すべての訳",
   searchComments: "コメントを検索...",
+  // 一覧は少しずつ読み込むので、この欄は「読み込み済みの分」にしか効かない
+  searchLoadedComments: "表示中のコメントを絞り込む",
 
   // Q&A 投稿フォーム
   qaInputTitlePlaceholder: "質問のタイトル（必須）",
@@ -750,6 +753,7 @@ const en: typeof ja = {
   expand: "Expand",
   collapse: "Collapse",
   numReplies: (n: number) => `${n} ${n === 1 ? "reply" : "replies"}`,
+  showReplies: (n: number) => `Show ${n} ${n === 1 ? "reply" : "replies"}`,
 
   bookNotFound: "Book not found",
   chapterNotFound: "Chapter not found",
@@ -783,6 +787,7 @@ const en: typeof ja = {
   orderVotes: "Popular",
   allVersionsToggle: "All versions",
   searchComments: "Search comments...",
+  searchLoadedComments: "Filter loaded comments",
 
   qaInputTitlePlaceholder: "Question title (required)",
   qaInputPlaceholder: "Describe your question in detail...",

@@ -3,7 +3,6 @@ import type {
   Chapter,
   Verse,
   Comment,
-  CommentNode,
   Bookmark,
   Notification,
   User,
@@ -246,7 +245,14 @@ export function fetchReferenceVerses(slug: string, chapter: number, verse: numbe
   return apiFetch<{ verses: ReferenceItem[] }>(`/references/${slug}/verses/${chapter}/${verse}/`).then((r) => r.verses);
 }
 
-export function fetchComments(params: {
+/**
+ * 箇所に付いた**親コメント**の1ページ分。
+ *
+ * 返信はここには入らない（fetchCommentReplies で親ごとに取る）。以前は親と返信を
+ * 混ぜた1本の列を受け取って画面側で組み直していたが、ページで区切ると親と返信が
+ * 別ページに分かれ、親が見つからない返信が何も言わずに消えていた。
+ */
+export function fetchCommentPage(params: {
   // 段階6F: 単一 id（verse_id/chapter_id/book_id）は backend が「その箇所」へ解決し、
   // 訳をまたいで同じ箇所のコメントを集約して返す（全訳 id の集約パラメータは廃止）。
   verse_id?: string;
@@ -255,7 +261,8 @@ export function fetchComments(params: {
   ordering?: "new" | "votes";
   tag_id?: string;
   translation_project?: string;
-}): Promise<Comment[]> {
+  page?: number;
+}): Promise<ListPage<Comment>> {
   const q = new URLSearchParams();
   if (params.verse_id) q.set("verse_id", params.verse_id);
   if (params.chapter_id) q.set("chapter_id", params.chapter_id);
@@ -263,9 +270,8 @@ export function fetchComments(params: {
   if (params.ordering) q.set("ordering", params.ordering);
   if (params.tag_id) q.set("tag_id", params.tag_id);
   if (params.translation_project) q.set("translation_project", params.translation_project);
-  // 1ページ最大100件まで取得（コメント数が多い節向け）
-  q.set("page_size", "100");
-  return apiFetchList(`/comments/?${q}`);
+  if (params.page && params.page > 1) q.set("page", String(params.page));
+  return apiFetchPage(`/comments/?${q}`);
 }
 
 export function fetchTags(): Promise<Tag[]> {
@@ -287,22 +293,6 @@ export function createComment(data: {
     method: "POST",
     body: JSON.stringify(data),
   });
-}
-
-export function buildCommentTree(comments: Comment[]): CommentNode[] {
-  const nodeMap = new Map<string, CommentNode>();
-  for (const c of comments) {
-    nodeMap.set(c.id, { ...c, children: [] });
-  }
-  const roots: CommentNode[] = [];
-  for (const node of nodeMap.values()) {
-    if (!node.parent) {
-      roots.push(node);
-    } else {
-      nodeMap.get(node.parent)?.children.push(node);
-    }
-  }
-  return roots;
 }
 
 export function upvoteComment(commentId: string): Promise<void> {
@@ -489,18 +479,31 @@ export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
 }
 
-export function fetchQAComments(params?: { book_id?: string; tag_id?: string; answered?: boolean; q?: string }): Promise<QAComment[]> {
+/** Q&A一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
+export function fetchQACommentPage(params?: {
+  book_id?: string;
+  tag_id?: string;
+  answered?: boolean;
+  q?: string;
+  page?: number;
+}): Promise<ListPage<QAComment>> {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   if (params?.q?.trim()) qs.set("q", params.q.trim());
-  qs.set("page_size", "100");
-  return apiFetchList(`/comments/qa/?${qs}`);
+  if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  return apiFetchPage(`/comments/qa/?${qs}`);
 }
 
+/**
+ * ある親コメントへの返信を全部取る。
+ *
+ * 返信は親を開いたときにまとめて出したいので取り切る。返信が何百件も付くように
+ * なったら、ここも「もっと見る」に変える（親側の作りは変えなくてよい）。
+ */
 export function fetchCommentReplies(parentId: string): Promise<Comment[]> {
-  return apiFetchList(`/comments/?parent_id=${parentId}&page_size=100`);
+  return apiFetchAll(`/comments/?parent_id=${parentId}`);
 }
 
 export function setBestAnswer(questionId: string, answerCommentId: string | null): Promise<void> {
@@ -602,8 +605,34 @@ export function removeMember(projectId: string, membershipId: string): Promise<v
   return apiFetch(`/translations/${projectId}/members/${membershipId}/`, { method: "DELETE" });
 }
 
-export function fetchTranslationUnits(projectId: string): Promise<TranslationUnit[]> {
-  return apiFetch(`/translations/${projectId}/units/`);
+export type TranslationUnitStatus = TranslationUnit["status"];
+
+/** 章ボタンとレビュー件数を出すための軽い問い合わせ。全ユニットは取らない。 */
+export type TranslationUnitSummary = {
+  chapters: number[];
+  status_counts: Record<TranslationUnitStatus, number>;
+  total: number;
+};
+
+export function fetchTranslationUnitSummary(projectId: string): Promise<TranslationUnitSummary> {
+  return apiFetch(`/translations/${projectId}/units/summary/`);
+}
+
+/**
+ * 翻訳ユニットを取る。
+ *
+ * 企画は書を丸ごと追加できるので全体では数千件になりうる。画面は章を選んで
+ * 作業するので、原則 chapter を指定して呼ぶこと。1章は1ページに収まる。
+ */
+export function fetchTranslationUnits(
+  projectId: string,
+  params?: { chapter?: number; status?: TranslationUnitStatus }
+): Promise<TranslationUnit[]> {
+  const qs = new URLSearchParams();
+  if (params?.chapter !== undefined) qs.set("chapter", String(params.chapter));
+  if (params?.status) qs.set("status", params.status);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetchAll(`/translations/${projectId}/units/${suffix}`);
 }
 
 export function addBookToTranslation(projectId: string, bookId: string): Promise<{ created: number; book_name: string }> {
@@ -667,8 +696,20 @@ export function deleteTranslationComment(projectId: string, commentId: string): 
   return apiFetch(`/translations/${projectId}/comments/${commentId}/`, { method: "DELETE" });
 }
 
-export function fetchTranslationRead(projectId: string): Promise<TranslationUnit[]> {
-  return apiFetch(`/translations/${projectId}/read/`);
+/**
+ * 公開翻訳の本文。
+ *
+ * chapter を渡すとその章だけ、渡さないと目次用に章一覧だけ（units は空）を返す。
+ * 以前は常に全章返していたので、1章開くたびに書全体が飛んでいた。
+ */
+export type TranslationReadResult = { chapters: number[]; units: TranslationUnit[] };
+
+export function fetchTranslationRead(
+  projectId: string,
+  chapter?: number
+): Promise<TranslationReadResult> {
+  const suffix = chapter !== undefined ? `?chapter=${chapter}` : "";
+  return apiFetch(`/translations/${projectId}/read/${suffix}`);
 }
 
 // 自分が /read に追加した公開翻訳一覧（本棚）
