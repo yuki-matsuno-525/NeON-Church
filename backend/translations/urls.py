@@ -13,6 +13,7 @@ urlpatterns = [
     path("translations/<uuid:project_id>/members/", views.TranslationMemberListView.as_view(), name="translation-members"),
     path("translations/<uuid:project_id>/members/<uuid:membership_id>/", views.TranslationMemberDetailView.as_view(), name="translation-member-detail"),
     path("translations/<uuid:project_id>/units/", views.TranslationUnitListCreateView.as_view(), name="translation-units"),
+    path("translations/<uuid:project_id>/units/summary/", views.TranslationUnitSummaryView.as_view(), name="translation-unit-summary"),
     path("translations/<uuid:project_id>/units/<uuid:unit_id>/", views.TranslationUnitDetailView.as_view(), name="translation-unit-detail"),
     path("translations/<uuid:project_id>/units/<uuid:unit_id>/assign/", views.TranslationUnitAssignView.as_view(), name="translation-unit-assign"),
     path("translations/<uuid:project_id>/units/<uuid:unit_id>/comments/", views.TranslationCommentListCreateView.as_view(), name="translation-unit-comments"),
