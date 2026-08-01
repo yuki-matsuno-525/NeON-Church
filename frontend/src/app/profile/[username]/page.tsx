@@ -6,11 +6,13 @@ import {
   fetchUserProfile,
   fetchUserCommentPage,
   fetchUserBookmarkPage,
+  fetchArticles,
   EMPTY_BOOKMARK_COUNTS,
   type PublicUser,
   type Comment,
   type Bookmark,
   type BookmarkType,
+  type Article,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useRelativeTime } from "@/lib/i18n";
@@ -18,7 +20,7 @@ import { FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 
-type Tab = "favorites" | "comments";
+type Tab = "favorites" | "comments" | "articles";
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
@@ -26,6 +28,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const t = useT();
   const relTime = useRelativeTime();
   const [profile, setProfile] = useState<PublicUser | null>(null);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("comments");
@@ -45,7 +48,15 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       .finally(() => setLoading(false));
   }, [username]);
 
-  // 一覧は2つとも「もっと見る」で読み足す。プロフィールが取れるまでは取りに行かない。
+  useEffect(() => {
+    if (!profile) return;
+    // 記事は公開されたものだけが返る（下書きは author 指定でも出ない）
+    fetchArticles({ author: username })
+      .then((response) => setArticles(response.results))
+      .catch(() => setArticles([]));
+  }, [profile, username]);
+
+  // コメントとお気に入りは「もっと見る」で読み足す。プロフィールが取れるまでは取りに行かない。
   const fetchComments = useCallback(
     (page: number) =>
       profile
@@ -152,9 +163,28 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-current={activeTab === "comments" ? "page" : undefined}>
           {t.tabComments} ({commentList.total})
         </button>
+        {/* 記事が1件も無い人にはタブを出さない（空のタブが並ぶと寂しく見えるため） */}
+        {articles.length > 0 && (
+          <button style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-current={activeTab === "articles" ? "page" : undefined}>
+            記事 ({articles.length})
+          </button>
+        )}
       </div>
 
-      {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
+      {activeTab === "articles" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          {articles.map((article) => (
+            <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+              <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                {article.summary}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "articles" ? null : activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
         <>
           {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
           {bookmarkList.counts && bookmarkList.counts.all > 0 && (

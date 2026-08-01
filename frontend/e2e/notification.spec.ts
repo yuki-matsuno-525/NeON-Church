@@ -44,7 +44,8 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
 
   // 通知ページで確認
   await page.goto("/notifications");
-  await expect(page.getByText("返信")).toBeVisible();
+  // 種類の絞り込みにも「返信」ボタンが出るので、通知カードのバッジだけを見る。
+  await expect(page.locator("span.badge").filter({ hasText: "返信" })).toBeVisible();
   await expect(page.getByText(userB.username)).toBeVisible();
 
   // 通知クリックで既読化（p 要素をクリック → 親 div の onClick にバブリング）

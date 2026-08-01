@@ -1,16 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
 import {
   createBookmark,
   removeBookmark,
   createComment,
-  fetchMyCompiledBooks,
-  createCompiledVerse,
+  fetchArticlesCitingVerse,
   type Verse,
   type Bookmark,
-  type CompiledBook,
+  type Article,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -59,12 +58,27 @@ export function CommentPanel({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
-  const [compilationOpen, setCompilationOpen] = useState(false);
-  const [compilations, setCompilations] = useState<CompiledBook[]>([]);
-  const [selectedCompilationId, setSelectedCompilationId] = useState("");
-  const [compilationNote, setCompilationNote] = useState("");
-  const [compilationBusy, setCompilationBusy] = useState(false);
-  const [compilationMessage, setCompilationMessage] = useState<string | null>(null);
+  // この節を引用している記事。1件も無いときはタブ自体を出さない
+  // （どの節にも「引用した記事 (0)」が並ぶと、押しても空という体験になるため）。
+  const [citingArticles, setCitingArticles] = useState<Article[]>([]);
+  const [tab, setTab] = useState<"comments" | "articles">("comments");
+
+  useEffect(() => {
+    if (!bookSlug) return;
+    let alive = true;
+    // 別の節を選び直したときに前の節の記事が残らないよう、いったん空にする。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCitingArticles([]);
+    setTab("comments");
+    fetchArticlesCitingVerse({ book: bookSlug, chapter: chapterNumber, verse: verse.number })
+      .then((response) => {
+        if (alive) setCitingArticles(response.results);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [bookSlug, chapterNumber, verse.number]);
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
@@ -117,42 +131,6 @@ export function CommentPanel({
       return;
     }
     setComposeOpen(true);
-  };
-
-  const handleOpenCompilation = async () => {
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-    setCompilationMessage(null);
-    setCompilationOpen((open) => !open);
-    if (compilations.length === 0) {
-      try {
-        const list = await fetchMyCompiledBooks();
-        setCompilations(list);
-        setSelectedCompilationId((current) => current || list[0]?.id || "");
-      } catch {
-        setCompilationMessage("編纂書を取得できませんでした。");
-      }
-    }
-  };
-
-  const handleAddToCompilation = async () => {
-    if (!selectedCompilationId || compilationBusy) return;
-    setCompilationBusy(true);
-    setCompilationMessage(null);
-    try {
-      await createCompiledVerse(selectedCompilationId, {
-        source_verse: verse.id,
-        curator_note: compilationNote,
-      });
-      setCompilationNote("");
-      setCompilationMessage("未整理トレイへ追加しました。");
-    } catch {
-      setCompilationMessage("追加できませんでした。");
-    } finally {
-      setCompilationBusy(false);
-    }
   };
 
   const handleReply = async (body: string, parentId: string) => {
@@ -371,124 +349,41 @@ export function CommentPanel({
           )}
         </div>
 
+        {/* コメントと「引用した記事」のタブ。記事が無いときは出さない */}
+        {citingArticles.length > 0 && (
+          <div style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
+            <PanelTab active={tab === "comments"} onClick={() => setTab("comments")}>
+              {t.tabComments}
+            </PanelTab>
+            <PanelTab active={tab === "articles"} onClick={() => setTab("articles")}>
+              引用した記事 ({citingArticles.length})
+            </PanelTab>
+          </div>
+        )}
+
+        {tab === "articles" ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {citingArticles.map((article) => (
+              <Link
+                key={article.id}
+                href={`/articles/${article.id}`}
+                className="card-glow card-glow-interactive"
+                style={{ padding: "12px 14px", textDecoration: "none", color: "inherit" }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{article.title}</div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  {article.summary}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 6 }}>
+                  {article.owner_username}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+        <>
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
-          <div style={{ marginBottom: 10 }}>
-            <button
-              data-testid="open-add-to-compilation"
-              type="button"
-              onClick={handleOpenCompilation}
-              className="card-glow card-glow-interactive"
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                minHeight: 42,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                color: "var(--text)",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 700,
-                fontFamily: "inherit",
-              }}
-            >
-              <Icon name="book-open" size={16} />
-              編纂に追加
-            </button>
-            {compilationOpen && (
-              <div
-                style={{
-                  marginTop: 8,
-                  padding: 10,
-                  border: "1px solid var(--border)",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                {compilations.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
-                    編纂書がまだありません。{" "}
-                    <Link href="/compilations/new" style={{ color: "var(--accent)", fontWeight: 700 }}>
-                      新しく作成
-                    </Link>
-                  </p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <label style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: 4 }}>
-                      追加先
-                      <select
-                        data-testid="compilation-select"
-                        value={selectedCompilationId}
-                        onChange={(e) => setSelectedCompilationId(e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "7px 8px",
-                          borderRadius: 6,
-                          border: "1px solid var(--border)",
-                          background: "var(--bg)",
-                          color: "var(--text)",
-                          fontFamily: "inherit",
-                          fontSize: 13,
-                        }}
-                      >
-                        {compilations.map((book) => (
-                          <option key={book.id} value={book.id}>
-                            {book.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <textarea
-                      data-testid="compilation-note-input"
-                      value={compilationNote}
-                      onChange={(e) => setCompilationNote(e.target.value)}
-                      rows={3}
-                      placeholder="この節への注釈（任意）"
-                      style={{
-                        width: "100%",
-                        boxSizing: "border-box",
-                        padding: "7px 8px",
-                        borderRadius: 6,
-                        border: "1px solid var(--border)",
-                        background: "var(--bg)",
-                        color: "var(--text)",
-                        fontFamily: "inherit",
-                        fontSize: 13,
-                        resize: "vertical",
-                      }}
-                    />
-                    <button
-                      data-testid="add-to-compilation-button"
-                      type="button"
-                      onClick={handleAddToCompilation}
-                      disabled={!selectedCompilationId || compilationBusy}
-                      style={{
-                        border: "none",
-                        borderRadius: 6,
-                        background: "var(--accent)",
-                        color: "var(--accent-text)",
-                        fontWeight: 700,
-                        fontSize: 13,
-                        padding: "8px 10px",
-                        cursor: compilationBusy ? "default" : "pointer",
-                        opacity: compilationBusy ? 0.7 : 1,
-                        fontFamily: "inherit",
-                      }}
-                    >
-                      {compilationBusy ? "追加中..." : "未整理トレイへ追加"}
-                    </button>
-                  </div>
-                )}
-                {compilationMessage && (
-                  <p style={{ margin: "8px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
-                    {compilationMessage}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
           {composeOpen ? (
             <CommentInput
               onSubmit={handleSubmit}
@@ -594,7 +489,41 @@ export function CommentPanel({
             </>
           )}
         </div>
+        </>
+        )}
       </div>
     </>
+  );
+}
+
+function PanelTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: "10px 8px",
+        minHeight: 40,
+        border: "none",
+        background: "none",
+        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+        color: active ? "var(--accent)" : "var(--text-muted)",
+        fontWeight: active ? 700 : 400,
+        fontSize: 12,
+        cursor: "pointer",
+        fontFamily: "inherit",
+      }}
+    >
+      {children}
+    </button>
   );
 }

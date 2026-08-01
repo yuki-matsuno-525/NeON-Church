@@ -18,11 +18,10 @@ import type {
   TranslationComment,
   SearchResult,
   PublicUser,
-  CompiledBook,
-  CompiledChapter,
-  CompiledComment,
-  CompiledVerse,
-  CompiledVisibility,
+  Article,
+  ArticleComment,
+  ArticleTag,
+  ArticleVisibility,
 } from "./types";
 
 export class ApiError extends Error {
@@ -759,128 +758,77 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
 }
 
 // ---------------------------------------------------------------------------
-// 編纂書
+// 記事
 // ---------------------------------------------------------------------------
 
-export function fetchCompiledBooks(params?: { mine?: boolean; page?: number }): Promise<PaginatedResponse<CompiledBook>> {
+export function fetchArticles(params?: {
+  mine?: boolean;
+  tag?: string;
+  author?: string;
+  page?: number;
+}): Promise<PaginatedResponse<Article>> {
   const qs = new URLSearchParams();
-  if (params?.mine) qs.set("mine", "1");
+  if (params?.mine) qs.set("mine", "true");
+  if (params?.tag) qs.set("tag", params.tag);
+  if (params?.author) qs.set("author", params.author);
   if (params?.page) qs.set("page", String(params.page));
-  const suffix = qs.toString() ? `?${qs}` : "";
-  return apiFetch(`/compilations/${suffix}`);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch(`/articles/${suffix}`);
 }
 
-export function fetchMyCompiledBooks(): Promise<CompiledBook[]> {
-  return apiFetchList("/compilations/?mine=1&page_size=100");
+export function fetchArticle(id: string): Promise<Article> {
+  return apiFetch(`/articles/${id}/`);
 }
 
-export function fetchCompiledBook(id: string): Promise<CompiledBook> {
-  return apiFetch(`/compilations/${id}/`);
-}
-
-export function createCompiledBook(data: {
-  title: string;
-  description?: string;
-  annotation?: string;
-  visibility?: CompiledVisibility;
-  motif_names?: string[];
-}): Promise<CompiledBook> {
-  return apiFetch("/compilations/", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateCompiledBook(id: string, data: Partial<Pick<CompiledBook, "title" | "description" | "annotation" | "visibility">> & { motif_names?: string[] }): Promise<CompiledBook> {
-  return apiFetch(`/compilations/${id}/`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteCompiledBook(id: string): Promise<void> {
-  return apiFetch(`/compilations/${id}/`, { method: "DELETE" });
-}
-
-export function publishCompiledBook(id: string): Promise<CompiledBook> {
-  return apiFetch(`/compilations/${id}/publish/`, { method: "POST" });
-}
-
-export function unpublishCompiledBook(id: string): Promise<CompiledBook> {
-  return apiFetch(`/compilations/${id}/unpublish/`, { method: "POST" });
-}
-
-export function createCompiledChapter(bookId: string, data: {
+export type ArticleInput = {
   title?: string;
-  introduction?: string;
-  annotation?: string;
-}): Promise<CompiledChapter> {
-  return apiFetch(`/compilations/${bookId}/chapters/`, {
+  summary?: string;
+  body?: string;
+  visibility?: ArticleVisibility;
+  tag_ids?: string[];
+};
+
+export function createArticle(data: ArticleInput): Promise<Article> {
+  return apiFetch("/articles/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateArticle(id: string, data: ArticleInput): Promise<Article> {
+  return apiFetch(`/articles/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deleteArticle(id: string): Promise<void> {
+  return apiFetch(`/articles/${id}/`, { method: "DELETE" });
+}
+
+export function fetchArticleTags(): Promise<ArticleTag[]> {
+  return apiFetchList("/article-tags/");
+}
+
+/** その節を引用している公開記事。節のページの「引用した記事」タブで使う。 */
+export function fetchArticlesCitingVerse(params: {
+  book: string;
+  chapter: number;
+  verse?: number;
+}): Promise<PaginatedResponse<Article>> {
+  const qs = new URLSearchParams({ book: params.book, chapter: String(params.chapter) });
+  if (params.verse) qs.set("verse", String(params.verse));
+  return apiFetch(`/articles/citing/?${qs.toString()}`);
+}
+
+export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {
+  return apiFetchList(`/articles/${articleId}/comments/`);
+}
+
+export function createArticleComment(
+  articleId: string,
+  data: { body: string; parent?: string | null },
+): Promise<ArticleComment> {
+  return apiFetch(`/articles/${articleId}/comments/`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export function updateCompiledChapter(bookId: string, chapterId: string, data: Partial<Pick<CompiledChapter, "title" | "introduction" | "annotation" | "order" | "number">>): Promise<CompiledChapter> {
-  return apiFetch(`/compilations/${bookId}/chapters/${chapterId}/`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteCompiledChapter(bookId: string, chapterId: string): Promise<void> {
-  return apiFetch(`/compilations/${bookId}/chapters/${chapterId}/`, { method: "DELETE" });
-}
-
-export function createCompiledVerse(bookId: string, data: {
-  chapter?: string | null;
-  source_kind?: "bible_verse" | "translation_unit" | "compiled_verse" | "note";
-  source_verse?: string;
-  source_translation_unit?: string;
-  source_compiled_verse?: string;
-  body_snapshot?: string;
-  curator_note?: string;
-  motif_names?: string[];
-}): Promise<CompiledVerse> {
-  return apiFetch(`/compilations/${bookId}/verses/`, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateCompiledVerse(bookId: string, verseId: string, data: Partial<Pick<CompiledVerse, "chapter" | "verse_number" | "order" | "body_snapshot" | "curator_note">>): Promise<CompiledVerse> {
-  return apiFetch(`/compilations/${bookId}/verses/${verseId}/`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteCompiledVerse(bookId: string, verseId: string): Promise<void> {
-  return apiFetch(`/compilations/${bookId}/verses/${verseId}/`, { method: "DELETE" });
-}
-
-export function fetchCompiledComments(params: { book?: string; chapter?: string; verse?: string }): Promise<CompiledComment[]> {
-  const qs = new URLSearchParams();
-  if (params.book) qs.set("book", params.book);
-  if (params.chapter) qs.set("chapter", params.chapter);
-  if (params.verse) qs.set("verse", params.verse);
-  qs.set("page_size", "100");
-  return apiFetchList(`/compilations/comments/?${qs}`);
-}
-
-export function createCompiledComment(data: {
-  book?: string;
-  chapter?: string;
-  verse?: string;
-  body: string;
-  parent?: string;
-}): Promise<CompiledComment> {
-  return apiFetch("/compilations/comments/", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteCompiledComment(commentId: string): Promise<void> {
-  return apiFetch(`/compilations/comments/${commentId}/`, { method: "DELETE" });
+export function deleteArticleComment(commentId: string): Promise<void> {
+  return apiFetch(`/article-comments/${commentId}/`, { method: "DELETE" });
 }
