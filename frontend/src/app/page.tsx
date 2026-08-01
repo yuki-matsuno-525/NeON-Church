@@ -3,9 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { fetchVerseOfDay, fetchQACommentPage, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 import { useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";

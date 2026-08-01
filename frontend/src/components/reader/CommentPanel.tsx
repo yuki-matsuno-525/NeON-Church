@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   createBookmark,
@@ -90,10 +90,15 @@ export function CommentPanel({
 
   // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
   // KJV など別の訳を表示していても「ブックマーク済み」として扱われる（訳跨ぎハイライト）。
-  const bookmarkByLocation = new Map(
-    verseBookmarks
-      .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
-      .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+  // 節を選び直すたびに作り直すと重いので、栞の一覧が変わったときだけ組み直す。
+  const bookmarkByLocation = useMemo(
+    () =>
+      new Map(
+        verseBookmarks
+          .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
+          .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+      ),
+    [verseBookmarks]
   );
   const locationKey = bookSlug ? `${bookSlug}/${chapterNumber}/${verse.number}` : null;
   const existingBookmark = locationKey ? bookmarkByLocation.get(locationKey) : undefined;

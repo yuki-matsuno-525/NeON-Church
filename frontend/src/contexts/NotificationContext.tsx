@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -53,24 +54,44 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // user が変わるたびに refresh / polling を再構築
+  // user が変わるたびに refresh / polling を再構築。
+  // タブが裏に回っている間は止める。見ていない画面のために30秒ごとに通信し、そのたび
+  // アプリ全体を描き直すのは無駄なので、表に戻ったときにまとめて取り直す。
   useEffect(() => {
+    const stopPolling = () => {
+      if (pollingIdRef.current) {
+        window.clearInterval(pollingIdRef.current);
+        pollingIdRef.current = null;
+      }
+    };
+
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnreadCount(0);
-      if (pollingIdRef.current) {
-        window.clearInterval(pollingIdRef.current);
-        pollingIdRef.current = null;
-      }
+      stopPolling();
       return;
     }
-    refresh();
-    pollingIdRef.current = window.setInterval(refresh, POLL_INTERVAL_MS);
-    return () => {
-      if (pollingIdRef.current) {
-        window.clearInterval(pollingIdRef.current);
-        pollingIdRef.current = null;
+
+    const startPolling = () => {
+      stopPolling();
+      pollingIdRef.current = window.setInterval(refresh, POLL_INTERVAL_MS);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refresh();
+        startPolling();
+      } else {
+        stopPolling();
       }
+    };
+
+    refresh();
+    if (document.visibilityState === "visible") startPolling();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      stopPolling();
     };
   }, [user, refresh]);
 
@@ -82,9 +103,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setUnreadCount(0);
   }, []);
 
-  return (
-    <NotificationContext.Provider value={{ unreadCount, refresh, decrementUnread, clearUnread }}>
-      {children}
-    </NotificationContext.Provider>
+  // 毎回新しいオブジェクトを渡すと、未読数が変わるたびアプリ全体が描き直しになる。
+  const value = useMemo(
+    () => ({ unreadCount, refresh, decrementUnread, clearUnread }),
+    [unreadCount, refresh, decrementUnread, clearUnread]
   );
+
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }

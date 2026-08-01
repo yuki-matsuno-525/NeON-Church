@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 
 export type Lang = "ja" | "en";
 
@@ -23,16 +31,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (saved === "en" || saved === "ja") setLangState(saved);
   }, []);
 
-  const setLang = (l: Lang) => {
+  const setLang = useCallback((l: Lang) => {
     setLangState(l);
     localStorage.setItem("lang", l);
-  };
+  }, []);
 
-  return (
-    <LanguageContext.Provider value={{ lang, setLang }}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  // 毎回新しいオブジェクトを渡すと、useLang を使う全画面が無関係な再描画に巻き込まれる。
+  const value = useMemo(() => ({ lang, setLang }), [lang, setLang]);
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 
 export function useLang() {
