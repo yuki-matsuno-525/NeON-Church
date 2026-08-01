@@ -91,6 +91,8 @@ class CommentAuthorSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
+    # 「返信 N件」の表示用。返信を開く前に件数だけ知りたいので、一覧の annotate から取る。
+    reply_count = serializers.SerializerMethodField()
     version_label = serializers.SerializerMethodField()
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
@@ -104,11 +106,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "tags", "tag_ids"]
-        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "version_label", "tags"]
+        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
+        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "reply_count", "version_label", "tags"]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
+
+    def get_reply_count(self, obj) -> int:
+        # 投稿直後のレスポンスなど annotate していない場面では 0（返信はまだ無い）。
+        return getattr(obj, "reply_count", 0)
 
     def get_version_label(self, obj) -> str:
         return _get_version_label(obj)

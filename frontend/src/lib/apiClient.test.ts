@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   ApiError,
-  buildCommentTree,
   fetchBooks,
   createComment,
   deleteComment,
@@ -52,57 +51,6 @@ describe("ApiError", () => {
     expect(err.status).toBe(404);
     expect(err.message).toBe("Not found");
     expect(err).toBeInstanceOf(Error);
-  });
-});
-
-// ------------------------------------------------------------------
-// buildCommentTree
-// ------------------------------------------------------------------
-describe("buildCommentTree", () => {
-  const makeComment = (id: string, parent: string | null = null): Comment => ({
-    id,
-    user: { id: "u1", username: "alice" },
-    verse: "v1",
-    chapter: null,
-    book: null,
-    parent,
-    body: "本文",
-    is_qa: false,
-    is_deleted: false,
-    created_at: new Date().toISOString(),
-    vote_count: 0,
-    tags: [],
-  });
-
-  it("空配列 → []", () => {
-    expect(buildCommentTree([])).toEqual([]);
-  });
-
-  it("親なしコメントはルートになる", () => {
-    const roots = buildCommentTree([makeComment("c1"), makeComment("c2")]);
-    expect(roots).toHaveLength(2);
-    expect(roots.map((r) => r.id)).toEqual(["c1", "c2"]);
-  });
-
-  it("子コメントは親の children に入る", () => {
-    const roots = buildCommentTree([makeComment("c1"), makeComment("c2", "c1")]);
-    expect(roots).toHaveLength(1);
-    expect(roots[0].children).toHaveLength(1);
-    expect(roots[0].children[0].id).toBe("c2");
-  });
-
-  it("存在しない親を持つコメントはルートにも children にも含まれない", () => {
-    const roots = buildCommentTree([makeComment("c2", "nonexistent")]);
-    expect(roots).toHaveLength(0);
-  });
-
-  it("3段ネストが正しく構築される", () => {
-    const roots = buildCommentTree([
-      makeComment("c1"),
-      makeComment("c2", "c1"),
-      makeComment("c3", "c2"),
-    ]);
-    expect(roots[0].children[0].children[0].id).toBe("c3");
   });
 });
 

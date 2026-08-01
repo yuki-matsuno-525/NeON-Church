@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
+import { fetchVerseOfDay, fetchQACommentPage, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -53,8 +53,9 @@ export default function Home() {
   }, [lang]);
 
   useEffect(() => {
-    fetchQAComments()
-      .then((qa) => setRecentQA(qa.slice(0, 4)))
+    // 表紙に出すのは冒頭の数件だけなので1ページ目で足りる。
+    fetchQACommentPage()
+      .then((page) => setRecentQA(page.results.slice(0, 4)))
       .catch(() => {});
     fetchTrendingComments().then(setTrending).catch(() => {});
   }, []);

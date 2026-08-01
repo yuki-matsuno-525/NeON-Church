@@ -282,3 +282,48 @@ class TestBookmarksVisibility:
             format="json",
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ------------------------------------------------------------------
+# 公開プロフィールのお気に入りも、自分の /bookmarks と同じ形で返す
+#
+# 表示カードを共通部品にしたので、種類での絞り込み・タブ件数・節本文が
+# ここだけ欠けていると公開プロフィールで中身が出なくなる。
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestPublicBookmarksTypeFilter:
+    def test_counts_are_returned_per_type(self, api_client, target_user, target_user_bookmark, chapter):
+        from bookmarks.models import Bookmark
+        Bookmark.objects.create(
+            user=target_user,
+            canonical_book=chapter.book.canonical_book,
+            chapter_number=chapter.number,
+        )
+        res = api_client.get(user_bookmarks_url("targetuser"))
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["counts"]["all"] == 2
+        assert res.data["counts"]["verse"] == 1
+        assert res.data["counts"]["chapter"] == 1
+
+    def test_filter_by_type(self, api_client, target_user, target_user_bookmark, chapter):
+        from bookmarks.models import Bookmark
+        Bookmark.objects.create(
+            user=target_user,
+            canonical_book=chapter.book.canonical_book,
+            chapter_number=chapter.number,
+        )
+        res = api_client.get(user_bookmarks_url("targetuser"), {"type": "verse"})
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == "verse"
+
+    def test_verse_text_is_included(self, api_client, target_user, target_user_bookmark, verse):
+        # 自分の一覧と同じく節本文を返す（共通カードが本文を出せるようにするため）。
+        res = api_client.get(user_bookmarks_url("targetuser"))
+        assert res.data["results"][0]["verse_text"] == verse.text
+
+    def test_private_user_counts_are_zero(self, api_client, private_target_user, verse):
+        _make_verse_bookmark(private_target_user, verse)
+        res = api_client.get(user_bookmarks_url("privateuser"))
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["count"] == 0
+        assert res.data["counts"]["all"] == 0

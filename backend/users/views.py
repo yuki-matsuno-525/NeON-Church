@@ -209,7 +209,8 @@ class UserBookmarksView(generics.ListAPIView):
         from bookmarks.serializers import BookmarkSerializer
         return BookmarkSerializer
 
-    def get_queryset(self):
+    def get_base_queryset(self):
+        """絞り込み前の対象ユーザーの栞。非公開なら空。件数集計にも使う。"""
         from bookmarks.models import Bookmark
         username = self.kwargs["username"]
         try:
@@ -218,10 +219,27 @@ class UserBookmarksView(generics.ListAPIView):
             raise NotFound("User not found.")
         if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
             return Bookmark.objects.none()
-        return (
-            Bookmark.objects.filter(user=user)
-            .select_related("canonical_book", "comment__user")
+        return Bookmark.objects.filter(user=user)
+
+    def get_queryset(self):
+        # 自分の /bookmarks と同じ形（種類での絞り込み・節本文つき）で返す。
+        # 表示側のカードを共通化しているため、ここだけ形が違うと本文が出ない。
+        from bookmarks.filters import filter_by_type
+        from bookmarks.views import annotate_verse_text
+
+        qs = self.get_base_queryset().select_related(
+            "canonical_book", "comment__user", "comment__canonical_book",
+            "translation_project",
         )
+        qs = filter_by_type(qs, self.request.query_params.get("type"))
+        return annotate_verse_text(qs)
+
+    def list(self, request, *args, **kwargs):
+        from bookmarks.filters import count_by_type
+
+        response = super().list(request, *args, **kwargs)
+        response.data["counts"] = count_by_type(self.get_base_queryset())
+        return response
 
 
 class TokenRefreshView(APIView):

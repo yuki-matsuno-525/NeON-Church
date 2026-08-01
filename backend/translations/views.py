@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth import get_user_model
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -257,13 +258,30 @@ class TranslationMemberDetailView(APIView):
 # ユニット
 # ---------------------------------------------------------------------------
 
+class ChapterPageNumberPagination(StandardPageNumberPagination):
+    """1章分をまとめて返せる大きさのページ。
+
+    翻訳画面は章を選んで作業するので、章の途中で切れると使いものにならない。
+    詩篇119篇（176節）でも1ページに収まる大きさにしてある。章を指定しない
+    取得（企画全体）でも、際限なく返さないための上限として効く。
+    """
+
+    page_size = 200
+    max_page_size = 500
+
+
 class TranslationUnitListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/translations/{id}/units/  ユニット一覧
-    POST /api/translations/{id}/units/  ユニット追加（オーナーのみ）
+    GET  /api/translations/{id}/units/            ユニット一覧
+    GET  /api/translations/{id}/units/?chapter=3  3章のユニットだけ
+    POST /api/translations/{id}/units/            ユニット追加（オーナーのみ）
+
+    書を丸ごと追加できる（add-book）ので、企画全体では数千件になりうる。
+    画面は章を選んで作業するため、章で絞って取れるようにしてある。
     """
 
     serializer_class = TranslationUnitSerializer
+    pagination_class = ChapterPageNumberPagination
 
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -271,9 +289,20 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        return TranslationUnit.objects.filter(
+        qs = TranslationUnit.objects.filter(
             project_id=self.kwargs["project_id"]
         ).select_related("verse__chapter", "assigned_to")
+        chapter = self.request.query_params.get("chapter")
+        if chapter:
+            # 数字以外が来たら絞らない（画面から来る値なので握りつぶしてよい）
+            try:
+                qs = qs.filter(verse__chapter__number=int(chapter))
+            except ValueError:
+                pass
+        status_param = self.request.query_params.get("status")
+        if status_param in dict(TranslationUnit.STATUS_CHOICES):
+            qs = qs.filter(status=status_param)
+        return qs
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -286,6 +315,37 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
         if project.owner != self.request.user:
             self.permission_denied(self.request)
         serializer.save(project=project)
+
+
+class TranslationUnitSummaryView(APIView):
+    """GET /api/translations/{id}/units/summary/  章の一覧と状態ごとの件数
+
+    画面の章ボタンと「レビュー(N)」のバッジを出すためだけの軽い問い合わせ。
+    以前は全ユニットを取ってから画面側で数えていたので、章ボタンを見るだけで
+    企画の全節（詩篇なら2400件超）が飛んでいた。
+
+    返り値: {"chapters": [1, 2, 3], "status_counts": {"todo": 10, ...}, "total": 30}
+    """
+
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, project_id):
+        get_object_or_404(TranslationProject, pk=project_id)
+        units = TranslationUnit.objects.filter(project_id=project_id)
+        # order_by() で既定の並び順を外してから distinct する。付けたままだと
+        # 並び替えに使う節番号が裏で SELECT に入り、章が節の数だけ重複する。
+        chapters = sorted(
+            units.order_by().values_list("verse__chapter__number", flat=True).distinct()
+        )
+        counts = units.aggregate(
+            total=Count("id"),
+            **{
+                name: Count("id", filter=Q(status=name))
+                for name, _label in TranslationUnit.STATUS_CHOICES
+            },
+        )
+        total = counts.pop("total")
+        return Response({"chapters": chapters, "status_counts": counts, "total": total})
 
 
 class TranslationUnitDetailView(generics.RetrieveUpdateAPIView):
@@ -488,7 +548,16 @@ class TranslationLibraryView(APIView):
 
 
 class TranslationReadView(APIView):
-    """GET /api/translations/{id}/read/  公開済み翻訳の完了ユニット一覧（誰でも閲覧可）"""
+    """GET /api/translations/{id}/read/  公開済み翻訳の完了ユニット（誰でも閲覧可）
+
+    GET .../read/            目次用。章番号の一覧だけを返す（units は空）
+    GET .../read/?chapter=3  3章の本文を返す
+
+    以前は常に全章の完了ユニットを返し、章のページが画面側で1章分だけ抜き出して
+    残りを捨てていた。1章開くたびに書全体が飛ぶので、章で絞れるようにした。
+
+    返り値: {"chapters": [1, 2, 3], "units": [...]}
+    """
 
     permission_classes = [permissions.AllowAny]
 
@@ -496,7 +565,29 @@ class TranslationReadView(APIView):
         project = get_object_or_404(TranslationProject, pk=project_id)
         if project.status != TranslationProject.STATUS_PUBLISHED:
             return Response({"detail": "公開されていないプロジェクトです。"}, status=status.HTTP_403_FORBIDDEN)
-        units = TranslationUnit.objects.filter(
+        done = TranslationUnit.objects.filter(
             project=project, status=TranslationUnit.STATUS_DONE
-        ).select_related("verse__chapter").order_by("verse__chapter__number", "verse__number")
-        return Response(TranslationUnitSerializer(units, many=True).data)
+        )
+        # order_by() で既定の並び順を外してから distinct する（節番号が裏で
+        # SELECT に入って章が重複するのを防ぐ）。
+        chapters = sorted(
+            done.order_by().values_list("verse__chapter__number", flat=True).distinct()
+        )
+
+        chapter = request.query_params.get("chapter")
+        units = []
+        if chapter:
+            try:
+                chapter_number = int(chapter)
+            except ValueError:
+                chapter_number = None
+            if chapter_number is not None:
+                units = (
+                    done.filter(verse__chapter__number=chapter_number)
+                    .select_related("verse__chapter")
+                    .order_by("verse__number")
+                )
+        return Response({
+            "chapters": chapters,
+            "units": TranslationUnitSerializer(units, many=True).data,
+        })

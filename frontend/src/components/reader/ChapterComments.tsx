@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchTags, createComment, buildCommentTree, type Tag } from "@/lib/api";
+import { fetchTags, createComment, type Tag } from "@/lib/api";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
+import { LoadMoreButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 
 type Props = {
@@ -32,7 +33,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
   // 段階6D: 単一 id を backend が箇所へ解決し、訳をまたいで同じ章/書のコメントを集約する。
   // 各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
-  const { comments, setComments, loading, reload } = useComments({
+  const { comments, setComments, loading, loadingMore, hasMore, loadMore, reload } = useComments({
     chapter_id: chapterId,
     book_id: bookId,
     ordering,
@@ -50,15 +51,16 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
   };
 
   const handleReply = async (body: string, parentId: string) => {
-    const comment = await createComment({ ...target, body, parent: parentId, translation_project: translationProject });
-    setComments((prev) => [...prev, comment]);
+    // 返信は親コメントの中に出るので、親一覧（comments）には足さない。
+    // 投稿後の表示は CommentItem 側がその親の返信を取り直して行う。
+    await createComment({ ...target, body, parent: parentId, translation_project: translationProject });
   };
 
+  // 絞り込みは読み込み済みのコメントにだけ効く（サーバー検索ではない）。
   const q = searchQuery.trim().toLowerCase();
-  const filteredComments = q
+  const visibleComments = q
     ? comments.filter((c) => c.body.toLowerCase().includes(q))
     : comments;
-  const tree = buildCommentTree(filteredComments);
 
   return (
     <section id="chapter-comments" style={{ marginTop: 40 }}>
@@ -159,21 +161,24 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
       {loading ? (
         <p style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
-      ) : tree.length === 0 ? (
+      ) : visibleComments.length === 0 ? (
         <p style={{ color: "var(--text-faint)", fontSize: 13 }}>
           {t.noCommentsYet}
         </p>
       ) : (
-        tree.map((node) => (
-          <CommentItem
-            key={node.id}
-            comment={node}
-            onReply={handleReply}
-            onRefresh={reload}
-            initialBookmarkId={commentBookmarkMap[node.id]}
-            showVersionBadge
-          />
-        ))
+        <>
+          {visibleComments.map((node) => (
+            <CommentItem
+              key={node.id}
+              comment={node}
+              onReply={handleReply}
+              onRefresh={reload}
+              initialBookmarkId={commentBookmarkMap[node.id]}
+              showVersionBadge
+            />
+          ))}
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+        </>
       )}
     </section>
   );

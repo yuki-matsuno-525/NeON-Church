@@ -1,33 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  fetchBookmarks,
+  fetchBookmarkPage,
   removeBookmark,
   createBookmark,
   createChapterBookmark,
   createBookBookmark,
   createCommentBookmark,
   createProjectBookmark,
+  EMPTY_BOOKMARK_COUNTS,
   type Bookmark,
+  type BookmarkType,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { bookLabel, formatBookLocation } from "@/lib/i18n";
-import { useLang } from "@/contexts/LanguageContext";
 import { resolveVersionVerseIds, resolveVersionChapterIds, resolveVersionBookIds } from "@/lib/versions";
-import { passageHref } from "@/lib/passage";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, Button } from "@/components/ui";
+import { SkeletonList, EmptyState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
+import { useLoadMore } from "@/hooks/useLoadMore";
 
 export default function BookmarksPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const t = useT();
-  const { lang } = useLang();
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [fetching, setFetching] = useState(true);
+  // null は「すべて」タブ
+  const [kind, setKind] = useState<BookmarkType | null>(null);
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -36,13 +36,21 @@ export default function BookmarksPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchBookmarks()
-      .then(setBookmarks)
-      .catch(() => setBookmarks([]))
-      .finally(() => setFetching(false));
-  }, [user]);
+  // user が入るまでは取りに行かない。kind を変えると1ページ目から読み直す。
+  const fetchPage = useCallback(
+    (page: number) =>
+      user
+        ? fetchBookmarkPage({ type: kind ?? undefined, page })
+        : Promise.resolve({
+            results: [] as Bookmark[],
+            count: 0,
+            hasMore: false,
+            counts: EMPTY_BOOKMARK_COUNTS,
+          }),
+    [user, kind]
+  );
+  const { items: bookmarks, setItems, counts, loading: fetching, loadingMore, hasMore, loadMore } =
+    useLoadMore(fetchPage);
 
   const handleRemove = async (bm: Bookmark) => {
     await removeBookmark(bm.id);
@@ -72,7 +80,7 @@ export default function BookmarksPage() {
     } else {
       return;
     }
-    setBookmarks((prev) => prev.map((b) => (b.id === bm.id ? newBm : b)));
+    setItems((prev) => prev.map((b) => (b.id === bm.id ? newBm : b)));
     setRemovedIds((prev) => {
       const next = new Set(prev);
       next.delete(bm.id);
@@ -80,34 +88,41 @@ export default function BookmarksPage() {
     });
   };
 
+  // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
+  const chips: FilterChip<BookmarkType>[] = counts
+    ? [
+        { value: null, label: t.filterAll, count: counts.all },
+        ...BOOKMARK_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+          value: type,
+          label: bookmarkKindLabel(type, t),
+          count: counts[type],
+        })),
+      ]
+    : [];
+
+  const heading = (
+    <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
+      {t.bookmarksTitle}
+    </h1>
+  );
+
   if (loading || fetching) {
     return (
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
-          {t.bookmarksTitle}
-        </h1>
+        {heading}
         <SkeletonList count={3} />
       </div>
     );
   }
 
-  const cardBase: React.CSSProperties = {
-    background: "var(--bg-alt)",
-    border: "1px solid var(--border)",
-    borderLeft: "3px solid var(--accent)",
-    borderRadius: 10,
-    padding: "16px",
-  };
-
-  const removedStyle: React.CSSProperties = {
-    opacity: 0.45,
-  };
-
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
-        {t.bookmarksTitle}
-      </h1>
+      {heading}
+
+      {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+      {counts && counts.all > 0 && (
+        <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
+      )}
 
       {bookmarks.length === 0 ? (
         <EmptyState
@@ -120,148 +135,22 @@ export default function BookmarksPage() {
           }
         />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-          {bookmarks.map((bm) => {
-            const isRemoved = removedIds.has(bm.id);
-
-            if (bm.target_type === "comment" && bm.comment_detail) {
-              const cd = bm.comment_detail;
-              // コメント栞も、その節（書・章・節）へ飛べるようにする。ラベルは表示言語の書名で出す。
-              const commentHref = cd.book_slug ? passageHref(cd) : "";
-              const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
-              return (
-                <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
-                  <Link
-                    href={isRemoved || !commentHref ? "#" : commentHref}
-                    onClick={(e) => (isRemoved || !commentHref) && e.preventDefault()}
-                    style={{ display: "block", textDecoration: "none", color: "inherit" }}
-                  >
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: "0 0 6px" }}>
-                      {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                      {cd.body}
-                    </p>
-                  </Link>
-                  <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
-                    {isRemoved ? (
-                      <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>
-                        {t.undo}
-                      </button>
-                    ) : (
-                      <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>
-                        {t.remove}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            }
-
-            // 翻訳プロジェクト栞：プロジェクトのページへ。
-            if (bm.target_type === "project" && bm.project_detail) {
-              const pd = bm.project_detail;
-              return (
-                <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
-                  <Link
-                    href={isRemoved ? "#" : `/translations/${pd.id}`}
-                    onClick={(e) => isRemoved && e.preventDefault()}
-                    style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
-                  >
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-faint)", margin: "0 0 4px" }}>
-                      {t.bookmarkKindProject}
-                    </p>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                      {pd.name}
-                    </p>
-                  </Link>
-                  <div style={{ marginTop: 8 }}>
-                    {isRemoved ? (
-                      <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>{t.undo}</button>
-                    ) : (
-                      <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>{t.remove}</button>
-                    )}
-                  </div>
-                </div>
-              );
-            }
-
-            if (!bm.reference) return null;
-            // 箇所栞（節／章／書）。粒度に応じてラベル・リンク先・種別バッジを変える。
-            const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-            let locationText: string;
-            let href: string;
-            let kindLabel: string;
-            if (bm.reference.verse != null && bm.reference.chapter != null) {
-              locationText = `${label} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
-              href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
-              kindLabel = t.bookmarkKindVerse;
-            } else if (bm.reference.chapter != null) {
-              locationText = `${label} ${t.chapterFmt(bm.reference.chapter)}`;
-              href = `/${bm.reference.book}/${bm.reference.chapter}`;
-              kindLabel = t.bookmarkKindChapter;
-            } else {
-              locationText = label;
-              href = `/${bm.reference.book}?list=1`;
-              kindLabel = t.bookmarkKindBook;
-            }
-
-            return (
-              <div key={bm.id} style={{ ...cardBase, ...(isRemoved ? removedStyle : {}) }}>
-                <Link
-                  href={isRemoved ? "#" : href}
-                  onClick={(e) => isRemoved && e.preventDefault()}
-                  style={{ display: "block", textDecoration: "none", color: "var(--text)" }}
-                >
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-faint)", margin: "0 0 4px" }}>
-                    {kindLabel}
-                  </p>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                    {locationText}
-                  </p>
-                  {bm.verse_text && (
-                    <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
-                      {bm.verse_text}
-                    </p>
-                  )}
-                </Link>
-                <div style={{ marginTop: 8 }}>
-                  {isRemoved ? (
-                    <button onClick={() => handleUndo(bm)} style={undoButtonStyle}>
-                      {t.undo}
-                    </button>
-                  ) : (
-                    <button onClick={() => handleRemove(bm)} style={removeButtonStyle}>
-                      {t.remove}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            {bookmarks.map((bm) => (
+              <BookmarkCard
+                key={bm.id}
+                bookmark={bm}
+                showKind={kind === null}
+                removed={removedIds.has(bm.id)}
+                onRemove={() => handleRemove(bm)}
+                onUndo={() => handleUndo(bm)}
+              />
+            ))}
+          </div>
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+        </>
       )}
     </div>
   );
 }
-
-const removeButtonStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--text-faint)",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-  padding: 0,
-  fontFamily: "inherit",
-};
-
-const undoButtonStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--accent)",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-  padding: 0,
-  fontFamily: "inherit",
-  fontWeight: 700,
-};

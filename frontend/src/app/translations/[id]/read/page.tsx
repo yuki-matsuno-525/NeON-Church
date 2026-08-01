@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
+import { fetchTranslation, fetchTranslationRead, type TranslationProject } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { findSlugByBookName, resolveVersionBookIds } from "@/lib/versions";
@@ -12,7 +12,8 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const t = useT();
   const [project, setProject] = useState<TranslationProject | null>(null);
-  const [units, setUnits] = useState<TranslationUnit[]>([]);
+  // 目次は章番号だけあればよい。以前は全章の本文を取ってから章を数えていた。
+  const [chapterNums, setChapterNums] = useState<number[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,9 +22,9 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     Promise.all([
       fetchTranslation(id),
       fetchTranslationRead(id),
-    ]).then(([proj, u]) => {
+    ]).then(([proj, read]) => {
       setProject(proj);
-      setUnits(u);
+      setChapterNums(read.chapters);
       // 全バージョン表示用：元の書名から slug を逆引きし、各訳の書idを集める。
       const slug = findSlugByBookName(proj.source_book_name);
       if (slug) resolveVersionBookIds(slug).then(setAllVersionBookIds).catch(() => {});
@@ -39,8 +40,6 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       <Link href="/translations" style={{ color: "var(--accent)" }}>{t.backToProjectList}</Link>
     </div>
   );
-
-  const chapterNums = [...new Set(units.map((u) => u.chapter_number))].sort((a, b) => a - b);
 
   return (
     <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>

@@ -65,11 +65,17 @@ def _notify(recipient, actor, notification_type, comment):
 
 class CommentListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/comments/?verse_id=&ordering=new|votes  コメント一覧
+    GET  /api/comments/?verse_id=&ordering=new|votes  コメント一覧（親コメントのみ）
+    GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
     POST /api/comments/                                コメント投稿（要認証）
 
     verse_id / chapter_id / book_id のいずれかが必須。
     指定なしの場合は空リストを返す。
+
+    箇所で絞るときは **親コメントだけ** を返す（返信は parent_id で別に取る）。
+    以前は親も返信も混ぜた1本の列を返し、フロントが親子に組み直していたが、
+    ページで区切ると親と返信が別ページに分かれ、親が見つからない返信が
+    エラーも出さずに画面から消えていた。親と返信を分けて数えることでこれを防ぐ。
     """
 
     serializer_class = CommentSerializer
@@ -102,7 +108,13 @@ class CommentListCreateView(generics.ListCreateAPIView):
                 "user", "translation_project", "canonical_book"
             )
             .prefetch_related("tags")
-            .annotate(vote_count=Count("votes"))
+            .annotate(
+                vote_count=Count("votes", distinct=True),
+                # 「返信 N件」を出すための数。削除済みの返信は数えない。
+                reply_count=Count(
+                    "replies", distinct=True, filter=models.Q(replies__is_deleted=False)
+                ),
+            )
         )
         params = self.request.query_params
 
@@ -126,11 +138,13 @@ class CommentListCreateView(generics.ListCreateAPIView):
                 qs = qs.filter(chapter_number=chapter_number, verse_number__isnull=True)
             else:
                 qs = qs.filter(chapter_number__isnull=True, verse_number__isnull=True)
+            # 箇所で絞るときは親コメントだけ（返信は parent_id で別に取る）
+            qs = qs.filter(parent__isnull=True)
         elif verse_id or chapter_id or book_id:
             loc = _location_from_target(verse_id=verse_id, chapter_id=chapter_id, book_id=book_id)
             if loc is None:
                 return qs.none()
-            qs = qs.filter(**loc)
+            qs = qs.filter(**loc, parent__isnull=True)
         elif parent_id:
             qs = qs.filter(parent_id=parent_id)
         else:

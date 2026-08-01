@@ -1,14 +1,27 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { updateProfile, fetchBookmarks, fetchMyComments, type User, type Bookmark, type MyComment, type BookmarksVisibility, formatRelativeTime } from "@/lib/api";
+import {
+  updateProfile,
+  fetchBookmarkPage,
+  fetchMyCommentPage,
+  EMPTY_BOOKMARK_COUNTS,
+  type User,
+  type Bookmark,
+  type BookmarkType,
+  type MyComment,
+  type BookmarksVisibility,
+  formatRelativeTime,
+} from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { useT, bookLabel, formatBookLocation } from "@/lib/i18n";
+import { useT, formatBookLocation } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
-import { SkeletonList, EmptyState, Button, Toggle } from "@/components/ui";
+import { SkeletonList, EmptyState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
+import { useLoadMore } from "@/hooks/useLoadMore";
 
 type Tab = "bookmarks" | "comments";
 
@@ -22,9 +35,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("bookmarks");
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [myComments, setMyComments] = useState<MyComment[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
+  // お気に入りタブの種類の絞り込み（null は「すべて」）
+  const [kind, setKind] = useState<BookmarkType | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,19 +51,34 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoadingData(true);
-    Promise.all([
-      fetchBookmarks().catch(() => [] as Bookmark[]),
-      fetchMyComments().catch(() => [] as MyComment[]),
-    ]).then(([bms, coms]) => {
-      setBookmarks(bms);
-      setMyComments(coms);
-      setLoadingData(false);
-    });
-  }, [user]);
+  // 一覧は2つとも「もっと見る」で読み足す。user が入るまでは取りに行かない。
+  const fetchBookmarks = useCallback(
+    (page: number) =>
+      user
+        ? fetchBookmarkPage({ type: kind ?? undefined, page })
+        : Promise.resolve({
+            results: [] as Bookmark[],
+            count: 0,
+            hasMore: false,
+            counts: EMPTY_BOOKMARK_COUNTS,
+          }),
+    [user, kind]
+  );
+  const bookmarkList = useLoadMore(fetchBookmarks);
+
+  const fetchComments = useCallback(
+    (page: number) =>
+      user
+        ? fetchMyCommentPage(page)
+        : Promise.resolve({
+            results: [] as MyComment[],
+            count: 0,
+            hasMore: false,
+            counts: undefined,
+          }),
+    [user]
+  );
+  const commentList = useLoadMore(fetchComments);
 
   if (loading) {
     return (
@@ -256,114 +283,106 @@ export default function ProfilePage() {
           onClick={() => setActiveTab("bookmarks")}
           aria-current={activeTab === "bookmarks" ? "page" : undefined}
         >
-          {t.tabBookmarks} ({bookmarks.length})
+          {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
         </button>
         <button
           style={tabStyle("comments")}
           onClick={() => setActiveTab("comments")}
           aria-current={activeTab === "comments" ? "page" : undefined}
         >
-          {t.tabComments} ({myComments.length})
+          {t.tabComments} ({commentList.total})
         </button>
       </div>
 
-      {loadingData ? (
+      {activeTab === "bookmarks" ? (
+        bookmarkList.loading ? (
+          <SkeletonList count={3} />
+        ) : (
+          <BookmarkList
+            bookmarks={bookmarkList.items}
+            counts={bookmarkList.counts}
+            kind={kind}
+            onKindChange={setKind}
+            hasMore={bookmarkList.hasMore}
+            loadingMore={bookmarkList.loadingMore}
+            onLoadMore={bookmarkList.loadMore}
+          />
+        )
+      ) : commentList.loading ? (
         <SkeletonList count={3} />
-      ) : activeTab === "bookmarks" ? (
-        <BookmarkList bookmarks={bookmarks} />
       ) : (
-        <CommentList comments={myComments} />
+        <>
+          <CommentList comments={commentList.items} />
+          <LoadMoreButton
+            hasMore={commentList.hasMore}
+            loading={commentList.loadingMore}
+            onClick={commentList.loadMore}
+          />
+        </>
       )}
     </div>
   );
 }
 
-function BookmarkList({ bookmarks }: { bookmarks: Bookmark[] }) {
+function BookmarkList({
+  bookmarks,
+  counts,
+  kind,
+  onKindChange,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+}: {
+  bookmarks: Bookmark[];
+  counts: Record<BookmarkType | "all", number> | undefined;
+  kind: BookmarkType | null;
+  onKindChange: (kind: BookmarkType | null) => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
+}) {
   const t = useT();
-  const { lang } = useLang();
-  if (bookmarks.length === 0) {
-    return (
-      <EmptyState
-        title={t.noMyBookmarks}
-        description={t.emptyMyBookmarksDesc}
-        action={
-          <Link href="/read" style={{ textDecoration: "none" }}>
-            <Button variant="primary">{t.emptyBookmarksCta}</Button>
-          </Link>
-        }
-      />
-    );
-  }
+
+  // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
+  const chips: FilterChip<BookmarkType>[] = counts
+    ? [
+        { value: null, label: t.filterAll, count: counts.all },
+        ...BOOKMARK_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+          value: type,
+          label: bookmarkKindLabel(type, t),
+          count: counts[type],
+        })),
+      ]
+    : [];
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {bookmarks.map((bm) => {
-        if (bm.target_type === "comment" && bm.comment_detail) {
-          const cd = bm.comment_detail;
-          // コメント栞も、そのコメントが付いた箇所（書・章・節）へ飛べるようにする。
-          const commentPassageHref = passageHref(cd);
-          const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
-          const card = (
-            <>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                {cd.body}
-              </p>
-            </>
-          );
-          return commentPassageHref ? (
-            <Link key={bm.id} href={commentPassageHref} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-              {card}
+    <>
+      {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+      {counts && counts.all > 0 && (
+        <FilterChips chips={chips} value={kind} onChange={onKindChange} ariaLabel={t.filterByKind} />
+      )}
+
+      {bookmarks.length === 0 ? (
+        <EmptyState
+          title={t.noMyBookmarks}
+          description={t.emptyMyBookmarksDesc}
+          action={
+            <Link href="/read" style={{ textDecoration: "none" }}>
+              <Button variant="primary">{t.emptyBookmarksCta}</Button>
             </Link>
-          ) : (
-            <div key={bm.id} style={cardStyle}>{card}</div>
-          );
-        }
-        // 翻訳プロジェクト栞：プロジェクトのページへ。
-        if (bm.target_type === "project" && bm.project_detail) {
-          const pd = bm.project_detail;
-          return (
-            <Link key={bm.id} href={`/translations/${pd.id}`} style={{ textDecoration: "none" }}>
-              <div style={{ ...cardStyle, cursor: "pointer" }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                  {pd.name}
-                </p>
-              </div>
-            </Link>
-          );
-        }
-        if (!bm.reference) return null;
-        // 箇所栞（節／章／書）。粒度に応じてラベルとリンク先を変える。節はその節（#verse-N）まで飛ぶ。
-        const label = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-        let locationText: string;
-        let href: string;
-        if (bm.reference.verse != null && bm.reference.chapter != null) {
-          locationText = `${label} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
-          href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
-        } else if (bm.reference.chapter != null) {
-          locationText = `${label} ${t.chapterFmt(bm.reference.chapter)}`;
-          href = `/${bm.reference.book}/${bm.reference.chapter}`;
-        } else {
-          locationText = label;
-          href = `/${bm.reference.book}?list=1`;
-        }
-        return (
-          <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
-            <div style={{ ...cardStyle, cursor: "pointer" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                {locationText}
-              </p>
-              {bm.verse_text && (
-                <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                  {bm.verse_text}
-                </p>
-              )}
-            </div>
-          </Link>
-        );
-      })}
-    </div>
+          }
+        />
+      ) : (
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {bookmarks.map((bm) => (
+              <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+            ))}
+          </div>
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={onLoadMore} />
+        </>
+      )}
+    </>
   );
 }
 

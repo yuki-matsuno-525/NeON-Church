@@ -6,46 +6,65 @@ from rest_framework.exceptions import ValidationError
 from bible.models import Verse
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from .filters import count_by_type, filter_by_type
 from .models import Bookmark
 from .serializers import BookmarkSerializer
 
 
+def annotate_verse_text(queryset):
+    """一覧表示用に、節栞の本文をサブクエリで引いて付ける。
+
+    節栞は訳非依存の箇所しか持たないので、本文は都度引く必要がある（口語訳を優先し、
+    無ければ任意の訳）。N+1 を避けるため本体クエリに含める。
+    """
+    verse_text_subq = (
+        Verse.objects.filter(
+            chapter__book__canonical_book=OuterRef("canonical_book"),
+            chapter__number=OuterRef("chapter_number"),
+            number=OuterRef("verse_number"),
+        )
+        .order_by(
+            Case(
+                When(chapter__book__translation="口語訳", then=0),
+                default=1,
+                output_field=IntegerField(),
+            )
+        )
+        .values("text")[:1]
+    )
+    return queryset.annotate(verse_text=Subquery(verse_text_subq))
+
+
 class BookmarkListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/bookmarks/  自分のブックマーク一覧（要認証）
-    POST /api/bookmarks/  ブックマーク追加（重複は 409）
+    GET  /api/bookmarks/         自分のブックマーク一覧（要認証）
+    GET  /api/bookmarks/?type=verse  種類で絞り込み（verse/chapter/book/comment/project）
+    POST /api/bookmarks/         ブックマーク追加（重複は 409）
+
+    一覧レスポンスには通常の count/next/results に加えて counts を付ける。
+    counts は絞り込み前の全種類の件数で、画面のタブに出す数字に使う。
     """
 
     serializer_class = BookmarkSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardPageNumberPagination
 
+    def get_base_queryset(self):
+        """絞り込み前の自分の栞。件数集計にも使うので annotate は付けない。"""
+        return Bookmark.objects.filter(user=self.request.user)
+
     def get_queryset(self):
-        # 節栞は訳非依存の箇所しか持たないので、一覧で本文を見せるために表示用の節本文を
-        # サブクエリで引く（口語訳を優先し、無ければ任意の訳）。N+1 を避けるため本体クエリに含める。
-        verse_text_subq = (
-            Verse.objects.filter(
-                chapter__book__canonical_book=OuterRef("canonical_book"),
-                chapter__number=OuterRef("chapter_number"),
-                number=OuterRef("verse_number"),
-            )
-            .order_by(
-                Case(
-                    When(chapter__book__translation="口語訳", then=0),
-                    default=1,
-                    output_field=IntegerField(),
-                )
-            )
-            .values("text")[:1]
+        qs = self.get_base_queryset().select_related(
+            "comment__user", "comment__canonical_book", "canonical_book",
+            "translation_project",
         )
-        return (
-            Bookmark.objects.filter(user=self.request.user)
-            .select_related(
-                "comment__user", "comment__canonical_book", "canonical_book",
-                "translation_project",
-            )
-            .annotate(verse_text=Subquery(verse_text_subq))
-        )
+        qs = filter_by_type(qs, self.request.query_params.get("type"))
+        return annotate_verse_text(qs)
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response.data["counts"] = count_by_type(self.get_base_queryset())
+        return response
 
     def perform_create(self, serializer):
         user = self.request.user
