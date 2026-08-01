@@ -3,14 +3,11 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { fetchVerseOfDay, fetchQAComments, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
 import { BOOKS } from "@/lib/books";
 import { useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
-import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon, type IconName } from "@/components/ui/Icon";
 
 type HomeSection = {
@@ -19,7 +16,6 @@ type HomeSection = {
   icon?: string;
   iconName?: IconName;
   featured?: boolean;
-  requiresAuth?: boolean;
 };
 
 function slugFromBookName(name: string): string {
@@ -29,20 +25,17 @@ function slugFromBookName(name: string): string {
 export default function Home() {
   const t = useT();
   const { lang } = useLang();
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const sections: HomeSection[] = [
     { title: t.read, href: "/read", icon: "/img/icon-read.webp", featured: true },
     { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
     { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
-    { title: t.compilation, href: "/compilations", iconName: "book-open", requiresAuth: true },
+    { title: t.articles, href: "/articles", iconName: "book-open" },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
   const [verseError, setVerseError] = useState(false);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
   const [trending, setTrending] = useState<QAComment[]>([]);
-  const [showCompilationLogin, setShowCompilationLogin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,25 +64,8 @@ export default function Home() {
     ? `/${slug}/${verseOfDay.chapter_number}?translation=${encodeURIComponent(verseOfDay.translation)}#verse-${verseOfDay.number}`
     : "#";
 
-  const openCompilation = () => {
-    if (authLoading) return;
-    if (!user) {
-      setShowCompilationLogin(true);
-      return;
-    }
-    router.push("/compilations");
-  };
-
   return (
     <>
-      {showCompilationLogin && (
-        <LoginRequiredModal
-          onClose={() => setShowCompilationLogin(false)}
-          from="/compilations"
-          title={t.compilationLoginTitle}
-          description={t.compilationLoginDesc}
-        />
-      )}
       {/* 背景（固定・全画面） */}
       <div
         style={{
@@ -366,8 +342,6 @@ export default function Home() {
               icon={s.icon}
               iconName={s.iconName}
               featured={s.featured}
-              onClick={s.requiresAuth ? openCompilation : undefined}
-              disabled={s.requiresAuth && authLoading}
             />
           ))}
         </div>

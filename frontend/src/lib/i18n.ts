@@ -36,7 +36,7 @@ const ja = {
   read: "読む",
   qa: "Q&A",
   translate: "翻訳",
-  compilation: "編纂",
+  articles: "記事",
   bookmarks: "お気に入り",
   notifications: "通知",
   profile: "プロフィール",
@@ -57,8 +57,6 @@ const ja = {
   trending: "トレンド",
   recentQA: "最近のQ&A",
   aboutLink: "NeON Church について",
-  compilationLoginTitle: "ログインして編纂を始める",
-  compilationLoginDesc: "節や本文を集めて自分の書を作るにはログインが必要です。",
 
   // 読む
   readTitle: "聖書を読む",
@@ -488,7 +486,7 @@ const en: typeof ja = {
   read: "Read",
   qa: "Q&A",
   translate: "Translate",
-  compilation: "Compile",
+  articles: "Articles",
   bookmarks: "Bookmarks",
   notifications: "Notifications",
   profile: "Profile",
@@ -508,8 +506,6 @@ const en: typeof ja = {
   trending: "Trending",
   recentQA: "Recent Q&A",
   aboutLink: "About NeON Church",
-  compilationLoginTitle: "Sign in to compile",
-  compilationLoginDesc: "Sign in to gather verses and prose into your own book.",
 
   readTitle: "Read the Bible",
   resumeReading: (bookName: string, chapter: number) => `Resume — ${bookName} Ch.${chapter} ›`,
