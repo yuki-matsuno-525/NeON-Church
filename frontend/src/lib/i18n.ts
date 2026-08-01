@@ -40,6 +40,7 @@ const ja = {
 
   // ナビゲーション
   menuOpen: "メニューを開く",
+  menuClose: "メニューを閉じる",
   read: "読む",
   qa: "Q&A",
   translate: "翻訳",
@@ -93,6 +94,8 @@ const ja = {
   notifReply: "返信",
   notifUpvote: "いいね",
   notifMention: "メンション",
+  unreadMark: "未読",
+  readingNowMark: "読書中",
 
   // Q&A
   qaTitle: "Q&A",
@@ -506,6 +509,7 @@ const en: typeof ja = {
   chapterVerseFmt: (book: string, chapter: number, verse: number) => `${book} ${chapter}:${verse} →`,
 
   menuOpen: "Open menu",
+  menuClose: "Close menu",
   read: "Read",
   qa: "Q&A",
   translate: "Translate",
@@ -554,6 +558,8 @@ const en: typeof ja = {
   notifReply: "Reply",
   notifUpvote: "Like",
   notifMention: "Mention",
+  unreadMark: "Unread",
+  readingNowMark: "Currently reading",
 
   qaTitle: "Q&A",
   askQuestion: "Ask a question",

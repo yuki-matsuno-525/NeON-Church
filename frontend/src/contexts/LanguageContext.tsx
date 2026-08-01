@@ -31,6 +31,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (saved === "en" || saved === "ja") setLangState(saved);
   }, []);
 
+  // ページの言語表示を実際の表示言語に合わせる。
+  // <html lang> は "ja" 固定だったため、英語表示にしても読み上げソフトが
+  // 日本語の発音で読んでしまっていた。
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     localStorage.setItem("lang", l);

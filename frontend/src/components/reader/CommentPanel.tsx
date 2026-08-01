@@ -456,6 +456,7 @@ export function CommentPanel({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchLoadedComments}
+            aria-label={t.searchLoadedComments}
             style={{
               width: "100%",
               padding: "5px 10px",

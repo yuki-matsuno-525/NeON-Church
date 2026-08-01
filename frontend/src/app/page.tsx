@@ -134,7 +134,7 @@ export default function Home() {
           <p
             style={{
               fontSize: 14,
-              color: "rgba(255, 255, 255, 0.45)",
+              color: "var(--text-muted)",
               lineHeight: 1.9,
               margin: 0,
               maxWidth: 480,
@@ -189,7 +189,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.30)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -229,7 +229,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.30)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -488,7 +488,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.32)",
+          color: "var(--text-faint)",
         }}
       >
         <span>{qa.user.username}</span>
@@ -559,7 +559,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.32)",
+          color: "var(--text-faint)",
         }}
       >
         <span>▲ {comment.vote_count}</span>

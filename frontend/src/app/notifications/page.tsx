@@ -208,6 +208,7 @@ function NotificationItem({
   typeLabel: string;
   onActivate: () => void;
 }) {
+  const t = useT();
   const cardStyle: React.CSSProperties = {
     padding: "14px 16px",
     borderRadius: "var(--radius-md)",
@@ -224,7 +225,7 @@ function NotificationItem({
     <>
       {!n.is_read && (
         <span
-          aria-label="未読"
+          aria-label={t.unreadMark}
           style={{
             position: "absolute",
             top: 18,

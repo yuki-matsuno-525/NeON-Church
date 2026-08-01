@@ -283,6 +283,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
                 placeholder={t.replyPlaceholder}
+                aria-label={t.replyPlaceholder}
                 rows={2}
                 style={{
                   width: "100%",

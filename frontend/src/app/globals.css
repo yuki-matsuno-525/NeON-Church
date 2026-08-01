@@ -11,7 +11,10 @@
   --border: rgba(140, 75, 235, 0.30);
   --text: rgba(236, 228, 252, 0.92);
   --text-muted: #a898d8;
-  --text-faint: #7a6aaa;
+  /* 日時・メタ情報など控えめな文字。以前の #7a6aaa は背景に対して 4.28:1 で、
+     本文として読める明るさ（4.5:1）に届いていなかった。4.95:1 まで上げつつ、
+     --text-muted（7.8:1）との差は残して「控えめさ」は保つ。 */
+  --text-faint: #8574b6;
   --accent: #c040f0;
   --accent-text: #fff;
   --accent-tint: rgba(145, 60, 240, 0.18);
@@ -300,6 +303,16 @@ select:focus-visible {
 }
 
 @media (max-width: 768px) {
+  /* iPhone の Safari は、文字が 16px 未満の入力欄をタップすると画面を勝手に拡大する。
+     元の倍率には自動で戻らないので、以降ずっと横にはみ出したまま操作することになる。
+     入力欄はほとんどが 12〜14px 指定なので、スマホでは一律 16px に底上げする。
+     画面ごとの指定（インラインの style）に勝つ必要があるため !important を付けている。 */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
   .hamburger-btn {
     display: flex !important;
   }
@@ -323,7 +336,7 @@ select:focus-visible {
     position: fixed !important;
     top: var(--navbar-height) !important;
     left: calc(-1 * var(--sidebar-width)) !important;
-    height: calc(100vh - var(--navbar-height)) !important;
+    height: calc(100dvh - var(--navbar-height)) !important;
     z-index: 40;
     transition: left var(--duration-base) var(--ease-out);
     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.5);
@@ -338,7 +351,7 @@ select:focus-visible {
   .reader-wrapper.has-verse .reader-main {
     display: block !important;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
-    padding-bottom: 70vh !important;
+    padding-bottom: 70dvh !important;
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed !important;
@@ -346,7 +359,7 @@ select:focus-visible {
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    height: 70vh !important;
+    height: 70dvh !important;
     z-index: 50;
     display: flex !important;
     flex-direction: column !important;

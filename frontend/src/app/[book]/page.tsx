@@ -207,7 +207,7 @@ function BookContent() {
               {ch.number}
               {isCurrent && (
                 <span
-                  aria-label="読書中"
+                  aria-label={t.readingNowMark}
                   style={{
                     position: "absolute",
                     bottom: 3,
