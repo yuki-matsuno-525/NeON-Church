@@ -33,8 +33,15 @@ class NotificationListView(generics.ListAPIView):
         return qs
 
     def get_queryset(self):
+        # 返信の返信からでも元の箇所へ飛ばすため、親を2段まで先読みしておく
+        # （これ以上深いときだけ追加で辿る）。canonical_book も書名の引き当てで使う。
         qs = self.get_base_queryset().select_related(
-            "actor", "comment", "translation_comment"
+            "actor",
+            "comment",
+            "comment__canonical_book",
+            "comment__parent",
+            "comment__parent__parent",
+            "translation_comment",
         )
         # 未知の種類は無視して全件（＝「すべて」タブ）にする。
         target_type = self.request.query_params.get("type")

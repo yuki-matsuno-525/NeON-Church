@@ -91,6 +91,19 @@ class Comment(BaseModel):
     class Meta:
         db_table = "comments"
         ordering = ["-created_at"]
+        indexes = [
+            # 読書画面は「この箇所のコメント」を新しい順に引く。chapter_number /
+            # verse_number は一番よく使う絞り込み列なのに索引が無く、人気のある書ほど
+            # そのコメント全体を走査していた。
+            models.Index(
+                fields=["canonical_book", "chapter_number", "verse_number", "-created_at"],
+                name="comment_location_recent_idx",
+            ),
+            # Q&A 一覧は質問（親なし・is_qa）を新しい順に出す。
+            models.Index(fields=["is_qa", "parent", "-created_at"], name="comment_qa_recent_idx"),
+            # 返信の読み足しは親でぶら下がりを引く。
+            models.Index(fields=["parent", "-created_at"], name="comment_replies_recent_idx"),
+        ]
         constraints = [
             # 段階6E: すべてのコメントは書・章・節のいずれかの粒度を必ず持つ。
             # canonical_book は必須。粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) /

@@ -787,3 +787,39 @@ class TestTopLevelOnlyListing:
         # 返信は親をたどれば必ず取れる
         replies = auth_client.get(COMMENTS_URL, {"parent_id": parents[0]["id"]})
         assert replies.data["count"] == 1
+
+
+# ------------------------------------------------------------------
+# Q&A 一覧の問い合わせ回数
+#
+# 書名の引き当ては Book テーブルへの問い合わせが要るのに、1件のコメントにつき
+# 4回（書名・章・節・ラベル）呼んでいたため、20件のページで約160回になっていた。
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestQAListQueryCount:
+    def test_query_count_does_not_grow_with_questions(
+        self, auth_client, api_client, book, chapter, django_assert_max_num_queries
+    ):
+        for i in range(15):
+            auth_client.post(
+                COMMENTS_URL,
+                {"body": "本文", "is_qa": True, "title": f"質問{i}", "chapter": str(chapter.id)},
+                format="json",
+            )
+
+        with django_assert_max_num_queries(10):
+            res = api_client.get(QA_URL)
+        assert len(res.data["results"]) == 15
+
+    def test_location_is_still_reported(self, auth_client, api_client, book, chapter):
+        # まとめて引くようにしても、返す箇所の情報は変わらない。
+        auth_client.post(
+            COMMENTS_URL,
+            {"body": "本文", "is_qa": True, "title": "箇所つきの質問", "chapter": str(chapter.id)},
+            format="json",
+        )
+        item = api_client.get(QA_URL).data["results"][0]
+        assert item["book_name"] == book.name
+        assert item["chapter_number"] == chapter.number
+        assert item["verse_number"] is None
+        assert item["location_label"] == f"{book.name} {chapter.number}章"
