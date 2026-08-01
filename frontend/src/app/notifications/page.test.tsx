@@ -171,11 +171,13 @@ describe("NotificationsPage", () => {
     await screen.findByText("メンション", { selector: ".badge" });
   });
 
-  it("fetchNotificationPage が失敗してもクラッシュしない", async () => {
+  it("取りに行けなかったときは「通知はありません」ではなくエラーとやり直しを出す", async () => {
     const { fetchNotificationPage } = await import("@/lib/api");
     vi.mocked(fetchNotificationPage).mockRejectedValue(new Error("Network Error"));
     render(<NotificationsPage />);
-    await screen.findByText("通知はありません。");
+    await screen.findByText("読み込めませんでした");
+    expect(screen.queryByText("通知はありません。")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /もう一度試す/ })).toBeInTheDocument();
   });
 
   // ------------------------------------------------------------------

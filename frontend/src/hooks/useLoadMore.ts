@@ -21,6 +21,9 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
   const [loading, setLoading] = useState(true);
   // 2ページ目以降の読み込み（ボタンだけを待ち状態にする）
   const [loadingMore, setLoadingMore] = useState(false);
+  // 取得に失敗したかどうか。「まだ1件も無い」と「取りに行けなかった」は見た目を分ける
+  // 必要がある（以前はどちらも空表示になり、サーバーが落ちていても「ありません」と出ていた）。
+  const [failed, setFailed] = useState(false);
   // reload() のたびに増やして、下の useEffect を1ページ目から走らせ直す。
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -40,12 +43,14 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
         setTotal(res.count);
         setHasMore(res.hasMore);
         setPage(1);
+        setFailed(false);
       })
       .catch(() => {
         if (cancelled) return;
         setItems([]);
         setTotal(0);
         setHasMore(false);
+        setFailed(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -73,5 +78,5 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
     }
   }, [fetchPage, page, hasMore, loadingMore]);
 
-  return { items, setItems, counts, total, loading, loadingMore, hasMore, loadMore, reload };
+  return { items, setItems, counts, total, loading, loadingMore, hasMore, loadMore, reload, failed };
 }

@@ -92,7 +92,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      <h1 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: 26, fontWeight: 700, margin: "0 0 10px", lineHeight: 1.5 }}>
+      <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 700, margin: "0 0 10px", lineHeight: 1.5 }}>
         {article.title}
       </h1>
 

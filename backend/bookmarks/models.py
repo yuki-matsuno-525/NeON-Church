@@ -52,6 +52,14 @@ class Bookmark(BaseModel):
     class Meta:
         db_table = "bookmarks"
         ordering = ["-created_at"]
+        indexes = [
+            # 栞一覧は「自分の栞」を新しい順に出す。読書画面は箇所で絞って引く。
+            models.Index(fields=["user", "-created_at"], name="bookmark_user_recent_idx"),
+            models.Index(
+                fields=["user", "canonical_book", "chapter_number"],
+                name="bookmark_user_location_idx",
+            ),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "comment"],

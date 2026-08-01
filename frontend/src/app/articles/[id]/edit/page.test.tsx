@@ -43,7 +43,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     fetchArticleTags: vi.fn(),
     updateArticle: vi.fn(),
     deleteArticle: vi.fn(),
-    fetchBookmarks: vi.fn().mockResolvedValue([]),
+    fetchVerseBookmarks: vi.fn().mockResolvedValue([]),
     fetchBooks: vi.fn().mockResolvedValue([]),
     fetchChapters: vi.fn().mockResolvedValue([]),
     fetchVerses: vi.fn().mockResolvedValue([]),

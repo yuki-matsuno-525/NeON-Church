@@ -31,14 +31,13 @@ vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    fetchBooks: vi.fn().mockResolvedValue([
-      { id: "book1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
-    ]),
-    fetchChapters: vi.fn().mockResolvedValue([
-      { id: "ch4", book: "book1", number: 4 },
-    ]),
-    fetchVerses: vi.fn().mockResolvedValue([]),
-    fetchBookmarks: vi.fn().mockResolvedValue([]),
+    // 書・章・節は1回でまとめて取る（3往復の直列待ちを解消した）。
+    fetchChapterRead: vi.fn().mockResolvedValue({
+      book: { id: "book1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
+      chapter: { id: "ch4", book: "book1", number: 4 },
+      verses: [],
+    }),
+    fetchChapterBookmarks: vi.fn().mockResolvedValue([]),
   };
 });
 
@@ -86,10 +85,19 @@ describe("ChapterPage - 章ナビゲーション", () => {
     });
   });
 
+  /** 「この書のこの章を開いた」状態を作る。書・章・節は1回でまとめて返ってくる。 */
+  const mockChapterRead = async (book: { id: string; name: string; order: number }, number: number) => {
+    const { fetchChapterRead } = await import("@/lib/api");
+    vi.mocked(fetchChapterRead).mockResolvedValue({
+      book: { ...book, translation: "口語訳" },
+      chapter: { id: `ch${number}`, book: book.id, number },
+      verses: [],
+    });
+  };
+
   it("1章のとき前の章リンクが表示されない", async () => {
     vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "1" });
-    const { fetchChapters } = await import("@/lib/api");
-    vi.mocked(fetchChapters).mockResolvedValue([{ id: "ch1", book: "book1", number: 1 }]);
+    await mockChapterRead({ id: "book1", name: "マタイによる福音書", order: 1 }, 1);
 
     render(<ChapterPage />);
 
@@ -99,8 +107,7 @@ describe("ChapterPage - 章ナビゲーション", () => {
 
   it("最終章（マタイ28章）のとき次の章リンクが表示されない", async () => {
     vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "28" });
-    const { fetchChapters } = await import("@/lib/api");
-    vi.mocked(fetchChapters).mockResolvedValue([{ id: "ch28", book: "book1", number: 28 }]);
+    await mockChapterRead({ id: "book1", name: "マタイによる福音書", order: 1 }, 28);
 
     render(<ChapterPage />);
 
@@ -110,11 +117,7 @@ describe("ChapterPage - 章ナビゲーション", () => {
 
   it("書ごとの最終章が正しく制御される（マルコ16章）", async () => {
     vi.mocked(useParams).mockReturnValue({ book: "mark", chapter: "16" });
-    const { fetchBooks, fetchChapters } = await import("@/lib/api");
-    vi.mocked(fetchBooks).mockResolvedValue([
-      { id: "book2", name: "マルコによる福音書", translation: "口語訳", order: 2 },
-    ]);
-    vi.mocked(fetchChapters).mockResolvedValue([{ id: "ch16", book: "book2", number: 16 }]);
+    await mockChapterRead({ id: "book2", name: "マルコによる福音書", order: 2 }, 16);
 
     render(<ChapterPage />);
 

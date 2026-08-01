@@ -289,6 +289,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
                 placeholder={t.replyPlaceholder}
+                aria-label={t.replyPlaceholder}
                 rows={2}
                 style={{
                   width: "100%",
@@ -345,7 +346,7 @@ const qaCardHeaderStyle: React.CSSProperties = {
 };
 
 const qaTitleStyle: React.CSSProperties = {
-  fontFamily: '"Noto Serif JP", serif',
+  fontFamily: "var(--font-serif)",
   fontSize: "var(--font-size-md)",
   fontWeight: 700,
   lineHeight: 1.45,

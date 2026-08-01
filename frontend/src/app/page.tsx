@@ -67,27 +67,10 @@ export default function Home() {
 
   return (
     <>
-      {/* 背景（固定・全画面） */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          backgroundImage: "url('/img/background.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "center 28%",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1,
-          background: "rgba(6, 3, 20, 0.80)",
-          pointerEvents: "none",
-        }}
-      />
+      {/* 背景は全ページ共通のもの（ClientLayout の .app-background）をそのまま使う。
+          以前はここでもう一枚同じ画像を重ねて描いていたので、画面全体の層が2倍あった。
+          ホームだけ画像の見せる位置を少し下げる。 */}
+      <div className="app-background" style={{ backgroundPosition: "center 28%" }} />
 
       {/* ページコンテンツ */}
       <div
@@ -119,7 +102,7 @@ export default function Home() {
           </p>
           <h1
             style={{
-              fontFamily: '"Noto Serif JP", serif',
+              fontFamily: "var(--font-serif)",
               fontSize: "clamp(30px, 5vw, 52px)",
               fontWeight: 700,
               color: "rgba(255, 255, 255, 0.95)",
@@ -134,7 +117,7 @@ export default function Home() {
           <p
             style={{
               fontSize: 14,
-              color: "rgba(255, 255, 255, 0.45)",
+              color: "var(--text-muted)",
               lineHeight: 1.9,
               margin: 0,
               maxWidth: 480,
@@ -189,7 +172,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.30)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -229,7 +212,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.30)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -302,7 +285,7 @@ export default function Home() {
               <blockquote
                 style={{
                   position: "relative",
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: 15,
                   lineHeight: 2.0,
                   color: "rgba(255, 255, 255, 0.85)",
@@ -360,7 +343,7 @@ export default function Home() {
             >
               <h2
                 style={{
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -390,7 +373,7 @@ export default function Home() {
             >
               <h2
                 style={{
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -490,7 +473,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.32)",
+          color: "var(--text-faint)",
         }}
       >
         <span>{qa.user.username}</span>
@@ -564,7 +547,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.32)",
+          color: "var(--text-faint)",
         }}
       >
         <span>▲ {comment.vote_count}</span>
@@ -683,7 +666,7 @@ function SectionCard({
         )}
         <p
           style={{
-            fontFamily: '"Noto Serif JP", serif',
+            fontFamily: "var(--font-serif)",
             fontSize: 30,
             fontWeight: 700,
             color: "rgba(255, 255, 255, 0.94)",

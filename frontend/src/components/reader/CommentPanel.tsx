@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   createBookmark,
@@ -18,7 +18,7 @@ import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
-import { LoadMoreButton } from "@/components/ui";
+import { LoadMoreButton, useToast } from "@/components/ui";
 
 type Props = {
   verse: Verse;
@@ -50,6 +50,7 @@ export function CommentPanel({
   translationProject,
 }: Props) {
   const t = useT();
+  const toast = useToast();
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
@@ -90,10 +91,15 @@ export function CommentPanel({
 
   // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
   // KJV など別の訳を表示していても「ブックマーク済み」として扱われる（訳跨ぎハイライト）。
-  const bookmarkByLocation = new Map(
-    verseBookmarks
-      .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
-      .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+  // 節を選び直すたびに作り直すと重いので、栞の一覧が変わったときだけ組み直す。
+  const bookmarkByLocation = useMemo(
+    () =>
+      new Map(
+        verseBookmarks
+          .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
+          .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+      ),
+    [verseBookmarks]
   );
   const locationKey = bookSlug ? `${bookSlug}/${chapterNumber}/${verse.number}` : null;
   const existingBookmark = locationKey ? bookmarkByLocation.get(locationKey) : undefined;
@@ -114,6 +120,8 @@ export function CommentPanel({
         const bm = await createBookmark(verse.id);
         onVerseBookmarksChange([...verseBookmarks, bm]);
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setLoadingBookmark(false);
     }
@@ -448,6 +456,7 @@ export function CommentPanel({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchLoadedComments}
+            aria-label={t.searchLoadedComments}
             style={{
               width: "100%",
               padding: "5px 10px",

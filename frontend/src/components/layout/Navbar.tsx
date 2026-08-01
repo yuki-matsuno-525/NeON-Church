@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -10,9 +11,11 @@ import { useT } from "@/lib/i18n";
 
 type NavbarProps = {
   onMenuToggle?: () => void;
+  /** ドロワーが開いているか。ボタンの説明を「開く／閉じる」で言い分けるために使う。 */
+  menuOpen?: boolean;
 };
 
-export function Navbar({ onMenuToggle }: NavbarProps) {
+export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   const { user, loading, logout } = useAuth();
   const { lang, setLang } = useLang();
   const { unreadCount } = useNotifications();
@@ -56,7 +59,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         onClick={onMenuToggle}
-        aria-label={t.menuOpen}
+        aria-label={menuOpen ? t.menuClose : t.menuOpen}
+        aria-expanded={menuOpen}
+        aria-controls="app-sidebar"
         className="hamburger-btn"
         style={{
           background: "transparent",
@@ -79,11 +84,14 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
 
       {/* ロゴ */}
       <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
-        <img
+        {/* 全ページの上部に必ず出るので、最初に描かれるものの1つ。
+            priority を付けて後回しにされないようにする。 */}
+        <Image
           src="/img/logo.webp"
           alt="NeON Church"
           width={172}
           height={44}
+          priority
           style={{
             height: 44,
             width: "auto",
@@ -110,6 +118,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
           name="q"
           className="navbar-search-input"
           placeholder={t.searchPlaceholder}
+          aria-label={t.searchPlaceholder}
           style={{
             width: "100%",
             maxWidth: 280,
@@ -133,6 +142,9 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               setLang(l);
               router.refresh();
             }}
+            // いま選ばれている言語は色と太さでしか示していなかったため、
+            // 読み上げでは2つとも同じボタンに聞こえていた。選択状態を明示する。
+            aria-pressed={lang === l}
             style={{
               background: "transparent",
               border: "none",

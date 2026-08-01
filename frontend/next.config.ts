@@ -30,11 +30,24 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  experimental: {
+    // @/components/ui のような「まとめ口」から1つだけ読み込んでも、
+    // 実際には中身が全部ついてくる。使ったものだけを読むようにする。
+    optimizePackageImports: ["@/components/ui"],
+  },
   async headers() {
     return [
       {
         source: "/:path*",
         headers: SECURITY_HEADERS,
+      },
+      {
+        // 画像やアイコンは中身が変わらない（変えるときはファイル名を変える）。
+        // 毎回取り直さず、ブラウザに1年持たせる。
+        source: "/img/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
       },
     ];
   },

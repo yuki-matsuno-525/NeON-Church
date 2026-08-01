@@ -297,7 +297,7 @@ def test_記事にコメントできる(auth_client, verses):
     listing = auth_client.get(url)
 
     assert posted.status_code == 201
-    assert [comment["body"] for comment in listing.data] == ["参考になった"]
+    assert [comment["body"] for comment in listing.data["results"]] == ["参考になった"]
 
 
 @pytest.mark.django_db
@@ -309,5 +309,5 @@ def test_コメントの削除は本文を隠すだけ(auth_client, verses):
     auth_client.delete(f"/api/article-comments/{comment_id}/")
 
     listing = auth_client.get(url)
-    assert listing.data[0]["is_deleted"] is True
-    assert listing.data[0]["body"] == ""
+    assert listing.data["results"][0]["is_deleted"] is True
+    assert listing.data["results"][0]["body"] == ""

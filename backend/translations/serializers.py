@@ -28,13 +28,24 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "is_in_library", "created_at", "updated_at"]
 
+    # 以下4つは、一覧では views.annotate_project_summary が本体クエリでまとめて求める。
+    # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。
+    # 一覧で annotate が無いと1件あたり4クエリ増えるので、一覧の queryset には必ず付けること。
+
     def get_unit_count(self, obj):
-        return obj.units.count()
+        annotated = getattr(obj, "annotated_unit_count", None)
+        return annotated if annotated is not None else obj.units.count()
 
     def get_done_count(self, obj):
+        annotated = getattr(obj, "annotated_done_count", None)
+        if annotated is not None:
+            return annotated
         return obj.units.filter(status=TranslationUnit.STATUS_DONE).count()
 
     def get_is_member(self, obj):
+        annotated = getattr(obj, "annotated_is_member", None)
+        if annotated is not None:
+            return annotated
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
@@ -45,6 +56,9 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_is_in_library(self, obj):
+        annotated = getattr(obj, "annotated_is_in_library", None)
+        if annotated is not None:
+            return annotated
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False

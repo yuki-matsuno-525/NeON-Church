@@ -151,7 +151,7 @@ export default function TranslationReadChapterPage({
                         style={{
                           lineHeight: 1.9,
                           fontSize: 17,
-                          fontFamily: '"Noto Serif JP", serif',
+                          fontFamily: "var(--font-serif)",
                           whiteSpace: "pre-line",
                         }}
                       >

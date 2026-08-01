@@ -18,7 +18,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveVersionVerseIds, resolveVersionChapterIds, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { SkeletonList, EmptyState, ErrorState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 
@@ -49,7 +49,7 @@ export default function BookmarksPage() {
           }),
     [user, kind]
   );
-  const { items: bookmarks, setItems, counts, loading: fetching, loadingMore, hasMore, loadMore } =
+  const { items: bookmarks, setItems, counts, loading: fetching, loadingMore, hasMore, loadMore, failed, reload } =
     useLoadMore(fetchPage);
 
   const handleRemove = async (bm: Bookmark) => {
@@ -124,7 +124,10 @@ export default function BookmarksPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {bookmarks.length === 0 ? (
+      {/* 取りに行けなかったときは「1件も無い」と言わない。理由と、やり直す手段を出す。 */}
+      {failed ? (
+        <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={reload} />
+      ) : bookmarks.length === 0 ? (
         <EmptyState
           title={t.noBookmarks}
           description={t.emptyBookmarksDesc}

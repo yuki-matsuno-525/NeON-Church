@@ -177,7 +177,7 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
 
 function headingStyle(fontSize: number) {
   return {
-    fontFamily: '"Noto Serif JP", serif',
+    fontFamily: "var(--font-serif)",
     fontSize,
     fontWeight: 700,
     margin: "28px 0 12px",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { BOOKS, GENRE_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const NAV_HREFS = [
   { href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
@@ -22,6 +23,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
+  const isMobile = useIsMobile();
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -48,6 +50,17 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     { label: t.articles, ...NAV_HREFS[3] },
   ];
 
+  // スマホでドロワーを開いているときは Escape で閉じられるようにする
+  // （被せて開くものは、閉じ方が1つしか無いと行き止まりになる）。
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   const handleLogout = async () => {
     onClose?.();
     await logout();
@@ -72,7 +85,12 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
+        id="app-sidebar"
         className={`sidebar${open ? " sidebar-open" : ""}`}
+        // スマホで閉じているとき、ドロワーは画面の外にあるだけでタブ順には残っていた。
+        // キーボードで進むと見えないリンクにフォーカスが飛んでしまうので、閉じている間は
+        // 中身ごと触れなくする（パソコンでは常に表示されているのでそのまま）。
+        inert={isMobile && !open}
         style={{
           width: "var(--sidebar-width)",
           minWidth: "var(--sidebar-width)",

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { CommentItem } from "./CommentItem";
 import type { Comment } from "@/lib/api";
 
@@ -86,12 +86,31 @@ describe("CommentItem", () => {
     expect(screen.queryByTestId("delete-comment")).not.toBeInTheDocument();
   });
 
-  it("削除ボタン押下でonRefreshが呼ばれる", async () => {
+  it("削除は確認してから消す", async () => {
+    // 削除は取り消せないので、押しただけでは消さず一度確認する。
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" } });
     const onRefresh = vi.fn();
     render(<CommentItem comment={makeComment()} onRefresh={onRefresh} />);
+
     fireEvent.click(screen.getByTestId("delete-comment"));
+    expect(onRefresh).not.toHaveBeenCalled();
+
+    // 「削除」は一覧側のボタンと確認ダイアログの実行ボタンの2つあるので、ダイアログ内から選ぶ。
+    const dialog = await screen.findByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "削除" }));
     await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+  });
+
+  it("確認をやめれば消さない", async () => {
+    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" } });
+    const onRefresh = vi.fn();
+    render(<CommentItem comment={makeComment()} onRefresh={onRefresh} />);
+
+    fireEvent.click(screen.getByTestId("delete-comment"));
+    fireEvent.click(await screen.findByRole("button", { name: "キャンセル" }));
+
+    expect(screen.queryByText("このコメントを削除しますか？")).not.toBeInTheDocument();
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it("未ログインのとき投票ボタンがdisabled", () => {

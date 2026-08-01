@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useRelativeTime, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-import { SkeletonList, EmptyState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { SkeletonList, EmptyState, ErrorState, FilterChips, LoadMoreButton, useToast, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
   notificationContextLabel,
@@ -70,17 +70,32 @@ export default function NotificationsPage() {
     loadingMore,
     hasMore,
     loadMore,
+    failed,
+    reload,
   } = useLoadMore(fetchPage);
+  const toast = useToast();
 
+  // 既読にできなかったときに画面だけ既読の見た目になると、未読の数字とも食い違う。
+  // 失敗したら知らせて、表示は変えない。
   const handleMarkAll = async () => {
-    await markAllNotificationsRead();
+    try {
+      await markAllNotificationsRead();
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+      return;
+    }
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     clearUnread();
   };
 
   const handleMarkOne = async (n: Notification) => {
     if (n.is_read) return;
-    await markNotificationRead(n.id);
+    try {
+      await markNotificationRead(n.id);
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+      return;
+    }
     setNotifications((prev) =>
       prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x))
     );
@@ -144,7 +159,10 @@ export default function NotificationsPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {notifications.length === 0 ? (
+      {/* 取りに行けなかったときは「1件も無い」と言わない。理由と、やり直す手段を出す。 */}
+      {failed ? (
+        <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={reload} />
+      ) : notifications.length === 0 ? (
         <EmptyState
           title={t.noNotifications}
           description={t.emptyNotificationsDesc}

@@ -111,3 +111,105 @@ def test_query_count_independent_of_translations(api, django_assert_num_queries)
     _add_verse(b_grc, 3, 16)
     with django_assert_num_queries(2):
         api.get("/api/references/matthew/verses/3/16/")
+
+
+# ------------------------------------------------------------------
+# 読書画面用のまとめ取得
+#
+# 以前は books → chapters → verses と3回、しかも順番待ちで叩いていた。
+# 1回で書・章・節が揃うこと、見つからない理由を言い分けられることを検証する。
+# ------------------------------------------------------------------
+def test_read_returns_book_chapter_and_verses_in_one_call(api):
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/3/", {"translation": "口語訳"})
+
+    assert res.status_code == 200
+    data = res.json()
+    assert data["reference"] == {"book": "matthew", "chapter": 3}
+    assert data["book"]["translation"] == "口語訳"
+    assert data["book"]["name"] == "マタイによる福音書"
+    assert data["chapter"]["number"] == 3
+    assert [v["number"] for v in data["verses"]] == [16]
+
+
+def test_read_picks_the_requested_translation(api):
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/3/", {"translation": "KJV"})
+
+    assert res.status_code == 200
+    assert res.json()["book"]["name"] == "Matthew"
+
+
+def test_read_without_translation_falls_back_to_any_version(api):
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/3/")
+
+    assert res.status_code == 200
+    assert res.json()["book"]["translation"] in _SORTED_TRANSLATIONS
+
+
+def test_read_unknown_slug_is_404(api):
+    _make_matthew()
+    assert api.get("/api/references/nosuchbook/read/3/").status_code == 404
+
+
+def test_read_missing_translation_says_book_not_found(api):
+    # 「その訳にこの書が無い」と「その章が無い」を画面が言い分けられるよう code を返す。
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/3/", {"translation": "存在しない訳"})
+
+    assert res.status_code == 404
+    assert res.json()["code"] == "book_not_found"
+
+
+def test_read_missing_chapter_says_chapter_not_found(api):
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/99/", {"translation": "口語訳"})
+
+    assert res.status_code == 404
+    assert res.json()["code"] == "chapter_not_found"
+
+
+def test_book_read_returns_book_and_all_chapters(api):
+    books = _make_matthew()
+    ja = books[0]
+    _add_verse(ja, 4, 1)  # 章をもう1つ増やす
+
+    res = api.get("/api/references/matthew/book/", {"translation": "口語訳"})
+
+    assert res.status_code == 200
+    data = res.json()
+    assert data["book"]["name"] == "マタイによる福音書"
+    assert sorted(c["number"] for c in data["chapters"]) == [3, 4]
+
+
+def test_book_read_missing_translation_is_404(api):
+    _make_matthew()
+    res = api.get("/api/references/matthew/book/", {"translation": "存在しない訳"})
+
+    assert res.status_code == 404
+    assert res.json()["code"] == "book_not_found"
+
+
+# ------------------------------------------------------------------
+# 本文まわりのキャッシュ指示
+#
+# 聖書本文は取り込み済みで基本的に変わらないのに、開くたび DB から作り直していた。
+# ブラウザに持たせてよいことを伝える（ログイン状態で内容は変わらない）。
+# ------------------------------------------------------------------
+def test_scripture_endpoints_are_cacheable(api):
+    books = _make_matthew()
+    ja = books[0]
+    chapter = ja.chapters.first()
+
+    for url in (
+        "/api/books/",
+        f"/api/books/{ja.id}/chapters/",
+        f"/api/chapters/{chapter.id}/verses/",
+        "/api/references/matthew/books/",
+        "/api/references/matthew/read/3/",
+    ):
+        res = api.get(url)
+        assert res.status_code == 200, url
+        assert "max-age" in res["Cache-Control"], url
+        assert res["Cache-Control"].startswith("public"), url

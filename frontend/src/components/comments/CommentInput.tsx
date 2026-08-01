@@ -115,6 +115,7 @@ export function CommentInput({
           value={qaTitle}
           onChange={(e) => setQaTitle(e.target.value)}
           placeholder={t.qaTitleInputPlaceholder}
+          aria-label={t.qaTitleInputPlaceholder}
           style={{
             width: "100%",
             padding: "8px 10px",
@@ -135,6 +136,7 @@ export function CommentInput({
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={effectivePlaceholder}
+        aria-label={effectivePlaceholder}
         rows={3}
         style={{
           width: "100%",

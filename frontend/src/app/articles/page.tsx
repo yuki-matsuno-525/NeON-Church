@@ -206,7 +206,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
           </span>
         </div>
 
-        <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
           {article.title}
         </h3>
 

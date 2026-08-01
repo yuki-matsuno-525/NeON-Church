@@ -38,20 +38,40 @@ def _clean_body(value: str | None) -> str:
 # 位置情報ヘルパー
 # ---------------------------------------------------------------------------
 
-def _get_location_parts(obj: Comment) -> tuple[str, int | None, int | None]:
+def book_name_cache(serializer) -> dict:
+    """書名の引き当て結果を1リクエストのあいだ使い回すための入れ物。
+
+    DRF の context は、一覧を1回シリアライズするあいだ同じものが共有される。
+    そこに結果を貯めることで、同じ (書, 訳) の組を何度も DB に聞かずに済む。
+    """
+    return serializer.context.setdefault("_book_name_cache", {})
+
+
+def _get_location_parts(obj: Comment, cache: dict | None = None) -> tuple[str, int | None, int | None]:
     """コメントの書名・章番号・節番号を返す。
 
     段階6F: 箇所は訳非依存の canonical_book / chapter_number / verse_number から取る。
     書名は投稿時訳（source_translation）に一致する Book 名で解決する（無ければ同一 canonical の
     いずれかの版名、それも無ければ slug）。返り値: (book_name, chapter_number, verse_number)
+
+    書名の引き当ては Book テーブルへの問い合わせが要るうえ、1件のコメントにつき
+    4回（書名・章・節・ラベル）呼ばれる作りになっている。20件のページで約160回になるため、
+    `cache`（book_name_cache が返す辞書）を渡して同じ組を使い回す。
     """
     if not obj.canonical_book_id:
         return "", None, None
+
+    key = (obj.canonical_book_id, obj.source_translation)
+    if cache is not None and key in cache:
+        return cache[key], obj.chapter_number, obj.verse_number
+
     book = (
         Book.objects.filter(canonical_book_id=obj.canonical_book_id, translation=obj.source_translation).first()
         or Book.objects.filter(canonical_book_id=obj.canonical_book_id).first()
     )
     name = book.name if book else (obj.canonical_book.slug if obj.canonical_book else "")
+    if cache is not None:
+        cache[key] = name
     return name, obj.chapter_number, obj.verse_number
 
 
@@ -258,7 +278,7 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return getattr(obj, "vote_count", 0)
 
     def get_location_label(self, obj) -> str:
-        book, chapter, verse = _get_location_parts(obj)
+        book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
 
     def get_book_slug(self, obj) -> str:
@@ -301,19 +321,19 @@ class QACommentSerializer(serializers.ModelSerializer):
         return obj.replies.filter(is_deleted=False).count()
 
     def get_book_name(self, obj) -> str:
-        book, _, _ = _get_location_parts(obj)
+        book, _, _ = _get_location_parts(obj, book_name_cache(self))
         return book
 
     def get_chapter_number(self, obj) -> int | None:
-        _, chapter, _ = _get_location_parts(obj)
+        _, chapter, _ = _get_location_parts(obj, book_name_cache(self))
         return chapter
 
     def get_verse_number(self, obj) -> int | None:
-        _, _, verse = _get_location_parts(obj)
+        _, _, verse = _get_location_parts(obj, book_name_cache(self))
         return verse
 
     def get_location_label(self, obj) -> str:
-        book, chapter, verse = _get_location_parts(obj)
+        book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
 
 
@@ -326,7 +346,7 @@ class CommentSearchSerializer(serializers.ModelSerializer):
         fields = ["id", "body", "username", "created_at", "location"]
 
     def get_location(self, obj) -> str:
-        book, chapter, verse = _get_location_parts(obj)
+        book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         # 検索結果では章節を「1章1節」（スペースなし）で表示する
         if verse is not None:
             return f"{book} {chapter}章{verse}節"

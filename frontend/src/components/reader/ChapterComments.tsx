@@ -140,6 +140,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchComments}
+          aria-label={t.searchComments}
           style={{
             width: "100%",
             padding: "6px 12px",

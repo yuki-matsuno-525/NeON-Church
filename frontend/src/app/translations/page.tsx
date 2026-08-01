@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { SkeletonList } from "@/components/ui";
@@ -30,6 +31,8 @@ export default function TranslationsPage() {
   // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
   const [projectSearch, setProjectSearch] = useState("");
+  // 検索欄は手が止まってから投げる（1文字ごとに3列ぶんのリクエストが飛ぶのを防ぐ）。
+  const debouncedSearch = useDebouncedValue(projectSearch);
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -131,7 +134,7 @@ export default function TranslationsPage() {
               tint={col.tint}
               label={columnLabel(col.key)}
               desc={columnDesc(col.key)}
-              search={projectSearch}
+              search={debouncedSearch}
             />
           </div>
         ))}
@@ -248,7 +251,7 @@ function ProjectCard({
           </span>
         </div>
 
-        <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
 
         {p.description && (
           <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>

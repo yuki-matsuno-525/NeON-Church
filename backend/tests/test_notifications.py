@@ -295,3 +295,55 @@ class TestNotificationTypeFilter:
     def test_counts_exclude_other_users(self, other_auth_client, mixed_notifications):
         res = other_auth_client.get(NOTIFICATIONS_URL)
         assert res.data["counts"]["all"] == 0
+
+
+# ------------------------------------------------------------------
+# 一覧の問い合わせ回数
+#
+# 通知は「返信の返信」でも元の箇所へ飛ばすため、スレッドの根まで親をたどる。
+# これを1件につき5か所（種別・書名・章・節・Q&Aか）から呼んでいたため、
+# 20件のページで100〜200回の問い合わせになっていた。
+# ------------------------------------------------------------------
+@pytest.fixture
+def nested_reply_notifications(db, auth_client, comment, verse):
+    """深さ2の返信スレッドを作り、その返信への通知を10件ぶら下げる。"""
+    from django.contrib.auth import get_user_model
+    from notifications.models import Notification
+    from tests.factories import make_comment
+
+    User = get_user_model()
+    recipient = User.objects.get(username="testuser")
+    actor = User.objects.create_user(username="deep_actor", password="pass12345")
+
+    from comments.models import Comment
+
+    parent = Comment.objects.get(pk=comment["id"])
+    for i in range(10):
+        child = make_comment(user=actor, verse=verse, body=f"返信{i}", parent=parent)
+        grandchild = make_comment(user=actor, verse=verse, body=f"返信の返信{i}", parent=child)
+        Notification.objects.create(
+            recipient=recipient,
+            actor=actor,
+            notification_type=Notification.REPLY,
+            comment=grandchild,
+        )
+
+
+@pytest.mark.django_db
+class TestNotificationListQueryCount:
+    def test_query_count_does_not_grow_with_notifications(
+        self, auth_client, nested_reply_notifications, django_assert_max_num_queries
+    ):
+        with django_assert_max_num_queries(12):
+            res = auth_client.get(NOTIFICATIONS_URL)
+        assert res.data["count"] == 10
+
+    def test_nested_reply_still_points_at_the_original_passage(
+        self, auth_client, nested_reply_notifications, verse
+    ):
+        # まとめて引くようにしても、飛び先（書名・章・節）は変わらない。
+        item = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
+        assert item["target_kind"] == "verse_comment"
+        assert item["book_name"] == verse.chapter.book.name
+        assert item["chapter_number"] == verse.chapter.number
+        assert item["verse_number"] == verse.number
