@@ -173,15 +173,22 @@ class ArticleCommentListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/articles/{id}/comments/   記事へのコメント（記事全体に対してのみ付く）
     POST /api/articles/{id}/comments/   コメントする（要認証）
+
+    コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
     """
 
     serializer_class = ArticleCommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    pagination_class = None
+    pagination_class = StandardPageNumberPagination
 
     def get_article(self):
-        article = get_object_or_404(_visible_articles(self.request.user), pk=self.kwargs["pk"])
-        return article
+        # get_queryset と get_serializer_context の両方から呼ばれるので、
+        # 1リクエストにつき1回だけ引く（そのままだと同じ問い合わせが2回走る）。
+        if not hasattr(self, "_article"):
+            self._article = get_object_or_404(
+                _visible_articles(self.request.user), pk=self.kwargs["pk"]
+            )
+        return self._article
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

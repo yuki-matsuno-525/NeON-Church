@@ -647,7 +647,8 @@ export function joinTranslation(id: string): Promise<TranslationMembership> {
 }
 
 export function fetchTranslationMembers(id: string): Promise<TranslationMembership[]> {
-  return apiFetch(`/translations/${id}/members/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll(`/translations/${id}/members/`);
 }
 
 export function updateMembershipStatus(projectId: string, membershipId: string, status: "approved" | "rejected"): Promise<TranslationMembership> {
@@ -727,11 +728,13 @@ export function assignTranslationUnit(projectId: string, unitId: string, userId:
 }
 
 export function fetchTranslationComments(projectId: string): Promise<TranslationComment[]> {
-  return apiFetch(`/translations/${projectId}/comments/`);
+  return apiFetchAll(`/translations/${projectId}/comments/`);
 }
 
 export function fetchUnitComments(projectId: string, unitId: string): Promise<TranslationComment[]> {
-  return apiFetch(`/translations/${projectId}/units/${unitId}/comments/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る
+  // （1ユニットの議論なので件数は少ないが、1回のリクエストで無制限に返させない）。
+  return apiFetchAll(`/translations/${projectId}/units/${unitId}/comments/`);
 }
 
 export function postTranslationComment(projectId: string, body: string): Promise<TranslationComment> {
@@ -770,7 +773,8 @@ export function fetchTranslationRead(
 
 // 自分が /read に追加した公開翻訳一覧（本棚）
 export function fetchTranslationLibrary(): Promise<TranslationProject[]> {
-  return apiFetch("/translations/library/");
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll("/translations/library/");
 }
 
 export function addTranslationToLibrary(id: string): Promise<TranslationProject> {
@@ -873,7 +877,8 @@ export function fetchArticlesCitingVerse(params: {
 }
 
 export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {
-  return apiFetchList(`/articles/${articleId}/comments/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll(`/articles/${articleId}/comments/`);
 }
 
 export function createArticleComment(

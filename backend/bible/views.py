@@ -53,7 +53,25 @@ def _min_query_len(q: str) -> int:
     return 2
 
 
-class BookListView(generics.ListAPIView):
+# 聖書本文はインポート済みで基本的に変わらないのに、開くたび DB から作り直していた。
+# ブラウザと中間キャッシュに持たせておく時間（1時間）。訳を足したときは最大1時間で反映される。
+_SCRIPTURE_CACHE_SECONDS = 60 * 60
+
+
+class _CacheableScriptureView:
+    """本文系の読み取り専用ビューに Cache-Control を付けるための共通処理。
+
+    ログイン状態で内容が変わらないもの（誰が見ても同じ本文）にだけ使う。
+    """
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if request.method == "GET" and response.status_code == 200:
+            response["Cache-Control"] = f"public, max-age={_SCRIPTURE_CACHE_SECONDS}"
+        return response
+
+
+class BookListView(_CacheableScriptureView, generics.ListAPIView):
     """書一覧。認証不要。?translation=和訳 でフィルタ可能。"""
 
     permission_classes = [AllowAny]
@@ -68,7 +86,7 @@ class BookListView(generics.ListAPIView):
         return qs
 
 
-class ChapterListView(generics.ListAPIView):
+class ChapterListView(_CacheableScriptureView, generics.ListAPIView):
     """指定した書の章一覧。書が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
@@ -81,7 +99,7 @@ class ChapterListView(generics.ListAPIView):
         return Chapter.objects.filter(book=book)
 
 
-class VerseListView(generics.ListAPIView):
+class VerseListView(_CacheableScriptureView, generics.ListAPIView):
     """指定した章の節一覧。章が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
@@ -93,7 +111,7 @@ class VerseListView(generics.ListAPIView):
         return Verse.objects.filter(chapter=chapter)
 
 
-class _ReferenceView(APIView):
+class _ReferenceView(_CacheableScriptureView, APIView):
     """箇所（canonical_book.slug）から、各版（訳）の書/章/節をまとめて返す基底。
 
     フロントの N+1（訳ごとに書→章→節を取得）を1回の問い合わせに置き換えるための API。

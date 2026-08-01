@@ -110,6 +110,34 @@ DATABASES = {
 }
 
 # ------------------------------------------------------------------
+# キャッシュ
+#
+# 「今日の聖句」など、計算し直す必要のない結果を置く場所。設定を書いていなかったため
+# Django の既定（プロセス内・300件まで・再起動で消える）に黙って落ちていた。
+# ワーカーごとに別々のキャッシュを持つので当たりも悪い。まずは意図を明示し、
+# 件数の上限を実態に合わせて上げておく。
+#
+# REDIS_URL を設定するとワーカー間で共有される Redis に切り替わる。
+# その場合は requirements.txt に `redis` を足すこと（未導入のまま設定すると起動時に落ちる）。
+# ------------------------------------------------------------------
+_redis_url = config("REDIS_URL", default="")
+if _redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _redis_url,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "neon-church",
+            "OPTIONS": {"MAX_ENTRIES": 5000},
+        }
+    }
+
+# ------------------------------------------------------------------
 # パスワードバリデーション
 # ------------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [

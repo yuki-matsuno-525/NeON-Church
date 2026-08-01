@@ -189,3 +189,27 @@ def test_book_read_missing_translation_is_404(api):
 
     assert res.status_code == 404
     assert res.json()["code"] == "book_not_found"
+
+
+# ------------------------------------------------------------------
+# 本文まわりのキャッシュ指示
+#
+# 聖書本文は取り込み済みで基本的に変わらないのに、開くたび DB から作り直していた。
+# ブラウザに持たせてよいことを伝える（ログイン状態で内容は変わらない）。
+# ------------------------------------------------------------------
+def test_scripture_endpoints_are_cacheable(api):
+    books = _make_matthew()
+    ja = books[0]
+    chapter = ja.chapters.first()
+
+    for url in (
+        "/api/books/",
+        f"/api/books/{ja.id}/chapters/",
+        f"/api/chapters/{chapter.id}/verses/",
+        "/api/references/matthew/books/",
+        "/api/references/matthew/read/3/",
+    ):
+        res = api.get(url)
+        assert res.status_code == 200, url
+        assert "max-age" in res["Cache-Control"], url
+        assert res["Cache-Control"].startswith("public"), url
