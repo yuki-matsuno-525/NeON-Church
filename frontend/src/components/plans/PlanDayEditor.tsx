@@ -1,0 +1,212 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import { updatePlanDay, type PlanDay } from "@/lib/api";
+import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
+import { MAX_READINGS_PER_DAY } from "@/lib/plans";
+import { useT } from "@/lib/i18n";
+import { ChapterPicker, type PickedChapter } from "./ChapterPicker";
+import { readingLabel } from "./ReadingChips";
+
+/**
+ * プランの1日ぶんを編集する。
+ *
+ * 読み始めた人がいても、日の中身（題・章・文章）は直せる。読んだ記録は「第N日」に
+ * 紐づいているので、中身が変わっても記録は壊れないため。
+ */
+export function PlanDayEditor({
+  planId,
+  day,
+  canDelete,
+  canMoveUp,
+  canMoveDown,
+  onDelete,
+  onMove,
+}: {
+  planId: string;
+  day: PlanDay;
+  canDelete: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onDelete: () => void;
+  onMove: (direction: -1 | 1) => void;
+}) {
+  const [title, setTitle] = useState(day.title);
+  const [devotional, setDevotional] = useState(day.devotional);
+  const [readings, setReadings] = useState(
+    day.readings.map((reading) => ({
+      book: reading.book,
+      book_name: reading.book_name,
+      chapter_number: reading.chapter_number,
+      translation: reading.translation,
+    })),
+  );
+  const [picking, setPicking] = useState(false);
+  const t = useT();
+
+  const draft = useMemo(
+    () => ({
+      title,
+      devotional,
+      readings: readings.map(({ book, chapter_number, translation }) => ({
+        book,
+        chapter_number,
+        translation,
+      })),
+    }),
+    [title, devotional, readings],
+  );
+
+  const handleSave = useCallback(
+    async (value: typeof draft) => {
+      const saved = await updatePlanDay(planId, day.id, value);
+      // 書名はサーバー側で訳に合わせて決まるので、保存の返事で入れ直す。
+      setReadings(
+        saved.readings.map((reading) => ({
+          book: reading.book,
+          book_name: reading.book_name,
+          chapter_number: reading.chapter_number,
+          translation: reading.translation,
+        })),
+      );
+    },
+    [planId, day.id],
+  );
+
+  const status = useAutosave({ value: draft, onSave: handleSave });
+
+  const addChapter = (picked: PickedChapter) => {
+    setPicking(false);
+    if (readings.length >= MAX_READINGS_PER_DAY) return;
+    setReadings((current) => [...current, { ...picked, book_name: picked.book }]);
+  };
+
+  return (
+    <section className="card-glow" style={{ padding: "16px 18px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>第{day.number}日</span>
+        <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{saveStatusLabel(status, t)}</span>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          {canMoveUp && (
+            <button type="button" onClick={() => onMove(-1)} aria-label="上へ" style={iconButtonStyle}>
+              ↑
+            </button>
+          )}
+          {canMoveDown && (
+            <button type="button" onClick={() => onMove(1)} aria-label="下へ" style={iconButtonStyle}>
+              ↓
+            </button>
+          )}
+          {canDelete && (
+            <button type="button" onClick={onDelete} style={iconButtonStyle}>
+              削除
+            </button>
+          )}
+        </div>
+      </div>
+
+      <input
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder="この日の題（任意）"
+        style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
+      />
+
+      {/* 読む章 */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+        {readings.map((reading, index) => (
+          <span
+            key={`${reading.book}-${reading.chapter_number}-${index}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "4px 8px 4px 12px",
+              fontSize: 13,
+            }}
+          >
+            {reading.book_name ? readingLabel(reading as never) : `${reading.book} ${reading.chapter_number}章`}
+            {reading.translation && (
+              <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
+            )}
+            <button
+              type="button"
+              aria-label="この章を外す"
+              onClick={() => setReadings((current) => current.filter((_, i) => i !== index))}
+              style={{
+                border: "none",
+                background: "none",
+                color: "var(--text-faint)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 14,
+                padding: "4px 6px",
+                minHeight: 32,
+              }}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        {readings.length < MAX_READINGS_PER_DAY && !picking && (
+          <button type="button" onClick={() => setPicking(true)} style={addChapterStyle}>
+            ＋ 章を足す
+          </button>
+        )}
+        {readings.length >= MAX_READINGS_PER_DAY && (
+          <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
+            1日は{MAX_READINGS_PER_DAY}章までです
+          </span>
+        )}
+      </div>
+
+      {picking && <ChapterPicker onPick={addChapter} onCancel={() => setPicking(false)} />}
+
+      <textarea
+        value={devotional}
+        onChange={(event) => setDevotional(event.target.value)}
+        rows={4}
+        placeholder="この日に添える文章（任意）"
+        style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
+      />
+    </section>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "1px solid var(--border)",
+  background: "var(--bg)",
+  color: "var(--text)",
+  fontFamily: "inherit",
+  fontSize: 14,
+};
+
+const iconButtonStyle: React.CSSProperties = {
+  border: "1px solid var(--border)",
+  borderRadius: 6,
+  background: "transparent",
+  color: "var(--text-muted)",
+  fontSize: 12,
+  padding: "6px 10px",
+  minHeight: 32,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const addChapterStyle: React.CSSProperties = {
+  border: "1px dashed var(--border)",
+  borderRadius: 8,
+  background: "transparent",
+  color: "var(--text-muted)",
+  fontSize: 13,
+  padding: "6px 12px",
+  minHeight: 36,
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
