@@ -34,7 +34,8 @@ def _visible_articles(user):
 class ArticleListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/articles/        記事一覧。既定は公開記事のみ。
-                               ?mine=true で自分の記事（下書き含む）、?tag=<slug> で主題で絞る。
+                               ?mine=true で自分の記事（下書き含む）、?tag=<slug> で主題、
+                               ?author=<ユーザー名> で書いた人で絞る。
     POST /api/articles/        記事を作る（要認証）
     """
 
@@ -55,6 +56,11 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         tag_slug = self.request.query_params.get("tag")
         if tag_slug:
             queryset = queryset.filter(tags__slug=tag_slug)
+
+        # プロフィールの記事タブで使う。公開記事だけが対象なので、下書きは漏れない。
+        author = self.request.query_params.get("author")
+        if author:
+            queryset = queryset.filter(owner__username=author)
 
         return queryset.select_related("owner").prefetch_related("tags").distinct()
 

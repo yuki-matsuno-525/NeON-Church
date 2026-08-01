@@ -222,6 +222,17 @@ def test_タグは3つまで(auth_client, verses):
 
 
 @pytest.mark.django_db
+def test_書いた人で絞り込める(auth_client, api_client, verses):
+    _create_article(auth_client)
+    _create_article(auth_client, visibility="private", summary="")
+
+    response = api_client.get(ARTICLES_URL, {"author": "testuser"})
+
+    # 下書きは混ざらない
+    assert len(response.data["results"]) == 1
+
+
+@pytest.mark.django_db
 def test_タグで絞り込める(auth_client, verses):
     fasting = ArticleTag.objects.get(slug="fasting")
     _create_article(auth_client, tag_ids=[str(fasting.id)])

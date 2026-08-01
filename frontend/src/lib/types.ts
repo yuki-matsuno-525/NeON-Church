@@ -238,3 +238,57 @@ export type PublicUser = {
   bookmarks_visibility: BookmarksVisibility;
   created_at: string;
 };
+
+// ---------------------------------------------------------------------------
+// 記事
+// ---------------------------------------------------------------------------
+
+export type ArticleVisibility = "private" | "unlisted" | "public";
+
+export type ArticleTag = {
+  id: string;
+  name: string;
+  slug: string;
+  article_count?: number;
+};
+
+/**
+ * 本文の印（[[matthew 6:16]] など）を、画面に出せる形へ解決したもの。
+ * raw は本文に書かれている印そのもので、これを目印に本文を置き換える。
+ */
+export type ArticleCitation = {
+  raw: string;
+  kind: "inline" | "block";
+  found: boolean;
+  label: string;
+  book_slug: string;
+  book_name: string;
+  chapter_number: number;
+  verse_number_start: number | null;
+  verse_number_end: number | null;
+  translation: string;
+  verses: { number: number; text: string }[];
+};
+
+export type Article = {
+  id: string;
+  title: string;
+  summary: string;
+  visibility: ArticleVisibility;
+  owner_username: string;
+  tags: ArticleTag[];
+  created_at: string;
+  updated_at: string;
+  // 一覧では返らない（記事1件の取得でのみ付く）
+  body?: string;
+  citations?: ArticleCitation[];
+};
+
+export type ArticleComment = {
+  id: string;
+  username: string;
+  body: string;
+  parent: string | null;
+  is_deleted: boolean;
+  created_at: string;
+};

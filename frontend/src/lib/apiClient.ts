@@ -19,6 +19,10 @@ import type {
   TranslationComment,
   SearchResult,
   PublicUser,
+  Article,
+  ArticleComment,
+  ArticleTag,
+  ArticleVisibility,
 } from "./types";
 
 export class ApiError extends Error {
@@ -603,4 +607,80 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
     method: "POST",
     body: JSON.stringify({ reason }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// 記事
+// ---------------------------------------------------------------------------
+
+export function fetchArticles(params?: {
+  mine?: boolean;
+  tag?: string;
+  author?: string;
+  page?: number;
+}): Promise<PaginatedResponse<Article>> {
+  const qs = new URLSearchParams();
+  if (params?.mine) qs.set("mine", "true");
+  if (params?.tag) qs.set("tag", params.tag);
+  if (params?.author) qs.set("author", params.author);
+  if (params?.page) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch(`/articles/${suffix}`);
+}
+
+export function fetchArticle(id: string): Promise<Article> {
+  return apiFetch(`/articles/${id}/`);
+}
+
+export type ArticleInput = {
+  title?: string;
+  summary?: string;
+  body?: string;
+  visibility?: ArticleVisibility;
+  tag_ids?: string[];
+};
+
+export function createArticle(data: ArticleInput): Promise<Article> {
+  return apiFetch("/articles/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateArticle(id: string, data: ArticleInput): Promise<Article> {
+  return apiFetch(`/articles/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deleteArticle(id: string): Promise<void> {
+  return apiFetch(`/articles/${id}/`, { method: "DELETE" });
+}
+
+export function fetchArticleTags(): Promise<ArticleTag[]> {
+  return apiFetchList("/article-tags/");
+}
+
+/** その節を引用している公開記事。節のページの「引用した記事」タブで使う。 */
+export function fetchArticlesCitingVerse(params: {
+  book: string;
+  chapter: number;
+  verse?: number;
+}): Promise<PaginatedResponse<Article>> {
+  const qs = new URLSearchParams({ book: params.book, chapter: String(params.chapter) });
+  if (params.verse) qs.set("verse", String(params.verse));
+  return apiFetch(`/articles/citing/?${qs.toString()}`);
+}
+
+export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {
+  return apiFetchList(`/articles/${articleId}/comments/`);
+}
+
+export function createArticleComment(
+  articleId: string,
+  data: { body: string; parent?: string | null },
+): Promise<ArticleComment> {
+  return apiFetch(`/articles/${articleId}/comments/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteArticleComment(commentId: string): Promise<void> {
+  return apiFetch(`/article-comments/${commentId}/`, { method: "DELETE" });
 }

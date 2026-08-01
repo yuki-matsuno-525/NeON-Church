@@ -6,16 +6,18 @@ import {
   fetchUserProfile,
   fetchUserComments,
   fetchUserBookmarks,
+  fetchArticles,
   type PublicUser,
   type Comment,
   type Bookmark,
+  type Article,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, bookLabel, useRelativeTime, formatBookLocation } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
 import { useLang } from "@/contexts/LanguageContext";
 
-type Tab = "favorites" | "comments";
+type Tab = "favorites" | "comments" | "articles";
 
 export default function UserProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
@@ -26,6 +28,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const [profile, setProfile] = useState<PublicUser | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("comments");
@@ -48,6 +51,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     fetchUserComments(username)
       .then(setComments)
       .catch(() => setComments([]));
+    // 記事は公開されたものだけが返る（下書きは author 指定でも出ない）
+    fetchArticles({ author: username })
+      .then((response) => setArticles(response.results))
+      .catch(() => setArticles([]));
     // 非公開ユーザーはブックマーク API を呼ばない (空配列が返るが無駄な往復を避ける)
     if (profile.bookmarks_visibility === "public") {
       fetchUserBookmarks(username)
@@ -127,9 +134,28 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-current={activeTab === "comments" ? "page" : undefined}>
           {t.tabComments} ({comments.length})
         </button>
+        {/* 記事が1件も無い人にはタブを出さない（空のタブが並ぶと寂しく見えるため） */}
+        {articles.length > 0 && (
+          <button style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-current={activeTab === "articles" ? "page" : undefined}>
+            記事 ({articles.length})
+          </button>
+        )}
       </div>
 
-      {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
+      {activeTab === "articles" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          {articles.map((article) => (
+            <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+              <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                {article.summary}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "articles" ? null : activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
         bookmarks.length === 0 ? (
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
         ) : (

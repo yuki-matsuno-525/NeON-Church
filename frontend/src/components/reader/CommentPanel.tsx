@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   createBookmark,
   removeBookmark,
   createComment,
   buildCommentTree,
+  fetchArticlesCitingVerse,
   type Verse,
   type Bookmark,
+  type Article,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -55,6 +58,27 @@ export function CommentPanel({
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
+  // この節を引用している記事。1件も無いときはタブ自体を出さない
+  // （どの節にも「引用した記事 (0)」が並ぶと、押しても空という体験になるため）。
+  const [citingArticles, setCitingArticles] = useState<Article[]>([]);
+  const [tab, setTab] = useState<"comments" | "articles">("comments");
+
+  useEffect(() => {
+    if (!bookSlug) return;
+    let alive = true;
+    // 別の節を選び直したときに前の節の記事が残らないよう、いったん空にする。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCitingArticles([]);
+    setTab("comments");
+    fetchArticlesCitingVerse({ book: bookSlug, chapter: chapterNumber, verse: verse.number })
+      .then((response) => {
+        if (alive) setCitingArticles(response.results);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [bookSlug, chapterNumber, verse.number]);
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
@@ -323,6 +347,39 @@ export function CommentPanel({
           )}
         </div>
 
+        {/* コメントと「引用した記事」のタブ。記事が無いときは出さない */}
+        {citingArticles.length > 0 && (
+          <div style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
+            <PanelTab active={tab === "comments"} onClick={() => setTab("comments")}>
+              {t.tabComments}
+            </PanelTab>
+            <PanelTab active={tab === "articles"} onClick={() => setTab("articles")}>
+              引用した記事 ({citingArticles.length})
+            </PanelTab>
+          </div>
+        )}
+
+        {tab === "articles" ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {citingArticles.map((article) => (
+              <Link
+                key={article.id}
+                href={`/articles/${article.id}`}
+                className="card-glow card-glow-interactive"
+                style={{ padding: "12px 14px", textDecoration: "none", color: "inherit" }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{article.title}</div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  {article.summary}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 6 }}>
+                  {article.owner_username}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+        <>
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
           {composeOpen ? (
@@ -427,7 +484,41 @@ export function CommentPanel({
             ))
           )}
         </div>
+        </>
+        )}
       </div>
     </>
+  );
+}
+
+function PanelTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: "10px 8px",
+        minHeight: 40,
+        border: "none",
+        background: "none",
+        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+        color: active ? "var(--accent)" : "var(--text-muted)",
+        fontWeight: active ? 700 : 400,
+        fontSize: 12,
+        cursor: "pointer",
+        fontFamily: "inherit",
+      }}
+    >
+      {children}
+    </button>
   );
 }

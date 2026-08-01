@@ -66,10 +66,16 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         source="tags",
         required=False,
     )
+    # 保存の返事にも引用を載せる。編集画面のプレビューが、保存のたびに最新の見え方へ
+    # 追いつけるようにするため（もう一度取り直さなくてよい）。
+    citations = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
-        fields = ["id", "title", "summary", "body", "visibility", "tag_ids"]
+        fields = ["id", "title", "summary", "body", "visibility", "tag_ids", "citations"]
+
+    def get_citations(self, obj) -> list[dict]:
+        return resolve_citations(obj.citations.select_related("canonical_book"))
 
     def validate_title(self, value: str) -> str:
         cleaned = _clean_text(value, 200, "題")
