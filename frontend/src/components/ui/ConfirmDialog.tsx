@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import { useT } from "@/lib/i18n";
+import { useDialogBehavior } from "@/hooks/useDialogBehavior";
 import { Button } from "./Button";
 
 type Props = {
@@ -28,17 +29,8 @@ export function ConfirmDialog({
   const t = useT();
   const titleId = useId();
   const descId = useId();
-  const cancelRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    cancelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+  // Escape で閉じる・Tab が外へ出ない・閉じたら元の場所へフォーカスを戻す。
+  const dialogRef = useDialogBehavior<HTMLDivElement>(open, onCancel);
 
   if (!open) return null;
 
@@ -57,6 +49,7 @@ export function ConfirmDialog({
       }}
     >
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -99,7 +92,7 @@ export function ConfirmDialog({
             marginTop: 20,
           }}
         >
-          <Button ref={cancelRef} variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             {cancelText ?? t.cancel}
           </Button>
           <Button

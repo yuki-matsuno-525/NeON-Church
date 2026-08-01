@@ -1,7 +1,9 @@
 "use client";
 
+import { useId } from "react";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
+import { useDialogBehavior } from "@/hooks/useDialogBehavior";
 
 type Props = {
   onClose: () => void;
@@ -15,6 +17,10 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
   const pathname = usePathname();
   const t = useT();
   const loginHref = `/login?from=${encodeURIComponent(from ?? pathname)}`;
+  const titleId = useId();
+  const descId = useId();
+  // ダイアログとして正しく振る舞わせる（Escape で閉じる・Tab が外へ出ない・閉じたら元へ戻る）。
+  const dialogRef = useDialogBehavior<HTMLDivElement>(true, onClose);
 
   return (
     <>
@@ -28,6 +34,11 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
         }}
       />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descId}
         style={{
           position: "fixed",
           top: "50%",
@@ -44,10 +55,10 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
           textAlign: "center",
         }}
       >
-        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
+        <p id={titleId} style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
           {title ?? t.loginRequired}
         </p>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
+        <p id={descId} style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
           {description ?? t.loginRequiredDesc}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
