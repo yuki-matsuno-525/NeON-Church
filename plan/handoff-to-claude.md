@@ -21,6 +21,7 @@
 - 再マージ前の全検証は backend 601 passed / 13 skipped、frontend 353 passed、Playwright 43 passed、TypeScript、ESLint、production build、Django check/migration checkが成功済み。
 - 再マージ後の最終検証も完了済み。backend 629 passed / 13 skipped（642 collected）、frontend 68 files / 376 passed、Playwright 48 passed、TypeScript、zero-warning ESLint、32-route production build、Django check/migration checkがすべて成功。
 - E2Eで発見したReact Strict Mode時のautosave成功表示欠落も回帰テスト付きで修正済み。
+- 最新main再統合コミット `1d406d9` はブランチへpush済み。次はPR #59のCI確認から開始する。
 
 ## 残作業（順番を守る）
 
