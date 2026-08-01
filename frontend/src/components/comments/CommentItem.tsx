@@ -6,6 +6,8 @@ import { type Comment, fetchCommentReplies, upvoteComment, removeUpvote, deleteC
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 import { Icon } from "@/components/ui/Icon";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT, useRelativeTime } from "@/lib/i18n";
 
 type Props = {
@@ -30,6 +32,7 @@ export function CommentItem({
   const t = useT();
   const relTime = useRelativeTime();
   const { user } = useAuth();
+  const toast = useToast();
   const [upvoted, setUpvoted] = useState(false);
   const [voteCount, setVoteCount] = useState(comment.vote_count);
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -44,10 +47,14 @@ export function CommentItem({
   const [repliesShown, setRepliesShown] = useState(false);
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [replyCount, setReplyCount] = useState(comment.reply_count);
+  // 削除は取り消せないので、押しただけでは消さずに一度確認する。
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState("spam");
   const [reportStatus, setReportStatus] = useState<"idle" | "done" | "dup">("idle");
 
+  // 投票・削除・栞・編集は一番よく押される操作なのに、失敗しても何も出ていなかった。
+  // 押した結果が分からないと同じ操作を繰り返してしまうので、失敗はその場で伝える。
   const handleUpvote = async () => {
     if (!user) return;
     try {
@@ -61,17 +68,18 @@ export function CommentItem({
         setUpvoted(true);
       }
     } catch {
-      // ignore
+      toast.show(t.errorActionFailed, { type: "error" });
     }
   };
 
   const handleDelete = async () => {
+    setConfirmingDelete(false);
     if (!user) return;
     try {
       await deleteComment(comment.id);
       onRefresh?.();
     } catch {
-      // ignore
+      toast.show(t.errorActionFailed, { type: "error" });
     }
   };
 
@@ -94,7 +102,7 @@ export function CommentItem({
         setBookmarkId(bm.id);
       }
     } catch {
-      // ignore
+      toast.show(t.errorActionFailed, { type: "error" });
     }
   };
 
@@ -117,7 +125,7 @@ export function CommentItem({
       setCurrentBody(editBody.trim());
       setEditing(false);
     } catch {
-      // ignore
+      toast.show(t.errorSaveFailed, { type: "error" });
     }
   };
 
@@ -432,7 +440,7 @@ export function CommentItem({
                     {t.edit}
                   </button>
                   <button
-                    onClick={handleDelete}
+                    onClick={() => setConfirmingDelete(true)}
                     data-testid="delete-comment"
                     style={{
                       background: "transparent",
@@ -543,6 +551,16 @@ export function CommentItem({
           showVersionBadge={showVersionBadge}
         />
       ))}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        title={t.confirmDeleteCommentTitle}
+        description={t.confirmDeleteCommentDesc}
+        confirmText={t.delete}
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </div>
   );
 }

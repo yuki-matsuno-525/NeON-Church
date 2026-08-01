@@ -25,6 +25,7 @@ import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useT, useBookLabel } from "@/lib/i18n";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ChapterPage() {
   const params = useParams();
@@ -33,6 +34,7 @@ export default function ChapterPage() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const t = useT();
+  const toast = useToast();
 
   const slug = typeof params.book === "string" ? params.book : "";
   const chapterNum = typeof params.chapter === "string" ? Number(params.chapter) : 0;
@@ -230,6 +232,8 @@ export default function ChapterPage() {
         const bm = await createChapterBookmark(chapter.id);
         setBookmarks((prev) => [...prev, bm]);
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setChapterBusy(false);
     }

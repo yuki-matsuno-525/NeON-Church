@@ -195,6 +195,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [members, setMembers] = useState<TranslationMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"units" | "review" | "members">("units");
+  // 実行中の操作（参加・公開・公開取り消し・削除）。処理中はボタンを押せなくする。
+  const [busyAction, setBusyAction] = useState<
+    "join" | "activate" | "publish" | "unpublish" | "delete" | null
+  >(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmDeleteAllUnits, setConfirmDeleteAllUnits] = useState(false);
   const toast = useToast();
@@ -248,6 +252,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       } else {
         setProjectBookmark(await createProjectBookmark(id));
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setProjectBusy(false);
     }
@@ -352,18 +358,35 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     setScrollTargetUnit(unit.id);
   };
 
+  // 参加・公開状態の変更・削除・メンバー操作は、失敗しても何も出ていなかった。
+  // 押しっぱなしの二度押しも起きるので、処理中は無効にして結果を必ず伝える。
   const handleJoin = async () => {
-    await joinTranslation(id);
-    const proj = await fetchTranslation(id);
-    setProject(proj);
+    if (busyAction) return;
+    setBusyAction("join");
+    try {
+      await joinTranslation(id);
+      setProject(await fetchTranslation(id));
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+    } finally {
+      setBusyAction(null);
+    }
   };
 
   const handleStatusChange = async (action: "activate" | "publish" | "unpublish") => {
-    let proj: TranslationProject;
-    if (action === "activate") proj = await activateTranslation(id);
-    else if (action === "publish") proj = await publishTranslation(id);
-    else proj = await unpublishTranslation(id);
-    setProject(proj);
+    if (busyAction) return;
+    setBusyAction(action);
+    try {
+      let proj: TranslationProject;
+      if (action === "activate") proj = await activateTranslation(id);
+      else if (action === "publish") proj = await publishTranslation(id);
+      else proj = await unpublishTranslation(id);
+      setProject(proj);
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+    } finally {
+      setBusyAction(null);
+    }
   };
 
   const handleToggleLibrary = async () => {
@@ -378,8 +401,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   const handleDelete = async () => {
     setConfirmDelete(false);
-    await deleteTranslation(id);
-    router.push("/translations");
+    if (busyAction) return;
+    setBusyAction("delete");
+    try {
+      await deleteTranslation(id);
+      router.push("/translations");
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+      setBusyAction(null);
+    }
   };
 
   const handleConfirmDeleteAllUnits = async () => {
@@ -414,13 +444,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleMemberAction = async (membershipId: string, action: "approved" | "rejected" | "remove") => {
-    if (action === "remove") {
-      await removeMember(id, membershipId);
-    } else {
-      await updateMembershipStatus(id, membershipId, action);
+    try {
+      if (action === "remove") {
+        await removeMember(id, membershipId);
+      } else {
+        await updateMembershipStatus(id, membershipId, action);
+      }
+      setMembers(await fetchMembers(id));
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     }
-    const m = await fetchMembers(id);
-    setMembers(m);
   };
 
   const handleOpenAddUnit = () => {
@@ -463,16 +496,24 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleAssignUnit = async (unitId: string, userId: string) => {
-    const updated = await assignTranslationUnit(id, unitId, userId || null).catch(() => null);
-    if (updated) setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
+    try {
+      const updated = await assignTranslationUnit(id, unitId, userId || null);
+      setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+    }
   };
 
   const handleUnitStatusChange = async (unitId: string, newStatus: TranslationUnit["status"]) => {
-    const updated = await updateTranslationUnit(id, unitId, { status: newStatus });
-    setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
-    setReviewUnits((prev) => prev.filter((u) => u.id !== unitId));
-    // レビュー件数のバッジを合わせる
-    await reloadSummary();
+    try {
+      const updated = await updateTranslationUnit(id, unitId, { status: newStatus });
+      setUnits((prev) => prev.map((u) => (u.id === unitId ? updated : u)));
+      setReviewUnits((prev) => prev.filter((u) => u.id !== unitId));
+      // レビュー件数のバッジを合わせる
+      await reloadSummary();
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
+    }
   };
 
   const handleSaveBody = async (unitId: string) => {
@@ -494,6 +535,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       });
       const proj = await fetchTranslation(id);
       setProject(proj);
+    } catch {
+      // 保存できなかったときは下書きを消さない（書いた訳文が消えると取り返しがつかない）。
+      toast.show(t.errorSaveFailed, { type: "error" });
     } finally {
       setSavingUnit(null);
     }
@@ -583,12 +627,20 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         {isOwner && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {project.status === "draft" && (
-              <button onClick={() => handleStatusChange("activate")} style={btnStyle("var(--accent)")}>
+              <button
+                onClick={() => handleStatusChange("activate")}
+                disabled={busyAction !== null}
+                style={btnStyle("var(--accent)", false, busyAction !== null)}
+              >
                 {t.startRecruiting}
               </button>
             )}
             {project.status === "active" && (
-              <button onClick={() => handleStatusChange("publish")} style={btnStyle("var(--state-success)")}>
+              <button
+                onClick={() => handleStatusChange("publish")}
+                disabled={busyAction !== null}
+                style={btnStyle("var(--state-success)", false, busyAction !== null)}
+              >
                 {t.publish}
               </button>
             )}
@@ -600,19 +652,33 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 >
                   {t.viewPage}
                 </Link>
-                <button onClick={() => handleStatusChange("unpublish")} style={btnStyle("var(--state-danger)")}>
+                <button
+                  onClick={() => handleStatusChange("unpublish")}
+                  disabled={busyAction !== null}
+                  style={btnStyle("var(--state-danger)", false, busyAction !== null)}
+                >
                   {t.unpublish}
                 </button>
               </>
             )}
-            <button onClick={() => setConfirmDelete(true)} style={btnStyle("var(--state-danger)")}>
+            <button
+              onClick={() => setConfirmDelete(true)}
+              disabled={busyAction !== null}
+              style={btnStyle("var(--state-danger)", false, busyAction !== null)}
+            >
               {t.delete}
             </button>
           </div>
         )}
 
         {user && !isOwner && !isMember && project.status === "active" && (
-          <button onClick={handleJoin} style={btnStyle("var(--accent)")}>{t.applyMembership}</button>
+          <button
+            onClick={handleJoin}
+            disabled={busyAction !== null}
+            style={btnStyle("var(--accent)", false, busyAction !== null)}
+          >
+            {t.applyMembership}
+          </button>
         )}
         {user && !isOwner && !isMember && project.status !== "active" && project.status !== "published" && (
           <span
@@ -1126,7 +1192,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
 // resume バッジ風の淡いピル。色相で役割を残しつつ統一感を出す。
 // 緑(success)は統一感のためアクセント紫に寄せる。
-function btnStyle(color: string, small = false): React.CSSProperties {
+/**
+ * 丸いボタンの見た目。
+ *
+ * `disabled` を渡すと押せないことが見た目でも分かるようにする。以前は無効化しても
+ * 見た目が変わらず、押しても何も起きないボタンに見えていた。
+ */
+function btnStyle(color: string, small = false, disabled = false): React.CSSProperties {
   const c = color === "var(--state-success)" ? "var(--accent)" : color;
   const neutral = c === "var(--border)" || c === "var(--text-muted)";
   const tint = neutral
@@ -1142,7 +1214,8 @@ function btnStyle(color: string, small = false): React.CSSProperties {
     border: "none",
     borderRadius: 999,
     padding: small ? "3px 10px" : "5px 14px",
-    cursor: "pointer",
+    cursor: disabled ? "default" : "pointer",
+    opacity: disabled ? 0.5 : 1,
     fontWeight: 600,
     fontSize: small ? 12 : 13,
     whiteSpace: "nowrap" as const,

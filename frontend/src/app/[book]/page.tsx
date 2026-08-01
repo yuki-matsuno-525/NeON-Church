@@ -16,6 +16,7 @@ import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { resolveVersionBookIds } from "@/lib/versions";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
+import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -32,6 +33,7 @@ function BookContent() {
   const label = useBookLabel(slug);
 
   const { user } = useAuth();
+  const toast = useToast();
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
@@ -66,6 +68,8 @@ function BookContent() {
       } else {
         setBookBookmark(await createBookBookmark(bookId));
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setBookBusy(false);
     }

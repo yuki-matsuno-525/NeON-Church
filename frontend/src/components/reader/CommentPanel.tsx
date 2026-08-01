@@ -18,7 +18,7 @@ import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
-import { LoadMoreButton } from "@/components/ui";
+import { LoadMoreButton, useToast } from "@/components/ui";
 
 type Props = {
   verse: Verse;
@@ -50,6 +50,7 @@ export function CommentPanel({
   translationProject,
 }: Props) {
   const t = useT();
+  const toast = useToast();
   const { user } = useAuth();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
@@ -119,6 +120,8 @@ export function CommentPanel({
         const bm = await createBookmark(verse.id);
         onVerseBookmarksChange([...verseBookmarks, bm]);
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setLoadingBookmark(false);
     }
