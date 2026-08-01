@@ -926,7 +926,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
                       <div style={subCardStyle}>
                         <div style={colLabelStyle}>{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: "var(--font-serif)" }}>
                           {unit.verse_text}
                         </p>
                       </div>
@@ -1078,7 +1078,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
                       <div style={subCardStyle}>
                         <div style={colLabelStyle}>{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: "var(--font-serif)" }}>
                           {unit.verse_text}
                         </p>
                       </div>

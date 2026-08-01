@@ -81,7 +81,8 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
             href={loginHref}
             style={{
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #7618c5, #d81e80)",
+              // 主ボタンの色は1か所（--accent-primary-grad）にまとめている。
+              background: "var(--accent-primary-grad)",
               color: "#fff",
               borderRadius: 8,
               textDecoration: "none",

@@ -402,9 +402,6 @@ const ja = {
   reportReasonMisinformation: "誤情報",
   reportReasonOther: "その他",
 
-  // ThemeToggle
-  switchToLight: "ライトモードに切り替え",
-  switchToDark: "ダークモードに切り替え",
 
   // ホーム セクション説明
   replyLabel: "返信",
@@ -837,9 +834,6 @@ const en: typeof ja = {
   reportReasonOffensive: "Offensive content",
   reportReasonMisinformation: "Misinformation",
   reportReasonOther: "Other",
-
-  switchToLight: "Switch to light mode",
-  switchToDark: "Switch to dark mode",
 
   replyLabel: "replies",
 

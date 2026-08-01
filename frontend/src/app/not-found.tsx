@@ -26,7 +26,7 @@ export default function NotFound() {
           color: "rgba(193, 143, 255, 0.25)",
           margin: 0,
           lineHeight: 1,
-          fontFamily: '"Noto Serif JP", serif',
+          fontFamily: "var(--font-serif)",
         }}
       >
         404

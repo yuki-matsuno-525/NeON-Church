@@ -90,7 +90,7 @@ export function TermsContent() {
 function PolicyLayout({ c, feedbackLabel }: { c: Content; feedbackLabel: string }) {
   return (
     <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: '"Noto Serif JP", serif' }}>{c.title}</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: "var(--font-serif)" }}>{c.title}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
         {c.intro}
       </p>

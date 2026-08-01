@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -83,11 +84,14 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
 
       {/* ロゴ */}
       <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
-        <img
+        {/* 全ページの上部に必ず出るので、最初に描かれるものの1つ。
+            priority を付けて後回しにされないようにする。 */}
+        <Image
           src="/img/logo.webp"
           alt="NeON Church"
           width={172}
           height={44}
+          priority
           style={{
             height: 44,
             width: "auto",

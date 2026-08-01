@@ -8,7 +8,7 @@ export function AboutContent() {
 
   return (
     <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, fontFamily: '"Noto Serif JP", serif' }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, fontFamily: "var(--font-serif)" }}>
         {t.aboutTitle}
       </h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 40, whiteSpace: "pre-line" }}>

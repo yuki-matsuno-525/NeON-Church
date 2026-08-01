@@ -340,7 +340,7 @@ const qaCardHeaderStyle: React.CSSProperties = {
 };
 
 const qaTitleStyle: React.CSSProperties = {
-  fontFamily: '"Noto Serif JP", serif',
+  fontFamily: "var(--font-serif)",
   fontSize: "var(--font-size-md)",
   fontWeight: 700,
   lineHeight: 1.45,

@@ -99,6 +99,27 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
+/* 全ページ共通の背景。
+   以前は JavaScript 側のインライン指定だったため、ブラウザが「この画像が要る」と
+   気づくのが画面の組み立て後になり、読み込みの開始が遅れていた。
+   スタイルシートに置くと、ページを読み始めた時点で取りに行ける。 */
+.app-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/img/background.webp");
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+.app-background-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(6, 3, 20, 0.80);
+  pointer-events: none;
+}
+
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
 
 /* カード */
@@ -163,7 +184,8 @@
   cursor: not-allowed;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #7618c5, #d81e80);
+  /* 主ボタンの色は --accent-primary-grad が出どころ。components/ui/Button.tsx も同じ変数を見る。 */
+  background: var(--accent-primary-grad);
   color: #fff;
   box-shadow: 0 0 14px rgba(198, 44, 170, 0.40);
 }
@@ -311,6 +333,14 @@ select:focus-visible {
   textarea,
   select {
     font-size: 16px !important;
+  }
+
+  /* 指で押す領域は 44px 角が目安。返信・投票・栞・削除といった、よく押すボタンほど
+     小さく（15〜32px）作られていて押し間違えやすかった。高さだけ底上げする
+     （余白や文字サイズは触らないので、見た目の印象は大きく変えない）。 */
+  button,
+  [role="button"] {
+    min-height: 44px;
   }
 
   .hamburger-btn {

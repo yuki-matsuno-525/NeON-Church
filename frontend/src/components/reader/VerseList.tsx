@@ -83,7 +83,7 @@ export function VerseList({
               style={{
                 lineHeight: 1.9,
                 fontSize: 17,
-                fontFamily: '"Noto Serif JP", serif',
+                fontFamily: "var(--font-serif)",
                 // 詩文（エノク書など）の節内改行を保持する。改行の無い訳には影響しない。
                 whiteSpace: "pre-line",
               }}
