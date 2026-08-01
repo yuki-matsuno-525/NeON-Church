@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
+import { useT } from "@/lib/i18n";
 
 type Tone = "danger" | "warning";
 
@@ -12,9 +13,11 @@ type Props = {
   message?: string;
   /** クリックで再読み込み / リトライ。指定するとボタンを描画 */
   onRetry?: () => void;
+  /** 省略時は表示言語に合わせた「もう一度試す」 */
   retryLabel?: string;
   /** クリックで戻る。指定するとボタンを描画 */
   onBack?: () => void;
+  /** 省略時は表示言語に合わせた「戻る」 */
   backLabel?: string;
   /** 任意のアクション要素を追加で差し込む */
   extraAction?: ReactNode;
@@ -25,11 +28,15 @@ export function ErrorState({
   title,
   message,
   onRetry,
-  retryLabel = "もう一度試す",
+  retryLabel,
   onBack,
-  backLabel = "戻る",
+  backLabel,
   extraAction,
 }: Props) {
+  // ボタンの文言は表示言語に合わせる（以前は日本語で固定されていた）。
+  const t = useT();
+  const retryText = retryLabel ?? t.errorRetry;
+  const backText = backLabel ?? t.errorBack;
   const iconName: IconName = tone === "danger" ? "alert-circle" : "alert-triangle";
   const iconColor = tone === "danger" ? "var(--state-danger)" : "var(--state-warning)";
 
@@ -66,7 +73,7 @@ export function ErrorState({
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name="refresh-cw" size={14} />
-              {retryLabel}
+              {retryText}
             </button>
           )}
           {onBack && (
@@ -77,7 +84,7 @@ export function ErrorState({
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name="arrow-left" size={14} />
-              {backLabel}
+              {backText}
             </button>
           )}
           {extraAction}

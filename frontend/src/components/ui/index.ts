@@ -2,6 +2,7 @@ export { Skeleton } from "./Skeleton";
 export { SkeletonList } from "./SkeletonList";
 export { Spinner } from "./Spinner";
 export { EmptyState } from "./EmptyState";
+export { ErrorState } from "./ErrorState";
 export { Button } from "./Button";
 export { TextField } from "./TextField";
 export { Toggle } from "./Toggle";

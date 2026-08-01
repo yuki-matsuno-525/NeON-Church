@@ -7,6 +7,13 @@ import { BIBLE_TRANSLATIONS, translationLabel } from "@/lib/translations";
 const ja = {
   // 共通
   loading: "読み込み中...",
+  // 失敗したときの言い方。何が起きたかと、次にどうすればよいかを1つずつ。
+  errorTitle: "読み込めませんでした",
+  errorRetry: "もう一度試す",
+  errorBack: "戻る",
+  errorNetwork: "通信できませんでした。電波の状況を確かめて、もう一度お試しください。",
+  errorSaveFailed: "保存できませんでした。もう一度お試しください。",
+  errorActionFailed: "うまくいきませんでした。もう一度お試しください。",
   saving: "保存中...",
   posting: "投稿中...",
   cancel: "キャンセル",
@@ -369,6 +376,8 @@ const ja = {
 
   // 翻訳プロジェクト
   confirmDeleteProject: "このプロジェクトを削除しますか？この操作は取り消せません。",
+  confirmDeleteCommentTitle: "このコメントを削除しますか？",
+  confirmDeleteCommentDesc: "削除すると元に戻せません。返信は残ります。",
   confirmDeleteAllUnits: "すべてのユニットを削除しますか？",
   unitsAdded: (n: number) => `${n} ユニットを追加しました。`,
   unitsDeleted: (n: number) => `${n} ユニットを削除しました。`,
@@ -466,6 +475,12 @@ const ja = {
 
 const en: typeof ja = {
   loading: "Loading...",
+  errorTitle: "Couldn't load this",
+  errorRetry: "Try again",
+  errorBack: "Go back",
+  errorNetwork: "Couldn't reach the server. Check your connection and try again.",
+  errorSaveFailed: "Couldn't save. Please try again.",
+  errorActionFailed: "That didn't work. Please try again.",
   saving: "Saving...",
   posting: "Posting...",
   cancel: "Cancel",
@@ -795,6 +810,8 @@ const en: typeof ja = {
   verseOption: (n: number) => `Verse ${n}`,
 
   confirmDeleteProject: "Delete this project? This action cannot be undone.",
+  confirmDeleteCommentTitle: "Delete this comment?",
+  confirmDeleteCommentDesc: "This can't be undone. Replies to it will remain.",
   confirmDeleteAllUnits: "Delete all units?",
   unitsAdded: (n: number) => `Added ${n} units.`,
   unitsDeleted: (n: number) => `Deleted ${n} units.`,
