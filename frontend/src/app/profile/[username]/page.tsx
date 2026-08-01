@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import {
   fetchUserProfile,
-  fetchUserComments,
-  fetchUserBookmarks,
+  fetchUserCommentPage,
+  fetchUserBookmarkPage,
+  EMPTY_BOOKMARK_COUNTS,
   type PublicUser,
   type Comment,
   type Bookmark,
+  type BookmarkType,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT, bookLabel, useRelativeTime, formatBookLocation } from "@/lib/i18n";
-import { passageHref } from "@/lib/passage";
-import { useLang } from "@/contexts/LanguageContext";
+import { useT, useRelativeTime } from "@/lib/i18n";
+import { FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
+import { useLoadMore } from "@/hooks/useLoadMore";
 
 type Tab = "favorites" | "comments";
 
@@ -21,14 +24,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const { username } = use(params);
   const { user: me } = useAuth();
   const t = useT();
-  const { lang } = useLang();
   const relTime = useRelativeTime();
   const [profile, setProfile] = useState<PublicUser | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("comments");
+  // お気に入りタブの種類の絞り込み（null は「すべて」）
+  const [kind, setKind] = useState<BookmarkType | null>(null);
 
   useEffect(() => {
     fetchUserProfile(username)
@@ -43,21 +45,31 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       .finally(() => setLoading(false));
   }, [username]);
 
-  useEffect(() => {
-    if (!profile) return;
-    fetchUserComments(username)
-      .then(setComments)
-      .catch(() => setComments([]));
-    // 非公開ユーザーはブックマーク API を呼ばない (空配列が返るが無駄な往復を避ける)
-    if (profile.bookmarks_visibility === "public") {
-      fetchUserBookmarks(username)
-        .then(setBookmarks)
-        .catch(() => setBookmarks([]));
-    } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBookmarks([]);
-    }
-  }, [profile, username]);
+  // 一覧は2つとも「もっと見る」で読み足す。プロフィールが取れるまでは取りに行かない。
+  const fetchComments = useCallback(
+    (page: number) =>
+      profile
+        ? fetchUserCommentPage(username, page)
+        : Promise.resolve({ results: [] as Comment[], count: 0, hasMore: false, counts: undefined }),
+    [profile, username]
+  );
+  const commentList = useLoadMore(fetchComments);
+
+  // 非公開ユーザーはお気に入り API を呼ばない（空が返るが無駄な往復を避ける）。
+  const isPublicBookmarks = profile?.bookmarks_visibility === "public";
+  const fetchBookmarks = useCallback(
+    (page: number) =>
+      isPublicBookmarks
+        ? fetchUserBookmarkPage(username, { type: kind ?? undefined, page })
+        : Promise.resolve({
+            results: [] as Bookmark[],
+            count: 0,
+            hasMore: false,
+            counts: EMPTY_BOOKMARK_COUNTS,
+          }),
+    [isPublicBookmarks, username, kind]
+  );
+  const bookmarkList = useLoadMore(fetchBookmarks);
 
   if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
   if (notFound || !profile) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.userNotFound}</div>;
@@ -71,6 +83,19 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       </div>
     );
   }
+
+  // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
+  const counts = bookmarkList.counts;
+  const bookmarkChips: FilterChip<BookmarkType>[] = counts
+    ? [
+        { value: null, label: t.filterAll, count: counts.all },
+        ...BOOKMARK_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+          value: type,
+          label: bookmarkKindLabel(type, t),
+          count: counts[type],
+        })),
+      ]
+    : [];
 
   const tabStyle = (tab: Tab): React.CSSProperties => ({
     padding: "8px 16px",
@@ -121,88 +146,43 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         {profile.bookmarks_visibility === "public" && (
           <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-current={activeTab === "favorites" ? "page" : undefined}>
-            {t.tabBookmarks} ({bookmarks.length})
+            {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
           </button>
         )}
         <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-current={activeTab === "comments" ? "page" : undefined}>
-          {t.tabComments} ({comments.length})
+          {t.tabComments} ({commentList.total})
         </button>
       </div>
 
       {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
-        bookmarks.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {bookmarks.map((bm) => {
-              if (bm.target_type === "comment" && bm.comment_detail) {
-                const cd = bm.comment_detail;
-                const commentPassageHref = passageHref(cd);
-                const cdLabel = cd.book_slug ? formatBookLocation(cd.book_slug, cd.chapter_number, cd.verse_number, lang) : "";
-                const card = (
-                  <>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
-                      {cdLabel ? `${cdLabel} · ` : ""}{t.commentBy(cd.username)}
-                    </p>
-                    <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                      {cd.body}
-                    </p>
-                  </>
-                );
-                return commentPassageHref ? (
-                  <Link key={bm.id} href={commentPassageHref} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-                    {card}
-                  </Link>
-                ) : (
-                  <div key={bm.id} style={cardStyle}>{card}</div>
-                );
-              }
-              // 翻訳プロジェクト栞：プロジェクトのページへ。
-              if (bm.target_type === "project" && bm.project_detail) {
-                const pd = bm.project_detail;
-                return (
-                  <Link key={bm.id} href={`/translations/${pd.id}`} style={{ textDecoration: "none" }}>
-                    <div style={{ ...cardStyle, cursor: "pointer" }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                        {pd.name}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              }
-              if (!bm.reference) return null;
-              // 箇所栞（節／章／書）。粒度に応じてラベルとリンク先を変える。
-              const bookDisplay = bookLabel(bm.reference.book, lang)?.name ?? bm.reference.book;
-              let locationText: string;
-              let href: string;
-              if (bm.reference.verse != null && bm.reference.chapter != null) {
-                locationText = `${bookDisplay} ${t.verseFmt(bm.reference.chapter, bm.reference.verse)}`;
-                href = `/${bm.reference.book}/${bm.reference.chapter}#verse-${bm.reference.verse}`;
-              } else if (bm.reference.chapter != null) {
-                locationText = `${bookDisplay} ${t.chapterFmt(bm.reference.chapter)}`;
-                href = `/${bm.reference.book}/${bm.reference.chapter}`;
-              } else {
-                locationText = bookDisplay;
-                href = `/${bm.reference.book}?list=1`;
-              }
-              return (
-                <Link key={bm.id} href={href} style={{ textDecoration: "none" }}>
-                  <div style={{ ...cardStyle, cursor: "pointer" }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
-                      {locationText}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )
+        <>
+          {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+          {bookmarkList.counts && bookmarkList.counts.all > 0 && (
+            <FilterChips chips={bookmarkChips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
+          )}
+          {bookmarkList.items.length === 0 ? (
+            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+                {bookmarkList.items.map((bm) => (
+                  <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+                ))}
+              </div>
+              <LoadMoreButton
+                hasMore={bookmarkList.hasMore}
+                loading={bookmarkList.loadingMore}
+                onClick={bookmarkList.loadMore}
+              />
+            </>
+          )}
+        </>
+      ) : commentList.items.length === 0 ? (
+        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
       ) : (
-        comments.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
-        ) : (
+        <>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {comments.map((c) => (
+            {commentList.items.map((c) => (
               <div key={c.id} style={cardStyle}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
                   {c.body}
@@ -213,7 +193,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               </div>
             ))}
           </div>
-        )
+          <LoadMoreButton
+            hasMore={commentList.hasMore}
+            loading={commentList.loadingMore}
+            onClick={commentList.loadMore}
+          />
+        </>
       )}
     </div>
   );

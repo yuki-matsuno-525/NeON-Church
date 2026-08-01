@@ -101,12 +101,62 @@ function refreshToken(): Promise<void> {
 }
 
 // バックエンドのページネーション付きレスポンス形式。
-// 中身を全部取り切るだけのフロントでは next/previous は使わず results だけ取り出す。
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+/**
+ * 「もっと見る」で読み足す一覧の1ページ分。
+ *
+ * next の URL をそのまま持ち回らず「まだ続きがあるか（hasMore）」に畳んで返す。
+ * counts は種類ごとのタブに出す件数で、対応するエンドポイントだけが返す。
+ */
+export interface ListPage<T, C = undefined> {
+  results: T[];
+  /** 絞り込み後の総件数 */
+  count: number;
+  /** 「もっと見る」を出すかどうか */
+  hasMore: boolean;
+  counts: C;
+}
+
+async function apiFetchPage<T, C = undefined>(path: string): Promise<ListPage<T, C>> {
+  const data = await apiFetch<PaginatedResponse<T> & { counts?: C }>(path);
+  return {
+    results: data.results,
+    count: data.count,
+    hasMore: data.next !== null,
+    counts: data.counts as C,
+  };
+}
+
+// 取り切りの上限。1ページ100件なので 100 ページ＝10000 件。
+// サーバーが next を返し続ける不具合が起きても無限ループにならないようにするための保険。
+const MAX_PAGES = 100;
+
+/**
+ * 全ページを辿って取り切る。
+ *
+ * 「この節に栞が付いているか」の判定のように、一部だけでは正しく判断できない用途に限って使う。
+ * 画面に並べる一覧では使わないこと（件数が増えるほど遅くなる）。そちらは apiFetchPage を使い、
+ * 「もっと見る」で読み足す。
+ */
+async function apiFetchAll<T>(path: string): Promise<T[]> {
+  const separator = path.includes("?") ? "&" : "?";
+  const all: T[] = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const data = await apiFetch<PaginatedResponse<T> | T[]>(
+      `${path}${separator}page=${page}&page_size=100`
+    );
+    // paginate されていないエンドポイント（タグ等）は配列を直接返す
+    if (Array.isArray(data)) return data;
+    all.push(...data.results);
+    if (!data.next) break;
+  }
+  return all;
 }
 
 async function apiFetchList<T>(path: string): Promise<T[]> {
@@ -274,8 +324,36 @@ export function updateComment(commentId: string, body: string): Promise<Comment>
   });
 }
 
+// お気に入りの種類。バックエンドが返す target_type と同じ値を使う。
+export type BookmarkType = "verse" | "chapter" | "book" | "comment" | "project";
+export type BookmarkCounts = Record<BookmarkType | "all", number>;
+
+/** まだ読み込んでいないときに使う件数ゼロの値。 */
+export const EMPTY_BOOKMARK_COUNTS: BookmarkCounts = {
+  all: 0, verse: 0, chapter: 0, book: 0, comment: 0, project: 0,
+};
+
+/**
+ * 自分のお気に入りを全件取り切る。
+ *
+ * 読書画面で「この節・章・書に栞が付いているか」を判定するために使う。
+ * 一部しか持っていないと栞済みの印が出なくなるので、ここは取り切る必要がある。
+ * 一覧画面には fetchBookmarkPage を使うこと。
+ */
 export function fetchBookmarks(): Promise<Bookmark[]> {
-  return apiFetchList("/bookmarks/?page_size=100");
+  return apiFetchAll("/bookmarks/");
+}
+
+/** お気に入り一覧の1ページ分。type で種類を絞る（省略＝すべて）。 */
+export function fetchBookmarkPage(params?: {
+  type?: BookmarkType;
+  page?: number;
+}): Promise<ListPage<Bookmark, BookmarkCounts>> {
+  const qs = new URLSearchParams();
+  if (params?.type) qs.set("type", params.type);
+  if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetchPage(`/bookmarks/${suffix}`);
 }
 
 export function createBookmark(verseId: string): Promise<Bookmark> {
@@ -317,8 +395,10 @@ export function removeBookmark(bookmarkId: string): Promise<void> {
   return apiFetch(`/bookmarks/${bookmarkId}/`, { method: "DELETE" });
 }
 
-export function fetchMyComments(): Promise<MyComment[]> {
-  return apiFetchList("/comments/mine/?page_size=100");
+/** 自分のコメント一覧の1ページ分。 */
+export function fetchMyCommentPage(page = 1): Promise<ListPage<MyComment>> {
+  const suffix = page > 1 ? `?page=${page}` : "";
+  return apiFetchPage(`/comments/mine/${suffix}`);
 }
 
 export function fetchVerseOfDay(translation?: string): Promise<VerseOfDay> {
@@ -326,8 +406,25 @@ export function fetchVerseOfDay(translation?: string): Promise<VerseOfDay> {
   return apiFetch(`/verse-of-the-day/${qs}`);
 }
 
-export function fetchNotifications(): Promise<Notification[]> {
-  return apiFetchList("/notifications/?page_size=100");
+// 通知の種類。バックエンドが返す notification_type と同じ値を使う。
+export type NotificationType = "reply" | "upvote" | "mention";
+export type NotificationCounts = Record<NotificationType | "all", number>;
+
+/** まだ読み込んでいないときに使う件数ゼロの値。 */
+export const EMPTY_NOTIFICATION_COUNTS: NotificationCounts = {
+  all: 0, reply: 0, upvote: 0, mention: 0,
+};
+
+/** 通知一覧の1ページ分。type で種類を絞る（省略＝すべて）。 */
+export function fetchNotificationPage(params?: {
+  type?: NotificationType;
+  page?: number;
+}): Promise<ListPage<Notification, NotificationCounts>> {
+  const qs = new URLSearchParams();
+  if (params?.type) qs.set("type", params.type);
+  if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetchPage(`/notifications/${suffix}`);
 }
 
 export function fetchUnreadCount(): Promise<number> {
@@ -591,12 +688,22 @@ export function fetchUserProfile(username: string): Promise<PublicUser> {
   return apiFetch(`/users/${username}/`);
 }
 
-export function fetchUserComments(username: string): Promise<Comment[]> {
-  return apiFetchList(`/users/${username}/comments/?page_size=100`);
+/** 公開プロフィールのコメント一覧の1ページ分。 */
+export function fetchUserCommentPage(username: string, page = 1): Promise<ListPage<Comment>> {
+  const suffix = page > 1 ? `?page=${page}` : "";
+  return apiFetchPage(`/users/${username}/comments/${suffix}`);
 }
 
-export function fetchUserBookmarks(username: string): Promise<Bookmark[]> {
-  return apiFetchList(`/users/${username}/bookmarks/?page_size=100`);
+/** 公開プロフィールのお気に入り一覧の1ページ分。type で種類を絞る（省略＝すべて）。 */
+export function fetchUserBookmarkPage(
+  username: string,
+  params?: { type?: BookmarkType; page?: number }
+): Promise<ListPage<Bookmark, BookmarkCounts>> {
+  const qs = new URLSearchParams();
+  if (params?.type) qs.set("type", params.type);
+  if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return apiFetchPage(`/users/${username}/bookmarks/${suffix}`);
 }
 
 export function fetchTrendingComments(): Promise<QAComment[]> {

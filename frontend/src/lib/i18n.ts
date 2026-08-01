@@ -87,6 +87,7 @@ const ja = {
   noNotifications: "通知はありません。",
   notifReply: "返信",
   notifUpvote: "いいね",
+  notifMention: "メンション",
 
   // Q&A
   qaTitle: "Q&A",
@@ -340,6 +341,10 @@ const ja = {
   bookmarkKindChapter: "章",
   bookmarkKindBook: "書",
   bookmarkKindProject: "翻訳プロジェクト",
+  bookmarkKindComment: "コメント",
+  // 一覧の絞り込みチップ・読み足し
+  filterByKind: "種類で絞り込む",
+  loadMore: "もっと見る",
   // ページネーション
   paginationLabel: "ページ送り",
   paginationPrev: "前のページ",
@@ -534,6 +539,7 @@ const en: typeof ja = {
   noNotifications: "No notifications.",
   notifReply: "Reply",
   notifUpvote: "Like",
+  notifMention: "Mention",
 
   qaTitle: "Q&A",
   askQuestion: "Ask a question",
@@ -766,6 +772,9 @@ const en: typeof ja = {
   bookmarkKindChapter: "Chapter",
   bookmarkKindBook: "Book",
   bookmarkKindProject: "Translation project",
+  bookmarkKindComment: "Comment",
+  filterByKind: "Filter by kind",
+  loadMore: "Load more",
   paginationLabel: "Pagination",
   paginationPrev: "Previous page",
   paginationNext: "Next page",
