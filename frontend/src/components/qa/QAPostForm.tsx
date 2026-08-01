@@ -48,6 +48,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // 選んだ書（slug）＋訳（version）から DB の Book id を引く。
   const resolveBookId = (s: string, v: string): string =>
@@ -58,7 +59,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
     setChapterId("");
     setVerses([]);
     setVerseId("");
-    if (bid) fetchChapters(bid).then(setChapters).catch(() => setChapters([]));
+    setLocationError(null);
+    if (bid) fetchChapters(bid).then(setChapters).catch(() => {
+      setChapters([]);
+      setLocationError(t.loadErrorDesc);
+    });
     else setChapters([]);
   };
 
@@ -83,7 +88,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
     setVerses([]);
     setVerseId("");
     if (newChapterId) {
-      fetchVerses(newChapterId).then(setVerses).catch(() => setVerses([]));
+      setLocationError(null);
+      fetchVerses(newChapterId).then(setVerses).catch(() => {
+        setVerses([]);
+        setLocationError(t.loadErrorDesc);
+      });
     }
   };
 
@@ -130,13 +139,16 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
         background: "var(--bg-alt)",
       }}
     >
-      <label htmlFor={titleId} className="sr-only">{t.qaInputTitlePlaceholder}</label>
+      <label htmlFor={titleId} style={fieldLabelStyle}>{t.fieldTitle}</label>
       <input
         id={titleId}
         type="text"
         value={title}
+        maxLength={200}
         onChange={(e) => setTitle(e.target.value)}
         placeholder={t.qaInputTitlePlaceholder}
+        aria-invalid={!title.trim() && !!error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         style={{
           width: "100%",
           padding: "8px 10px",
@@ -150,13 +162,14 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
           marginBottom: 8,
         }}
       />
-      <label htmlFor={bodyId} className="sr-only">{t.qaInputPlaceholder}</label>
+      <label htmlFor={bodyId} style={fieldLabelStyle}>{t.fieldBody}</label>
       <textarea
         id={bodyId}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={t.qaInputPlaceholder}
         rows={4}
+        maxLength={5000}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
         style={{
@@ -230,10 +243,17 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
           </>
         )}
       </div>
+      {locationError && (
+        <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12, margin: "6px 0 0" }}>
+          {locationError}
+        </p>
+      )}
 
       {/* タグ選択 */}
       {tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+        <fieldset style={{ border: 0, padding: 0, margin: "10px 0 0" }}>
+          <legend style={fieldLabelStyle}>{t.allTags}</legend>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {tags.map((tag) => {
             const active = tagIds.includes(tag.id);
             return (
@@ -244,7 +264,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
                 onClick={() => toggleTag(tag.id)}
                 style={{
                   fontSize: 12,
-                  minHeight: 30,
+                  minHeight: 44,
                   padding: "3px 10px",
                   borderRadius: 999,
                   border: "1px solid var(--border)",
@@ -258,7 +278,8 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
               </button>
             );
           })}
-        </div>
+          </div>
+        </fieldset>
       )}
 
       {error && (
@@ -312,3 +333,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
     </form>
   );
 }
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  fontWeight: 700,
+  color: "var(--text-muted)",
+  margin: "0 0 5px",
+};

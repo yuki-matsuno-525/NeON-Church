@@ -9,6 +9,8 @@ import { formatBookLocation, useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { SkeletonList } from "@/components/ui";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 type HomeSection = {
   title: string;
@@ -37,14 +39,15 @@ export default function Home() {
   const [verseError, setVerseError] = useState(false);
   const [recentQA, setRecentQA] = useState<QAComment[]>([]);
   const [trending, setTrending] = useState<QAComment[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState(false);
+  const [activityRetryToken, setActivityRetryToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseOfDay(null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseLoading(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseError(false);
     fetchVerseOfDay(defaultTranslationForLang(lang))
       .then((data) => { if (!cancelled) setVerseOfDay(data); })
@@ -54,12 +57,22 @@ export default function Home() {
   }, [lang]);
 
   useEffect(() => {
-    // 表紙に出すのは冒頭の数件だけなので1ページ目で足りる。
-    fetchQACommentPage()
-      .then((page) => setRecentQA(page.results.slice(0, 4)))
-      .catch(() => {});
-    fetchTrendingComments().then(setTrending).catch(() => {});
-  }, []);
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActivityLoading(true);
+    setActivityError(false);
+    Promise.allSettled([fetchQACommentPage(), fetchTrendingComments()]).then(([recentResult, trendingResult]) => {
+      if (!active) return;
+      if (recentResult.status === "fulfilled") setRecentQA(recentResult.value.results.slice(0, 4));
+      else setActivityError(true);
+      if (trendingResult.status === "fulfilled") setTrending(trendingResult.value);
+      else setActivityError(true);
+      setActivityLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [activityRetryToken]);
 
   const slug = verseOfDay ? slugFromBookName(verseOfDay.book_name) : "";
   const verseHref = slug && verseOfDay
@@ -68,11 +81,6 @@ export default function Home() {
 
   return (
     <>
-      {/* 背景は全ページ共通のもの（ClientLayout の .app-background）をそのまま使う。
-          以前はここでもう一枚同じ画像を重ねて描いていたので、画面全体の層が2倍あった。
-          ホームだけ画像の見せる位置を少し下げる。 */}
-      <div className="app-background" style={{ backgroundPosition: "center 28%" }} />
-
       {/* ページコンテンツ */}
       <div
         className="home-content"
@@ -95,7 +103,7 @@ export default function Home() {
               fontSize: 11,
               fontWeight: 700,
               letterSpacing: "0.07em",
-              color: "rgba(193, 143, 255, 0.55)",
+              color: "rgba(213, 181, 255, 0.88)",
               margin: "0 0 16px",
             }}
           >
@@ -332,6 +340,20 @@ export default function Home() {
           ))}
         </div>
 
+        {activityLoading && (
+          <section aria-label={t.loading}>
+            <SkeletonList count={3} />
+          </section>
+        )}
+        {activityError && !activityLoading && (
+          <ErrorState
+            title={t.loadErrorTitle}
+            message={t.loadErrorDesc}
+            onRetry={() => setActivityRetryToken((value) => value + 1)}
+            retryLabel={t.retry}
+          />
+        )}
+
         {/* トレンド */}
         {trending.length > 0 && (
           <div>
@@ -387,7 +409,7 @@ export default function Home() {
                 href="/qa"
                 style={{
                   fontSize: "var(--font-size-sm)",
-                  color: "rgba(193, 143, 255, 0.50)",
+                  color: "rgba(213, 181, 255, 0.88)",
                   textDecoration: "none",
                 }}
               >
@@ -502,7 +524,7 @@ function TrendingCard({ comment }: { comment: QAComment }) {
   const slug = slugFromBookName(comment.book_name);
   const href = slug && comment.chapter_number
     ? `/${slug}/${comment.chapter_number}${comment.verse_number ? `#verse-${comment.verse_number}` : ""}`
-    : "#";
+    : "/qa";
 
   return (
     <Link
@@ -724,6 +746,8 @@ function SectionCard({
       onMouseLeave={(e) => {
         hoverOff(e.currentTarget as HTMLElement);
       }}
+      onFocus={(e) => hoverOn(e.currentTarget as HTMLElement)}
+      onBlur={(e) => hoverOff(e.currentTarget as HTMLElement)}
     >
       {content}
     </Link>

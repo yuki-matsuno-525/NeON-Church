@@ -1,43 +1,94 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { findSlugByBookName, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { Button, SkeletonList } from "@/components/ui";
+import { translationUiText } from "../../translationUiText";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useT();
+  const { lang } = useLang();
+  const ui = translationUiText(lang);
   const [project, setProject] = useState<TranslationProject | null>(null);
   // 目次は章番号だけあればよい。以前は全章の本文を取ってから章を数えていた。
   const [chapterNums, setChapterNums] = useState<number[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
+  const [versionCommentsError, setVersionCommentsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      fetchTranslation(id),
-      fetchTranslationRead(id),
-    ]).then(([proj, read]) => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [proj, read] = await Promise.all([fetchTranslation(id), fetchTranslationRead(id)]);
       setProject(proj);
       setChapterNums(read.chapters);
       // 全バージョン表示用：元の書名から slug を逆引きし、各訳の書idを集める。
-      const slug = findSlugByBookName(proj.source_book_name);
-      if (slug) resolveVersionBookIds(slug).then(setAllVersionBookIds).catch(() => {});
-    }).catch(() => {
+    } catch {
       setError(t.notPublishedOrMissing);
-    }).finally(() => setLoading(false));
+    } finally {
+      setLoading(false);
+    }
   }, [id, t.notPublishedOrMissing]);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetchTranslation(id), fetchTranslationRead(id)])
+      .then(([proj, read]) => {
+        if (!active) return;
+        setProject(proj);
+        setChapterNums(read.chapters);
+      })
+      .catch(() => active && setError(t.notPublishedOrMissing))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [id, t.notPublishedOrMissing]);
+
+  const loadVersionComments = useCallback(async () => {
+    const slug = project ? findSlugByBookName(project.source_book_name) : null;
+    if (!slug) {
+      setAllVersionBookIds([]);
+      setVersionCommentsError(false);
+      return;
+    }
+    setVersionCommentsError(false);
+    try {
+      setAllVersionBookIds(await resolveVersionBookIds(slug));
+    } catch {
+      setVersionCommentsError(true);
+    }
+  }, [project]);
+
+  useEffect(() => {
+    let active = true;
+    const slug = project ? findSlugByBookName(project.source_book_name) : null;
+    const request = slug ? resolveVersionBookIds(slug) : Promise.resolve<string[]>([]);
+    request
+      .then((ids) => {
+        if (!active) return;
+        setAllVersionBookIds(ids);
+        setVersionCommentsError(false);
+      })
+      .catch(() => active && setVersionCommentsError(true));
+    return () => { active = false; };
+  }, [project]);
+
+  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={5} /></div>;
   if (error) return (
-    <div style={{ padding: 32, textAlign: "center" }}>
+    <div style={{ padding: 32, textAlign: "center" }} role="alert">
       <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <Link href="/translations" style={{ color: "var(--accent)" }}>{t.backToProjectList}</Link>
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
+        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+      </div>
     </div>
   );
 
@@ -70,7 +121,10 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       </p>
 
       {chapterNums.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVerses}</p>
+        <div style={{ padding: "24px 20px", border: "1px solid var(--border)", borderRadius: 12, textAlign: "center", background: "var(--bg-alt)" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVerses}</p>
+          <Link href={`/translations/${id}`} style={{ color: "var(--accent)", fontSize: 13 }}>{ui.noPublishedCta}</Link>
+        </div>
       ) : (
         <>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
@@ -127,13 +181,23 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       )}
 
       {project?.source_book && (
-        <ChapterComments
-          bookId={project.source_book}
-          translationProject={id}
-          label={project.name}
-          commentBookmarkMap={{}}
-          allVersionIds={allVersionBookIds}
-        />
+        <>
+          {versionCommentsError && (
+            <div role="alert" style={{ padding: 12, marginBottom: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+              <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+              <Button variant="secondary" size="sm" onClick={() => void loadVersionComments()}>
+                {ui.retryRelatedComments}
+              </Button>
+            </div>
+          )}
+          <ChapterComments
+            bookId={project.source_book}
+            translationProject={id}
+            label={ui.publishedCommentsHeading}
+            commentBookmarkMap={{}}
+            allVersionIds={allVersionBookIds}
+          />
+        </>
       )}
     </div>
     </div>

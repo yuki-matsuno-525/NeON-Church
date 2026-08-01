@@ -1,14 +1,35 @@
 from django.db import transaction
 from django.db.models import Case, IntegerField, OuterRef, Subquery, When
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import Http404
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 
 from bible.models import Verse
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from translations.access import (
+    can_view_project_work,
+    filter_by_project_visibility,
+    get_visible_project_or_404,
+)
 from .filters import count_by_type, filter_by_location, filter_by_type
 from .models import Bookmark
 from .serializers import BookmarkSerializer
+
+
+def filter_by_translation_visibility(queryset, user):
+    """Hide bookmarks whose project work is not visible to ``user``.
+
+    Both direct project bookmarks and comment bookmarks are covered. Keeping
+    this filter at the base-queryset level also keeps per-type counts private.
+    """
+    return filter_by_project_visibility(
+        queryset,
+        user,
+        "translation_project",
+        "comment__translation_project",
+    )
 
 
 def annotate_verse_text(queryset):
@@ -57,7 +78,10 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
 
     def get_base_queryset(self):
         """絞り込み前の自分の栞。件数集計にも使うので annotate は付けない。"""
-        return Bookmark.objects.filter(user=self.request.user)
+        return filter_by_translation_visibility(
+            Bookmark.objects.filter(user=self.request.user),
+            self.request.user,
+        )
 
     def _location_params(self):
         """箇所での絞り込みの指定を取り出す。1つも指定が無ければ None を返す。"""
@@ -101,6 +125,12 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         if not any([verse, chapter, book, comment, project]):
             raise ValidationError({"detail": "Specify verse, chapter, book, comment or project."})
 
+        comment_project = comment.translation_project if comment and comment.translation_project_id else None
+        if project and not can_view_project_work(self.request.user, project):
+            raise Http404
+        if comment_project and not can_view_project_work(self.request.user, comment_project):
+            raise Http404
+
         # 箇所栞は訳非依存の箇所（canonical_book/章番号/節番号）を backend が導出して保存する
         # （クライアントからは受け取らない＝偽装防止）。節栞=章+節、章栞=章のみ、書栞=書のみ。
         # verse_number/chapter_number は明示的に None を入れて「粒度」を確定させる（重複判定も IS NULL で一致）。
@@ -137,6 +167,23 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
             serializer.save(user=user, **location)
 
     def create(self, request, *args, **kwargs):
+        # Resolve project-backed targets before serializer validation. Hidden,
+        # missing, and malformed UUIDs must all look like the same 404.
+        project_id = request.data.get("translation_project")
+        if project_id:
+            get_visible_project_or_404(request.user, project_id)
+        comment_id = request.data.get("comment")
+        if comment_id:
+            from comments.models import Comment
+
+            try:
+                comment = Comment.objects.select_related("translation_project").get(pk=comment_id)
+            except (Comment.DoesNotExist, DjangoValidationError, TypeError, ValueError):
+                raise Http404
+            if comment.translation_project_id and not can_view_project_work(
+                request.user, comment.translation_project
+            ):
+                raise Http404
         try:
             return super().create(request, *args, **kwargs)
         except ValidationError as exc:
@@ -150,4 +197,9 @@ class BookmarkDestroyView(generics.DestroyAPIView):
     """
 
     permission_classes = [permissions.IsAuthenticated, IsOwner]
-    queryset = Bookmark.objects.all()
+
+    def get_queryset(self):
+        return filter_by_translation_visibility(
+            Bookmark.objects.all(),
+            self.request.user,
+        )

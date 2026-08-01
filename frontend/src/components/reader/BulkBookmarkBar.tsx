@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useT, type Translations } from "@/lib/i18n";
 
 /**
@@ -23,10 +23,28 @@ export function BulkBookmarkBar({
   onCancel: () => void;
 }) {
   const t = useT();
+  const barRef = useRef<HTMLDivElement>(null);
+  const cancelOnEscape = useEffectEvent(onCancel);
+
+  useEffect(() => {
+    barRef.current?.focus();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      cancelOnEscape();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
   return (
     <div
+      ref={barRef}
       data-testid="bulk-bookmark-bar"
+      role="region"
+      aria-label={t.bulkBookmarkStart}
+      aria-busy={busy}
+      tabIndex={-1}
       style={{
         position: "fixed",
         left: 0,
@@ -47,7 +65,7 @@ export function BulkBookmarkBar({
       <span style={{ fontSize: 13, fontWeight: 700 }}>
         {pickedCount > 0 ? t.bulkPickedCount(pickedCount) : t.bulkPickPrompt}
       </span>
-      {message && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{message}</span>}
+      {message && <span role="status" aria-live="polite" style={{ fontSize: 12, color: "var(--text-muted)" }}>{message}</span>}
       <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
         <button type="button" onClick={onCancel} style={cancelStyle}>
           {t.articleCancel}
@@ -76,7 +94,7 @@ const cancelStyle: React.CSSProperties = {
   color: "var(--text-muted)",
   fontSize: 13,
   padding: "8px 16px",
-  minHeight: 40,
+  minHeight: 44,
   cursor: "pointer",
   fontFamily: "inherit",
 };
@@ -89,7 +107,7 @@ const saveStyle: React.CSSProperties = {
   fontWeight: 700,
   fontSize: 13,
   padding: "8px 18px",
-  minHeight: 40,
+  minHeight: 44,
   fontFamily: "inherit",
 };
 

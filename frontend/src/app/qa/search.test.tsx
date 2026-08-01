@@ -28,7 +28,7 @@ vi.mock("@/lib/bookCatalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/bookCatalog")>();
   return {
     ...actual,
-    useBookCatalog: () => [],
+    useBookCatalogState: () => ({ catalog: [], loading: false, error: false, retry: vi.fn() }),
   };
 });
 

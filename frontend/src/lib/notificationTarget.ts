@@ -38,9 +38,17 @@ export function notificationTargetUrl(n: Notification): string | null {
     case "qa":
       // /qa/[id] 詳細ページは未実装 (Step UX-10 以降)
       return "/qa";
+    case "translation_project_comment": {
+      if (!n.translation_project_id) return null;
+      const base = `/translations/${n.translation_project_id}/read`;
+      if (n.chapter_number == null) return `${base}#chapter-comments`;
+      if (n.verse_number == null) return `${base}/${n.chapter_number}#chapter-comments`;
+      return `${base}/${n.chapter_number}#verse-${n.verse_number}`;
+    }
     case "translation_unit": {
       if (!n.translation_project_id) return null;
-      return `/translations/${n.translation_project_id}`;
+      const anchor = n.translation_unit_id ? `#unit-${n.translation_unit_id}` : "";
+      return `/translations/${n.translation_project_id}${anchor}`;
     }
     default:
       return null;
@@ -67,6 +75,14 @@ export function notificationContextLabel(n: Notification, t: Translations, lang 
         return `Q&A · ${formatBookLocation(slug, n.chapter_number, n.verse_number, lang)}`;
       }
       return "Q&A";
+    case "translation_project_comment":
+      if (n.book_name && n.chapter_number != null && n.verse_number != null) {
+        return `${t.translationsTitle} · ${n.book_name} ${t.verseFmt(n.chapter_number, n.verse_number)}`;
+      }
+      if (n.book_name && n.chapter_number != null) {
+        return `${t.translationsTitle} · ${n.book_name} ${t.chapterOption(n.chapter_number)}`;
+      }
+      return n.book_name ? `${t.translationsTitle} · ${n.book_name}` : t.translationsTitle;
     case "translation_unit":
       return t.translationsTitle;
     default:

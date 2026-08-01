@@ -20,6 +20,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     fetchBookmarkPage: vi.fn(),
+    removeBookmark: vi.fn(),
   };
 });
 
@@ -174,9 +175,24 @@ describe("BookmarksPage", () => {
 
     render(<BookmarksPage />);
 
-    await screen.findByText("読み込めませんでした");
+    expect(await screen.findByRole("alert")).toHaveTextContent("読み込めませんでした");
     expect(screen.queryByText("お気に入りはまだありません。")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /もう一度試す/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "もう一度試す" })).toBeInTheDocument();
+  });
+
+  it("削除後はカードを一覧から外し、取り消し導線を表示する", async () => {
+    const { fetchBookmarkPage, removeBookmark } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
+    vi.mocked(removeBookmark).mockResolvedValue(undefined);
+    loggedIn();
+
+    render(<BookmarksPage />);
+    await screen.findByText(/マタイによる福音書/);
+    await userEvent.click(screen.getByRole("button", { name: "解除" }));
+
+    await screen.findByText("お気に入りを解除しました。");
+    expect(screen.queryByText(/マタイによる福音書/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "元に戻す" })).toBeInTheDocument();
   });
 
   // ------------------------------------------------------------------

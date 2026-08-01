@@ -5,7 +5,7 @@ import { fetchTags, createComment, type Tag } from "@/lib/api";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
-import { LoadMoreButton } from "@/components/ui";
+import { ErrorState, LoadMoreButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 
 type Props = {
@@ -25,6 +25,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
   const heading = label ?? t.chapterCommentsHeading;
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagsError, setTagsError] = useState(false);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -33,7 +34,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
   // 段階6D: 単一 id を backend が箇所へ解決し、訳をまたいで同じ章/書のコメントを集約する。
   // 各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
-  const { comments, setComments, loading, loadingMore, hasMore, loadMore, reload } = useComments({
+  const { comments, setComments, total, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } = useComments({
     chapter_id: chapterId,
     book_id: bookId,
     ordering,
@@ -41,8 +42,26 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
     translation_project: translationProject,
   });
 
+  const loadTags = () => {
+    setTagsError(false);
+    fetchTags().then(setTags).catch(() => setTagsError(true));
+  };
+
   useEffect(() => {
-    fetchTags().then(setTags).catch(() => {});
+    let active = true;
+    fetchTags()
+      .then((items) => {
+        if (active) {
+          setTags(items);
+          setTagsError(false);
+        }
+      })
+      .catch(() => {
+        if (active) setTagsError(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
@@ -70,7 +89,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
           {heading}{" "}
           <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
-            ({comments.length})
+            ({total})
           </span>
         </h2>
 
@@ -78,10 +97,13 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
+              type="button"
               onClick={() => setOrdering(ord)}
+              aria-pressed={ordering === ord}
               style={{
                 fontSize: 12,
                 padding: "3px 10px",
+                minHeight: 44,
                 borderRadius: 12,
                 border: "1px solid var(--border)",
                 cursor: "pointer",
@@ -100,10 +122,13 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       {tags.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
           <button
+            type="button"
             onClick={() => setActiveTagId(null)}
+            aria-pressed={activeTagId === null}
             style={{
               fontSize: 12,
               padding: "3px 10px",
+              minHeight: 44,
               borderRadius: 999,
               border: "1px solid var(--border)",
               cursor: "pointer",
@@ -117,10 +142,13 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
           {tags.map((tag) => (
             <button
               key={tag.id}
+              type="button"
               onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
+              aria-pressed={activeTagId === tag.id}
               style={{
                 fontSize: 12,
                 padding: "3px 10px",
+                minHeight: 44,
                 borderRadius: 999,
                 border: "1px solid var(--border)",
                 cursor: "pointer",
@@ -134,13 +162,20 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
           ))}
         </div>
       )}
+      {tagsError && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--state-danger)", fontSize: 12 }}>
+          <span>{t.tagsLoadFailed}</span>
+          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+        </div>
+      )}
 
       <div style={{ marginBottom: 12 }}>
         <input
+          type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={t.searchComments}
-          aria-label={t.searchComments}
+          placeholder={t.searchLoadedComments}
+          aria-label={t.searchLoadedComments}
           style={{
             width: "100%",
             padding: "6px 12px",
@@ -161,10 +196,12 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
+        <p role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
+      ) : error ? (
+        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
       ) : visibleComments.length === 0 ? (
         <p style={{ color: "var(--text-faint)", fontSize: 13 }}>
-          {t.noCommentsYet}
+          {q ? t.filterCommentsNoMatch : t.noCommentsYet}
         </p>
       ) : (
         <>
@@ -178,7 +215,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
               showVersionBadge
             />
           ))}
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
         </>
       )}
     </section>

@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -52,7 +52,17 @@ class PlanListCreateView(generics.ListCreateAPIView):
             queryset = Plan.objects.filter(owner=user)
         else:
             queryset = Plan.objects.filter(visibility=Plan.VISIBILITY_PUBLIC)
-        return queryset.select_related("owner").prefetch_related("days", "subscriptions")
+        return (
+            queryset.select_related("owner")
+            .annotate(
+                active_reader_count=Count(
+                    "subscriptions",
+                    filter=Q(subscriptions__is_active=True),
+                )
+            )
+            .order_by("-created_at")
+            .prefetch_related("days")
+        )
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -71,8 +81,15 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
         return PlanDetailSerializer if self.request.method == "GET" else PlanWriteSerializer
 
     def get_queryset(self):
-        return Plan.objects.select_related("owner").prefetch_related(
-            "days__readings__canonical_book", "subscriptions"
+        return (
+            Plan.objects.select_related("owner")
+            .annotate(
+                active_reader_count=Count(
+                    "subscriptions",
+                    filter=Q(subscriptions__is_active=True),
+                )
+            )
+            .prefetch_related("days__readings__canonical_book")
         )
 
     def get_object(self):
@@ -271,13 +288,23 @@ class PlanDayCompleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, day_id):
-        subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
+        subscription = get_object_or_404(
+            PlanSubscription,
+            user=request.user,
+            plan_id=pk,
+            is_active=True,
+        )
         day = get_object_or_404(PlanDay, pk=day_id, plan_id=pk)
         PlanDayProgress.objects.get_or_create(subscription=subscription, day=day)
         return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, pk, day_id):
-        subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
+        subscription = get_object_or_404(
+            PlanSubscription,
+            user=request.user,
+            plan_id=pk,
+            is_active=True,
+        )
         PlanDayProgress.objects.filter(subscription=subscription, day_id=day_id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

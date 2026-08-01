@@ -16,6 +16,7 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
     unit_count = serializers.SerializerMethodField()
     done_count = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
+    membership_status = serializers.SerializerMethodField()
     is_in_library = serializers.SerializerMethodField()
 
     class Meta:
@@ -23,10 +24,10 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "description", "owner_username",
             "source_book", "source_book_name", "target_language",
-            "status", "unit_count", "done_count", "is_member", "is_in_library",
+            "status", "unit_count", "done_count", "is_member", "membership_status", "is_in_library",
             "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "is_in_library", "created_at", "updated_at"]
+        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "membership_status", "is_in_library", "created_at", "updated_at"]
 
     # 以下4つは、一覧では views.annotate_project_summary が本体クエリでまとめて求める。
     # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。
@@ -49,11 +50,17 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return False
-        # PENDING（申請済み）も含めてメンバー扱いにし、二重申請ボタン表示を防ぐ
+        # 作業権限を持つ承認済みメンバーだけをメンバー扱いにする。
         return obj.memberships.filter(
             user=request.user,
-            status__in=[TranslationMembership.STATUS_APPROVED, TranslationMembership.STATUS_PENDING],
+            status=TranslationMembership.STATUS_APPROVED,
         ).exists()
+
+    def get_membership_status(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        return obj.memberships.filter(user=request.user).values_list("status", flat=True).first()
 
     def get_is_in_library(self, obj):
         annotated = getattr(obj, "annotated_is_in_library", None)
@@ -88,7 +95,10 @@ class TranslationUnitSerializer(serializers.ModelSerializer):
             "assigned_to", "assigned_to_username",
             "body", "status", "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "verse_number", "verse_text", "chapter", "chapter_number", "assigned_to_username", "created_at", "updated_at"]
+        read_only_fields = [
+            "id", "verse", "verse_number", "verse_text", "chapter", "chapter_number",
+            "assigned_to", "assigned_to_username", "created_at", "updated_at",
+        ]
 
     def validate(self, attrs):
         # 作成時（instance なし）のみ重複チェック
@@ -98,6 +108,17 @@ class TranslationUnitSerializer(serializers.ModelSerializer):
             if project and verse and TranslationUnit.objects.filter(project=project, verse=verse).exists():
                 raise serializers.ValidationError({"verse": "この節はすでにこのプロジェクトに登録されています。"})
         return attrs
+
+
+class TranslationUnitCreateSerializer(TranslationUnitSerializer):
+    """Owner-only unit creation input; assignment stays on the dedicated endpoint."""
+
+    class Meta(TranslationUnitSerializer.Meta):
+        read_only_fields = [
+            field
+            for field in TranslationUnitSerializer.Meta.read_only_fields
+            if field != "verse"
+        ]
 
 
 class TranslationCommentSerializer(serializers.ModelSerializer):

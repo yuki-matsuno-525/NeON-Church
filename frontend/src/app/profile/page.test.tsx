@@ -34,6 +34,7 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
   username: "testuser",
   email: "test@example.com",
   bio: "初期自己紹介",
+  bookmarks_visibility: "private",
   created_at: "2024-01-01T00:00:00Z",
   ...overrides,
 });
@@ -110,8 +111,9 @@ describe("ProfilePage", () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
     render(<ProfilePage />);
-    expect(screen.getByText("testuser")).toBeInTheDocument();
+    expect(screen.getAllByText("testuser")).not.toHaveLength(0);
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
+    expect(document.querySelector('a[href="/settings"]')).toBeInTheDocument();
   });
 
   it("bio の初期値がフォームに入力されている", () => {
@@ -149,6 +151,9 @@ describe("ProfilePage", () => {
     vi.mocked(updateProfile).mockRejectedValue(new Error("Network Error"));
 
     render(<ProfilePage />);
+    fireEvent.change(screen.getByRole("textbox", { name: "自己紹介" }), {
+      target: { value: "変更後の自己紹介" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
@@ -166,6 +171,9 @@ describe("ProfilePage", () => {
     vi.mocked(updateProfile).mockReturnValue(new Promise(() => {}));
 
     render(<ProfilePage />);
+    fireEvent.change(screen.getByRole("textbox", { name: "自己紹介" }), {
+      target: { value: "変更後の自己紹介" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
@@ -231,7 +239,7 @@ describe("ProfilePage", () => {
     vi.mocked(fetchMyCommentPage).mockResolvedValue(makeCommentPage([makeMyComment()]));
 
     render(<ProfilePage />);
-    fireEvent.click(screen.getByRole("button", { name: /コメント/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /コメント/ }));
 
     await waitFor(() => {
       expect(screen.getByText("テストコメント")).toBeInTheDocument();
@@ -246,7 +254,7 @@ describe("ProfilePage", () => {
     vi.mocked(fetchMyCommentPage).mockResolvedValue(makeCommentPage([makeMyComment()]));
 
     render(<ProfilePage />);
-    fireEvent.click(screen.getByRole("button", { name: /コメント/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /コメント/ }));
 
     const link = await screen.findByRole("link", { name: /テストコメント/ });
     expect(link).toHaveAttribute(

@@ -37,6 +37,11 @@ const ja = {
   chapterFmt: (n: number) => `第${n}章`,
   verseFmt: (chapter: number, verse: number) => `${chapter}章${verse}節`,
   chapterVerseFmt: (book: string, chapter: number, verse: number) => `${book} ${chapter}章${verse}節 →`,
+  loadErrorTitle: "読み込めませんでした",
+  loadErrorDesc: "通信状態を確認して、もう一度お試しください。",
+  loadMoreFailed: "続きを読み込めませんでした。もう一度お試しください。",
+  actionFailed: "操作に失敗しました。もう一度お試しください。",
+  tagsLoadFailed: "タグを読み込めませんでした。",
 
   // ナビゲーション
   menuOpen: "メニューを開く",
@@ -82,6 +87,7 @@ const ja = {
   articleCannotEdit: "この記事は編集できません。",
   articleBackToList: "記事の一覧へ",
   articleEdit: "編集する",
+  articleEditShort: "編集",
   articleRelated: "同じ主題の記事",
   citingArticles: (n: number) => `引用した記事 (${n})`,
   articleNotOwner: "この記事はあなたのものではありません。",
@@ -98,7 +104,7 @@ const ja = {
   articleTabPreview: "見え方",
   articleTabCitations: "引用",
   articleEmptyBody: "まだ何も書かれていません。",
-  articleCitationMissing: "（見つかりません）",
+  articleCitationMissing: "参照先を確認できませんでした",
   articleCommentsTitle: "コメント",
   articleCommentsEmpty: "まだコメントはありません。",
   articleCommentPostFailed: "コメントを投稿できませんでした。",
@@ -108,6 +114,30 @@ const ja = {
   articleCommentPlaceholder: "この記事へのコメント",
   articleCommentLoginRequired: "コメントするにはログインが必要です。",
   articleCommentAction: "コメントする",
+  articleNotFound: "記事が見つかりません。",
+  articlePrivate: "この記事は非公開です。",
+  articleLoadFailed: "記事を読み込めませんでした。通信状態を確認して、もう一度お試しください。",
+  articleDiscardTitle: "入力内容を破棄しますか？",
+  articleDiscardDesc: "入力した題は保存されません。",
+  articleDiscardAction: "破棄する",
+  articleDraftNext: "次の画面で本文・要約・主題・公開範囲を編集できます。",
+  articleLoginToWrite: "ログインして記事を書く",
+  articleTopicsLabel: "記事の主題",
+  articleTopicsLoadFailed: "主題を読み込めませんでした。",
+  articleEditLoginRequired: "記事を編集するにはログインが必要です。",
+  articleFormatHelp: "書式の使い方",
+  articleFormatDescription: "見出しは ## 見出し、箇条書きは - 項目。聖書箇所は引用パネルから挿入できます。",
+  articleVisibilityLabel: "公開範囲",
+  articleVisibilityConfirmTitle: "公開範囲を変更しますか？",
+  articleVisibilityPublicConfirmDesc: "保存が完了すると、この記事は誰でも読めるようになります。題・要約・本文を確認してください。",
+  articleVisibilityUnlistedConfirmDesc: "保存が完了すると、URLを知っている人がこの記事を読めるようになります。",
+  articleVisibilityConfirmAction: "変更して保存",
+  articleDeleting: "削除中…",
+  articleTitleRequired: "題を入力してください。",
+  articleAutosaveHelp: "変更は自動保存されます。移動前には未保存分を保存します。",
+  articleSummaryLabel: "要約",
+  articleTopicsLimitNotice: (n: number) => `主題は${n}つまでです。別の主題を外してから選んでください。`,
+  articleEditTabsLabel: "記事編集",
 
   // 読書プラン
   plansTitle: "読書プラン",
@@ -289,6 +319,10 @@ const ja = {
   allBooks: "すべての書",
   allVersions: "すべての訳",
   allTags: "すべてのタグ",
+  genreFilterLabel: "ジャンルで絞り込む",
+  noSearchMatches: "検索条件に一致する項目はありません。",
+  answersLoadFailed: "回答を読み込めませんでした。",
+  bestAnswerFailed: "ベストアンサーを更新できませんでした。",
   tagNames: {
     "感想": "感想",
     "解説": "解説",
@@ -316,6 +350,7 @@ const ja = {
   password: "パスワード",
   loggingIn: "ログイン中...",
   loginFailed: "ログインに失敗しました",
+  forgotPassword: "パスワードをお忘れですか？",
   noAccount: "アカウントをお持ちでない方は",
   oauthOr: "または",
   oauthGoogle: "Google でログイン",
@@ -328,6 +363,9 @@ const ja = {
   registerTitle: "新規登録",
   email: "メールアドレス",
   passwordHint: "パスワード（8文字以上）",
+  confirmPassword: "パスワード（確認）",
+  passwordMismatch: "確認用パスワードが一致しません。",
+  usernameHint: "英数字と _ . + - @ のみ、150文字以内",
   registering: "登録中...",
   registerBtn: "登録する",
   registerFailed: "登録に失敗しました",
@@ -344,6 +382,9 @@ const ja = {
   tabComments: "コメント",
   noMyBookmarks: "お気に入りはまだありません。",
   noMyComments: "コメントはまだありません。",
+  noArticles: "公開記事はまだありません。",
+  emptyArticlesDesc: "このユーザーが公開した記事はありません。",
+  profileLoadFailed: "プロフィールを読み込めませんでした。",
 
   // About
   aboutTitle: "NeON Church について",
@@ -464,6 +505,8 @@ const ja = {
   submitComment: "投稿する",
   loginToComment: "してコメントする",
   postFailed: "投稿に失敗しました",
+  confirmDeleteCommentTitle: "コメントを削除しますか？",
+  confirmDeleteCommentDesc: "削除後は元に戻せません。返信がある場合、本文は削除済みとして表示されます。",
 
   // Q&Aカード
   bestAnswer: "✓ ベストアンサー",
@@ -527,6 +570,9 @@ const ja = {
   // 一覧の絞り込みチップ・読み足し
   filterByKind: "種類で絞り込む",
   loadMore: "もっと見る",
+  bookmarkRemoveFailed: "お気に入りを解除できませんでした。",
+  bookmarkUndoFailed: "お気に入りを元に戻せませんでした。",
+  bookmarkRemovedStatus: "お気に入りを解除しました。",
   // ページネーション
   paginationLabel: "ページ送り",
   paginationPrev: "前のページ",
@@ -539,6 +585,7 @@ const ja = {
   searchComments: "コメントを検索...",
   // 一覧は少しずつ読み込むので、この欄は「読み込み済みの分」にしか効かない
   searchLoadedComments: "表示中のコメントを絞り込む",
+  filterCommentsNoMatch: "表示中のコメントに一致するものはありません。",
 
   // Q&A 投稿フォーム
   qaInputTitlePlaceholder: "質問のタイトル（必須）",
@@ -552,8 +599,6 @@ const ja = {
 
   // 翻訳プロジェクト
   confirmDeleteProject: "このプロジェクトを削除しますか？この操作は取り消せません。",
-  confirmDeleteCommentTitle: "このコメントを削除しますか？",
-  confirmDeleteCommentDesc: "削除すると元に戻せません。返信は残ります。",
   confirmDeleteAllUnits: "すべてのユニットを削除しますか？",
   unitsAdded: (n: number) => `${n} ユニットを追加しました。`,
   unitsDeleted: (n: number) => `${n} ユニットを削除しました。`,
@@ -591,6 +636,9 @@ const ja = {
   showPassword: "パスワードを表示",
   hidePassword: "パスワードを非表示",
   passwordTooShort: "パスワードは8文字以上で入力してください。",
+  notificationActionFailed: "通知を更新できませんでした。",
+  notificationUnread: "未読",
+  reportReasonLabel: "報告理由",
 
   // 空状態（EmptyState 用）
   emptyBookmarksDesc: "本文を読んでお気に入りを追加すると、ここに表示されます。",
@@ -627,6 +675,8 @@ const ja = {
   // CommentPanel (UX-9)
   writeCommentCta: "コメントを書く",
   closeCommentPanel: "コメントパネルを閉じる",
+  resizeCommentPanel: "コメントパネルの幅を変更",
+  panelContentTabs: "コメントパネルの内容",
   readMoreVerse: "続きを読む",
   readLessVerse: "折りたたむ",
 
@@ -642,6 +692,8 @@ const ja = {
   searchEmptyDesc: "別のキーワードを試すか、関連するページを開いて探してみてください。",
   searchEmptyGoQa: "Q&A を見る",
   searchEmptyGoRead: "文献を読む",
+  searchPromptTitle: "キーワードを入力してください",
+  searchPromptDesc: "本文・書名・コメントを横断して検索できます。",
 
   genreNames: { "律法": "律法", "歴史": "歴史", "詩歌": "詩歌", "預言": "預言", "福音書": "福音書", "使徒・書簡": "使徒・書簡", "黙示": "黙示" } as Record<string, string>,
 };
@@ -677,6 +729,11 @@ const en: typeof ja = {
   chapterFmt: (n: number) => `Chapter ${n}`,
   verseFmt: (chapter: number, verse: number) => `${chapter}:${verse}`,
   chapterVerseFmt: (book: string, chapter: number, verse: number) => `${book} ${chapter}:${verse} →`,
+  loadErrorTitle: "Couldn't load this content",
+  loadErrorDesc: "Check your connection and try again.",
+  loadMoreFailed: "Couldn't load more items. Please try again.",
+  actionFailed: "The action failed. Please try again.",
+  tagsLoadFailed: "Couldn't load tags.",
 
   menuOpen: "Open menu",
   menuClose: "Close menu",
@@ -720,6 +777,7 @@ const en: typeof ja = {
   articleCannotEdit: "This article cannot be edited.",
   articleBackToList: "Back to articles",
   articleEdit: "Edit",
+  articleEditShort: "Edit",
   articleRelated: "Articles on the same topic",
   citingArticles: (n: number) => `Citing articles (${n})`,
   articleNotOwner: "This article does not belong to you.",
@@ -736,7 +794,7 @@ const en: typeof ja = {
   articleTabPreview: "Preview",
   articleTabCitations: "Citations",
   articleEmptyBody: "Nothing has been written yet.",
-  articleCitationMissing: "(Not found)",
+  articleCitationMissing: "Could not verify this reference",
   articleCommentsTitle: "Comments",
   articleCommentsEmpty: "No comments yet.",
   articleCommentPostFailed: "Could not post the comment.",
@@ -746,6 +804,30 @@ const en: typeof ja = {
   articleCommentPlaceholder: "Comment on this article",
   articleCommentLoginRequired: "Sign in to comment.",
   articleCommentAction: "Comment",
+  articleNotFound: "Article not found.",
+  articlePrivate: "This article is private.",
+  articleLoadFailed: "Couldn't load the article. Check your connection and try again.",
+  articleDiscardTitle: "Discard your changes?",
+  articleDiscardDesc: "The title you entered will not be saved.",
+  articleDiscardAction: "Discard",
+  articleDraftNext: "On the next screen you can edit the body, summary, topics, and visibility.",
+  articleLoginToWrite: "Sign in to write an article",
+  articleTopicsLabel: "Article topics",
+  articleTopicsLoadFailed: "Couldn't load topics.",
+  articleEditLoginRequired: "Sign in to edit this article.",
+  articleFormatHelp: "Formatting help",
+  articleFormatDescription: "Use ## Heading for headings and - Item for lists. Insert passages from the citation panel.",
+  articleVisibilityLabel: "Visibility",
+  articleVisibilityConfirmTitle: "Change visibility?",
+  articleVisibilityPublicConfirmDesc: "After saving, anyone can read this article. Review the title, summary, and body first.",
+  articleVisibilityUnlistedConfirmDesc: "After saving, anyone with the URL can read this article.",
+  articleVisibilityConfirmAction: "Change and save",
+  articleDeleting: "Deleting…",
+  articleTitleRequired: "Enter a title.",
+  articleAutosaveHelp: "Changes are saved automatically, including before you leave.",
+  articleSummaryLabel: "Summary",
+  articleTopicsLimitNotice: (n: number) => `Choose up to ${n} topics. Remove one before selecting another.`,
+  articleEditTabsLabel: "Article editor",
 
   // Reading plans
   plansTitle: "Reading plans",
@@ -921,6 +1003,10 @@ const en: typeof ja = {
   allBooks: "All books",
   allVersions: "All versions",
   allTags: "All tags",
+  genreFilterLabel: "Filter by genre",
+  noSearchMatches: "No items match your search.",
+  answersLoadFailed: "Couldn't load answers.",
+  bestAnswerFailed: "Couldn't update the best answer.",
   tagNames: {
     "感想": "Reflection",
     "解説": "Commentary",
@@ -946,6 +1032,7 @@ const en: typeof ja = {
   password: "Password",
   loggingIn: "Signing in...",
   loginFailed: "Sign in failed",
+  forgotPassword: "Forgot your password?",
   noAccount: "Don't have an account?",
   oauthOr: "or",
   oauthGoogle: "Sign in with Google",
@@ -957,6 +1044,9 @@ const en: typeof ja = {
   registerTitle: "Sign Up",
   email: "Email",
   passwordHint: "Password (8+ characters)",
+  confirmPassword: "Confirm password",
+  passwordMismatch: "The passwords do not match.",
+  usernameHint: "Letters, numbers, and _ . + - @ only; up to 150 characters",
   registering: "Signing up...",
   registerBtn: "Sign up",
   registerFailed: "Sign up failed",
@@ -972,6 +1062,9 @@ const en: typeof ja = {
   tabComments: "Comments",
   noMyBookmarks: "No bookmarks yet.",
   noMyComments: "No comments yet.",
+  noArticles: "No published articles yet.",
+  emptyArticlesDesc: "This user has not published any articles.",
+  profileLoadFailed: "Couldn't load the profile.",
 
   aboutTitle: "About NeON Church",
   aboutSubtitle: "A new Christian platform where texts and interpretations intersect",
@@ -1085,6 +1178,8 @@ const en: typeof ja = {
   submitComment: "Post",
   loginToComment: "to comment",
   postFailed: "Failed to post",
+  confirmDeleteCommentTitle: "Delete this comment?",
+  confirmDeleteCommentDesc: "This cannot be undone. If the comment has replies, it will remain marked as deleted.",
 
   bestAnswer: "✓ Best answer",
   setBestAnswer: "Best answer",
@@ -1138,6 +1233,9 @@ const en: typeof ja = {
   bookmarkKindComment: "Comment",
   filterByKind: "Filter by kind",
   loadMore: "Load more",
+  bookmarkRemoveFailed: "Couldn't remove the bookmark.",
+  bookmarkUndoFailed: "Couldn't restore the bookmark.",
+  bookmarkRemovedStatus: "Bookmark removed.",
   paginationLabel: "Pagination",
   paginationPrev: "Previous page",
   paginationNext: "Next page",
@@ -1147,6 +1245,7 @@ const en: typeof ja = {
   allVersionsToggle: "All versions",
   searchComments: "Search comments...",
   searchLoadedComments: "Filter loaded comments",
+  filterCommentsNoMatch: "No loaded comments match this filter.",
 
   qaInputTitlePlaceholder: "Question title (required)",
   qaInputPlaceholder: "Describe your question in detail...",
@@ -1158,8 +1257,6 @@ const en: typeof ja = {
   verseOption: (n: number) => `Verse ${n}`,
 
   confirmDeleteProject: "Delete this project? This action cannot be undone.",
-  confirmDeleteCommentTitle: "Delete this comment?",
-  confirmDeleteCommentDesc: "This can't be undone. Replies to it will remain.",
   confirmDeleteAllUnits: "Delete all units?",
   unitsAdded: (n: number) => `Added ${n} units.`,
   unitsDeleted: (n: number) => `Deleted ${n} units.`,
@@ -1192,6 +1289,9 @@ const en: typeof ja = {
   showPassword: "Show password",
   hidePassword: "Hide password",
   passwordTooShort: "Password must be at least 8 characters.",
+  notificationActionFailed: "Couldn't update notifications.",
+  notificationUnread: "Unread",
+  reportReasonLabel: "Report reason",
 
   emptyBookmarksDesc: "Read passages and save your favorites — they'll show up here.",
   emptyBookmarksCta: "Start reading",
@@ -1224,6 +1324,8 @@ const en: typeof ja = {
 
   writeCommentCta: "Write a comment",
   closeCommentPanel: "Close comment panel",
+  resizeCommentPanel: "Resize comment panel",
+  panelContentTabs: "Comment panel content",
   readMoreVerse: "Read more",
   readLessVerse: "Show less",
 
@@ -1237,6 +1339,8 @@ const en: typeof ja = {
   searchEmptyDesc: "Try different keywords or browse related pages.",
   searchEmptyGoQa: "Browse Q&A",
   searchEmptyGoRead: "Browse texts",
+  searchPromptTitle: "Enter a keyword",
+  searchPromptDesc: "Search across passages, books, and comments.",
 
   genreNames: { "律法": "Law (Torah)", "歴史": "History", "詩歌": "Poetry & Wisdom", "預言": "Prophets", "福音書": "Gospels", "使徒・書簡": "Acts & Epistles", "黙示": "Apocalyptic" } as Record<string, string>,
 };

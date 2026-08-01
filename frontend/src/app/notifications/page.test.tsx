@@ -36,8 +36,15 @@ const makeNotification = (overrides: Partial<Notification> = {}): Notification =
   actor_username: "bob",
   comment_id: "c1",
   comment_body_snippet: "返信テキスト",
+  translation_project_id: null,
   is_read: false,
   created_at: new Date().toISOString(),
+  target_kind: "verse_comment",
+  book_name: "マタイによる福音書",
+  chapter_number: 5,
+  verse_number: 3,
+  translation_unit_id: null,
+  is_qa: false,
   ...overrides,
 });
 
@@ -175,9 +182,9 @@ describe("NotificationsPage", () => {
     const { fetchNotificationPage } = await import("@/lib/api");
     vi.mocked(fetchNotificationPage).mockRejectedValue(new Error("Network Error"));
     render(<NotificationsPage />);
-    await screen.findByText("読み込めませんでした");
+    expect(await screen.findByRole("alert")).toHaveTextContent("読み込めませんでした");
     expect(screen.queryByText("通知はありません。")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /もう一度試す/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "もう一度試す" })).toBeInTheDocument();
   });
 
   // ------------------------------------------------------------------

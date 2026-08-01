@@ -26,11 +26,15 @@ function RegisterForm() {
   const usernameId = useId();
   const emailId = useId();
   const passwordId = useId();
+  const confirmPasswordId = useId();
+  const usernameHintId = useId();
   const errorId = useId();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorField, setErrorField] = useState<"username" | "password" | "confirm" | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const from = searchParams.get("from");
@@ -44,9 +48,23 @@ function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setErrorField(null);
+
+    if (!/^[\p{L}\p{N}_.@+\-]+$/u.test(username) || username.length > 150) {
+      setError(t.usernameHint);
+      setErrorField("username");
+      return;
+    }
 
     if (password.length < PASSWORD_MIN_LENGTH) {
       setError(t.passwordTooShort);
+      setErrorField("password");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError(t.passwordMismatch);
+      setErrorField("confirm");
       return;
     }
 
@@ -123,13 +141,17 @@ function RegisterForm() {
               id={usernameId}
               type="text"
               value={username}
+              maxLength={150}
               onChange={(e) => setUsername(e.target.value)}
               required
               autoComplete="username"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+              aria-invalid={errorField === "username" ? true : undefined}
+              aria-describedby={[usernameHintId, errorField === "username" ? errorId : null].filter(Boolean).join(" ")}
               style={fieldStyle}
             />
+            <p id={usernameHintId} style={{ margin: "5px 0 0", color: "var(--text-faint)", fontSize: 12 }}>
+              {t.usernameHint}
+            </p>
           </div>
 
           <div style={{ marginBottom: 16 }}>
@@ -138,11 +160,10 @@ function RegisterForm() {
               id={emailId}
               type="email"
               value={email}
+              maxLength={254}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
               style={fieldStyle}
             />
           </div>
@@ -156,8 +177,23 @@ function RegisterForm() {
               autoComplete="new-password"
               required
               minLength={PASSWORD_MIN_LENGTH}
-              ariaInvalid={error ? true : undefined}
-              ariaDescribedby={error ? errorId : undefined}
+              ariaInvalid={errorField === "password" ? true : undefined}
+              ariaDescribedby={errorField === "password" ? errorId : undefined}
+              inputStyle={fieldStyle}
+            />
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label htmlFor={confirmPasswordId} style={labelStyle}>{t.confirmPassword}</label>
+            <PasswordField
+              id={confirmPasswordId}
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+              required
+              minLength={PASSWORD_MIN_LENGTH}
+              ariaInvalid={errorField === "confirm" ? true : undefined}
+              ariaDescribedby={errorField === "confirm" ? errorId : undefined}
               inputStyle={fieldStyle}
             />
           </div>
@@ -193,7 +229,7 @@ function RegisterForm() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
               {OAUTH_GOOGLE_ENABLED && (
                 <a
-                  href={`/api/auth/oauth/google/${from ? `?next=${encodeURIComponent(from)}` : ""}`}
+                  href={`/api/auth/oauth/google/${from ? `?next=${encodeURIComponent(safeRedirectTarget(from))}` : ""}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -220,7 +256,7 @@ function RegisterForm() {
               )}
               {OAUTH_GITHUB_ENABLED && (
                 <a
-                  href={`/api/auth/oauth/github/${from ? `?next=${encodeURIComponent(from)}` : ""}`}
+                  href={`/api/auth/oauth/github/${from ? `?next=${encodeURIComponent(safeRedirectTarget(from))}` : ""}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -248,7 +284,7 @@ function RegisterForm() {
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--text-muted)" }}>
           {t.hasAccount}{" "}
-          <Link href="/login" style={{ color: "var(--accent)", textDecoration: "underline" }}>
+          <Link href={from ? `/login?from=${encodeURIComponent(safeRedirectTarget(from))}` : "/login"} style={{ color: "var(--accent)", textDecoration: "underline" }}>
             {t.login}
           </Link>
         </p>

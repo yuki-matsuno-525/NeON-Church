@@ -8,7 +8,8 @@ import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 import { translationLabel } from "@/lib/translations";
 import { useLang } from "@/contexts/LanguageContext";
-import { EmptyState, Button } from "@/components/ui";
+import { EmptyState, SkeletonList } from "@/components/ui";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { Pagination } from "@/components/ui/Pagination";
 
 // 検索結果（節）は50件ずつページ送りする。backend の VERSE_PAGE_SIZE と揃える。
@@ -64,28 +65,42 @@ function SearchContent() {
   const [inputValue, setInputValue] = useState(q);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(q);
     if (q.length < 1) {
       setResult(null);
+      setError(false);
       return;
     }
+    let active = true;
     // クエリ・絞り込み・ページのいずれかが変わったら、そのページを取り直す（追記ではなく置換）。
     // UI 言語は依存に入れない。言語を切り替えても検索結果は変わらない。
     // 件数の最小判定（CJKは1文字可）は backend に任せる。
     setLoading(true);
+    setError(false);
     searchBible(q, page, kind, bookSlug)
-      .then(setResult)
-      .catch(() => setResult({ verses: [], books: [], comments: [], verse_total: 0, has_more: false }))
-      .finally(() => setLoading(false));
-  }, [q, kind, bookSlug, page]);
+      .then((data) => {
+        if (active) setResult(data);
+      })
+      .catch(() => {
+        if (active) setError(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [q, kind, bookSlug, page, retryToken]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const trimmed = ((formData.get("search-q") as string) ?? inputValue).trim();
+    const trimmed = ((formData.get("q") as string) ?? inputValue).trim();
     const params = new URLSearchParams(searchParams.toString());
     if (trimmed) params.set("q", trimmed);
     else params.delete("q");
@@ -129,7 +144,7 @@ function SearchContent() {
         <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
           <input
             id={inputId}
-            name="search-q"
+            name="q"
             type="search"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -138,7 +153,8 @@ function SearchContent() {
             style={{
               width: "100%",
               padding: "9px 12px",
-              paddingRight: inputValue ? 36 : 12,
+              paddingRight: inputValue ? 48 : 12,
+              minHeight: 44,
               border: "1px solid var(--border)",
               borderRadius: "var(--radius-md)",
               background: "var(--bg-alt)",
@@ -154,11 +170,11 @@ function SearchContent() {
               aria-label={t.clearInput}
               style={{
                 position: "absolute",
-                right: 6,
+                right: 2,
                 top: "50%",
                 transform: "translateY(-50%)",
-                width: 26,
-                height: 26,
+                width: 44,
+                height: 44,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -193,6 +209,7 @@ function SearchContent() {
                 onClick={() => updateFilters({ kind: option.value })}
                 style={{
                   padding: "6px 11px",
+                  minHeight: 44,
                   border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
                   borderRadius: 999,
                   background: active ? "var(--accent-tint)" : "var(--bg-alt)",
@@ -214,7 +231,7 @@ function SearchContent() {
           value={bookSlug}
           onChange={(e) => updateFilters({ book: e.target.value })}
           style={{
-            minHeight: 32,
+            minHeight: 44,
             maxWidth: "100%",
             padding: "5px 10px",
             border: "1px solid var(--border)",
@@ -234,11 +251,28 @@ function SearchContent() {
         </select>
       </div>
 
-      {loading && <div style={{ color: "var(--text-muted)" }}>{t.searching}</div>}
+      {!q && (
+        <EmptyState title={t.searchPromptTitle} description={t.searchPromptDesc} />
+      )}
 
-      {result && !loading && (
+      {loading && (
+        <div role="status" aria-label={t.searching}>
+          <SkeletonList count={4} />
+        </div>
+      )}
+
+      {error && !loading && (
+        <ErrorState
+          title={t.loadErrorTitle}
+          message={t.loadErrorDesc}
+          onRetry={() => setRetryToken((value) => value + 1)}
+          retryLabel={t.retry}
+        />
+      )}
+
+      {result && !loading && !error && (
         <>
-          <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 20 }}>
+          <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 20 }}>
             {t.searchResults(q, totalHits)}
           </p>
 
@@ -253,7 +287,7 @@ function SearchContent() {
                   return (
                     <Link
                       key={b.id}
-                      href={slug ? `/${slug}` : "/"}
+                      href={slug ? `/${slug}?list=1` : "/read"}
                       style={{
                         padding: "var(--space-3)",
                         border: "1px solid var(--border)",
@@ -372,12 +406,8 @@ function SearchContent() {
               description={t.searchEmptyDesc}
               action={
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                  <Link href="/qa" style={{ textDecoration: "none" }}>
-                    <Button variant="ghost">{t.searchEmptyGoQa}</Button>
-                  </Link>
-                  <Link href="/read" style={{ textDecoration: "none" }}>
-                    <Button variant="primary">{t.searchEmptyGoRead}</Button>
-                  </Link>
+                  <Link href="/qa" className="btn btn-ghost">{t.searchEmptyGoQa}</Link>
+                  <Link href="/read" className="btn btn-primary">{t.searchEmptyGoRead}</Link>
                 </div>
               }
             />
@@ -391,7 +421,7 @@ function SearchContent() {
 export default function SearchPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
       <SearchContent />
     </Suspense>
   );

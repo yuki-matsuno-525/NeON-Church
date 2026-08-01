@@ -1,26 +1,49 @@
+import logging
 import secrets
 import urllib.parse
 
 import requests as http_requests
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 from django.core import signing
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
+from django.utils import timezone
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, status
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from common.pagination import StandardPageNumberPagination
 
-from .serializers import LoginSerializer, ProfileUpdateSerializer, PublicUserSerializer, RegisterSerializer, UserSerializer
+from .serializers import (
+    AccountDeletionSerializer,
+    AccountSettingsSerializer,
+    IdentityUpdateSerializer,
+    LoginSerializer,
+    NotificationPreferencesSerializer,
+    PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    ProfileUpdateSerializer,
+    PublicUserSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def _safe_next_path(raw: str | None) -> str:
@@ -58,6 +81,41 @@ def _set_auth_cookies(response, access: str, refresh: str | None = None) -> None
             secure=not settings.DEBUG,
             samesite="Lax",
         )
+
+
+def _clear_auth_cookies(response) -> None:
+    for name in ("access_token", "refresh_token"):
+        response.set_cookie(
+            name,
+            "",
+            max_age=0,
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite="Lax",
+            expires="Thu, 01 Jan 1970 00:00:00 GMT",
+        )
+
+
+def _blacklist_user_sessions(user, *, except_jti: str | None = None) -> None:
+    tokens = OutstandingToken.objects.filter(
+        user=user,
+        expires_at__gt=timezone.now(),
+        blacklistedtoken__isnull=True,
+    )
+    if except_jti:
+        tokens = tokens.exclude(jti=except_jti)
+    for token in tokens:
+        BlacklistedToken.objects.get_or_create(token=token)
+
+
+def _current_refresh_jti(request: Request) -> str | None:
+    raw_refresh = request.COOKIES.get("refresh_token")
+    if not raw_refresh:
+        return None
+    try:
+        return str(RefreshToken(raw_refresh)["jti"])
+    except (TokenError, KeyError):
+        return None
 
 
 class RegisterView(APIView):
@@ -212,6 +270,8 @@ class UserBookmarksView(generics.ListAPIView):
     def get_base_queryset(self):
         """絞り込み前の対象ユーザーの栞。非公開なら空。件数集計にも使う。"""
         from bookmarks.models import Bookmark
+        from bookmarks.views import filter_by_translation_visibility
+
         username = self.kwargs["username"]
         try:
             user = User.objects.get(username=username)
@@ -219,7 +279,8 @@ class UserBookmarksView(generics.ListAPIView):
             raise NotFound("User not found.")
         if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
             return Bookmark.objects.none()
-        return Bookmark.objects.filter(user=user)
+
+        return filter_by_translation_visibility(Bookmark.objects.filter(user=user), self.request.user)
 
     def get_queryset(self):
         # 自分の /bookmarks と同じ形（種類での絞り込み・節本文つき）で返す。
@@ -258,7 +319,6 @@ class TokenRefreshView(APIView):
 
         try:
             refresh = RefreshToken(raw_refresh)
-            access = str(refresh.access_token)
 
             # 古い refresh token をブラックリストに追加し、新しい jti/exp/iat を付与する
             try:
@@ -268,6 +328,8 @@ class TokenRefreshView(APIView):
             refresh.set_jti()
             refresh.set_exp()
             refresh.set_iat()
+            refresh.outstand()
+            access = str(refresh.access_token)
 
             response = Response({"detail": "Token refreshed."})
             _set_auth_cookies(response, access, str(refresh))
@@ -281,6 +343,172 @@ class TokenRefreshView(APIView):
 # ---------------------------------------------------------------------------
 # OAuth ヘルパー
 # ---------------------------------------------------------------------------
+
+class AccountSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        return Response(AccountSettingsSerializer(request.user).data)
+
+
+class IdentityUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request: Request) -> Response:
+        serializer = IdentityUpdateSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(AccountSettingsSerializer(user).data)
+
+
+class NotificationPreferencesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request: Request) -> Response:
+        serializer = NotificationPreferencesSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        serializer = PasswordChangeSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password", "updated_at"])
+        _blacklist_user_sessions(user)
+
+        refresh = RefreshToken.for_user(user)
+        response = Response({"detail": "Password changed."})
+        _set_auth_cookies(response, str(refresh.access_token), str(refresh))
+        return response
+
+
+class SessionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        current_jti = _current_refresh_jti(request)
+        tokens = OutstandingToken.objects.filter(
+            user=request.user,
+            expires_at__gt=timezone.now(),
+            blacklistedtoken__isnull=True,
+        ).order_by("-created_at")
+        return Response([
+            {
+                "id": token.jti,
+                "created_at": token.created_at,
+                "expires_at": token.expires_at,
+                "current": token.jti == current_jti,
+            }
+            for token in tokens
+        ])
+
+
+class SessionRevokeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request: Request, jti: str) -> Response:
+        try:
+            token = OutstandingToken.objects.get(
+                user=request.user,
+                jti=jti,
+                expires_at__gt=timezone.now(),
+            )
+        except OutstandingToken.DoesNotExist:
+            raise NotFound("Session not found.")
+        BlacklistedToken.objects.get_or_create(token=token)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        if jti == _current_refresh_jti(request):
+            _clear_auth_cookies(response)
+        return response
+
+
+class RevokeOtherSessionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        _blacklist_user_sessions(request.user, except_jti=_current_refresh_jti(request))
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AccountDeletionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request: Request) -> Response:
+        serializer = AccountDeletionSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        _blacklist_user_sessions(user)
+        user.delete()
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        _clear_auth_cookies(response)
+        return response
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request: Request) -> Response:
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.filter(
+            email__iexact=serializer.validated_data["email"],
+            is_active=True,
+        ).first()
+        if user and user.has_usable_password():
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            query = urllib.parse.urlencode({"uid": uid, "token": token})
+            reset_url = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?{query}"
+            try:
+                send_mail(
+                    "NeON Church password reset",
+                    f"Use the following link to reset your password:\n\n{reset_url}",
+                    getattr(settings, "DEFAULT_FROM_EMAIL", None),
+                    [user.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                logger.exception("Password reset email delivery failed")
+        return Response(
+            {"detail": "If an account exists for that email address, a reset link has been sent."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request: Request) -> Response:
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user_id = force_str(urlsafe_base64_decode(serializer.validated_data["uid"]))
+            user = User.objects.get(pk=user_id, is_active=True)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise ValidationError({"token": "This password reset link is invalid or expired."})
+        if not default_token_generator.check_token(user, serializer.validated_data["token"]):
+            raise ValidationError({"token": "This password reset link is invalid or expired."})
+        try:
+            validate_password(serializer.validated_data["new_password"], user=user)
+        except DjangoValidationError as exc:
+            raise ValidationError({"new_password": exc.messages})
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password", "updated_at"])
+        _blacklist_user_sessions(user)
+        response = Response({"detail": "Password reset complete."})
+        _clear_auth_cookies(response)
+        return response
+
 
 _GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 _GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"

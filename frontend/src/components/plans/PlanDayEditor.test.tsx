@@ -60,7 +60,7 @@ describe("プランの1日の編集", () => {
 
     expect(screen.getByText("マタイによる福音書 1章")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "この章を外す" }));
+    await user.click(screen.getByRole("button", { name: "マタイによる福音書 1章を外す" }));
 
     expect(screen.queryByText("マタイによる福音書 1章")).not.toBeInTheDocument();
   });
@@ -88,8 +88,8 @@ describe("プランの1日の編集", () => {
   it("並べ替えられないときは上下と削除のボタンを出さない", () => {
     renderEditor({ canDelete: false, canMoveUp: false, canMoveDown: false });
 
-    expect(screen.queryByRole("button", { name: "上へ" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "削除" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "第1日を上へ移動" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "第1日を削除" })).not.toBeInTheDocument();
     // 中身は直せるので、入力欄は出したまま
     expect(screen.getByPlaceholderText("この日の題（任意）")).toBeInTheDocument();
   });

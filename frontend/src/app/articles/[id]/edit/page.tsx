@@ -23,12 +23,14 @@ import { CitationPanel } from "@/components/articles/CitationPanel";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
 
 const MAX_TAGS = 3;
+const MAX_TITLE_LENGTH = 120;
+const MAX_SUMMARY_LENGTH = 300;
 
 export default function ArticleEditPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useT();
   const { id } = use(params);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isMobile = useIsMobile();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,7 +38,12 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const [tags, setTags] = useState<ArticleTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [pendingVisibility, setPendingVisibility] = useState<ArticleVisibility | null>(null);
+  const [tagNotice, setTagNotice] = useState<string | null>(null);
+  const [tagLoadError, setTagLoadError] = useState(false);
   // スマホは1カラムなので、本文・プレビュー・引用をタブで切り替える。
   const [mobileTab, setMobileTab] = useState<"body" | "preview" | "citations">("body");
 
@@ -49,9 +56,19 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   // プレビュー用。保存の返事に入っている引用で更新する。
   const [citations, setCitations] = useState<ArticleCitation[]>([]);
 
-  useEffect(() => {
-    fetchArticleTags().then(setTags).catch(() => {});
+  const loadTags = useCallback(async () => {
+    setTagLoadError(false);
+    try {
+      setTags(await fetchArticleTags());
+    } catch {
+      setTagLoadError(true);
+    }
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadTags();
+  }, [loadTags]);
 
   useEffect(() => {
     fetchArticle(id)
@@ -75,6 +92,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   const handleSave = useCallback(
     async (value: typeof draft) => {
+      if (!value.title.trim()) throw new Error("記事の題を入力してください。");
       const saved = await updateArticle(id, value);
       // 保存のたびに引用を作り直しているので、プレビューもここで最新にする。
       setCitations(saved.citations ?? []);
@@ -82,7 +100,11 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     [id],
   );
 
-  const status = useAutosave({ value: draft, onSave: handleSave, enabled: !loading && !error });
+  const autosave = useAutosave({
+    value: draft,
+    onSave: handleSave,
+    enabled: !loading && !authLoading && !!user && !error && user.username === article?.owner_username,
+  });
 
   /** 引用パネルから呼ばれる。本文のカーソル位置に印を差し込む。 */
   const insertMark = (mark: string) => {
@@ -112,23 +134,34 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   const toggleTag = (tagId: string) => {
     setTagIds((current) => {
-      if (current.includes(tagId)) return current.filter((value) => value !== tagId);
-      if (current.length >= MAX_TAGS) return current;
+      if (current.includes(tagId)) {
+        setTagNotice(null);
+        return current.filter((value) => value !== tagId);
+      }
+      if (current.length >= MAX_TAGS) {
+        setTagNotice(t.articleTopicsLimitNotice(MAX_TAGS));
+        return current;
+      }
+      setTagNotice(null);
       return [...current, tagId];
     });
   };
 
   const handleDelete = async () => {
-    setConfirmDelete(false);
+    if (deleteBusy) return;
+    setDeleteBusy(true);
+    setActionError(null);
     try {
       await deleteArticle(id);
       router.push("/articles");
     } catch {
-      setError(t.articleDeleteFailed);
+      setActionError(t.articleDeleteFailed);
+      setDeleteBusy(false);
+      setConfirmDelete(false);
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
         <SkeletonList count={4} />
@@ -147,7 +180,18 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (user && user.username !== article.owner_username) {
+  if (!user) {
+    return (
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleEditLoginRequired}</p>
+        <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} style={{ color: "var(--accent)" }}>
+          {t.login}
+        </Link>
+      </div>
+    );
+  }
+
+  if (user.username !== article.owner_username) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
         <p style={{ color: "var(--text-muted)" }}>{t.articleNotOwner}</p>
@@ -157,34 +201,43 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   const canPublish = summary.trim().length > 0;
   const bodyPane = (
-    <textarea
-      ref={bodyRef}
-      value={body}
-      onChange={(event) => setBody(event.target.value)}
-      placeholder={t.articleBodyPlaceholder}
-      style={{
-        width: "100%",
-        flex: 1,
-        minHeight: isMobile ? 320 : 0,
-        boxSizing: "border-box",
-        padding: 14,
-        borderRadius: 10,
-        border: "1px solid var(--border)",
-        background: "var(--bg)",
-        color: "var(--text)",
-        fontFamily: "inherit",
-        fontSize: 15,
-        lineHeight: 1.8,
-        resize: "none",
-      }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <label htmlFor="article-body" style={fieldLabelStyle}>{t.articleTabBody}</label>
+      <textarea
+        id="article-body"
+        ref={bodyRef}
+        value={body}
+        onChange={(event) => setBody(event.target.value)}
+        placeholder={t.articleBodyPlaceholder}
+        aria-describedby="article-markdown-help"
+        style={{
+          width: "100%",
+          minHeight: isMobile ? 360 : 480,
+          boxSizing: "border-box",
+          padding: 14,
+          borderRadius: 10,
+          border: "1px solid var(--border)",
+          background: "var(--bg)",
+          color: "var(--text)",
+          fontFamily: "inherit",
+          fontSize: 16,
+          lineHeight: 1.8,
+          resize: "vertical",
+        }}
+      />
+      <details id="article-markdown-help" style={{ marginTop: 8, color: "var(--text-muted)", fontSize: 12 }}>
+        <summary style={{ cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>{t.articleFormatHelp}</summary>
+        <p style={{ margin: "4px 0 0", lineHeight: 1.7 }}>
+          {t.articleFormatDescription}
+        </p>
+      </details>
+    </div>
   );
   const previewPane = (
     <div
       style={{
         flex: 1,
-        minHeight: isMobile ? 320 : 0,
-        overflowY: "auto",
+        minHeight: isMobile ? 360 : 480,
         border: "1px solid var(--border)",
         borderRadius: 10,
         padding: 14,
@@ -217,15 +270,34 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         confirmText={t.articleDeleteAction}
         destructive
         onConfirm={handleDelete}
-        onCancel={() => setConfirmDelete(false)}
+        onCancel={() => !deleteBusy && setConfirmDelete(false)}
+      />
+      <ConfirmDialog
+        open={pendingVisibility !== null}
+        title={t.articleVisibilityConfirmTitle}
+        description={pendingVisibility === "public"
+          ? t.articleVisibilityPublicConfirmDesc
+          : t.articleVisibilityUnlistedConfirmDesc}
+        confirmText={t.articleVisibilityConfirmAction}
+        onConfirm={() => {
+          if (pendingVisibility) setVisibility(pendingVisibility);
+          setPendingVisibility(null);
+        }}
+        onCancel={() => setPendingVisibility(null)}
       />
 
       {/* 題と公開範囲 */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+        <label htmlFor="article-title" style={visuallyHiddenStyle}>{t.articleTitleLabel}</label>
         <input
+          id="article-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t.articleTitleLabel}
+          maxLength={MAX_TITLE_LENGTH}
+          required
+          aria-invalid={!title.trim()}
+          aria-describedby={!title.trim() ? "article-title-error" : undefined}
           style={{
             flex: "1 1 280px",
             padding: "10px 12px",
@@ -238,9 +310,15 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             fontWeight: 700,
           }}
         />
+        <label htmlFor="article-visibility" style={visuallyHiddenStyle}>{t.articleVisibilityLabel}</label>
         <select
+          id="article-visibility"
           value={visibility}
-          onChange={(event) => setVisibility(event.target.value as ArticleVisibility)}
+          onChange={(event) => {
+            const next = event.target.value as ArticleVisibility;
+            if (next === "private") setVisibility(next);
+            else setPendingVisibility(next);
+          }}
           style={selectStyle}
         >
           {visibilityOptions(t).map((option) => (
@@ -249,23 +327,40 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             </option>
           ))}
         </select>
-        <span style={{ fontSize: 12, color: status === "error" ? "var(--state-error)" : "var(--text-faint)", minWidth: 80 }}>
-          {saveStatusLabel(status, t)}
+        <span
+          role="status"
+          aria-live="polite"
+          style={{ fontSize: 12, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-muted)", minWidth: 120 }}
+        >
+          {saveStatusLabel(autosave.status, t)}
         </span>
+        {autosave.status === "error" && (
+          <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>{t.retry}</button>
+        )}
         <Link href={`/articles/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
           {t.articleView}
         </Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} style={deleteButtonStyle}>
-          {t.delete}
+        <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} style={deleteButtonStyle}>
+          {deleteBusy ? t.articleDeleting : t.delete}
         </button>
+      </div>
+      {actionError && <p role="alert" style={{ margin: "-4px 0 12px", color: "var(--state-danger)", fontSize: 13 }}>{actionError}</p>}
+
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, margin: "-4px 0 10px", fontSize: 12, color: "var(--text-muted)" }}>
+        <span id={!title.trim() ? "article-title-error" : undefined} style={{ color: !title.trim() ? "var(--state-danger)" : undefined }}>
+          {!title.trim() ? t.articleTitleRequired : t.articleAutosaveHelp}
+        </span>
+        <span>{title.length}/{MAX_TITLE_LENGTH}</span>
       </div>
 
       {/* 要約 */}
+      <label htmlFor="article-summary" style={fieldLabelStyle}>{t.articleSummaryLabel}</label>
       <input
+        id="article-summary"
         value={summary}
         onChange={(event) => setSummary(event.target.value)}
         placeholder={t.articleSummaryPlaceholder}
-        maxLength={300}
+        maxLength={MAX_SUMMARY_LENGTH}
         style={{
           width: "100%",
           boxSizing: "border-box",
@@ -279,6 +374,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           marginBottom: 10,
         }}
       />
+      <div style={{ textAlign: "right", margin: "-6px 0 8px", fontSize: 12, color: "var(--text-muted)" }}>
+        {summary.length}/{MAX_SUMMARY_LENGTH}
+      </div>
       {!canPublish && (
         <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>
           {t.articleSummaryRequired}
@@ -286,7 +384,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       )}
 
       {/* タグ */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+      <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
+        <legend style={fieldLabelStyle}>{t.articleTopicsLimit(MAX_TAGS)}</legend>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {tags.map((tag) => {
           const active = tagIds.includes(tag.id);
           return (
@@ -294,13 +394,14 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               key={tag.id}
               type="button"
               onClick={() => toggleTag(tag.id)}
+              aria-pressed={active}
               style={{
                 border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
                 background: active ? "var(--accent-tint)" : "transparent",
                 color: active ? "var(--accent)" : "var(--text-muted)",
                 borderRadius: 999,
                 padding: "4px 12px",
-                minHeight: 30,
+                minHeight: 44,
                 fontSize: 12,
                 cursor: "pointer",
                 fontFamily: "inherit",
@@ -310,38 +411,46 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             </button>
           );
         })}
-        <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
-          {t.articleTopicsLimit(MAX_TAGS)}
-        </span>
-      </div>
+        </div>
+        {tagLoadError && (
+          <p role="alert" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>
+            {t.articleTopicsLoadFailed} <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
+          </p>
+        )}
+        {tagNotice && <p role="status" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>{tagNotice}</p>}
+      </fieldset>
 
       {isMobile ? (
         <div>
-          <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
-            <MobileTab active={mobileTab === "body"} onClick={() => setMobileTab("body")}>
+          <div role="tablist" aria-label={t.articleEditTabsLabel} onKeyDown={handleTabArrowKey} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
+            <MobileTab id="body" active={mobileTab === "body"} onClick={() => setMobileTab("body")}>
               {t.articleTabBody}
             </MobileTab>
-            <MobileTab active={mobileTab === "preview"} onClick={() => setMobileTab("preview")}>
+            <MobileTab id="preview" active={mobileTab === "preview"} onClick={() => setMobileTab("preview")}>
               {t.articleTabPreview}
             </MobileTab>
-            <MobileTab active={mobileTab === "citations"} onClick={() => setMobileTab("citations")}>
+            <MobileTab id="citations" active={mobileTab === "citations"} onClick={() => setMobileTab("citations")}>
               {t.articleTabCitations}
             </MobileTab>
           </div>
-          {mobileTab === "body" && bodyPane}
-          {mobileTab === "preview" && previewPane}
-          {mobileTab === "citations" && citationPane}
+          <div role="tabpanel" id={`article-${mobileTab}-panel`} aria-labelledby={`article-${mobileTab}-tab`}>
+            {mobileTab === "body" && bodyPane}
+            {mobileTab === "preview" && previewPane}
+            {mobileTab === "citations" && citationPane}
+          </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 360px", gap: 16, height: "calc(100vh - 280px)", minHeight: 480 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 380px)", gap: 20, alignItems: "start" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
             {bodyPane}
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <div style={{ fontSize: 11, color: "var(--text-faint)", marginBottom: 4 }}>{t.articleTabPreview}</div>
+            <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+              <div style={fieldLabelStyle}>{t.articleTabPreview}</div>
               {previewPane}
             </div>
           </div>
-          {citationPane}
+          <div style={{ position: "sticky", top: "calc(var(--navbar-height) + 16px)", height: "min(720px, calc(100vh - var(--navbar-height) - 32px))" }}>
+            {citationPane}
+          </div>
         </div>
       )}
     </div>
@@ -349,17 +458,24 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 }
 
 function MobileTab({
+  id,
   active,
   onClick,
   children,
 }: {
+  id: "body" | "preview" | "citations";
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
     <button
+      id={`article-${id}-tab`}
       type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={`article-${id}-panel`}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       style={{
         flex: 1,
@@ -382,7 +498,7 @@ function MobileTab({
 
 const selectStyle: React.CSSProperties = {
   padding: "8px 10px",
-  minHeight: 40,
+  minHeight: 44,
   borderRadius: 8,
   border: "1px solid var(--border)",
   background: "var(--bg)",
@@ -398,7 +514,64 @@ const deleteButtonStyle: React.CSSProperties = {
   color: "var(--text-muted)",
   fontSize: 13,
   padding: "8px 14px",
-  minHeight: 40,
+  minHeight: 44,
   cursor: "pointer",
   fontFamily: "inherit",
 };
+
+const secondaryButtonStyle: React.CSSProperties = {
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  background: "transparent",
+  color: "var(--text)",
+  minHeight: 44,
+  padding: "8px 14px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};
+
+const inlineRetryStyle: React.CSSProperties = {
+  border: 0,
+  background: "transparent",
+  color: "var(--accent)",
+  minHeight: 44,
+  padding: "8px 6px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  textDecoration: "underline",
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  color: "var(--text-muted)",
+  fontSize: 13,
+  fontWeight: 700,
+  marginBottom: 6,
+};
+
+const visuallyHiddenStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+  const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+  if (tabs.length === 0) return;
+  const current = tabs.indexOf(document.activeElement as HTMLButtonElement);
+  let next = current;
+  if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = tabs.length - 1;
+  else if (event.key === "ArrowRight") next = (Math.max(current, 0) + 1) % tabs.length;
+  else next = (current <= 0 ? tabs.length : current) - 1;
+  event.preventDefault();
+  tabs[next]?.focus();
+  tabs[next]?.click();
+}

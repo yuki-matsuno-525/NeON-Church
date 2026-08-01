@@ -81,6 +81,38 @@ class TestNotificationTrigger:
         res = auth_client.get(NOTIFICATIONS_URL)
         assert res.data["count"] == 0
 
+    def test_disabled_in_app_preference_skips_comment_notification(
+        self, auth_client, other_auth_client, comment
+    ):
+        from django.contrib.auth import get_user_model
+
+        recipient = get_user_model().objects.get(username="testuser")
+        recipient.in_app_notifications_enabled = False
+        recipient.save(update_fields=["in_app_notifications_enabled"])
+
+        other_auth_client.post(upvote_url(comment["id"]))
+
+        assert auth_client.get(NOTIFICATIONS_URL).data["count"] == 0
+
+    def test_email_preference_delivers_comment_notification(
+        self, auth_client, other_auth_client, comment, settings
+    ):
+        from django.contrib.auth import get_user_model
+        from django.core import mail
+
+        settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+        recipient = get_user_model().objects.get(username="testuser")
+        recipient.in_app_notifications_enabled = False
+        recipient.email_notifications_enabled = True
+        recipient.save(update_fields=["in_app_notifications_enabled", "email_notifications_enabled"])
+
+        other_auth_client.post(upvote_url(comment["id"]))
+
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == [recipient.email]
+        assert "/matthew/1#verse-1" in mail.outbox[0].body
+        assert auth_client.get(NOTIFICATIONS_URL).data["count"] == 0
+
 
 # ------------------------------------------------------------------
 # 通知一覧

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import {
   fetchCommentReplies,
@@ -36,6 +36,7 @@ type Props = {
 
 export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPosted, onLoginRequired }: Props) {
   const t = useT();
+  const replyId = useId();
   const { lang } = useLang();
   const formatRelativeTime = useRelativeTime();
   const [expanded, setExpanded] = useState(false);
@@ -45,6 +46,9 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
   const [answering, setAnswering] = useState(false);
   const [submittingReply, setSubmittingReply] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
+  const [repliesError, setRepliesError] = useState(false);
+  const [bestAnswerError, setBestAnswerError] = useState<string | null>(null);
+  const [updatingBestAnswer, setUpdatingBestAnswer] = useState<string | null>(null);
 
   const url = buildVerseUrl(comment);
   const locationSlug = slugFromDbName(comment.book_name);
@@ -55,14 +59,19 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
 
   const loadReplies = () => {
     setLoadingReplies(true);
+    setRepliesError(false);
     fetchCommentReplies(comment.id)
       .then((data) => setReplies(data.slice().reverse()))
-      .catch(() => setReplies([]))
+      .catch(() => {
+        setReplies([]);
+        setRepliesError(true);
+      })
       .finally(() => setLoadingReplies(false));
   };
 
   const handleExpand = () => {
     if (!expanded) loadReplies();
+    else setAnswering(false);
     setExpanded((v) => !v);
   };
 
@@ -98,16 +107,21 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
 
   const handleSetBestAnswer = async (answerId: string) => {
     const next = comment.best_answer?.id === answerId ? null : answerId;
+    setUpdatingBestAnswer(answerId);
+    setBestAnswerError(null);
     try {
       await setBestAnswer(comment.id, next);
       onBestAnswerChange();
     } catch {
-      // ignore
+      setBestAnswerError(t.bestAnswerFailed);
+    } finally {
+      setUpdatingBestAnswer(null);
     }
   };
 
   return (
     <div
+      id={`question-${comment.id}`}
       className="card-glow"
       style={{
         padding: "16px",
@@ -143,13 +157,15 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
       </div>
 
       {comment.title && (
-        <h2 style={qaTitleStyle}>{comment.title}</h2>
+        <h3 style={qaTitleStyle}>{comment.title}</h3>
       )}
-      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{comment.body}</p>
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)", whiteSpace: "pre-wrap" }}>{comment.body}</p>
 
       {/* 投稿者・日時・タグは翻訳カードの meta ピルと同じ見た目に揃える。 */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-        <span style={metaPillStyle}>{comment.user.username}</span>
+        <Link href={`/profile/${comment.user.username}`} style={{ ...metaPillStyle, textDecoration: "none" }}>
+          {comment.user.username}
+        </Link>
         <span style={metaPillStyle}>{formatRelativeTime(comment.created_at)}</span>
         {comment.tags.map((tag) => (
           <span key={tag.id} style={metaPillStyle}>
@@ -171,10 +187,12 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", marginBottom: 4 }}>
             {t.bestAnswer}
           </div>
-          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 2 }}>
-            {comment.best_answer.user.username} · {formatRelativeTime(comment.best_answer.created_at)}
-          </div>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>{comment.best_answer.body}</p>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 2 }}>
+              <Link href={`/profile/${comment.best_answer.user.username}`} style={{ color: "inherit" }}>
+                {comment.best_answer.user.username}
+              </Link>{" "}· {formatRelativeTime(comment.best_answer.created_at)}
+            </div>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{comment.best_answer.body}</p>
         </div>
       )}
 
@@ -184,6 +202,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
           {comment.vote_count}
         </span>
         <button
+          type="button"
           onClick={handleExpand}
           aria-expanded={expanded}
           style={{
@@ -194,6 +213,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
             borderRadius: 999,
             cursor: "pointer",
             padding: "3px 8px",
+            minHeight: 44,
             fontFamily: "inherit",
             display: "inline-flex",
             alignItems: "center",
@@ -214,6 +234,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
             borderRadius: 999,
             cursor: "pointer",
             padding: "3px 8px",
+            minHeight: 44,
             fontFamily: "inherit",
             display: "inline-flex",
             alignItems: "center",
@@ -229,6 +250,11 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
         <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
           {loadingReplies ? (
             <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</div>
+          ) : repliesError ? (
+            <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 13, color: "var(--state-danger)" }}>{t.answersLoadFailed}</span>
+              <button type="button" onClick={loadReplies} className="btn btn-ghost">{t.retry}</button>
+            </div>
           ) : replies.length === 0 ? (
             <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.noReplies}</div>
           ) : (
@@ -251,22 +277,28 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
                           {t.bestAnswer}
                         </span>
                       )}
-                      <span style={{ fontWeight: 600, fontSize: 12 }}>{r.user.username}</span>
+                      <Link href={`/profile/${r.user.username}`} style={{ fontWeight: 600, fontSize: 12, color: "inherit" }}>
+                        {r.user.username}
+                      </Link>
                       <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
                         {formatRelativeTime(r.created_at)}
                       </span>
                       {isOwner && !r.is_deleted && (
                         <button
+                          type="button"
                           onClick={() => handleSetBestAnswer(r.id)}
+                          disabled={updatingBestAnswer !== null}
+                          aria-pressed={isBest}
                           style={{
                             marginLeft: "auto",
                             fontSize: 11,
                             padding: "2px 8px",
+                            minHeight: 44,
                             borderRadius: 999,
                             border: `1px solid ${isBest ? "var(--accent)" : "var(--border)"}`,
                             background: isBest ? "var(--accent)" : "transparent",
                             color: isBest ? "var(--accent-text)" : "var(--text-muted)",
-                            cursor: "pointer",
+                            cursor: updatingBestAnswer ? "wait" : "pointer",
                             fontFamily: "inherit",
                           }}
                         >
@@ -274,7 +306,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
                         </button>
                       )}
                     </div>
-                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+                    <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
                       {r.is_deleted ? t.deletedComment : r.body}
                     </p>
                   </div>
@@ -283,9 +315,17 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
             </div>
           )}
 
-          {currentUserId && (answering || expanded) && (
+          {bestAnswerError && (
+            <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12, margin: "8px 0 0" }}>
+              {bestAnswerError}
+            </p>
+          )}
+
+          {currentUserId && answering && (
             <form onSubmit={handleReplySubmit} style={{ marginTop: 10 }}>
+              <label htmlFor={replyId} className="sr-only">{t.replyPlaceholder}</label>
               <textarea
+                id={replyId}
                 value={replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
                 placeholder={t.replyPlaceholder}
@@ -306,9 +346,12 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
                 }}
               />
               {replyError && (
-                <p style={{ color: "#ef4444", fontSize: 12, margin: "2px 0" }}>{replyError}</p>
+                <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "2px 0" }}>{replyError}</p>
               )}
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+                <button type="button" onClick={() => setAnswering(false)} className="btn btn-ghost">
+                  {t.cancel}
+                </button>
                 <button
                   type="submit"
                   disabled={submittingReply || !replyBody.trim()}
@@ -376,7 +419,7 @@ const qaCardFooterStyle: React.CSSProperties = {
 const metaPillStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: 24,
+  minHeight: 44,
   padding: "2px 8px",
   borderRadius: 6,
   background: "rgba(255,255,255,0.06)",

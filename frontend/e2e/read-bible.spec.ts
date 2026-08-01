@@ -63,6 +63,11 @@ test("B-2: 章ナビゲーション — 前後章に遷移する", async ({ page
 test("B-3: サイドバー — モバイルでハンバーガーメニューが機能する", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/matthew/1");
+  // Client hydration and chapter data loading are complete before testing an
+  // interactive control; otherwise an early click can land on server HTML.
+  await expect(
+    page.getByRole("heading", { name: "マタイ 第1章", exact: true })
+  ).toBeVisible();
 
   // ハンバーガーボタンでサイドバーを開く
   await page.getByRole("button", { name: "メニューを開く" }).click();

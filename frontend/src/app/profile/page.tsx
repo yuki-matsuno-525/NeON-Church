@@ -18,9 +18,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT, formatBookLocation, useRelativeTime } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
-import { SkeletonList, EmptyState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { SkeletonList, EmptyState, ErrorState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
+import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 type Tab = "bookmarks" | "comments";
 
@@ -32,7 +33,9 @@ export default function ProfilePage() {
   const messageId = useId();
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [bioMessage, setBioMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [privacyMessage, setPrivacyMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [savingVisibility, setSavingVisibility] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("bookmarks");
   // お気に入りタブの種類の絞り込み（null は「すべて」）
   const [kind, setKind] = useState<BookmarkType | null>(null);
@@ -92,13 +95,13 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
+    setBioMessage(null);
     try {
       const updated: User = await updateProfile({ bio });
       setUser(updated);
-      setMessage({ type: "success", text: t.profileUpdated });
+      setBioMessage({ type: "success", text: t.profileUpdated });
     } catch {
-      setMessage({ type: "error", text: t.profileUpdateFailed });
+      setBioMessage({ type: "error", text: t.profileUpdateFailed });
     } finally {
       setSaving(false);
     }
@@ -106,13 +109,16 @@ export default function ProfilePage() {
 
   const handleVisibilityToggle = async (next: boolean) => {
     const visibility: BookmarksVisibility = next ? "public" : "private";
-    setMessage(null);
+    setPrivacyMessage(null);
+    setSavingVisibility(true);
     try {
       const updated = await updateProfile({ bookmarks_visibility: visibility });
       setUser(updated);
-      setMessage({ type: "success", text: t.profileUpdated });
+      setPrivacyMessage({ type: "success", text: t.profileUpdated });
     } catch {
-      setMessage({ type: "error", text: t.profileUpdateFailed });
+      setPrivacyMessage({ type: "error", text: t.profileUpdateFailed });
+    } finally {
+      setSavingVisibility(false);
     }
   };
 
@@ -158,6 +164,16 @@ export default function ProfilePage() {
         >
           {user.username[0]?.toUpperCase() ?? "?"}
         </span>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, overflowWrap: "anywhere" }}>{user.username}</div>
+          <Link href={`/profile/${user.username}`} style={{ color: "var(--accent)", fontSize: 13 }}>
+            {t.profile}
+          </Link>
+          <span aria-hidden="true" style={{ color: "var(--text-faint)", margin: "0 8px" }}>·</span>
+          <Link href="/settings" style={{ color: "var(--accent)", fontSize: 13 }}>
+            {lang === "ja" ? "アカウント設定" : "Account settings"}
+          </Link>
+        </div>
       </div>
 
       <div
@@ -208,7 +224,7 @@ export default function ProfilePage() {
             maxLength={500}
             placeholder={t.bioPlaceholder}
             autoComplete="off"
-            aria-describedby={message ? messageId : undefined}
+            aria-describedby={bioMessage ? messageId : undefined}
             style={{
               width: "100%",
               padding: "10px 12px",
@@ -226,24 +242,24 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {message && (
+        {bioMessage && (
           <p
             id={messageId}
-            role={message.type === "error" ? "alert" : "status"}
+            role={bioMessage.type === "error" ? "alert" : "status"}
             aria-live="polite"
             style={{
               fontSize: "var(--font-size-sm)",
-              color: message.type === "success" ? "var(--accent)" : "var(--state-danger)",
+              color: bioMessage.type === "success" ? "var(--accent)" : "var(--state-danger)",
               marginBottom: "var(--space-3)",
             }}
           >
-            {message.text}
+            {bioMessage.text}
           </p>
         )}
 
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || bio === user.bio}
           className="btn btn-primary"
         >
           {saving ? t.saving : t.save}
@@ -271,28 +287,43 @@ export default function ProfilePage() {
         <Toggle
           checked={user.bookmarks_visibility === "public"}
           onChange={handleVisibilityToggle}
+          disabled={savingVisibility}
           label={t.bookmarksVisibilityLabel}
           description={t.bookmarksVisibilityHint}
         />
+        {privacyMessage && (
+          <p role={privacyMessage.type === "error" ? "alert" : "status"} aria-live="polite" style={{ margin: "10px 0 0", fontSize: 12, color: privacyMessage.type === "error" ? "var(--state-danger)" : "var(--accent)" }}>
+            {privacyMessage.text}
+          </p>
+        )}
       </section>
 
-      <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
+      <div role="tablist" aria-label={t.profileTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
         <button
+          id="profile-tab-bookmarks"
+          role="tab"
+          aria-controls="profile-panel-bookmarks"
+          tabIndex={activeTab === "bookmarks" ? 0 : -1}
           style={tabStyle("bookmarks")}
           onClick={() => setActiveTab("bookmarks")}
-          aria-current={activeTab === "bookmarks" ? "page" : undefined}
+          aria-selected={activeTab === "bookmarks"}
         >
           {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
         </button>
         <button
+          id="profile-tab-comments"
+          role="tab"
+          aria-controls="profile-panel-comments"
+          tabIndex={activeTab === "comments" ? 0 : -1}
           style={tabStyle("comments")}
           onClick={() => setActiveTab("comments")}
-          aria-current={activeTab === "comments" ? "page" : undefined}
+          aria-selected={activeTab === "comments"}
         >
           {t.tabComments} ({commentList.total})
         </button>
       </div>
 
+      <div id={`profile-panel-${activeTab}`} role="tabpanel" aria-labelledby={`profile-tab-${activeTab}`}>
       {activeTab === "bookmarks" ? (
         bookmarkList.loading ? (
           <SkeletonList count={3} />
@@ -304,21 +335,28 @@ export default function ProfilePage() {
             onKindChange={setKind}
             hasMore={bookmarkList.hasMore}
             loadingMore={bookmarkList.loadingMore}
+            error={bookmarkList.error}
+            loadMoreError={bookmarkList.loadMoreError}
+            onRetry={bookmarkList.retry}
             onLoadMore={bookmarkList.loadMore}
           />
         )
       ) : commentList.loading ? (
         <SkeletonList count={3} />
+      ) : commentList.error ? (
+        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
       ) : (
         <>
           <CommentList comments={commentList.items} />
           <LoadMoreButton
             hasMore={commentList.hasMore}
             loading={commentList.loadingMore}
+            error={!!commentList.loadMoreError}
             onClick={commentList.loadMore}
           />
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -330,6 +368,9 @@ function BookmarkList({
   onKindChange,
   hasMore,
   loadingMore,
+  error,
+  loadMoreError,
+  onRetry,
   onLoadMore,
 }: {
   bookmarks: Bookmark[];
@@ -338,6 +379,9 @@ function BookmarkList({
   onKindChange: (kind: BookmarkType | null) => void;
   hasMore: boolean;
   loadingMore: boolean;
+  error: Error | null;
+  loadMoreError: Error | null;
+  onRetry: () => void;
   onLoadMore: () => void;
 }) {
   const t = useT();
@@ -361,7 +405,9 @@ function BookmarkList({
         <FilterChips chips={chips} value={kind} onChange={onKindChange} ariaLabel={t.filterByKind} />
       )}
 
-      {bookmarks.length === 0 ? (
+      {error ? (
+        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={onRetry} retryLabel={t.retry} />
+      ) : bookmarks.length === 0 ? (
         <EmptyState
           title={t.noMyBookmarks}
           description={t.emptyMyBookmarksDesc}
@@ -378,7 +424,7 @@ function BookmarkList({
               <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
             ))}
           </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={onLoadMore} />
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={onLoadMore} />
         </>
       )}
     </>

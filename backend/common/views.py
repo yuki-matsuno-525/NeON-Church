@@ -1,11 +1,78 @@
+import logging
+
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db import connection, OperationalError
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import serializers, status
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
+
+
+logger = logging.getLogger(__name__)
+
+
+class FeedbackSerializer(serializers.Serializer):
+    category = serializers.ChoiceField(
+        choices=("feedback", "bug", "feature", "privacy", "other")
+    )
+    email = serializers.EmailField(required=False, allow_blank=True, max_length=254)
+    message = serializers.CharField(min_length=10, max_length=4000, trim_whitespace=True)
+    page_url = serializers.URLField(required=False, allow_blank=True, max_length=500)
+    # Hidden honeypot. Bots commonly fill every text field; humans never see this one.
+    website = serializers.CharField(required=False, allow_blank=True, write_only=True)
+
+    def validate_website(self, value: str) -> str:
+        if value:
+            raise serializers.ValidationError("Invalid submission.")
+        return value
+
+
+class FeedbackRateThrottle(SimpleRateThrottle):
+    scope = "feedback"
+
+    def get_cache_key(self, request, view):
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([FeedbackRateThrottle])
+def feedback(request: Request) -> Response:
+    """Accept feedback without requiring a GitHub account or signed-in session."""
+
+    serializer = FeedbackSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+    sender = data.get("email") or "not provided"
+    page_url = data.get("page_url") or "not provided"
+    body = (
+        f"Category: {data['category']}\n"
+        f"Reply-to: {sender}\n"
+        f"Page: {page_url}\n\n"
+        f"{data['message']}"
+    )
+    try:
+        send_mail(
+            subject=f"[NeON Church feedback] {data['category']}",
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[settings.FEEDBACK_EMAIL],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception("Feedback email delivery failed")
+        return Response(
+            {"detail": "Feedback could not be sent. Please try again later."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+    return Response({"detail": "Feedback received."}, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])

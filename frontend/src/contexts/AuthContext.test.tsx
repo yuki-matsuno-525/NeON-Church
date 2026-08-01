@@ -16,6 +16,7 @@ const TEST_USER = {
   username: "alice",
   email: "alice@example.com",
   bio: "",
+  bookmarks_visibility: "private" as const,
   created_at: "2024-01-01T00:00:00Z",
 };
 
@@ -82,17 +83,17 @@ describe("AuthContext", () => {
     expect(result.current.user).toBeNull();
   });
 
-  it("logoutAPIが失敗してもuser=nullになる", async () => {
+  it("logout API失敗時は認証状態を偽って消さず、再試行可能にする", async () => {
     mockFetchMe.mockResolvedValue(TEST_USER);
     mockApiLogout.mockRejectedValue(new Error("network error"));
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     await waitFor(() => expect(result.current.user).not.toBeNull());
 
-    await act(async () => {
+    await expect(act(async () => {
       await result.current.logout();
-    });
+    })).rejects.toThrow("network error");
 
-    expect(result.current.user).toBeNull();
+    expect(result.current.user).toEqual(TEST_USER);
   });
 });

@@ -133,6 +133,15 @@ def test_中身が空のままでは公開できない(auth_client, plan_id):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("visibility", ["public", "unlisted"])
+def test_作成時も中身が空のまま公開できない(auth_client, visibility):
+    response = _create_plan(auth_client, visibility=visibility)
+
+    assert response.status_code == 400
+    assert Plan.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_日があれば公開できる(auth_client, plan_id):
     _add_day(auth_client, plan_id)
 
@@ -293,6 +302,34 @@ def test_途中でやめられて読み直せる(auth_client, other_client):
 
     assert stopped is False
     assert resumed is True
+
+
+@pytest.mark.django_db
+def test_やめたプランの進捗は更新できない(auth_client, other_client):
+    plan_id = _published_plan_with_reader(auth_client, other_client)
+    day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
+    other_client.delete(f"{PLANS_URL}{plan_id}/subscribe/")
+
+    completed = other_client.post(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+    uncompleted = other_client.delete(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+
+    assert completed.status_code == 404
+    assert uncompleted.status_code == 404
+
+
+@pytest.mark.django_db
+def test_読書中人数にはやめた人を含めない(auth_client, other_client):
+    plan_id = _published_plan_with_reader(auth_client, other_client)
+    reading = auth_client.get(PLANS_URL)
+    reading_item = next(plan for plan in reading.data["results"] if plan["id"] == plan_id)
+    assert reading_item["reader_count"] == 1
+
+    other_client.delete(f"{PLANS_URL}{plan_id}/subscribe/")
+
+    response = auth_client.get(PLANS_URL)
+    item = next(plan for plan in response.data["results"] if plan["id"] == plan_id)
+
+    assert item["reader_count"] == 0
 
 
 @pytest.mark.django_db

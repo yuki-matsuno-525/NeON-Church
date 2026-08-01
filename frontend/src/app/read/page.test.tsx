@@ -3,8 +3,11 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ReadPage from "./page";
 import type { TranslationProject } from "@/lib/api";
 
+const mockReplace = vi.fn();
+let mockSearchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: mockReplace }),
+  useSearchParams: () => mockSearchParams,
 }));
 
 vi.mock("next/link", () => ({
@@ -39,6 +42,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   unit_count: 100,
   done_count: 100,
   is_member: false,
+  membership_status: null,
   is_in_library: true,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-10T00:00:00Z",
@@ -49,6 +53,7 @@ describe("ReadPage マイ翻訳セクション", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockSearchParams = new URLSearchParams();
   });
 
   it("未ログインのときはマイ翻訳セクションを表示しない", async () => {
@@ -106,5 +111,21 @@ describe("ReadPage マイ翻訳セクション", () => {
     fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
 
     expect(searchBox).toHaveValue("");
+  });
+
+  it("hydrates book search from q and replaces the URL after edits", async () => {
+    mockSearchParams = new URLSearchParams("q=Peter");
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+
+    render(<ReadPage />);
+
+    const searchBox = screen.getByRole("searchbox");
+    expect(searchBox).toHaveValue("Peter");
+
+    fireEvent.change(searchBox, { target: { value: "John" } });
+
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith("/read?q=John", { scroll: false })
+    );
   });
 });

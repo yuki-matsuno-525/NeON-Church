@@ -4,9 +4,10 @@ import LoginPage from "./page";
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
+let mockFrom: string | null = null;
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => ({ get: () => null }),
+  useSearchParams: () => ({ get: (key: string) => key === "from" ? mockFrom : null }),
 }));
 
 vi.mock("next/link", () => ({
@@ -28,6 +29,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFrom = null;
   });
 
   it("フォームフィールドとボタンが表示される", () => {
@@ -39,7 +41,7 @@ describe("LoginPage", () => {
 
   it("ログイン成功時にユーザーをセットして /matthew/1 にリダイレクト", async () => {
     const { login } = await import("@/lib/api");
-    const mockUser = { id: "u1", username: "alice", email: "a@b.com", bio: "", created_at: "" };
+    const mockUser = { id: "u1", username: "alice", email: "a@b.com", bio: "", bookmarks_visibility: "private" as const, created_at: "" };
     vi.mocked(login).mockResolvedValue(mockUser);
 
     render(<LoginPage />);
@@ -81,6 +83,25 @@ describe("LoginPage", () => {
     expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute("href", "/register");
   });
 
+  it("ログイン後に安全な from のURLへ戻り、登録リンクにも引き継ぐ", async () => {
+    mockFrom = "/qa?q=%E5%B1%B1%E4%B8%8A#question-q1";
+    const { login } = await import("@/lib/api");
+    vi.mocked(login).mockResolvedValue({
+      id: "u1", username: "alice", email: "a@b.com", bio: "", bookmarks_visibility: "private", created_at: "",
+    });
+
+    render(<LoginPage />);
+    fireEvent.change(screen.getAllByRole("textbox")[0], { target: { value: "alice" } });
+    fireEvent.change(document.querySelector('input[type="password"]')!, { target: { value: "pass1234" } });
+    fireEvent.click(screen.getByRole("button", { name: "ログイン" }));
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith(mockFrom));
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      `/register?from=${encodeURIComponent(mockFrom)}`,
+    );
+  });
+
   it("パスワード表示切替ボタンが表示され、トグルできる", () => {
     render(<LoginPage />);
     const toggle = screen.getByRole("button", { name: "パスワードを表示" });
@@ -88,5 +109,10 @@ describe("LoginPage", () => {
     expect(pw).toBeTruthy();
     fireEvent.click(toggle);
     expect(document.querySelector('input[type="text"][autocomplete="current-password"]')).toBeTruthy();
+  });
+
+  it("links to password recovery", () => {
+    render(<LoginPage />);
+    expect(document.querySelector('a[href="/forgot-password"]')).toBeInTheDocument();
   });
 });

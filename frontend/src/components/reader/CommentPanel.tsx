@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createBookmark,
@@ -18,7 +18,10 @@ import { CommentItem } from "@/components/comments/CommentItem";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
+import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 import { LoadMoreButton, useToast } from "@/components/ui";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 type Props = {
   verse: Verse;
@@ -52,17 +55,34 @@ export function CommentPanel({
   const t = useT();
   const toast = useToast();
   const { user } = useAuth();
+  const isMobile = useIsMobile(768);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  const headingId = useId();
+  const commentsTabId = useId();
+  const articlesTabId = useId();
+  const commentsPanelId = useId();
+  const articlesPanelId = useId();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const showLoginModalRef = useRef(showLoginModal);
+  useEffect(() => {
+    showLoginModalRef.current = showLoginModal;
+  }, [showLoginModal]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [verseExpanded, setVerseExpanded] = useState(false);
   // この節を引用している記事。1件も無いときはタブ自体を出さない
   // （どの節にも「引用した記事 (0)」が並ぶと、押しても空という体験になるため）。
   const [citingArticles, setCitingArticles] = useState<Article[]>([]);
   const [tab, setTab] = useState<"comments" | "articles">("comments");
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const [articlesError, setArticlesError] = useState(false);
 
   useEffect(() => {
     if (!bookSlug) return;
@@ -70,12 +90,15 @@ export function CommentPanel({
     // 別の節を選び直したときに前の節の記事が残らないよう、いったん空にする。
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCitingArticles([]);
+    setArticlesError(false);
     setTab("comments");
     fetchArticlesCitingVerse({ book: bookSlug, chapter: chapterNumber, verse: verse.number })
       .then((response) => {
         if (alive) setCitingArticles(response.results);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) setArticlesError(true);
+      });
     return () => {
       alive = false;
     };
@@ -83,7 +106,7 @@ export function CommentPanel({
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
-  const { comments, setComments, loading, loadingMore, hasMore, loadMore, reload } = useComments({
+  const { comments, setComments, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } = useComments({
     verse_id: verse.id,
     ordering,
     translation_project: translationProject,
@@ -112,6 +135,7 @@ export function CommentPanel({
     }
     if (loadingBookmark || !onVerseBookmarksChange) return;
     setLoadingBookmark(true);
+    setPanelError(null);
     try {
       if (existingBookmark) {
         await removeBookmark(existingBookmark.id);
@@ -121,6 +145,7 @@ export function CommentPanel({
         onVerseBookmarksChange([...verseBookmarks, bm]);
       }
     } catch {
+      setPanelError(t.bookmarkFailed);
       toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setLoadingBookmark(false);
@@ -205,11 +230,40 @@ export function CommentPanel({
     window.addEventListener("touchcancel", onEnd);
   };
 
+  const handleResizeKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setPanelWidth(event.key === "Home" ? MIN_WIDTH : MAX_WIDTH);
+      return;
+    }
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const delta = event.key === "ArrowLeft" ? 20 : -20;
+      setPanelWidth((width) => Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width + delta)));
+    }
+  };
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !showLoginModalRef.current) onCloseRef.current();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    closeRef.current?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, []);
+
   return (
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
       <div
         className="comment-panel"
+        role={isMobile ? "dialog" : "complementary"}
+        aria-modal={isMobile ? true : undefined}
+        aria-labelledby={headingId}
         style={{
           width: panelWidth,
           minWidth: MIN_WIDTH,
@@ -230,6 +284,12 @@ export function CommentPanel({
           className="resize-handle"
           role="separator"
           aria-orientation="vertical"
+          aria-label={t.resizeCommentPanel}
+          aria-valuemin={MIN_WIDTH}
+          aria-valuemax={MAX_WIDTH}
+          aria-valuenow={panelWidth}
+          tabIndex={0}
+          onKeyDown={handleResizeKeyDown}
           onMouseDown={handleResizeStart}
           onTouchStart={handleResizeTouchStart}
           style={{
@@ -261,19 +321,22 @@ export function CommentPanel({
               gap: 8,
             }}
           >
-            <span
+            <h2
+              id={headingId}
               className="badge"
               style={{
                 background: "var(--accent-tint)",
                 color: "var(--accent)",
                 fontSize: 12,
+                margin: 0,
               }}
             >
               {t.chapterVerseHeader(chapterNumber, verse.number)}
-            </span>
+            </h2>
             <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
               {user && onVerseBookmarksChange && (
                 <button
+                  type="button"
                   onClick={handleBookmark}
                   disabled={loadingBookmark}
                   data-testid="verse-bookmark"
@@ -282,8 +345,8 @@ export function CommentPanel({
                   title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
                   style={{
                     border: "none",
-                    width: 36,
-                    height: 36,
+                    width: 44,
+                    height: 44,
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -299,6 +362,8 @@ export function CommentPanel({
                 </button>
               )}
               <button
+                ref={closeRef}
+                type="button"
                 onClick={onClose}
                 aria-label={t.closeCommentPanel}
                 style={{
@@ -308,8 +373,8 @@ export function CommentPanel({
                   color: "var(--text-faint)",
                   fontSize: 22,
                   lineHeight: 1,
-                  width: 36,
-                  height: 36,
+                  width: 44,
+                  height: 44,
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -355,23 +420,30 @@ export function CommentPanel({
               {verseExpanded ? t.readLessVerse : t.readMoreVerse}
             </button>
           )}
+          {panelError && (
+            <p role="alert" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>
+              {panelError}
+            </p>
+          )}
         </div>
 
         {/* コメントと「引用した記事」のタブ。記事が無いときは出さない */}
-        {citingArticles.length > 0 && (
-          <div style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
-            <PanelTab active={tab === "comments"} onClick={() => setTab("comments")}>
+        {(citingArticles.length > 0 || articlesError) && (
+          <div role="tablist" aria-label={t.panelContentTabs} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
+            <PanelTab id={commentsTabId} controls={commentsPanelId} active={tab === "comments"} onClick={() => setTab("comments")}>
               {t.tabComments}
             </PanelTab>
-            <PanelTab active={tab === "articles"} onClick={() => setTab("articles")}>
+            <PanelTab id={articlesTabId} controls={articlesPanelId} active={tab === "articles"} onClick={() => setTab("articles")}>
               {t.citingArticles(citingArticles.length)}
             </PanelTab>
           </div>
         )}
 
         {tab === "articles" ? (
-          <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-            {citingArticles.map((article) => (
+          <div id={articlesPanelId} role="tabpanel" aria-labelledby={articlesTabId} style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {articlesError ? (
+              <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} />
+            ) : citingArticles.map((article) => (
               <Link
                 key={article.id}
                 href={`/articles/${article.id}`}
@@ -389,7 +461,7 @@ export function CommentPanel({
             ))}
           </div>
         ) : (
-        <>
+        <div id={commentsPanelId} role={citingArticles.length > 0 || articlesError ? "tabpanel" : undefined} aria-labelledby={citingArticles.length > 0 || articlesError ? commentsTabId : undefined} style={{ display: "contents" }}>
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
           {composeOpen ? (
@@ -433,10 +505,13 @@ export function CommentPanel({
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
+              type="button"
               onClick={() => setOrdering(ord)}
+              aria-pressed={ordering === ord}
               style={{
                 fontSize: 12,
                 padding: "3px 10px",
+                minHeight: 44,
                 borderRadius: 12,
                 border: "1px solid var(--border)",
                 cursor: "pointer",
@@ -453,6 +528,7 @@ export function CommentPanel({
         {/* Search */}
         <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)" }}>
           <input
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchLoadedComments}
@@ -478,9 +554,11 @@ export function CommentPanel({
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
               {t.loading}
             </p>
+          ) : error ? (
+            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
           ) : visibleComments.length === 0 ? (
             <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
-              {t.noCommentsYet}
+              {q ? t.filterCommentsNoMatch : t.noCommentsYet}
             </p>
           ) : (
             <>
@@ -494,11 +572,11 @@ export function CommentPanel({
                   showVersionBadge
                 />
               ))}
-              <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+              <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
             </>
           )}
         </div>
-        </>
+        </div>
         )}
       </div>
     </>
@@ -506,22 +584,31 @@ export function CommentPanel({
 }
 
 function PanelTab({
+  id,
+  controls,
   active,
   onClick,
   children,
 }: {
+  id: string;
+  controls: string;
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
     <button
+      id={id}
       type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={controls}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       style={{
         flex: 1,
         padding: "10px 8px",
-        minHeight: 40,
+        minHeight: 44,
         border: "none",
         background: "none",
         borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",

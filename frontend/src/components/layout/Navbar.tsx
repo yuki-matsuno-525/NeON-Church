@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useT } from "@/lib/i18n";
+import { BOOKS } from "@/lib/books";
 
 type NavbarProps = {
   onMenuToggle?: () => void;
@@ -22,7 +23,11 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
+  const rootSegment = pathname.split("/").filter(Boolean)[0] ?? "";
+  const isReadRoute = pathname.startsWith("/read") || BOOKS.some((book) => book.slug === rootSegment);
   const [scrolled, setScrolled] = React.useState(false);
+  const [logoutBusy, setLogoutBusy] = React.useState(false);
+  const [logoutError, setLogoutError] = React.useState(false);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -31,9 +36,17 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   }, []);
 
   const handleLogout = async () => {
-    await logout();
-    router.push("/");
-    router.refresh();
+    setLogoutBusy(true);
+    setLogoutError(false);
+    try {
+      await logout();
+      router.push("/");
+      router.refresh();
+    } catch {
+      setLogoutError(true);
+    } finally {
+      setLogoutBusy(false);
+    }
   };
 
   return (
@@ -58,6 +71,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
     >
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
+        type="button"
         onClick={onMenuToggle}
         aria-label={menuOpen ? t.menuClose : t.menuOpen}
         aria-expanded={menuOpen}
@@ -138,6 +152,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
         {(["ja", "en"] as const).map((l) => (
           <button
             key={l}
+            type="button"
             onClick={() => {
               setLang(l);
               router.refresh();
@@ -145,6 +160,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
             // いま選ばれている言語は色と太さでしか示していなかったため、
             // 読み上げでは2つとも同じボタンに聞こえていた。選択状態を明示する。
             aria-pressed={lang === l}
+            aria-label={l === "ja" ? "日本語" : "English"}
             style={{
               background: "transparent",
               border: "none",
@@ -168,7 +184,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
         <div className="nav-desktop-only" style={{ display: "contents" }}>
           {user ? (
             <>
-              <Link href="/read" aria-current={pathname.startsWith("/read") ? "page" : undefined} style={{ color: pathname.startsWith("/read") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+              <Link href="/read" aria-current={isReadRoute ? "page" : undefined} style={{ color: isReadRoute ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.read}
               </Link>
               <Link href="/qa" aria-current={pathname.startsWith("/qa") ? "page" : undefined} style={{ color: pathname.startsWith("/qa") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
@@ -195,6 +211,9 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
                   position: "relative",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 44,
+                  minHeight: 44,
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -220,7 +239,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
                   </span>
                 )}
               </Link>
-              <Link href="/profile" aria-label={t.profile} style={{ textDecoration: "none", flexShrink: 0 }}>
+              <Link href="/profile" aria-label={t.profile} style={{ textDecoration: "none", flexShrink: 0, minWidth: 44, minHeight: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                 <span
                   style={{
                     width: 28,
@@ -239,11 +258,15 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
                 </span>
               </Link>
               <button
+                type="button"
                 onClick={handleLogout}
+                disabled={logoutBusy}
+                aria-busy={logoutBusy}
                 style={{
                   border: "1px solid var(--border)",
                   borderRadius: 6,
                   padding: "4px 12px",
+                  minHeight: 44,
                   background: "transparent",
                   color: "var(--text-muted)",
                   cursor: "pointer",
@@ -251,7 +274,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
                   fontFamily: "inherit",
                 }}
               >
-                {t.logout}
+                {logoutBusy ? t.loading : t.logout}
               </button>
             </>
           ) : (
@@ -264,6 +287,11 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
             </Link>
           )}
         </div>
+      )}
+      {logoutError && (
+        <span role="alert" style={{ color: "var(--state-danger)", fontSize: 12 }}>
+          {lang === "ja" ? "ログアウトできませんでした。もう一度お試しください。" : "Could not sign out. Please try again."}
+        </span>
       )}
     </nav>
   );
