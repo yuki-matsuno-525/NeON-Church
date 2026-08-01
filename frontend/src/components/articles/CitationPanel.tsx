@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
-  fetchBookmarks,
+  fetchVerseBookmarks,
   fetchBooks,
   fetchChapters,
   fetchVerses,
@@ -11,7 +11,9 @@ import {
   type Verse,
 } from "@/lib/api";
 import { BOOKS, getBookBySlug } from "@/lib/books";
-import { DEFAULT_TRANSLATION } from "@/lib/translations";
+import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
+import { bookLabel, useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
 
 /**
  * 引用パネル。記事を書きながら、引く節をここから選んで本文に入れる。
@@ -20,6 +22,7 @@ import { DEFAULT_TRANSLATION } from "@/lib/translations";
  * タブは「栞」（読書中に印をつけた節）と「さがす」（書→章→節とたどる）の2つ。
  */
 export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }) {
+  const t = useT();
   const [tab, setTab] = useState<"bookmarks" | "search">("search");
   const tabsId = useId();
 
@@ -27,15 +30,15 @@ export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div
         role="tablist"
-        aria-label="引用元"
+        aria-label={t.articleTabCitations}
         onKeyDown={handleTabArrowKey}
         style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 }}
       >
         <TabButton id={`${tabsId}-search`} panelId={`${tabsId}-search-panel`} active={tab === "search"} onClick={() => setTab("search")}>
-          さがす
+          {t.citationSearchTab}
         </TabButton>
         <TabButton id={`${tabsId}-bookmarks`} panelId={`${tabsId}-bookmarks-panel`} active={tab === "bookmarks"} onClick={() => setTab("bookmarks")}>
-          栞
+          {t.citationBookmarksTab}
         </TabButton>
       </div>
 
@@ -84,6 +87,8 @@ export function buildMark(params: {
 // ---------------------------------------------------------------------------
 
 function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
+  const t = useT();
+  const { lang } = useLang();
   const [keyword, setKeyword] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
   const [translation, setTranslation] = useState(DEFAULT_TRANSLATION);
@@ -96,8 +101,14 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   const [reloadToken, setReloadToken] = useState(0);
 
   const meta = slug ? getBookBySlug(slug) : null;
+  const displayMeta = slug ? bookLabel(slug, lang) : null;
+  const normalizedKeyword = keyword.toLocaleLowerCase(lang);
   const matched = BOOKS.filter(
-    (book) => !keyword || book.name.includes(keyword) || book.short.includes(keyword),
+    (book) =>
+      !normalizedKeyword ||
+      book.name.toLocaleLowerCase(lang).includes(normalizedKeyword) ||
+      book.short.toLocaleLowerCase(lang).includes(normalizedKeyword) ||
+      book.englishName.toLocaleLowerCase(lang).includes(normalizedKeyword),
   );
 
   // 書と訳が決まったら章の一覧を引く。章番号は連番とは限らないので、決め打ちせず API から取る。
@@ -110,7 +121,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     fetchBooks(translation)
       .then((books) => {
         const target = books.find((book) => book.name === bookNameFor(slug, translation));
-        if (!target) throw new Error("この訳にはこの書がありません。");
+        if (!target) throw new Error(t.citationBookUnavailable);
         return fetchChapters(target.id);
       })
       .then((chapters) => {
@@ -127,7 +138,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     return () => {
       alive = false;
     };
-  }, [slug, translation, reloadToken]);
+  }, [slug, translation, reloadToken, t]);
 
   // 章が決まったら節の一覧を引く。
   useEffect(() => {
@@ -138,12 +149,12 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     fetchBooks(translation)
       .then((books) => {
         const target = books.find((book) => book.name === bookNameFor(slug, translation));
-        if (!target) throw new Error("この訳にはこの書がありません。");
+        if (!target) throw new Error(t.citationBookUnavailable);
         return fetchChapters(target.id);
       })
       .then((chapters) => {
         const found = chapters.find((c) => c.number === chapter);
-        if (!found) throw new Error("この章はありません。");
+        if (!found) throw new Error(t.citationChapterUnavailable);
         return fetchVerses(found.id);
       })
       .then((list) => {
@@ -160,7 +171,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     return () => {
       alive = false;
     };
-  }, [slug, chapter, translation, reloadToken]);
+  }, [slug, chapter, translation, reloadToken, t]);
 
   if (!slug) {
     return (
@@ -170,7 +181,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
           id="citation-book-search"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
-          placeholder="書をさがす"
+          placeholder={t.citationBookSearchPlaceholder}
           style={inputStyle}
         />
         <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 10 }}>
@@ -181,7 +192,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               onClick={() => setSlug(book.slug)}
               style={rowButtonStyle}
             >
-              {book.name}
+              {bookLabel(book.slug, lang)?.name ?? book.name}
             </button>
           ))}
           {matched.length === 0 && <p style={mutedTextStyle}>一致する書はありません。</p>}
@@ -193,12 +204,12 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   return (
     <div style={{ padding: "0 12px" }}>
       <button type="button" onClick={() => resetTo(null)} style={backButtonStyle}>
-        ← 書をえらび直す
+        {t.citationChooseBookAgain}
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0" }}>
-        <strong style={{ fontSize: 13 }}>{meta?.short}</strong>
-        <label htmlFor="citation-translation" style={visuallyHiddenStyle}>引用に使う翻訳</label>
+        <strong style={{ fontSize: 13 }}>{displayMeta?.short}</strong>
+        <label htmlFor="citation-translation" style={visuallyHiddenStyle}>{t.translationLabel}</label>
         <select
           id="citation-translation"
           value={translation}
@@ -211,7 +222,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
           {/* その書に実際にある訳だけを出す */}
           {(meta?.translations ?? []).map((tr) => (
             <option key={tr.id} value={tr.id}>
-              {tr.id}
+              {translationLabel(tr.id, lang)}
             </option>
           ))}
         </select>
@@ -290,6 +301,7 @@ function VerseList({
   onBack: () => void;
   onInsert: (mark: string) => void;
 }) {
+  const t = useT();
   // 範囲で選ぶあいだだけ使う。start が決まると「終わりの節」を待つ。
   const [rangeMode, setRangeMode] = useState(false);
   const [rangeStart, setRangeStart] = useState<number | null>(null);
@@ -322,9 +334,9 @@ function VerseList({
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <button type="button" onClick={onBack} style={backButtonStyle}>
-          ← 章
+          {t.citationBackToChapters}
         </button>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>{chapter}章</span>
+        <span style={{ fontSize: 13, fontWeight: 700 }}>{t.chapterFmt(chapter)}</span>
         <button
           type="button"
           onClick={() => (rangeMode ? clearRange() : setRangeMode(true))}
@@ -335,17 +347,17 @@ function VerseList({
             color: rangeMode ? "var(--accent)" : "var(--text-muted)",
           }}
         >
-          {rangeMode ? "範囲をやめる" : "範囲で選ぶ"}
+          {rangeMode ? t.citationStopRange : t.citationStartRange}
         </button>
       </div>
 
       {rangeMode && (
         <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 8px" }}>
           {rangeStart === null
-            ? "始まりの節を押してください。"
+            ? t.citationPickStart
             : rangeEnd === null
-              ? `${rangeStart}節から。終わりの節を押してください。`
-              : `${rangeStart}〜${rangeEnd}節`}
+              ? t.citationPickEnd(rangeStart)
+              : t.citationRange(rangeStart, rangeEnd)}
         </p>
       )}
 
@@ -359,7 +371,7 @@ function VerseList({
             }}
             style={insertButtonStyle}
           >
-            文中に入れる
+            {t.citationInsertInline}
           </button>
           <button
             type="button"
@@ -369,13 +381,13 @@ function VerseList({
             }}
             style={{ ...insertButtonStyle, background: "var(--accent)", color: "var(--accent-text)", border: "none" }}
           >
-            引用して入れる
+            {t.citationInsertBlock}
           </button>
         </div>
       )}
 
       {loading ? (
-        <p style={{ fontSize: 12, color: "var(--text-faint)" }}>読み込み中...</p>
+        <p style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.loading}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {verses.map((verse) => {
@@ -406,7 +418,7 @@ function VerseList({
                       onClick={() => handleRangePick(verse.number)}
                       style={smallButtonStyle}
                     >
-                      {rangeStart === null ? "ここから" : "ここまで"}
+                      {rangeStart === null ? t.citationSelectStart : t.citationSelectEnd}
                     </button>
                   ) : (
                     <>
@@ -415,14 +427,14 @@ function VerseList({
                         onClick={() => insert("inline", verse.number)}
                         style={smallButtonStyle}
                       >
-                        文中に入れる
+                        {t.citationInsertInline}
                       </button>
                       <button
                         type="button"
                         onClick={() => insert("block", verse.number)}
                         style={smallButtonStyle}
                       >
-                        引用して入れる
+                        {t.citationInsertBlock}
                       </button>
                     </>
                   )}
@@ -441,6 +453,7 @@ function VerseList({
 // ---------------------------------------------------------------------------
 
 function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
+  const t = useT();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -449,14 +462,14 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchBookmarks();
+      const list = await fetchVerseBookmarks();
       setBookmarks(list.filter((bm) => bm.target_type === "verse" && bm.reference));
     } catch {
-      setError("栞を読み込めませんでした。");
+      setError(t.loadErrorDesc);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -464,14 +477,14 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   }, [loadBookmarks]);
 
   if (loading) {
-    return <p role="status" style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)" }}>栞を読み込んでいます…</p>;
+    return <p role="status" style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)" }}>{t.loading}</p>;
   }
 
   if (error) {
     return (
       <div role="alert" style={{ padding: "0 12px" }}>
         <p style={{ ...mutedTextStyle, color: "var(--state-danger)" }}>{error}</p>
-        <button type="button" onClick={() => void loadBookmarks()} style={smallButtonStyle}>再試行</button>
+        <button type="button" onClick={() => void loadBookmarks()} style={smallButtonStyle}>{t.retry}</button>
       </div>
     );
   }
@@ -479,8 +492,8 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   if (bookmarks.length === 0) {
     return (
       <div style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
-        <p>節の栞がありません。読む画面で節に栞をつけると、ここから引けます。</p>
-        <Link href="/read" style={{ color: "var(--accent)", display: "inline-flex", minHeight: 44, alignItems: "center" }}>聖書を読む</Link>
+        <p>{t.citationNoVerseBookmarks}</p>
+        <Link href="/read" style={{ color: "var(--accent)", display: "inline-flex", minHeight: 44, alignItems: "center" }}>{t.read}</Link>
       </div>
     );
   }
@@ -495,9 +508,12 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
 }
 
 function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onInsert: (mark: string) => void }) {
+  const t = useT();
+  const { lang } = useLang();
   const reference = bookmark.reference!;
-  const meta = getBookBySlug(reference.book);
-  const translations = meta?.translations ?? [];
+  const book = getBookBySlug(reference.book);
+  const displayMeta = bookLabel(reference.book, lang);
+  const translations = book?.translations ?? [];
   const initialTranslation = translations.some((item) => item.id === DEFAULT_TRANSLATION)
     ? DEFAULT_TRANSLATION
     : translations[0]?.id ?? DEFAULT_TRANSLATION;
@@ -514,16 +530,16 @@ function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onIn
   return (
     <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
       <div style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
-        {meta?.short ?? reference.book} {reference.chapter}:{reference.verse}
+        {displayMeta?.short ?? reference.book} {reference.chapter}:{reference.verse}
       </div>
       {bookmark.verse_text && <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>{bookmark.verse_text}</p>}
-      <label htmlFor={selectId} style={fieldLabelStyle}>引用に使う翻訳</label>
+      <label htmlFor={selectId} style={fieldLabelStyle}>{t.translationLabel}</label>
       <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} style={{ ...inputStyle, marginBottom: 8 }}>
-        {translations.map((item) => <option key={item.id} value={item.id}>{item.id}</option>)}
+        {translations.map((item) => <option key={item.id} value={item.id}>{translationLabel(item.id, lang)}</option>)}
       </select>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>文中に入れる</button>
-        <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>引用して入れる</button>
+        <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>{t.citationInsertInline}</button>
+        <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>{t.citationInsertBlock}</button>
       </div>
     </div>
   );

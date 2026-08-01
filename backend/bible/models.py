@@ -42,6 +42,13 @@ class Book(BaseModel):
         db_table = "books"
         unique_together = [("name", "translation")]
         ordering = ["order"]
+        indexes = [
+            # 訳だけで絞る場面（書一覧・検索・今日の聖句）が多いが、unique_together の索引は
+            # name が先頭なので効かない。訳を先頭に持つ索引を別に用意する。
+            models.Index(fields=["translation", "order"], name="book_translation_order_idx"),
+            # 箇所（canonical）と訳から1冊を引く経路（読書画面・書名の引き当て）。
+            models.Index(fields=["canonical_book", "translation"], name="book_canonical_trans_idx"),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name}（{self.translation}）"

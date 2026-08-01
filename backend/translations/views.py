@@ -1,7 +1,8 @@
 import re
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
@@ -18,6 +19,41 @@ from .access import (
 from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, TranslationLibraryEntry, Language
 
 User = get_user_model()
+
+
+def annotate_project_summary(queryset, user):
+    """一覧に出す「ユニット数・完了数・参加中か・本棚にあるか」を本体クエリで求める。
+
+    シリアライザ側で数えると1件につき4回（count/count/exists/exists）問い合わせるので、
+    20件のページで80回の往復になっていた。ここで1回にまとめる。
+
+    ユニット数と完了数は同じ units への JOIN を共有するので、件数は二重に数えられない。
+    参加中・本棚は Exists のサブクエリなので行を増やさない。
+    """
+    queryset = queryset.annotate(
+        annotated_unit_count=Count("units"),
+        annotated_done_count=Count(
+            "units", filter=Q(units__status=TranslationUnit.STATUS_DONE)
+        ),
+    )
+    if user and user.is_authenticated:
+        queryset = queryset.annotate(
+            annotated_is_member=Exists(
+                TranslationMembership.objects.filter(
+                    project=OuterRef("pk"),
+                    user=user,
+                    # is_member は作業権限を表す。申請中は membership_status で
+                    # 区別し、承認されるまではメンバー扱いにしない。
+                    status=TranslationMembership.STATUS_APPROVED,
+                )
+            ),
+            annotated_is_in_library=Exists(
+                TranslationLibraryEntry.objects.filter(project=OuterRef("pk"), user=user)
+            ),
+        )
+    # 集計を足すと Django は Meta.ordering を「無い」ものとして扱い、ページングが
+    # 不安定になったと警告する。並び順は変えずに明示しておく。
+    return queryset.order_by("-created_at")
 
 
 def _create_mention_notifications(comment: TranslationComment) -> None:
@@ -126,7 +162,7 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
                 | Q(source_book__name__icontains=q)
                 | Q(owner__username__icontains=q)
             )
-        return qs
+        return annotate_project_summary(qs, user)
 
     def perform_create(self, serializer):
         project = serializer.save(owner=self.request.user, status=TranslationProject.STATUS_DRAFT)
@@ -153,7 +189,16 @@ class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.IsAuthenticated(), IsProjectOwner()]
 
     def get_object(self):
-        obj = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
+        visible_project = _get_visible_project_or_404(
+            self.request, self.kwargs["project_id"]
+        )
+        obj = get_object_or_404(
+            annotate_project_summary(
+                TranslationProject.objects.select_related("owner", "source_book"),
+                self.request.user,
+            ),
+            pk=visible_project.pk,
+        )
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -229,15 +274,20 @@ class TranslationJoinView(APIView):
 
 
 class TranslationMemberListView(generics.ListAPIView):
-    """GET /api/translations/{id}/members/  メンバー一覧（承認済みメンバーのみ閲覧可）"""
+    """GET /api/translations/{id}/members/  メンバー一覧（承認済みメンバーのみ閲覧可）
+
+    参加者は増え続けうるので、1回のリクエストで全件返さないようページングする。
+    """
 
     serializer_class = TranslationMembershipSerializer
     permission_classes = [IsApprovedMember]
+    pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
+        # ページングするので並び順を決めておく（既定の並びを持たないモデルのため）。
         return TranslationMembership.objects.filter(
             project_id=self.kwargs["project_id"]
-        ).select_related("user")
+        ).select_related("user").order_by("created_at")
 
 
 class TranslationMemberDetailView(APIView):
@@ -497,9 +547,14 @@ class TranslationUnitAssignView(APIView):
 # ---------------------------------------------------------------------------
 
 class TranslationCommentListCreateView(generics.ListCreateAPIView):
-    """プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）"""
+    """プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
+
+    コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+    フロントは「もっと見る」で読み足す。
+    """
 
     serializer_class = TranslationCommentSerializer
+    pagination_class = StandardPageNumberPagination
 
     def get_permissions(self):
         # POST は承認済みメンバーのみ（IsApprovedMember が kwargs["project_id"] を参照する）
@@ -561,13 +616,32 @@ class TranslationAddBookView(APIView):
         if not book_id:
             return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         book = get_object_or_404(Book, pk=book_id)
-        verses = Verse.objects.filter(chapter__book=book)
-        created = 0
-        for verse in verses:
-            _, is_new = TranslationUnit.objects.get_or_create(project=project, verse=verse)
-            if is_new:
-                created += 1
-        return Response({"created": created, "book_name": book.name}, status=status.HTTP_201_CREATED)
+
+        # 節ごとに get_or_create を回すと、詩篇（約2461節）で1リクエスト約5000クエリになる。
+        # しかも TranslationUnit の既定の並び順が verse__chapter__number なので、
+        # 1件ごとに2段の JOIN が付いていた。
+        # 「既にあるぶん」を1回で引き、足りないぶんだけまとめて作る（3クエリで済む）。
+        # values_list("id") で節そのものは読み込まない。
+        verse_ids = set(
+            Verse.objects.filter(chapter__book=book).values_list("id", flat=True)
+        )
+        existing_ids = set(
+            TranslationUnit.objects.filter(
+                project=project, verse_id__in=verse_ids
+            ).values_list("verse_id", flat=True)
+        )
+        missing_ids = verse_ids - existing_ids
+
+        # 途中で落ちたときに中途半端なユニットが残らないよう、まとめて1つの処理にする。
+        with transaction.atomic():
+            TranslationUnit.objects.bulk_create(
+                [TranslationUnit(project=project, verse_id=vid) for vid in missing_ids],
+                ignore_conflicts=True,
+            )
+        return Response(
+            {"created": len(missing_ids), "book_name": book.name},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class TranslationRemoveBookView(APIView):
@@ -600,16 +674,21 @@ class LanguageListView(generics.ListAPIView):
 
 
 class TranslationLibraryListView(generics.ListAPIView):
-    """GET /api/translations/library/  自分が /read に追加した公開翻訳一覧（要認証）"""
+    """GET /api/translations/library/  自分が /read に追加した公開翻訳一覧（要認証）
+
+    本棚は増え続けうるので、1回のリクエストで全件返さないようページングする。
+    """
 
     serializer_class = TranslationProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
-        return TranslationProject.objects.filter(
+        qs = TranslationProject.objects.filter(
             library_entries__user=self.request.user,
             status=TranslationProject.STATUS_PUBLISHED,
         ).select_related("owner", "source_book")
+        return annotate_project_summary(qs, self.request.user)
 
 
 class TranslationLibraryView(APIView):

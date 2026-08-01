@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createArticle } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 
 const MAX_TITLE_LENGTH = 120;
 
@@ -16,6 +17,7 @@ const MAX_TITLE_LENGTH = 120;
  * 最初にあれこれ入力させると、書き始めるまでが遠くなるため。
  */
 export default function NewArticlePage() {
+  const t = useT();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState("");
@@ -45,7 +47,7 @@ export default function NewArticlePage() {
       const article = await createArticle({ title: trimmed, visibility: "private" });
       router.push(`/articles/${article.id}/edit`);
     } catch {
-      setError("記事を作れませんでした。");
+      setError(t.articleCreateFailed);
       setBusy(false);
     }
   };
@@ -57,9 +59,9 @@ export default function NewArticlePage() {
   if (!user) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>記事を書くにはログインが必要です。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleLoginRequired}</p>
         <Link href="/login?from=%2Farticles%2Fnew" style={{ color: "var(--accent)" }}>
-          ログインする
+          {t.loginBtn}
         </Link>
       </div>
     );
@@ -69,21 +71,21 @@ export default function NewArticlePage() {
     <div style={containerStyle}>
       <ConfirmDialog
         open={confirmCancel}
-        title="入力を破棄しますか？"
-        description="入力した題は保存されていません。"
-        confirmText="破棄する"
+        title={t.articleDiscardTitle}
+        description={t.articleDiscardDesc}
+        confirmText={t.articleDiscardAction}
         destructive
         onConfirm={() => router.push("/articles")}
         onCancel={() => setConfirmCancel(false)}
       />
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>新しい記事</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.articleNewTitle}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
-        題を決めると下書きができます。要約やタグはあとから足せます。
+        {t.articleNewDesc}
       </p>
 
       <form onSubmit={(event) => { event.preventDefault(); void handleCreate(); }} noValidate>
         <label htmlFor="new-article-title" style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
-          題 <span aria-hidden="true">*</span>
+          {t.articleTitleLabel} <span aria-hidden="true">*</span>
         </label>
         <input
           id="new-article-title"
@@ -94,7 +96,7 @@ export default function NewArticlePage() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && (composing.current || event.nativeEvent.isComposing)) event.preventDefault();
           }}
-          placeholder="例: 断食について"
+          placeholder={t.articleTitlePlaceholder}
           autoFocus
           required
           maxLength={MAX_TITLE_LENGTH}
@@ -114,7 +116,7 @@ export default function NewArticlePage() {
           }}
         />
         <div id="new-article-title-help" style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>
-          <span>下書きとして作成し、次の画面で本文・要約・主題を追加します。</span>
+          <span>{t.articleDraftNext}</span>
           <span>{title.length}/{MAX_TITLE_LENGTH}</span>
         </div>
 
@@ -138,14 +140,14 @@ export default function NewArticlePage() {
             fontFamily: "inherit",
           }}
         >
-          {busy ? "作成中..." : "書きはじめる"}
+          {busy ? t.articleCreating : t.articleStartWriting}
         </button>
         <button
           type="button"
           onClick={() => isDirty ? setConfirmCancel(true) : router.push("/articles")}
           style={{ alignSelf: "center", minHeight: 44, padding: "8px 12px", border: 0, background: "transparent", fontSize: 13, color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit" }}
         >
-          やめる
+          {t.articleCancel}
         </button>
         </div>
       </form>

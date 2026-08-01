@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { Translations } from "@/lib/i18n";
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 
@@ -166,10 +167,9 @@ export function useAutosave<T>({
   return { status, isDirty, saveNow, retry: saveNow };
 }
 
-export function saveStatusLabel(status: SaveStatus): string {
-  if (status === "dirty") return "未保存の変更があります";
-  if (status === "saving") return "保存中…";
-  if (status === "saved") return "保存しました";
-  if (status === "error") return "保存できませんでした";
-  return "変更はありません";
+export function saveStatusLabel(status: SaveStatus, t: Translations): string {
+  if (status === "saving") return t.saving;
+  if (status === "saved") return t.autosaveSaved;
+  if (status === "error") return t.autosaveError;
+  return "";
 }

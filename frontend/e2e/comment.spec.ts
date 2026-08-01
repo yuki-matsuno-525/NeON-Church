@@ -12,7 +12,7 @@ import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
  * 5. 投稿したコメントが表示される
  * 6. コメントに返信する
  * 7. 返信がツリー表示される
- * 8. コメントを削除する
+ * 8. コメントを削除する（確認ダイアログを通る）
  * 9. 「このコメントは削除されました」と表示される
  */
 test("コメント投稿・返信・削除", async ({ page, request }) => {
@@ -57,8 +57,10 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
   // 返信がツリー表示される（インデントされた返信コメント）
   await expect(panel.getByText(replyBody)).toBeVisible();
 
-  // 元のコメントを削除（自分のコメントの削除ボタン）
+  // 元のコメントを削除（自分のコメントの削除ボタン）。
+  // 削除は取り消せないので、押したあと確認ダイアログで「削除」を選ぶ。
   await panel.getByTestId("delete-comment").first().click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "削除" }).click();
 
   // 「このコメントは削除されました」が表示される
   await expect(

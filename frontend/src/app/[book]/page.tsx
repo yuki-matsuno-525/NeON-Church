@@ -4,9 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  fetchBooks,
-  fetchChapters,
-  fetchBookmarks,
+  fetchBookRead,
+  fetchBookBookmarks,
   createBookBookmark,
   removeBookmark,
   type Chapter,
@@ -19,6 +18,7 @@ import { ChapterComments } from "@/components/reader/ChapterComments";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { SkeletonList } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -35,6 +35,7 @@ function BookContent() {
   const label = useBookLabel(slug);
 
   const { user } = useAuth();
+  const toast = useToast();
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
@@ -48,17 +49,14 @@ function BookContent() {
   const [versionError, setVersionError] = useState(false);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
 
-  // この書の書栞（reference が同じ書で、章・節を持たないもの）を拾っておく。
+  // この書の書栞を拾っておく。サーバー側でこの書に絞って取る（全件は取らない）。
   useEffect(() => {
     if (!user) return;
     let active = true;
-    fetchBookmarks()
+    fetchBookBookmarks(slug)
       .then((bms) => {
         if (!active) return;
-        const found = bms.find(
-          (bm) => bm.target_type === "book" && bm.reference?.book === slug
-        );
-        setBookBookmark(found ?? null);
+        setBookBookmark(bms[0] ?? null);
         setBookmarkLoadError(false);
       })
       .catch(() => {
@@ -82,6 +80,8 @@ function BookContent() {
       } else {
         setBookBookmark(await createBookBookmark(bookId));
       }
+    } catch {
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setBookBusy(false);
     }
@@ -105,14 +105,13 @@ function BookContent() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
-    fetchBooks(tr.id)
-      .then((books) => {
-        const book = books.find((b) => b.name === tr.name);
-        if (!book) throw new Error(t.bookNotFound);
+    // 書と全章は1回でまとめて取る（以前は books → chapters の2往復だった）。
+    fetchBookRead(slug, tr.id)
+      .then(({ book, chapters: chs }) => {
         setBookId(book.id);
-        return fetchChapters(book.id).then(setChapters);
+        setChapters(chs);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.code === "book_not_found" ? t.bookNotFound : err.message))
       .finally(() => setLoading(false));
 
     // 全バージョン表示トグル用に、この書の各訳の書idを集めておく。
@@ -256,7 +255,7 @@ function BookContent() {
               {ch.number}
               {isCurrent && (
                 <span
-                  aria-label="読書中"
+                  aria-label={t.currentReadingLabel}
                   style={{
                     position: "absolute",
                     bottom: 3,

@@ -33,8 +33,20 @@ export function VerseList({
             id={`verse-${verse.number}`}
             key={verse.id}
             data-testid="verse-item"
-            onClick={() => onSelectVerse(verse.id)}
+            // 節を選ぶのはこのアプリの中心の操作（ここからコメント・栞・引用へ進む）。
+            // ただの div に onClick を付けていたため、キーボードだけの人はここで詰まっていた。
+            // ボタンとして扱い、Tab で移動して Enter / Space で選べるようにする。
+            role="button"
+            tabIndex={0}
             aria-pressed={isSelected}
+            onClick={() => onSelectVerse(verse.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                // Space は既定だとページが下にスクロールしてしまうので止める。
+                e.preventDefault();
+                onSelectVerse(verse.id);
+              }
+            }}
             style={{
               padding: "12px 16px",
               minHeight: 44,
@@ -50,6 +62,7 @@ export function VerseList({
               transition: isHighlighted ? undefined : "background 0.1s",
               animation: isHighlighted ? "verse-flash 5s ease-out forwards" : undefined,
             }}
+            // マウスを乗せたときと同じ手応えを、キーボードで移動したときにも返す。
             onMouseEnter={(e) => {
               if (!isSelected) {
                 (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)";
@@ -60,12 +73,22 @@ export function VerseList({
                 (e.currentTarget as HTMLElement).style.background = "transparent";
               }
             }}
+            onFocus={(e) => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)";
+              }
+            }}
+            onBlur={(e) => {
+              if (!isSelected) {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }
+            }}
           >
             <span
               style={{
                 lineHeight: 1.9,
                 fontSize: 17,
-                fontFamily: '"Noto Serif JP", serif',
+                fontFamily: "var(--font-serif)",
                 // 詩文（エノク書など）の節内改行を保持する。改行の無い訳には影響しない。
                 whiteSpace: "pre-line",
               }}

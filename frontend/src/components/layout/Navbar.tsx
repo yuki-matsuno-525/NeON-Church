@@ -12,6 +12,7 @@ import { BOOKS } from "@/lib/books";
 
 type NavbarProps = {
   onMenuToggle?: () => void;
+  /** ドロワーが開いているか。ボタンの説明を「開く／閉じる」で言い分けるために使う。 */
   menuOpen?: boolean;
 };
 
@@ -72,9 +73,9 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
       <button
         type="button"
         onClick={onMenuToggle}
-        aria-label={menuOpen ? (lang === "ja" ? "メニューを閉じる" : "Close menu") : t.menuOpen}
+        aria-label={menuOpen ? t.menuClose : t.menuOpen}
         aria-expanded={menuOpen}
-        aria-controls="site-sidebar"
+        aria-controls="app-sidebar"
         className="hamburger-btn"
         style={{
           background: "transparent",
@@ -97,12 +98,14 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
 
       {/* ロゴ */}
       <Link href="/" style={{ textDecoration: "none", flexShrink: 0, lineHeight: 0 }}>
+        {/* 全ページの上部に必ず出るので、最初に描かれるものの1つ。
+            priority を付けて後回しにされないようにする。 */}
         <Image
           src="/img/logo.webp"
           alt="NeON Church"
           width={172}
           height={44}
-          loading="eager"
+          priority
           style={{
             height: 44,
             width: "auto",
@@ -150,7 +153,12 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
           <button
             key={l}
             type="button"
-            onClick={() => setLang(l)}
+            onClick={() => {
+              setLang(l);
+              router.refresh();
+            }}
+            // いま選ばれている言語は色と太さでしか示していなかったため、
+            // 読み上げでは2つとも同じボタンに聞こえていた。選択状態を明示する。
             aria-pressed={lang === l}
             aria-label={l === "ja" ? "日本語" : "English"}
             style={{

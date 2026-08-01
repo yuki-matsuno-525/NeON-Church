@@ -100,7 +100,7 @@ function SearchContent() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const trimmed = ((formData.get("search-q") as string) ?? inputValue).trim();
+    const trimmed = ((formData.get("q") as string) ?? inputValue).trim();
     const params = new URLSearchParams(searchParams.toString());
     if (trimmed) params.set("q", trimmed);
     else params.delete("q");
@@ -144,7 +144,7 @@ function SearchContent() {
         <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
           <input
             id={inputId}
-            name="search-q"
+            name="q"
             type="search"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}

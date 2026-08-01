@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import { useT } from "@/lib/i18n";
+import { useDialogBehavior } from "@/hooks/useDialogBehavior";
 import { Button } from "./Button";
 
 type Props = {
@@ -28,47 +29,8 @@ export function ConfirmDialog({
   const t = useT();
   const titleId = useId();
   const descId = useId();
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const onCancelRef = useRef(onCancel);
-  useEffect(() => {
-    onCancelRef.current = onCancel;
-  }, [onCancel]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    cancelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onCancelRef.current();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable?.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus();
-    };
-  }, [open]);
+  // Escape で閉じる・Tab が外へ出ない・閉じたら元の場所へフォーカスを戻す。
+  const dialogRef = useDialogBehavior<HTMLDivElement>(open, onCancel);
 
   if (!open) return null;
 
@@ -130,7 +92,7 @@ export function ConfirmDialog({
             marginTop: 20,
           }}
         >
-          <Button ref={cancelRef} variant="ghost" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             {cancelText ?? t.cancel}
           </Button>
           <Button

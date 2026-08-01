@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createBookmark,
@@ -19,7 +19,7 @@ import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
-import { LoadMoreButton } from "@/components/ui";
+import { LoadMoreButton, useToast } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
@@ -53,6 +53,7 @@ export function CommentPanel({
   translationProject,
 }: Props) {
   const t = useT();
+  const toast = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile(768);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -113,10 +114,15 @@ export function CommentPanel({
 
   // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
   // KJV など別の訳を表示していても「ブックマーク済み」として扱われる（訳跨ぎハイライト）。
-  const bookmarkByLocation = new Map(
-    verseBookmarks
-      .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
-      .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+  // 節を選び直すたびに作り直すと重いので、栞の一覧が変わったときだけ組み直す。
+  const bookmarkByLocation = useMemo(
+    () =>
+      new Map(
+        verseBookmarks
+          .filter((bm): bm is typeof bm & { reference: NonNullable<typeof bm.reference> } => bm.reference !== null)
+          .map((bm) => [`${bm.reference.book}/${bm.reference.chapter}/${bm.reference.verse}`, bm])
+      ),
+    [verseBookmarks]
   );
   const locationKey = bookSlug ? `${bookSlug}/${chapterNumber}/${verse.number}` : null;
   const existingBookmark = locationKey ? bookmarkByLocation.get(locationKey) : undefined;
@@ -140,6 +146,7 @@ export function CommentPanel({
       }
     } catch {
       setPanelError(t.bookmarkFailed);
+      toast.show(t.errorActionFailed, { type: "error" });
     } finally {
       setLoadingBookmark(false);
     }
@@ -427,7 +434,7 @@ export function CommentPanel({
               {t.tabComments}
             </PanelTab>
             <PanelTab id={articlesTabId} controls={articlesPanelId} active={tab === "articles"} onClick={() => setTab("articles")}>
-              {t.citingArticles} ({citingArticles.length})
+              {t.citingArticles(citingArticles.length)}
             </PanelTab>
           </div>
         )}

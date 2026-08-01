@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
+import { useDialogBehavior } from "@/hooks/useDialogBehavior";
 
 type Props = {
   onClose: () => void;
@@ -18,51 +19,12 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
   const t = useT();
   const titleId = useId();
   const descriptionId = useId();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
   const currentLocation = typeof window === "undefined"
     ? pathname
     : `${window.location.pathname}${window.location.search}${window.location.hash}`;
   const loginHref = `/login?from=${encodeURIComponent(from ?? currentLocation)}`;
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-      if (event.key !== "Tab") return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusable?.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previouslyFocused?.focus();
-    };
-  }, []);
+  // ダイアログとして正しく振る舞わせる（Escape で閉じる・Tab が外へ出ない・閉じたら元へ戻る）。
+  const dialogRef = useDialogBehavior<HTMLDivElement>(true, onClose);
 
   return (
     <>
@@ -106,7 +68,6 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button
-            ref={closeRef}
             onClick={onClose}
             style={{
               padding: "8px 20px",
@@ -129,7 +90,8 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
               minHeight: 44,
               display: "inline-flex",
               alignItems: "center",
-              background: "linear-gradient(135deg, #7618c5, #d81e80)",
+              // 主ボタンの色は1か所（--accent-primary-grad）にまとめている。
+              background: "var(--accent-primary-grad)",
               color: "#fff",
               borderRadius: 8,
               textDecoration: "none",

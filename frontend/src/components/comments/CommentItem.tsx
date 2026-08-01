@@ -46,6 +46,7 @@ export function CommentItem({
   const [repliesLoading, setRepliesLoading] = useState(false);
   const [repliesError, setRepliesError] = useState(false);
   const [replyCount, setReplyCount] = useState(comment.reply_count);
+  // 削除は取り消せないので、押しただけでは消さずに一度確認する。
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState("spam");
   const [reportStatus, setReportStatus] = useState<"idle" | "done" | "dup">("idle");
@@ -53,6 +54,8 @@ export function CommentItem({
   const [busyAction, setBusyAction] = useState<"vote" | "bookmark" | "edit" | "delete" | "report" | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // 投票・削除・栞・編集は一番よく押される操作なのに、失敗しても何も出ていなかった。
+  // 押した結果が分からないと同じ操作を繰り返してしまうので、失敗はその場で伝える。
   const handleUpvote = async () => {
     if (!user) return;
     setBusyAction("vote");
@@ -142,7 +145,7 @@ export function CommentItem({
       setCurrentBody(editBody.trim());
       setEditing(false);
     } catch {
-      setActionError(t.actionFailed);
+      setActionError(t.errorSaveFailed);
     } finally {
       setBusyAction(null);
     }
@@ -622,6 +625,7 @@ export function CommentItem({
           showVersionBadge={showVersionBadge}
         />
       ))}
+
     </div>
   );
 }

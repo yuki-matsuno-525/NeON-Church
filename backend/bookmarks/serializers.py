@@ -17,6 +17,7 @@ class CommentBriefSerializer(serializers.Serializer):
     chapter_number = serializers.IntegerField(read_only=True)
     verse_number = serializers.IntegerField(read_only=True)
     source_translation = serializers.CharField(read_only=True)
+    is_deleted = serializers.BooleanField(read_only=True)
 
     def get_body(self, obj):
         if obj.is_deleted:
@@ -24,8 +25,9 @@ class CommentBriefSerializer(serializers.Serializer):
         return obj.body[:100]
 
     def get_location_label(self, obj):
-        from comments.serializers import _format_location_label, _get_location_parts
-        book, chapter, verse = _get_location_parts(obj)
+        from comments.serializers import _format_location_label, _get_location_parts, book_name_cache
+        # 一覧のあいだ書名の引き当て結果を使い回す（栞1件ごとに Book を引かない）。
+        book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
 
     def get_book_slug(self, obj):

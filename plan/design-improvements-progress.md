@@ -131,16 +131,16 @@ test suites, a commit, and a push.
 
 ## Verification gates
 
-- [ ] Focused backend permission/state tests pass.
-- [ ] Focused frontend component/page tests pass.
-- [ ] Full backend `pytest` passes.
-- [ ] Full frontend `npm test` passes.
-- [ ] Frontend lint passes with no new warnings.
-- [ ] Frontend production build passes.
-- [ ] Desktop and 375/390px visual smoke checks pass for public and authenticated states.
-- [ ] Keyboard-only smoke checks pass for navigation, dialogs, tabs, verses, comments, forms, and destructive confirmations.
-- [ ] No unrelated user changes are overwritten.
-- [ ] Final tracker accurately records completed and deferred work.
+- [x] Focused backend permission/state tests pass.
+- [x] Focused frontend component/page tests pass.
+- [x] Full backend `pytest` passes.
+- [x] Full frontend `npm test` passes.
+- [x] Frontend lint passes with no new warnings.
+- [x] Frontend production build passes.
+- [x] Desktop and 375/390px visual smoke checks pass for public and authenticated states.
+- [x] Keyboard-only smoke checks pass for navigation, dialogs, tabs, verses, comments, forms, and destructive confirmations.
+- [x] No unrelated user changes are overwritten.
+- [x] Final tracker accurately records completed and deferred work.
 - [ ] Branch is committed and pushed.
 
 ## Progress log
@@ -164,3 +164,6 @@ test suites, a commit, and a push.
 - 2026-08-02: Removed obsolete standalone demo/default assets and added redirects to the maintained component catalog.
 - 2026-08-02: Enabled an environment-scoped local-network dev origin so the in-app browser can inspect the local application even when direct `localhost` access is unavailable.
 - 2026-08-02: Browser smoke-tested real seeded data for `/read`, Q&A search and in-list answering, translation search, public translation reading, mobile navigation/dialog behavior, profile/settings, and owner-only translation management. A guest-owner detection regression discovered during the pass was fixed and covered by tests.
+- 2026-08-02: Integrated the latest `origin/main`, preserving its i18n, API aggregation, loading-state, and performance work alongside the full UX/security pass. Resolved and re-tested every conflict across four parallel workstreams.
+- 2026-08-02: Final frontend verification passed: 63 Vitest files / 353 tests, TypeScript, zero-warning ESLint, production build, and 43/43 Playwright E2E scenarios with a single deterministic worker.
+- 2026-08-02: Final backend verification passed: 601 tests passed and 13 platform-specific import tests were skipped (614 collected). Django system checks and migration-drift checks also passed.

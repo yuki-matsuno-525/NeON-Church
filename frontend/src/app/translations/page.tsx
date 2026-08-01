@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { Button, SkeletonList } from "@/components/ui";
@@ -39,6 +40,8 @@ export default function TranslationsPage() {
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
   const [projectSearch, setProjectSearch] = useState(searchQuery);
   const deferredProjectSearch = useDeferredValue(projectSearch);
+  // 入力欄とURLは即時同期しつつ、3列分の検索リクエストは入力が止まってから送る。
+  const debouncedSearch = useDebouncedValue(deferredProjectSearch);
   const visibleColumns = user ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
 
   useEffect(() => {
@@ -157,7 +160,7 @@ export default function TranslationsPage() {
               tint={col.tint}
               label={columnLabel(col.key)}
               desc={columnDesc(col.key)}
-              search={deferredProjectSearch}
+              search={debouncedSearch}
               retryLabel={ui.retry}
               errorMessage={ui.loadError}
             />
@@ -289,7 +292,7 @@ function ProjectCard({
           </span>
         </div>
 
-        <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
+        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
 
         {p.description && (
           <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>

@@ -3,9 +3,8 @@ from django.db import models
 
 from common.models import BaseModel
 
-# 論理削除済みコメントをフロントエンドに表示する際のプレースホルダー文字列。
-# serializers.py・bookmarks/serializers.py・notifications/serializers.py で共用する。
-DELETED_COMMENT_BODY = "This comment has been deleted."
+# 削除状態は is_deleted で返し、表示文言はクライアントの言語で決める。
+DELETED_COMMENT_BODY = ""
 
 PREDEFINED_TAGS = [
     ("感想", "感想"),
@@ -29,7 +28,7 @@ class Tag(models.Model):
 class Comment(BaseModel):
     """
     コメント。parent FK によるツリー構造、is_deleted による論理削除。
-    論理削除時は body をクリアし、シリアライザ側で「削除されました」と表示する。
+    論理削除時は body をクリアし、クライアント側で is_deleted に応じた文言を表示する。
     物理削除は行わない（子コメントの親参照を維持するため）。
     """
 
@@ -91,6 +90,19 @@ class Comment(BaseModel):
     class Meta:
         db_table = "comments"
         ordering = ["-created_at"]
+        indexes = [
+            # 読書画面は「この箇所のコメント」を新しい順に引く。chapter_number /
+            # verse_number は一番よく使う絞り込み列なのに索引が無く、人気のある書ほど
+            # そのコメント全体を走査していた。
+            models.Index(
+                fields=["canonical_book", "chapter_number", "verse_number", "-created_at"],
+                name="comment_location_recent_idx",
+            ),
+            # Q&A 一覧は質問（親なし・is_qa）を新しい順に出す。
+            models.Index(fields=["is_qa", "parent", "-created_at"], name="comment_qa_recent_idx"),
+            # 返信の読み足しは親でぶら下がりを引く。
+            models.Index(fields=["parent", "-created_at"], name="comment_replies_recent_idx"),
+        ]
         constraints = [
             # 段階6E: すべてのコメントは書・章・節のいずれかの粒度を必ず持つ。
             # canonical_book は必須。粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) /

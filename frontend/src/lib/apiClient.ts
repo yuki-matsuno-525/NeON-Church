@@ -28,36 +28,47 @@ import type {
 } from "./types";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /**
+   * `code` はサーバーが付ける機械可読な理由。画面が理由ごとに文言を変えたいときに使う
+   * （例: 章が無いのか、その訳にその書が無いのか）。無いことのほうが多い。
+   */
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
   }
 }
 
-// DRF 等のエラーレスポンスから人間可読な1行を取り出す。
-// 想定形: { detail: "..." } | { field: ["msg1", "msg2"], ... } | "string" | ["msg"]
-function extractErrorMessage(body: unknown): string | null {
-  if (body == null) return null;
-  if (typeof body === "string") return body;
-  if (Array.isArray(body)) {
-    for (const item of body) {
-      const msg = extractErrorMessage(item);
-      if (msg) return msg;
-    }
-    return null;
+// サーバーが理由を機械可読に添えているとき（{ detail: "...", code: "chapter_not_found" }）
+// その code を取り出す。表示する文言は言語に合わせて自前で決めるが、
+// 「その訳に書が無い」「章が無い」のような分岐は code で見分ける。
+function extractErrorCode(body: unknown): string | undefined {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const code = (body as Record<string, unknown>).code;
+    if (typeof code === "string") return code;
   }
-  if (typeof body === "object") {
-    const obj = body as Record<string, unknown>;
-    if (typeof obj.detail === "string") return obj.detail;
-    for (const value of Object.values(obj)) {
-      const msg = extractErrorMessage(value);
-      if (msg) return msg;
-    }
-  }
-  return null;
+  return undefined;
 }
 
 // 常に相対パスで Next.js rewrites を経由する（クロスドメイン Cookie 問題を回避）
 const API_BASE = "";
+
+function getUiLanguage(): "ja" | "en" {
+  if (typeof window === "undefined") return "ja";
+  return localStorage.getItem("lang") === "en" ? "en" : "ja";
+}
+
+function localizedErrorMessage(status: number): string {
+  const en = getUiLanguage() === "en";
+  if (status === 400) return en ? "Please check your input." : "入力内容を確認してください。";
+  if (status === 401) return en ? "Please sign in and try again." : "ログインして、もう一度お試しください。";
+  if (status === 403) return en ? "You do not have permission to do that." : "この操作を行う権限がありません。";
+  if (status === 404) return en ? "The requested item was not found." : "対象が見つかりませんでした。";
+  if (status === 409) return en ? "This conflicts with an existing item." : "すでにある項目と重複しています。";
+  if (status === 429) return en ? "Too many requests. Please try again later." : "操作が多すぎます。時間を置いてお試しください。";
+  if (status >= 500) return en
+    ? "An unexpected error occurred. Please try again later."
+    : "予期しないエラーが発生しました。時間を置いて再度お試しください。";
+  return en ? "The request failed. Please try again." : "操作に失敗しました。もう一度お試しください。";
+}
 
 function getCsrfToken(): string | undefined {
   if (typeof document === "undefined") return undefined;
@@ -87,7 +98,10 @@ async function doRefresh(): Promise<void> {
   const res = await fetch(`${API_BASE}/api/auth/token/refresh/`, {
     method: "POST",
     credentials: "include",
-    headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
+    headers: {
+      "Accept-Language": getUiLanguage(),
+      ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+    },
   });
   if (!res.ok) throw new ApiError(res.status, "Token refresh failed");
 }
@@ -173,6 +187,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      "Accept-Language": getUiLanguage(),
       ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
       ...init?.headers,
     },
@@ -186,7 +201,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
       await refreshToken();
     } catch {
       notifySessionExpired();
-      throw new ApiError(401, "Unauthorized");
+      throw new ApiError(401, localizedErrorMessage(401));
     }
     return apiFetch<T>(path, init, true);
   }
@@ -197,21 +212,15 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
   }
 
   if (!res.ok) {
-    let message: string;
-    if (res.status >= 500) {
-      // 5xx ではサーバー由来の詳細をユーザーに見せず、汎用文言に固定する。
-      // 実際のエラー詳細は Sentry / バックエンドログから追える。
-      message = "予期しないエラーが発生しました。時間を置いて再度お試しください。";
-    } else {
-      message = res.statusText;
-      try {
-        const body = await res.json();
-        message = extractErrorMessage(body) ?? res.statusText;
-      } catch {
-        // ignore parse failure
-      }
+    // バックエンドの文言や言語をそのまま UI に漏らさず、選択中の言語で一貫した文言を返す。
+    // 理由の見分けだけは本文の code を使う（表示はしない）。
+    let code: string | undefined;
+    try {
+      code = extractErrorCode(await res.json());
+    } catch {
+      // 本文が JSON でないことはある。その場合は code 無しで扱う。
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, localizedErrorMessage(res.status), code);
   }
   if (res.status === 204) return undefined as T;
   const text = await res.text();
@@ -245,6 +254,30 @@ export function fetchReferenceChapters(slug: string, chapter: number): Promise<R
 
 export function fetchReferenceVerses(slug: string, chapter: number, verse: number): Promise<ReferenceItem[]> {
   return apiFetch<{ verses: ReferenceItem[] }>(`/references/${slug}/verses/${chapter}/${verse}/`).then((r) => r.verses);
+}
+
+/**
+ * 章のページに要る書・章・節を1回で取る。
+ *
+ * 以前は books → chapters → verses と3回、しかも前の返事を待ってから次を投げていた。
+ * 最初の1回は書の全一覧を落として1冊探すだけだったので、章を開くたびに待ち時間が積み上がっていた。
+ */
+export function fetchChapterRead(
+  slug: string,
+  chapter: number,
+  translation: string
+): Promise<{ book: Book; chapter: Chapter; verses: Verse[] }> {
+  return apiFetch(
+    `/references/${slug}/read/${chapter}/?translation=${encodeURIComponent(translation)}`
+  );
+}
+
+/** 書のページ（章グリッド）に要る書と全章を1回で取る。 */
+export function fetchBookRead(
+  slug: string,
+  translation: string
+): Promise<{ book: Book; chapters: Chapter[] }> {
+  return apiFetch(`/references/${slug}/book/?translation=${encodeURIComponent(translation)}`);
 }
 
 /**
@@ -326,14 +359,31 @@ export const EMPTY_BOOKMARK_COUNTS: BookmarkCounts = {
 };
 
 /**
- * 自分のお気に入りを全件取り切る。
+ * 章のページで使う栞だけを取る（その章の章栞・節栞と、その章のコメントへの栞）。
  *
- * 読書画面で「この節・章・書に栞が付いているか」を判定するために使う。
- * 一部しか持っていないと栞済みの印が出なくなるので、ここは取り切る必要がある。
- * 一覧画面には fetchBookmarkPage を使うこと。
+ * 以前は栞を全件取ってから絞っていたが、栞が増えるほど章を開くのが遅くなるので
+ * サーバー側で絞る。判定に漏れがあると栞済みの印が出なくなるため、絞ったうえで取り切る。
  */
-export function fetchBookmarks(): Promise<Bookmark[]> {
-  return apiFetchAll("/bookmarks/");
+export function fetchChapterBookmarks(bookSlug: string, chapter: number): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}&chapter=${chapter}`);
+}
+
+/** 書のページで使う栞（その書の書栞）だけを取る。 */
+export function fetchBookBookmarks(bookSlug: string): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}`);
+}
+
+/** 翻訳企画のページで使う栞（その企画の栞）だけを取る。 */
+export function fetchProjectBookmarks(projectId: string): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?translation_project=${encodeURIComponent(projectId)}`);
+}
+
+/**
+ * 節の栞だけを取る。記事を書くときの引用パネル（栞から節を選ぶ）で使う。
+ * 選ぶための一覧なので節栞は全部要るが、他の種類まで落とす必要はない。
+ */
+export function fetchVerseBookmarks(): Promise<Bookmark[]> {
+  return apiFetchAll("/bookmarks/?type=verse");
 }
 
 /** お気に入り一覧の1ページ分。type で種類を絞る（省略＝すべて）。 */
@@ -661,7 +711,8 @@ export function joinTranslation(id: string): Promise<TranslationMembership> {
 }
 
 export function fetchTranslationMembers(id: string): Promise<TranslationMembership[]> {
-  return apiFetch(`/translations/${id}/members/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll(`/translations/${id}/members/`);
 }
 
 export function updateMembershipStatus(projectId: string, membershipId: string, status: "approved" | "rejected"): Promise<TranslationMembership> {
@@ -752,11 +803,13 @@ export function assignTranslationUnit(projectId: string, unitId: string, userId:
 }
 
 export function fetchTranslationComments(projectId: string): Promise<TranslationComment[]> {
-  return apiFetch(`/translations/${projectId}/comments/`);
+  return apiFetchAll(`/translations/${projectId}/comments/`);
 }
 
 export function fetchUnitComments(projectId: string, unitId: string): Promise<TranslationComment[]> {
-  return apiFetch(`/translations/${projectId}/units/${unitId}/comments/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る
+  // （1ユニットの議論なので件数は少ないが、1回のリクエストで無制限に返させない）。
+  return apiFetchAll(`/translations/${projectId}/units/${unitId}/comments/`);
 }
 
 export function postTranslationComment(projectId: string, body: string): Promise<TranslationComment> {
@@ -795,7 +848,8 @@ export function fetchTranslationRead(
 
 // 自分が /read に追加した公開翻訳一覧（本棚）
 export function fetchTranslationLibrary(): Promise<TranslationProject[]> {
-  return apiFetch("/translations/library/");
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll("/translations/library/");
 }
 
 export function addTranslationToLibrary(id: string): Promise<TranslationProject> {
@@ -900,7 +954,8 @@ export function fetchArticlesCitingVerse(params: {
 }
 
 export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {
-  return apiFetchList(`/articles/${articleId}/comments/`);
+  // サーバー側でページングするようになったので、ページを辿って取り切る。
+  return apiFetchAll(`/articles/${articleId}/comments/`);
 }
 
 export function createArticleComment(

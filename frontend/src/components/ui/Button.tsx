@@ -20,11 +20,16 @@ const sizeStyles: Record<Size, { padding: string; fontSize: number; radius: numb
   md: { padding: "9px 16px", fontSize: 14, radius: 8, minHeight: 44 },
 };
 
+/**
+ * 見た目は globals.css のトークンを参照する。
+ * 以前は同じグラデーションが Button と .btn-primary の2か所に書かれていて、
+ * 片方だけ直すと見た目がずれる状態だった。色の出どころを1つにする。
+ */
 function variantStyles(variant: Variant): React.CSSProperties {
   switch (variant) {
     case "primary":
       return {
-        background: "linear-gradient(135deg, #7618c5, #d81e80)",
+        background: "var(--accent-primary-grad)",
         color: "#fff",
         border: "none",
         boxShadow: "0 0 14px rgba(198, 44, 170, 0.40)",

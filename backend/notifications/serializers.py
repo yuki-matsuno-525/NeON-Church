@@ -10,6 +10,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     actor_username = serializers.CharField(source="actor.username", read_only=True)
     comment_id = serializers.SerializerMethodField()
     comment_body_snippet = serializers.SerializerMethodField()
+    comment_is_deleted = serializers.SerializerMethodField()
     translation_project_id = serializers.SerializerMethodField()
 
     # 通知のジャンプ先を表す情報。
@@ -29,6 +30,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "actor_username",
             "comment_id",
             "comment_body_snippet",
+            "comment_is_deleted",
             "translation_project_id",
             "is_read",
             "created_at",
@@ -57,26 +59,31 @@ class NotificationSerializer(serializers.ModelSerializer):
             return tc.body[:_SNIPPET_LENGTH]
         return ""
 
+    def get_comment_is_deleted(self, obj) -> bool:
+        if obj.comment_id:
+            return obj.comment.is_deleted
+        if obj.translation_comment_id:
+            return obj.translation_comment.is_deleted
+        return False
+
     def get_translation_project_id(self, obj) -> str | None:
         if obj.translation_comment_id:
             return str(obj.translation_comment.project_id)
-        if obj.comment_id and obj.comment.translation_project_id:
-            return str(obj.comment.translation_project_id)
+        root = self._root_comment(obj)
+        if root is not None and root.translation_project_id:
+            return str(root.translation_project_id)
         return None
 
     def get_target_kind(self, obj) -> str | None:
         """ジャンプ先の種別。フロントの URL 組み立て分岐に使う。"""
         if obj.translation_comment_id:
             return "translation_unit"
-        if not obj.comment_id:
+        root = self._root_comment(obj)
+        if root is None:
             return None
-        if obj.comment.translation_project_id:
+        if root.translation_project_id:
             return "translation_project_comment"
-        c = obj.comment
         # スレッドの根をたどって target を決める（返信の返信でも元の verse/chapter/book に飛ぶ）
-        root = c
-        while root.parent_id is not None:
-            root = root.parent
         if root.is_qa:
             return "qa"
         # 段階6F: 箇所は canonical_book/章/節の列で判定する（旧 verse/chapter/book FK は撤去済み）。
@@ -89,23 +96,30 @@ class NotificationSerializer(serializers.ModelSerializer):
         return None
 
     def _root_comment(self, obj):
+        """スレッドの根をたどる（返信の返信でも元の書・章・節へ飛ばすため）。
+
+        親をたどるのは階層の数だけ DB に聞くことになるうえ、1件の通知につき5か所から
+        呼ばれていた（種別・書名・章・節・Q&Aか）。1件につき1回だけ辿って覚えておく。
+        """
         if not obj.comment_id:
             return None
+        cache = self.context.setdefault("_root_comment_cache", {})
+        if obj.comment_id in cache:
+            return cache[obj.comment_id]
         c = obj.comment
         while c.parent_id is not None:
             c = c.parent
+        cache[obj.comment_id] = c
         return c
 
     def get_book_name(self, obj) -> str | None:
         root = self._root_comment(obj)
         if not root or not root.canonical_book_id:
             return None
-        from bible.models import Book
-        book = (
-            Book.objects.filter(canonical_book_id=root.canonical_book_id, translation=root.source_translation).first()
-            or Book.objects.filter(canonical_book_id=root.canonical_book_id).first()
-        )
-        return book.name if book else (root.canonical_book.slug if root.canonical_book else None)
+        from comments.serializers import _get_location_parts, book_name_cache
+        # 書名の引き当てはコメント側と同じ仕組みを使い、一覧のあいだ結果を使い回す。
+        name, _, _ = _get_location_parts(root, book_name_cache(self))
+        return name or None
 
     def get_chapter_number(self, obj) -> int | None:
         root = self._root_comment(obj)

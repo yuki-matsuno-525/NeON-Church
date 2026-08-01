@@ -6,17 +6,19 @@ import {
   fetchArticleComments,
   createArticleComment,
   deleteArticleComment,
-  formatRelativeTime,
   type ArticleComment,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmDialog } from "@/components/ui";
+import { useRelativeTime, useT } from "@/lib/i18n";
 
 /**
  * 記事へのコメント。記事全体に対してのみ付く（記事の中の節には付かない）。
  * 節への反応は読む画面のコメント欄、記事への反応はここ、と場所を分けている。
  */
 export function ArticleComments({ articleId }: { articleId: string }) {
+  const t = useT();
+  const formatRelativeTime = useRelativeTime();
   const { user } = useAuth();
   const [comments, setComments] = useState<ArticleComment[]>([]);
   const [body, setBody] = useState("");
@@ -53,7 +55,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       setComments((prev) => [...prev, created]);
       setBody("");
     } catch {
-      setError("コメントを投稿できませんでした。");
+      setError(t.articleCommentPostFailed);
     } finally {
       setBusy(false);
     }
@@ -68,13 +70,13 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       setComments((prev) =>
         prev.map((comment) =>
           comment.id === commentId
-            ? { ...comment, is_deleted: true, body: "このコメントは削除されました。" }
+            ? { ...comment, is_deleted: true, body: "" }
             : comment,
         ),
       );
       setDeleting(null);
     } catch {
-      setError("コメントを削除できませんでした。");
+      setError(t.articleCommentDeleteFailed);
     } finally {
       setDeleteBusy(false);
     }
@@ -84,27 +86,27 @@ export function ArticleComments({ articleId }: { articleId: string }) {
     <section style={{ marginTop: 40 }}>
       <ConfirmDialog
         open={deleting !== null}
-        title="コメントを削除しますか？"
-        description="削除すると、他の人からは「削除されました」と見えるようになります。"
-        confirmText="削除する"
+        title={t.articleCommentDeleteConfirmTitle}
+        description={t.articleCommentDeleteConfirmDesc}
+        confirmText={t.articleDeleteAction}
         destructive
         onConfirm={() => deleting && handleDelete(deleting)}
         onCancel={() => !deleteBusy && setDeleting(null)}
       />
 
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
-        コメント <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>{comments.length}</span>
+        {t.articleCommentsTitle} <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>{comments.length}</span>
       </h2>
 
       {loading ? (
-        <p role="status" style={{ fontSize: 13, color: "var(--text-muted)" }}>コメントを読み込んでいます…</p>
+        <p role="status" style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</p>
       ) : error && comments.length === 0 ? (
         <div role="alert" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <p style={{ margin: 0, fontSize: 13, color: "var(--state-danger)" }}>{error}</p>
-          <button type="button" onClick={() => void loadComments()} style={secondaryButtonStyle}>再試行</button>
+          <button type="button" onClick={() => void loadComments()} style={secondaryButtonStyle}>{t.retry}</button>
         </div>
       ) : comments.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)" }}>まだコメントはありません。</p>
+        <p style={{ fontSize: 13, color: "var(--text-faint)" }}>{t.articleCommentsEmpty}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           {comments.map((comment) => (
@@ -130,7 +132,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
                       fontFamily: "inherit",
                     }}
                   >
-                    削除
+                    {t.delete}
                   </button>
                 )}
               </div>
@@ -143,7 +145,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
                   color: comment.is_deleted ? "var(--text-faint)" : "var(--text)",
                 }}
               >
-                {comment.body}
+                {comment.is_deleted ? t.deletedComment : comment.body}
               </p>
             </div>
           ))}
@@ -160,7 +162,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={3}
-            placeholder="この記事へのコメント"
+            placeholder={t.articleCommentPlaceholder}
             style={{
               width: "100%",
               boxSizing: "border-box",
@@ -194,12 +196,13 @@ export function ArticleComments({ articleId }: { articleId: string }) {
               fontFamily: "inherit",
             }}
           >
-            {busy ? "投稿中..." : "コメントする"}
+            {busy ? t.posting : t.articleCommentAction}
           </button>
         </div>
       ) : (
         <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-          コメントするには<Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} style={{ color: "var(--accent)", marginLeft: 4 }}>ログイン</Link>してください。
+          {t.articleCommentLoginRequired}{" "}
+          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} style={{ color: "var(--accent)" }}>{t.login}</Link>
         </p>
       )}
     </section>

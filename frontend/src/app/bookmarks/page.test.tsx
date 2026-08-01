@@ -166,7 +166,9 @@ describe("BookmarksPage", () => {
     expect(screen.getByText(/マタイによる福音書 1章3節/)).toBeInTheDocument();
   });
 
-  it("fetchBookmarkPage が失敗してもページがクラッシュしない", async () => {
+  it("取りに行けなかったときは「1件も無い」ではなくエラーとやり直しを出す", async () => {
+    // 以前は通信エラーでも「お気に入りはまだありません」と出ていたため、
+    // サーバーが落ちているのか本当に空なのか区別できなかった。
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockRejectedValue(new Error("Network Error"));
     loggedIn();
@@ -174,6 +176,7 @@ describe("BookmarksPage", () => {
     render(<BookmarksPage />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("読み込めませんでした");
+    expect(screen.queryByText("お気に入りはまだありません。")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "もう一度試す" })).toBeInTheDocument();
   });
 

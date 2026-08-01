@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
@@ -113,11 +112,4 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
       {toast.message}
     </div>
   );
-}
-
-// Toast の自動消失で setTimeout を貼るだけのため、明示的に unmount を保証する hook (現状は未使用、将来用)
-export function useToastCleanupOnUnmount() {
-  useEffect(() => {
-    return () => {};
-  }, []);
 }

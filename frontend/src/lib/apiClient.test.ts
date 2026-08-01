@@ -59,6 +59,7 @@ describe("apiFetch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setCookie("");
+    localStorage.setItem("lang", "ja");
   });
 
   it("成功時に JSON をパースして返す", async () => {
@@ -88,32 +89,32 @@ describe("apiFetch", () => {
     expect(result).toBeUndefined();
   });
 
-  it("4xx エラーは ApiError(status, detail) をスロー", async () => {
+  it("4xx エラーはサーバー文言を露出せず日本語の ApiError をスロー", async () => {
     mockFetch.mockResolvedValueOnce(makeRes(403, { detail: "Forbidden" }));
     const err = await fetchBooks().catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(403);
-    expect(err.message).toBe("Forbidden");
+    expect(err.message).toBe("この操作を行う権限がありません。");
   });
 
-  it("4xx エラーで detail なし → 値の中から最初の文字列を取り出す", async () => {
+  it("4xx エラーはレスポンス形式に依存しない", async () => {
     mockFetch.mockResolvedValueOnce(makeRes(400, { error: "bad" }));
     const err = await fetchBooks().catch((e) => e);
-    expect(err.message).toBe("bad");
+    expect(err.message).toBe("入力内容を確認してください。");
   });
 
-  it("4xx エラーで DRF 風の {field: [msg]} → 配列先頭メッセージを使う", async () => {
+  it("DRF のフィールドエラーもサーバー文言を露出しない", async () => {
     mockFetch.mockResolvedValueOnce(
       makeRes(400, { username: ["A user with that username already exists."] })
     );
     const err = await fetchBooks().catch((e) => e);
-    expect(err.message).toBe("A user with that username already exists.");
+    expect(err.message).toBe("入力内容を確認してください。");
   });
 
-  it("4xx エラーで空オブジェクト → statusText にフォールバック", async () => {
+  it("4xx エラーで空オブジェクトでもローカライズ済み文言を使う", async () => {
     mockFetch.mockResolvedValueOnce(makeRes(400, {}));
     const err = await fetchBooks().catch((e) => e);
-    expect(err.message).toBe("Error");
+    expect(err.message).toBe("入力内容を確認してください。");
   });
 
   it("5xx エラーは詳細を露出せず固定文言を返す", async () => {
@@ -183,7 +184,7 @@ describe("apiFetch", () => {
 
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(401);
-    expect(err.message).toBe("Invalid username or password."); // body メッセージが保持される
+    expect(err.message).toBe("ログインして、もう一度お試しください。");
     expect(spy).not.toHaveBeenCalled();
     expect(mockFetch).toHaveBeenCalledTimes(1); // refresh を呼ばない
   });
@@ -201,6 +202,15 @@ describe("apiFetch", () => {
     await fetchBooks();
     const [, init] = mockFetch.mock.calls[0];
     expect((init as RequestInit).headers).not.toHaveProperty("X-CSRFToken");
+  });
+
+  it("英語選択時は Accept-Language とエラー文言を英語にする", async () => {
+    localStorage.setItem("lang", "en");
+    mockFetch.mockResolvedValueOnce(makeRes(403, { detail: "日本語の詳細" }));
+    const err = await fetchBooks().catch((e) => e);
+    const [, init] = mockFetch.mock.calls[0];
+    expect((init as RequestInit).headers).toMatchObject({ "Accept-Language": "en" });
+    expect(err.message).toBe("You do not have permission to do that.");
   });
 });
 

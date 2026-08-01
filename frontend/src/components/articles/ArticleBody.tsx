@@ -3,6 +3,9 @@
 import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 import type { ArticleCitation } from "@/lib/types";
+import { bookLabel, useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { translationLabel } from "@/lib/translations";
 
 /**
  * 記事の本文を表示する。
@@ -20,11 +23,12 @@ export function ArticleBody({
   body: string;
   citations: ArticleCitation[];
 }) {
+  const t = useT();
   const byRaw = new Map(citations.map((citation) => [citation.raw, citation]));
   const blocks = parseBlocks(body);
 
   if (blocks.length === 0) {
-    return <p style={{ color: "var(--text-faint)", fontSize: 14 }}>まだ何も書かれていません。</p>;
+    return <p style={{ color: "var(--text-faint)", fontSize: 14 }}>{t.articleEmptyBody}</p>;
   }
 
   return (
@@ -173,7 +177,7 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
 
 function headingStyle(fontSize: number) {
   return {
-    fontFamily: '"Noto Serif JP", serif',
+    fontFamily: "var(--font-serif)",
     fontSize,
     fontWeight: 700,
     margin: "28px 0 12px",
@@ -182,6 +186,8 @@ function headingStyle(fontSize: number) {
 
 /** 引用ブロック。節の本文と出典を出す。 */
 function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitation }) {
+  const t = useT();
+  const { lang } = useLang();
   if (!citation || !citation.found) {
     return <NotFound raw={raw} block />;
   }
@@ -208,7 +214,7 @@ function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitat
           textDecoration: "none",
         }}
       >
-        {citation.label}（{citation.translation}）
+        {citationDisplayLabel(citation, lang, t)}（{translationLabel(citation.translation, lang)}）
       </Link>
     </blockquote>
   );
@@ -216,25 +222,40 @@ function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitat
 
 /** 文中の参照。（マタイによる福音書 6:16-18）というリンクになる。 */
 function CitationLink({ raw, citation }: { raw: string; citation?: ArticleCitation }) {
+  const t = useT();
+  const { lang } = useLang();
   if (!citation || !citation.found) {
     return <NotFound raw={raw} />;
   }
   return (
     <Link href={verseHref(citation)} style={{ color: "var(--accent)", textDecoration: "none" }}>
-      （{citation.label}）
+      （{citationDisplayLabel(citation, lang, t)}）
     </Link>
   );
 }
 
+function citationDisplayLabel(
+  citation: ArticleCitation,
+  lang: "ja" | "en",
+  t: ReturnType<typeof useT>,
+): string {
+  const name = bookLabel(citation.book_slug, lang)?.name ?? citation.book_name;
+  if (citation.verse_number_start === null) return `${name} ${t.chapterFmt(citation.chapter_number)}`;
+  const start = `${citation.chapter_number}:${citation.verse_number_start}`;
+  const end = citation.verse_number_end;
+  return end !== null && end !== citation.verse_number_start ? `${name} ${start}-${end}` : `${name} ${start}`;
+}
+
 function NotFound({ raw, block = false }: { raw: string; block?: boolean }) {
+  const t = useT();
   const style = {
     color: "var(--text-faint)",
     fontSize: 13,
     ...(block ? { display: "block", margin: "0 0 16px" } : {}),
   };
   return (
-    <span style={style} role="note">
-      （参照先を確認できませんでした: <code>{raw}</code>）
+    <span style={style} role="note" title={raw}>
+      {t.articleCitationMissing}: <code>{raw}</code>
     </span>
   );
 }

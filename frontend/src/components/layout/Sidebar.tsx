@@ -8,6 +8,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { BOOKS, GENRE_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const NAV_HREFS = [
   { href: "/read", matchPrefixes: ["/read", ...BOOKS.map((book) => `/${book.slug}`)] },
@@ -22,6 +23,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
+  const isMobile = useIsMobile();
   const sidebarRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -55,6 +57,8 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     { label: t.articles, ...NAV_HREFS[3] },
   ];
 
+  // スマホでドロワーを開いているときは Escape で閉じられるようにする
+  // （被せて開くものは、閉じ方が1つしか無いと行き止まりになる）。
   const handleLogout = async () => {
     setLogoutBusy(true);
     setLogoutError(false);
@@ -105,13 +109,17 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
-        id="site-sidebar"
+        id="app-sidebar"
         ref={sidebarRef}
         tabIndex={open ? -1 : undefined}
         role={open ? "dialog" : "complementary"}
         aria-modal={open || undefined}
         aria-label={lang === "ja" ? "メニュー" : "Menu"}
         className={`sidebar${open ? " sidebar-open" : ""}`}
+        // スマホで閉じているとき、ドロワーは画面の外にあるだけでタブ順には残っていた。
+        // キーボードで進むと見えないリンクにフォーカスが飛んでしまうので、閉じている間は
+        // 中身ごと触れなくする（パソコンでは常に表示されているのでそのまま）。
+        inert={isMobile && !open}
         style={{
           width: "var(--sidebar-width)",
           minWidth: "var(--sidebar-width)",

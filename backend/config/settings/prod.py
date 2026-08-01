@@ -63,7 +63,13 @@ if _sentry_dsn:
 # collectstatic が staticfiles/ に出力したファイルを Django プロセス自身が配信する。
 # ------------------------------------------------------------------
 STATIC_ROOT = BASE_DIR / "staticfiles"  # noqa: F405
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# 以前は STATICFILES_STORAGE を使っていたが、この設定は Django 5.1 で削除されている
+# （本プロジェクトは 5.2）。無視されていたため、実際には圧縮もファイル名のハッシュ化も
+# 効いておらず、ブラウザに長期キャッシュさせることもできていなかった。
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 # ------------------------------------------------------------------
 # メール（本番では SMTP サービスを設定する）

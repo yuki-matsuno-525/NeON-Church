@@ -113,8 +113,10 @@ export function FeedbackContent() {
 
   return (
     <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, fontFamily: '"Noto Serif JP", serif' }}>{c.title}</h1>
-      <p style={{ color: "var(--text-muted)", lineHeight: 1.8, marginBottom: 32 }}>{c.intro}</p>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, fontFamily: "var(--font-serif)" }}>{c.title}</h1>
+      <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
+        {c.intro}
+      </p>
 
       <form onSubmit={submit} aria-describedby="feedback-result" style={{ display: "grid", gap: 20 }}>
         <h2 style={{ fontSize: 20, margin: 0 }}>{c.formTitle}</h2>

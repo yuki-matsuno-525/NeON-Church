@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchArticles, fetchArticleTags, type Article, type ArticleTag } from "@/lib/api";
-import { visibilityLabel } from "@/lib/articles";
+import { articleTagLabel, visibilityLabel } from "@/lib/articles";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { LoadMoreButton, SkeletonList } from "@/components/ui";
@@ -27,6 +28,7 @@ const emptyFeed: ArticleFeed = {
 };
 
 export default function ArticlesPage() {
+  const t = useT();
   const { user } = useAuth();
   const [publicFeed, setPublicFeed] = useState<ArticleFeed>(emptyFeed);
   const [myFeed, setMyFeed] = useState<ArticleFeed>(emptyFeed);
@@ -74,9 +76,9 @@ export default function ArticlesPage() {
         error: null,
       }));
     } catch {
-      setter((current) => ({ ...current, loading: false, error: "記事を読み込めませんでした。" }));
+      setter((current) => ({ ...current, loading: false, error: t.articleLoadFailed }));
     }
-  }, [activeTag, user]);
+  }, [activeTag, t.articleLoadFailed, user]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -98,27 +100,27 @@ export default function ArticlesPage() {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>記事</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.articlesTitle}</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            節を引きながら、主題について書いた文章。
+            {t.articlesDesc}
           </p>
         </div>
         {user ? (
-          <Link href="/articles/new" style={newButtonStyle}>新しく書く</Link>
+          <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
         ) : (
-          <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>ログインして記事を書く</Link>
+          <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
         )}
       </div>
 
-      <div role="group" aria-label="記事の主題" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-        <TagChip label="すべて" active={activeTag === null} onClick={() => selectTag(null)} />
+      <div role="group" aria-label={t.articleTopicsLabel} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+        <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => selectTag(null)} />
         {tags.map((tag) => (
-          <TagChip key={tag.id} label={tag.name} count={tag.article_count} active={activeTag === tag.slug} onClick={() => selectTag(tag.slug)} />
+          <TagChip key={tag.id} label={articleTagLabel(tag.slug, tag.name, t)} count={tag.article_count} active={activeTag === tag.slug} onClick={() => selectTag(tag.slug)} />
         ))}
         {tagError && (
           <span role="alert" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--state-danger)" }}>
-            主題を読み込めませんでした。
-            <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>再試行</button>
+            {t.articleTopicsLoadFailed}
+            <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
           </span>
         )}
       </div>
@@ -126,26 +128,26 @@ export default function ArticlesPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 16, alignItems: "start" }}>
         {user && (
           <ArticleColumn
-            title="自分の記事"
-            desc="下書きも含めて、自分が書いた記事。各カードから閲覧と編集を選べます。"
+            title={t.articleMineTitle}
+            desc={t.articleMineDesc}
             icon="book-open"
             color="var(--accent)"
             tint="var(--accent-tint)"
             feed={myFeed}
-            empty="まだ記事がありません。"
+            empty={t.articleMineEmpty}
             editable
             onRetry={() => void loadFeed("mine", 1, false)}
             onLoadMore={() => void loadFeed("mine", myFeed.nextPage, true)}
           />
         )}
         <ArticleColumn
-          title="公開された記事"
-          desc={user ? "ほかの人が公開した記事。" : "誰でも読める記事。"}
+          title={t.articlePublicTitle}
+          desc={t.articlePublicDesc}
           icon="globe"
           color="var(--state-success)"
           tint="rgba(34,197,94,0.15)"
           feed={publicFeed}
-          empty="公開された記事はまだありません。"
+          empty={t.articlePublicEmpty}
           onRetry={() => void loadFeed("public", 1, false)}
           onLoadMore={() => void loadFeed("public", publicFeed.nextPage, true)}
         />
@@ -187,6 +189,7 @@ function ArticleColumn({
   onRetry: () => void;
   onLoadMore: () => void;
 }) {
+  const t = useT();
   return (
     <section style={columnStyle} aria-busy={feed.loading}>
       <div style={{ marginBottom: 16 }}>
@@ -203,7 +206,7 @@ function ArticleColumn({
       ) : feed.error && feed.articles.length === 0 ? (
         <div role="alert">
           <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{feed.error}</p>
-          <button type="button" onClick={onRetry} style={inlineRetryStyle}>再試行</button>
+          <button type="button" onClick={onRetry} style={inlineRetryStyle}>{t.retry}</button>
         </div>
       ) : feed.articles.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 2px" }}>{empty}</p>
@@ -220,14 +223,15 @@ function ArticleColumn({
 }
 
 function ArticleCard({ article, editable }: { article: Article; editable: boolean }) {
+  const t = useT();
   const isPublic = article.visibility === "public";
   return (
     <article className="card-glow" style={{ padding: 16, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <span className="badge" style={{ background: isPublic ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)", color: isPublic ? "var(--state-success)" : "var(--text-muted)" }}>
-          {visibilityLabel(article.visibility)}
+          {visibilityLabel(article.visibility, t)}
         </span>
-        {editable && <Link href={`/articles/${article.id}/edit`} style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center", padding: "0 6px" }}>編集</Link>}
+        {editable && <Link href={`/articles/${article.id}/edit`} style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center", padding: "0 6px" }}>{t.articleEditShort}</Link>}
       </div>
       <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
         <Link href={`/articles/${article.id}`} style={{ color: "inherit", textDecoration: "none" }}>{article.title}</Link>
@@ -235,7 +239,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
       {article.summary && <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>{article.summary}</p>}
       <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", flexWrap: "wrap" }}>
         <Link href={`/profile/${article.owner_username}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{article.owner_username}</Link>
-        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{tag.name}</Link>)}
+        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
       </div>
     </article>
   );

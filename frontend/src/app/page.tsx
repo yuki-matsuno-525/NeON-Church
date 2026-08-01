@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchVerseOfDay, fetchQACommentPage, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
-import { useT, useRelativeTime } from "@/lib/i18n";
+import { formatBookLocation, useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
 import { Icon, type IconName } from "@/components/ui/Icon";
@@ -110,7 +110,7 @@ export default function Home() {
           </p>
           <h1
             style={{
-              fontFamily: '"Noto Serif JP", serif',
+              fontFamily: "var(--font-serif)",
               fontSize: "clamp(30px, 5vw, 52px)",
               fontWeight: 700,
               color: "rgba(255, 255, 255, 0.95)",
@@ -125,7 +125,7 @@ export default function Home() {
           <p
             style={{
               fontSize: 14,
-              color: "rgba(255, 255, 255, 0.74)",
+              color: "var(--text-muted)",
               lineHeight: 1.9,
               margin: 0,
               maxWidth: 480,
@@ -180,7 +180,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.72)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -220,7 +220,7 @@ export default function Home() {
                 style={{
                   position: "relative",
                   fontSize: 14,
-                  color: "rgba(255, 255, 255, 0.72)",
+                  color: "var(--text-muted)",
                   margin: 0,
                 }}
               >
@@ -293,7 +293,7 @@ export default function Home() {
               <blockquote
                 style={{
                   position: "relative",
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: 15,
                   lineHeight: 2.0,
                   color: "rgba(255, 255, 255, 0.85)",
@@ -365,7 +365,7 @@ export default function Home() {
             >
               <h2
                 style={{
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -395,7 +395,7 @@ export default function Home() {
             >
               <h2
                 style={{
-                  fontFamily: '"Noto Serif JP", serif',
+                  fontFamily: "var(--font-serif)",
                   fontSize: "var(--font-size-xl)",
                   color: "rgba(193, 143, 255, 0.88)",
                   margin: 0,
@@ -447,7 +447,9 @@ export default function Home() {
 
 function ActivityCard({ qa }: { qa: QAComment }) {
   const t = useT();
+  const { lang } = useLang();
   const relTime = useRelativeTime();
+  const slug = slugFromBookName(qa.book_name);
   return (
     <Link
       href="/qa"
@@ -493,12 +495,14 @@ function ActivityCard({ qa }: { qa: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.68)",
+          color: "var(--text-faint)",
         }}
       >
         <span>{qa.user.username}</span>
         <span>·</span>
-        <span style={{ whiteSpace: "nowrap" }}>{qa.location_label}</span>
+        <span style={{ whiteSpace: "nowrap" }}>
+          {slug ? formatBookLocation(slug, qa.chapter_number, qa.verse_number, lang) : qa.location_label}
+        </span>
         <span>·</span>
         <span>{relTime(qa.created_at)}</span>
         {qa.reply_count > 0 && (
@@ -514,7 +518,8 @@ function ActivityCard({ qa }: { qa: QAComment }) {
 
 function TrendingCard({ comment }: { comment: QAComment }) {
   const t = useT();
-  const slug = BOOKS.find((b) => b.name === comment.book_name)?.slug ?? "";
+  const { lang } = useLang();
+  const slug = slugFromBookName(comment.book_name);
   const href = slug && comment.chapter_number
     ? `/${slug}/${comment.chapter_number}${comment.verse_number ? `#verse-${comment.verse_number}` : ""}`
     : "/qa";
@@ -564,14 +569,16 @@ function TrendingCard({ comment }: { comment: QAComment }) {
           flexWrap: "wrap",
           gap: 8,
           fontSize: 11,
-          color: "rgba(255, 255, 255, 0.68)",
+          color: "var(--text-faint)",
         }}
       >
         <span>▲ {comment.vote_count}</span>
         <span>·</span>
         <span>{comment.user.username}</span>
         <span>·</span>
-        <span style={{ whiteSpace: "nowrap" }}>{comment.location_label}</span>
+        <span style={{ whiteSpace: "nowrap" }}>
+          {slug ? formatBookLocation(slug, comment.chapter_number, comment.verse_number, lang) : comment.location_label}
+        </span>
         {comment.reply_count > 0 && (
           <>
             <span>·</span>
@@ -681,7 +688,7 @@ function SectionCard({
         )}
         <p
           style={{
-            fontFamily: '"Noto Serif JP", serif',
+            fontFamily: "var(--font-serif)",
             fontSize: 30,
             fontWeight: 700,
             color: "rgba(255, 255, 255, 0.94)",

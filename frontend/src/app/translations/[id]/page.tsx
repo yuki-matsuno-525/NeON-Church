@@ -29,8 +29,7 @@ import {
   deleteTranslation,
   fetchTranslationMembers as fetchMembers,
   assignTranslationUnit,
-  formatRelativeTime,
-  fetchBookmarks,
+  fetchProjectBookmarks,
   createProjectBookmark,
   removeBookmark,
   type TranslationProject,
@@ -44,7 +43,7 @@ import {
   type TranslationLanguage,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
+import { useRelativeTime, useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, ConfirmDialog, Button, useToast } from "@/components/ui";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
@@ -195,6 +194,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const { user } = useAuth();
   const router = useRouter();
   const t = useT();
+  const formatRelativeTime = useRelativeTime();
   const { lang } = useLang();
   const ui = translationUiText(lang);
   const [project, setProject] = useState<TranslationProject | null>(null);
@@ -328,13 +328,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   useEffect(() => {
     if (!user) return;
     let active = true;
-    fetchBookmarks()
+    fetchProjectBookmarks(id)
       .then((bms) => {
         if (!active) return;
-        const found = bms.find(
-          (bm) => bm.target_type === "project" && bm.project_detail?.id === id
-        );
-        setProjectBookmark(found ?? null);
+        setProjectBookmark(bms[0] ?? null);
       })
       .catch(() => active && setProjectBookmark(null));
     return () => {

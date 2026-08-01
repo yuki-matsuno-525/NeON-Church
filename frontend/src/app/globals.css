@@ -11,7 +11,10 @@
   --border: rgba(140, 75, 235, 0.30);
   --text: rgba(236, 228, 252, 0.92);
   --text-muted: #a898d8;
-  --text-faint: #9485c2;
+  /* 日時・メタ情報など控えめな文字。以前の #7a6aaa は背景に対して 4.28:1 で、
+     本文として読める明るさ（4.5:1）に届いていなかった。4.95:1 まで上げつつ、
+     --text-muted（7.8:1）との差は残して「控えめさ」は保つ。 */
+  --text-faint: #8574b6;
   --accent: #c040f0;
   --accent-text: #fff;
   --accent-tint: rgba(145, 60, 240, 0.18);
@@ -96,6 +99,27 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
+/* 全ページ共通の背景。
+   以前は JavaScript 側のインライン指定だったため、ブラウザが「この画像が要る」と
+   気づくのが画面の組み立て後になり、読み込みの開始が遅れていた。
+   スタイルシートに置くと、ページを読み始めた時点で取りに行ける。 */
+.app-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url("/img/background.webp");
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+.app-background-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: rgba(6, 3, 20, 0.80);
+  pointer-events: none;
+}
+
 /* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
 
 /* カード */
@@ -161,7 +185,8 @@
   cursor: not-allowed;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #7618c5, #d81e80);
+  /* 主ボタンの色は --accent-primary-grad が出どころ。components/ui/Button.tsx も同じ変数を見る。 */
+  background: var(--accent-primary-grad);
   color: #fff;
   box-shadow: 0 0 14px rgba(198, 44, 170, 0.40);
 }
@@ -336,6 +361,25 @@ select:focus-visible {
   .content-page {
     padding: 32px 20px !important;
   }
+
+  /* iPhone の Safari は、文字が 16px 未満の入力欄をタップすると画面を勝手に拡大する。
+     元の倍率には自動で戻らないので、以降ずっと横にはみ出したまま操作することになる。
+     入力欄はほとんどが 12〜14px 指定なので、スマホでは一律 16px に底上げする。
+     画面ごとの指定（インラインの style）に勝つ必要があるため !important を付けている。 */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* 指で押す領域は 44px 角が目安。返信・投票・栞・削除といった、よく押すボタンほど
+     小さく（15〜32px）作られていて押し間違えやすかった。高さだけ底上げする
+     （余白や文字サイズは触らないので、見た目の印象は大きく変えない）。 */
+  button,
+  [role="button"] {
+    min-height: 44px;
+  }
+
   .hamburger-btn {
     display: flex !important;
   }
@@ -359,7 +403,7 @@ select:focus-visible {
     position: fixed !important;
     top: var(--navbar-height) !important;
     left: calc(-1 * var(--sidebar-width)) !important;
-    height: calc(100vh - var(--navbar-height)) !important;
+    height: calc(100dvh - var(--navbar-height)) !important;
     z-index: 40;
     transition: left var(--duration-base) var(--ease-out);
     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.5);
@@ -374,7 +418,7 @@ select:focus-visible {
   .reader-wrapper.has-verse .reader-main {
     display: block !important;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
-    padding-bottom: 70vh !important;
+    padding-bottom: 70dvh !important;
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed !important;
@@ -382,7 +426,7 @@ select:focus-visible {
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    height: 70vh !important;
+    height: 70dvh !important;
     z-index: 50;
     display: flex !important;
     flex-direction: column !important;

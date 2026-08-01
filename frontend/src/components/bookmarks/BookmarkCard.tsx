@@ -31,7 +31,7 @@ function useBookmarkTarget(bookmark: Bookmark) {
       // コメント栞も、そのコメントが付いた箇所へ飛べるようにする。
       href: cd.book_slug ? passageHref(cd) : "",
       title: `${label ? `${label} · ` : ""}${t.commentBy(cd.username)}`,
-      body: cd.body,
+      body: cd.is_deleted ? t.deletedComment : cd.body,
     };
   }
 

@@ -47,4 +47,23 @@ describe("VerseList", () => {
     fireEvent.click(screen.getByTestId("verse-item"));
     expect(onSelectVerse).toHaveBeenCalledWith("v1");
   });
+
+  // 節を選ぶのはこのアプリの中心の操作（ここからコメント・栞・引用へ進む）。
+  // 以前はただの div に onClick を付けていたため、キーボードだけの人は使えなかった。
+  it("キーボードで節までたどり着ける", () => {
+    render(<VerseList {...defaultProps} />);
+    expect(screen.getByRole("button", { name: /テスト節テキスト/ })).toHaveAttribute("tabindex", "0");
+  });
+
+  it.each(["Enter", " "])("%s キーで節を選べる", (key) => {
+    const onSelectVerse = vi.fn();
+    render(<VerseList {...defaultProps} onSelectVerse={onSelectVerse} />);
+    fireEvent.keyDown(screen.getByTestId("verse-item"), { key });
+    expect(onSelectVerse).toHaveBeenCalledWith("v1");
+  });
+
+  it("選択中の節は選択状態として伝わる", () => {
+    render(<VerseList {...defaultProps} selectedVerseId="v1" />);
+    expect(screen.getByTestId("verse-item")).toHaveAttribute("aria-pressed", "true");
+  });
 });

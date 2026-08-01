@@ -53,7 +53,25 @@ def _min_query_len(q: str) -> int:
     return 2
 
 
-class BookListView(generics.ListAPIView):
+# 聖書本文はインポート済みで基本的に変わらないのに、開くたび DB から作り直していた。
+# ブラウザと中間キャッシュに持たせておく時間（1時間）。訳を足したときは最大1時間で反映される。
+_SCRIPTURE_CACHE_SECONDS = 60 * 60
+
+
+class _CacheableScriptureView:
+    """本文系の読み取り専用ビューに Cache-Control を付けるための共通処理。
+
+    ログイン状態で内容が変わらないもの（誰が見ても同じ本文）にだけ使う。
+    """
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if request.method == "GET" and response.status_code == 200:
+            response["Cache-Control"] = f"public, max-age={_SCRIPTURE_CACHE_SECONDS}"
+        return response
+
+
+class BookListView(_CacheableScriptureView, generics.ListAPIView):
     """書一覧。認証不要。?translation=和訳 でフィルタ可能。"""
 
     permission_classes = [AllowAny]
@@ -68,7 +86,7 @@ class BookListView(generics.ListAPIView):
         return qs
 
 
-class ChapterListView(generics.ListAPIView):
+class ChapterListView(_CacheableScriptureView, generics.ListAPIView):
     """指定した書の章一覧。書が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
@@ -81,7 +99,7 @@ class ChapterListView(generics.ListAPIView):
         return Chapter.objects.filter(book=book)
 
 
-class VerseListView(generics.ListAPIView):
+class VerseListView(_CacheableScriptureView, generics.ListAPIView):
     """指定した章の節一覧。章が存在しない場合は 404。"""
 
     permission_classes = [AllowAny]
@@ -93,7 +111,7 @@ class VerseListView(generics.ListAPIView):
         return Verse.objects.filter(chapter=chapter)
 
 
-class _ReferenceView(APIView):
+class _ReferenceView(_CacheableScriptureView, APIView):
     """箇所（canonical_book.slug）から、各版（訳）の書/章/節をまとめて返す基底。
 
     フロントの N+1（訳ごとに書→章→節を取得）を1回の問い合わせに置き換えるための API。
@@ -107,6 +125,17 @@ class _ReferenceView(APIView):
     def _require_slug(self, slug: str) -> None:
         if not CanonicalBook.objects.filter(slug=slug).exists():
             raise NotFound("Unknown book.")
+
+
+def _book_for_translation(slug: str, translation: str | None):
+    """箇所 slug と訳から Book を1冊決める。無ければ 404（訳の指定ミスと言い分けられる code 付き）。"""
+    books = Book.objects.filter(canonical_book__slug=slug)
+    if translation:
+        books = books.filter(translation=translation)
+    book = books.order_by("order", "translation").first()
+    if book is None:
+        raise NotFound({"detail": "Book not found for this translation.", "code": "book_not_found"})
+    return book
 
 
 class ReferenceBooksView(_ReferenceView):
@@ -134,6 +163,53 @@ class ReferenceChaptersView(_ReferenceView):
         return Response({
             "reference": {"book": slug, "chapter": chapter},
             "chapters": [{"id": str(c.id), "translation": c.book.translation} for c in chapters],
+        })
+
+
+class ReferenceBookReadView(_ReferenceView):
+    """GET /api/references/<slug>/book/?translation=口語訳
+
+    書のページ（章番号のグリッド）が必要な「書と、その全章」を1回で返す。
+    こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
+    """
+
+    def get(self, request, slug):
+        self._require_slug(slug)
+        book = _book_for_translation(slug, request.query_params.get("translation"))
+        chapters = Chapter.objects.filter(book=book)
+        return Response({
+            "reference": {"book": slug},
+            "book": BookSerializer(book).data,
+            "chapters": ChapterSerializer(chapters, many=True).data,
+        })
+
+
+class ReferenceReadView(_ReferenceView):
+    """GET /api/references/<slug>/read/<chapter>/?translation=口語訳
+
+    読書画面が1章を表示するのに必要な「書・章・節」をまとめて1回で返す。
+
+    以前フロントは books → chapters → verses と3回、しかも順番待ちで叩いていた。
+    最初の1回は書の全一覧を落として目当ての1冊を探すだけだったので、章を開くたびに
+    無駄な往復と転送が発生していた。ここで1回にまとめる。
+
+    見つからないときは 404 に `code` を付けて、画面が「その訳にこの書が無い」のか
+    「その章が無い」のかを言い分けられるようにする。
+    """
+
+    def get(self, request, slug, chapter):
+        self._require_slug(slug)
+        book = _book_for_translation(slug, request.query_params.get("translation"))
+        chapter_obj = Chapter.objects.filter(book=book, number=chapter).first()
+        if chapter_obj is None:
+            raise NotFound({"detail": "Chapter not found.", "code": "chapter_not_found"})
+
+        verses = Verse.objects.filter(chapter=chapter_obj)
+        return Response({
+            "reference": {"book": slug, "chapter": chapter},
+            "book": BookSerializer(book).data,
+            "chapter": ChapterSerializer(chapter_obj).data,
+            "verses": VerseSerializer(verses, many=True).data,
         })
 
 

@@ -165,6 +165,7 @@ export function CommentInput({
         maxLength={5000}
         onChange={(e) => setBody(e.target.value)}
         placeholder={effectivePlaceholder}
+        aria-label={effectivePlaceholder}
         rows={3}
         aria-invalid={!body.trim() && !!error ? true : undefined}
         aria-describedby={error ? errorId : undefined}

@@ -13,7 +13,8 @@ import {
   type ArticleTag,
   type ArticleVisibility,
 } from "@/lib/api";
-import { VISIBILITY_OPTIONS } from "@/lib/articles";
+import { articleTagLabel, visibilityOptions } from "@/lib/articles";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
@@ -26,6 +27,7 @@ const MAX_TITLE_LENGTH = 120;
 const MAX_SUMMARY_LENGTH = 300;
 
 export default function ArticleEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useT();
   const { id } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -79,9 +81,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         setTagIds(data.tags.map((tag) => tag.id));
         setCitations(data.citations ?? []);
       })
-      .catch(() => setError("この記事は編集できません。"))
+      .catch(() => setError(t.articleCannotEdit))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t]);
 
   const draft = useMemo(
     () => ({ title, summary, body, visibility, tag_ids: tagIds }),
@@ -137,7 +139,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         return current.filter((value) => value !== tagId);
       }
       if (current.length >= MAX_TAGS) {
-        setTagNotice(`主題は${MAX_TAGS}つまでです。別の主題を外してから選んでください。`);
+        setTagNotice(t.articleTopicsLimitNotice(MAX_TAGS));
         return current;
       }
       setTagNotice(null);
@@ -153,7 +155,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       await deleteArticle(id);
       router.push("/articles");
     } catch {
-      setActionError("記事を削除できませんでした。通信状態を確認して、もう一度お試しください。");
+      setActionError(t.articleDeleteFailed);
       setDeleteBusy(false);
       setConfirmDelete(false);
     }
@@ -170,9 +172,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   if (error || !article) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? "この記事は編集できません。"}</p>
+        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotEdit}</p>
         <Link href="/articles" style={{ color: "var(--accent)" }}>
-          記事の一覧へ
+          {t.articleBackToList}
         </Link>
       </div>
     );
@@ -181,9 +183,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   if (!user) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>記事を編集するにはログインが必要です。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleEditLoginRequired}</p>
         <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} style={{ color: "var(--accent)" }}>
-          ログインする
+          {t.login}
         </Link>
       </div>
     );
@@ -192,7 +194,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   if (user.username !== article.owner_username) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>この記事はあなたのものではありません。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleNotOwner}</p>
       </div>
     );
   }
@@ -200,13 +202,13 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const canPublish = summary.trim().length > 0;
   const bodyPane = (
     <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-      <label htmlFor="article-body" style={fieldLabelStyle}>本文</label>
+      <label htmlFor="article-body" style={fieldLabelStyle}>{t.articleTabBody}</label>
       <textarea
         id="article-body"
         ref={bodyRef}
         value={body}
         onChange={(event) => setBody(event.target.value)}
-        placeholder={"本文を書きます。\n\n右の引用パネルから節を選ぶと、ここに引用が入ります。"}
+        placeholder={t.articleBodyPlaceholder}
         aria-describedby="article-markdown-help"
         style={{
           width: "100%",
@@ -224,9 +226,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         }}
       />
       <details id="article-markdown-help" style={{ marginTop: 8, color: "var(--text-muted)", fontSize: 12 }}>
-        <summary style={{ cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>書式の使い方</summary>
+        <summary style={{ cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>{t.articleFormatHelp}</summary>
         <p style={{ margin: "4px 0 0", lineHeight: 1.7 }}>
-          見出しは <code>## 見出し</code>、箇条書きは <code>- 項目</code>。聖書箇所は引用パネルから挿入できます。
+          {t.articleFormatDescription}
         </p>
       </details>
     </div>
@@ -263,20 +265,20 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px 48px" }}>
       <ConfirmDialog
         open={confirmDelete}
-        title="この記事を削除しますか？"
-        description="記事とコメントが消えます。元には戻せません。"
-        confirmText="削除する"
+        title={t.articleDeleteConfirmTitle}
+        description={t.articleDeleteConfirmDesc}
+        confirmText={t.articleDeleteAction}
         destructive
         onConfirm={handleDelete}
         onCancel={() => !deleteBusy && setConfirmDelete(false)}
       />
       <ConfirmDialog
         open={pendingVisibility !== null}
-        title="公開範囲を変更しますか？"
+        title={t.articleVisibilityConfirmTitle}
         description={pendingVisibility === "public"
-          ? "保存が完了すると、この記事は誰でも読めるようになります。題・要約・本文を確認してください。"
-          : "保存が完了すると、URLを知っている人がこの記事を読めるようになります。"}
-        confirmText="変更して保存"
+          ? t.articleVisibilityPublicConfirmDesc
+          : t.articleVisibilityUnlistedConfirmDesc}
+        confirmText={t.articleVisibilityConfirmAction}
         onConfirm={() => {
           if (pendingVisibility) setVisibility(pendingVisibility);
           setPendingVisibility(null);
@@ -286,12 +288,12 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
       {/* 題と公開範囲 */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-        <label htmlFor="article-title" style={visuallyHiddenStyle}>題</label>
+        <label htmlFor="article-title" style={visuallyHiddenStyle}>{t.articleTitleLabel}</label>
         <input
           id="article-title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="題"
+          placeholder={t.articleTitleLabel}
           maxLength={MAX_TITLE_LENGTH}
           required
           aria-invalid={!title.trim()}
@@ -308,7 +310,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             fontWeight: 700,
           }}
         />
-        <label htmlFor="article-visibility" style={visuallyHiddenStyle}>公開範囲</label>
+        <label htmlFor="article-visibility" style={visuallyHiddenStyle}>{t.articleVisibilityLabel}</label>
         <select
           id="article-visibility"
           value={visibility}
@@ -319,7 +321,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           }}
           style={selectStyle}
         >
-          {VISIBILITY_OPTIONS.map((option) => (
+          {visibilityOptions(t).map((option) => (
             <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
               {option.label}
             </option>
@@ -330,34 +332,34 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           aria-live="polite"
           style={{ fontSize: 12, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-muted)", minWidth: 120 }}
         >
-          {saveStatusLabel(autosave.status)}
+          {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>再試行</button>
+          <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>{t.retry}</button>
         )}
         <Link href={`/articles/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
-          記事を見る
+          {t.articleView}
         </Link>
         <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} style={deleteButtonStyle}>
-          {deleteBusy ? "削除中…" : "削除"}
+          {deleteBusy ? t.articleDeleting : t.delete}
         </button>
       </div>
       {actionError && <p role="alert" style={{ margin: "-4px 0 12px", color: "var(--state-danger)", fontSize: 13 }}>{actionError}</p>}
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, margin: "-4px 0 10px", fontSize: 12, color: "var(--text-muted)" }}>
         <span id={!title.trim() ? "article-title-error" : undefined} style={{ color: !title.trim() ? "var(--state-danger)" : undefined }}>
-          {!title.trim() ? "題を入力してください。" : "変更は自動保存されます。移動前には未保存分を保存します。"}
+          {!title.trim() ? t.articleTitleRequired : t.articleAutosaveHelp}
         </span>
         <span>{title.length}/{MAX_TITLE_LENGTH}</span>
       </div>
 
       {/* 要約 */}
-      <label htmlFor="article-summary" style={fieldLabelStyle}>要約</label>
+      <label htmlFor="article-summary" style={fieldLabelStyle}>{t.articleSummaryLabel}</label>
       <input
         id="article-summary"
         value={summary}
         onChange={(event) => setSummary(event.target.value)}
-        placeholder="要約（一覧に出る短い説明。公開するには必要です）"
+        placeholder={t.articleSummaryPlaceholder}
         maxLength={MAX_SUMMARY_LENGTH}
         style={{
           width: "100%",
@@ -377,13 +379,13 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       </div>
       {!canPublish && (
         <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>
-          要約を書くと、公開できるようになります。
+          {t.articleSummaryRequired}
         </p>
       )}
 
       {/* タグ */}
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
-        <legend style={fieldLabelStyle}>主題は{MAX_TAGS}つまで</legend>
+        <legend style={fieldLabelStyle}>{t.articleTopicsLimit(MAX_TAGS)}</legend>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {tags.map((tag) => {
           const active = tagIds.includes(tag.id);
@@ -405,14 +407,14 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
                 fontFamily: "inherit",
               }}
             >
-              {tag.name}
+              {articleTagLabel(tag.slug, tag.name, t)}
             </button>
           );
         })}
         </div>
         {tagLoadError && (
           <p role="alert" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>
-            主題を読み込めませんでした。 <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>再試行</button>
+            {t.articleTopicsLoadFailed} <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
           </p>
         )}
         {tagNotice && <p role="status" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>{tagNotice}</p>}
@@ -420,15 +422,15 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
       {isMobile ? (
         <div>
-          <div role="tablist" aria-label="記事編集" onKeyDown={handleTabArrowKey} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
+          <div role="tablist" aria-label={t.articleEditTabsLabel} onKeyDown={handleTabArrowKey} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
             <MobileTab id="body" active={mobileTab === "body"} onClick={() => setMobileTab("body")}>
-              本文
+              {t.articleTabBody}
             </MobileTab>
             <MobileTab id="preview" active={mobileTab === "preview"} onClick={() => setMobileTab("preview")}>
-              見え方
+              {t.articleTabPreview}
             </MobileTab>
             <MobileTab id="citations" active={mobileTab === "citations"} onClick={() => setMobileTab("citations")}>
-              引用
+              {t.articleTabCitations}
             </MobileTab>
           </div>
           <div role="tabpanel" id={`article-${mobileTab}-panel`} aria-labelledby={`article-${mobileTab}-tab`}>
@@ -442,7 +444,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
             {bodyPane}
             <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-              <div style={fieldLabelStyle}>見え方</div>
+              <div style={fieldLabelStyle}>{t.articleTabPreview}</div>
               {previewPane}
             </div>
           </div>
