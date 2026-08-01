@@ -25,6 +25,10 @@ import type {
   AccountSettings,
   NotificationPreferences,
   JwtSession,
+  Plan,
+  PlanDay,
+  PlanSubscription,
+  PlanVisibility,
 } from "./types";
 
 export class ApiError extends Error {
@@ -982,4 +986,96 @@ export function sendFeedback(data: {
   website?: string;
 }): Promise<{ detail: string }> {
   return apiFetch("/feedback/", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ---------------------------------------------------------------------------
+// 読書プラン
+// ---------------------------------------------------------------------------
+
+export function fetchPlans(params?: { mine?: boolean; page?: number }): Promise<PaginatedResponse<Plan>> {
+  const qs = new URLSearchParams();
+  if (params?.mine) qs.set("mine", "true");
+  if (params?.page) qs.set("page", String(params.page));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch(`/plans/${suffix}`);
+}
+
+export function fetchPlan(id: string): Promise<Plan> {
+  return apiFetch(`/plans/${id}/`);
+}
+
+export type PlanInput = {
+  title?: string;
+  description?: string;
+  note?: string;
+  visibility?: PlanVisibility;
+};
+
+export function createPlan(data: PlanInput): Promise<Plan> {
+  return apiFetch("/plans/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updatePlan(id: string, data: PlanInput): Promise<Plan> {
+  return apiFetch(`/plans/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deletePlan(id: string): Promise<void> {
+  return apiFetch(`/plans/${id}/`, { method: "DELETE" });
+}
+
+/** 日を末尾に足す。読み始めた人がいても足せる。 */
+export function addPlanDay(planId: string, data?: { title?: string }): Promise<PlanDay> {
+  return apiFetch(`/plans/${planId}/days/`, {
+    method: "POST",
+    body: JSON.stringify(data ?? {}),
+  });
+}
+
+export type PlanDayInput = {
+  title?: string;
+  devotional?: string;
+  readings?: { book: string; chapter_number: number; translation?: string }[];
+};
+
+export function updatePlanDay(planId: string, dayId: string, data: PlanDayInput): Promise<PlanDay> {
+  return apiFetch(`/plans/${planId}/days/${dayId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deletePlanDay(planId: string, dayId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/days/${dayId}/`, { method: "DELETE" });
+}
+
+export function reorderPlanDays(planId: string, dayIds: string[]): Promise<void> {
+  return apiFetch(`/plans/${planId}/days/reorder/`, {
+    method: "POST",
+    body: JSON.stringify({ day_ids: dayIds }),
+  });
+}
+
+export function subscribeToPlan(planId: string): Promise<PlanSubscription> {
+  return apiFetch(`/plans/${planId}/subscribe/`, { method: "POST" });
+}
+
+export function unsubscribeFromPlan(planId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/subscribe/`, { method: "DELETE" });
+}
+
+/** 最初からやり直す。読んだ記録を消して、今日から数え直す。 */
+export function restartPlan(planId: string): Promise<PlanSubscription> {
+  return apiFetch(`/plans/${planId}/restart/`, { method: "POST" });
+}
+
+export function completePlanDay(planId: string, dayId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/days/${dayId}/complete/`, { method: "POST" });
+}
+
+export function uncompletePlanDay(planId: string, dayId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/days/${dayId}/complete/`, { method: "DELETE" });
+}
+
+export function fetchMyPlanSubscriptions(): Promise<PlanSubscription[]> {
+  return apiFetchList("/plan-subscriptions/");
 }

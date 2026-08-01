@@ -141,7 +141,7 @@ test suites, a commit, and a push.
 - [x] Keyboard-only smoke checks pass for navigation, dialogs, tabs, verses, comments, forms, and destructive confirmations.
 - [x] No unrelated user changes are overwritten.
 - [x] Final tracker accurately records completed and deferred work.
-- [x] Branch is committed and pushed.
+- [ ] Branch is committed and pushed.
 
 ## Progress log
 
@@ -168,3 +168,6 @@ test suites, a commit, and a push.
 - 2026-08-02: Final frontend verification passed: 63 Vitest files / 353 tests, TypeScript, zero-warning ESLint, production build, and 43/43 Playwright E2E scenarios with a single deterministic worker.
 - 2026-08-02: Final backend verification passed: 601 tests passed and 13 platform-specific import tests were skipped (614 collected). Django system checks and migration-drift checks also passed.
 - 2026-08-02: Committed the fully verified integration and pushed `codex/list-searches-qa-answer` for the production merge gate.
+- 2026-08-02: Re-integrated `origin/main` after PR #57 added reading plans. Audited all four new plan routes and supporting panels, added complete loading/error/auth/i18n/A11y behavior, and closed three uncovered plan API boundary issues with regression tests.
+- 2026-08-02: Final post-integration verification passed: backend 629 passed / 13 skipped (642 collected), frontend 68 files / 376 tests, TypeScript, zero-warning ESLint, 32-route production build, Django checks, and 48/48 deterministic Playwright E2E scenarios.
+- 2026-08-02: E2E exposed a React Strict Mode autosave status regression; restored the mounted lifecycle correctly and added dedicated regression coverage.

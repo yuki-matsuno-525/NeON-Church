@@ -622,3 +622,13 @@ export function bookHasLang(slug: string, lang: "ja" | "en"): boolean {
   const trs = getBookBySlug(slug)?.translations;
   return trs?.some((tr) => translationLang(tr.id) === lang) ?? false;
 }
+
+/**
+ * その訳での書名を返す。訳が無ければ既定の書名にたおす。
+ * 書の各訳は Book.name が訳ごとに違う（マタイによる福音書 / Matthew / ΚΑΤΑ ΜΑΘΘΑΙΟΝ）ため、
+ * API から書を引くときの照合にも使う。
+ */
+export function bookNameForTranslation(slug: string, translation: string): string {
+  const meta = getBookBySlug(slug);
+  return meta?.translations.find((tr) => tr.id === translation)?.name ?? meta?.name ?? "";
+}

@@ -32,6 +32,7 @@ export default function Home() {
     { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
     { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
     { title: t.articles, href: "/articles", iconName: "book-open" },
+    { title: t.plans, href: "/plans", iconName: "check-circle" },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
@@ -322,7 +323,8 @@ export default function Home() {
           className="home-cards"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
+            // 5枚を1行に詰めると狭くなるので、幅に合わせて折り返す。
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: 16,
           }}
         >

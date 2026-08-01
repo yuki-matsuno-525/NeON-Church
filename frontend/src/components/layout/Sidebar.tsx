@@ -15,6 +15,7 @@ const NAV_HREFS = [
   { href: "/qa", matchPrefixes: ["/qa"] },
   { href: "/translations", matchPrefixes: ["/translations"] },
   { href: "/articles", matchPrefixes: ["/articles"] },
+  { href: "/plans", matchPrefixes: ["/plans"] },
 ];
 
 type SidebarProps = {
@@ -55,6 +56,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     { label: t.qa, ...NAV_HREFS[1] },
     { label: t.translate, ...NAV_HREFS[2] },
     { label: t.articles, ...NAV_HREFS[3] },
+    { label: t.plans, ...NAV_HREFS[4] },
   ];
 
   // スマホでドロワーを開いているときは Escape で閉じられるようにする

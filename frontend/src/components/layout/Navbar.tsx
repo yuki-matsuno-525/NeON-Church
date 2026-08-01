@@ -196,6 +196,9 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
               <Link href="/articles" aria-current={pathname.startsWith("/articles") ? "page" : undefined} style={{ color: pathname.startsWith("/articles") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.articles}
               </Link>
+              <Link href="/plans" aria-current={pathname.startsWith("/plans") ? "page" : undefined} style={{ color: pathname.startsWith("/plans") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
+                {t.plans}
+              </Link>
               <Link href="/bookmarks" aria-current={pathname.startsWith("/bookmarks") ? "page" : undefined} style={{ color: pathname.startsWith("/bookmarks") ? "var(--accent)" : "var(--text)", textDecoration: "none", fontSize: 13, opacity: 0.85 }}>
                 {t.bookmarks}
               </Link>

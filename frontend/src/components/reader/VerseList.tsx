@@ -11,6 +11,10 @@ type Props = {
   // 節番号の表示を差し替えたいとき（例: マルコの「短い結び」）に使う。
   // 省略時は verse.number をそのまま表示する。
   numberLabel?: (verse: Verse) => ReactNode;
+  // まとめて栞に入れるモード。節を押すとコメント欄が開く代わりに選び入り・選び外しになる。
+  pickMode?: boolean;
+  pickedIds?: string[];
+  onTogglePick?: (verseId: string) => void;
 };
 
 export function VerseList({
@@ -19,12 +23,21 @@ export function VerseList({
   onSelectVerse,
   highlightVerseNumber,
   numberLabel,
+  pickMode = false,
+  pickedIds = [],
+  onTogglePick,
 }: Props) {
+  const picked = new Set(pickedIds);
+  const activate = (verseId: string) => {
+    if (pickMode) onTogglePick?.(verseId);
+    else onSelectVerse(verseId);
+  };
 
   return (
     <div>
       {verses.map((verse) => {
-        const isSelected = selectedVerseId === verse.id;
+        const isPicked = pickMode && picked.has(verse.id);
+        const isSelected = pickMode ? isPicked : selectedVerseId === verse.id;
         const isHighlighted = !isSelected && verse.number === highlightVerseNumber;
 
         return (
@@ -39,12 +52,12 @@ export function VerseList({
             role="button"
             tabIndex={0}
             aria-pressed={isSelected}
-            onClick={() => onSelectVerse(verse.id)}
+            onClick={() => activate(verse.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 // Space は既定だとページが下にスクロールしてしまうので止める。
                 e.preventDefault();
-                onSelectVerse(verse.id);
+                activate(verse.id);
               }
             }}
             style={{
@@ -93,6 +106,21 @@ export function VerseList({
                 whiteSpace: "pre-line",
               }}
             >
+              {pickMode && (
+                // 選んだ節が一目で分かるように、番号の前に印を出す。
+                <span
+                  aria-hidden="true"
+                  style={{
+                    display: "inline-block",
+                    width: 16,
+                    marginRight: 4,
+                    color: isPicked ? "var(--accent)" : "var(--text-faint)",
+                    fontWeight: 700,
+                  }}
+                >
+                  {isPicked ? "✓" : "○"}
+                </span>
+              )}
               <sup
                 style={{
                   fontSize: 11,

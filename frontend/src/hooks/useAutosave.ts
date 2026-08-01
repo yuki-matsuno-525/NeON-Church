@@ -158,10 +158,16 @@ export function useAutosave<T>({
     return () => document.removeEventListener("click", saveBeforeLinkNavigation, true);
   }, []);
 
-  useEffect(() => () => {
-    mounted.current = false;
-    clearTimer();
-    if (dirtyRef.current) void saveNowRef.current();
+  useEffect(() => {
+    // React Strict Mode intentionally replays effect setup/cleanup in
+    // development. Restore the mounted flag on every setup so successful
+    // saves can still publish their status after that replay.
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      clearTimer();
+      if (dirtyRef.current) void saveNowRef.current();
+    };
   }, [clearTimer]);
 
   return { status, isDirty, saveNow, retry: saveNow };
