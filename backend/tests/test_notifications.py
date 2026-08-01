@@ -229,3 +229,69 @@ class TestNotificationUnreadCount:
         first = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         auth_client.post(read_url(first["id"]))
         assert auth_client.get(UNREAD_COUNT_URL).data == {"count": 1}
+
+
+# ------------------------------------------------------------------
+# 種類での絞り込みとタブ件数
+#
+# 返信・高評価・メンションが1本に混ざると、数の多い高評価に返信が埋もれる。
+# 画面はタブで切り替えるので、その材料になる ?type= と counts を検証する。
+# ------------------------------------------------------------------
+@pytest.fixture
+def mixed_notifications(db, auth_client, comment):
+    """受信者(testuser)宛に 返信2件 / 高評価1件 / メンション1件 を作る。"""
+    from django.contrib.auth import get_user_model
+    from notifications.models import Notification
+    User = get_user_model()
+    recipient = User.objects.get(username="testuser")
+    actor = User.objects.create_user(username="notif_actor", password="pass12345")
+
+    for notification_type, times in (
+        (Notification.REPLY, 2),
+        (Notification.UPVOTE, 1),
+        (Notification.MENTION, 1),
+    ):
+        for _ in range(times):
+            Notification.objects.create(
+                recipient=recipient, actor=actor, notification_type=notification_type
+            )
+
+
+@pytest.mark.django_db
+class TestNotificationTypeFilter:
+    def test_counts_are_returned_per_type(self, auth_client, mixed_notifications):
+        res = auth_client.get(NOTIFICATIONS_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["counts"] == {"all": 4, "reply": 2, "upvote": 1, "mention": 1}
+
+    @pytest.mark.parametrize("target_type,expected", [("reply", 2), ("upvote", 1), ("mention", 1)])
+    def test_filter_returns_only_that_type(self, auth_client, mixed_notifications, target_type, expected):
+        res = auth_client.get(NOTIFICATIONS_URL, {"type": target_type})
+        assert res.data["count"] == expected
+        assert {n["notification_type"] for n in res.data["results"]} == {target_type}
+
+    def test_unknown_type_falls_back_to_all(self, auth_client, mixed_notifications):
+        res = auth_client.get(NOTIFICATIONS_URL, {"type": "nonsense"})
+        assert res.data["count"] == 4
+
+    def test_counts_ignore_the_type_filter(self, auth_client, mixed_notifications):
+        res = auth_client.get(NOTIFICATIONS_URL, {"type": "reply"})
+        assert res.data["count"] == 2
+        assert res.data["counts"]["all"] == 4
+
+    def test_counts_follow_the_unread_filter(self, auth_client, mixed_notifications):
+        # 未読タブを見ているときは、種類ごとの数字も未読だけを数える。
+        first = auth_client.get(NOTIFICATIONS_URL, {"type": "reply"}).data["results"][0]
+        auth_client.post(read_url(first["id"]))
+        res = auth_client.get(NOTIFICATIONS_URL, {"unread": "1"})
+        assert res.data["counts"] == {"all": 3, "reply": 1, "upvote": 1, "mention": 1}
+
+    def test_type_and_unread_combine(self, auth_client, mixed_notifications):
+        first = auth_client.get(NOTIFICATIONS_URL, {"type": "reply"}).data["results"][0]
+        auth_client.post(read_url(first["id"]))
+        res = auth_client.get(NOTIFICATIONS_URL, {"type": "reply", "unread": "1"})
+        assert res.data["count"] == 1
+
+    def test_counts_exclude_other_users(self, other_auth_client, mixed_notifications):
+        res = other_auth_client.get(NOTIFICATIONS_URL)
+        assert res.data["counts"]["all"] == 0

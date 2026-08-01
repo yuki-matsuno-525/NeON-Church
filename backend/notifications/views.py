@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -11,21 +12,46 @@ from .serializers import NotificationSerializer
 
 class NotificationListView(generics.ListAPIView):
     """
-    GET /api/notifications/          全通知一覧（新しい順）
-    GET /api/notifications/?unread=1 未読のみ
+    GET /api/notifications/             全通知一覧（新しい順）
+    GET /api/notifications/?unread=1    未読のみ
+    GET /api/notifications/?type=reply  種類で絞り込み（reply/upvote/mention）
+
+    返信・高評価・メンションが1本に混ざると、数の多い高評価に返信が埋もれる。
+    画面はタブで切り替えるので、その絞り込みと件数をここで用意する。
+    counts は type での絞り込み前の件数（unread の指定は反映する）。
     """
 
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = StandardPageNumberPagination
 
-    def get_queryset(self):
-        qs = Notification.objects.filter(
-            recipient=self.request.user
-        ).select_related("actor", "comment", "translation_comment")
+    def get_base_queryset(self):
+        """type で絞る前の通知。件数集計にも使う。"""
+        qs = Notification.objects.filter(recipient=self.request.user)
         if self.request.query_params.get("unread") == "1":
             qs = qs.filter(is_read=False)
         return qs
+
+    def get_queryset(self):
+        qs = self.get_base_queryset().select_related(
+            "actor", "comment", "translation_comment"
+        )
+        # 未知の種類は無視して全件（＝「すべて」タブ）にする。
+        target_type = self.request.query_params.get("type")
+        if target_type in dict(Notification.TYPE_CHOICES):
+            qs = qs.filter(notification_type=target_type)
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response.data["counts"] = self.get_base_queryset().aggregate(
+            all=Count("id"),
+            **{
+                name: Count("id", filter=Q(notification_type=name))
+                for name, _label in Notification.TYPE_CHOICES
+            },
+        )
+        return response
 
 
 class NotificationReadView(APIView):

@@ -300,3 +300,62 @@ class TestProjectBookmark:
         res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
         del_res = auth_client.delete(bookmark_url(res.data["id"]))
         assert del_res.status_code == status.HTTP_204_NO_CONTENT
+
+
+# ------------------------------------------------------------------
+# 種類での絞り込みとタブ件数
+#
+# 一覧には節・章・書・コメント・翻訳企画の5種が混ざるため、画面はタブで切り替える。
+# その材料になる ?type= と counts を検証する。
+# ------------------------------------------------------------------
+@pytest.fixture
+def one_of_each_type(auth_client, verse, chapter, book, comment, project):
+    """5種類の栞を1件ずつ作る。粒度が違うので節・章・書は共存できる。"""
+    auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
+    auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
+    auth_client.post(BOOKMARKS_URL, {"book": str(book.id)}, format="json")
+    auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
+    auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+
+
+@pytest.mark.django_db
+class TestBookmarkTypeFilter:
+    def test_counts_are_returned_per_type(self, auth_client, one_of_each_type):
+        res = auth_client.get(BOOKMARKS_URL)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["counts"] == {
+            "all": 5, "verse": 1, "chapter": 1, "book": 1, "comment": 1, "project": 1,
+        }
+
+    @pytest.mark.parametrize("target_type", ["verse", "chapter", "book", "comment", "project"])
+    def test_filter_returns_only_that_type(self, auth_client, one_of_each_type, target_type):
+        res = auth_client.get(BOOKMARKS_URL, {"type": target_type})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == target_type
+
+    def test_no_type_returns_all(self, auth_client, one_of_each_type):
+        res = auth_client.get(BOOKMARKS_URL)
+        assert res.data["count"] == 5
+
+    def test_unknown_type_falls_back_to_all(self, auth_client, one_of_each_type):
+        # 古い URL を開いても一覧が空にならないよう、未知の値では絞らない。
+        res = auth_client.get(BOOKMARKS_URL, {"type": "nonsense"})
+        assert res.data["count"] == 5
+
+    def test_counts_ignore_the_type_filter(self, auth_client, one_of_each_type):
+        # タブの数字は「絞り込み前の全体」なので、絞っても変わらない。
+        res = auth_client.get(BOOKMARKS_URL, {"type": "verse"})
+        assert res.data["count"] == 1
+        assert res.data["counts"]["all"] == 5
+
+    def test_counts_exclude_other_users(self, other_auth_client, one_of_each_type):
+        res = other_auth_client.get(BOOKMARKS_URL)
+        assert res.data["counts"]["all"] == 0
+
+    def test_chapter_filter_excludes_verse_and_book(self, auth_client, one_of_each_type):
+        # 節・章・書は同じ canonical_book を指すので、条件がずれると互いに混ざる。
+        res = auth_client.get(BOOKMARKS_URL, {"type": "chapter"})
+        ref = res.data["results"][0]["reference"]
+        assert ref["chapter"] is not None
+        assert ref["verse"] is None
