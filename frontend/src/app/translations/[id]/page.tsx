@@ -27,7 +27,7 @@ import {
   fetchTranslationMembers as fetchMembers,
   assignTranslationUnit,
   formatRelativeTime,
-  fetchBookmarks,
+  fetchProjectBookmarks,
   createProjectBookmark,
   removeBookmark,
   type TranslationProject,
@@ -226,13 +226,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   useEffect(() => {
     if (!user) return;
     let active = true;
-    fetchBookmarks()
+    // サーバー側でこの企画に絞って取る（栞を全件落とさない）。
+    fetchProjectBookmarks(id)
       .then((bms) => {
         if (!active) return;
-        const found = bms.find(
-          (bm) => bm.target_type === "project" && bm.project_detail?.id === id
-        );
-        setProjectBookmark(found ?? null);
+        setProjectBookmark(bms[0] ?? null);
       })
       .catch(() => active && setProjectBookmark(null));
     return () => {
