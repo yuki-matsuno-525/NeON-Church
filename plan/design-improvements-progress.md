@@ -141,7 +141,7 @@ test suites, a commit, and a push.
 - [x] Keyboard-only smoke checks pass for navigation, dialogs, tabs, verses, comments, forms, and destructive confirmations.
 - [x] No unrelated user changes are overwritten.
 - [x] Final tracker accurately records completed and deferred work.
-- [ ] Branch is committed and pushed.
+- [x] Branch is committed and pushed.
 
 ## Progress log
 
@@ -167,3 +167,4 @@ test suites, a commit, and a push.
 - 2026-08-02: Integrated the latest `origin/main`, preserving its i18n, API aggregation, loading-state, and performance work alongside the full UX/security pass. Resolved and re-tested every conflict across four parallel workstreams.
 - 2026-08-02: Final frontend verification passed: 63 Vitest files / 353 tests, TypeScript, zero-warning ESLint, production build, and 43/43 Playwright E2E scenarios with a single deterministic worker.
 - 2026-08-02: Final backend verification passed: 601 tests passed and 13 platform-specific import tests were skipped (614 collected). Django system checks and migration-drift checks also passed.
+- 2026-08-02: Committed the fully verified integration and pushed `codex/list-searches-qa-answer` for the production merge gate.
