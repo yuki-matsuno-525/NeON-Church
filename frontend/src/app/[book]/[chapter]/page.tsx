@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   fetchChapterRead,
   fetchChapterBookmarks,
+  createBookmark,
   createChapterBookmark,
   removeBookmark,
   saveReadingProgress,
@@ -22,6 +23,7 @@ import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { VerseList } from "@/components/reader/VerseList";
+import { BulkBookmarkBar, useBulkBookmark } from "@/components/reader/BulkBookmarkBar";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useT, useBookLabel } from "@/lib/i18n";
@@ -188,6 +190,25 @@ export default function ChapterPage() {
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
+
+  // まとめて栞。すでに栞のある節は飛ばして、入った分だけ一覧に足す。
+  const bulk = useBulkBookmark(async (verseIds) => {
+    const already = new Set(
+      bookmarks
+        .filter((bm) => bm.target_type === "verse" && bm.reference?.verse != null)
+        .map((bm) => `${bm.reference!.book}/${bm.reference!.chapter}/${bm.reference!.verse}`),
+    );
+    const targets = verseIds.filter((id) => {
+      const verse = verses.find((v) => v.id === id);
+      return verse && !already.has(`${slug}/${chapterNum}/${verse.number}`);
+    });
+    const added: Bookmark[] = [];
+    for (const verseId of targets) {
+      added.push(await createBookmark(verseId));
+    }
+    if (added.length > 0) setBookmarks((prev) => [...prev, ...added]);
+    return added.length;
+  });
 
   // 表示用に並べ替えた節（マルコ16のギリシャ語のみ「短い結び」を8節直後へ移動）。
   const displayVerses = useMemo(
@@ -376,6 +397,26 @@ export default function ChapterPage() {
               size={18}
             />
           )}
+          {user && !bulk.pickMode && (
+            <button
+              type="button"
+              onClick={bulk.start}
+              style={{
+                marginLeft: "auto",
+                border: "1px solid var(--border)",
+                borderRadius: 8,
+                background: "transparent",
+                color: "var(--text-muted)",
+                fontSize: 12,
+                padding: "6px 12px",
+                minHeight: 36,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              まとめて栞
+            </button>
+          )}
         </div>
 
         <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
@@ -385,6 +426,9 @@ export default function ChapterPage() {
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
           highlightVerseNumber={highlightVerseNumber}
+          pickMode={bulk.pickMode}
+          pickedIds={bulk.pickedIds}
+          onTogglePick={bulk.toggle}
           numberLabel={(v) =>
             isMarkShorterEnding(slug, activeTranslationId, v.number)
               ? t.markShorterEnding
@@ -424,6 +468,16 @@ export default function ChapterPage() {
         </div>
         )}
       </div>
+
+      {bulk.pickMode && (
+        <BulkBookmarkBar
+          pickedCount={bulk.pickedIds.length}
+          busy={bulk.busy}
+          message={bulk.message}
+          onSave={bulk.submit}
+          onCancel={bulk.cancel}
+        />
+      )}
 
       {showScrollTop && (
         <button

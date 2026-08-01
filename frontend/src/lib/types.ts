@@ -295,3 +295,53 @@ export type ArticleComment = {
   is_deleted: boolean;
   created_at: string;
 };
+
+// ---------------------------------------------------------------------------
+// 読書プラン
+// ---------------------------------------------------------------------------
+
+export type PlanVisibility = "private" | "unlisted" | "public";
+
+/** その日に読む章1つ。book は訳に依らない書の slug。 */
+export type PlanReading = {
+  id: string;
+  book: string;
+  book_name: string;
+  chapter_number: number;
+  translation: string;
+  order: number;
+};
+
+export type PlanDay = {
+  id: string;
+  number: number;
+  title: string;
+  devotional: string;
+  readings: PlanReading[];
+  completed: boolean;
+};
+
+export type Plan = {
+  id: string;
+  title: string;
+  description: string;
+  visibility: PlanVisibility;
+  owner_username: string;
+  day_count: number;
+  reader_count: number;
+  created_at: string;
+  updated_at: string;
+  // 一覧では返らない（プラン1件の取得でのみ付く）
+  note?: string;
+  days?: PlanDay[];
+  can_reorder_days?: boolean;
+  subscription?: { id: string; started_at: string; is_active: boolean } | null;
+};
+
+export type PlanSubscription = {
+  id: string;
+  plan: string;
+  plan_title: string;
+  started_at: string;
+  is_active: boolean;
+};
