@@ -49,7 +49,7 @@ describe("ArticleBody", () => {
 
     expect(screen.getByText("あなたは断食するとき、頭に油をつけ")).toBeInTheDocument();
     expect(screen.getByText("顔を洗いなさい")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /マタイによる福音書 6:17-18（口語訳）/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /マタイによる福音書 6:17-18（口語訳（日本語））/ })).toBeInTheDocument();
   });
 
   it("段落の途中にある引用ブロックはそこで段落を切る", () => {

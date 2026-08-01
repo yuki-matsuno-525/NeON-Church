@@ -166,7 +166,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         {/* 記事が1件も無い人にはタブを出さない（空のタブが並ぶと寂しく見えるため） */}
         {articles.length > 0 && (
           <button style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-current={activeTab === "articles" ? "page" : undefined}>
-            記事 ({articles.length})
+            {t.articles} ({articles.length})
           </button>
         )}
       </div>

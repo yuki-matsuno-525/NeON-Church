@@ -13,11 +13,10 @@ import {
   type BookmarkType,
   type MyComment,
   type BookmarksVisibility,
-  formatRelativeTime,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { useT, formatBookLocation } from "@/lib/i18n";
+import { useT, formatBookLocation, useRelativeTime } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
 import { SkeletonList, EmptyState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
@@ -389,6 +388,7 @@ function BookmarkList({
 function CommentList({ comments }: { comments: MyComment[] }) {
   const t = useT();
   const { lang } = useLang();
+  const formatRelativeTime = useRelativeTime();
   if (comments.length === 0) {
     return (
       <EmptyState

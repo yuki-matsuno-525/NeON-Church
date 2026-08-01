@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "NeON Church",
     short_name: "NeON Church",
     description:
-      "Not a church as an institution, but an open field where texts and interpretations intersect.",
+      "テキストと解釈が交差する開かれた場 / An open field where texts and interpretations intersect.",
     start_url: "/",
     display: "standalone",
     background_color: "#000000",

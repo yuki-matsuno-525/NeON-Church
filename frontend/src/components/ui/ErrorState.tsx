@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./Icon";
+import { useT } from "@/lib/i18n";
 
 type Tone = "danger" | "warning";
 
@@ -25,11 +26,12 @@ export function ErrorState({
   title,
   message,
   onRetry,
-  retryLabel = "もう一度試す",
+  retryLabel,
   onBack,
-  backLabel = "戻る",
+  backLabel,
   extraAction,
 }: Props) {
+  const t = useT();
   const iconName: IconName = tone === "danger" ? "alert-circle" : "alert-triangle";
   const iconColor = tone === "danger" ? "var(--state-danger)" : "var(--state-warning)";
 
@@ -66,7 +68,7 @@ export function ErrorState({
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name="refresh-cw" size={14} />
-              {retryLabel}
+              {retryLabel ?? t.retry}
             </button>
           )}
           {onBack && (
@@ -77,7 +79,7 @@ export function ErrorState({
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
               <Icon name="arrow-left" size={14} />
-              {backLabel}
+              {backLabel ?? t.back}
             </button>
           )}
           {extraAction}

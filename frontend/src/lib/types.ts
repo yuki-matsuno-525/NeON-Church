@@ -37,6 +37,7 @@ export type BookmarkCommentDetail = {
   chapter_number: number | null;
   verse_number: number | null;
   source_translation: string;
+  is_deleted?: boolean;
 };
 export type BookmarkReference = {
   book: string; // canonical_book.slug
@@ -72,6 +73,7 @@ export type Notification = {
   actor_username: string;
   comment_id: string | null;
   comment_body_snippet: string;
+  comment_is_deleted?: boolean;
   translation_project_id: string | null;
   is_read: boolean;
   created_at: string;

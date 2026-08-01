@@ -129,7 +129,10 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         {(["ja", "en"] as const).map((l) => (
           <button
             key={l}
-            onClick={() => setLang(l)}
+            onClick={() => {
+              setLang(l);
+              router.refresh();
+            }}
             style={{
               background: "transparent",
               border: "none",

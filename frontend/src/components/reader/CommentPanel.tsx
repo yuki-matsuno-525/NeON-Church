@@ -356,7 +356,7 @@ export function CommentPanel({
               {t.tabComments}
             </PanelTab>
             <PanelTab active={tab === "articles"} onClick={() => setTab("articles")}>
-              引用した記事 ({citingArticles.length})
+              {t.citingArticles(citingArticles.length)}
             </PanelTab>
           </div>
         )}
