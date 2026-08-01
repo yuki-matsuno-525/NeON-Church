@@ -19,7 +19,10 @@ export default function TranslationReadChapterPage({
   const t = useT();
 
   const [project, setProject] = useState<TranslationProject | null>(null);
-  const [allUnits, setAllUnits] = useState<TranslationUnit[]>([]);
+  // この章の節だけ。以前は全章取ってから1章分を抜き出し、残りを捨てていた。
+  const [units, setUnits] = useState<TranslationUnit[]>([]);
+  // 前後の章へのリンクを出すための章番号一覧（本文は含まない）。
+  const [chapterNums, setChapterNums] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // コメントパネルを開いている節（翻訳ユニット）。null なら閉じている。
@@ -31,14 +34,15 @@ export default function TranslationReadChapterPage({
   useEffect(() => {
     Promise.all([
       fetchTranslation(id),
-      fetchTranslationRead(id),
-    ]).then(([proj, u]) => {
+      fetchTranslationRead(id, chapterNum),
+    ]).then(([proj, read]) => {
       setProject(proj);
-      setAllUnits(u);
+      setChapterNums(read.chapters);
+      setUnits(read.units);
     }).catch(() => {
       setError(t.notPublishedOrMissing);
     }).finally(() => setLoading(false));
-  }, [id, t.notPublishedOrMissing]);
+  }, [id, chapterNum, t.notPublishedOrMissing]);
 
   // 全バージョン表示用：元の書名から slug を逆引きし、この章の各訳の章idを集める。
   useEffect(() => {
@@ -68,8 +72,6 @@ export default function TranslationReadChapterPage({
     </div>
   );
 
-  const chapterNums = [...new Set(allUnits.map((u) => u.chapter_number))].sort((a, b) => a - b);
-  const units = allUnits.filter((u) => u.chapter_number === chapterNum).sort((a, b) => a.verse_number - b.verse_number);
   const currentIndex = chapterNums.indexOf(chapterNum);
   const prevChapter = currentIndex > 0 ? chapterNums[currentIndex - 1] : null;
   const nextChapter = currentIndex < chapterNums.length - 1 ? chapterNums[currentIndex + 1] : null;

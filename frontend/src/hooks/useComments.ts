@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
-import { fetchComments, type Comment } from "@/lib/api";
+"use client";
+
+import { useCallback } from "react";
+import { fetchCommentPage, type Comment } from "@/lib/api";
+import { useLoadMore } from "./useLoadMore";
 
 type Params = {
   verse_id?: string;
@@ -10,31 +13,42 @@ type Params = {
   translation_project?: string;
 };
 
+/**
+ * 箇所に付いた**親コメント**を「もっと見る」で読み足す。
+ *
+ * 返信はここには含まれない（コメントを開いたときに CommentItem が親ごとに取る）。
+ * 以前は親と返信を混ぜた1本の列を全部取って画面側で組み直していたが、ページで
+ * 区切ると親と返信が別ページに分かれ、親が見つからない返信が何も言わずに
+ * 画面から消えていた。
+ */
 export function useComments(params: Params) {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const { verse_id, chapter_id, book_id, ordering, tag_id, translation_project } = params;
 
-  const reload = useCallback(() => {
-    setLoading(true);
-    fetchComments({
-      verse_id,
-      chapter_id,
-      book_id,
-      ordering,
-      tag_id: tag_id ?? undefined,
-      translation_project,
-    })
-      .then(setComments)
-      .catch(() => setComments([]))
-      .finally(() => setLoading(false));
-  }, [verse_id, chapter_id, book_id, ordering, tag_id, translation_project]);
+  const fetchPage = useCallback(
+    (page: number) =>
+      fetchCommentPage({
+        verse_id,
+        chapter_id,
+        book_id,
+        ordering,
+        tag_id: tag_id ?? undefined,
+        translation_project,
+        page,
+      }),
+    [verse_id, chapter_id, book_id, ordering, tag_id, translation_project]
+  );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    reload();
-  }, [reload]);
+  const { items, setItems, total, loading, loadingMore, hasMore, loadMore, reload } =
+    useLoadMore<Comment, undefined>(fetchPage);
 
-  return { comments, setComments, loading, reload };
+  return {
+    comments: items,
+    setComments: setItems,
+    total,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
+    reload,
+  };
 }

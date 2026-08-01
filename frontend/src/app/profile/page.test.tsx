@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ProfilePage from "./page";
-import type { User, Bookmark, MyComment } from "@/lib/api";
+import type { User, Bookmark, BookmarkCounts, ListPage, MyComment } from "@/lib/api";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -19,8 +19,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     updateProfile: vi.fn(),
-    fetchBookmarks: vi.fn().mockResolvedValue([]),
-    fetchMyComments: vi.fn().mockResolvedValue([]),
+    fetchBookmarkPage: vi.fn(),
+    fetchMyCommentPage: vi.fn(),
   };
 });
 
@@ -51,6 +51,26 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   ...overrides,
 });
 
+/** お気に入り1ページ分。counts は results の中身から素直に数える。 */
+const makeBookmarkPage = (
+  results: Bookmark[],
+  overrides: Partial<ListPage<Bookmark, BookmarkCounts>> = {}
+): ListPage<Bookmark, BookmarkCounts> => {
+  const counts: BookmarkCounts = { all: results.length, verse: 0, chapter: 0, book: 0, comment: 0, project: 0 };
+  for (const bm of results) {
+    if (bm.target_type) counts[bm.target_type] += 1;
+  }
+  return { results, count: results.length, hasMore: false, counts, ...overrides };
+};
+
+/** コメント1ページ分。こちらは種類の件数を持たない。 */
+const makeCommentPage = (
+  results: MyComment[],
+  overrides: Partial<ListPage<MyComment>> = {}
+): ListPage<MyComment> => ({
+  results, count: results.length, hasMore: false, counts: undefined, ...overrides,
+});
+
 const makeMyComment = (overrides: Partial<MyComment> = {}): MyComment => ({
   id: "c1",
   user: { id: "u1", username: "testuser" },
@@ -66,8 +86,12 @@ const makeMyComment = (overrides: Partial<MyComment> = {}): MyComment => ({
 });
 
 describe("ProfilePage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // 一覧を使わないテストでも、この2つは必ず呼ばれるので空ページを既定にしておく。
+    const { fetchBookmarkPage, fetchMyCommentPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
+    vi.mocked(fetchMyCommentPage).mockResolvedValue(makeCommentPage([]));
   });
 
   it("ローディング中に Skeleton を表示する", () => {
@@ -151,8 +175,8 @@ describe("ProfilePage", () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makeBookmarkPage([makeBookmark()]));
 
     render(<ProfilePage />);
 
@@ -170,8 +194,8 @@ describe("ProfilePage", () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makeBookmarkPage([
       makeBookmark({
         target_type: "comment",
         reference: null,
@@ -187,7 +211,7 @@ describe("ProfilePage", () => {
           source_translation: "口語訳",
         },
       }),
-    ]);
+    ]));
 
     render(<ProfilePage />);
 
@@ -203,8 +227,8 @@ describe("ProfilePage", () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
-    const { fetchMyComments } = await import("@/lib/api");
-    vi.mocked(fetchMyComments).mockResolvedValue([makeMyComment()]);
+    const { fetchMyCommentPage } = await import("@/lib/api");
+    vi.mocked(fetchMyCommentPage).mockResolvedValue(makeCommentPage([makeMyComment()]));
 
     render(<ProfilePage />);
     fireEvent.click(screen.getByRole("button", { name: /コメント/ }));
@@ -218,8 +242,8 @@ describe("ProfilePage", () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
-    const { fetchMyComments } = await import("@/lib/api");
-    vi.mocked(fetchMyComments).mockResolvedValue([makeMyComment()]);
+    const { fetchMyCommentPage } = await import("@/lib/api");
+    vi.mocked(fetchMyCommentPage).mockResolvedValue(makeCommentPage([makeMyComment()]));
 
     render(<ProfilePage />);
     fireEvent.click(screen.getByRole("button", { name: /コメント/ }));

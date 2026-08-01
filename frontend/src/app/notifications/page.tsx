@@ -1,35 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  fetchNotifications,
+  fetchNotificationPage,
   markAllNotificationsRead,
   markNotificationRead,
+  EMPTY_NOTIFICATION_COUNTS,
   type Notification,
+  type NotificationType,
   formatRelativeTime,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState } from "@/components/ui";
+import { SkeletonList, EmptyState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
   notificationContextLabel,
 } from "@/lib/notificationTarget";
+import { useLoadMore } from "@/hooks/useLoadMore";
+
+// チップに出す種類の並び。
+const NOTIFICATION_TYPES: NotificationType[] = ["reply", "upvote", "mention"];
 
 export default function NotificationsPage() {
   const { user, loading } = useAuth();
-  const { decrementUnread, clearUnread, refresh } = useNotifications();
+  // 未読件数は画面が持っている分から数えず、サーバーの数（NotificationContext）を使う。
+  // 一覧は1ページずつしか持たないので、読み込み済みの分だけでは全体の未読数が分からない。
+  const { unreadCount, decrementUnread, clearUnread, refresh } = useNotifications();
   const router = useRouter();
   const t = useT();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [fetching, setFetching] = useState(true);
+  // null は「すべて」タブ
+  const [kind, setKind] = useState<NotificationType | null>(null);
 
   const typeLabel = (type: string): string => {
     if (type === "reply") return t.notifReply;
     if (type === "upvote") return t.notifUpvote;
+    if (type === "mention") return t.notifMention;
     return type;
   };
 
@@ -39,13 +48,28 @@ export default function NotificationsPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchNotifications()
-      .then(setNotifications)
-      .catch(() => setNotifications([]))
-      .finally(() => setFetching(false));
-  }, [user]);
+  // user が入るまでは取りに行かない。kind を変えると1ページ目から読み直す。
+  const fetchPage = useCallback(
+    (page: number) =>
+      user
+        ? fetchNotificationPage({ type: kind ?? undefined, page })
+        : Promise.resolve({
+            results: [] as Notification[],
+            count: 0,
+            hasMore: false,
+            counts: EMPTY_NOTIFICATION_COUNTS,
+          }),
+    [user, kind]
+  );
+  const {
+    items: notifications,
+    setItems: setNotifications,
+    counts,
+    loading: fetching,
+    loadingMore,
+    hasMore,
+    loadMore,
+  } = useLoadMore(fetchPage);
 
   const handleMarkAll = async () => {
     await markAllNotificationsRead();
@@ -62,6 +86,18 @@ export default function NotificationsPage() {
     decrementUnread();
   };
 
+  // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
+  const chips: FilterChip<NotificationType>[] = counts
+    ? [
+        { value: null, label: t.filterAll, count: counts.all },
+        ...NOTIFICATION_TYPES.filter((type) => counts[type] > 0).map((type) => ({
+          value: type,
+          label: typeLabel(type),
+          count: counts[type],
+        })),
+      ]
+    : [];
+
   if (loading || fetching) {
     return (
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
@@ -70,8 +106,6 @@ export default function NotificationsPage() {
       </div>
     );
   }
-
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
@@ -104,32 +138,40 @@ export default function NotificationsPage() {
         </button>
       </div>
 
+      {/* 通知が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+      {counts && counts.all > 0 && (
+        <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
+      )}
+
       {notifications.length === 0 ? (
         <EmptyState
           title={t.noNotifications}
           description={t.emptyNotificationsDesc}
         />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {notifications.map((n) => {
-            const url = notificationTargetUrl(n);
-            const contextLabel = notificationContextLabel(n, t);
-            return (
-              <NotificationItem
-                key={n.id}
-                notification={n}
-                url={url}
-                contextLabel={contextLabel}
-                typeLabel={typeLabel(n.notification_type)}
-                onActivate={() => {
-                  handleMarkOne(n);
-                  // refresh は markOne 後の整合性確認用
-                  void refresh;
-                }}
-              />
-            );
-          })}
-        </div>
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {notifications.map((n) => {
+              const url = notificationTargetUrl(n);
+              const contextLabel = notificationContextLabel(n, t);
+              return (
+                <NotificationItem
+                  key={n.id}
+                  notification={n}
+                  url={url}
+                  contextLabel={contextLabel}
+                  typeLabel={typeLabel(n.notification_type)}
+                  onActivate={() => {
+                    handleMarkOne(n);
+                    // refresh は markOne 後の整合性確認用
+                    void refresh;
+                  }}
+                />
+              );
+            })}
+          </div>
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+        </>
       )}
     </div>
   );

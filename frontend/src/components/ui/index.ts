@@ -7,3 +7,5 @@ export { TextField } from "./TextField";
 export { Toggle } from "./Toggle";
 export { ToastProvider, useToast, type ToastType } from "./Toast";
 export { ConfirmDialog } from "./ConfirmDialog";
+export { FilterChips, type FilterChip } from "./FilterChips";
+export { LoadMoreButton } from "./LoadMoreButton";

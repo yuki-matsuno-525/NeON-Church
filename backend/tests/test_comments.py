@@ -702,3 +702,88 @@ class TestCommentLocationAggregation:
         )
         assert res.status_code == status.HTTP_201_CREATED
         # 別箇所への返信が拒否されることは既存の test_reply_to_different_verse_is_rejected が担保。
+
+
+# ------------------------------------------------------------------
+# 箇所で取るときは親コメントだけを返す
+#
+# 以前は親も返信も混ぜた1本の列を返していた。ページで区切ると親と返信が別ページに
+# 分かれ、親が見つからない返信がエラーも出さずに画面から消えていた。
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestTopLevelOnlyListing:
+    @pytest.fixture
+    def thread(self, auth_client, other_auth_client, verse):
+        """親コメント1件と、それへの返信2件。"""
+        parent = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "親コメント"}, format="json"
+        ).data
+        for body in ("返信その1", "返信その2"):
+            other_auth_client.post(
+                COMMENTS_URL,
+                {"verse": str(verse.id), "body": body, "parent": parent["id"]},
+                format="json",
+            )
+        return parent
+
+    def test_verse_listing_excludes_replies(self, api_client, thread, verse):
+        res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["body"] == "親コメント"
+
+    def test_parent_carries_reply_count(self, api_client, thread, verse):
+        res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        assert res.data["results"][0]["reply_count"] == 2
+
+    def test_replies_are_fetched_by_parent_id(self, api_client, thread):
+        res = api_client.get(COMMENTS_URL, {"parent_id": thread["id"]})
+        assert res.data["count"] == 2
+        assert {c["body"] for c in res.data["results"]} == {"返信その1", "返信その2"}
+
+    def test_deleted_reply_not_counted(self, auth_client, other_auth_client, verse):
+        parent = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "親"}, format="json"
+        ).data
+        reply = other_auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "消す返信", "parent": parent["id"]},
+            format="json",
+        ).data
+        other_auth_client.delete(comment_url(reply["id"]))
+
+        res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        assert res.data["results"][0]["reply_count"] == 0
+
+    def test_reply_count_is_zero_without_replies(self, api_client, comment, verse):
+        res = api_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        assert res.data["results"][0]["reply_count"] == 0
+
+    def test_paging_never_drops_replies(self, auth_client, other_auth_client, verse):
+        """親25件＋返信を混ぜても、1ページ目には親20件だけが並ぶ。
+
+        混ぜて返していた頃は、この状況で返信がページをまたいで消えていた。
+        """
+        parents = [
+            auth_client.post(
+                COMMENTS_URL, {"verse": str(verse.id), "body": f"親{i}"}, format="json"
+            ).data
+            for i in range(25)
+        ]
+        # 一番古い親に返信を付ける（新しい順なので返信だけが1ページ目に来る状況）
+        other_auth_client.post(
+            COMMENTS_URL,
+            {"verse": str(verse.id), "body": "遅れてきた返信", "parent": parents[0]["id"]},
+            format="json",
+        )
+
+        page1 = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
+        assert page1.data["count"] == 25  # 返信は数に入らない
+        assert len(page1.data["results"]) == 20
+        assert all(c["parent"] is None for c in page1.data["results"])
+
+        page2 = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id), "page": 2})
+        assert len(page2.data["results"]) == 5
+        # 返信は親をたどれば必ず取れる
+        replies = auth_client.get(COMMENTS_URL, {"parent_id": parents[0]["id"]})
+        assert replies.data["count"] == 1

@@ -91,5 +91,8 @@ Thumbs.db
 contrast-demo.html
 *AppDataLocalTemp*.png
 
-# Design review screenshots (local artifacts)
-artifacts/design-review/
+# 確認用のスクショ・ログ（ローカルの作業ファイル）
+artifacts/
+
+# Claude Code の作業用ワークツリー
+.claude/worktrees/

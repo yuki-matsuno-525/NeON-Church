@@ -36,7 +36,7 @@ const ja = {
   read: "読む",
   qa: "Q&A",
   translate: "翻訳",
-  compilation: "編纂",
+  articles: "記事",
   bookmarks: "お気に入り",
   notifications: "通知",
   profile: "プロフィール",
@@ -57,8 +57,6 @@ const ja = {
   trending: "トレンド",
   recentQA: "最近のQ&A",
   aboutLink: "NeON Church について",
-  compilationLoginTitle: "ログインして編纂を始める",
-  compilationLoginDesc: "節や本文を集めて自分の書を作るにはログインが必要です。",
 
   // 読む
   readTitle: "聖書を読む",
@@ -87,6 +85,7 @@ const ja = {
   noNotifications: "通知はありません。",
   notifReply: "返信",
   notifUpvote: "いいね",
+  notifMention: "メンション",
 
   // Q&A
   qaTitle: "Q&A",
@@ -313,6 +312,7 @@ const ja = {
   expand: "展開",
   collapse: "折り畳む",
   numReplies: (n: number) => `${n}件の返信`,
+  showReplies: (n: number) => `返信を表示（${n}件）`,
 
   // 章/書/ユーザー not found
   bookNotFound: "書が見つかりません",
@@ -340,6 +340,10 @@ const ja = {
   bookmarkKindChapter: "章",
   bookmarkKindBook: "書",
   bookmarkKindProject: "翻訳プロジェクト",
+  bookmarkKindComment: "コメント",
+  // 一覧の絞り込みチップ・読み足し
+  filterByKind: "種類で絞り込む",
+  loadMore: "もっと見る",
   // ページネーション
   paginationLabel: "ページ送り",
   paginationPrev: "前のページ",
@@ -350,6 +354,8 @@ const ja = {
   orderVotes: "人気順",
   allVersionsToggle: "すべての訳",
   searchComments: "コメントを検索...",
+  // 一覧は少しずつ読み込むので、この欄は「読み込み済みの分」にしか効かない
+  searchLoadedComments: "表示中のコメントを絞り込む",
 
   // Q&A 投稿フォーム
   qaInputTitlePlaceholder: "質問のタイトル（必須）",
@@ -488,7 +494,7 @@ const en: typeof ja = {
   read: "Read",
   qa: "Q&A",
   translate: "Translate",
-  compilation: "Compile",
+  articles: "Articles",
   bookmarks: "Bookmarks",
   notifications: "Notifications",
   profile: "Profile",
@@ -508,8 +514,6 @@ const en: typeof ja = {
   trending: "Trending",
   recentQA: "Recent Q&A",
   aboutLink: "About NeON Church",
-  compilationLoginTitle: "Sign in to compile",
-  compilationLoginDesc: "Sign in to gather verses and prose into your own book.",
 
   readTitle: "Read the Bible",
   resumeReading: (bookName: string, chapter: number) => `Resume — ${bookName} Ch.${chapter} ›`,
@@ -534,6 +538,7 @@ const en: typeof ja = {
   noNotifications: "No notifications.",
   notifReply: "Reply",
   notifUpvote: "Like",
+  notifMention: "Mention",
 
   qaTitle: "Q&A",
   askQuestion: "Ask a question",
@@ -744,6 +749,7 @@ const en: typeof ja = {
   expand: "Expand",
   collapse: "Collapse",
   numReplies: (n: number) => `${n} ${n === 1 ? "reply" : "replies"}`,
+  showReplies: (n: number) => `Show ${n} ${n === 1 ? "reply" : "replies"}`,
 
   bookNotFound: "Book not found",
   chapterNotFound: "Chapter not found",
@@ -766,6 +772,9 @@ const en: typeof ja = {
   bookmarkKindChapter: "Chapter",
   bookmarkKindBook: "Book",
   bookmarkKindProject: "Translation project",
+  bookmarkKindComment: "Comment",
+  filterByKind: "Filter by kind",
+  loadMore: "Load more",
   paginationLabel: "Pagination",
   paginationPrev: "Previous page",
   paginationNext: "Next page",
@@ -774,6 +783,7 @@ const en: typeof ja = {
   orderVotes: "Popular",
   allVersionsToggle: "All versions",
   searchComments: "Search comments...",
+  searchLoadedComments: "Filter loaded comments",
 
   qaInputTitlePlaceholder: "Question title (required)",
   qaInputPlaceholder: "Describe your question in detail...",

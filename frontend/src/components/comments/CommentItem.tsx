@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { type CommentNode, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, type Tag, reportComment } from "@/lib/api";
+import { type Comment, fetchCommentReplies, upvoteComment, removeUpvote, deleteComment, updateComment, createCommentBookmark, removeBookmark, type Tag, reportComment } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 import { Icon } from "@/components/ui/Icon";
 import { useT, useRelativeTime } from "@/lib/i18n";
 
 type Props = {
-  comment: CommentNode;
+  // 返信はここに含まれない。件数（reply_count）だけ持っていて、開いたときに取りに行く。
+  comment: Comment;
   onReply?: (body: string, parentId: string) => Promise<void>;
   onRefresh?: () => void;
   initialBookmarkId?: string;
@@ -37,6 +38,12 @@ export function CommentItem({
   const [editBody, setEditBody] = useState(comment.body);
   const [currentBody, setCurrentBody] = useState(comment.body);
   const [bookmarkId, setBookmarkId] = useState<string | null>(initialBookmarkId ?? null);
+  // 返信は親を開いたときに取る。全部まとめて受け取って組み直していた頃は、
+  // ページで区切ると親と返信が別ページに分かれて返信が消えていた。
+  const [replies, setReplies] = useState<Comment[]>([]);
+  const [repliesShown, setRepliesShown] = useState(false);
+  const [repliesLoading, setRepliesLoading] = useState(false);
+  const [replyCount, setReplyCount] = useState(comment.reply_count);
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState("spam");
   const [reportStatus, setReportStatus] = useState<"idle" | "done" | "dup">("idle");
@@ -72,7 +79,8 @@ export function CommentItem({
     if (!onReply) return;
     await onReply(body, comment.id);
     setShowReplyForm(false);
-    onRefresh?.();
+    // 一覧全体ではなく、この親の返信だけを取り直す
+    await refreshReplies();
   };
 
   const handleBookmark = async () => {
@@ -113,7 +121,39 @@ export function CommentItem({
     }
   };
 
-  const hasChildren = comment.children.length > 0;
+  const hasChildren = replyCount > 0;
+
+  /** 返信を取って開く。2回目以降は取り直さず開閉だけ切り替える。 */
+  const loadReplies = async () => {
+    if (repliesShown) {
+      setRepliesShown(false);
+      return;
+    }
+    if (replies.length === 0 && replyCount > 0) {
+      setRepliesLoading(true);
+      try {
+        const data = await fetchCommentReplies(comment.id);
+        setReplies(data);
+        setReplyCount(data.length);
+      } catch {
+        // 取れなかったときは開かない（件数はそのまま残す）
+        setRepliesLoading(false);
+        return;
+      } finally {
+        setRepliesLoading(false);
+      }
+    }
+    setRepliesShown(true);
+  };
+
+  /** 返信を投稿したあとに、この親の返信を取り直す。 */
+  const refreshReplies = async () => {
+    const data = await fetchCommentReplies(comment.id).catch(() => null);
+    if (!data) return;
+    setReplies(data);
+    setReplyCount(data.length);
+    setRepliesShown(true);
+  };
 
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0 }}>
@@ -135,7 +175,7 @@ export function CommentItem({
           {/* Collapse toggle (vertical line) */}
           {hasChildren && (
             <button
-              onClick={() => setCollapsed((v) => !v)}
+              onClick={() => { setCollapsed((v) => !v); void loadReplies(); }}
               aria-label={collapsed ? t.expand : t.collapse}
               aria-expanded={!collapsed}
               title={collapsed ? t.expand : t.collapse}
@@ -213,7 +253,7 @@ export function CommentItem({
           </span>
           {collapsed && hasChildren && (
             <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
-              ({t.numReplies(comment.children.length)})
+              ({t.numReplies(replyCount)})
             </span>
           )}
         </div>
@@ -471,7 +511,29 @@ export function CommentItem({
         )}
       </div>
 
-      {!collapsed && comment.children.map((child) => (
+      {/* 返信は件数だけ先に出し、押したときに取りに行く（Q&A のカードと同じ作り） */}
+      {!collapsed && hasChildren && !repliesShown && (
+        <button
+          type="button"
+          onClick={loadReplies}
+          disabled={repliesLoading}
+          style={{
+            marginLeft: depth > 0 ? 20 : 0,
+            background: "transparent",
+            border: "none",
+            cursor: repliesLoading ? "default" : "pointer",
+            color: "var(--accent)",
+            fontSize: 13,
+            fontWeight: 700,
+            padding: "4px 0 10px",
+            fontFamily: "inherit",
+          }}
+        >
+          {repliesLoading ? t.loading : t.showReplies(replyCount)}
+        </button>
+      )}
+
+      {!collapsed && repliesShown && replies.map((child) => (
         <CommentItem
           key={child.id}
           comment={child}

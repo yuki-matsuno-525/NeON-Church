@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import UserProfilePage from "./page";
-import type { PublicUser, Comment, Bookmark } from "@/lib/api";
+import type { PublicUser, Comment, Bookmark, BookmarkCounts, ListPage } from "@/lib/api";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -25,8 +25,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     fetchUserProfile: vi.fn(),
-    fetchUserComments: vi.fn(),
-    fetchUserBookmarks: vi.fn(),
+    fetchUserCommentPage: vi.fn(),
+    fetchUserBookmarkPage: vi.fn(),
     formatRelativeTime: vi.fn().mockReturnValue("1日前"),
   };
 });
@@ -74,6 +74,26 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   ...overrides,
 });
 
+/** お気に入り1ページ分。counts は results の中身から素直に数える。 */
+const makeBookmarkPage = (
+  results: Bookmark[],
+  overrides: Partial<ListPage<Bookmark, BookmarkCounts>> = {}
+): ListPage<Bookmark, BookmarkCounts> => {
+  const counts: BookmarkCounts = { all: results.length, verse: 0, chapter: 0, book: 0, comment: 0, project: 0 };
+  for (const bm of results) {
+    if (bm.target_type) counts[bm.target_type] += 1;
+  }
+  return { results, count: results.length, hasMore: false, counts, ...overrides };
+};
+
+/** コメント1ページ分。こちらは種類の件数を持たない。 */
+const makeCommentPage = (
+  results: Comment[],
+  overrides: Partial<ListPage<Comment>> = {}
+): ListPage<Comment> => ({
+  results, count: results.length, hasMore: false, counts: undefined, ...overrides,
+});
+
 describe("UserProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,10 +109,10 @@ describe("UserProfilePage", () => {
   });
 
   it("自分自身のプロフィールページでは /profile へのリンクが表示される", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
-    vi.mocked(fetchUserComments).mockResolvedValue([]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "targetuser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
@@ -103,10 +123,10 @@ describe("UserProfilePage", () => {
   });
 
   it("他ユーザーのプロフィールにユーザー名が表示される", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
-    vi.mocked(fetchUserComments).mockResolvedValue([]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
@@ -115,10 +135,10 @@ describe("UserProfilePage", () => {
   });
 
   it("bio が表示される", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile({ bio: "これはテストユーザーです。" }));
-    vi.mocked(fetchUserComments).mockResolvedValue([]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
@@ -137,10 +157,10 @@ describe("UserProfilePage", () => {
   });
 
   it("お気に入りタブが表示される (visibility=public)", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
-    vi.mocked(fetchUserComments).mockResolvedValue([]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([makeBookmark()]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([makeBookmark()]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
@@ -150,24 +170,24 @@ describe("UserProfilePage", () => {
   });
 
   it("visibility=private のときお気に入りタブが表示されず、bookmarks API は呼ばれない", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile({ bookmarks_visibility: "private" }));
-    vi.mocked(fetchUserComments).mockResolvedValue([makeComment()]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([makeComment()]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
 
     await screen.findByText("targetuser");
     expect(screen.queryByRole("button", { name: /お気に入り/ })).not.toBeInTheDocument();
-    expect(fetchUserBookmarks).not.toHaveBeenCalled();
+    expect(fetchUserBookmarkPage).not.toHaveBeenCalled();
   });
 
   it("コメントタブに切り替えできる", async () => {
-    const { fetchUserProfile, fetchUserComments, fetchUserBookmarks } = await import("@/lib/api");
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
-    vi.mocked(fetchUserComments).mockResolvedValue([makeComment()]);
-    vi.mocked(fetchUserBookmarks).mockResolvedValue([]);
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([makeComment()]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);

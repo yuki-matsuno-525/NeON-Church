@@ -14,10 +14,11 @@ export type Comment = {
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
+  // このコメントへの返信の数（削除済みは含まない）。返信を開く前に件数だけ出すのに使う。
+  reply_count: number;
   tags: Tag[];
 };
 
-export type CommentNode = Comment & { children: CommentNode[] };
 export type BookmarkVerseDetail = {
   id: string;
   number: number;
@@ -67,7 +68,7 @@ export type NotificationTargetKind =
 
 export type Notification = {
   id: string;
-  notification_type: "reply" | "upvote";
+  notification_type: "reply" | "upvote" | "mention";
   actor_username: string;
   comment_id: string | null;
   comment_body_snippet: string;
@@ -239,77 +240,56 @@ export type PublicUser = {
   created_at: string;
 };
 
-export type MotifTag = {
+// ---------------------------------------------------------------------------
+// 記事
+// ---------------------------------------------------------------------------
+
+export type ArticleVisibility = "private" | "unlisted" | "public";
+
+export type ArticleTag = {
   id: string;
   name: string;
   slug: string;
-  description: string;
+  article_count?: number;
 };
 
-export type CompiledVisibility = "private" | "unlisted" | "public";
-export type CompiledSourceKind = "bible_verse" | "translation_unit" | "compiled_verse" | "note";
-
-export type CompiledVerse = {
-  id: string;
-  book: string;
-  chapter: string | null;
-  verse_number: number | null;
-  order: number;
-  source_kind: CompiledSourceKind;
-  source_verse: string | null;
-  source_translation_unit: string | null;
-  source_compiled_verse: string | null;
-  body_snapshot: string;
-  source_label: string;
-  source_reference: Record<string, unknown> | null;
-  curator_note: string;
-  motif_tags: MotifTag[];
-  created_at: string;
-  updated_at: string;
+/**
+ * 本文の印（[[matthew 6:16]] など）を、画面に出せる形へ解決したもの。
+ * raw は本文に書かれている印そのもので、これを目印に本文を置き換える。
+ */
+export type ArticleCitation = {
+  raw: string;
+  kind: "inline" | "block";
+  found: boolean;
+  label: string;
+  book_slug: string;
+  book_name: string;
+  chapter_number: number;
+  verse_number_start: number | null;
+  verse_number_end: number | null;
+  translation: string;
+  verses: { number: number; text: string }[];
 };
 
-export type CompiledChapter = {
-  id: string;
-  book: string;
-  number: number;
-  title: string;
-  introduction: string;
-  annotation: string;
-  order: number;
-  motif_tags: MotifTag[];
-  verse_count: number;
-  verses: CompiledVerse[];
-  created_at: string;
-  updated_at: string;
-};
-
-export type CompiledBook = {
+export type Article = {
   id: string;
   title: string;
-  slug: string;
-  description: string;
-  annotation: string;
+  summary: string;
+  visibility: ArticleVisibility;
   owner_username: string;
-  visibility: CompiledVisibility;
-  motif_tags: MotifTag[];
-  chapter_count: number;
-  verse_count: number;
-  forked_from?: string | null;
-  forked_from_title?: string | null;
-  chapters?: CompiledChapter[];
-  tray?: CompiledVerse[];
+  tags: ArticleTag[];
   created_at: string;
   updated_at: string;
+  // 一覧では返らない（記事1件の取得でのみ付く）
+  body?: string;
+  citations?: ArticleCitation[];
 };
 
-export type CompiledComment = {
+export type ArticleComment = {
   id: string;
-  user: CommentUser;
-  book: string | null;
-  chapter: string | null;
-  verse: string | null;
-  parent: string | null;
+  username: string;
   body: string;
+  parent: string | null;
   is_deleted: boolean;
   created_at: string;
 };

@@ -52,7 +52,7 @@ LOCAL_APPS: list[str] = [
     "notifications",
     "reading_progress",
     "translations",
-    "compilations",
+    "articles",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

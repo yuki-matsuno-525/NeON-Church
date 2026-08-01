@@ -355,7 +355,7 @@ class TestTranslationUnit:
         owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
         res = anon_client.get(units_url(project["id"]))
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert res.data["count"] == 1
 
     def test_assigned_member_can_update_body(self, owner_client, member_client, active_project, verse):
         # ユニット作成
@@ -487,10 +487,16 @@ class TestTranslationRead:
             "status": "done",
         }, format="json")
         from rest_framework.test import APIClient
-        res = APIClient().get(read_url(published_project["id"]))
+        # 章を指定しないと目次（章一覧）だけが返る
+        index = APIClient().get(read_url(published_project["id"]))
+        assert index.status_code == status.HTTP_200_OK
+        assert index.data["chapters"] == [verse.chapter.number]
+        assert index.data["units"] == []
+        # 章を指定するとその章の本文が返る
+        res = APIClient().get(read_url(published_project["id"]), {"chapter": verse.chapter.number})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
-        assert res.data[0]["body"] == "The son of Abraham"
+        assert len(res.data["units"]) == 1
+        assert res.data["units"][0]["body"] == "The son of Abraham"
 
     def test_non_published_project_read_forbidden(self, owner_client, active_project):
         from rest_framework.test import APIClient
@@ -504,9 +510,9 @@ class TestTranslationRead:
         # todoユニット（未完了）
         owner_client.post(units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json")
         from rest_framework.test import APIClient
-        res = APIClient().get(read_url(published_project["id"]))
+        res = APIClient().get(read_url(published_project["id"]), {"chapter": verse.chapter.number})
         assert res.status_code == status.HTTP_200_OK
-        assert len(res.data) == 1
+        assert len(res.data["units"]) == 1
 
 
 def add_book_url(project_id):
@@ -629,3 +635,131 @@ class TestTranslationLibrary:
     def test_list_requires_auth(self, api_client):
         res = api_client.get(LIBRARY_LIST_URL)
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+def unit_summary_url(project_id):
+    return f"/api/translations/{project_id}/units/summary/"
+
+
+# ------------------------------------------------------------------
+# 章で絞る／章の一覧をまとめて取る
+#
+# 書を丸ごと追加できるので企画全体は数千件になりうる。画面は章を選んで作業するので、
+# 章ボタンを見るためだけに全節を取らなくて済むようにした。
+# ------------------------------------------------------------------
+@pytest.fixture
+def two_chapter_units(owner_client, project, chapter, verse, verse2):
+    """1章に2節、2章に1節のユニットを作る。"""
+    from bible.models import Chapter, Verse
+    owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
+    owner_client.post(units_url(project["id"]), {"verse": str(verse2.id)}, format="json")
+    ch2 = Chapter.objects.create(book=chapter.book, number=2)
+    v3 = Verse.objects.create(chapter=ch2, number=1, text="2章の節")
+    owner_client.post(units_url(project["id"]), {"verse": str(v3.id)}, format="json")
+    return project
+
+
+@pytest.mark.django_db
+class TestTranslationUnitChapterFilter:
+    def test_chapter_filter_returns_only_that_chapter(self, anon_client, two_chapter_units):
+        res = anon_client.get(units_url(two_chapter_units["id"]), {"chapter": 1})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["count"] == 2
+        assert all(u["chapter_number"] == 1 for u in res.data["results"])
+
+    def test_without_chapter_returns_all(self, anon_client, two_chapter_units):
+        res = anon_client.get(units_url(two_chapter_units["id"]))
+        assert res.data["count"] == 3
+
+    def test_invalid_chapter_is_ignored(self, anon_client, two_chapter_units):
+        # 画面から来る値なので、数字でなければ絞らずに全件返す（エラーにしない）
+        res = anon_client.get(units_url(two_chapter_units["id"]), {"chapter": "abc"})
+        assert res.data["count"] == 3
+
+    def test_status_filter(self, owner_client, two_chapter_units):
+        unit = owner_client.get(units_url(two_chapter_units["id"])).data["results"][0]
+        owner_client.patch(
+            unit_detail_url(two_chapter_units["id"], unit["id"]),
+            {"status": "review", "body": "訳文"},
+            format="json",
+        )
+        res = owner_client.get(units_url(two_chapter_units["id"]), {"status": "review"})
+        assert res.data["count"] == 1
+
+    def test_one_chapter_fits_in_a_single_page(self, anon_client, owner_client, project, chapter):
+        # 章の途中でページが切れると翻訳画面が使いものにならない。
+        from bible.models import Verse
+        for n in range(2, 130):
+            v = Verse.objects.create(chapter=chapter, number=n, text=f"節{n}")
+            owner_client.post(units_url(project["id"]), {"verse": str(v.id)}, format="json")
+        res = anon_client.get(units_url(project["id"]), {"chapter": chapter.number})
+        assert res.data["count"] == 128
+        assert len(res.data["results"]) == 128
+        assert res.data["next"] is None
+
+
+@pytest.mark.django_db
+class TestTranslationUnitSummary:
+    def test_returns_chapters_and_status_counts(self, anon_client, two_chapter_units):
+        res = anon_client.get(unit_summary_url(two_chapter_units["id"]))
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["chapters"] == [1, 2]
+        assert res.data["total"] == 3
+        assert res.data["status_counts"]["todo"] == 3
+        assert res.data["status_counts"]["review"] == 0
+
+    def test_review_count_reflects_updates(self, owner_client, anon_client, two_chapter_units):
+        unit = owner_client.get(units_url(two_chapter_units["id"])).data["results"][0]
+        owner_client.patch(
+            unit_detail_url(two_chapter_units["id"], unit["id"]),
+            {"status": "review", "body": "訳文"},
+            format="json",
+        )
+        res = anon_client.get(unit_summary_url(two_chapter_units["id"]))
+        assert res.data["status_counts"]["review"] == 1
+
+    def test_unknown_project_is_404(self, anon_client):
+        res = anon_client.get(unit_summary_url("00000000-0000-0000-0000-000000000000"))
+        assert res.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_empty_project_has_no_chapters(self, anon_client, project):
+        res = anon_client.get(unit_summary_url(project["id"]))
+        assert res.data["chapters"] == []
+        assert res.data["total"] == 0
+
+
+@pytest.mark.django_db
+class TestTranslationReadChapter:
+    def test_index_returns_only_chapters_of_done_units(self, owner_client, published_project, verse, verse2):
+        from rest_framework.test import APIClient
+        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
+        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "完了"}, format="json")
+        # 未完了の節は目次にも本文にも出さない
+        owner_client.post(units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json")
+
+        res = APIClient().get(read_url(published_project["id"]))
+        assert res.data["chapters"] == [verse.chapter.number]
+        assert res.data["units"] == []
+
+    def test_other_chapter_is_not_returned(self, owner_client, published_project, verse, chapter):
+        from bible.models import Chapter, Verse
+        from rest_framework.test import APIClient
+        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
+        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "1章"}, format="json")
+        ch2 = Chapter.objects.create(book=chapter.book, number=2)
+        v2 = Verse.objects.create(chapter=ch2, number=1, text="2章の節")
+        u2 = owner_client.post(units_url(published_project["id"]), {"verse": str(v2.id)}, format="json").data
+        owner_client.patch(unit_detail_url(published_project["id"], u2["id"]), {"status": "done", "body": "2章"}, format="json")
+
+        res = APIClient().get(read_url(published_project["id"]), {"chapter": 2})
+        assert res.data["chapters"] == [1, 2]
+        assert len(res.data["units"]) == 1
+        assert res.data["units"][0]["body"] == "2章"
+
+    def test_invalid_chapter_returns_no_units(self, owner_client, published_project, verse):
+        from rest_framework.test import APIClient
+        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
+        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "完了"}, format="json")
+        res = APIClient().get(read_url(published_project["id"]), {"chapter": "abc"})
+        assert res.status_code == status.HTTP_200_OK
+        assert res.data["units"] == []

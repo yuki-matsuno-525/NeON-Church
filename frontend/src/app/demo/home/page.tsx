@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchVerseOfDay, fetchQAComments, type VerseOfDay, type QAComment } from "@/lib/api";
+import { fetchVerseOfDay, fetchQACommentPage, type VerseOfDay, type QAComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -37,8 +37,9 @@ export default function DemoHomePage() {
 
   useEffect(() => {
     fetchVerseOfDay().then(setVerseOfDay).catch(() => {});
-    fetchQAComments()
-      .then((qa) => setRecentQA(qa.slice(0, 4)))
+    // 表紙に出すのは冒頭の数件だけなので1ページ目で足りる。
+    fetchQACommentPage()
+      .then((page) => setRecentQA(page.results.slice(0, 4)))
       .catch(() => {});
   }, []);
 

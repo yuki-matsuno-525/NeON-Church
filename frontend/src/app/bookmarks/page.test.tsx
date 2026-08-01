@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import BookmarksPage from "./page";
-import type { Bookmark } from "@/lib/api";
+import type { Bookmark, BookmarkCounts, ListPage } from "@/lib/api";
 
 const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -18,7 +19,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    fetchBookmarks: vi.fn(),
+    fetchBookmarkPage: vi.fn(),
   };
 });
 
@@ -40,6 +41,21 @@ const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   ...overrides,
 });
 
+/** 1ページ分のレスポンス。counts は results の中身から素直に数える。 */
+const makePage = (
+  results: Bookmark[],
+  overrides: Partial<ListPage<Bookmark, BookmarkCounts>> = {}
+): ListPage<Bookmark, BookmarkCounts> => {
+  const counts: BookmarkCounts = { all: results.length, verse: 0, chapter: 0, book: 0, comment: 0, project: 0 };
+  for (const bm of results) {
+    if (bm.target_type) counts[bm.target_type] += 1;
+  }
+  return { results, count: results.length, hasMore: false, counts, ...overrides };
+};
+
+const loggedIn = () =>
+  mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+
 describe("BookmarksPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -58,9 +74,9 @@ describe("BookmarksPage", () => {
   });
 
   it("ブックマークがない場合「お気に入りはまだありません。」を表示する", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([]));
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -68,9 +84,9 @@ describe("BookmarksPage", () => {
   });
 
   it("ブックマーク一覧を表示する（書名・章・節番号）", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -80,9 +96,9 @@ describe("BookmarksPage", () => {
   });
 
   it("ブックマークのリンクが正しい章URLを持つ", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([makeBookmark()]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -91,15 +107,14 @@ describe("BookmarksPage", () => {
   });
 
   it("複数のブックマークがすべて表示される", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([
-      makeBookmark({ id: "bm1" }),
-      makeBookmark({
-        id: "bm2",
-        reference: { book: "mark", chapter: 2, verse: 5 },
-      }),
-    ]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(
+      makePage([
+        makeBookmark({ id: "bm1" }),
+        makeBookmark({ id: "bm2", reference: { book: "mark", chapter: 2, verse: 5 } }),
+      ])
+    );
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -109,11 +124,11 @@ describe("BookmarksPage", () => {
   });
 
   it("節の栞に本文（verse_text）を表示する", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([
-      makeBookmark({ verse_text: "はじめに神は天と地とを創造された。" }),
-    ]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(
+      makePage([makeBookmark({ verse_text: "はじめに神は天と地とを創造された。" })])
+    );
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -121,25 +136,27 @@ describe("BookmarksPage", () => {
   });
 
   it("コメントの栞は箇所ラベル付きでその節へリンクする", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockResolvedValue([
-      makeBookmark({
-        target_type: "comment",
-        reference: null,
-        comment_detail: {
-          id: "cm1",
-          body: "栞したコメント本文",
-          username: "someone",
-          created_at: "2024-01-01T00:00:00Z",
-          location_label: "マタイによる福音書 1章 3節",
-          book_slug: "matthew",
-          chapter_number: 1,
-          verse_number: 3,
-          source_translation: "口語訳",
-        },
-      }),
-    ]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(
+      makePage([
+        makeBookmark({
+          target_type: "comment",
+          reference: null,
+          comment_detail: {
+            id: "cm1",
+            body: "栞したコメント本文",
+            username: "someone",
+            created_at: "2024-01-01T00:00:00Z",
+            location_label: "マタイによる福音書 1章 3節",
+            book_slug: "matthew",
+            chapter_number: 1,
+            verse_number: 3,
+            source_translation: "口語訳",
+          },
+        }),
+      ])
+    );
+    loggedIn();
 
     render(<BookmarksPage />);
 
@@ -148,13 +165,88 @@ describe("BookmarksPage", () => {
     expect(screen.getByText(/マタイによる福音書 1章3節/)).toBeInTheDocument();
   });
 
-  it("fetchBookmarks が失敗してもページがクラッシュしない", async () => {
-    const { fetchBookmarks } = await import("@/lib/api");
-    vi.mocked(fetchBookmarks).mockRejectedValue(new Error("Network Error"));
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
+  it("fetchBookmarkPage が失敗してもページがクラッシュしない", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockRejectedValue(new Error("Network Error"));
+    loggedIn();
 
     render(<BookmarksPage />);
 
     await screen.findByText("お気に入りはまだありません。");
+  });
+
+  // ------------------------------------------------------------------
+  // 種類での絞り込み
+  // ------------------------------------------------------------------
+  it("種類のチップを件数つきで表示する（0件の種類は出さない）", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(
+      makePage([makeBookmark({ id: "bm1" }), makeBookmark({ id: "bm2" })])
+    );
+    loggedIn();
+
+    render(<BookmarksPage />);
+
+    await screen.findByRole("button", { name: /すべて \(2\)/ });
+    expect(screen.getByRole("button", { name: /節 \(2\)/ })).toBeInTheDocument();
+    // 章・書・コメント・翻訳は 0 件なのでチップを出さない
+    expect(screen.queryByRole("button", { name: /^章/ })).not.toBeInTheDocument();
+  });
+
+  it("種類のチップを押すとその種類だけを取り直す", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
+    loggedIn();
+
+    render(<BookmarksPage />);
+    const chip = await screen.findByRole("button", { name: /節 \(1\)/ });
+    await userEvent.click(chip);
+
+    expect(fetchBookmarkPage).toHaveBeenCalledWith({ type: "verse", page: 1 });
+  });
+
+  it("栞が0件のときはチップを出さない", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([]));
+    loggedIn();
+
+    render(<BookmarksPage />);
+
+    await screen.findByText("お気に入りはまだありません。");
+    expect(screen.queryByRole("button", { name: /すべて/ })).not.toBeInTheDocument();
+  });
+
+  // ------------------------------------------------------------------
+  // もっと見る
+  // ------------------------------------------------------------------
+  it("続きがあるとき「もっと見る」を表示し、押すと次のページを足す", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage)
+      .mockResolvedValueOnce(makePage([makeBookmark({ id: "bm1" })], { hasMore: true }))
+      .mockResolvedValueOnce(
+        makePage([makeBookmark({ id: "bm2", reference: { book: "mark", chapter: 2, verse: 5 } })])
+      );
+    loggedIn();
+
+    render(<BookmarksPage />);
+
+    const button = await screen.findByRole("button", { name: "もっと見る" });
+    await userEvent.click(button);
+
+    // 1ページ目の分は消えず、2ページ目が下に足される
+    await screen.findByText(/マルコによる福音書/);
+    expect(screen.getByText(/マタイによる福音書/)).toBeInTheDocument();
+    expect(fetchBookmarkPage).toHaveBeenLastCalledWith({ type: undefined, page: 2 });
+  });
+
+  it("続きがないときは「もっと見る」を出さない", async () => {
+    const { fetchBookmarkPage } = await import("@/lib/api");
+    vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
+    loggedIn();
+
+    render(<BookmarksPage />);
+
+    await screen.findByText(/マタイによる福音書/);
+    expect(screen.queryByRole("button", { name: "もっと見る" })).not.toBeInTheDocument();
   });
 });
