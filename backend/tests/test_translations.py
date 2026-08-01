@@ -211,6 +211,38 @@ class TestTranslationProjectList:
         res2 = anon_client.get(LIST_URL, {"status": "published", "page": 2})
         assert len(res2.data["results"]) == 1
 
+    def test_list_query_count_does_not_grow_with_projects(
+        self, db, anon_client, owner_client, book, django_assert_max_num_queries
+    ):
+        # 以前は1件につき4回（ユニット数・完了数・参加中か・本棚にあるか）問い合わせていたので、
+        # 20件のページで80回の往復になっていた。件数が増えてもクエリ数が増えないことを確かめる。
+        for i in range(10):
+            pid = owner_client.post(LIST_URL, {
+                "name": f"公開P{i}", "source_book": str(book.id), "target_language": "en",
+            }, format="json").data["id"]
+            owner_client.post(activate_url(pid))
+            owner_client.post(publish_url(pid))
+
+        with django_assert_max_num_queries(5):
+            res = anon_client.get(LIST_URL, {"status": "published"})
+        assert len(res.data["results"]) == 10
+
+    def test_list_still_reports_unit_and_done_counts(self, owner_client, active_project, verse, verse2):
+        # まとめて数えるようにしても、返す数字は変わらない。
+        unit = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json").data
+        owner_client.post(units_url(active_project["id"]), {"verse": str(verse2.id)}, format="json")
+        owner_client.patch(
+            unit_detail_url(active_project["id"], unit["id"]),
+            {"status": "done", "body": "完了"},
+            format="json",
+        )
+
+        res = owner_client.get(LIST_URL, {"status": "active"})
+        found = next(p for p in res.data["results"] if p["id"] == active_project["id"])
+        assert found["unit_count"] == 2
+        assert found["done_count"] == 1
+        assert found["is_member"] is True
+
     def test_create_requires_auth(self, anon_client, book):
         res = anon_client.post(LIST_URL, {"name": "X", "source_book": str(book.id), "target_language": "en"}, format="json")
         assert res.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
@@ -226,9 +258,10 @@ class TestTranslationProjectList:
         # オーナーはメンバーとして登録済みのはず（メンバーAPIで確認）
         members_res = owner_client.get(members_url(project_id))
         assert members_res.status_code == status.HTTP_200_OK
-        assert len(members_res.data) == 1
-        assert members_res.data[0]["role"] == "owner"
-        assert members_res.data[0]["status"] == "approved"
+        members = members_res.data["results"]
+        assert len(members) == 1
+        assert members[0]["role"] == "owner"
+        assert members[0]["status"] == "approved"
 
 
 @pytest.mark.django_db
@@ -544,6 +577,44 @@ class TestTranslationAddBook:
         res = owner_client.post(add_book_url(active_project["id"]), {}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_all_verses_of_the_book_become_units(self, owner_client, active_project, book, chapter):
+        # 節ごとに1件ずつ作るのをやめ、まとめて作るようにした。取りこぼしが無いことを確かめる。
+        from bible.models import Verse
+        from translations.models import TranslationUnit
+
+        Verse.objects.bulk_create(
+            [Verse(chapter=chapter, number=n, text=f"節{n}") for n in range(1, 31)]
+        )
+        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+
+        assert res.status_code == status.HTTP_201_CREATED
+        assert res.data["created"] == 30
+        assert TranslationUnit.objects.filter(project_id=active_project["id"]).count() == 30
+
+    def test_uses_a_constant_number_of_queries(
+        self, owner_client, active_project, book, chapter, django_assert_max_num_queries
+    ):
+        # 以前は節1件につき SELECT+INSERT を回していたので、詩篇では約5000クエリ走っていた。
+        # 節数が増えてもクエリ数が増えないことを確かめる（認証などの分を含めた上限）。
+        from bible.models import Verse
+
+        Verse.objects.bulk_create(
+            [Verse(chapter=chapter, number=n, text=f"節{n}") for n in range(1, 101)]
+        )
+        with django_assert_max_num_queries(15):
+            res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.data["created"] == 100
+
+    def test_second_call_adds_only_the_new_verses(self, owner_client, active_project, book, chapter, verse):
+        # 途中まで登録済みの書に節が足された場合、足りないぶんだけ増える。
+        from bible.models import Verse
+
+        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        Verse.objects.create(chapter=chapter, number=99, text="あとから足した節")
+
+        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        assert res.data["created"] == 1
+
 
 def remove_book_url(project_id):
     return f"/api/translations/{project_id}/remove-book/"
@@ -590,7 +661,7 @@ class TestTranslationLibrary:
 
         list_res = auth_client.get(LIBRARY_LIST_URL)
         assert list_res.status_code == status.HTTP_200_OK
-        ids = [p["id"] for p in list_res.data]
+        ids = [p["id"] for p in list_res.data["results"]]
         assert published_project["id"] in ids
 
     def test_cannot_add_unpublished(self, auth_client, project):
@@ -607,13 +678,13 @@ class TestTranslationLibrary:
         # 別ユーザーの本棚には出ない
         res = member_client.get(LIBRARY_LIST_URL)
         assert res.status_code == status.HTTP_200_OK
-        assert res.data == []
+        assert res.data["results"] == []
 
     def test_add_is_idempotent(self, auth_client, published_project):
         auth_client.post(library_url(published_project["id"]))
         auth_client.post(library_url(published_project["id"]))
         res = auth_client.get(LIBRARY_LIST_URL)
-        ids = [p["id"] for p in res.data]
+        ids = [p["id"] for p in res.data["results"]]
         assert ids.count(published_project["id"]) == 1
 
     def test_remove_from_library(self, auth_client, published_project):
@@ -621,7 +692,7 @@ class TestTranslationLibrary:
         del_res = auth_client.delete(library_url(published_project["id"]))
         assert del_res.status_code == status.HTTP_204_NO_CONTENT
         res = auth_client.get(LIBRARY_LIST_URL)
-        assert published_project["id"] not in [p["id"] for p in res.data]
+        assert published_project["id"] not in [p["id"] for p in res.data["results"]]
 
     def test_remove_is_idempotent(self, auth_client, published_project):
         # 未登録でも 204（冪等）
@@ -763,3 +834,34 @@ class TestTranslationReadChapter:
         res = APIClient().get(read_url(published_project["id"]), {"chapter": "abc"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["units"] == []
+
+
+# ------------------------------------------------------------------
+# 上限のない一覧をページングする
+#
+# コメント・メンバー・本棚は利用者が好きなだけ増やせるのに、1回のリクエストで
+# 全件返していた。1回で返る件数に上限があることを確かめる。
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestUnboundedListsArePaginated:
+    def test_project_comments_are_paginated(self, member_client, approved_member_setup):
+        project = approved_member_setup
+        for i in range(25):
+            member_client.post(comments_url(project["id"]), {"body": f"意見{i}"}, format="json")
+
+        res = member_client.get(comments_url(project["id"]))
+
+        assert res.data["count"] == 25
+        assert len(res.data["results"]) == 20
+        assert res.data["next"] is not None
+
+    def test_members_are_paginated(self, owner_client, active_project):
+        res = owner_client.get(members_url(active_project["id"]))
+        assert res.data["count"] == 1
+        assert len(res.data["results"]) == 1
+
+    def test_library_is_paginated(self, auth_client, published_project):
+        auth_client.post(library_url(published_project["id"]))
+        res = auth_client.get(LIBRARY_LIST_URL)
+        assert res.data["count"] == 1
+        assert len(res.data["results"]) == 1
