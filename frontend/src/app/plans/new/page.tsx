@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createPlan } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 /** 新しいプランを始める。題だけ聞いて下書きを作り、編集画面へ送る。 */
 export default function NewPlanPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function NewPlanPage() {
       const plan = await createPlan({ title: trimmed, visibility: "private" });
       router.push(`/plans/${plan.id}/edit`);
     } catch {
-      setError("プランを作れませんでした。");
+      setError(t.planCreateFailed);
       setBusy(false);
     }
   };
@@ -31,9 +33,9 @@ export default function NewPlanPage() {
   if (!authLoading && !user) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>プランを作るにはログインが必要です。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.planLoginRequired}</p>
         <Link href="/login?from=%2Fplans%2Fnew" style={{ color: "var(--accent)" }}>
-          ログインする
+          {t.login}
         </Link>
       </div>
     );
@@ -41,13 +43,13 @@ export default function NewPlanPage() {
 
   return (
     <div style={containerStyle}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>新しいプラン</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.planNewTitle}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
-        題を決めると下書きができます。日や章はあとから足せます。
+        {t.planNewDesc}
       </p>
 
       <label style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
-        題
+        {t.planTitleLabel}
       </label>
       <input
         value={title}
@@ -55,7 +57,7 @@ export default function NewPlanPage() {
         onKeyDown={(event) => {
           if (event.key === "Enter") handleCreate();
         }}
-        placeholder="例: 7日で読む終わりの日"
+        placeholder={t.planTitlePlaceholder}
         autoFocus
         style={{
           width: "100%",
@@ -90,13 +92,13 @@ export default function NewPlanPage() {
             fontFamily: "inherit",
           }}
         >
-          {busy ? "作成中..." : "作りはじめる"}
+          {busy ? t.articleCreating : t.planStartCreating}
         </button>
         <Link
           href="/plans"
           style={{ alignSelf: "center", fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}
         >
-          やめる
+          {t.articleCancel}
         </Link>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BOOKS, getBookBySlug } from "@/lib/books";
 import { useChapterNumbers } from "@/hooks/useChapterNumbers";
 import { DEFAULT_TRANSLATION } from "@/lib/translations";
+import { useT } from "@/lib/i18n";
 
 export type PickedChapter = { book: string; chapter_number: number; translation: string };
 
@@ -20,6 +21,7 @@ export function ChapterPicker({
   onPick: (chapter: PickedChapter) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [keyword, setKeyword] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
   // 空文字は「読む人の訳にまかせる」。
@@ -38,12 +40,12 @@ export function ChapterPicker({
           <input
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="書をさがす"
+            placeholder={t.citationBookSearchPlaceholder}
             autoFocus
             style={{ ...inputStyle, flex: 1 }}
           />
           <button type="button" onClick={onCancel} style={plainButtonStyle}>
-            やめる
+            {t.articleCancel}
           </button>
         </div>
         <div style={{ maxHeight: 220, overflowY: "auto" }}>
@@ -66,16 +68,16 @@ export function ChapterPicker({
     <div style={boxStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={() => setSlug(null)} style={plainButtonStyle}>
-          ← 書
+          {t.planBackToBooks}
         </button>
         <strong style={{ fontSize: 13 }}>{meta?.short}</strong>
         <select
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}
-          aria-label="訳"
+          aria-label={t.planTranslationLabel}
           style={{ ...inputStyle, width: "auto" }}
         >
-          <option value="">読む人の訳</option>
+          <option value="">{t.planReaderTranslation}</option>
           {(meta?.translations ?? []).map((tr) => (
             <option key={tr.id} value={tr.id}>
               {tr.id}
@@ -83,7 +85,7 @@ export function ChapterPicker({
           ))}
         </select>
         <button type="button" onClick={onCancel} style={{ ...plainButtonStyle, marginLeft: "auto" }}>
-          やめる
+          {t.articleCancel}
         </button>
       </div>
 

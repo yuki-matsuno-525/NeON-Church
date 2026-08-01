@@ -1,17 +1,20 @@
 import type { PlanVisibility } from "./types";
+import type { Translations } from "./i18n";
 
-/** 公開範囲の日本語ラベル。画面に英語の private/public を出さないための変換。 */
-export function visibilityLabel(visibility: PlanVisibility): string {
-  if (visibility === "public") return "公開";
-  if (visibility === "unlisted") return "限定公開";
-  return "下書き";
+/** 公開範囲のラベル。画面に英語の private/public を出さないための変換。 */
+export function visibilityLabel(visibility: PlanVisibility, t: Translations): string {
+  if (visibility === "public") return t.visibilityPublic;
+  if (visibility === "unlisted") return t.visibilityUnlisted;
+  return t.visibilityPrivate;
 }
 
-export const VISIBILITY_OPTIONS: { value: PlanVisibility; label: string }[] = [
-  { value: "private", label: "下書き" },
-  { value: "unlisted", label: "限定公開" },
-  { value: "public", label: "公開" },
-];
+export function visibilityOptions(t: Translations): { value: PlanVisibility; label: string }[] {
+  return [
+    { value: "private", label: t.visibilityPrivate },
+    { value: "unlisted", label: t.visibilityUnlisted },
+    { value: "public", label: t.visibilityPublic },
+  ];
+}
 
 /** 1日に入れられる章の上限（backend の MAX_READINGS_PER_DAY と合わせる）。 */
 export const MAX_READINGS_PER_DAY = 10;

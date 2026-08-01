@@ -208,7 +208,7 @@ export default function ChapterPage() {
     }
     if (added.length > 0) setBookmarks((prev) => [...prev, ...added]);
     return added.length;
-  });
+  }, t);
 
   // 表示用に並べ替えた節（マルコ16のギリシャ語のみ「短い結び」を8節直後へ移動）。
   const displayVerses = useMemo(
@@ -414,7 +414,7 @@ export default function ChapterPage() {
                 fontFamily: "inherit",
               }}
             >
-              まとめて栞
+              {t.bulkBookmarkStart}
             </button>
           )}
         </div>

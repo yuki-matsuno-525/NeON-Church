@@ -13,15 +13,17 @@ import {
 } from "@/lib/api";
 import { dayNumberToday, visibilityLabel } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 import { ReadingLinks } from "@/components/plans/ReadingChips";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
 
 export default function PlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
+  const t = useT();
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmRestart, setConfirmRestart] = useState(false);
 
@@ -30,7 +32,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     fetchPlan(id)
       .then(setPlan)
-      .catch(() => setError("このプランは読めません。"))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -96,12 +98,12 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  if (error || !plan) {
+  if (failed || !plan) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? "このプランは読めません。"}</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.planCannotRead}</p>
         <Link href="/plans" style={{ color: "var(--accent)" }}>
-          プランの一覧へ
+          {t.planBackToList}
         </Link>
       </div>
     );
@@ -115,9 +117,9 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     <div style={containerStyle}>
       <ConfirmDialog
         open={confirmRestart}
-        title="最初からやり直しますか？"
-        description="読み終えた印がすべて消えて、今日から数え直します。"
-        confirmText="やり直す"
+        title={t.planRestartConfirmTitle}
+        description={t.planRestartConfirmDesc}
+        confirmText={t.planRestartAction}
         destructive
         onConfirm={handleRestart}
         onCancel={() => setConfirmRestart(false)}
@@ -126,7 +128,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {plan.visibility !== "public" && (
           <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
-            {visibilityLabel(plan.visibility)}
+            {visibilityLabel(plan.visibility, t)}
           </span>
         )}
         {isOwner && (
@@ -134,7 +136,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             href={`/plans/${plan.id}/edit`}
             style={{ marginLeft: "auto", fontSize: 13, color: "var(--accent)", textDecoration: "none" }}
           >
-            編集する
+            {t.articleEdit}
           </Link>
         )}
       </div>
@@ -146,7 +148,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
         <Link href={`/profile/${plan.owner_username}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
           {plan.owner_username}
         </Link>
-        <span style={{ marginLeft: 8 }}>{plan.day_count}日</span>
+        <span style={{ marginLeft: 8 }}>{t.planDayCount(plan.day_count)}</span>
       </div>
 
       {plan.description && (
@@ -164,7 +166,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             background: "rgba(255,255,255,0.03)",
           }}
         >
-          <div style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 4 }}>作った人からの注記</div>
+          <div style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 4 }}>{t.planNoteLabel}</div>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{plan.note}</p>
         </div>
       )}
@@ -173,26 +175,26 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
         {!user ? (
           <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>
-            読み始めるにはログインが必要です。
+            {t.planReadLoginRequired}
           </p>
         ) : isReading ? (
           <>
             <span style={{ fontSize: 14, fontWeight: 700 }}>
-              {today && today <= plan.day_count ? `今日は${today}日目` : "読書中"}
+              {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
             </span>
             <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              {doneCount} / {plan.day_count} 日ぶん読み終わり
+              {t.planProgress(doneCount, plan.day_count)}
             </span>
             <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} style={plainButtonStyle}>
-              最初からやり直す
+              {t.planRestart}
             </button>
             <button type="button" onClick={handleStop} disabled={busy} style={plainButtonStyle}>
-              やめる
+              {t.planStop}
             </button>
           </>
         ) : (
           <button type="button" onClick={handleStart} disabled={busy} style={startButtonStyle}>
-            {subscription ? "また読み始める" : "読み始める"}
+            {subscription ? t.planResume : t.planStart}
           </button>
         )}
       </div>
@@ -207,7 +209,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>
-                第{day.number}日
+                {t.planDayLabel(day.number)}
               </span>
               {day.title && <span style={{ fontSize: 15, fontWeight: 700 }}>{day.title}</span>}
               {isReading && (
@@ -228,7 +230,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                     fontFamily: "inherit",
                   }}
                 >
-                  {day.completed ? "読み終わり ✓" : "読み終えた"}
+                  {day.completed ? t.planDayDone : t.planDayMarkDone}
                 </button>
               )}
             </div>
