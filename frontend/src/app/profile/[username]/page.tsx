@@ -13,12 +13,14 @@ import {
   type Bookmark,
   type BookmarkType,
   type Article,
+  type ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useRelativeTime } from "@/lib/i18n";
-import { FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { EmptyState, ErrorState, FilterChips, LoadMoreButton, SkeletonList, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
+import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 type Tab = "favorites" | "comments" | "articles";
 
@@ -28,9 +30,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const t = useT();
   const relTime = useRelativeTime();
   const [profile, setProfile] = useState<PublicUser | null>(null);
-  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [profileError, setProfileError] = useState(false);
+  const [profileReload, setProfileReload] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>("comments");
   // お気に入りタブの種類の絞り込み（null は「すべて」）
   const [kind, setKind] = useState<BookmarkType | null>(null);
@@ -44,17 +47,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           setActiveTab("favorites");
         }
       })
-      .catch(() => setNotFound(true))
+      .catch((cause: ApiError) => {
+        if (cause.status === 404) setNotFound(true);
+        else setProfileError(true);
+      })
       .finally(() => setLoading(false));
-  }, [username]);
-
-  useEffect(() => {
-    if (!profile) return;
-    // 記事は公開されたものだけが返る（下書きは author 指定でも出ない）
-    fetchArticles({ author: username })
-      .then((response) => setArticles(response.results))
-      .catch(() => setArticles([]));
-  }, [profile, username]);
+  }, [username, profileReload]);
 
   // コメントとお気に入りは「もっと見る」で読み足す。プロフィールが取れるまでは取りに行かない。
   const fetchComments = useCallback(
@@ -65,6 +63,21 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     [profile, username]
   );
   const commentList = useLoadMore(fetchComments);
+
+  // 公開記事も他のアクティビティと同じく、失敗と空を分けてページ単位で読み足す。
+  const fetchArticlePage = useCallback(
+    (page: number) =>
+      profile
+        ? fetchArticles({ author: username, page }).then((response) => ({
+            results: response.results,
+            count: response.count,
+            hasMore: response.next !== null,
+            counts: undefined,
+          }))
+        : Promise.resolve({ results: [] as Article[], count: 0, hasMore: false, counts: undefined }),
+    [profile, username],
+  );
+  const articleList = useLoadMore(fetchArticlePage);
 
   // 非公開ユーザーはお気に入り API を呼ばない（空が返るが無駄な往復を避ける）。
   const isPublicBookmarks = profile?.bookmarks_visibility === "public";
@@ -83,6 +96,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   const bookmarkList = useLoadMore(fetchBookmarks);
 
   if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  if (profileError) return (
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+      <ErrorState
+        title={t.profileLoadFailed}
+        message={t.loadErrorDesc}
+        onRetry={() => { setProfileError(false); setLoading(true); setProfileReload((value) => value + 1); }}
+        retryLabel={t.retry}
+      />
+    </div>
+  );
   if (notFound || !profile) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.userNotFound}</div>;
 
   if (me?.username === username) {
@@ -148,49 +171,68 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       </div>
 
       {profile.bio && (
-        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 24 }}>
+        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 24, whiteSpace: "pre-wrap" }}>
           {profile.bio}
         </p>
       )}
 
       {/* タブ。ブックマークタブは visibility=public のときのみ表示 */}
-      <div style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
+      <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex", overflowX: "auto" }}>
         {profile.bookmarks_visibility === "public" && (
-          <button style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-current={activeTab === "favorites" ? "page" : undefined}>
+          <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
             {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
           </button>
         )}
-        <button style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-current={activeTab === "comments" ? "page" : undefined}>
+        <button id="public-profile-tab-comments" role="tab" aria-controls="public-profile-panel-comments" tabIndex={activeTab === "comments" ? 0 : -1} style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-selected={activeTab === "comments"}>
           {t.tabComments} ({commentList.total})
         </button>
-        {/* 記事が1件も無い人にはタブを出さない（空のタブが並ぶと寂しく見えるため） */}
-        {articles.length > 0 && (
-          <button style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-current={activeTab === "articles" ? "page" : undefined}>
-            記事 ({articles.length})
-          </button>
-        )}
+        <button id="public-profile-tab-articles" role="tab" aria-controls="public-profile-panel-articles" tabIndex={activeTab === "articles" ? 0 : -1} style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-selected={activeTab === "articles"}>
+          {t.articles} ({articleList.total})
+        </button>
       </div>
 
       {activeTab === "articles" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-          {articles.map((article) => (
-            <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-              <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                {article.summary}
-              </p>
-            </Link>
-          ))}
+        <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          {articleList.loading ? (
+            <SkeletonList count={3} />
+          ) : articleList.error ? (
+            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={articleList.retry} retryLabel={t.retry} />
+          ) : articleList.items.length === 0 ? (
+            <EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />
+          ) : (
+            <>
+              {articleList.items.map((article) => (
+                <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                    {article.summary}
+                  </p>
+                </Link>
+              ))}
+              <LoadMoreButton
+                hasMore={articleList.hasMore}
+                loading={articleList.loadingMore}
+                error={!!articleList.loadMoreError}
+                onClick={articleList.loadMore}
+              />
+            </>
+          )}
         </div>
       )}
 
-      {activeTab === "articles" ? null : activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
+      {activeTab !== "articles" && (
+      <div id={`public-profile-panel-${activeTab}`} role="tabpanel" aria-labelledby={`public-profile-tab-${activeTab}`}>
+      {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
         <>
           {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
           {bookmarkList.counts && bookmarkList.counts.all > 0 && (
             <FilterChips chips={bookmarkChips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
           )}
-          {bookmarkList.items.length === 0 ? (
+          {bookmarkList.loading ? (
+            <SkeletonList count={3} />
+          ) : bookmarkList.error ? (
+            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={bookmarkList.retry} retryLabel={t.retry} />
+          ) : bookmarkList.items.length === 0 ? (
             <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
           ) : (
             <>
@@ -202,11 +244,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               <LoadMoreButton
                 hasMore={bookmarkList.hasMore}
                 loading={bookmarkList.loadingMore}
+                error={!!bookmarkList.loadMoreError}
                 onClick={bookmarkList.loadMore}
               />
             </>
           )}
         </>
+      ) : commentList.loading ? (
+        <SkeletonList count={3} />
+      ) : commentList.error ? (
+        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
       ) : commentList.items.length === 0 ? (
         <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
       ) : (
@@ -215,7 +262,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             {commentList.items.map((c) => (
               <div key={c.id} style={cardStyle}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                  {c.body}
+                  <span style={{ whiteSpace: "pre-wrap" }}>{c.body}</span>
                 </p>
                 <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
                   {relTime(c.created_at)} · ▲ {(c as Comment & { vote_count?: number }).vote_count ?? 0}
@@ -226,9 +273,12 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           <LoadMoreButton
             hasMore={commentList.hasMore}
             loading={commentList.loadingMore}
+            error={!!commentList.loadMoreError}
             onClick={commentList.loadMore}
           />
         </>
+      )}
+      </div>
       )}
     </div>
   );

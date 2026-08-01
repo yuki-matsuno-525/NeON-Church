@@ -61,10 +61,11 @@ describe("ArticleBody", () => {
     expect(screen.getByText("あとの文。")).toBeInTheDocument();
   });
 
-  it("解決できない印は「見つかりません」と出す", () => {
+  it("解決できない印は確認できない参照として印も出す", () => {
     render(<ArticleBody body="[[nosuchbook 1:1]]" citations={[]} />);
 
-    expect(screen.getByText("（見つかりません）")).toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent("参照先を確認できませんでした");
+    expect(screen.getByRole("note")).toHaveTextContent("[[nosuchbook 1:1]]");
   });
 
   it("見出し・箇条書き・太字を表示できる", () => {

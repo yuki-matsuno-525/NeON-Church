@@ -4,7 +4,7 @@ import TranslationsPage from "./page";
 import type { TranslationProject, TranslationStatus, PaginatedResponse } from "@/lib/api";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -39,6 +39,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   unit_count: 100,
   done_count: 30,
   is_member: false,
+  membership_status: null,
   is_in_library: false,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-10T00:00:00Z",
@@ -125,8 +126,9 @@ describe("TranslationsPage", () => {
 
     render(<TranslationsPage />);
 
-    // 各カラムが空表示に落ちる。
-    expect(await screen.findAllByText("このステータスのプロジェクトはありません")).not.toHaveLength(0);
+    // 失敗を空一覧と誤認させず、各公開カラムで再試行できる。
+    expect(await screen.findAllByText("読み込みに失敗しました。通信状況を確認して再試行してください。")).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "再試行" })).toHaveLength(2);
   });
 
   it("プロジェクトなしのとき各カラムに空メッセージが表示される", async () => {

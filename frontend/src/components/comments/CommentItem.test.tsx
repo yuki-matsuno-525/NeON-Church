@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { CommentItem } from "./CommentItem";
 import type { Comment } from "@/lib/api";
 
@@ -32,16 +32,17 @@ vi.mock("@/contexts/AuthContext", () => ({
 const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   id: "c1",
   user: { id: "u1", username: "alice" },
-  verse: "v1",
-  chapter: null,
-  book: null,
+  translation_project: null,
+  version_label: "新共同訳",
   parent: null,
   body: "テストコメント本文",
+  is_qa: false,
   is_deleted: false,
   created_at: new Date().toISOString(),
   vote_count: 3,
   // 返信は持たず件数だけ。開いたときに fetchCommentReplies で取りに行く。
   reply_count: 0,
+  tags: [],
   ...overrides,
 });
 
@@ -91,13 +92,14 @@ describe("CommentItem", () => {
     const onRefresh = vi.fn();
     render(<CommentItem comment={makeComment()} onRefresh={onRefresh} />);
     fireEvent.click(screen.getByTestId("delete-comment"));
+    fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "削除" }));
     await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
   });
 
   it("未ログインのとき投票ボタンがdisabled", () => {
     mockUseAuth.mockReturnValue({ user: null });
     render(<CommentItem comment={makeComment()} />);
-    expect(screen.getByRole("button", { name: /▲/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /承認/ })).toBeDisabled();
   });
 
   it("onReplyがあるとき返信ボタンが表示される", () => {

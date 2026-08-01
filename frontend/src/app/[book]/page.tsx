@@ -17,6 +17,8 @@ import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
 import { resolveVersionBookIds } from "@/lib/versions";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
+import { SkeletonList } from "@/components/ui";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -38,8 +40,12 @@ function BookContent() {
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [bookBookmark, setBookBookmark] = useState<Bookmark | null>(null);
   const [bookBusy, setBookBusy] = useState(false);
+  const [bookmarkLoadError, setBookmarkLoadError] = useState(false);
+  const [bookmarkRetryToken, setBookmarkRetryToken] = useState(0);
+  const [versionError, setVersionError] = useState(false);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
 
   // この書の書栞（reference が同じ書で、章・節を持たないもの）を拾っておく。
@@ -53,12 +59,18 @@ function BookContent() {
           (bm) => bm.target_type === "book" && bm.reference?.book === slug
         );
         setBookBookmark(found ?? null);
+        setBookmarkLoadError(false);
       })
-      .catch(() => active && setBookBookmark(null));
+      .catch(() => {
+        if (active) {
+          setBookBookmark(null);
+          setBookmarkLoadError(true);
+        }
+      });
     return () => {
       active = false;
     };
-  }, [user, slug]);
+  }, [user, slug, bookmarkRetryToken]);
 
   const toggleBookBookmark = async () => {
     if (bookBusy || !bookId) return;
@@ -77,7 +89,7 @@ function BookContent() {
 
   useEffect(() => {
     if (!meta) {
-      router.push("/matthew");
+      router.replace("/read");
       return;
     }
 
@@ -90,6 +102,9 @@ function BookContent() {
     // UI 言語の既定訳をその本が持っていればそれを、無ければその本の訳（英訳のみの本など）を使う。
     // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
     const tr = resolveTranslation(slug, defaultTranslationForLang(lang))!;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    setError(null);
     fetchBooks(tr.id)
       .then((books) => {
         const book = books.find((b) => b.name === tr.name);
@@ -101,20 +116,25 @@ function BookContent() {
       .finally(() => setLoading(false));
 
     // 全バージョン表示トグル用に、この書の各訳の書idを集めておく。
-    resolveVersionBookIds(slug).then(setAllVersionBookIds).catch(() => {});
-  }, [slug, meta, router, searchParams, lang, t.bookNotFound]);
+    resolveVersionBookIds(slug)
+      .then((ids) => {
+        setAllVersionBookIds(ids);
+        setVersionError(false);
+      })
+      .catch(() => setVersionError(true));
+  }, [slug, meta, router, searchParams, lang, t.bookNotFound, reloadToken]);
 
   if (!meta) return null;
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div role="status" aria-label={t.loading} style={{ padding: 32 }}><SkeletonList count={5} /></div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: 32, color: "var(--state-danger)" }}>{error}</div>
+      <ErrorState title={t.loadErrorTitle} message={error} onRetry={() => setReloadToken((value) => value + 1)} retryLabel={t.retry} />
     );
   }
 
@@ -131,7 +151,7 @@ function BookContent() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+        <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
           <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
             {t.bookList}
           </Link>
@@ -154,6 +174,22 @@ function BookContent() {
           />
         )}
       </div>
+
+      {(bookmarkLoadError || versionError) && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              if (bookmarkLoadError) setBookmarkRetryToken((value) => value + 1);
+              if (versionError) setReloadToken((value) => value + 1);
+            }}
+          >
+            {t.retry}
+          </button>
+        </div>
+      )}
 
       <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
         {t.selectChapterHeading}
@@ -204,6 +240,18 @@ function BookContent() {
                 el.style.borderColor = isCurrent ? "var(--accent)" : "var(--border)";
                 el.style.boxShadow = "none";
               }}
+              onFocus={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "var(--accent-tint)";
+                el.style.color = "var(--accent)";
+                el.style.borderColor = "var(--accent)";
+              }}
+              onBlur={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = isCurrent ? "var(--accent-tint)" : "var(--bg-alt)";
+                el.style.color = isCurrent ? "var(--accent)" : "var(--text-muted)";
+                el.style.borderColor = isCurrent ? "var(--accent)" : "var(--border)";
+              }}
             >
               {ch.number}
               {isCurrent && (
@@ -239,7 +287,7 @@ function BookContent() {
 
 function LoadingFallback() {
   const t = useT();
-  return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  return <div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
 }
 
 export default function BookPage() {

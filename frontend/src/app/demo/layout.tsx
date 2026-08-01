@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { routeMetadata } from "../routeMetadata";
 
 export const metadata: Metadata = {
+  ...routeMetadata.demo,
   robots: { index: false, follow: false },
 };
 

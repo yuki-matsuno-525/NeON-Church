@@ -13,18 +13,19 @@ export function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <span style={{ width: 32, height: 32, display: "inline-block" }} />;
+    return <span aria-hidden="true" style={{ width: 44, height: 44, display: "inline-block" }} />;
   }
 
   const isDark = resolvedTheme === "dark";
 
   return (
     <button
+      type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? t.switchToLight : t.switchToDark}
       style={{
-        width: 32,
-        height: 32,
+        width: 44,
+        height: 44,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

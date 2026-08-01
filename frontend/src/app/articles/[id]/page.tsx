@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   fetchArticle,
   fetchArticles,
   formatRelativeTime,
+  ApiError,
   type Article,
 } from "@/lib/api";
 import { visibilityLabel } from "@/lib/articles";
@@ -21,34 +22,39 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
   const [related, setRelated] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedError, setRelatedError] = useState(false);
+
+  const loadArticle = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setArticle(await fetchArticle(id));
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 404) setError("この記事は見つかりませんでした。");
+      else if (reason instanceof ApiError && (reason.status === 401 || reason.status === 403)) setError("この記事は非公開か、閲覧する権限がありません。");
+      else setError("記事を読み込めませんでした。通信状態を確認して再試行してください。");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    let alive = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    fetchArticle(id)
-      .then((data) => {
-        if (!alive) return;
-        setArticle(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!alive) return;
-        setError("この記事は読めません。");
-        setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [id]);
+    void loadArticle();
+  }, [loadArticle]);
 
   // 同じ主題の記事。最初のタグだけを見る（複数タグで混ぜると脈絡が薄くなるため）。
   useEffect(() => {
     const tag = article?.tags[0]?.slug;
     if (!tag) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRelatedLoading(true);
+    setRelatedError(false);
     fetchArticles({ tag })
       .then((response) => setRelated(response.results.filter((item) => item.id !== id).slice(0, 5)))
-      .catch(() => {});
+      .catch(() => setRelatedError(true))
+      .finally(() => setRelatedLoading(false));
   }, [article, id]);
 
   if (loading) {
@@ -63,6 +69,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div style={containerStyle}>
         <p style={{ color: "var(--text-muted)" }}>{error ?? "この記事は読めません。"}</p>
+        {error?.includes("読み込めません") && (
+          <button type="button" onClick={() => void loadArticle()} style={retryButtonStyle}>再試行</button>
+        )}
         <Link href="/articles" style={{ color: "var(--accent)" }}>
           記事の一覧へ
         </Link>
@@ -98,8 +107,12 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         <Link href={`/profile/${article.owner_username}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
           {article.owner_username}
         </Link>
-        <span style={{ color: "var(--text-faint)" }}>{formatRelativeTime(article.created_at)}</span>
+        <time dateTime={article.created_at} title={new Date(article.created_at).toLocaleString("ja-JP")} style={{ color: "var(--text-muted)" }}>
+          {formatRelativeTime(article.created_at)}
+        </time>
       </div>
+
+      {article.summary && <p style={{ margin: "0 0 28px", color: "var(--text-muted)", lineHeight: 1.8, fontSize: 15 }}>{article.summary}</p>}
 
       <ArticleBody body={article.body ?? ""} citations={article.citations ?? []} />
 
@@ -113,6 +126,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
                 border: "1px solid var(--border)",
                 borderRadius: 999,
                 padding: "4px 12px",
+                minHeight: 44,
+                display: "inline-flex",
+                alignItems: "center",
                 fontSize: 13,
                 color: "var(--text-muted)",
                 textDecoration: "none",
@@ -142,6 +158,8 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </section>
       )}
+      {relatedLoading && <p role="status" style={{ marginTop: 24, color: "var(--text-muted)", fontSize: 13 }}>関連記事を読み込んでいます…</p>}
+      {relatedError && <p role="alert" style={{ marginTop: 24, color: "var(--state-danger)", fontSize: 13 }}>関連記事を読み込めませんでした。</p>}
 
       <ArticleComments articleId={article.id} />
     </div>
@@ -152,4 +170,16 @@ const containerStyle: React.CSSProperties = {
   maxWidth: 720,
   margin: "0 auto",
   padding: "32px 16px 64px",
+};
+
+const retryButtonStyle: React.CSSProperties = {
+  minHeight: 44,
+  margin: "0 12px 16px 0",
+  padding: "8px 14px",
+  borderRadius: 8,
+  border: "1px solid var(--border)",
+  background: "transparent",
+  color: "var(--text)",
+  cursor: "pointer",
+  fontFamily: "inherit",
 };

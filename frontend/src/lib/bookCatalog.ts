@@ -5,7 +5,7 @@
 // まず書（slug）を選び、次にその書が持つ訳（バージョン）を選ばせるため、
 // slug ごとに「訳 id → DB Book id」をまとめておく。
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { fetchBooks, type Book } from "@/lib/api";
 import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName } from "@/lib/books";
 
@@ -33,15 +33,43 @@ export function buildCatalog(dbBooks: Book[]): BookCatalogEntry[] {
   });
 }
 
-/** DB の全 Book を取得してカタログを返すフック。 */
-export function useBookCatalog(): BookCatalogEntry[] {
+/** DB の全 Book を取得し、空データと通信失敗を区別して返すフック。 */
+export function useBookCatalogState(): {
+  catalog: BookCatalogEntry[];
+  loading: boolean;
+  error: boolean;
+  retry: () => void;
+} {
   const [catalog, setCatalog] = useState<BookCatalogEntry[]>([]);
-  useEffect(() => {
-    fetchBooks()
-      .then((all) => setCatalog(buildCatalog(all)))
-      .catch(() => {});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [requestKey, setRequestKey] = useState(0);
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    setRequestKey((value) => value + 1);
   }, []);
-  return catalog;
+
+  useEffect(() => {
+    let active = true;
+    fetchBooks()
+      .then((all) => {
+        if (active) setCatalog(buildCatalog(all));
+      })
+      .catch(() => {
+        if (active) setError(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, [requestKey]);
+  return { catalog, loading, error, retry };
+}
+
+/** @deprecated New UI should use useBookCatalogState so failures remain recoverable. */
+export function useBookCatalog(): BookCatalogEntry[] {
+  return useBookCatalogState().catalog;
 }
 
 /** カタログから slug のエントリを返す。 */

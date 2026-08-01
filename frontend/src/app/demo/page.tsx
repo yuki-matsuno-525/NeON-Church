@@ -110,6 +110,7 @@ function btn(p: Palette, active = false) {
     cursor: "pointer" as const,
     fontWeight: active ? 700 : 400,
     fontSize: "0.875rem",
+    minHeight: "44px",
   }
 }
 
@@ -131,7 +132,7 @@ export default function DemoPage() {
 
   // --- デモコントロールバー（常にダーク固定）---
   const ctrlBar = (
-    <div style={{
+    <div className="demo-controls" style={{
       position: "sticky" as const, top: 0, zIndex: 100,
       background: "#1e1e2e", color: "#cdd6f4",
       padding: "8px 20px", display: "flex", flexWrap: "wrap" as const,
@@ -181,14 +182,16 @@ export default function DemoPage() {
           set: (v: string) => setScreen(v as Screen),
         },
       ].map(group => (
-        <div key={group.label} style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+        <div key={group.label} role="group" aria-label={group.label} style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <span style={{ color: "#585b70", marginRight: "2px" }}>{group.label}:</span>
           {group.items.map(item => (
             <button
+              type="button"
               key={item.value}
               onClick={() => group.set(item.value)}
+              aria-pressed={group.current === item.value}
               style={{
-                padding: "2px 10px", borderRadius: "4px", border: "none",
+                padding: "2px 10px", minHeight: "44px", borderRadius: "4px", border: "none",
                 cursor: "pointer", fontSize: "0.75rem",
                 background: group.current === item.value ? item.color : "#313244",
                 color: group.current === item.value ? "#1e1e2e" : "#cdd6f4",
@@ -205,7 +208,7 @@ export default function DemoPage() {
 
   // --- ナビゲーションバー ---
   const navbar = (
-    <header style={{
+    <header className="demo-navbar" style={{
       backgroundColor: p.bgAlt,
       borderBottom: `1px solid ${p.border}`,
       padding: "0 24px",
@@ -223,11 +226,11 @@ export default function DemoPage() {
       <div style={{ flex: 1 }} />
       {screen !== "login" && (
         <>
-          <button onClick={() => setScreen("bookmarks")}
+          <button type="button" aria-pressed={screen === "bookmarks"} onClick={() => setScreen("bookmarks")}
             style={{ background: "none", border: "none", cursor: "pointer", color: screen === "bookmarks" ? p.accent : p.textMuted, fontSize: "0.875rem", fontWeight: screen === "bookmarks" ? 700 : 400 }}>
             お気に入り
           </button>
-          <button onClick={() => setScreen("notifications")}
+          <button type="button" aria-label="通知" aria-pressed={screen === "notifications"} onClick={() => setScreen("notifications")}
             style={{ background: "none", border: "none", cursor: "pointer", position: "relative" as const }}>
             <span style={{ fontSize: "1.125rem" }}>🔔</span>
             <span style={{
@@ -238,23 +241,23 @@ export default function DemoPage() {
               fontFamily: "system-ui",
             }}>2</span>
           </button>
-          <div style={{
+          <div aria-label="田中太郎" style={{
             width: "32px", height: "32px", borderRadius: "50%",
             background: p.accent, color: p.accentText,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "0.8125rem", fontWeight: 700, cursor: "pointer",
+            fontSize: "0.8125rem", fontWeight: 700,
           }}>田</div>
         </>
       )}
       {screen === "login" && (
-        <button onClick={() => setScreen("reading")} style={btn(p, true)}>ログイン</button>
+        <button type="button" onClick={() => setScreen("reading")} style={btn(p, true)}>ログイン</button>
       )}
     </header>
   )
 
   // --- サイドバー ---
   const sidebar = (
-    <aside style={{
+    <aside className="demo-sidebar" style={{
       width: "200px", minWidth: "200px",
       background: p.bgAlt,
       borderRight: `1px solid ${p.border}`,
@@ -272,7 +275,9 @@ export default function DemoPage() {
       {BOOKS.map(book => (
         <div key={book.name}>
           <button
+            type="button"
             onClick={() => setExpandedBook(expandedBook === book.name ? "" : book.name)}
+            aria-expanded={expandedBook === book.name}
             style={{
               width: "100%", textAlign: "left" as const,
               padding: "8px 16px",
@@ -294,6 +299,7 @@ export default function DemoPage() {
             <div style={{ paddingLeft: "8px", paddingBottom: "4px" }}>
               {Array.from({ length: book.chapters }, (_, i) => i + 1).map(ch => (
                 <button
+                  type="button"
                   key={ch}
                   onClick={() => { setActiveBook(book.name); setActiveChapter(ch); setScreen("reading") }}
                   style={{
@@ -363,7 +369,6 @@ export default function DemoPage() {
           return (
             <div
               key={verse.number}
-              onClick={() => setSelectedVerse(isSelected ? null : verse.number)}
               style={{
                 padding: theme === "C" ? "10px 14px" : "8px 0",
                 marginBottom: theme === "C" ? "3px" : "0",
@@ -375,6 +380,12 @@ export default function DemoPage() {
                 transition: "background 0.12s, padding-left 0.12s",
               }}
             >
+              <button
+                type="button"
+                onClick={() => setSelectedVerse(isSelected ? null : verse.number)}
+                aria-pressed={isSelected}
+                style={{ width: "100%", padding: 0, border: "none", background: "transparent", color: "inherit", textAlign: "left", cursor: "pointer" }}
+              >
               <span style={{
                 fontFamily: "system-ui, sans-serif",
                 color: p.accent, fontWeight: 700,
@@ -392,6 +403,7 @@ export default function DemoPage() {
               }}>
                 {verse.text}
               </span>
+              </button>
               {isSelected && (
                 <div style={{ marginTop: "8px", display: "flex", gap: "8px", fontFamily: "system-ui" }}>
                   <button style={{
@@ -518,13 +530,16 @@ export default function DemoPage() {
       }}>お気に入り</h1>
       <div style={{ display: "flex", flexDirection: "column" as const, gap: "12px" }}>
         {BOOKMARKS_DATA.map((bm, i) => (
-          <div key={i} onClick={() => setScreen("reading")} style={{
+          <button type="button" key={i} onClick={() => setScreen("reading")} style={{
             padding: "16px 18px",
             background: p.bgAlt,
             border: `1px solid ${p.border}`,
             borderRadius: p.radius,
             cursor: "pointer",
             transition: "border-color 0.15s",
+            color: "inherit",
+            width: "100%",
+            textAlign: "left",
           }}>
             <div style={{ fontFamily: "system-ui", fontSize: "0.8125rem", color: p.accent, fontWeight: 700, marginBottom: "6px" }}>
               {bm.book} {bm.chapter}:{bm.verse}
@@ -537,7 +552,7 @@ export default function DemoPage() {
             }}>
               「{bm.text}」
             </p>
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -608,10 +623,11 @@ export default function DemoPage() {
           { label: "パスワード", type: "password", placeholder: "••••••••" },
         ].map(field => (
           <div key={field.label} style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, color: p.text, marginBottom: "6px" }}>
+            <label htmlFor={`demo-${field.type}`} style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, color: p.text, marginBottom: "6px" }}>
               {field.label}
             </label>
             <input
+              id={`demo-${field.type}`}
               type={field.type}
               placeholder={field.placeholder}
               style={{
@@ -624,7 +640,7 @@ export default function DemoPage() {
             />
           </div>
         ))}
-        <button onClick={() => setScreen("reading")} style={{
+        <button type="button" onClick={() => setScreen("reading")} style={{
           ...btn(p, true),
           width: "100%", padding: "11px",
           fontSize: "1rem", fontWeight: 800, marginTop: "4px",
@@ -647,15 +663,25 @@ export default function DemoPage() {
   }
 
   return (
-    <div style={{ background: p.bg, color: p.text, minHeight: "100vh", display: "flex", flexDirection: "column" as const }}>
+    <div className="demo-root" style={{ background: p.bg, color: p.text, minHeight: "100vh", display: "flex", flexDirection: "column" as const }}>
       {ctrlBar}
       {navbar}
-      <div style={{ display: "flex", flex: 1 }}>
+      <div className="demo-shell" style={{ display: "flex", flex: 1 }}>
         {layout === "sidebar" && screen !== "login" && sidebar}
-        <main style={{ flex: 1, overflowY: "auto" as const }}>
+        <div role="region" aria-label="Component preview" style={{ flex: 1, overflowY: "auto" as const }}>
           {contentMap[screen]}
-        </main>
+        </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .demo-controls { position: static !important; gap: 8px !important; padding: 8px 12px !important; }
+          .demo-controls > div { flex-basis: 100%; flex-wrap: wrap; }
+          .demo-navbar { padding: 0 12px !important; overflow-x: auto; }
+          .demo-sidebar { display: none; }
+          .demo-shell { min-width: 0; }
+          .demo-shell main { min-width: 0; }
+        }
+      `}</style>
     </div>
   )
 }

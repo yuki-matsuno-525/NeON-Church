@@ -8,8 +8,6 @@ import {
   removeUpvote,
   login,
 } from "./apiClient";
-import type { Comment } from "./types";
-
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 

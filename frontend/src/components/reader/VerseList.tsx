@@ -28,14 +28,20 @@ export function VerseList({
         const isHighlighted = !isSelected && verse.number === highlightVerseNumber;
 
         return (
-          <div
+          <button
+            type="button"
             id={`verse-${verse.number}`}
             key={verse.id}
             data-testid="verse-item"
             onClick={() => onSelectVerse(verse.id)}
+            aria-pressed={isSelected}
             style={{
               padding: "12px 16px",
               minHeight: 44,
+              width: "100%",
+              border: "none",
+              textAlign: "left",
+              fontFamily: "inherit",
               cursor: "pointer",
               borderRadius: 5,
               background: isSelected ? "var(--accent-tint)" : isHighlighted ? undefined : "transparent",
@@ -78,7 +84,7 @@ export function VerseList({
               {verse.text}
             </span>
 
-          </div>
+          </button>
         );
       })}
     </div>

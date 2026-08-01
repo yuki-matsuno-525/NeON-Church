@@ -233,8 +233,8 @@ function NotFound({ raw, block = false }: { raw: string; block?: boolean }) {
     ...(block ? { display: "block", margin: "0 0 16px" } : {}),
   };
   return (
-    <span style={style} title={raw}>
-      （見つかりません）
+    <span style={style} role="note">
+      （参照先を確認できませんでした: <code>{raw}</code>）
     </span>
   );
 }
@@ -299,9 +299,17 @@ function renderMarkdownToken(token: string, key: string): ReactNode {
     const href = token.slice(divider + 2, -1);
     // javascript: のような危ないリンクは踏ませない。外部リンクと相対リンクだけ通す。
     if (!/^(https?:\/\/|\/)/.test(href)) return <span key={key}>{label}</span>;
+    const external = !href.startsWith("/");
     return (
-      <a key={key} href={href} style={{ color: "var(--accent)" }} target={href.startsWith("/") ? undefined : "_blank"} rel="noreferrer">
-        {label}
+      <a
+        key={key}
+        href={href}
+        style={{ color: "var(--accent)" }}
+        target={external ? "_blank" : undefined}
+        rel={external ? "noreferrer" : undefined}
+        aria-label={external ? `${label}（新しいタブで開く）` : undefined}
+      >
+        {label}{external && <span aria-hidden="true"> ↗</span>}
       </a>
     );
   }

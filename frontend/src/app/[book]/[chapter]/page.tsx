@@ -26,6 +26,8 @@ import { useLang } from "@/contexts/LanguageContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { SkeletonList } from "@/components/ui";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { useT, useBookLabel } from "@/lib/i18n";
 
 export default function ChapterPage() {
@@ -55,10 +57,15 @@ export default function ChapterPage() {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [chapterBusy, setChapterBusy] = useState(false);
+  const [loadedBookId, setLoadedBookId] = useState<string | null>(null);
+  const [progressError, setProgressError] = useState(false);
+  const [bookmarkLoadError, setBookmarkLoadError] = useState(false);
+  const [versionResolutionError, setVersionResolutionError] = useState(false);
   const selectedVerseId = searchParams.get("verse");
   const [loading, setLoading] = useState(true);
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
   // 全バージョン表示トグル用：この章・選択中の節の、各訳のid。
   const [allVersionChapterIds, setAllVersionChapterIds] = useState<string[]>([]);
@@ -101,6 +108,7 @@ export default function ChapterPage() {
       .then((books) => {
         const book = books.find((b) => b.name === active.name);
         if (!book) throw new Error(t.bookNotFound);
+        setLoadedBookId(book.id);
         return fetchChapters(book.id).then((chapters) => {
           const ch = chapters.find((c) => c.number === chapterNum);
           if (!ch) throw new Error(t.chapterNotFound);
@@ -112,7 +120,9 @@ export default function ChapterPage() {
             updatedAt: new Date().toISOString(),
           });
           if (user) {
-            saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
+            saveReadingProgress({ book: book.id, chapter: ch.id })
+              .then(() => setProgressError(false))
+              .catch(() => setProgressError(true));
           }
           return fetchVerses(ch.id);
         });
@@ -126,26 +136,52 @@ export default function ChapterPage() {
         );
       })
       .finally(() => setLoading(false));
-  }, [slug, chapterNum, translation, meta, router, user, t]);
+  }, [slug, chapterNum, translation, meta, router, user, t, reloadToken]);
 
   useEffect(() => {
     if (!user) return;
-    fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
+    fetchBookmarks()
+      .then((items) => {
+        setBookmarks(items);
+        setBookmarkLoadError(false);
+      })
+      .catch(() => {
+        setBookmarks([]);
+        setBookmarkLoadError(true);
+      });
   }, [user]);
 
   // 全バージョン表示用：この章の各訳の章idを集める。
   useEffect(() => {
-    resolveVersionChapterIds(slug, chapterNum).then(setAllVersionChapterIds).catch(() => setAllVersionChapterIds([]));
-  }, [slug, chapterNum]);
+    resolveVersionChapterIds(slug, chapterNum)
+      .then((ids) => {
+        setAllVersionChapterIds(ids);
+        setVersionResolutionError(false);
+      })
+      .catch(() => {
+        setAllVersionChapterIds([]);
+        setVersionResolutionError(true);
+      });
+  }, [slug, chapterNum, reloadToken]);
 
   // 選択中の節の、各訳の節idを集める（節を選び直すたびに更新）。
   useEffect(() => {
     let cancelled = false;
     const v = verses.find((vv) => vv.id === selectedVerseId);
     const p = v ? resolveVersionVerseIds(slug, chapterNum, v.number) : Promise.resolve<string[]>([]);
-    p.then((ids) => !cancelled && setAllVersionVerseIds(ids)).catch(() => !cancelled && setAllVersionVerseIds([]));
+    p.then((ids) => {
+      if (!cancelled) {
+        setAllVersionVerseIds(ids);
+        setVersionResolutionError(false);
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        setAllVersionVerseIds([]);
+        setVersionResolutionError(true);
+      }
+    });
     return () => { cancelled = true; };
-  }, [slug, chapterNum, selectedVerseId, verses]);
+  }, [slug, chapterNum, selectedVerseId, verses, reloadToken]);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -171,13 +207,26 @@ export default function ChapterPage() {
     return () => clearTimeout(timer);
   }, [loading, highlightVerseNumber]);
 
+  const verseUrl = (verseId: string | null) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (verseId) next.set("verse", verseId);
+    else next.delete("verse");
+    const query = next.toString();
+    const hash = typeof window === "undefined" ? "" : window.location.hash;
+    return `${pathname}${query ? `?${query}` : ""}${hash}`;
+  };
+
+  const handleClosePanel = () => {
+    router.replace(verseUrl(null));
+  };
+
   const handleSelectVerse = (verseId: string) => {
     if (verseId === selectedVerseId) {
-      router.back();
+      handleClosePanel();
     } else if (selectedVerseId) {
-      router.replace(`${pathname}?verse=${verseId}`);
+      router.replace(verseUrl(verseId));
     } else {
-      router.push(`${pathname}?verse=${verseId}`);
+      router.push(verseUrl(verseId));
     }
   };
 
@@ -223,36 +272,34 @@ export default function ChapterPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div role="status" aria-label={t.loading} style={{ padding: 32 }}>
+        <SkeletonList count={5} />
+      </div>
     );
   }
 
   if (error) {
     return (
       <div style={{ padding: 32 }}>
-        <p style={{ color: "var(--state-danger)", marginBottom: 16 }}>{error}</p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {translationOptions.filter((trans) => trans.id !== activeTranslationId).map((trans) => (
+        <ErrorState
+          title={t.loadErrorTitle}
+          message={error}
+          onRetry={() => setReloadToken((value) => value + 1)}
+          retryLabel={t.retry}
+          extraAction={translationOptions.filter((trans) => trans.id !== activeTranslationId).map((trans) => (
             <button
               key={trans.id}
+              type="button"
+              className="btn btn-ghost"
               onClick={() => {
                 localStorage.setItem("bible-translation", trans.id);
                 setTranslation(trans.id);
-              }}
-              style={{
-                fontSize: 13,
-                color: "var(--text-muted)",
-                background: "none",
-                cursor: "pointer",
-                padding: "4px 12px",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
               }}
             >
               {t.switchTranslation(trans.label)}
             </button>
           ))}
-        </div>
+        />
       </div>
     );
   }
@@ -271,7 +318,7 @@ export default function ChapterPage() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-          <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
+          <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
             <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
               {t.bookList}
             </Link>
@@ -282,7 +329,7 @@ export default function ChapterPage() {
             {" › "}
             <span>{t.chapterFmt(chapterNum)}</span>
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="reader-header-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
               <span>{t.translationLabel}</span>
               <select
@@ -297,6 +344,7 @@ export default function ChapterPage() {
                   background: "var(--bg)",
                   cursor: "pointer",
                   padding: "4px 10px",
+                  minHeight: 44,
                   border: "1px solid var(--border)",
                   borderRadius: 12,
                 }}
@@ -314,6 +362,9 @@ export default function ChapterPage() {
                   color: "var(--text-faint)",
                   textDecoration: "none",
                   padding: "3px 10px",
+                  minHeight: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
                   border: "1px solid var(--border)",
                   borderRadius: 12,
                   whiteSpace: "nowrap",
@@ -324,6 +375,36 @@ export default function ChapterPage() {
             )}
           </div>
       </div>
+
+      {(progressError || bookmarkLoadError || versionResolutionError) && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap", padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
+          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.actionFailed}</span>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              if (progressError && user && loadedBookId && chapter) {
+                saveReadingProgress({ book: loadedBookId, chapter: chapter.id })
+                  .then(() => setProgressError(false))
+                  .catch(() => setProgressError(true));
+              }
+              if (bookmarkLoadError && user) {
+                fetchBookmarks()
+                  .then((items) => {
+                    setBookmarks(items);
+                    setBookmarkLoadError(false);
+                  })
+                  .catch(() => setBookmarkLoadError(true));
+              }
+              if (versionResolutionError) {
+                setReloadToken((value) => value + 1);
+              }
+            }}
+          >
+            {t.retry}
+          </button>
+        </div>
+      )}
 
       <div
         className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
@@ -388,7 +469,7 @@ export default function ChapterPage() {
           <CommentPanel
             verse={selectedVerse}
             chapterNumber={chapterNum}
-            onClose={() => router.back()}
+            onClose={handleClosePanel}
             commentBookmarkMap={commentBookmarkMap}
             verseBookmarks={verseBookmarks}
             bookSlug={slug}

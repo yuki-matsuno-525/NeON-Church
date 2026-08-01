@@ -166,6 +166,7 @@ REST_FRAMEWORK = {
         "auth": "5/min",           # login / register
         "comment_create": "10/min", # コメント投稿
         "report": "5/min",         # 通報
+        "feedback": "5/hour",
     },
 }
 
@@ -204,6 +205,8 @@ GITHUB_CLIENT_SECRET = config("GITHUB_CLIENT_SECRET", default="")
 GITHUB_REDIRECT_URI = config("GITHUB_REDIRECT_URI", default="")
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@neon-church.com")
+FEEDBACK_EMAIL = config("FEEDBACK_EMAIL", default="yuki.matsuno525@gmail.com")
 
 # ------------------------------------------------------------------
 # CSRF

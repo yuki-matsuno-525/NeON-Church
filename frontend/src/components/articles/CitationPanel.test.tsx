@@ -69,7 +69,7 @@ describe("CitationPanel", () => {
   it("栞が無いときは読む画面で栞をつけるよう案内する", async () => {
     render(<CitationPanel onInsert={vi.fn()} />);
 
-    screen.getByRole("button", { name: "栞" }).click();
+    screen.getByRole("tab", { name: "栞" }).click();
 
     expect(
       await screen.findByText(/節の栞がありません/),

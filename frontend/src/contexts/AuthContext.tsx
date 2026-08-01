@@ -30,7 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // csrftoken Cookie を取得してから認証状態を確認する
     fetch("/api/csrf/", { credentials: "include" })
-      .catch(() => {})
+      .catch((error) => {
+        console.warn("Could not initialize CSRF protection; write actions may need a retry.", error);
+      })
       .finally(() => {
         fetchMe()
           .then(setUser)
@@ -40,11 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
-    try {
-      await apiLogout();
-    } catch {
-      // ignore logout errors
-    }
+    await apiLogout();
     setUser(null);
   };
 

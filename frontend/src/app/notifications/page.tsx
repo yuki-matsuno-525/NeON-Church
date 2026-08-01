@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { SkeletonList, EmptyState, ErrorState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
   notificationContextLabel,
@@ -34,6 +34,9 @@ export default function NotificationsPage() {
   const t = useT();
   // null は「すべて」タブ
   const [kind, setKind] = useState<NotificationType | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [busyNotificationId, setBusyNotificationId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const typeLabel = (type: string): string => {
     if (type === "reply") return t.notifReply;
@@ -68,22 +71,43 @@ export default function NotificationsPage() {
     loading: fetching,
     loadingMore,
     hasMore,
+    error,
+    loadMoreError,
     loadMore,
+    retry,
   } = useLoadMore(fetchPage);
 
   const handleMarkAll = async () => {
-    await markAllNotificationsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    clearUnread();
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      clearUnread();
+      await refresh();
+    } catch {
+      setActionError(t.notificationActionFailed);
+    } finally {
+      setActionBusy(false);
+    }
   };
 
   const handleMarkOne = async (n: Notification) => {
     if (n.is_read) return;
-    await markNotificationRead(n.id);
-    setNotifications((prev) =>
-      prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x))
-    );
-    decrementUnread();
+    setBusyNotificationId(n.id);
+    setActionError(null);
+    try {
+      await markNotificationRead(n.id);
+      setNotifications((prev) =>
+        prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x))
+      );
+      decrementUnread();
+      await refresh();
+    } catch {
+      setActionError(t.notificationActionFailed);
+    } finally {
+      setBusyNotificationId(null);
+    }
   };
 
   // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
@@ -107,6 +131,8 @@ export default function NotificationsPage() {
     );
   }
 
+  if (!user) return null;
+
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
       <div
@@ -120,15 +146,16 @@ export default function NotificationsPage() {
         <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700 }}>{t.notificationsTitle}</h1>
         <button
           onClick={handleMarkAll}
-          disabled={unreadCount === 0}
-          aria-disabled={unreadCount === 0}
+          disabled={unreadCount === 0 || actionBusy}
+          aria-busy={actionBusy}
           style={{
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-md)",
             padding: "6px 14px",
+            minHeight: 44,
             background: "transparent",
             color: unreadCount === 0 ? "var(--text-faint)" : "var(--text-muted)",
-            cursor: unreadCount === 0 ? "default" : "pointer",
+            cursor: unreadCount === 0 || actionBusy ? "default" : "pointer",
             opacity: unreadCount === 0 ? 0.6 : 1,
             fontSize: "var(--font-size-sm)",
             fontFamily: "inherit",
@@ -138,12 +165,20 @@ export default function NotificationsPage() {
         </button>
       </div>
 
+      {actionError && (
+        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 13, margin: "-12px 0 16px" }}>
+          {actionError}
+        </p>
+      )}
+
       {/* 通知が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
       {counts && counts.all > 0 && (
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {notifications.length === 0 ? (
+      {error ? (
+        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
+      ) : notifications.length === 0 ? (
         <EmptyState
           title={t.noNotifications}
           description={t.emptyNotificationsDesc}
@@ -161,16 +196,14 @@ export default function NotificationsPage() {
                   url={url}
                   contextLabel={contextLabel}
                   typeLabel={typeLabel(n.notification_type)}
-                  onActivate={() => {
-                    handleMarkOne(n);
-                    // refresh は markOne 後の整合性確認用
-                    void refresh;
-                  }}
+                  unreadLabel={t.notificationUnread}
+                  busy={busyNotificationId === n.id}
+                  onActivate={() => handleMarkOne(n)}
                 />
               );
             })}
           </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} onClick={loadMore} />
+          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
         </>
       )}
     </div>
@@ -182,31 +215,40 @@ function NotificationItem({
   url,
   contextLabel,
   typeLabel,
+  unreadLabel,
+  busy,
   onActivate,
 }: {
   notification: Notification;
   url: string | null;
   contextLabel: string | null;
   typeLabel: string;
-  onActivate: () => void;
+  unreadLabel: string;
+  busy: boolean;
+  onActivate: () => Promise<void>;
 }) {
   const cardStyle: React.CSSProperties = {
+    width: "100%",
     padding: "14px 16px",
     borderRadius: "var(--radius-md)",
     background: n.is_read ? "var(--bg-alt)" : "var(--bg-hover)",
+    border: "none",
     borderLeft: n.is_read ? "3px solid transparent" : "3px solid var(--accent)",
     transition: `background var(--duration-fast) var(--ease-out)`,
     display: "block",
     textDecoration: "none",
     color: "inherit",
     position: "relative",
+    textAlign: "left",
+    fontFamily: "inherit",
+    fontSize: "inherit",
   };
 
   const body = (
     <>
       {!n.is_read && (
         <span
-          aria-label="未読"
+          aria-label={unreadLabel}
           style={{
             position: "absolute",
             top: 18,
@@ -241,7 +283,7 @@ function NotificationItem({
           {formatRelativeTime(n.created_at)}
         </span>
       </div>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", overflowWrap: "anywhere" }}>
         {n.comment_body_snippet}
       </p>
     </>
@@ -249,17 +291,28 @@ function NotificationItem({
 
   if (url) {
     return (
-      <Link href={url} onClick={onActivate} style={cardStyle}>
+      <Link
+        href={url}
+        aria-busy={busy}
+        onClick={(event) => {
+          if (busy) event.preventDefault();
+          else void onActivate();
+        }}
+        style={{ ...cardStyle, opacity: busy ? 0.7 : 1 }}
+      >
         {body}
       </Link>
     );
   }
   return (
-    <div
-      onClick={onActivate}
-      style={{ ...cardStyle, cursor: n.is_read ? "default" : "pointer" }}
+    <button
+      type="button"
+      onClick={() => { void onActivate(); }}
+      disabled={n.is_read || busy}
+      aria-busy={busy}
+      style={{ ...cardStyle, cursor: n.is_read || busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}
     >
       {body}
-    </div>
+    </button>
   );
 }

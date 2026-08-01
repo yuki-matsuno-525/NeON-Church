@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
+import Link from "next/link";
 import {
   fetchBookmarks,
   fetchBooks,
@@ -20,19 +21,30 @@ import { DEFAULT_TRANSLATION } from "@/lib/translations";
  */
 export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }) {
   const [tab, setTab] = useState<"bookmarks" | "search">("search");
+  const tabsId = useId();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <div style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 }}>
-        <TabButton active={tab === "search"} onClick={() => setTab("search")}>
+      <div
+        role="tablist"
+        aria-label="引用元"
+        onKeyDown={handleTabArrowKey}
+        style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 }}
+      >
+        <TabButton id={`${tabsId}-search`} panelId={`${tabsId}-search-panel`} active={tab === "search"} onClick={() => setTab("search")}>
           さがす
         </TabButton>
-        <TabButton active={tab === "bookmarks"} onClick={() => setTab("bookmarks")}>
+        <TabButton id={`${tabsId}-bookmarks`} panelId={`${tabsId}-bookmarks-panel`} active={tab === "bookmarks"} onClick={() => setTab("bookmarks")}>
           栞
         </TabButton>
       </div>
 
-      <div style={{ overflowY: "auto", flex: 1, minHeight: 0, padding: "12px 0" }}>
+      <div
+        role="tabpanel"
+        id={`${tabsId}-${tab}-panel`}
+        aria-labelledby={`${tabsId}-${tab}`}
+        style={{ overflowY: "auto", flex: 1, minHeight: 0, padding: "12px 0" }}
+      >
         {tab === "search" ? <SearchTab onInsert={onInsert} /> : <BookmarkTab onInsert={onInsert} />}
       </div>
     </div>
@@ -79,7 +91,9 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   const [chapterNumbers, setChapterNumbers] = useState<number[]>([]);
   const [verses, setVerses] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingChapters, setLoadingChapters] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const meta = slug ? getBookBySlug(slug) : null;
   const matched = BOOKS.filter(
@@ -92,6 +106,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     let alive = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
+    setLoadingChapters(true);
     fetchBooks(translation)
       .then((books) => {
         const target = books.find((book) => book.name === bookNameFor(slug, translation));
@@ -101,16 +116,18 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
       .then((chapters) => {
         if (!alive) return;
         setChapterNumbers(chapters.map((c) => c.number));
+        setLoadingChapters(false);
       })
       .catch((err) => {
         if (!alive) return;
         setChapterNumbers([]);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "章を読み込めませんでした。");
+        setLoadingChapters(false);
       });
     return () => {
       alive = false;
     };
-  }, [slug, translation]);
+  }, [slug, translation, reloadToken]);
 
   // 章が決まったら節の一覧を引く。
   useEffect(() => {
@@ -137,18 +154,20 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
       .catch((err) => {
         if (!alive) return;
         setVerses([]);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "節を読み込めませんでした。");
         setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [slug, chapter, translation]);
+  }, [slug, chapter, translation, reloadToken]);
 
   if (!slug) {
     return (
       <div style={{ padding: "0 12px" }}>
+        <label htmlFor="citation-book-search" style={fieldLabelStyle}>引用する書をさがす</label>
         <input
+          id="citation-book-search"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
           placeholder="書をさがす"
@@ -165,6 +184,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               {book.name}
             </button>
           ))}
+          {matched.length === 0 && <p style={mutedTextStyle}>一致する書はありません。</p>}
         </div>
       </div>
     );
@@ -178,7 +198,9 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0" }}>
         <strong style={{ fontSize: 13 }}>{meta?.short}</strong>
+        <label htmlFor="citation-translation" style={visuallyHiddenStyle}>引用に使う翻訳</label>
         <select
+          id="citation-translation"
           value={translation}
           onChange={(event) => {
             setTranslation(event.target.value);
@@ -195,10 +217,15 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
         </select>
       </div>
 
-      {error && <p style={{ fontSize: 12, color: "var(--state-error)" }}>{error}</p>}
+      {error && (
+        <div role="alert" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--state-danger)" }}>{error}</p>
+          <button type="button" onClick={() => setReloadToken((value) => value + 1)} style={smallButtonStyle}>再試行</button>
+        </div>
+      )}
 
       {chapter === null ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        loadingChapters ? <p role="status" style={mutedTextStyle}>章を読み込んでいます…</p> : <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {chapterNumbers.map((number) => (
             <button
               key={number}
@@ -206,9 +233,10 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               onClick={() => setChapter(number)}
               style={chapterButtonStyle}
             >
-              {number}
+              <span aria-hidden="true">{number}</span><span style={visuallyHiddenStyle}>第{number}章</span>
             </button>
           ))}
+          {!error && chapterNumbers.length === 0 && <p style={mutedTextStyle}>この翻訳には章がありません。</p>}
         </div>
       ) : (
         <VerseList
@@ -415,62 +443,88 @@ function VerseList({
 function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchBookmarks()
-      .then((list) => setBookmarks(list.filter((bm) => bm.target_type === "verse" && bm.reference)))
-      .catch(() => setBookmarks([]))
-      .finally(() => setLoading(false));
+  const loadBookmarks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const list = await fetchBookmarks();
+      setBookmarks(list.filter((bm) => bm.target_type === "verse" && bm.reference));
+    } catch {
+      setError("栞を読み込めませんでした。");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadBookmarks();
+  }, [loadBookmarks]);
+
   if (loading) {
-    return <p style={{ padding: "0 12px", fontSize: 12, color: "var(--text-faint)" }}>読み込み中...</p>;
+    return <p role="status" style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)" }}>栞を読み込んでいます…</p>;
+  }
+
+  if (error) {
+    return (
+      <div role="alert" style={{ padding: "0 12px" }}>
+        <p style={{ ...mutedTextStyle, color: "var(--state-danger)" }}>{error}</p>
+        <button type="button" onClick={() => void loadBookmarks()} style={smallButtonStyle}>再試行</button>
+      </div>
+    );
   }
 
   if (bookmarks.length === 0) {
     return (
-      <p style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
-        節の栞がありません。読む画面で節に栞をつけると、ここから引けます。
-      </p>
+      <div style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
+        <p>節の栞がありません。読む画面で節に栞をつけると、ここから引けます。</p>
+        <Link href="/read" style={{ color: "var(--accent)", display: "inline-flex", minHeight: 44, alignItems: "center" }}>聖書を読む</Link>
+      </div>
     );
   }
 
   return (
     <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 8 }}>
       {bookmarks.map((bookmark) => {
-        const reference = bookmark.reference!;
-        const meta = getBookBySlug(reference.book);
-        // 栞は訳に依らない箇所なので、印にも訳を付けない（読む人の訳で開く）。
-        const insert = (kind: "inline" | "block") =>
-          onInsert(
-            buildMark({
-              kind,
-              slug: reference.book,
-              chapter: reference.chapter ?? 1,
-              verseStart: reference.verse ?? undefined,
-            }),
-          );
-        return (
-          <div key={bookmark.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-            <div style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
-              {meta?.short ?? reference.book} {reference.chapter}:{reference.verse}
-            </div>
-            {bookmark.verse_text && (
-              <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
-                {bookmark.verse_text}
-              </p>
-            )}
-            <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>
-                文中に入れる
-              </button>
-              <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>
-                引用して入れる
-              </button>
-            </div>
-          </div>
-        );
+        return <BookmarkCitationCard key={bookmark.id} bookmark={bookmark} onInsert={onInsert} />;
       })}
+    </div>
+  );
+}
+
+function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onInsert: (mark: string) => void }) {
+  const reference = bookmark.reference!;
+  const meta = getBookBySlug(reference.book);
+  const translations = meta?.translations ?? [];
+  const initialTranslation = translations.some((item) => item.id === DEFAULT_TRANSLATION)
+    ? DEFAULT_TRANSLATION
+    : translations[0]?.id ?? DEFAULT_TRANSLATION;
+  const [translation, setTranslation] = useState<string>(initialTranslation);
+  const selectId = `bookmark-translation-${bookmark.id}`;
+  const insert = (kind: "inline" | "block") => onInsert(buildMark({
+    kind,
+    slug: reference.book,
+    chapter: reference.chapter ?? 1,
+    verseStart: reference.verse ?? undefined,
+    translation,
+  }));
+
+  return (
+    <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
+      <div style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
+        {meta?.short ?? reference.book} {reference.chapter}:{reference.verse}
+      </div>
+      {bookmark.verse_text && <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>{bookmark.verse_text}</p>}
+      <label htmlFor={selectId} style={fieldLabelStyle}>引用に使う翻訳</label>
+      <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} style={{ ...inputStyle, marginBottom: 8 }}>
+        {translations.map((item) => <option key={item.id} value={item.id}>{item.id}</option>)}
+      </select>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>文中に入れる</button>
+        <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>引用して入れる</button>
+      </div>
     </div>
   );
 }
@@ -478,22 +532,31 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
 // ---------------------------------------------------------------------------
 
 function TabButton({
+  id,
+  panelId,
   active,
   onClick,
   children,
 }: {
+  id: string;
+  panelId: string;
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
     <button
+      id={id}
       type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={panelId}
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       style={{
         flex: 1,
         padding: "10px 8px",
-        minHeight: 40,
+        minHeight: 44,
         border: "none",
         background: "none",
         borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
@@ -518,13 +581,13 @@ const inputStyle: React.CSSProperties = {
   background: "var(--bg)",
   color: "var(--text)",
   fontFamily: "inherit",
-  fontSize: 13,
+  fontSize: 16,
 };
 
 const rowButtonStyle: React.CSSProperties = {
   textAlign: "left",
   padding: "8px 6px",
-  minHeight: 36,
+  minHeight: 44,
   border: "none",
   background: "none",
   color: "var(--text)",
@@ -540,7 +603,8 @@ const backButtonStyle: React.CSSProperties = {
   color: "var(--text-muted)",
   fontSize: 12,
   cursor: "pointer",
-  padding: 0,
+  padding: "8px 4px",
+  minHeight: 44,
   fontFamily: "inherit",
 };
 
@@ -563,7 +627,7 @@ const smallButtonStyle: React.CSSProperties = {
   color: "var(--text-muted)",
   fontSize: 12,
   padding: "5px 10px",
-  minHeight: 32,
+  minHeight: 44,
   cursor: "pointer",
   fontFamily: "inherit",
 };
@@ -575,7 +639,48 @@ const insertButtonStyle: React.CSSProperties = {
   color: "var(--text)",
   fontSize: 13,
   padding: "6px 12px",
-  minHeight: 34,
+  minHeight: 44,
   cursor: "pointer",
   fontFamily: "inherit",
 };
+
+const fieldLabelStyle: React.CSSProperties = {
+  display: "block",
+  color: "var(--text-muted)",
+  fontSize: 12,
+  fontWeight: 700,
+  marginBottom: 6,
+};
+
+const mutedTextStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: "var(--text-muted)",
+  lineHeight: 1.7,
+};
+
+const visuallyHiddenStyle: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
+  const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+  if (tabs.length === 0) return;
+  const current = tabs.indexOf(document.activeElement as HTMLButtonElement);
+  let next = current;
+  if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = tabs.length - 1;
+  else if (event.key === "ArrowRight") next = (Math.max(current, 0) + 1) % tabs.length;
+  else next = (current <= 0 ? tabs.length : current) - 1;
+  event.preventDefault();
+  tabs[next]?.focus();
+  tabs[next]?.click();
+}

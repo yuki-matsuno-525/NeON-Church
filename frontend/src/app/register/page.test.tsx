@@ -4,9 +4,10 @@ import RegisterPage from "./page";
 
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
+let mockFrom: string | null = null;
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => ({ get: () => null }),
+  useSearchParams: () => ({ get: (key: string) => key === "from" ? mockFrom : null }),
 }));
 
 vi.mock("next/link", () => ({
@@ -28,6 +29,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
 describe("RegisterPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFrom = null;
   });
 
   it("フォームフィールドとボタンが表示される", () => {
@@ -38,14 +40,16 @@ describe("RegisterPage", () => {
 
   it("登録成功時にユーザーをセットして /matthew/1 にリダイレクト", async () => {
     const { register } = await import("@/lib/api");
-    const mockUser = { id: "u1", username: "bob", email: "b@c.com", bio: "", created_at: "" };
+    const mockUser = { id: "u1", username: "bob", email: "b@c.com", bio: "", bookmarks_visibility: "private" as const, created_at: "" };
     vi.mocked(register).mockResolvedValue(mockUser);
 
     render(<RegisterPage />);
     const textboxes = screen.getAllByRole("textbox");
     fireEvent.change(textboxes[0], { target: { value: "bob" } });
     fireEvent.change(textboxes[1], { target: { value: "bob@example.com" } });
-    fireEvent.change(document.querySelector('input[type="password"]')!, { target: { value: "password123" } });
+    for (const input of document.querySelectorAll('input[type="password"]')) {
+      fireEvent.change(input, { target: { value: "password123" } });
+    }
     fireEvent.click(screen.getByRole("button", { name: "登録する" }));
 
     await waitFor(() => expect(mockSetUser).toHaveBeenCalledWith(mockUser));
@@ -60,7 +64,9 @@ describe("RegisterPage", () => {
     const textboxes = screen.getAllByRole("textbox");
     fireEvent.change(textboxes[0], { target: { value: "dup" } });
     fireEvent.change(textboxes[1], { target: { value: "dup@x.com" } });
-    fireEvent.change(document.querySelector('input[type="password"]')!, { target: { value: "password123" } });
+    for (const input of document.querySelectorAll('input[type="password"]')) {
+      fireEvent.change(input, { target: { value: "password123" } });
+    }
     fireEvent.click(screen.getByRole("button", { name: "登録する" }));
 
     await waitFor(() => expect(screen.getByText("このユーザー名は既に使われています")).toBeInTheDocument());
@@ -75,7 +81,9 @@ describe("RegisterPage", () => {
     const textboxes = screen.getAllByRole("textbox");
     fireEvent.change(textboxes[0], { target: { value: "bob" } });
     fireEvent.change(textboxes[1], { target: { value: "bob@example.com" } });
-    fireEvent.change(document.querySelector('input[type="password"]')!, { target: { value: "password123" } });
+    for (const input of document.querySelectorAll('input[type="password"]')) {
+      fireEvent.change(input, { target: { value: "password123" } });
+    }
     fireEvent.click(screen.getByRole("button", { name: "登録する" }));
 
     expect(await screen.findByRole("button", { name: "登録中..." })).toBeDisabled();
@@ -93,6 +101,7 @@ describe("RegisterPage", () => {
       username: "x",
       email: "x@y.com",
       bio: "",
+      bookmarks_visibility: "private",
       created_at: "",
     });
 
@@ -112,6 +121,21 @@ describe("RegisterPage", () => {
     await waitFor(() =>
       expect(screen.getByText("パスワードは8文字以上で入力してください。")).toBeInTheDocument()
     );
+    expect(register).not.toHaveBeenCalled();
+  });
+
+  it("確認用パスワードが一致しない場合はAPIを呼ばない", async () => {
+    const { register } = await import("@/lib/api");
+    render(<RegisterPage />);
+    const textboxes = screen.getAllByRole("textbox");
+    fireEvent.change(textboxes[0], { target: { value: "bob" } });
+    fireEvent.change(textboxes[1], { target: { value: "bob@example.com" } });
+    const passwords = document.querySelectorAll('input[type="password"]');
+    fireEvent.change(passwords[0], { target: { value: "password123" } });
+    fireEvent.change(passwords[1], { target: { value: "different123" } });
+    fireEvent.submit(passwords[0].closest("form")!);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("確認用パスワードが一致しません。");
     expect(register).not.toHaveBeenCalled();
   });
 });

@@ -21,6 +21,8 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
   const [loading, setLoading] = useState(true);
   // 2ページ目以降の読み込み（ボタンだけを待ち状態にする）
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<Error | null>(null);
   // reload() のたびに増やして、下の useEffect を1ページ目から走らせ直す。
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -32,6 +34,8 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    setError(null);
+    setLoadMoreError(null);
     fetchPage(1)
       .then((res) => {
         if (cancelled) return;
@@ -41,11 +45,12 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
         setHasMore(res.hasMore);
         setPage(1);
       })
-      .catch(() => {
+      .catch((cause) => {
         if (cancelled) return;
         setItems([]);
         setTotal(0);
         setHasMore(false);
+        setError(cause instanceof Error ? cause : new Error("Failed to load list"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -58,6 +63,7 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
+    setLoadMoreError(null);
     try {
       const next = page + 1;
       const res = await fetchPage(next);
@@ -65,13 +71,27 @@ export function useLoadMore<T, C>(fetchPage: (page: number) => Promise<ListPage<
       setHasMore(res.hasMore);
       setTotal(res.count);
       setPage(next);
-    } catch {
-      // 読み足しに失敗したらボタンを引っ込める。既に出ている分はそのまま残す。
-      setHasMore(false);
+    } catch (cause) {
+      // 既に表示できている内容は残し、再試行できるよう hasMore も維持する。
+      setLoadMoreError(cause instanceof Error ? cause : new Error("Failed to load more"));
     } finally {
       setLoadingMore(false);
     }
   }, [fetchPage, page, hasMore, loadingMore]);
 
-  return { items, setItems, counts, total, loading, loadingMore, hasMore, loadMore, reload };
+  return {
+    items,
+    setItems,
+    counts,
+    setCounts,
+    total,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    loadMoreError,
+    loadMore,
+    retry: reload,
+    reload,
+  };
 }

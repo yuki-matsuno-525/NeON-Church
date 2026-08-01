@@ -35,8 +35,8 @@ export function BookmarkStar({
       title={title}
       style={{
         border: "none",
-        width: 36,
-        height: 36,
+        width: 44,
+        height: 44,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",

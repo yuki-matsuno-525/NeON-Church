@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { useCallback, useDeferredValue, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -8,7 +8,7 @@ import { fetchQACommentPage, fetchTags, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
-import { SkeletonList, EmptyState, Button, LoadMoreButton } from "@/components/ui";
+import { SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { Icon } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
@@ -16,8 +16,9 @@ import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
-import { useBookCatalog, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
+import { useBookCatalogState, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 import type { IconName } from "@/components/ui/Icon";
+import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 // 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
 type QAColumnKey = "answered" | "unanswered";
@@ -48,13 +49,21 @@ function QAContent() {
   const selectedVersion = searchParams.get("version") ?? "";
   const selectedTagId = searchParams.get("tag") ?? "";
 
-  const catalog = useBookCatalog();
+  const { catalog, loading: catalogLoading, error: catalogError, retry: retryCatalog } = useBookCatalogState();
   const isMobile = useIsMobile();
   // スマホでは1カラムずつタブ切り替え。既定は「未解決」（回答が必要な列）。
   const [activeTab, setActiveTab] = useState<QAColumnKey>("unanswered");
   const [genreFilter, setGenreFilter] = useState("");
-  const [questionSearch, setQuestionSearch] = useState("");
+  const urlQuestionSearch = searchParams.get("q") ?? "";
+  const [questionSearch, setQuestionSearch] = useState(urlQuestionSearch);
+  const [lastUrlQuestionSearch, setLastUrlQuestionSearch] = useState(urlQuestionSearch);
+  if (urlQuestionSearch !== lastUrlQuestionSearch) {
+    setLastUrlQuestionSearch(urlQuestionSearch);
+    setQuestionSearch(urlQuestionSearch);
+  }
+  const deferredQuestionSearch = useDeferredValue(questionSearch);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagsError, setTagsError] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -78,8 +87,13 @@ function QAContent() {
   const setSelectedVersion = (v: string) => updateParams({ version: v || null });
   const setSelectedTagId = (id: string) => updateParams({ tag: id || null });
 
+  const loadTags = useCallback(() => {
+    setTagsError(false);
+    fetchTags().then(setTags).catch(() => setTagsError(true));
+  }, []);
+
   useEffect(() => {
-    fetchTags().then(setTags).catch(() => {});
+    fetchTags().then(setTags).catch(() => setTagsError(true));
   }, []);
 
   // 選んだ書（と任意の訳）から絞り込み用の Book id 群を決める。
@@ -93,7 +107,7 @@ function QAContent() {
 
   // 列ごとに独立して読み足す。全件取ってから画面側で2列に振り分けていた頃は、
   // 件数バッジが「読み込めた分」の数になり、片方の列だけ増えるといった破綻が起きる。
-  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: questionSearch };
+  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: deferredQuestionSearch };
   const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
 
   const fetchAnswered = useCallback(
@@ -164,6 +178,14 @@ function QAContent() {
         />
       )}
 
+      {catalogLoading && <p role="status" style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.loading}</p>}
+      {catalogError && (
+        <div role="alert" style={{ marginBottom: 16 }}>
+          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{lang === "ja" ? "書の一覧を読み込めませんでした。" : "Could not load the book list."}</p>
+          <Button variant="ghost" size="sm" onClick={retryCatalog}>{t.retry}</Button>
+        </div>
+      )}
+
       <fieldset style={filterPanelStyle}>
         {/* フィルタの見出しは各ボタンのラベルと重複するため画面には出さない（スクリーンリーダー用に残す）。 */}
         <legend className="sr-only">
@@ -179,7 +201,10 @@ function QAContent() {
         <div style={filterRowStyle}>
           <ClearableSearchInput
             value={questionSearch}
-            onChange={setQuestionSearch}
+            onChange={(value) => {
+              setQuestionSearch(value);
+              updateParams({ q: value || null });
+            }}
             placeholder={t.qaSearchPlaceholder}
             ariaLabel={t.qaSearchLabel}
             inputStyle={qaSearchInputStyle}
@@ -193,7 +218,8 @@ function QAContent() {
                 {/* カテゴリを先に選ぶと、次の書プルダウンがそのカテゴリの書に絞られる。 */}
                 <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
                   <select
-                    aria-label={t.allBooks}
+                    aria-label={t.genreFilterLabel}
+                    disabled={catalogLoading || catalogError}
                     value={genreFilter}
                     onChange={(e) => { setGenreFilter(e.target.value); setSelectedSlug(""); }}
                     style={qaSelectStyle}
@@ -207,6 +233,7 @@ function QAContent() {
                 <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
                   <select
                     aria-label={t.allBooks}
+                    disabled={catalogLoading || catalogError}
                     value={selectedSlug}
                     onChange={(e) => setSelectedSlug(e.target.value)}
                     style={qaSelectStyle}
@@ -250,10 +277,23 @@ function QAContent() {
             </select>
           </label>
         </div>
+        {tagsError && (
+          <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+            <span>{t.tagsLoadFailed}</span>
+            <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          </div>
+        )}
       </fieldset>
 
       {loading ? (
         <SkeletonList count={3} />
+      ) : answeredList.error || unansweredList.error ? (
+        <ErrorState
+          title={t.loadErrorTitle}
+          message={t.loadErrorDesc}
+          onRetry={loadComments}
+          retryLabel={t.retry}
+        />
       ) : totalCount === 0 ? (
         <EmptyState
           title={t.qaEmpty}
@@ -274,7 +314,7 @@ function QAContent() {
         <>
         {/* スマホだけカラム切り替えタブを出す。PC はタブなしで2カラムを横並び。 */}
         {isMobile && (
-          <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          <div role="tablist" aria-label={t.qaTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", gap: 6, marginBottom: 16 }}>
             {QA_COLUMNS.map((col) => {
               const active = col.key === activeTab;
               // 表示中の件数ではなく、サーバーが数えたその列の総数
@@ -283,7 +323,11 @@ function QAContent() {
                 <button
                   key={col.key}
                   type="button"
-                  aria-pressed={active}
+                  id={`qa-tab-${col.key}`}
+                  role="tab"
+                  aria-selected={active}
+                  aria-controls={`qa-panel-${col.key}`}
+                  tabIndex={active ? 0 : -1}
                   onClick={() => setActiveTab(col.key)}
                   style={{
                     flex: 1,
@@ -311,6 +355,9 @@ function QAContent() {
             return (
               <section
                 key={col.key}
+                id={`qa-panel-${col.key}`}
+                role={isMobile ? "tabpanel" : undefined}
+                aria-labelledby={isMobile ? `qa-tab-${col.key}` : undefined}
                 style={{ ...columnStyle, display: isMobile && col.key !== activeTab ? "none" : undefined }}
               >
                 <div style={{ marginBottom: 16 }}>
@@ -345,6 +392,7 @@ function QAContent() {
                     <LoadMoreButton
                       hasMore={list.hasMore}
                       loading={list.loadingMore}
+                      error={!!list.loadMoreError}
                       onClick={list.loadMore}
                     />
                   </>
@@ -409,7 +457,7 @@ const filterRowStyle: React.CSSProperties = {
 };
 
 const qaSelectStyle: React.CSSProperties = {
-  minHeight: 36,
+  minHeight: 44,
   padding: "6px 10px",
   border: "1px solid var(--border)",
   borderRadius: 8,
@@ -420,7 +468,7 @@ const qaSelectStyle: React.CSSProperties = {
 };
 
 const qaSearchInputStyle: React.CSSProperties = {
-  minHeight: 36,
+  minHeight: 44,
   minWidth: 220,
   flex: "1 1 240px",
   padding: "6px 10px",

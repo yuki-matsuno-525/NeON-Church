@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
-import { SkeletonList } from "@/components/ui";
+import { Button, SkeletonList } from "@/components/ui";
 import { Pagination } from "@/components/ui/Pagination";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
+import { useLang } from "@/contexts/LanguageContext";
+import { translationUiText } from "./translationUiText";
 
 type StatusKey = TranslationStatus;
 
@@ -26,10 +29,32 @@ const COLUMNS: { key: StatusKey; icon: IconName; color: string; tint: string }[]
 export default function TranslationsPage() {
   const { user } = useAuth();
   const t = useT();
+  const { lang } = useLang();
+  const ui = translationUiText(lang);
   const isMobile = useIsMobile();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") ?? "";
   // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
-  const [projectSearch, setProjectSearch] = useState("");
+  const [projectSearch, setProjectSearch] = useState(searchQuery);
+  const deferredProjectSearch = useDeferredValue(projectSearch);
+  const visibleColumns = user ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
+
+  useEffect(() => {
+    // ブラウザーの戻る・進む操作で URL が変わったとき、入力欄も同じ値へ戻す。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setProjectSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleProjectSearchChange = (value: string) => {
+    setProjectSearch(value);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (value) nextParams.set("q", value);
+    else nextParams.delete("q");
+    const query = nextParams.toString();
+    router.replace(query ? `/translations?${query}` : "/translations", { scroll: false });
+  };
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -74,7 +99,7 @@ export default function TranslationsPage() {
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
           value={projectSearch}
-          onChange={setProjectSearch}
+          onChange={handleProjectSearchChange}
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
           inputStyle={projectSearchInputStyle}
@@ -84,7 +109,7 @@ export default function TranslationsPage() {
 
       {isMobile && (
         <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-          {COLUMNS.map((col) => {
+          {visibleColumns.map((col) => {
             const active = col.key === activeTab;
             return (
               <button
@@ -94,6 +119,7 @@ export default function TranslationsPage() {
                 onClick={() => setActiveTab(col.key)}
                 style={{
                   flex: 1,
+                  minHeight: 44,
                   padding: "8px 6px",
                   border: `1px solid ${active ? col.color : "var(--border)"}`,
                   borderRadius: 8,
@@ -119,7 +145,7 @@ export default function TranslationsPage() {
             : { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }
         }
       >
-        {COLUMNS.map((col) => (
+        {visibleColumns.map((col) => (
           <div
             key={col.key}
             style={{ display: isMobile && col.key !== activeTab ? "none" : "block" }}
@@ -131,7 +157,9 @@ export default function TranslationsPage() {
               tint={col.tint}
               label={columnLabel(col.key)}
               desc={columnDesc(col.key)}
-              search={projectSearch}
+              search={deferredProjectSearch}
+              retryLabel={ui.retry}
+              errorMessage={ui.loadError}
             />
           </div>
         ))}
@@ -148,6 +176,8 @@ function TranslationColumn({
   label,
   desc,
   search,
+  retryLabel,
+  errorMessage,
 }: {
   statusKey: StatusKey;
   icon: IconName;
@@ -156,17 +186,22 @@ function TranslationColumn({
   label: string;
   desc: string;
   search: string;
+  retryLabel: string;
+  errorMessage: string;
 }) {
   const t = useT();
   const [items, setItems] = useState<TranslationProject[]>([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    setError(false);
     fetchTranslations(statusKey, page, search)
       .then((res) => {
         if (!active) return;
@@ -177,12 +212,13 @@ function TranslationColumn({
         if (!active) return;
         setItems([]);
         setCount(0);
+        setError(true);
       })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [statusKey, page, search]);
+  }, [statusKey, page, search, reloadKey]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -206,6 +242,11 @@ function TranslationColumn({
 
       {loading ? (
         <SkeletonList count={2} />
+      ) : error ? (
+        <div role="alert" style={{ padding: "10px 2px" }}>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 10px" }}>{errorMessage}</p>
+          <Button variant="ghost" size="sm" onClick={() => setReloadKey((key) => key + 1)}>{retryLabel}</Button>
+        </div>
       ) : items.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.emptyColumn}</p>
       ) : (
@@ -257,6 +298,7 @@ function ProjectCard({
         )}
 
         <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap", marginBottom: 12 }}>
+          <span style={metaPillStyle}>{p.source_book_name}</span>
           <span style={metaPillStyle}>{languageLabel(p.target_language)}</span>
           <span style={metaPillStyle}>{t.createdBy} {p.owner_username}</span>
         </div>
@@ -314,7 +356,7 @@ const metaPillStyle: React.CSSProperties = {
 
 const projectSearchInputStyle: React.CSSProperties = {
   width: "100%",
-  minHeight: 40,
+  minHeight: 44,
   padding: "8px 12px",
   border: "1px solid var(--border)",
   borderRadius: 8,

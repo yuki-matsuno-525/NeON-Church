@@ -42,4 +42,5 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "auth": DEV_THROTTLE_RATE,
     "comment_create": DEV_THROTTLE_RATE,
     "report": DEV_THROTTLE_RATE,
+    "feedback": DEV_THROTTLE_RATE,
 }

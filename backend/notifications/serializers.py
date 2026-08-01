@@ -60,6 +60,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     def get_translation_project_id(self, obj) -> str | None:
         if obj.translation_comment_id:
             return str(obj.translation_comment.project_id)
+        if obj.comment_id and obj.comment.translation_project_id:
+            return str(obj.comment.translation_project_id)
         return None
 
     def get_target_kind(self, obj) -> str | None:
@@ -68,6 +70,8 @@ class NotificationSerializer(serializers.ModelSerializer):
             return "translation_unit"
         if not obj.comment_id:
             return None
+        if obj.comment.translation_project_id:
+            return "translation_project_comment"
         c = obj.comment
         # スレッドの根をたどって target を決める（返信の返信でも元の verse/chapter/book に飛ぶ）
         root = c

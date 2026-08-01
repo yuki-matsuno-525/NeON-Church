@@ -38,7 +38,7 @@ function LoginForm() {
       fetchMe().then((me) => {
         setUser(me);
         router.replace(safeRedirectTarget(from));
-      }).catch(() => {});
+      }).catch(() => setError(t.oauthError));
     } else if (oauthResult === "error") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(t.oauthError);
@@ -171,6 +171,11 @@ function LoginForm() {
                 fontFamily: "inherit",
               }}
             />
+            <div style={{ textAlign: "right", marginTop: 8 }}>
+              <Link href="/forgot-password" style={{ color: "var(--accent)", fontSize: 13 }}>
+                {t.forgotPassword}
+              </Link>
+            </div>
           </div>
 
           {error && (
@@ -204,7 +209,7 @@ function LoginForm() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
               {OAUTH_GOOGLE_ENABLED && (
                 <a
-                  href={`/api/auth/oauth/google/${from ? `?next=${encodeURIComponent(from)}` : ""}`}
+                  href={`/api/auth/oauth/google/${from ? `?next=${encodeURIComponent(safeRedirectTarget(from))}` : ""}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -231,7 +236,7 @@ function LoginForm() {
               )}
               {OAUTH_GITHUB_ENABLED && (
                 <a
-                  href={`/api/auth/oauth/github/${from ? `?next=${encodeURIComponent(from)}` : ""}`}
+                  href={`/api/auth/oauth/github/${from ? `?next=${encodeURIComponent(safeRedirectTarget(from))}` : ""}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -259,7 +264,7 @@ function LoginForm() {
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--text-muted)" }}>
           {t.noAccount}{" "}
-          <Link href="/register" style={{ color: "var(--accent)", textDecoration: "underline" }}>
+          <Link href={from ? `/register?from=${encodeURIComponent(safeRedirectTarget(from))}` : "/register"} style={{ color: "var(--accent)", textDecoration: "underline" }}>
             {t.register}
           </Link>
         </p>

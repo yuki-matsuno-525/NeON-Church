@@ -2,6 +2,7 @@ import re
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -9,6 +10,11 @@ from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
 from notifications.models import Notification
+from notifications.services import send_user_notification
+from .access import (
+    can_view_project_work,
+    get_visible_project_or_404 as resolve_visible_project_or_404,
+)
 from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, TranslationLibraryEntry, Language
 
 User = get_user_model()
@@ -20,21 +26,19 @@ def _create_mention_notifications(comment: TranslationComment) -> None:
     if not usernames:
         return
     users = User.objects.filter(username__in=usernames).exclude(pk=comment.user_id)
-    notifications = [
-        Notification(
-            recipient=u,
+    for user in users:
+        send_user_notification(
+            recipient=user,
             actor=comment.user,
             notification_type=Notification.MENTION,
             translation_comment=comment,
         )
-        for u in users
-    ]
-    Notification.objects.bulk_create(notifications, ignore_conflicts=True)
 from .serializers import (
     LanguageSerializer,
     TranslationProjectSerializer,
     TranslationMembershipSerializer,
     TranslationUnitSerializer,
+    TranslationUnitCreateSerializer,
     TranslationCommentSerializer,
 )
 
@@ -53,11 +57,21 @@ class IsApprovedMember(permissions.BasePermission):
         project_id = view.kwargs.get("project_id")
         if not project_id:
             return False
+        _get_visible_project_or_404(request, project_id)
         return TranslationMembership.objects.filter(
             project_id=project_id,
             user=request.user,
             status=TranslationMembership.STATUS_APPROVED,
         ).exists()
+
+
+def _can_view_project_work(request, project):
+    """Draft work is private to the owner and approved collaborators."""
+    return can_view_project_work(request.user, project)
+
+
+def _get_visible_project_or_404(request, project_id):
+    return resolve_visible_project_or_404(request.user, project_id)
 
 
 # ---------------------------------------------------------------------------
@@ -84,8 +98,14 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         qs = TranslationProject.objects.select_related("owner", "source_book")
         user = self.request.user
         if user.is_authenticated:
-            from django.db.models import Q
-            qs = qs.filter(Q(owner=user) | ~Q(status=TranslationProject.STATUS_DRAFT))
+            qs = qs.filter(
+                Q(owner=user)
+                | Q(
+                    memberships__user=user,
+                    memberships__status=TranslationMembership.STATUS_APPROVED,
+                )
+                | ~Q(status=TranslationProject.STATUS_DRAFT)
+            ).distinct()
         else:
             qs = qs.exclude(status=TranslationProject.STATUS_DRAFT)
 
@@ -100,7 +120,6 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(status=status_param)
         q = (self.request.query_params.get("q") or "").strip()
         if q:
-            from django.db.models import Q
             qs = qs.filter(
                 Q(name__icontains=q)
                 | Q(description__icontains=q)
@@ -134,10 +153,7 @@ class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.IsAuthenticated(), IsProjectOwner()]
 
     def get_object(self):
-        obj = get_object_or_404(
-            TranslationProject.objects.select_related("owner", "source_book"),
-            pk=self.kwargs["project_id"],
-        )
+        obj = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -148,7 +164,7 @@ def _set_project_status(view, request, project_id, new_status):
     オーナーチェック（check_object_permissions）込み。
     TranslationActivateView / TranslationPublishView / TranslationUnpublishView が共用する。
     """
-    project = get_object_or_404(TranslationProject, pk=project_id)
+    project = _get_visible_project_or_404(request, project_id)
     view.check_object_permissions(request, project)
     project.status = new_status
     project.save(update_fields=["status", "updated_at"])
@@ -192,14 +208,23 @@ class TranslationJoinView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
+        project = _get_visible_project_or_404(request, project_id)
+        if project.status != TranslationProject.STATUS_ACTIVE:
+            return Response(
+                {"detail": "This project is not accepting applications."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         membership, created = TranslationMembership.objects.get_or_create(
             project=project,
             user=request.user,
             defaults={"role": TranslationMembership.ROLE_MEMBER, "status": TranslationMembership.STATUS_PENDING},
         )
         if not created:
-            return Response({"detail": "Already applied."}, status=status.HTTP_400_BAD_REQUEST)
+            if membership.status == TranslationMembership.STATUS_REJECTED:
+                membership.status = TranslationMembership.STATUS_PENDING
+                membership.save(update_fields=["status", "updated_at"])
+            else:
+                return Response({"detail": "Already applied."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(TranslationMembershipSerializer(membership).data, status=status.HTTP_201_CREATED)
 
 
@@ -224,7 +249,7 @@ class TranslationMemberDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def _get_project(self, project_id, request):
-        project = get_object_or_404(TranslationProject, pk=project_id)
+        project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
             self.permission_denied(request)
         return project
@@ -283,12 +308,18 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
     serializer_class = TranslationUnitSerializer
     pagination_class = ChapterPageNumberPagination
 
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return TranslationUnitCreateSerializer
+        return TranslationUnitSerializer
+
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
+        _get_visible_project_or_404(self.request, self.kwargs["project_id"])
         qs = TranslationUnit.objects.filter(
             project_id=self.kwargs["project_id"]
         ).select_related("verse__chapter", "assigned_to")
@@ -302,19 +333,33 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
         status_param = self.request.query_params.get("status")
         if status_param in dict(TranslationUnit.STATUS_CHOICES):
             qs = qs.filter(status=status_param)
+        assigned_to = self.request.query_params.get("assigned_to")
+        if assigned_to == "me":
+            if not self.request.user.is_authenticated:
+                return qs.none()
+            qs = qs.filter(assigned_to=self.request.user)
+        elif assigned_to == "unassigned":
+            qs = qs.filter(assigned_to__isnull=True)
+        elif assigned_to:
+            qs = qs.filter(assigned_to_id=assigned_to)
         return qs
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         if self.request.method not in permissions.SAFE_METHODS:
-            ctx["project"] = get_object_or_404(TranslationProject, pk=self.kwargs["project_id"])
+            ctx["project"] = self._get_owned_project_or_404()
         return ctx
 
+    def _get_owned_project_or_404(self):
+        if not hasattr(self, "_owned_project"):
+            project = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
+            if project.owner_id != self.request.user.id:
+                self.permission_denied(self.request)
+            self._owned_project = project
+        return self._owned_project
+
     def perform_create(self, serializer):
-        project = get_object_or_404(TranslationProject, pk=self.kwargs["project_id"])
-        if project.owner != self.request.user:
-            self.permission_denied(self.request)
-        serializer.save(project=project)
+        serializer.save(project=self._get_owned_project_or_404())
 
 
 class TranslationUnitSummaryView(APIView):
@@ -330,7 +375,7 @@ class TranslationUnitSummaryView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, project_id):
-        get_object_or_404(TranslationProject, pk=project_id)
+        _get_visible_project_or_404(request, project_id)
         units = TranslationUnit.objects.filter(project_id=project_id)
         # order_by() で既定の並び順を外してから distinct する。付けたままだと
         # 並び替えに使う節番号が裏で SELECT に入り、章が節の数だけ重複する。
@@ -345,10 +390,33 @@ class TranslationUnitSummaryView(APIView):
             },
         )
         total = counts.pop("total")
-        return Response({"chapters": chapters, "status_counts": counts, "total": total})
+        chapter_counts = {}
+        for row in (
+            units.values("verse__chapter__number", "status")
+            .annotate(count=Count("id"))
+            .order_by("verse__chapter__number")
+        ):
+            number = row["verse__chapter__number"]
+            entry = chapter_counts.setdefault(number, {
+                "number": number,
+                "total": 0,
+                "status_counts": {name: 0 for name, _label in TranslationUnit.STATUS_CHOICES},
+            })
+            entry["status_counts"][row["status"]] = row["count"]
+            entry["total"] += row["count"]
+        mine = 0
+        if request.user.is_authenticated:
+            mine = units.filter(assigned_to=request.user).exclude(status=TranslationUnit.STATUS_DONE).count()
+        return Response({
+            "chapters": chapters,
+            "chapter_summaries": list(chapter_counts.values()),
+            "status_counts": counts,
+            "assigned_to_me": mine,
+            "total": total,
+        })
 
 
-class TranslationUnitDetailView(generics.RetrieveUpdateAPIView):
+class TranslationUnitDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET   /api/translations/{id}/units/{uid}/  ユニット詳細
     PATCH /api/translations/{id}/units/{uid}/  訳文・ステータス更新（担当者またはオーナー）
@@ -362,18 +430,40 @@ class TranslationUnitDetailView(generics.RetrieveUpdateAPIView):
         return [permissions.IsAuthenticated()]
 
     def get_object(self):
-        return get_object_or_404(
-            TranslationUnit.objects.select_related("verse__chapter", "assigned_to"),
-            pk=self.kwargs["unit_id"],
-            project_id=self.kwargs["project_id"],
+        project = _get_visible_project_or_404(
+            self.request,
+            self.kwargs["project_id"],
         )
+        unit = get_object_or_404(
+            TranslationUnit.objects.select_related("project", "verse__chapter", "assigned_to"),
+            pk=self.kwargs["unit_id"],
+            project=project,
+        )
+        return unit
 
     def update(self, request, *args, **kwargs):
         unit = self.get_object()
         project = unit.project
-        if project.owner != request.user and unit.assigned_to != request.user:
+        member_can_update = (
+            unit.assigned_to == request.user
+            and TranslationMembership.objects.filter(
+                project=project,
+                user=request.user,
+                status=TranslationMembership.STATUS_APPROVED,
+            ).exists()
+        )
+        if project.owner != request.user and not member_can_update:
             return Response({"detail": "Only the assignee or owner can update."}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        unit = self.get_object()
+        if unit.project.owner != request.user:
+            return Response(
+                {"detail": "Only the owner can delete a unit."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class TranslationUnitAssignView(APIView):
@@ -382,7 +472,7 @@ class TranslationUnitAssignView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, project_id, unit_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
+        project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
             return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project)
@@ -419,6 +509,7 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         project_id = self.kwargs["project_id"]
+        _get_visible_project_or_404(self.request, project_id)
         unit_id = self.kwargs.get("unit_id")
         qs = TranslationComment.objects.filter(project_id=project_id).select_related("user")
         if unit_id:
@@ -432,8 +523,7 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
         unit_id = self.kwargs.get("unit_id")
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project) if unit_id else None
         comment = serializer.save(project=project, unit=unit, user=self.request.user)
-        if unit_id:
-            _create_mention_notifications(comment)
+        _create_mention_notifications(comment)
 
 
 class TranslationCommentDeleteView(APIView):
@@ -442,6 +532,7 @@ class TranslationCommentDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request, project_id, comment_id):
+        _get_visible_project_or_404(request, project_id)
         comment = get_object_or_404(TranslationComment, pk=comment_id, project_id=project_id)
         project = comment.project
         if comment.user != request.user and project.owner != request.user:
@@ -463,7 +554,7 @@ class TranslationAddBookView(APIView):
 
     def post(self, request, project_id):
         from bible.models import Book, Verse
-        project = get_object_or_404(TranslationProject, pk=project_id)
+        project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
             return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         book_id = request.data.get("book_id")
@@ -489,7 +580,7 @@ class TranslationRemoveBookView(APIView):
 
     def delete(self, request, project_id):
         from bible.models import Book
-        project = get_object_or_404(TranslationProject, pk=project_id)
+        project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
             return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
         book_id = request.data.get("book_id")
@@ -530,12 +621,11 @@ class TranslationLibraryView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
-        if project.status != TranslationProject.STATUS_PUBLISHED:
-            return Response(
-                {"detail": "公開されていないプロジェクトは追加できません。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        project = get_object_or_404(
+            TranslationProject,
+            pk=project_id,
+            status=TranslationProject.STATUS_PUBLISHED,
+        )
         TranslationLibraryEntry.objects.get_or_create(user=request.user, project=project)
         return Response(
             TranslationProjectSerializer(project, context={"request": request}).data,
@@ -562,9 +652,11 @@ class TranslationReadView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, project_id):
-        project = get_object_or_404(TranslationProject, pk=project_id)
-        if project.status != TranslationProject.STATUS_PUBLISHED:
-            return Response({"detail": "公開されていないプロジェクトです。"}, status=status.HTTP_403_FORBIDDEN)
+        project = get_object_or_404(
+            TranslationProject,
+            pk=project_id,
+            status=TranslationProject.STATUS_PUBLISHED,
+        )
         done = TranslationUnit.objects.filter(
             project=project, status=TranslationUnit.STATUS_DONE
         )

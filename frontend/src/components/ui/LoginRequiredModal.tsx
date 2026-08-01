@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useId, useRef } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
 
@@ -14,11 +16,58 @@ type Props = {
 export function LoginRequiredModal({ onClose, title, description, from }: Props) {
   const pathname = usePathname();
   const t = useT();
-  const loginHref = `/login?from=${encodeURIComponent(from ?? pathname)}`;
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+  const currentLocation = typeof window === "undefined"
+    ? pathname
+    : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const loginHref = `/login?from=${encodeURIComponent(from ?? currentLocation)}`;
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus();
+    };
+  }, []);
 
   return (
     <>
       <div
+        aria-hidden="true"
         onClick={onClose}
         style={{
           position: "fixed",
@@ -28,6 +77,11 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
         }}
       />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         style={{
           position: "fixed",
           top: "50%",
@@ -44,17 +98,19 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
           textAlign: "center",
         }}
       >
-        <p style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
+        <h2 id={titleId} style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>
           {title ?? t.loginRequired}
-        </p>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
+        </h2>
+        <p id={descriptionId} style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
           {description ?? t.loginRequiredDesc}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
           <button
+            ref={closeRef}
             onClick={onClose}
             style={{
               padding: "8px 20px",
+              minHeight: 44,
               border: "1px solid var(--border)",
               borderRadius: 8,
               background: "transparent",
@@ -66,10 +122,13 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
           >
             {t.close}
           </button>
-          <a
+          <Link
             href={loginHref}
             style={{
               padding: "8px 20px",
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
               background: "linear-gradient(135deg, #7618c5, #d81e80)",
               color: "#fff",
               borderRadius: 8,
@@ -80,7 +139,7 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
             }}
           >
             {t.loginBtn}
-          </a>
+          </Link>
         </div>
       </div>
     </>

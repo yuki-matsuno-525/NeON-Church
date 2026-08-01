@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,21 +29,30 @@ export function CommentInput({
   const { user } = useAuth();
   const t = useT();
   const pathname = usePathname();
+  const titleId = useId();
+  const bodyId = useId();
+  const errorId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
   const [isQa, setIsQa] = useState(false);
   const [qaTitle, setQaTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [tagsError, setTagsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const effectivePlaceholder = placeholder ?? t.commentPlaceholder;
   const effectiveLabel = submitLabel ?? t.submitComment;
 
+  const loadTags = () => {
+    setTagsError(false);
+    fetchTags().then(setTags).catch(() => setTagsError(true));
+  };
+
   useEffect(() => {
     if (showTagOption) {
-      fetchTags().then(setTags).catch(() => {});
+      fetchTags().then(setTags).catch(() => setTagsError(true));
     }
   }, [showTagOption]);
 
@@ -109,33 +118,56 @@ export function CommentInput({
 
   return (
     <form onSubmit={handleSubmit}>
-      {showQaOption && isQa && (
-        <input
-          type="text"
-          value={qaTitle}
-          onChange={(e) => setQaTitle(e.target.value)}
-          placeholder={t.qaTitleInputPlaceholder}
-          style={{
-            width: "100%",
-            padding: "8px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontSize: 14,
-            fontFamily: "inherit",
-            outline: "none",
-            marginBottom: 8,
-            boxSizing: "border-box",
-          }}
-        />
+      {showQaOption && (
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, minHeight: 44, fontSize: 13, color: "var(--text-muted)", cursor: "pointer", marginBottom: isQa ? 8 : 4 }}>
+          <input
+            type="checkbox"
+            checked={isQa}
+            onChange={(e) => setIsQa(e.target.checked)}
+            style={{ cursor: "pointer" }}
+          />
+          Q&amp;A
+        </label>
       )}
+      {showQaOption && isQa && (
+        <div>
+          <label htmlFor={titleId} style={inputLabelStyle}>{t.fieldTitle}</label>
+          <input
+            id={titleId}
+            type="text"
+            value={qaTitle}
+            maxLength={200}
+            onChange={(e) => setQaTitle(e.target.value)}
+            placeholder={t.qaTitleInputPlaceholder}
+            aria-invalid={!qaTitle.trim() && !!error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
+            style={{
+              width: "100%",
+              padding: "8px 10px",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              background: "var(--bg)",
+              color: "var(--text)",
+              fontSize: 14,
+              fontFamily: "inherit",
+              outline: "none",
+              marginBottom: 8,
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+      )}
+      <label htmlFor={bodyId} className="sr-only">{effectivePlaceholder}</label>
       <textarea
+        id={bodyId}
         ref={textareaRef}
         value={body}
+        maxLength={5000}
         onChange={(e) => setBody(e.target.value)}
         placeholder={effectivePlaceholder}
         rows={3}
+        aria-invalid={!body.trim() && !!error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         style={{
           width: "100%",
           padding: "8px 10px",
@@ -150,7 +182,9 @@ export function CommentInput({
         }}
       />
       {showTagOption && tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+        <fieldset style={{ border: 0, padding: 0, margin: "8px 0 0" }}>
+          <legend style={inputLabelStyle}>{t.allTags}</legend>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
           {tags.map((tag) => {
             const active = selectedTags.includes(tag.id);
             return (
@@ -158,8 +192,10 @@ export function CommentInput({
                 key={tag.id}
                 type="button"
                 onClick={() => toggleTag(tag.id)}
+                aria-pressed={active}
                 style={{
                   fontSize: 12,
+                  minHeight: 44,
                   padding: "3px 10px",
                   borderRadius: 999,
                   border: "1px solid var(--border)",
@@ -173,25 +209,21 @@ export function CommentInput({
               </button>
             );
           })}
+          </div>
+        </fieldset>
+      )}
+      {showTagOption && tagsError && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+          <span>{t.tagsLoadFailed}</span>
+          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
         </div>
       )}
       {error && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p id={errorId} role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
           {error}
         </p>
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
-        {showQaOption && (
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-muted)", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={isQa}
-              onChange={(e) => setIsQa(e.target.checked)}
-              style={{ cursor: "pointer" }}
-            />
-            Q&A
-          </label>
-        )}
         {onCancel && (
           <button
             type="button"
@@ -201,6 +233,7 @@ export function CommentInput({
               border: "1px solid var(--border)",
               borderRadius: 8,
               padding: "6px 14px",
+              minHeight: 44,
               color: "var(--text-muted)",
               cursor: "pointer",
               fontSize: 13,
@@ -219,6 +252,7 @@ export function CommentInput({
             border: "none",
             borderRadius: 8,
             padding: "7px 16px",
+            minHeight: 44,
             cursor: isSubmitDisabled ? "not-allowed" : "pointer",
             opacity: isSubmitDisabled ? 0.6 : 1,
             fontWeight: 700,
@@ -232,3 +266,11 @@ export function CommentInput({
     </form>
   );
 }
+
+const inputLabelStyle: React.CSSProperties = {
+  display: "block",
+  margin: "0 0 4px",
+  color: "var(--text-muted)",
+  fontSize: 12,
+  fontWeight: 700,
+};

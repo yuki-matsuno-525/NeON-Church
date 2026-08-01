@@ -11,7 +11,7 @@
   --border: rgba(140, 75, 235, 0.30);
   --text: rgba(236, 228, 252, 0.92);
   --text-muted: #a898d8;
-  --text-faint: #7a6aaa;
+  --text-faint: #9485c2;
   --accent: #c040f0;
   --accent-text: #fff;
   --accent-tint: rgba(145, 60, 240, 0.18);
@@ -151,6 +151,7 @@
               transform var(--duration-fast) var(--ease-out);
   border: 1px solid transparent;
   text-decoration: none;
+  min-height: 44px;
 }
 .btn:active:not(:disabled) {
   transform: translateY(1px);
@@ -232,6 +233,38 @@ select:focus-visible {
   border: 0;
 }
 
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2000;
+  transform: translateY(-160%);
+  padding: 10px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.content-page a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.content-page p,
+.content-page li {
+  overflow-wrap: anywhere;
+}
+
 @theme inline {
   /* 本文はシステム日本語フォント（Web フォントを読まず高速化）。見出しのみ Web フォントの明朝体。 */
   --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
@@ -296,10 +329,13 @@ select:focus-visible {
   --sidebar-font-item: var(--font-size-sm);
   --sidebar-font-genre: var(--font-size-xs);
   --sidebar-font-label: var(--font-size-xs);
-  --sidebar-item-min-height: 36px;
+  --sidebar-item-min-height: 44px;
 }
 
 @media (max-width: 768px) {
+  .content-page {
+    padding: 32px 20px !important;
+  }
   .hamburger-btn {
     display: flex !important;
   }
@@ -407,6 +443,32 @@ select:focus-visible {
   .reader-sticky-header {
     position: static !important;
     padding: 8px 16px !important;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+  }
+
+  .reader-breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reader-header-actions {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .reader-header-actions label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .reader-header-actions select {
+    flex: 1;
+    min-width: 0;
   }
 
   /* モバイルではサイドバーが画面外のため、前章ナビを画面左端に戻す */
@@ -466,4 +528,13 @@ textarea::placeholder {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-faint);
+}
+
+/* iOS Safari prevents focus zoom only when form controls use at least 16px. */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

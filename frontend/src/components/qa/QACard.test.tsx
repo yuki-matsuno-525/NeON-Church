@@ -28,7 +28,7 @@ const makeQuestion = (overrides: Partial<QAComment> = {}): QAComment => ({
 
 describe("QACard", () => {
   it("質問の見出し・状態・場所リンク・返信数を表示する", () => {
-    render(
+    const { container } = render(
       <QACard
         comment={makeQuestion()}
         currentUserId={null}
@@ -36,7 +36,9 @@ describe("QACard", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { level: 2, name: "山上の説教の『心の貧しい人』とは？" })).toBeInTheDocument();
+    expect(container.querySelector("#question-q1")).toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { level: 3, name: "山上の説教の『心の貧しい人』とは？" })).toBeInTheDocument();
     expect(screen.getByLabelText("未解決")).toBeInTheDocument();
     expect(screen.getByText("解説")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();

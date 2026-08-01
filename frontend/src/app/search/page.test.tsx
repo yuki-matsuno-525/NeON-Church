@@ -217,8 +217,10 @@ describe("SearchPage", () => {
     vi.mocked(searchBible).mockRejectedValue(new Error("Network Error"));
     mockSearchParams = new URLSearchParams({ q: "エラー検索" });
     render(<SearchPage />);
-    // エラー時は空結果として処理されるため「一致する結果が見つかりませんでした。」が表示される
-    await screen.findByText(/一致する結果が見つかりませんでした。/);
+    // 0件と通信失敗を混同せず、再試行できるエラー状態を表示する。
+    await screen.findByRole("alert");
+    expect(screen.getByText("読み込めませんでした")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "もう一度試す" })).toBeInTheDocument();
   });
 
   it("検索フォーム送信で router.push が呼ばれる", async () => {

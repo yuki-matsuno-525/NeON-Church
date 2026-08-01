@@ -15,9 +15,9 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   children?: ReactNode;
 };
 
-const sizeStyles: Record<Size, { padding: string; fontSize: number; radius: number }> = {
-  sm: { padding: "5px 12px", fontSize: 12, radius: 6 },
-  md: { padding: "9px 16px", fontSize: 14, radius: 8 },
+const sizeStyles: Record<Size, { padding: string; fontSize: number; radius: number; minHeight: number }> = {
+  sm: { padding: "5px 12px", fontSize: 12, radius: 6, minHeight: 44 },
+  md: { padding: "9px 16px", fontSize: 14, radius: 8, minHeight: 44 },
 };
 
 function variantStyles(variant: Variant): React.CSSProperties {
@@ -81,6 +81,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
         padding: sz.padding,
         fontSize: sz.fontSize,
         borderRadius: sz.radius,
+        minHeight: sz.minHeight,
         fontWeight: 700,
         fontFamily: "inherit",
         cursor: isDisabled ? "not-allowed" : "pointer",

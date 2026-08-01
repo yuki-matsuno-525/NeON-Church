@@ -20,7 +20,9 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   await page.locator('input[type="text"]').waitFor({ state: "visible" });
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
+  const registrationPasswords = page.locator('input[type="password"]');
+  await registrationPasswords.nth(0).fill(password);
+  await registrationPasswords.nth(1).fill(password);
   await page.getByRole("button", { name: "登録する" }).click();
 
   // 登録成功 = ログアウトボタンが表示される (リダイレクト先はホーム)

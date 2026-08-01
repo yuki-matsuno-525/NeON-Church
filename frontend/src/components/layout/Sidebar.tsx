@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,7 @@ import { BOOKS, GENRE_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 
 const NAV_HREFS = [
-  { href: "/read", matchPrefixes: ["/read", "/matthew", "/mark", "/luke", "/john"] },
+  { href: "/read", matchPrefixes: ["/read", ...BOOKS.map((book) => `/${book.slug}`)] },
   { href: "/qa", matchPrefixes: ["/qa"] },
   { href: "/translations", matchPrefixes: ["/translations"] },
   { href: "/articles", matchPrefixes: ["/articles"] },
@@ -22,6 +22,11 @@ type SidebarProps = {
 };
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
+  const sidebarRef = useRef<HTMLElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -34,6 +39,8 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   const [openGenres, setOpenGenres] = useState<Set<string>>(
     () => new Set(currentGenre ? [currentGenre] : []),
   );
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
   const toggleGenre = (g: string) =>
     setOpenGenres((prev) => {
       const next = new Set(prev);
@@ -49,11 +56,37 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   ];
 
   const handleLogout = async () => {
-    onClose?.();
-    await logout();
-    router.push("/");
-    router.refresh();
+    setLogoutBusy(true);
+    setLogoutError(false);
+    try {
+      await logout();
+      onClose?.();
+      router.push("/");
+      router.refresh();
+    } catch {
+      setLogoutError(true);
+    } finally {
+      setLogoutBusy(false);
+    }
   };
+
+  useEffect(() => {
+    if (!open) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    sidebarRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCloseRef.current?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [open]);
 
   return (
     <>
@@ -72,6 +105,12 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
       )}
 
       <aside
+        id="site-sidebar"
+        ref={sidebarRef}
+        tabIndex={open ? -1 : undefined}
+        role={open ? "dialog" : "complementary"}
+        aria-modal={open || undefined}
+        aria-label={lang === "ja" ? "メニュー" : "Menu"}
         className={`sidebar${open ? " sidebar-open" : ""}`}
         style={{
           width: "var(--sidebar-width)",
@@ -155,6 +194,8 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
               </Link>
               <button
                 onClick={handleLogout}
+                disabled={logoutBusy}
+                aria-busy={logoutBusy}
                 style={{
                   display: "block",
                   width: "100%",
@@ -168,8 +209,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   fontFamily: "inherit",
                 }}
               >
-                {t.logout}
+                {logoutBusy ? t.loading : t.logout}
               </button>
+              {logoutError && (
+                <p role="alert" style={{ margin: "4px 12px 8px", color: "var(--state-danger)", fontSize: 12 }}>
+                  {lang === "ja" ? "ログアウトできませんでした。もう一度お試しください。" : "Could not sign out. Please try again."}
+                </p>
+              )}
             </>
           ) : (
             <Link

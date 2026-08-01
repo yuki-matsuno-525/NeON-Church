@@ -33,4 +33,5 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "auth": "1000/min",
     "comment_create": "1000/min",
     "report": "1000/min",
+    "feedback": "1000/min",
 }

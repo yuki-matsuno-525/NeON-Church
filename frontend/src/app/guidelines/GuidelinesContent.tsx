@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
+import { ContentPageMeta } from "@/components/ContentPageMeta";
 
 type Section = { heading: string; body: string };
 type Content = {
@@ -90,18 +91,30 @@ export function GuidelinesContent() {
   const { lang } = useLang();
   const c = content[lang] ?? content.en;
   return (
-    <div style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
+    <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: '"Noto Serif JP", serif' }}>{c.title}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
         {c.intro}
       </p>
-      {c.sections.map((s) => (
-        <div key={s.heading} style={{ marginBottom: 28 }}>
+      <ContentPageMeta
+        updatedAt="2026-08-01"
+        sections={c.sections.map((section) => section.heading)}
+        relatedLinks={[
+          { href: "/terms", label: lang === "ja" ? "利用規約" : "Terms" },
+          { href: "/privacy", label: lang === "ja" ? "プライバシー" : "Privacy" },
+          { href: "/feedback", label: lang === "ja" ? "フィードバック" : "Feedback" },
+        ]}
+        labels={lang === "ja"
+          ? { updated: "更新日", contents: "目次", related: "関連ページ" }
+          : { updated: "Last updated", contents: "Contents", related: "Related pages" }}
+      />
+      {c.sections.map((s, index) => (
+        <section id={`section-${index + 1}`} key={s.heading} style={{ marginBottom: 28, scrollMarginTop: 96 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--accent)", marginBottom: 10 }}>
             {s.heading}
           </h2>
           <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>{s.body}</p>
-        </div>
+        </section>
       ))}
       <div style={{ marginTop: 40 }}>
         <Link

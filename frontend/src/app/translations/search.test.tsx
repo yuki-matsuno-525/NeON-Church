@@ -3,6 +3,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TranslationsPage from "./page";
 import type { PaginatedResponse, TranslationProject } from "@/lib/api";
 
+const mockReplace = vi.fn();
+let mockSearchParams = new URLSearchParams();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: mockReplace }),
+  useSearchParams: () => mockSearchParams,
+}));
+
 vi.mock("next/link", () => ({
   default: ({ href, children }: { href: string; children: React.ReactNode }) => (
     <a href={href}>{children}</a>
@@ -34,6 +42,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   unit_count: 10,
   done_count: 3,
   is_member: false,
+  membership_status: null,
   is_in_library: false,
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-10T00:00:00Z",
@@ -50,6 +59,7 @@ const paginated = (items: TranslationProject[]): PaginatedResponse<TranslationPr
 describe("TranslationsPage search", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockSearchParams = new URLSearchParams();
     mockUseAuth.mockReturnValue({ user: null });
     const { fetchTranslations } = await import("@/lib/api");
     vi.mocked(fetchTranslations).mockResolvedValue(paginated([makeProject()]));
@@ -67,6 +77,7 @@ describe("TranslationsPage search", () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "Matthew");
     });
+    expect(mockReplace).toHaveBeenLastCalledWith("/translations?q=Matthew", { scroll: false });
 
     fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
 
@@ -74,5 +85,27 @@ describe("TranslationsPage search", () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "");
     });
+    expect(mockReplace).toHaveBeenLastCalledWith("/translations", { scroll: false });
+  });
+
+  it("qパラメーターで入力欄を初期化し、戻る・進むのURL変更にも同期する", async () => {
+    mockSearchParams = new URLSearchParams("q=Luke");
+    const { rerender } = render(<TranslationsPage />);
+
+    const searchBox = screen.getByRole("searchbox", { name: "プロジェクトを検索" });
+    expect(searchBox).toHaveValue("Luke");
+    const { fetchTranslations } = await import("@/lib/api");
+    await waitFor(() => {
+      expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "Luke");
+    });
+
+    mockSearchParams = new URLSearchParams("q=John");
+    rerender(<TranslationsPage />);
+
+    await waitFor(() => expect(searchBox).toHaveValue("John"));
+    await waitFor(() => {
+      expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "John");
+    });
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });

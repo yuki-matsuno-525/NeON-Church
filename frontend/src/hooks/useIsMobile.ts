@@ -14,7 +14,6 @@ export function useIsMobile(maxWidth = 640): boolean {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
     const update = () => setIsMobile(mq.matches);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);

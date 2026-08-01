@@ -22,6 +22,9 @@ import type {
   ArticleComment,
   ArticleTag,
   ArticleVisibility,
+  AccountSettings,
+  NotificationPreferences,
+  JwtSession,
 } from "./types";
 
 export class ApiError extends Error {
@@ -64,7 +67,7 @@ function getCsrfToken(): string | undefined {
 
 // 認証不要／401 が通常の入力エラーとして起こり得るパス。ここでの 401 は
 // 「セッション切れ」として扱わない（refresh もしない）。
-const AUTH_EXEMPT_PATH = /^\/auth\/(login|register|logout|token\/refresh)\b/;
+const AUTH_EXEMPT_PATH = /^\/auth\/(login|register|logout|token\/refresh|password-reset(?:\/confirm)?)\b/;
 
 // セッション切れ通知の多重発火を防ぐフラグ。認証済みリクエストが 401 かつ refresh も
 // 失敗したとき一度だけ window イベントを発火する。成功レスポンスで false に戻す。
@@ -478,6 +481,74 @@ export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
 }
 
+export function fetchAccountSettings(): Promise<AccountSettings> {
+  return apiFetch("/auth/settings/");
+}
+
+export function updateAccountIdentity(data: {
+  username?: string;
+  email?: string;
+  current_password: string;
+}): Promise<AccountSettings> {
+  return apiFetch("/auth/settings/identity/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateNotificationPreferences(
+  data: NotificationPreferences,
+): Promise<NotificationPreferences> {
+  return apiFetch("/auth/settings/preferences/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export function changePassword(currentPassword: string, newPassword: string): Promise<{ detail: string }> {
+  return apiFetch("/auth/settings/password/", {
+    method: "POST",
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+}
+
+export function fetchSessions(): Promise<JwtSession[]> {
+  return apiFetch("/auth/settings/sessions/");
+}
+
+export function revokeSession(id: string): Promise<void> {
+  return apiFetch(`/auth/settings/sessions/${encodeURIComponent(id)}/`, { method: "DELETE" });
+}
+
+export function revokeOtherSessions(): Promise<void> {
+  return apiFetch("/auth/settings/sessions/revoke-others/", { method: "POST" });
+}
+
+export function deleteAccount(username: string, password?: string): Promise<void> {
+  return apiFetch("/auth/settings/account/", {
+    method: "DELETE",
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export function requestPasswordReset(email: string): Promise<{ detail: string }> {
+  return apiFetch("/auth/password-reset/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function confirmPasswordReset(data: {
+  uid: string;
+  token: string;
+  new_password: string;
+}): Promise<{ detail: string }> {
+  return apiFetch("/auth/password-reset/confirm/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 /** Q&A一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
 export function fetchQACommentPage(params?: {
   book_id?: string;
@@ -609,7 +680,13 @@ export type TranslationUnitStatus = TranslationUnit["status"];
 /** 章ボタンとレビュー件数を出すための軽い問い合わせ。全ユニットは取らない。 */
 export type TranslationUnitSummary = {
   chapters: number[];
+  chapter_summaries: {
+    number: number;
+    total: number;
+    status_counts: Record<TranslationUnitStatus, number>;
+  }[];
   status_counts: Record<TranslationUnitStatus, number>;
+  assigned_to_me: number;
   total: number;
 };
 
@@ -625,13 +702,18 @@ export function fetchTranslationUnitSummary(projectId: string): Promise<Translat
  */
 export function fetchTranslationUnits(
   projectId: string,
-  params?: { chapter?: number; status?: TranslationUnitStatus }
+  params?: { chapter?: number; status?: TranslationUnitStatus; assigned_to?: "me" | "unassigned" | string }
 ): Promise<TranslationUnit[]> {
   const qs = new URLSearchParams();
   if (params?.chapter !== undefined) qs.set("chapter", String(params.chapter));
   if (params?.status) qs.set("status", params.status);
+  if (params?.assigned_to) qs.set("assigned_to", params.assigned_to);
   const suffix = qs.toString() ? `?${qs}` : "";
   return apiFetchAll(`/translations/${projectId}/units/${suffix}`);
+}
+
+export function deleteTranslationUnit(projectId: string, unitId: string): Promise<void> {
+  return apiFetch(`/translations/${projectId}/units/${unitId}/`, { method: "DELETE" });
 }
 
 export function addBookToTranslation(projectId: string, bookId: string): Promise<{ created: number; book_name: string }> {
@@ -763,12 +845,14 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
 
 export function fetchArticles(params?: {
   mine?: boolean;
+  excludeMine?: boolean;
   tag?: string;
   author?: string;
   page?: number;
 }): Promise<PaginatedResponse<Article>> {
   const qs = new URLSearchParams();
   if (params?.mine) qs.set("mine", "true");
+  if (params?.excludeMine) qs.set("exclude_mine", "true");
   if (params?.tag) qs.set("tag", params.tag);
   if (params?.author) qs.set("author", params.author);
   if (params?.page) qs.set("page", String(params.page));
@@ -831,4 +915,16 @@ export function createArticleComment(
 
 export function deleteArticleComment(commentId: string): Promise<void> {
   return apiFetch(`/article-comments/${commentId}/`, { method: "DELETE" });
+}
+
+export type FeedbackCategory = "feedback" | "bug" | "feature" | "privacy" | "other";
+
+export function sendFeedback(data: {
+  category: FeedbackCategory;
+  email?: string;
+  message: string;
+  page_url?: string;
+  website?: string;
+}): Promise<{ detail: string }> {
+  return apiFetch("/feedback/", { method: "POST", body: JSON.stringify(data) });
 }

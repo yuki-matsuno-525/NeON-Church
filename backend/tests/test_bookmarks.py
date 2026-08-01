@@ -268,7 +268,11 @@ def project(db, book):
     User = get_user_model()
     owner = User.objects.create_user(username="proj_owner", password="pass12345")
     return TranslationProject.objects.create(
-        name="エノク書 私訳", owner=owner, source_book=book, target_language="ja"
+        name="エノク書 私訳",
+        owner=owner,
+        source_book=book,
+        target_language="ja",
+        status=TranslationProject.STATUS_PUBLISHED,
     )
 
 

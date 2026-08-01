@@ -36,6 +36,7 @@ class ArticleListCreateView(generics.ListCreateAPIView):
     GET  /api/articles/        記事一覧。既定は公開記事のみ。
                                ?mine=true で自分の記事（下書き含む）、?tag=<slug> で主題、
                                ?author=<ユーザー名> で書いた人で絞る。
+                               ?exclude_mine=true で自分の記事を公開一覧から除く。
     POST /api/articles/        記事を作る（要認証）
     """
 
@@ -52,6 +53,8 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         else:
             # 一覧に出るのは公開記事だけ（限定公開はURLを知っている人だけが見る）。
             queryset = Article.objects.filter(visibility=Article.VISIBILITY_PUBLIC)
+            if self.request.query_params.get("exclude_mine") == "true" and user.is_authenticated:
+                queryset = queryset.exclude(owner=user)
 
         tag_slug = self.request.query_params.get("tag")
         if tag_slug:

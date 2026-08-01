@@ -33,7 +33,7 @@ export function ClearableSearchInput({
         autoComplete="off"
         style={{
           ...inputStyle,
-          paddingRight: value ? 38 : inputStyle?.paddingRight,
+          paddingRight: value ? 48 : inputStyle?.paddingRight,
         }}
       />
       {value && (
@@ -52,11 +52,11 @@ export function ClearableSearchInput({
 
 const clearButtonStyle: CSSProperties = {
   position: "absolute",
-  right: 6,
+  right: 2,
   top: "50%",
   transform: "translateY(-50%)",
-  width: 26,
-  height: 26,
+  width: 44,
+  height: 44,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

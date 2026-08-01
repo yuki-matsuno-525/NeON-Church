@@ -49,6 +49,7 @@ export function FilterChips<T extends string>({
             style={{
               fontSize: "var(--font-size-sm)",
               padding: "6px 14px",
+              minHeight: 44,
               borderRadius: 999,
               border: "1px solid var(--border)",
               cursor: "pointer",

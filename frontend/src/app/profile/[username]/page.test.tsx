@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import UserProfilePage from "./page";
-import type { PublicUser, Comment, Bookmark, BookmarkCounts, ListPage } from "@/lib/api";
+import { ApiError, type PublicUser, type Comment, type Bookmark, type BookmarkCounts, type ListPage } from "@/lib/api";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -27,6 +27,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     fetchUserProfile: vi.fn(),
     fetchUserCommentPage: vi.fn(),
     fetchUserBookmarkPage: vi.fn(),
+    fetchArticles: vi.fn(),
     formatRelativeTime: vi.fn().mockReturnValue("1日前"),
   };
 });
@@ -48,15 +49,15 @@ const makeProfile = (overrides: Partial<PublicUser> = {}): PublicUser => ({
 const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   id: "c1",
   user: { id: "u2", username: "targetuser" },
-  verse: "v1",
-  chapter: null,
-  book: null,
+  translation_project: null,
+  version_label: "新共同訳",
   parent: null,
   body: "テストコメント本文",
   is_qa: false,
   is_deleted: false,
   created_at: "2024-01-01T00:00:00Z",
   vote_count: 3,
+  reply_count: 0,
   tags: [],
   ...overrides,
 });
@@ -95,8 +96,10 @@ const makeCommentPage = (
 });
 
 describe("UserProfilePage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const { fetchArticles } = await import("@/lib/api");
+    vi.mocked(fetchArticles).mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
   });
 
   it("ローディング中に「読み込み中...」が表示される", async () => {
@@ -148,7 +151,7 @@ describe("UserProfilePage", () => {
 
   it("ユーザーが見つからない場合「ユーザーが見つかりません。」が表示される", async () => {
     const { fetchUserProfile } = await import("@/lib/api");
-    vi.mocked(fetchUserProfile).mockRejectedValue(new Error("Not Found"));
+    vi.mocked(fetchUserProfile).mockRejectedValue(new ApiError(404, "Not Found"));
     mockUseAuth.mockReturnValue({ user: null });
 
     render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
@@ -194,11 +197,41 @@ describe("UserProfilePage", () => {
 
     await screen.findByText("targetuser");
 
-    const commentTab = await screen.findByRole("button", { name: /コメント/ });
+    const commentTab = await screen.findByRole("tab", { name: /コメント/ });
     fireEvent.click(commentTab);
 
     await waitFor(() => {
       expect(screen.getByText("テストコメント本文")).toBeInTheDocument();
     });
+  });
+
+  it("公開記事をページ単位で読み足し、総件数を表示する", async () => {
+    const { fetchUserProfile, fetchUserCommentPage, fetchUserBookmarkPage, fetchArticles } = await import("@/lib/api");
+    vi.mocked(fetchUserProfile).mockResolvedValue(makeProfile());
+    vi.mocked(fetchUserCommentPage).mockResolvedValue(makeCommentPage([]));
+    vi.mocked(fetchUserBookmarkPage).mockResolvedValue(makeBookmarkPage([]));
+    vi.mocked(fetchArticles)
+      .mockResolvedValueOnce({
+        count: 2,
+        next: "/api/articles/?page=2",
+        previous: null,
+        results: [{ id: "a1", title: "最初の記事", summary: "概要", visibility: "public", owner_username: "targetuser", tags: [], created_at: "2026-08-01T00:00:00Z", updated_at: "2026-08-01T00:00:00Z" }],
+      })
+      .mockResolvedValueOnce({
+        count: 2,
+        next: null,
+        previous: "/api/articles/",
+        results: [{ id: "a2", title: "次の記事", summary: "概要", visibility: "public", owner_username: "targetuser", tags: [], created_at: "2026-08-01T00:00:00Z", updated_at: "2026-08-01T00:00:00Z" }],
+      });
+    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "otheruser" } });
+
+    render(<UserProfilePage params={Promise.resolve({ username: "targetuser" })} />);
+    const articleTab = await screen.findByRole("tab", { name: "記事 (2)" });
+    fireEvent.click(articleTab);
+    expect(await screen.findByText("最初の記事")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "もっと見る" }));
+    expect(await screen.findByText("次の記事")).toBeInTheDocument();
+    expect(fetchArticles).toHaveBeenLastCalledWith({ author: "targetuser", page: 2 });
   });
 });

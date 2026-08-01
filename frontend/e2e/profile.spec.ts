@@ -21,7 +21,7 @@ test("Pr-1: ログイン済みユーザーが /profile にアクセスすると�
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // ユーザー名が dl/dd に表示される
-  await expect(page.getByRole("main").getByText(username, { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").locator("dd").getByText(username, { exact: true })).toBeVisible();
 });
 
 test("Pr-2: bio を更新すると保存成功メッセージが表示される", async ({
@@ -62,7 +62,7 @@ test("Pr-3: お気に入りタブにブックマーク一覧が表示される",
 
   // 「お気に入り」タブが表示されていることを確認（デフォルトで選択されている）
   // ブックマークが1件以上あるので「お気に入り (1)」のようにカウントが表示される
-  await expect(page.getByRole("button", { name: /お気に入り \(\d+\)/ })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /お気に入り \(\d+\)/ })).toBeVisible();
 
   // マタイのブックマークが表示される
   await expect(page.getByText(/マタイによる福音書/)).toBeVisible();
@@ -83,7 +83,13 @@ test("Pr-4: コメントタブに自分のコメントが表示される（コ�
   const panel = page.locator(".comment-panel");
   await openVerseCompose(page);
   await panel.getByPlaceholder("この節へのコメント...").fill(commentBody);
-  await panel.getByRole("button", { name: "投稿する" }).click();
+  const [commentResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) => response.url().includes("/api/comments/") && response.request().method() === "POST"
+    ),
+    panel.getByRole("button", { name: "投稿する" }).click(),
+  ]);
+  expect(commentResponse.ok(), `comment API failed: ${commentResponse.status()}`).toBeTruthy();
   await expect(panel.getByText(commentBody)).toBeVisible();
 
   // プロフィールページのコメントタブを確認
@@ -91,7 +97,7 @@ test("Pr-4: コメントタブに自分のコメントが表示される（コ�
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // 「コメント」タブをクリック
-  await page.getByRole("button", { name: /コメント \(\d+\)/ }).click();
+  await page.getByRole("tab", { name: /コメント \(\d+\)/ }).click();
 
   // 投稿したコメントが表示される
   await expect(page.getByText(commentBody)).toBeVisible();

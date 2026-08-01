@@ -6,6 +6,7 @@ import { type Comment, fetchCommentReplies, upvoteComment, removeUpvote, deleteC
 import { useAuth } from "@/contexts/AuthContext";
 import { CommentInput } from "./CommentInput";
 import { Icon } from "@/components/ui/Icon";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT, useRelativeTime } from "@/lib/i18n";
 
 type Props = {
@@ -43,13 +44,19 @@ export function CommentItem({
   const [replies, setReplies] = useState<Comment[]>([]);
   const [repliesShown, setRepliesShown] = useState(false);
   const [repliesLoading, setRepliesLoading] = useState(false);
+  const [repliesError, setRepliesError] = useState(false);
   const [replyCount, setReplyCount] = useState(comment.reply_count);
   const [showReportForm, setShowReportForm] = useState(false);
   const [reportReason, setReportReason] = useState("spam");
   const [reportStatus, setReportStatus] = useState<"idle" | "done" | "dup">("idle");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [busyAction, setBusyAction] = useState<"vote" | "bookmark" | "edit" | "delete" | "report" | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleUpvote = async () => {
     if (!user) return;
+    setBusyAction("vote");
+    setActionError(null);
     try {
       if (upvoted) {
         await removeUpvote(comment.id);
@@ -61,17 +68,24 @@ export function CommentItem({
         setUpvoted(true);
       }
     } catch {
-      // ignore
+      setActionError(t.actionFailed);
+    } finally {
+      setBusyAction(null);
     }
   };
 
   const handleDelete = async () => {
     if (!user) return;
+    setBusyAction("delete");
+    setActionError(null);
     try {
       await deleteComment(comment.id);
       onRefresh?.();
     } catch {
-      // ignore
+      setActionError(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+      setConfirmDelete(false);
     }
   };
 
@@ -85,6 +99,8 @@ export function CommentItem({
 
   const handleBookmark = async () => {
     if (!user) return;
+    setBusyAction("bookmark");
+    setActionError(null);
     try {
       if (bookmarkId) {
         await removeBookmark(bookmarkId);
@@ -94,11 +110,15 @@ export function CommentItem({
         setBookmarkId(bm.id);
       }
     } catch {
-      // ignore
+      setActionError(t.bookmarkFailed);
+    } finally {
+      setBusyAction(null);
     }
   };
 
   const handleReport = async () => {
+    setBusyAction("report");
+    setActionError(null);
     try {
       await reportComment(comment.id, reportReason);
       setReportStatus("done");
@@ -107,17 +127,24 @@ export function CommentItem({
       const err = e as { status?: number };
       setReportStatus(err.status === 409 ? "dup" : "idle");
       setShowReportForm(false);
+      if (err.status !== 409) setActionError(t.actionFailed);
+    } finally {
+      setBusyAction(null);
     }
   };
 
   const handleEditSubmit = async () => {
     if (!editBody.trim()) return;
+    setBusyAction("edit");
+    setActionError(null);
     try {
       await updateComment(comment.id, editBody.trim());
       setCurrentBody(editBody.trim());
       setEditing(false);
     } catch {
-      // ignore
+      setActionError(t.actionFailed);
+    } finally {
+      setBusyAction(null);
     }
   };
 
@@ -131,12 +158,14 @@ export function CommentItem({
     }
     if (replies.length === 0 && replyCount > 0) {
       setRepliesLoading(true);
+      setRepliesError(false);
       try {
         const data = await fetchCommentReplies(comment.id);
         setReplies(data);
         setReplyCount(data.length);
       } catch {
         // 取れなかったときは開かない（件数はそのまま残す）
+        setRepliesError(true);
         setRepliesLoading(false);
         return;
       } finally {
@@ -148,15 +177,28 @@ export function CommentItem({
 
   /** 返信を投稿したあとに、この親の返信を取り直す。 */
   const refreshReplies = async () => {
-    const data = await fetchCommentReplies(comment.id).catch(() => null);
-    if (!data) return;
-    setReplies(data);
-    setReplyCount(data.length);
-    setRepliesShown(true);
+    setRepliesError(false);
+    try {
+      const data = await fetchCommentReplies(comment.id);
+      setReplies(data);
+      setReplyCount(data.length);
+      setRepliesShown(true);
+    } catch {
+      setRepliesError(true);
+    }
   };
 
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0 }}>
+      <ConfirmDialog
+        open={confirmDelete}
+        title={t.confirmDeleteCommentTitle}
+        description={t.confirmDeleteCommentDesc}
+        confirmText={t.delete}
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
       <div
         style={{
           padding: "12px 0",
@@ -175,6 +217,7 @@ export function CommentItem({
           {/* Collapse toggle (vertical line) */}
           {hasChildren && (
             <button
+              type="button"
               onClick={() => { setCollapsed((v) => !v); void loadReplies(); }}
               aria-label={collapsed ? t.expand : t.collapse}
               aria-expanded={!collapsed}
@@ -183,7 +226,9 @@ export function CommentItem({
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                padding: "2px 4px",
+                padding: 0,
+                minWidth: 44,
+                minHeight: 44,
                 color: "var(--text-faint)",
                 display: "inline-flex",
                 alignItems: "center",
@@ -281,6 +326,7 @@ export function CommentItem({
                 />
                 <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                   <button
+                    type="button"
                     onClick={handleEditSubmit}
                     style={{
                       padding: "4px 12px",
@@ -291,11 +337,13 @@ export function CommentItem({
                       borderRadius: 4,
                       cursor: "pointer",
                       fontFamily: "inherit",
+                      minHeight: 44,
                     }}
                   >
                     {t.save}
                   </button>
                   <button
+                    type="button"
                     onClick={() => { setEditing(false); setEditBody(currentBody); }}
                     style={{
                       padding: "4px 12px",
@@ -306,6 +354,7 @@ export function CommentItem({
                       borderRadius: 4,
                       cursor: "pointer",
                       fontFamily: "inherit",
+                      minHeight: 44,
                     }}
                   >
                     {t.cancel}
@@ -322,7 +371,7 @@ export function CommentItem({
                   fontStyle: comment.is_deleted ? "italic" : "normal",
                 }}
               >
-                {comment.is_deleted ? t.deletedComment : currentBody}
+                <span style={{ whiteSpace: "pre-wrap" }}>{comment.is_deleted ? t.deletedComment : currentBody}</span>
               </p>
             )}
 
@@ -351,19 +400,23 @@ export function CommentItem({
                 alignItems: "center",
                 gap: 12,
                 marginLeft: 52,
+                flexWrap: "wrap",
               }}
             >
               <button
+                type="button"
                 onClick={handleUpvote}
-                disabled={!user}
+                disabled={!user || busyAction === "vote"}
+                aria-pressed={upvoted}
+                aria-label={`${t.approve}: ${voteCount}`}
                 style={{
                   background: "transparent",
                   border: "none",
-                  cursor: user ? "pointer" : "default",
+                  cursor: user && busyAction !== "vote" ? "pointer" : "default",
                   color: upvoted ? "var(--accent)" : "var(--text-faint)",
                   fontSize: 13,
                   padding: "4px 6px",
-                  minHeight: 32,
+                  minHeight: 44,
                   display: "flex",
                   alignItems: "center",
                   gap: 4,
@@ -375,7 +428,9 @@ export function CommentItem({
 
               {onReply && !comment.is_deleted && depth < 2 && (
                 <button
+                  type="button"
                   onClick={() => setShowReplyForm((v) => !v)}
+                  aria-expanded={showReplyForm}
                   style={{
                     background: "transparent",
                     border: "none",
@@ -383,7 +438,7 @@ export function CommentItem({
                     color: "var(--text-faint)",
                     fontSize: 13,
                     padding: "4px 6px",
-                    minHeight: 32,
+                    minHeight: 44,
                     fontFamily: "inherit",
                   }}
                 >
@@ -393,7 +448,9 @@ export function CommentItem({
 
               {user && !comment.is_deleted && (
                 <button
+                  type="button"
                   onClick={handleBookmark}
+                  disabled={busyAction === "bookmark"}
                   aria-pressed={!!bookmarkId}
                   aria-label={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
                   title={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
@@ -405,7 +462,7 @@ export function CommentItem({
                     display: "inline-flex",
                     alignItems: "center",
                     padding: "4px 6px",
-                    minHeight: 32,
+                    minHeight: 44,
                     fontFamily: "inherit",
                     filter: bookmarkId ? "drop-shadow(0 0 4px var(--accent))" : undefined,
                   }}
@@ -417,7 +474,8 @@ export function CommentItem({
               {!comment.is_deleted && user?.id === comment.user.id && (
                 <>
                   <button
-                    onClick={() => setEditing(true)}
+                    type="button"
+                    onClick={() => { setActionError(null); setEditing(true); }}
                     style={{
                       background: "transparent",
                       border: "none",
@@ -425,14 +483,16 @@ export function CommentItem({
                       color: "var(--text-faint)",
                       fontSize: 13,
                       padding: "4px 6px",
-                      minHeight: 32,
+                      minHeight: 44,
                       fontFamily: "inherit",
                     }}
                   >
                     {t.edit}
                   </button>
                   <button
-                    onClick={handleDelete}
+                    type="button"
+                    onClick={() => setConfirmDelete(true)}
+                    disabled={busyAction === "delete"}
                     data-testid="delete-comment"
                     style={{
                       background: "transparent",
@@ -441,7 +501,7 @@ export function CommentItem({
                       color: "var(--text-faint)",
                       fontSize: 13,
                       padding: "4px 6px",
-                      minHeight: 32,
+                      minHeight: 44,
                       fontFamily: "inherit",
                     }}
                   >
@@ -452,7 +512,9 @@ export function CommentItem({
 
               {user && user.id !== comment.user.id && !comment.is_deleted && reportStatus === "idle" && (
                 <button
+                  type="button"
                   onClick={() => setShowReportForm((v) => !v)}
+                  aria-expanded={showReportForm}
                   style={{
                     background: "transparent",
                     border: "none",
@@ -460,7 +522,7 @@ export function CommentItem({
                     color: "var(--text-faint)",
                     fontSize: 12,
                     padding: "4px 6px",
-                    minHeight: 32,
+                    minHeight: 44,
                     fontFamily: "inherit",
                   }}
                 >
@@ -468,12 +530,18 @@ export function CommentItem({
                 </button>
               )}
               {reportStatus === "done" && (
-                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reported}</span>
+                <span role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reported}</span>
               )}
               {reportStatus === "dup" && (
-                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reportedDup}</span>
+                <span role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reportedDup}</span>
               )}
             </div>
+
+            {actionError && (
+              <p role="alert" aria-live="polite" style={{ margin: "6px 0 0 52px", color: "var(--state-danger)", fontSize: 12 }}>
+                {actionError}
+              </p>
+            )}
 
             {showReplyForm && (
               <div style={{ marginLeft: 52, marginTop: 8 }}>
@@ -482,11 +550,13 @@ export function CommentItem({
             )}
 
             {showReportForm && (
-              <div style={{ marginLeft: 52, marginTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ marginLeft: 52, marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <label className="sr-only" htmlFor={`report-reason-${comment.id}`}>{t.reportReasonLabel}</label>
                 <select
+                  id={`report-reason-${comment.id}`}
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
-                  style={{ fontSize: 12, padding: "3px 8px", border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg)", color: "var(--text)", fontFamily: "inherit" }}
+                  style={{ fontSize: 12, padding: "3px 8px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg)", color: "var(--text)", fontFamily: "inherit" }}
                 >
                   <option value="spam">{t.reportReasonSpam}</option>
                   <option value="offensive">{t.reportReasonOffensive}</option>
@@ -494,14 +564,17 @@ export function CommentItem({
                   <option value="other">{t.reportReasonOther}</option>
                 </select>
                 <button
+                  type="button"
                   onClick={handleReport}
-                  style={{ fontSize: 12, padding: "3px 10px", background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                  disabled={busyAction === "report"}
+                  style={{ fontSize: 12, padding: "3px 10px", minHeight: 44, background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
                 >
                   {t.submit}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowReportForm(false)}
-                  style={{ fontSize: 12, padding: "3px 10px", background: "transparent", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                  style={{ fontSize: 12, padding: "3px 10px", minHeight: 44, background: "transparent", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
                 >
                   {t.cancel}
                 </button>
@@ -513,24 +586,30 @@ export function CommentItem({
 
       {/* 返信は件数だけ先に出し、押したときに取りに行く（Q&A のカードと同じ作り） */}
       {!collapsed && hasChildren && !repliesShown && (
-        <button
-          type="button"
-          onClick={loadReplies}
-          disabled={repliesLoading}
-          style={{
-            marginLeft: depth > 0 ? 20 : 0,
-            background: "transparent",
-            border: "none",
-            cursor: repliesLoading ? "default" : "pointer",
-            color: "var(--accent)",
-            fontSize: 13,
-            fontWeight: 700,
-            padding: "4px 0 10px",
-            fontFamily: "inherit",
-          }}
-        >
-          {repliesLoading ? t.loading : t.showReplies(replyCount)}
-        </button>
+        <div style={{ marginLeft: depth > 0 ? 20 : 0, paddingBottom: 10 }}>
+          {repliesError && (
+            <span role="alert" style={{ color: "var(--state-danger)", fontSize: 12, marginRight: 8 }}>
+              {t.answersLoadFailed}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={loadReplies}
+            disabled={repliesLoading}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: repliesLoading ? "default" : "pointer",
+              color: "var(--accent)",
+              fontSize: 13,
+              fontWeight: 700,
+              padding: "4px 0",
+              fontFamily: "inherit",
+            }}
+          >
+            {repliesLoading ? t.loading : repliesError ? t.retry : t.showReplies(replyCount)}
+          </button>
+        </div>
       )}
 
       {!collapsed && repliesShown && replies.map((child) => (
