@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { dayNumberToday, visibilityLabel } from "./plans";
+import type { Translations } from "./i18n";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -29,9 +30,16 @@ describe("dayNumberToday", () => {
 });
 
 describe("visibilityLabel", () => {
-  it("英語のままにせず日本語で出す", () => {
-    expect(visibilityLabel("private")).toBe("下書き");
-    expect(visibilityLabel("unlisted")).toBe("限定公開");
-    expect(visibilityLabel("public")).toBe("公開");
+  it("公開範囲ごとに、選んだ言語の言い方を返す", () => {
+    // 辞書のどのキーを引くかを確かめたいので、見分けやすい値を入れておく。
+    const t = {
+      visibilityPrivate: "draft-label",
+      visibilityUnlisted: "unlisted-label",
+      visibilityPublic: "public-label",
+    } as Translations;
+
+    expect(visibilityLabel("private", t)).toBe("draft-label");
+    expect(visibilityLabel("unlisted", t)).toBe("unlisted-label");
+    expect(visibilityLabel("public", t)).toBe("public-label");
   });
 });

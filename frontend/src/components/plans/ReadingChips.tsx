@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import type { PlanReading } from "@/lib/types";
-import { useLang } from "@/contexts/LanguageContext";
-import { planUiText } from "./planUiText";
+import { useT, type Translations } from "@/lib/i18n";
 
 /** その章を読む画面へのリンク。訳の指定があればその訳で開く。 */
 export function readingHref(reading: { book: string; chapter_number: number; translation: string }): string {
@@ -13,16 +12,19 @@ export function readingHref(reading: { book: string; chapter_number: number; tra
   return `/${reading.book}/${reading.chapter_number}${query}`;
 }
 
-export function readingLabel(reading: PlanReading, lang: "ja" | "en" = "ja"): string {
-  return planUiText(lang).chapterLabel(reading.book_name, reading.chapter_number);
+export function readingLabel(
+  reading: { book_name: string; chapter_number: number },
+  t: Translations,
+): string {
+  return t.planReadingLabel(reading.book_name, reading.chapter_number);
 }
 
 /** 読む画面で使う、章のリンク一覧。 */
 export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
-  const { lang } = useLang();
-  const ui = planUiText(lang);
+  const t = useT();
+
   if (readings.length === 0) {
-    return <p role="status" style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{ui.readingEmpty}</p>;
+    return <p role="status" style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
   }
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -43,7 +45,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
             textDecoration: "none",
           }}
         >
-          {readingLabel(reading, lang)}
+          {readingLabel(reading, t)}
           {reading.translation && (
             <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
           )}

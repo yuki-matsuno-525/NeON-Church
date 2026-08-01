@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { useLang } from "@/contexts/LanguageContext";
-import { planUiText } from "@/components/plans/planUiText";
+import { useT, type Translations } from "@/lib/i18n";
 
 /**
  * 「まとめて栞」モードの下のバー。
@@ -23,8 +22,7 @@ export function BulkBookmarkBar({
   onSave: () => void;
   onCancel: () => void;
 }) {
-  const { lang } = useLang();
-  const ui = planUiText(lang);
+  const t = useT();
   const barRef = useRef<HTMLDivElement>(null);
   const cancelOnEscape = useEffectEvent(onCancel);
 
@@ -44,7 +42,7 @@ export function BulkBookmarkBar({
       ref={barRef}
       data-testid="bulk-bookmark-bar"
       role="region"
-      aria-label={ui.bulkRegion}
+      aria-label={t.bulkBookmarkStart}
       aria-busy={busy}
       tabIndex={-1}
       style={{
@@ -65,12 +63,12 @@ export function BulkBookmarkBar({
       }}
     >
       <span style={{ fontSize: 13, fontWeight: 700 }}>
-        {pickedCount > 0 ? ui.pickedVerses(pickedCount) : ui.pickVerses}
+        {pickedCount > 0 ? t.bulkPickedCount(pickedCount) : t.bulkPickPrompt}
       </span>
       {message && <span role="status" aria-live="polite" style={{ fontSize: 12, color: "var(--text-muted)" }}>{message}</span>}
       <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
         <button type="button" onClick={onCancel} style={cancelStyle}>
-          {ui.cancel}
+          {t.articleCancel}
         </button>
         <button
           type="button"
@@ -82,7 +80,7 @@ export function BulkBookmarkBar({
             opacity: pickedCount === 0 || busy ? 0.6 : 1,
           }}
         >
-          {busy ? ui.savingBookmarks : ui.saveBookmarks}
+          {busy ? t.bulkSaving : t.bulkSave}
         </button>
       </div>
     </div>
@@ -117,9 +115,10 @@ const saveStyle: React.CSSProperties = {
  * 「まとめて栞」の状態をまとめて持つ。ページ側は使うだけにする。
  * 保存そのものは呼び出し側から渡す（栞の一覧の持ち方はページが知っているため）。
  */
-export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
-  const { lang } = useLang();
-  const ui = planUiText(lang);
+export function useBulkBookmark(
+  save: (verseIds: string[]) => Promise<number>,
+  t: Translations,
+) {
   const [pickMode, setPickMode] = useState(false);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -152,7 +151,7 @@ export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
     try {
       const added = await save(pickedIds);
       // すでに栞のある節は数に入らない。何件入ったかを出して、押した手応えを返す。
-      setMessage(added === pickedIds.length ? null : ui.bulkPartial(added));
+      setMessage(added === pickedIds.length ? null : t.bulkPartial(added));
       if (added === pickedIds.length) {
         setPickMode(false);
         setPickedIds([]);
@@ -160,7 +159,7 @@ export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
         setPickedIds([]);
       }
     } catch {
-      setMessage(ui.bulkError);
+      setMessage(t.bulkFailed);
     } finally {
       setBusy(false);
     }

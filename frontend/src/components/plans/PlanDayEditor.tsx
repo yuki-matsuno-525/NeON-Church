@@ -8,7 +8,6 @@ import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { ChapterPicker, type PickedChapter } from "./ChapterPicker";
 import { readingLabel } from "./ReadingChips";
-import { planUiText } from "./planUiText";
 
 /**
  * プランの1日ぶんを編集する。
@@ -46,7 +45,7 @@ export function PlanDayEditor({
   const [picking, setPicking] = useState(false);
   const t = useT();
   const { lang } = useLang();
-  const ui = planUiText(lang);
+  const dayLabel = t.planDayLabel(day.number);
 
   const draft = useMemo(
     () => ({
@@ -88,26 +87,26 @@ export function PlanDayEditor({
   return (
     <section className="card-glow" style={{ padding: "16px 18px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{ui.dayNumber(day.number)}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{dayLabel}</span>
         <span role="status" aria-live="polite" style={{ fontSize: 11, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)" }}>
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} style={retryButtonStyle}>{ui.retrySave}</button>
+          <button type="button" onClick={() => void autosave.retry()} style={retryButtonStyle}>{t.retry}</button>
         )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           {canMoveUp && (
-            <button type="button" onClick={() => onMove(-1)} aria-label={ui.moveUp(day.number)} style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(-1)} aria-label={lang === "ja" ? `${dayLabel}を上へ移動` : `Move ${dayLabel} up`} style={iconButtonStyle}>
               ↑
             </button>
           )}
           {canMoveDown && (
-            <button type="button" onClick={() => onMove(1)} aria-label={ui.moveDown(day.number)} style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(1)} aria-label={lang === "ja" ? `${dayLabel}を下へ移動` : `Move ${dayLabel} down`} style={iconButtonStyle}>
               ↓
             </button>
           )}
           {canDelete && (
-            <button type="button" onClick={onDelete} aria-label={ui.deleteDay(day.number)} style={iconButtonStyle}>
+            <button type="button" onClick={onDelete} aria-label={lang === "ja" ? `${dayLabel}を削除` : `Delete ${dayLabel}`} style={iconButtonStyle}>
               {t.delete}
             </button>
           )}
@@ -115,11 +114,11 @@ export function PlanDayEditor({
       </div>
 
       <label>
-        <span className="sr-only">{ui.dayTitleLabel(day.number)}</span>
+        <span className="sr-only">{dayLabel}: {t.planTitleLabel}</span>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={ui.dayTitlePlaceholder}
+          placeholder={t.planDayTitlePlaceholder}
           maxLength={200}
           style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
         />
@@ -140,13 +139,18 @@ export function PlanDayEditor({
               fontSize: 13,
             }}
           >
-            {reading.book_name ? readingLabel(reading as never, lang) : ui.chapterLabel(reading.book, reading.chapter_number)}
+            {readingLabel(
+              { book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number },
+              t,
+            )}
             {reading.translation && (
               <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
             )}
             <button
               type="button"
-              aria-label={ui.removeChapter(reading.book_name ? readingLabel(reading as never, lang) : ui.chapterLabel(reading.book, reading.chapter_number))}
+              aria-label={lang === "ja"
+                ? `${readingLabel({ book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number }, t)}を外す`
+                : `Remove ${readingLabel({ book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number }, t)}`}
               onClick={() => setReadings((current) => current.filter((_, i) => i !== index))}
               style={{
                 border: "none",
@@ -166,12 +170,12 @@ export function PlanDayEditor({
         ))}
         {readings.length < MAX_READINGS_PER_DAY && !picking && (
           <button type="button" onClick={() => setPicking(true)} style={addChapterStyle}>
-            {ui.addChapter}
+            {t.planAddChapter}
           </button>
         )}
         {readings.length >= MAX_READINGS_PER_DAY && (
           <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
-            {ui.chapterLimit(MAX_READINGS_PER_DAY)}
+            {t.planChapterLimit(MAX_READINGS_PER_DAY)}
           </span>
         )}
       </div>
@@ -179,12 +183,12 @@ export function PlanDayEditor({
       {picking && <ChapterPicker onPick={addChapter} onCancel={() => setPicking(false)} />}
 
       <label>
-        <span className="sr-only">{ui.devotionalLabel(day.number)}</span>
+        <span className="sr-only">{dayLabel}: {t.planDevotionalPlaceholder}</span>
         <textarea
           value={devotional}
           onChange={(event) => setDevotional(event.target.value)}
           rows={4}
-          placeholder={ui.devotionalPlaceholder}
+          placeholder={t.planDevotionalPlaceholder}
           style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
         />
       </label>

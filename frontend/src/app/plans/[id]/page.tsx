@@ -11,9 +11,10 @@ import {
   uncompletePlanDay,
   type Plan,
 } from "@/lib/api";
-import { dayNumberToday } from "@/lib/plans";
+import { dayNumberToday, visibilityLabel } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { useT } from "@/lib/i18n";
 import { ReadingLinks } from "@/components/plans/ReadingChips";
 import { ConfirmDialog, EmptyState, ErrorState, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
@@ -21,9 +22,10 @@ import { planUiText } from "@/components/plans/planUiText";
 export default function PlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const { lang } = useLang();
-  const ui = planUiText(lang);
-  const unreadableDescription = ui.unreadableDescription;
+  const supplementalText = planUiText(lang);
+  const unreadableDescription = supplementalText.unreadableDescription;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       await subscribeToPlan(id);
       await reload();
     } catch {
-      setActionError(ui.actionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusy(false);
     }
@@ -79,7 +81,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       await unsubscribeFromPlan(id);
       await reload();
     } catch {
-      setActionError(ui.actionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusy(false);
     }
@@ -94,7 +96,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       await restartPlan(id);
       await reload();
     } catch {
-      setActionError(ui.actionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusy(false);
     }
@@ -105,7 +107,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     const previousPlan = plan;
     setBusyDayId(dayId);
     setActionError(null);
-    // 押した手応えをすぐ返すため、先に画面を切り替えてから送る。
     setPlan((current) =>
       current
         ? {
@@ -121,29 +122,25 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       else await completePlanDay(id, dayId);
     } catch {
       setPlan(previousPlan);
-      setActionError(ui.actionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusyDayId(null);
     }
   };
 
   if (loading || authLoading) {
-    return (
-      <div style={containerStyle}>
-        <SkeletonList count={3} />
-      </div>
-    );
+    return <div style={containerStyle}><SkeletonList count={3} /></div>;
   }
 
   if (error || !plan) {
     return (
       <div style={containerStyle}>
         <ErrorState
-          title={ui.unreadableTitle}
-          message={error ?? ui.unreadableDescription}
+          title={t.planCannotRead}
+          message={error ?? unreadableDescription}
           onRetry={retryLoad}
-          retryLabel={ui.retry}
-          extraAction={<Link href="/plans" style={actionLinkStyle}>{ui.backToPlans}</Link>}
+          retryLabel={t.retry}
+          extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>}
         />
       </div>
     );
@@ -157,9 +154,9 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
     <div style={containerStyle}>
       <ConfirmDialog
         open={confirmRestart}
-        title={ui.restartTitle}
-        description={ui.restartDescription}
-        confirmText={ui.restartConfirm}
+        title={t.planRestartConfirmTitle}
+        description={t.planRestartConfirmDesc}
+        confirmText={t.planRestartAction}
         destructive
         onConfirm={handleRestart}
         onCancel={() => setConfirmRestart(false)}
@@ -168,15 +165,12 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {plan.visibility !== "public" && (
           <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
-            {ui.visibilityLabel(plan.visibility)}
+            {visibilityLabel(plan.visibility, t)}
           </span>
         )}
         {isOwner && (
-          <Link
-            href={`/plans/${plan.id}/edit`}
-            style={{ marginLeft: "auto", fontSize: 13, color: "var(--accent)", textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}
-          >
-            {ui.edit}
+          <Link href={`/plans/${plan.id}/edit`} style={editLinkStyle}>
+            {t.articleEdit}
           </Link>
         )}
       </div>
@@ -188,80 +182,57 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
         <Link href={`/profile/${plan.owner_username}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
           {plan.owner_username}
         </Link>
-        <span style={{ marginLeft: 8 }}>{ui.dayCount(plan.day_count)}</span>
+        <span style={{ marginLeft: 8 }}>{t.planDayCount(plan.day_count)}</span>
       </div>
 
-      {plan.description && (
-        <p style={{ fontSize: 15, lineHeight: 1.8, margin: "0 0 16px" }}>{plan.description}</p>
-      )}
+      {plan.description && <p style={{ fontSize: 15, lineHeight: 1.8, margin: "0 0 16px" }}>{plan.description}</p>}
 
       {plan.note && (
-        // 日の並びは公開後に固まるので、訂正はここに書かれる。目立つ場所に出す。
-        <div
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: 10,
-            padding: "12px 14px",
-            marginBottom: 20,
-            background: "rgba(255,255,255,0.03)",
-          }}
-        >
-          <div style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 4 }}>{ui.ownerNote}</div>
+        <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", marginBottom: 20, background: "rgba(255,255,255,0.03)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-faint)", marginBottom: 4 }}>{t.planNoteLabel}</div>
           <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{plan.note}</p>
         </div>
       )}
 
-      {/* 読む・やめる */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
         {!user ? (
-          <Link href={`/login?from=${encodeURIComponent(`/plans/${id}`)}`} style={actionLinkStyle}>{ui.startLoginRequired}</Link>
+          <Link href={`/login?from=${encodeURIComponent(`/plans/${id}`)}`} style={actionLinkStyle}>
+            {t.planReadLoginRequired}
+          </Link>
         ) : isReading ? (
           <>
             <span style={{ fontSize: 14, fontWeight: 700 }}>
-              {today && today <= plan.day_count ? ui.today(today) : ui.reading}
+              {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
             </span>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-              {ui.progress(doneCount, plan.day_count)}
-            </span>
-            <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} style={plainButtonStyle}>
-              {ui.restart}
-            </button>
-            <button type="button" onClick={handleStop} disabled={busy} style={plainButtonStyle}>
-              {ui.stop}
-            </button>
+            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.planProgress(doneCount, plan.day_count)}</span>
+            <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} style={plainButtonStyle}>{t.planRestart}</button>
+            <button type="button" onClick={handleStop} disabled={busy} style={plainButtonStyle}>{t.planStop}</button>
           </>
         ) : (
           <button type="button" onClick={handleStart} disabled={busy} style={startButtonStyle}>
-            {subscription ? ui.resume : ui.start}
+            {subscription ? t.planResume : t.planStart}
           </button>
         )}
       </div>
 
       {isReading && (
-        <div role="progressbar" aria-label={ui.progress(doneCount, plan.day_count)} aria-valuemin={0} aria-valuemax={plan.day_count} aria-valuenow={doneCount} style={progressTrackStyle}>
+        <div role="progressbar" aria-label={t.planProgress(doneCount, plan.day_count)} aria-valuemin={0} aria-valuemax={plan.day_count} aria-valuenow={doneCount} style={progressTrackStyle}>
           <div style={{ width: `${plan.day_count ? Math.round((doneCount / plan.day_count) * 100) : 0}%`, height: "100%", borderRadius: 999, background: "var(--accent)" }} />
         </div>
       )}
       {actionError && <p role="alert" style={{ color: "var(--state-danger)", fontSize: 13, margin: "0 0 16px" }}>{actionError}</p>}
 
-      {/* 日ごとの中身 */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {(plan.days ?? []).map((day) => (
-          <section
-            key={day.id}
-            className="card-glow"
-            style={{ padding: "16px 18px", opacity: day.completed ? 0.7 : 1 }}
-          >
+          <section key={day.id} className="card-glow" style={{ padding: "16px 18px", opacity: day.completed ? 0.7 : 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>
-                {ui.dayNumber(day.number)}
-              </span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{t.planDayLabel(day.number)}</span>
               {day.title && <span style={{ fontSize: 15, fontWeight: 700 }}>{day.title}</span>}
               {isReading && (
                 <button
                   type="button"
                   onClick={() => toggleDay(day.id, day.completed)}
-                  aria-label={day.completed ? ui.unmarkDayCompleted(day.number) : ui.markDayCompleted(day.number)}
+                  aria-label={day.completed ? supplementalText.unmarkDayCompleted(day.number) : supplementalText.markDayCompleted(day.number)}
                   aria-pressed={day.completed}
                   aria-busy={busyDayId === day.id}
                   disabled={busyDayId !== null}
@@ -278,31 +249,21 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                     fontFamily: "inherit",
                   }}
                 >
-                  {day.completed ? ui.completed : ui.markCompleted}
+                  {day.completed ? t.planDayDone : t.planDayMarkDone}
                 </button>
               )}
             </div>
-
             <ReadingLinks readings={day.readings} />
-
-            {day.devotional && (
-              <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>
-                {day.devotional}
-              </p>
-            )}
+            {day.devotional && <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{day.devotional}</p>}
           </section>
         ))}
-        {(plan.days ?? []).length === 0 && <EmptyState title={ui.noDays} />}
+        {(plan.days ?? []).length === 0 && <EmptyState title={supplementalText.noDays} />}
       </div>
     </div>
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 720,
-  margin: "0 auto",
-  padding: "32px 16px 64px",
-};
+const containerStyle: React.CSSProperties = { maxWidth: 720, margin: "0 auto", padding: "32px 16px 64px" };
 
 const startButtonStyle: React.CSSProperties = {
   border: "none",
@@ -329,18 +290,6 @@ const plainButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const actionLinkStyle: React.CSSProperties = {
-  color: "var(--accent)",
-  minHeight: 44,
-  display: "inline-flex",
-  alignItems: "center",
-};
-
-const progressTrackStyle: React.CSSProperties = {
-  height: 6,
-  width: "100%",
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "var(--border)",
-  margin: "-12px 0 20px",
-};
+const actionLinkStyle: React.CSSProperties = { color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" };
+const editLinkStyle: React.CSSProperties = { ...actionLinkStyle, marginLeft: "auto", fontSize: 13, textDecoration: "none" };
+const progressTrackStyle: React.CSSProperties = { height: 6, width: "100%", borderRadius: 999, overflow: "hidden", background: "var(--border)", margin: "-12px 0 20px" };

@@ -103,7 +103,7 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   await loginWithUI(otherPage, other.username, other.password);
   await otherPage.goto(url);
 
-  await expect(otherPage.locator("main")).toContainText(/記事が見つかりません。|この記事は非公開です。/);
+  await expect(otherPage.getByText(/記事が見つかりません。|この記事は非公開です。/).first()).toBeVisible();
   await expect(otherPage.getByText("まだ人には見せない。")).toHaveCount(0);
   await context.close();
 });

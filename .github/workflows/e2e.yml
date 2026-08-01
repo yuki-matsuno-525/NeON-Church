@@ -121,3 +121,14 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 7
+
+      # 再試行で通ってしまう失敗の記録（trace）はここに残る。
+      # 時々落ちるテストを追うときは、これを落として `npx playwright show-trace` で見る。
+      - name: Upload Playwright traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

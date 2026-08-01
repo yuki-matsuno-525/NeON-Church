@@ -13,6 +13,7 @@ import {
   type Plan,
   type PlanVisibility,
 } from "@/lib/api";
+import { visibilityOptions } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
@@ -27,7 +28,8 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   const { user, loading: authLoading } = useAuth();
   const t = useT();
   const { lang } = useLang();
-  const ui = planUiText(lang);
+  const supplementalText = planUiText(lang);
+  const editUnavailableDescription = supplementalText.editUnavailableDescription;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -56,9 +58,9 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     load()
-      .catch(() => setLoadError(ui.editUnavailableDescription))
+      .catch(() => setLoadError(editUnavailableDescription))
       .finally(() => setLoading(false));
-  }, [load, ui.editUnavailableDescription]);
+  }, [load, editUnavailableDescription]);
 
   const draft = useMemo(
     () => ({ title, description, note, visibility }),
@@ -82,7 +84,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       await addPlanDay(id);
       await load();
     } catch {
-      setActionError(ui.dayActionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusyAction(null);
     }
@@ -97,7 +99,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       await deletePlanDay(id, dayId);
       await load();
     } catch {
-      setActionError(ui.dayActionError);
+      setActionError(t.planDayDeleteFailed);
     } finally {
       setBusyAction(null);
     }
@@ -117,7 +119,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       await reorderPlanDays(id, ids);
       await load();
     } catch {
-      setActionError(ui.dayActionError);
+      setActionError(t.actionFailed);
     } finally {
       setBusyAction(null);
     }
@@ -132,26 +134,22 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       await deletePlan(id);
       router.push("/plans");
     } catch {
-      setActionError(ui.actionError);
+      setActionError(t.actionFailed);
       setBusyAction(null);
     }
   };
 
   if (loading || authLoading) {
-    return (
-      <div style={containerStyle}>
-        <SkeletonList count={4} />
-      </div>
-    );
+    return <div style={containerStyle}><SkeletonList count={4} /></div>;
   }
 
   if (!user) {
     return (
       <div style={containerStyle}>
         <ErrorState
-          title={ui.editUnavailableTitle}
-          message={ui.createLoginRequired}
-          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} style={actionLinkStyle}>{ui.login}</Link>}
+          title={t.planCannotEdit}
+          message={t.planLoginRequired}
+          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} style={actionLinkStyle}>{t.loginBtn}</Link>}
         />
       </div>
     );
@@ -161,18 +159,25 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
     return (
       <div style={containerStyle}>
         <ErrorState
-          title={ui.editUnavailableTitle}
-          message={loadError ?? ui.editUnavailableDescription}
-          onRetry={() => { setLoading(true); load().catch(() => setLoadError(ui.editUnavailableDescription)).finally(() => setLoading(false)); }}
-          retryLabel={ui.retry}
-          extraAction={<Link href="/plans" style={actionLinkStyle}>{ui.backToPlans}</Link>}
+          title={t.planCannotEdit}
+          message={loadError ?? editUnavailableDescription}
+          onRetry={() => {
+            setLoading(true);
+            load().catch(() => setLoadError(editUnavailableDescription)).finally(() => setLoading(false));
+          }}
+          retryLabel={t.retry}
+          extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>}
         />
       </div>
     );
   }
 
   if (user.username !== plan.owner_username) {
-    return <div style={containerStyle}><ErrorState title={ui.editUnavailableTitle} message={ui.notOwner} extraAction={<Link href="/plans" style={actionLinkStyle}>{ui.backToPlans}</Link>} /></div>;
+    return (
+      <div style={containerStyle}>
+        <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>} />
+      </div>
+    );
   }
 
   const days = plan.days ?? [];
@@ -183,18 +188,18 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
     <div style={containerStyle}>
       <ConfirmDialog
         open={confirmDelete}
-        title={ui.deletePlanTitle}
-        description={ui.deletePlanDescription}
-        confirmText={ui.deletePlanConfirm}
+        title={t.planDeleteConfirmTitle}
+        description={t.planDeleteConfirmDesc}
+        confirmText={t.articleDeleteAction}
         destructive
         onConfirm={handleDeletePlan}
         onCancel={() => setConfirmDelete(false)}
       />
       <ConfirmDialog
         open={deletingDayId !== null}
-        title={ui.deleteDayTitle}
-        description={ui.deleteDayDescription}
-        confirmText={ui.deleteDayConfirm}
+        title={t.planDayDeleteConfirmTitle}
+        description={t.planDayDeleteConfirmDesc}
+        confirmText={t.planDayDeleteAction}
         destructive
         onConfirm={() => deletingDayId && handleDeleteDay(deletingDayId)}
         onCancel={() => setDeletingDayId(null)}
@@ -202,11 +207,11 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
         <label style={{ flex: "1 1 280px" }}>
-          <span className="sr-only">{ui.planTitleLabel}</span>
+          <span className="sr-only">{t.planTitleLabel}</span>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder={ui.planTitleLabel}
+            placeholder={t.planTitleLabel}
             maxLength={200}
             aria-invalid={!title.trim()}
             aria-describedby={!title.trim() ? "plan-title-error" : undefined}
@@ -214,68 +219,52 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
           />
         </label>
         <label>
-          <span className="sr-only">{ui.visibilityLabelText}</span>
-          <select
-            value={visibility}
-            onChange={(event) => setVisibility(event.target.value as PlanVisibility)}
-            style={{ ...inputStyle, width: "auto" }}
-          >
-          {ui.visibilityOptions.map((option) => (
-            <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
-              {option.label}
-            </option>
-          ))}
+          <span className="sr-only">{supplementalText.visibilityLabelText}</span>
+          <select value={visibility} onChange={(event) => setVisibility(event.target.value as PlanVisibility)} style={{ ...inputStyle, width: "auto" }}>
+            {visibilityOptions(t).map((option) => (
+              <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
         <span role="status" aria-live="polite" style={{ fontSize: 12, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)", minWidth: 80 }}>
           {saveStatusLabel(autosave.status, t)}
         </span>
-        {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} style={inlineRetryStyle}>{ui.retrySave}</button>}
-        <Link href={`/plans/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}>
-          {ui.viewPlan}
-        </Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} style={plainButtonStyle}>
-          {ui.deletePlan}
-        </button>
+        {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} style={inlineRetryStyle}>{t.retry}</button>}
+        <Link href={`/plans/${id}`} style={viewLinkStyle}>{t.planView}</Link>
+        <button type="button" onClick={() => setConfirmDelete(true)} style={plainButtonStyle}>{t.delete}</button>
       </div>
 
-      {!title.trim() && <p id="plan-title-error" role="alert" style={errorTextStyle}>{ui.titleRequired}</p>}
+      {!title.trim() && <p id="plan-title-error" role="alert" style={errorTextStyle}>{supplementalText.titleRequired}</p>}
       {actionError && <p role="alert" style={errorTextStyle}>{actionError}</p>}
 
       <label>
-        <span className="sr-only">{ui.descriptionLabel}</span>
+        <span className="sr-only">{t.description}</span>
         <input
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          placeholder={ui.descriptionPlaceholder}
+          placeholder={t.planDescPlaceholder}
           maxLength={300}
           style={{ ...inputStyle, marginBottom: 10 }}
         />
       </label>
 
-      {!canPublish && (
-        <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>
-          {ui.publishNeedsDay}
-        </p>
-      )}
+      {!canPublish && <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>{t.planDayRequired}</p>}
 
       <label htmlFor="plan-reader-note" style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-        {ui.noteLabel}
+        {t.planNoteFieldLabel}
       </label>
       <textarea
         id="plan-reader-note"
         value={note}
         onChange={(event) => setNote(event.target.value)}
         rows={2}
-        placeholder={ui.notePlaceholder}
+        placeholder={t.planNotePlaceholder}
         style={{ ...inputStyle, marginBottom: 8, resize: "vertical" }}
       />
 
-      {!canReorder && (
-        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 16px", lineHeight: 1.7 }}>
-          {ui.reorderLocked}
-        </p>
-      )}
+      {!canReorder && <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 16px", lineHeight: 1.7 }}>{t.planFrozenNotice}</p>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
         {days.map((day, index) => (
@@ -292,25 +281,17 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         ))}
       </div>
 
-      {days.length === 0 && <EmptyState title={ui.noDays} description={ui.publishNeedsDay} />}
+      {days.length === 0 && <EmptyState title={supplementalText.noDays} description={t.planDayRequired} />}
 
       <button type="button" onClick={handleAddDay} disabled={!!busyAction} style={{ ...addDayStyle, opacity: busyAction ? 0.6 : 1 }}>
-        {busyAction === "add-day" ? ui.addingDay : ui.addDay}
+        {busyAction === "add-day" ? supplementalText.addingDay : t.planAddDay}
       </button>
-      {days.length > 0 && !canReorder && (
-        <p style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 8 }}>
-          {ui.appendOnly}
-        </p>
-      )}
+      {days.length > 0 && !canReorder && <p style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 8 }}>{t.planAddDayAlways}</p>}
     </div>
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 760,
-  margin: "0 auto",
-  padding: "24px 16px 64px",
-};
+const containerStyle: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "24px 16px 64px" };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -337,27 +318,10 @@ const plainButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const actionLinkStyle: React.CSSProperties = {
-  color: "var(--accent)",
-  minHeight: 44,
-  display: "inline-flex",
-  alignItems: "center",
-};
-
-const inlineRetryStyle: React.CSSProperties = {
-  border: 0,
-  background: "transparent",
-  color: "var(--accent)",
-  textDecoration: "underline",
-  minHeight: 44,
-  cursor: "pointer",
-};
-
-const errorTextStyle: React.CSSProperties = {
-  color: "var(--state-danger)",
-  fontSize: 13,
-  margin: "4px 0 10px",
-};
+const actionLinkStyle: React.CSSProperties = { color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" };
+const viewLinkStyle: React.CSSProperties = { ...actionLinkStyle, fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
+const inlineRetryStyle: React.CSSProperties = { border: 0, background: "transparent", color: "var(--accent)", textDecoration: "underline", minHeight: 44, cursor: "pointer" };
+const errorTextStyle: React.CSSProperties = { color: "var(--state-danger)", fontSize: 13, margin: "4px 0 10px" };
 
 const addDayStyle: React.CSSProperties = {
   width: "100%",

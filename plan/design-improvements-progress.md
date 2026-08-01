@@ -141,7 +141,7 @@ test suites, a commit, and a push.
 - [x] Keyboard-only smoke checks pass for navigation, dialogs, tabs, verses, comments, forms, and destructive confirmations.
 - [x] No unrelated user changes are overwritten.
 - [x] Final tracker accurately records completed and deferred work.
-- [x] Branch is committed and pushed.
+- [ ] Branch is committed and pushed.
 
 ## Progress log
 
@@ -172,3 +172,5 @@ test suites, a commit, and a push.
 - 2026-08-02: Final post-integration verification passed: backend 629 passed / 13 skipped (642 collected), frontend 68 files / 376 tests, TypeScript, zero-warning ESLint, 32-route production build, Django checks, and 48/48 deterministic Playwright E2E scenarios.
 - 2026-08-02: E2E exposed a React Strict Mode autosave status regression; restored the mounted lifecycle correctly and added dedicated regression coverage.
 - 2026-08-02: Committed the second latest-main integration as `1d406d9` and pushed the fully verified branch to PR #59.
+- 2026-08-02: Integrated `origin/main` through `9c88f56` (PRs #58 and #60), reconciling the upstream reading-plan localization with the fuller error, retry, auth, keyboard, and accessibility treatment. Japanese and English now each expose 568 matching i18n keys with no duplicates.
+- 2026-08-02: Post-`9c88f56` verification passed again: 68 frontend files / 376 tests, TypeScript, zero-warning ESLint, 32-route production build, and all 48 E2E scenarios (47 in the full run plus the corrected strict-locator case focused).

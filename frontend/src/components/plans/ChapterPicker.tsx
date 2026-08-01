@@ -5,7 +5,7 @@ import { BOOKS, getBookBySlug } from "@/lib/books";
 import { useChapterNumbers } from "@/hooks/useChapterNumbers";
 import { DEFAULT_TRANSLATION } from "@/lib/translations";
 import { useLang } from "@/contexts/LanguageContext";
-import { planUiText } from "./planUiText";
+import { useT } from "@/lib/i18n";
 
 export type PickedChapter = {
   book: string;
@@ -27,12 +27,12 @@ export function ChapterPicker({
   onPick: (chapter: PickedChapter) => void;
   onCancel: () => void;
 }) {
+  const t = useT();
   const [keyword, setKeyword] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
   // 空文字は「読む人の訳にまかせる」。
   const [translation, setTranslation] = useState("");
   const { lang } = useLang();
-  const ui = planUiText(lang);
   const meta = slug ? getBookBySlug(slug) : null;
   const { numbers, error, loading, retry } = useChapterNumbers(slug, translation || DEFAULT_TRANSLATION);
 
@@ -48,21 +48,21 @@ export function ChapterPicker({
 
   if (!slug) {
     return (
-      <div role="group" aria-label={ui.findBookLabel} style={boxStyle}>
+      <div role="group" aria-label={t.citationBookSearchPlaceholder} style={boxStyle}>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
           <label style={{ flex: 1 }}>
-            <span className="sr-only">{ui.findBookLabel}</span>
+            <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
             <input
               type="search"
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
-              placeholder={ui.findBookPlaceholder}
+              placeholder={t.citationBookSearchPlaceholder}
               autoFocus
               style={{ ...inputStyle, width: "100%" }}
             />
           </label>
           <button type="button" onClick={onCancel} style={plainButtonStyle}>
-            {ui.cancel}
+            {t.articleCancel}
           </button>
         </div>
         <div style={{ maxHeight: 220, overflowY: "auto" }}>
@@ -79,26 +79,26 @@ export function ChapterPicker({
               {localizedBookName(book)}
             </button>
           ))}
-          {matched.length === 0 && <p role="status" style={messageStyle}>{ui.noBooks}</p>}
+          {matched.length === 0 && <p role="status" style={messageStyle}>{t.listSearchEmpty}</p>}
         </div>
       </div>
     );
   }
 
   return (
-    <div role="group" aria-label={ui.chooseChapter(localizedShortName)} style={boxStyle}>
+    <div role="group" aria-label={`${t.planAddChapter}: ${localizedShortName}`} style={boxStyle}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={() => { setSlug(null); setTranslation(""); }} style={plainButtonStyle}>
-          {ui.backToBooks}
+          {t.planBackToBooks}
         </button>
         <strong style={{ fontSize: 13 }}>{localizedShortName}</strong>
         <select
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}
-          aria-label={ui.translationLabel}
+          aria-label={t.planTranslationLabel}
           style={{ ...inputStyle, width: "auto" }}
         >
-          <option value="">{ui.readerTranslation}</option>
+          <option value="">{t.planReaderTranslation}</option>
           {(meta?.translations ?? []).map((tr) => (
             <option key={tr.id} value={tr.id}>
               {tr.id}
@@ -106,15 +106,15 @@ export function ChapterPicker({
           ))}
         </select>
         <button type="button" onClick={onCancel} style={{ ...plainButtonStyle, marginLeft: "auto" }}>
-          {ui.cancel}
+          {t.articleCancel}
         </button>
       </div>
 
-      {loading && <p role="status" style={messageStyle}>{ui.chapterLoading}</p>}
+      {loading && <p role="status" style={messageStyle}>{t.loading}</p>}
       {error && (
         <div role="alert" style={{ ...messageStyle, color: "var(--state-danger)" }}>
-          <span>{ui.chapterLoadError}</span>{" "}
-          <button type="button" onClick={retry} style={inlineRetryStyle}>{ui.retry}</button>
+          <span>{error}</span>{" "}
+          <button type="button" onClick={retry} style={inlineRetryStyle}>{t.retry}</button>
         </div>
       )}
 
@@ -123,7 +123,7 @@ export function ChapterPicker({
           <button
             key={number}
             type="button"
-            aria-label={ui.chapterLabel(localizedShortName, number)}
+            aria-label={t.planReadingLabel(localizedShortName, number)}
             onClick={() => onPick({
               book: slug,
               book_name: meta ? localizedBookName(meta) : slug,
@@ -135,7 +135,7 @@ export function ChapterPicker({
             {number}
           </button>
         ))}
-        {!loading && !error && numbers.length === 0 && <p role="status" style={messageStyle}>{ui.noChapters}</p>}
+        {!loading && !error && numbers.length === 0 && <p role="status" style={messageStyle}>{t.planNoReadings}</p>}
       </div>
     </div>
   );

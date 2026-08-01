@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createPlan } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { useT } from "@/lib/i18n";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
 
@@ -13,8 +14,9 @@ import { planUiText } from "@/components/plans/planUiText";
 export default function NewPlanPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const { lang } = useLang();
-  const ui = planUiText(lang);
+  const supplementalText = planUiText(lang);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export default function NewPlanPage() {
       const plan = await createPlan({ title: trimmed, visibility: "private" });
       router.push(`/plans/${plan.id}/edit`);
     } catch {
-      setError(ui.createError);
+      setError(t.planCreateFailed);
       setBusy(false);
     }
   };
@@ -53,9 +55,9 @@ export default function NewPlanPage() {
   if (!user) {
     return (
       <div style={containerStyle}>
-        <p role="status" style={{ color: "var(--text-muted)" }}>{ui.createLoginRequired}</p>
+        <p role="status" style={{ color: "var(--text-muted)" }}>{t.planLoginRequired}</p>
         <Link href="/login?from=%2Fplans%2Fnew" style={loginLinkStyle}>
-          {ui.login}
+          {t.loginBtn}
         </Link>
       </div>
     );
@@ -65,21 +67,21 @@ export default function NewPlanPage() {
     <div style={containerStyle}>
       <ConfirmDialog
         open={confirmCancel}
-        title={ui.discardNewTitle}
-        description={ui.discardNewDescription}
-        confirmText={ui.discardNewConfirm}
+        title={supplementalText.discardNewTitle}
+        description={supplementalText.discardNewDescription}
+        confirmText={supplementalText.discardNewConfirm}
         destructive
         onConfirm={() => router.push("/plans")}
         onCancel={() => setConfirmCancel(false)}
       />
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{ui.newTitle}</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.planNewTitle}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
-        {ui.newDescription}
+        {t.planNewDesc}
       </p>
 
       <form onSubmit={(event) => { event.preventDefault(); void handleCreate(); }}>
         <label htmlFor="new-plan-title" style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
-          {ui.titleLabel}
+          {t.planTitleLabel}
         </label>
         <input
           id="new-plan-title"
@@ -92,7 +94,7 @@ export default function NewPlanPage() {
               event.preventDefault();
             }
           }}
-          placeholder={ui.titlePlaceholder}
+          placeholder={t.planTitlePlaceholder}
           autoFocus
           required
           maxLength={200}
@@ -115,34 +117,34 @@ export default function NewPlanPage() {
         {error && <p id="new-plan-error" role="alert" style={{ fontSize: 13, color: "var(--state-danger)", marginTop: 8 }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
-        <button
-          type="submit"
-          disabled={!title.trim() || busy}
-          style={{
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            fontWeight: 700,
-            fontSize: 14,
-            padding: "10px 22px",
-            minHeight: 44,
-            cursor: !title.trim() || busy ? "default" : "pointer",
-            opacity: !title.trim() || busy ? 0.6 : 1,
-            fontFamily: "inherit",
-          }}
-        >
-          {busy ? ui.creating : ui.create}
-        </button>
-        {isDirty ? (
-          <button type="button" onClick={() => setConfirmCancel(true)} style={cancelButtonStyle}>
-            {ui.cancel}
+          <button
+            type="submit"
+            disabled={!title.trim() || busy}
+            style={{
+              border: "none",
+              borderRadius: 8,
+              background: "var(--accent)",
+              color: "var(--accent-text)",
+              fontWeight: 700,
+              fontSize: 14,
+              padding: "10px 22px",
+              minHeight: 44,
+              cursor: !title.trim() || busy ? "default" : "pointer",
+              opacity: !title.trim() || busy ? 0.6 : 1,
+              fontFamily: "inherit",
+            }}
+          >
+            {busy ? t.articleCreating : t.planStartCreating}
           </button>
-        ) : (
-          <Link href="/plans" style={cancelLinkStyle}>
-            {ui.cancel}
-          </Link>
-        )}
+          {isDirty ? (
+            <button type="button" onClick={() => setConfirmCancel(true)} style={cancelButtonStyle}>
+              {t.articleCancel}
+            </button>
+          ) : (
+            <Link href="/plans" style={cancelLinkStyle}>
+              {t.articleCancel}
+            </Link>
+          )}
         </div>
       </form>
     </div>
