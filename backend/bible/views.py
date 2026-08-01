@@ -109,6 +109,17 @@ class _ReferenceView(APIView):
             raise NotFound("Unknown book.")
 
 
+def _book_for_translation(slug: str, translation: str | None):
+    """箇所 slug と訳から Book を1冊決める。無ければ 404（訳の指定ミスと言い分けられる code 付き）。"""
+    books = Book.objects.filter(canonical_book__slug=slug)
+    if translation:
+        books = books.filter(translation=translation)
+    book = books.order_by("order", "translation").first()
+    if book is None:
+        raise NotFound({"detail": "Book not found for this translation.", "code": "book_not_found"})
+    return book
+
+
 class ReferenceBooksView(_ReferenceView):
     """GET /api/references/<slug>/books/  その書の全版の書 id。"""
 
@@ -134,6 +145,53 @@ class ReferenceChaptersView(_ReferenceView):
         return Response({
             "reference": {"book": slug, "chapter": chapter},
             "chapters": [{"id": str(c.id), "translation": c.book.translation} for c in chapters],
+        })
+
+
+class ReferenceBookReadView(_ReferenceView):
+    """GET /api/references/<slug>/book/?translation=口語訳
+
+    書のページ（章番号のグリッド）が必要な「書と、その全章」を1回で返す。
+    こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
+    """
+
+    def get(self, request, slug):
+        self._require_slug(slug)
+        book = _book_for_translation(slug, request.query_params.get("translation"))
+        chapters = Chapter.objects.filter(book=book)
+        return Response({
+            "reference": {"book": slug},
+            "book": BookSerializer(book).data,
+            "chapters": ChapterSerializer(chapters, many=True).data,
+        })
+
+
+class ReferenceReadView(_ReferenceView):
+    """GET /api/references/<slug>/read/<chapter>/?translation=口語訳
+
+    読書画面が1章を表示するのに必要な「書・章・節」をまとめて1回で返す。
+
+    以前フロントは books → chapters → verses と3回、しかも順番待ちで叩いていた。
+    最初の1回は書の全一覧を落として目当ての1冊を探すだけだったので、章を開くたびに
+    無駄な往復と転送が発生していた。ここで1回にまとめる。
+
+    見つからないときは 404 に `code` を付けて、画面が「その訳にこの書が無い」のか
+    「その章が無い」のかを言い分けられるようにする。
+    """
+
+    def get(self, request, slug, chapter):
+        self._require_slug(slug)
+        book = _book_for_translation(slug, request.query_params.get("translation"))
+        chapter_obj = Chapter.objects.filter(book=book, number=chapter).first()
+        if chapter_obj is None:
+            raise NotFound({"detail": "Chapter not found.", "code": "chapter_not_found"})
+
+        verses = Verse.objects.filter(chapter=chapter_obj)
+        return Response({
+            "reference": {"book": slug, "chapter": chapter},
+            "book": BookSerializer(book).data,
+            "chapter": ChapterSerializer(chapter_obj).data,
+            "verses": VerseSerializer(verses, many=True).data,
         })
 
 

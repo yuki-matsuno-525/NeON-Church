@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  fetchBooks,
-  fetchChapters,
-  fetchVerses,
-  fetchBookmarks,
+  fetchChapterRead,
+  fetchChapterBookmarks,
   createChapterBookmark,
   removeBookmark,
   saveReadingProgress,
@@ -46,10 +44,14 @@ export default function ChapterPage() {
   const nav = adjacentChapter(slug, chapterNum);
   const { lang } = useLang();
   // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
-  const translationOptions = (meta?.translations ?? []).map((tr) => ({
-    id: tr.id,
-    label: translationLabel(tr.id, lang),
-  }));
+  const translationOptions = useMemo(
+    () =>
+      (meta?.translations ?? []).map((tr) => ({
+        id: tr.id,
+        label: translationLabel(tr.id, lang),
+      })),
+    [meta, lang]
+  );
 
   const [verses, setVerses] = useState<Verse[]>([]);
   const [chapter, setChapter] = useState<Chapter | null>(null);
@@ -97,41 +99,43 @@ export default function ChapterPage() {
 
     // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
     const active = resolveTranslation(slug, translation)!;
-    fetchBooks(active.id)
-      .then((books) => {
-        const book = books.find((b) => b.name === active.name);
-        if (!book) throw new Error(t.bookNotFound);
-        return fetchChapters(book.id).then((chapters) => {
-          const ch = chapters.find((c) => c.number === chapterNum);
-          if (!ch) throw new Error(t.chapterNotFound);
-          setChapter(ch);
-          saveLocalProgress(slug, {
-            bookId: book.id,
-            chapterId: ch.id,
-            chapterNumber: ch.number,
-            updatedAt: new Date().toISOString(),
-          });
-          if (user) {
-            saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
-          }
-          return fetchVerses(ch.id);
+    // 書・章・節は1回でまとめて取る（以前は3回、しかも順番待ちだった）。
+    fetchChapterRead(slug, chapterNum, active.id)
+      .then(({ book, chapter: ch, verses: vs }) => {
+        setChapter(ch);
+        saveLocalProgress(slug, {
+          bookId: book.id,
+          chapterId: ch.id,
+          chapterNumber: ch.number,
+          updatedAt: new Date().toISOString(),
         });
+        if (user) {
+          saveReadingProgress({ book: book.id, chapter: ch.id }).catch(() => {});
+        }
+        setVerses(vs);
       })
-      .then(setVerses)
       .catch((err) => {
-        setError(
-          translation !== DEFAULT_TRANSLATION && err.message === t.bookNotFound
-            ? t.translationNotFound(translation)
-            : err.message
-        );
+        // サーバーは「その訳にこの書が無い」「その章が無い」を code で言い分ける。
+        if (err.code === "book_not_found") {
+          setError(
+            translation !== DEFAULT_TRANSLATION
+              ? t.translationNotFound(translation)
+              : t.bookNotFound
+          );
+        } else if (err.code === "chapter_not_found") {
+          setError(t.chapterNotFound);
+        } else {
+          setError(err.message);
+        }
       })
       .finally(() => setLoading(false));
   }, [slug, chapterNum, translation, meta, router, user, t]);
 
+  // この章に関わる栞（章栞・節栞・この章のコメントへの栞）だけをサーバー側で絞って取る。
   useEffect(() => {
     if (!user) return;
-    fetchBookmarks().then(setBookmarks).catch(() => setBookmarks([]));
-  }, [user]);
+    fetchChapterBookmarks(slug, chapterNum).then(setBookmarks).catch(() => setBookmarks([]));
+  }, [user, slug, chapterNum]);
 
   // 全バージョン表示用：この章の各訳の章idを集める。
   useEffect(() => {
@@ -189,19 +193,31 @@ export default function ChapterPage() {
     [slug, chapterNum, activeTranslationId, verses]
   );
 
-  const commentBookmarkMap: Record<string, string> = Object.fromEntries(
-    bookmarks
-      .filter((bm) => bm.target_type === "comment" && bm.comment_detail)
-      .map((bm) => [bm.comment_detail!.id, bm.id])
+  // 栞の仕分けは毎回作り直すと子（コメント欄・パネル）まで描き直しになるので覚えておく。
+  const commentBookmarkMap: Record<string, string> = useMemo(
+    () =>
+      Object.fromEntries(
+        bookmarks
+          .filter((bm) => bm.target_type === "comment" && bm.comment_detail)
+          .map((bm) => [bm.comment_detail!.id, bm.id])
+      ),
+    [bookmarks]
   );
-  const verseBookmarks = bookmarks.filter((bm) => bm.target_type === "verse" || bm.target_type === null);
+  const verseBookmarks = useMemo(
+    () => bookmarks.filter((bm) => bm.target_type === "verse" || bm.target_type === null),
+    [bookmarks]
+  );
 
   // この章そのものの栞（章栞）。reference が同じ書・同じ章で、節を持たないものが該当。
-  const chapterBookmark = bookmarks.find(
-    (bm) =>
-      bm.target_type === "chapter" &&
-      bm.reference?.book === slug &&
-      bm.reference?.chapter === chapterNum
+  const chapterBookmark = useMemo(
+    () =>
+      bookmarks.find(
+        (bm) =>
+          bm.target_type === "chapter" &&
+          bm.reference?.book === slug &&
+          bm.reference?.chapter === chapterNum
+      ),
+    [bookmarks, slug, chapterNum]
   );
   const toggleChapterBookmark = async () => {
     if (chapterBusy || !chapter) return;

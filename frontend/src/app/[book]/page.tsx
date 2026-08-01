@@ -4,9 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
-  fetchBooks,
-  fetchChapters,
-  fetchBookmarks,
+  fetchBookRead,
+  fetchBookBookmarks,
   createBookBookmark,
   removeBookmark,
   type Chapter,
@@ -42,17 +41,14 @@ function BookContent() {
   const [bookBusy, setBookBusy] = useState(false);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
 
-  // この書の書栞（reference が同じ書で、章・節を持たないもの）を拾っておく。
+  // この書の書栞を拾っておく。サーバー側でこの書に絞って取る（全件は取らない）。
   useEffect(() => {
     if (!user) return;
     let active = true;
-    fetchBookmarks()
+    fetchBookBookmarks(slug)
       .then((bms) => {
         if (!active) return;
-        const found = bms.find(
-          (bm) => bm.target_type === "book" && bm.reference?.book === slug
-        );
-        setBookBookmark(found ?? null);
+        setBookBookmark(bms[0] ?? null);
       })
       .catch(() => active && setBookBookmark(null));
     return () => {
@@ -90,14 +86,13 @@ function BookContent() {
     // UI 言語の既定訳をその本が持っていればそれを、無ければその本の訳（英訳のみの本など）を使う。
     // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
     const tr = resolveTranslation(slug, defaultTranslationForLang(lang))!;
-    fetchBooks(tr.id)
-      .then((books) => {
-        const book = books.find((b) => b.name === tr.name);
-        if (!book) throw new Error(t.bookNotFound);
+    // 書と全章は1回でまとめて取る（以前は books → chapters の2往復だった）。
+    fetchBookRead(slug, tr.id)
+      .then(({ book, chapters: chs }) => {
         setBookId(book.id);
-        return fetchChapters(book.id).then(setChapters);
+        setChapters(chs);
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setError(err.code === "book_not_found" ? t.bookNotFound : err.message))
       .finally(() => setLoading(false));
 
     // 全バージョン表示トグル用に、この書の各訳の書idを集めておく。
