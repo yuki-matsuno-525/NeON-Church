@@ -26,6 +26,8 @@ import { useLang } from "@/contexts/LanguageContext";
 import { VerseList } from "@/components/reader/VerseList";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { CollectBar } from "@/components/reader/CollectBar";
+import { Icon } from "@/components/ui/Icon";
 import { useT, useBookLabel } from "@/lib/i18n";
 
 export default function ChapterPage() {
@@ -60,6 +62,9 @@ export default function ChapterPage() {
   const [highlightVerseNumber, setHighlightVerseNumber] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  // 編纂へまとめて集めるモードと、そこで選ばれた節（押した順）。
+  const [collecting, setCollecting] = useState(false);
+  const [collectedVerseIds, setCollectedVerseIds] = useState<string[]>([]);
   // 全バージョン表示トグル用：この章・選択中の節の、各訳のid。
   const [allVersionChapterIds, setAllVersionChapterIds] = useState<string[]>([]);
   const [allVersionVerseIds, setAllVersionVerseIds] = useState<string[]>([]);
@@ -172,6 +177,13 @@ export default function ChapterPage() {
   }, [loading, highlightVerseNumber]);
 
   const handleSelectVerse = (verseId: string) => {
+    // 集めるモードのときは、コメント欄を開かずに選んだり外したりする。
+    if (collecting) {
+      setCollectedVerseIds((prev) =>
+        prev.includes(verseId) ? prev.filter((id) => id !== verseId) : [...prev, verseId]
+      );
+      return;
+    }
     if (verseId === selectedVerseId) {
       router.back();
     } else if (selectedVerseId) {
@@ -179,6 +191,17 @@ export default function ChapterPage() {
     } else {
       router.push(`${pathname}?verse=${verseId}`);
     }
+  };
+
+  const startCollecting = () => {
+    setCollectedVerseIds([]);
+    setCollecting(true);
+    if (selectedVerseId) router.back();
+  };
+
+  const stopCollecting = () => {
+    setCollecting(false);
+    setCollectedVerseIds([]);
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
@@ -306,6 +329,30 @@ export default function ChapterPage() {
                 ))}
               </select>
             </label>
+            {user && !collecting && (
+              <button
+                type="button"
+                data-testid="start-collecting"
+                onClick={startCollecting}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 12,
+                  color: "var(--text-faint)",
+                  background: "none",
+                  padding: "3px 10px",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  whiteSpace: "nowrap",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                <Icon name="book-open" size={12} />
+                集める
+              </button>
+            )}
             {chapter && (
               <a
                 href="#chapter-comments"
@@ -365,6 +412,8 @@ export default function ChapterPage() {
           selectedVerseId={selectedVerseId}
           onSelectVerse={handleSelectVerse}
           highlightVerseNumber={highlightVerseNumber}
+          collecting={collecting}
+          collectedVerseIds={collectedVerseIds}
           numberLabel={(v) =>
             isMarkShorterEnding(slug, activeTranslationId, v.number)
               ? t.markShorterEnding
@@ -404,6 +453,14 @@ export default function ChapterPage() {
         </div>
         )}
       </div>
+
+      {collecting && (
+        <CollectBar
+          verseIds={collectedVerseIds}
+          onDone={() => setCollectedVerseIds([])}
+          onCancel={stopCollecting}
+        />
+      )}
 
       {showScrollTop && (
         <button

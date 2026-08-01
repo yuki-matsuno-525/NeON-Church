@@ -1,4 +1,5 @@
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, F, Max, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
@@ -14,6 +15,9 @@ from .serializers import (
     CompiledCommentSerializer,
     CompiledVerseSerializer,
     MotifTagSerializer,
+    renumber_chapter_verses,
+    renumber_chapters,
+    renumber_tray_verses,
 )
 
 
@@ -170,6 +174,19 @@ class CompiledChapterDetailView(generics.UpdateAPIView, generics.DestroyAPIView)
         _require_owner(self.request, book)
         return get_object_or_404(CompiledChapter, pk=self.kwargs["chapter_id"], book=book)
 
+    def perform_destroy(self, instance):
+        """章を消しても中の節は捨てない。断章ボックスの上へ戻し、残りの章の番号を詰める。"""
+        book = instance.book
+        with transaction.atomic():
+            for verse in instance.verses.all().order_by("order", "created_at"):
+                verse.chapter = None
+                verse.verse_number = None
+                verse.order = 0
+                verse.save(update_fields=["chapter", "verse_number", "order", "updated_at"])
+            instance.delete()
+            renumber_tray_verses(book)
+            renumber_chapters(book)
+
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx["book"] = self.get_object().book
@@ -217,6 +234,42 @@ class CompiledVerseListCreateView(generics.ListCreateAPIView):
         return ctx
 
 
+class CompiledVerseBulkCreateView(APIView):
+    """読む画面で選んだ複数の節を、選んだ順のまま断章ボックスの上へまとめて入れる。"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    MAX_VERSES = 100
+
+    def post(self, request, book_id):
+        book = get_object_or_404(CompiledBook, pk=book_id)
+        _require_owner(request, book)
+
+        source_verses = _id_list(request.data.get("source_verses"))
+        if not source_verses:
+            return Response({"detail": "source_verses must be a list of unique ids."}, status=status.HTTP_400_BAD_REQUEST)
+        if len(source_verses) > self.MAX_VERSES:
+            return Response(
+                {"detail": f"Cannot add more than {self.MAX_VERSES} verses at once."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            # 既に入っている断章を人数分だけ下げ、上に並べる場所をあける。
+            CompiledVerse.objects.filter(book=book, chapter__isnull=True).update(order=F("order") + len(source_verses))
+            for index, verse_id in enumerate(source_verses, start=1):
+                serializer = CompiledVerseSerializer(
+                    data={"source_verse": verse_id, "order": index},
+                    context={"book": book, "request": request},
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+        return Response(
+            CompiledBookDetailSerializer(book, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class CompiledVerseDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     serializer_class = CompiledVerseSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -231,6 +284,94 @@ class CompiledVerseDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         ctx = super().get_serializer_context()
         ctx["book"] = self.get_object().book
         return ctx
+
+
+def _id_list(raw) -> list[str] | None:
+    if not isinstance(raw, list):
+        return None
+    ids = [str(x) for x in raw]
+    if len(set(ids)) != len(ids):
+        return None
+    return ids
+
+
+class CompiledVerseReorderView(APIView):
+    """章（または断章ボックス）の中身を、送られた並び順そのままに置き直す。
+
+    verse_ids には、その章（または断章ボックス）に置きたい節を、上から順に全部入れて送る。
+    他の章から移ってきた節が混じっていてもよく、その場合は移動元の章の節番号を詰め直す。
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, book_id):
+        book = get_object_or_404(CompiledBook, pk=book_id)
+        _require_owner(request, book)
+
+        verse_ids = _id_list(request.data.get("verse_ids"))
+        if verse_ids is None:
+            return Response({"detail": "verse_ids must be a list of unique ids."}, status=status.HTTP_400_BAD_REQUEST)
+
+        chapter = None
+        chapter_id = request.data.get("chapter") or None
+        if chapter_id:
+            chapter = get_object_or_404(CompiledChapter, pk=chapter_id, book=book)
+
+        verses_by_id = {str(verse.id): verse for verse in book.verses.all()}
+        if any(vid not in verses_by_id for vid in verse_ids):
+            return Response({"detail": "Unknown verse id for this compiled book."}, status=status.HTTP_400_BAD_REQUEST)
+
+        source_chapter_ids = {verses_by_id[vid].chapter_id for vid in verse_ids if verses_by_id[vid].chapter_id}
+        came_from_tray = any(verses_by_id[vid].chapter_id is None for vid in verse_ids)
+
+        with transaction.atomic():
+            for index, vid in enumerate(verse_ids, start=1):
+                verse = verses_by_id[vid]
+                verse.chapter = chapter
+                verse.order = index
+                verse.verse_number = index if chapter else None
+                verse.save(update_fields=["chapter", "order", "verse_number", "updated_at"])
+
+            keep_id = chapter.id if chapter else None
+            for other_id in source_chapter_ids - {keep_id}:
+                renumber_chapter_verses(CompiledChapter.objects.get(pk=other_id))
+            if chapter is not None and came_from_tray:
+                renumber_tray_verses(book)
+
+        return Response(CompiledBookDetailSerializer(book, context={"request": request}).data)
+
+
+class CompiledChapterReorderView(APIView):
+    """章の並び順を置き直す。chapter_ids にはこの編纂書の全章を上から順に入れて送る。"""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, book_id):
+        book = get_object_or_404(CompiledBook, pk=book_id)
+        _require_owner(request, book)
+
+        chapter_ids = _id_list(request.data.get("chapter_ids"))
+        if chapter_ids is None:
+            return Response({"detail": "chapter_ids must be a list of unique ids."}, status=status.HTTP_400_BAD_REQUEST)
+
+        chapters_by_id = {str(chapter.id): chapter for chapter in book.chapters.all()}
+        if set(chapter_ids) != set(chapters_by_id):
+            return Response({"detail": "chapter_ids must list every chapter of this compiled book."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # (book, number) が一意なので、いったん衝突しない番号へ逃がしてから振り直す。
+            parking = int(book.chapters.aggregate(max_num=Max("number"))["max_num"] or 0) + len(chapter_ids) + 1
+            for offset, cid in enumerate(chapter_ids):
+                chapter = chapters_by_id[cid]
+                chapter.number = parking + offset
+                chapter.save(update_fields=["number", "updated_at"])
+            for index, cid in enumerate(chapter_ids, start=1):
+                chapter = chapters_by_id[cid]
+                chapter.number = index
+                chapter.order = index
+                chapter.save(update_fields=["number", "order", "updated_at"])
+
+        return Response(CompiledBookDetailSerializer(book, context={"request": request}).data)
 
 
 class CompiledCommentListCreateView(generics.ListCreateAPIView):

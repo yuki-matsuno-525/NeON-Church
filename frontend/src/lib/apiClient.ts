@@ -643,7 +643,7 @@ export function createCompiledBook(data: {
   });
 }
 
-export function updateCompiledBook(id: string, data: Partial<Pick<CompiledBook, "title" | "description" | "annotation" | "visibility">> & { motif_names?: string[] }): Promise<CompiledBook> {
+export function updateCompiledBook(id: string, data: Partial<Pick<CompiledBook, "title" | "description" | "annotation" | "tray_name" | "visibility">> & { motif_names?: string[] }): Promise<CompiledBook> {
   return apiFetch(`/compilations/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(data),
@@ -709,6 +709,36 @@ export function updateCompiledVerse(bookId: string, verseId: string, data: Parti
 
 export function deleteCompiledVerse(bookId: string, verseId: string): Promise<void> {
   return apiFetch(`/compilations/${bookId}/verses/${verseId}/`, { method: "DELETE" });
+}
+
+/**
+ * 読む画面で選んだ複数の節を、選んだ順のまま断章ボックスの上へまとめて入れる。
+ * 更新後の編纂書全体が返る。
+ */
+export function addVersesToCompilation(bookId: string, sourceVerseIds: string[]): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${bookId}/verses/bulk/`, {
+    method: "POST",
+    body: JSON.stringify({ source_verses: sourceVerseIds }),
+  });
+}
+
+/**
+ * 章（chapter が null なら断章ボックス）の中身を、verseIds の並び順そのままに置き直す。
+ * 他の章や断章ボックスから移ってきた節が混じっていてもよい。更新後の編纂書全体が返る。
+ */
+export function reorderCompiledVerses(bookId: string, chapter: string | null, verseIds: string[]): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${bookId}/verses/reorder/`, {
+    method: "POST",
+    body: JSON.stringify({ chapter, verse_ids: verseIds }),
+  });
+}
+
+/** 章の並び順を置き直す。chapterIds にはこの編纂書の全章を上から順に入れる。 */
+export function reorderCompiledChapters(bookId: string, chapterIds: string[]): Promise<CompiledBook> {
+  return apiFetch(`/compilations/${bookId}/chapters/reorder/`, {
+    method: "POST",
+    body: JSON.stringify({ chapter_ids: chapterIds }),
+  });
 }
 
 export function fetchCompiledComments(params: { book?: string; chapter?: string; verse?: string }): Promise<CompiledComment[]> {

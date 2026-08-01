@@ -1,4 +1,4 @@
-from django.db.models import Max
+from django.db.models import F, Max
 from rest_framework import serializers
 
 from bible.models import Verse
@@ -58,6 +58,42 @@ def _next_chapter_number(book: CompiledBook) -> int:
 def _next_verse_number(chapter: CompiledChapter) -> int:
     current = CompiledVerse.objects.filter(chapter=chapter).aggregate(max_num=Max("verse_number"))["max_num"]
     return int(current or 0) + 1
+
+
+def renumber_chapter_verses(chapter: CompiledChapter) -> None:
+    """章の節を、今の並び順のまま 1 から振り直す。"""
+    verses = CompiledVerse.objects.filter(chapter=chapter).order_by("order", "created_at")
+    for index, verse in enumerate(verses, start=1):
+        if verse.order != index or verse.verse_number != index:
+            verse.order = index
+            verse.verse_number = index
+            verse.save(update_fields=["order", "verse_number", "updated_at"])
+
+
+def renumber_tray_verses(book: CompiledBook) -> None:
+    """断章ボックスの節を、今の並び順のまま 1 から振り直す。節番号は持たせない。"""
+    verses = CompiledVerse.objects.filter(book=book, chapter__isnull=True).order_by("order", "created_at")
+    for index, verse in enumerate(verses, start=1):
+        if verse.order != index or verse.verse_number is not None:
+            verse.order = index
+            verse.verse_number = None
+            verse.save(update_fields=["order", "verse_number", "updated_at"])
+
+
+def renumber_chapters(book: CompiledBook) -> None:
+    """章を、今の並び順のまま第1章から振り直す。"""
+    chapters = CompiledChapter.objects.filter(book=book).order_by("order", "number")
+    for index, chapter in enumerate(chapters, start=1):
+        if chapter.number != index or chapter.order != index:
+            chapter.number = index
+            chapter.order = index
+            chapter.save(update_fields=["number", "order", "updated_at"])
+
+
+def _push_to_tray_top(book: CompiledBook) -> int:
+    """断章ボックスの既存の節を1つずつ下げ、一番上（order=1）を空ける。"""
+    CompiledVerse.objects.filter(book=book, chapter__isnull=True).update(order=F("order") + 1)
+    return 1
 
 
 class MotifTagSerializer(serializers.ModelSerializer):
@@ -238,7 +274,11 @@ class CompiledVerseSerializer(serializers.ModelSerializer):
         book = self.context["book"]
         chapter = validated_data.get("chapter")
         if "order" not in validated_data:
-            validated_data["order"] = _next_order(CompiledVerse, book=book, chapter=chapter)
+            if chapter is None:
+                # 断章ボックスは、あとから入れたものが一番上に来る。
+                validated_data["order"] = _push_to_tray_top(book)
+            else:
+                validated_data["order"] = _next_order(CompiledVerse, book=book, chapter=chapter)
         if chapter and "verse_number" not in validated_data:
             validated_data["verse_number"] = _next_verse_number(chapter)
         verse = CompiledVerse(book=book, **validated_data)
@@ -256,14 +296,22 @@ class CompiledVerseSerializer(serializers.ModelSerializer):
         old_chapter_id = instance.chapter_id
         for key, value in validated_data.items():
             setattr(instance, key, value)
+        chapter_changed = old_chapter_id != instance.chapter_id
         if instance.chapter_id and not instance.verse_number:
             instance.verse_number = _next_verse_number(instance.chapter)
-        if old_chapter_id != instance.chapter_id and instance.chapter_id:
-            instance.order = _next_order(CompiledVerse, book=instance.book, chapter=instance.chapter)
-            instance.verse_number = _next_verse_number(instance.chapter)
+        if chapter_changed:
+            if instance.chapter_id:
+                instance.order = _next_order(CompiledVerse, book=instance.book, chapter=instance.chapter)
+                instance.verse_number = _next_verse_number(instance.chapter)
+            else:
+                # 断章ボックスに戻すときは一番上へ。節番号は章のものなので落とす。
+                instance.order = _push_to_tray_top(instance.book)
+                instance.verse_number = None
         if source_changed:
             self._snapshot(instance)
         instance.save()
+        if chapter_changed and old_chapter_id:
+            renumber_chapter_verses(CompiledChapter.objects.get(pk=old_chapter_id))
         _set_motifs(instance, motif_names)
         return instance
 
@@ -340,6 +388,7 @@ class CompiledBookSummarySerializer(serializers.ModelSerializer):
             "slug",
             "description",
             "annotation",
+            "tray_name",
             "owner_username",
             "visibility",
             "motif_tags",

@@ -38,6 +38,8 @@ class CompiledBook(BaseModel):
     slug = models.SlugField(max_length=240, unique=True, blank=True)
     description = models.TextField(blank=True)
     annotation = models.TextField(blank=True)
+    # 断章ボックス（章に入れる前の節を溜める場所）に付ける個別名。空なら「断章ボックス」と表示する。
+    tray_name = models.CharField(max_length=100, blank=True)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -35,7 +35,7 @@ export default function Home() {
     { title: t.read, href: "/read", icon: "/img/icon-read.webp", featured: true },
     { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
     { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
-    { title: t.compilation, href: "/compilations", iconName: "book-open", requiresAuth: true },
+    { title: t.compilation, href: "/compilations", icon: "/img/block-1.png", requiresAuth: true },
   ];
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);

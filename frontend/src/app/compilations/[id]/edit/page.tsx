@@ -1,58 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   createCompiledChapter,
-  createCompiledVerse,
+  deleteCompiledBook,
   fetchCompiledBook,
-  publishCompiledBook,
-  unpublishCompiledBook,
+  reorderCompiledChapters,
   updateCompiledBook,
-  updateCompiledChapter,
-  updateCompiledVerse,
   type CompiledBook,
   type CompiledChapter,
-  type CompiledVerse,
   type CompiledVisibility,
 } from "@/lib/api";
+import { trayLabel, visibilityDescription } from "@/lib/compilations";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon } from "@/components/ui/Icon";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
 
+/**
+ * 編纂書の設定ページ。書の情報と章立てを決め、章を選ぶと作業ページ（章と断章ボックスの画面）へ進む。
+ */
 export default function CompilationEditPage() {
   const params = useParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const id = typeof params.id === "string" ? params.id : "";
+
   const [book, setBook] = useState<CompiledBook | null>(null);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const reload = () => {
+  const reload = useCallback(() => {
     if (!id) return;
-    setLoading(true);
     fetchCompiledBook(id)
       .then(setBook)
       .catch(() => setError("編纂書を読み込めませんでした。"))
       .finally(() => setLoading(false));
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (!authLoading && !user) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (user) reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, user, authLoading, router]);
+    if (authLoading || !user) return;
+    reload();
+  }, [authLoading, user, reload]);
 
-  const showMessage = (text: string) => {
-    setMessage(text);
-    setTimeout(() => setMessage(""), 2400);
-  };
-
-  if (authLoading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
+  if (authLoading || loading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
   if (!user) {
     return (
       <main style={{ padding: 32 }}>
@@ -65,314 +59,336 @@ export default function CompilationEditPage() {
       </main>
     );
   }
-  if (loading) return <main style={{ padding: 32, color: "var(--text-muted)" }}>読み込み中...</main>;
   if (error || !book) return <main style={{ padding: 32, color: "var(--state-danger)" }}>{error || "見つかりません。"}</main>;
 
   return (
-    <main style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 18px" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 22 }}>
-        <div>
-          <Link href={`/compilations/${book.id}`} style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13 }}>
-            ← 閲覧ページ
-          </Link>
-          <h1 style={{ margin: "10px 0 4px", fontSize: 24 }}>編纂エディタ</h1>
-          <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>
-            追加・移動・保存はすべて下書きに残ります。
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-          {book.visibility === "public" ? (
-            <button data-testid="unpublish-compilation-button" style={secondaryButtonStyle} onClick={async () => { setBook(await unpublishCompiledBook(book.id)); showMessage("非公開に戻しました。"); }}>
-              非公開へ
-            </button>
-          ) : (
-            <button data-testid="publish-compilation-button" style={primaryButtonStyle} onClick={async () => { setBook(await publishCompiledBook(book.id)); showMessage("公開しました。"); }}>
-              公開する
-            </button>
-          )}
-        </div>
+    <main style={{ maxWidth: 800, margin: "0 auto", padding: "32px 16px" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center", marginBottom: 22 }}>
+        <Link href="/compilations" style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <Icon name="arrow-left" size={14} />
+          編纂書一覧
+        </Link>
+        <Link href={`/compilations/${book.id}`} style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13, fontWeight: 700 }}>
+          読む形で見る
+        </Link>
       </header>
 
-      {message && <p role="status" style={{ color: "var(--accent)", fontSize: 13, fontWeight: 700 }}>{message}</p>}
+      <BookSettings book={book} onSaved={setBook} />
 
-      <div className="compilation-editor-grid" style={{ display: "grid", gridTemplateColumns: "minmax(260px, 340px) minmax(0, 1fr)", gap: 18, alignItems: "start" }}>
-        <aside style={panelStyle}>
-          <BookForm book={book} onSaved={(next) => { setBook(next); showMessage("書を保存しました。"); }} />
-          <AddTextForm bookId={book.id} onAdded={() => { reload(); showMessage("本文を追加しました。"); }} />
-          <AddChapterForm bookId={book.id} onAdded={() => { reload(); showMessage("章を追加しました。"); }} />
-        </aside>
+      <ChapterGrid book={book} onChanged={setBook} />
 
-        <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Tray verses={book.tray ?? []} chapters={book.chapters ?? []} bookId={book.id} onChanged={() => { reload(); showMessage("保存しました。"); }} />
-          {(book.chapters ?? []).map((chapter) => (
-            <ChapterEditor key={chapter.id} chapter={chapter} bookId={book.id} onChanged={() => { reload(); showMessage("保存しました。"); }} />
-          ))}
-        </section>
-      </div>
-      <style>{`
-        @media (max-width: 820px) {
-          .compilation-editor-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+      <DeleteBook book={book} onDeleted={() => router.push("/compilations")} />
     </main>
   );
 }
 
-function BookForm({ book, onSaved }: { book: CompiledBook; onSaved: (book: CompiledBook) => void }) {
-  const [title, setTitle] = useState(book.title);
-  const [description, setDescription] = useState(book.description);
-  const [annotation, setAnnotation] = useState(book.annotation);
-  const [visibility, setVisibility] = useState<CompiledVisibility>(book.visibility);
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      onSaved(await updateCompiledBook(book.id, { title, description, annotation, visibility }));
-    } finally {
-      setSaving(false);
-    }
-  };
+function BookSettings({ book, onSaved }: { book: CompiledBook; onSaved: (book: CompiledBook) => void }) {
+  const [draft, setDraft] = useState({
+    title: book.title,
+    description: book.description,
+    annotation: book.annotation,
+    tray_name: book.tray_name,
+    visibility: book.visibility,
+  });
+  const status = useAutosave(draft, async (value) => onSaved(await updateCompiledBook(book.id, value)));
 
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <h2 style={panelHeadingStyle}>書の設定</h2>
-      <Input label="書名" value={title} onChange={setTitle} />
-      <Textarea label="説明" value={description} onChange={setDescription} rows={3} />
-      <Textarea label="書への注釈" value={annotation} onChange={setAnnotation} rows={4} />
-      <label style={labelStyle}>
-        公開範囲
-        <select value={visibility} onChange={(e) => setVisibility(e.target.value as CompiledVisibility)} style={inputStyle}>
-          <option value="private">非公開</option>
-          <option value="unlisted">限定公開</option>
-          <option value="public">公開</option>
-        </select>
-      </label>
-      <button data-testid="book-save-button" type="button" style={primaryButtonStyle} onClick={save} disabled={saving || !title.trim()}>
-        {saving ? "保存中..." : "下書き保存"}
-      </button>
-    </section>
-  );
-}
-
-function AddTextForm({ bookId, onAdded }: { bookId: string; onAdded: () => void }) {
-  const [body, setBody] = useState("");
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const add = async () => {
-    const text = body.trim();
-    if (!text || saving) return;
-    setSaving(true);
-    try {
-      await createCompiledVerse(bookId, { source_kind: "note", body_snapshot: text, curator_note: note });
-      setBody("");
-      setNote("");
-      onAdded();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
-      <h2 style={panelHeadingStyle}>普通の本文を追加</h2>
-      <Textarea testId="add-text-body" label="本文" value={body} onChange={setBody} rows={4} />
-      <Textarea testId="add-text-note" label="節への注釈" value={note} onChange={setNote} rows={3} />
-      <button data-testid="add-text-button" type="button" style={secondaryButtonStyle} onClick={add} disabled={saving || !body.trim()}>
-        {saving ? "追加中..." : "未整理トレイへ追加"}
-      </button>
-    </section>
-  );
-}
-
-function AddChapterForm({ bookId, onAdded }: { bookId: string; onAdded: () => void }) {
-  const [title, setTitle] = useState("");
-  const [saving, setSaving] = useState(false);
-  const add = async () => {
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle || saving) return;
-    setSaving(true);
-    try {
-      await createCompiledChapter(bookId, { title: trimmedTitle });
-      setTitle("");
-      onAdded();
-    } finally {
-      setSaving(false);
-    }
-  };
-  return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 14 }}>
-      <h2 style={panelHeadingStyle}>章を追加</h2>
-      <Input testId="add-chapter-title" label="章タイトル" value={title} onChange={setTitle} />
-      <button data-testid="add-chapter-button" type="button" style={secondaryButtonStyle} onClick={add} disabled={saving || !title.trim()}>
-        {saving ? "追加中..." : "章を作成"}
-      </button>
-    </section>
-  );
-}
-
-function Tray({ verses, chapters, bookId, onChanged }: { verses: CompiledVerse[]; chapters: CompiledChapter[]; bookId: string; onChanged: () => void }) {
-  return (
-    <section style={panelStyle}>
-      <h2 style={{ ...panelHeadingStyle, display: "flex", alignItems: "center", gap: 6 }}>
-        <Icon name="book-open" size={16} />
-        未整理トレイ
-      </h2>
-      {verses.length === 0 ? (
-        <p style={emptyStyle}>読む画面の「編纂に追加」や、この画面の「普通の本文を追加」から断章を集めます。</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {verses.map((verse) => (
-            <VerseEditor key={verse.id} verse={verse} bookId={bookId} chapters={chapters} onChanged={onChanged} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ChapterEditor({ chapter, bookId, onChanged }: { chapter: CompiledChapter; bookId: string; onChanged: () => void }) {
-  const [title, setTitle] = useState(chapter.title);
-  const [introduction, setIntroduction] = useState(chapter.introduction);
-  const [annotation, setAnnotation] = useState(chapter.annotation);
-  const [saving, setSaving] = useState(false);
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateCompiledChapter(bookId, chapter.id, { title, introduction, annotation });
-      onChanged();
-    } finally {
-      setSaving(false);
-    }
-  };
-  return (
-    <section style={panelStyle}>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 10, alignItems: "start" }}>
-        <div>
-          <h2 style={panelHeadingStyle}>第{chapter.number}章</h2>
-          <Input label="章タイトル" value={title} onChange={setTitle} />
-        </div>
-        <button data-testid="chapter-save-button" type="button" style={secondaryButtonStyle} onClick={save} disabled={saving}>
-          {saving ? "保存中..." : "章を保存"}
-        </button>
+    <section style={{ marginBottom: 34 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>{draft.title || "無題の編纂書"}</h1>
+        <span role="status" style={{ fontSize: 11, color: status === "error" ? "var(--state-danger)" : "var(--text-faint)" }}>
+          {saveStatusLabel(status)}
+        </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 10 }}>
-        <Textarea testId="chapter-introduction" label="章の導入文" value={introduction} onChange={setIntroduction} rows={3} />
-        <Textarea testId="chapter-annotation" label="章への注釈" value={annotation} onChange={setAnnotation} rows={3} />
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
-        {chapter.verses.length === 0 ? (
-          <p style={emptyStyle}>この章にはまだ節がありません。</p>
-        ) : (
-          chapter.verses.map((verse) => (
-            <VerseEditor key={verse.id} verse={verse} bookId={bookId} chapters={[]} onChanged={onChanged} />
-          ))
-        )}
-      </div>
-    </section>
-  );
-}
 
-function VerseEditor({ verse, bookId, chapters, onChanged }: { verse: CompiledVerse; bookId: string; chapters: CompiledChapter[]; onChanged: () => void }) {
-  const [body, setBody] = useState(verse.body_snapshot);
-  const [note, setNote] = useState(verse.curator_note);
-  const [saving, setSaving] = useState(false);
-  const isNote = verse.source_kind === "note";
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await updateCompiledVerse(bookId, verse.id, {
-        ...(isNote ? { body_snapshot: body } : {}),
-        curator_note: note,
-      });
-      onChanged();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const moveToChapter = async (chapterId: string) => {
-    if (!chapterId) return;
-    setSaving(true);
-    try {
-      await updateCompiledVerse(bookId, verse.id, { chapter: chapterId });
-      onChanged();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <article style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 12, background: "rgba(255,255,255,0.03)" }}>
-      <p style={{ margin: "0 0 8px", color: "var(--text-faint)", fontSize: 12 }}>
-        {verse.chapter ? `第${verse.verse_number}節` : "未整理"} {verse.source_label && `・${verse.source_label}`}
-      </p>
-      {isNote ? (
-        <textarea data-testid="verse-body-input" value={body} onChange={(e) => setBody(e.target.value)} rows={4} style={textareaStyle} />
-      ) : (
-        <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.8, fontFamily: '"Noto Serif JP", serif', whiteSpace: "pre-wrap" }}>{verse.body_snapshot}</p>
-      )}
-      <Textarea testId="verse-note-input" label="節への注釈" value={note} onChange={setNote} rows={3} />
-      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 10 }}>
-        <button data-testid="verse-save-button" type="button" style={secondaryButtonStyle} onClick={save} disabled={saving}>
-          {saving ? "保存中..." : "節を保存"}
-        </button>
-        {chapters.length > 0 && (
-          <select data-testid="move-verse-select" onChange={(e) => moveToChapter(e.target.value)} defaultValue="" style={{ ...inputStyle, maxWidth: 220 }}>
-            <option value="">章へ移動...</option>
-            {chapters.map((chapter) => (
-              <option key={chapter.id} value={chapter.id}>第{chapter.number}章 {chapter.title}</option>
-            ))}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+        <Field label="書名">
+          <input
+            data-testid="book-title-input"
+            value={draft.title}
+            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+            maxLength={200}
+            style={{ ...inputStyle, fontFamily: '"Noto Serif JP", serif', fontSize: 15 }}
+          />
+        </Field>
+        <Field label="断章ボックスの名前" hint="空のままなら「断章ボックス」と呼びます。">
+          <input
+            data-testid="tray-name-input"
+            value={draft.tray_name}
+            onChange={(e) => setDraft((d) => ({ ...d, tray_name: e.target.value }))}
+            maxLength={100}
+            placeholder="断章ボックス"
+            style={inputStyle}
+          />
+        </Field>
+        <Field label="説明">
+          <textarea
+            data-testid="book-description-input"
+            value={draft.description}
+            onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+            rows={3}
+            style={{ ...inputStyle, lineHeight: 1.6, resize: "vertical" }}
+          />
+        </Field>
+        <Field label="書への注釈">
+          <textarea
+            data-testid="book-annotation-input"
+            value={draft.annotation}
+            onChange={(e) => setDraft((d) => ({ ...d, annotation: e.target.value }))}
+            rows={3}
+            style={{ ...inputStyle, lineHeight: 1.6, resize: "vertical" }}
+          />
+        </Field>
+        <Field label="公開範囲" hint={visibilityDescription(draft.visibility)}>
+          <select
+            data-testid="visibility-select"
+            value={draft.visibility}
+            onChange={(e) => setDraft((d) => ({ ...d, visibility: e.target.value as CompiledVisibility }))}
+            style={inputStyle}
+          >
+            <option value="private">非公開</option>
+            <option value="unlisted">限定公開</option>
+            <option value="public">公開</option>
           </select>
-        )}
+        </Field>
       </div>
-    </article>
+    </section>
   );
 }
 
-function Input({ label, value, onChange, testId }: { label: string; value: string; onChange: (value: string) => void; testId?: string }) {
+/**
+ * 読む画面の「章を選択」と同じ形の章立て。数字のパネルを押すとその章の作業ページへ進む。
+ * ＋のパネルで章を足し、パネルをドラッグすると章の順番が変わる。
+ */
+function ChapterGrid({ book, onChanged }: { book: CompiledBook; onChanged: (book: CompiledBook) => void }) {
+  const chapters = book.chapters ?? [];
+  const [adding, setAdding] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  const addChapter = async () => {
+    if (adding) return;
+    setAdding(true);
+    try {
+      await createCompiledChapter(book.id, {});
+      onChanged(await fetchCompiledBook(book.id));
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const dropOn = async (targetIndex: number) => {
+    const ids = chapters.map((c) => c.id);
+    const fromIndex = draggingId ? ids.indexOf(draggingId) : -1;
+    setDraggingId(null);
+    setOverId(null);
+    if (fromIndex === -1 || fromIndex === targetIndex) return;
+    const [moved] = ids.splice(fromIndex, 1);
+    ids.splice(targetIndex, 0, moved);
+    onChanged(await reorderCompiledChapters(book.id, ids));
+  };
+
   return (
-    <label style={labelStyle}>
+    <section style={{ marginBottom: 40 }}>
+      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>章を選択</h2>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))", gap: "var(--space-2)" }}>
+        {chapters.map((chapter, index) => (
+          <ChapterPanel
+            key={chapter.id}
+            book={book}
+            chapter={chapter}
+            isOver={overId === chapter.id && draggingId !== chapter.id}
+            isDragging={draggingId === chapter.id}
+            onDragStart={() => setDraggingId(chapter.id)}
+            onDragEnd={() => {
+              setDraggingId(null);
+              setOverId(null);
+            }}
+            onDragOver={() => setOverId(chapter.id)}
+            onDrop={() => dropOn(index)}
+          />
+        ))}
+
+        <button
+          type="button"
+          data-testid="add-chapter-button"
+          onClick={addChapter}
+          aria-label="章を追加"
+          title="章を追加"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 44,
+            minWidth: 44,
+            border: "1px dashed var(--border)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--bg-alt)",
+            color: "var(--text-muted)",
+            cursor: "pointer",
+            padding: 0,
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "var(--accent-tint)";
+            el.style.color = "var(--accent)";
+            el.style.borderColor = "var(--accent)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "var(--bg-alt)";
+            el.style.color = "var(--text-muted)";
+            el.style.borderColor = "var(--border)";
+          }}
+        >
+          <Icon name="plus" size={18} />
+        </button>
+      </div>
+
+      {chapters.length === 0 && (
+        <p style={{ margin: "12px 0 0", fontSize: 12, color: "var(--text-faint)", lineHeight: 1.7 }}>
+          ＋で章を作ると、{trayLabel(book)}の断章をその章へ並べられます。
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ChapterPanel({
+  book,
+  chapter,
+  isOver,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+}: {
+  book: CompiledBook;
+  chapter: CompiledChapter;
+  isOver: boolean;
+  isDragging: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
+}) {
+  const border = isOver ? "var(--accent)" : "var(--border)";
+  return (
+    <Link
+      href={`/compilations/${book.id}/edit/chapters/${chapter.id}`}
+      data-testid="chapter-panel"
+      title={`第${chapter.number}章 ${chapter.title || "（無題）"} ・ ${chapter.verses.length}節`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", chapter.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      style={{
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 44,
+        minWidth: 44,
+        border: `1px solid ${border}`,
+        borderRadius: "var(--radius-md)",
+        textDecoration: "none",
+        color: isOver ? "var(--accent)" : "var(--text-muted)",
+        fontWeight: 700,
+        fontSize: "var(--font-size-sm)",
+        background: isOver ? "var(--accent-tint)" : "var(--bg-alt)",
+        opacity: isDragging ? 0.4 : 1,
+        transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = "var(--accent-tint)";
+        el.style.color = "var(--accent)";
+        el.style.borderColor = "var(--accent)";
+        el.style.boxShadow = "var(--shadow-glow)";
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLElement;
+        el.style.background = isOver ? "var(--accent-tint)" : "var(--bg-alt)";
+        el.style.color = isOver ? "var(--accent)" : "var(--text-muted)";
+        el.style.borderColor = border;
+        el.style.boxShadow = "none";
+      }}
+    >
+      {chapter.number}
+      {chapter.verses.length > 0 && (
+        <span
+          aria-label={`${chapter.verses.length}節`}
+          style={{ position: "absolute", bottom: 3, left: 3, width: 4, height: 4, borderRadius: "50%", background: "var(--accent)" }}
+        />
+      )}
+    </Link>
+  );
+}
+
+function DeleteBook({ book, onDeleted }: { book: CompiledBook; onDeleted: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <section style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
+      <ConfirmDialog
+        open={confirming}
+        destructive
+        title={`「${book.title}」を消しますか？`}
+        description="章も断章もすべて消えます。元に戻せません。"
+        confirmText="編纂書を消す"
+        onCancel={() => setConfirming(false)}
+        onConfirm={async () => {
+          setConfirming(false);
+          await deleteCompiledBook(book.id);
+          onDeleted();
+        }}
+      />
+      <button
+        type="button"
+        data-testid="delete-book"
+        onClick={() => setConfirming(true)}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          border: "none",
+          background: "none",
+          padding: 0,
+          color: "var(--state-danger)",
+          fontSize: 12,
+          fontWeight: 700,
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
+        <Icon name="trash" size={13} />
+        この編纂書を消す
+      </button>
+    </section>
+  );
+}
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12, fontWeight: 700, color: "var(--text-muted)" }}>
       {label}
-      <input data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle} />
+      {children}
+      {hint && <span style={{ fontWeight: 400, fontSize: 11, color: "var(--text-faint)", lineHeight: 1.5 }}>{hint}</span>}
     </label>
   );
 }
-
-function Textarea({ label, value, onChange, rows, testId }: { label: string; value: string; onChange: (value: string) => void; rows: number; testId?: string }) {
-  return (
-    <label style={labelStyle}>
-      {label}
-      <textarea data-testid={testId} value={value} onChange={(e) => onChange(e.target.value)} rows={rows} style={textareaStyle} />
-    </label>
-  );
-}
-
-const panelStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  padding: 16,
-  background: "rgba(255,255,255,0.02)",
-};
-
-const panelHeadingStyle: React.CSSProperties = {
-  margin: "0 0 10px",
-  fontSize: 15,
-  fontWeight: 800,
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 5,
-  fontSize: 12,
-  fontWeight: 700,
-  color: "var(--text-muted)",
-};
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -384,41 +400,4 @@ const inputStyle: React.CSSProperties = {
   color: "var(--text)",
   fontFamily: "inherit",
   fontSize: 13,
-};
-
-const textareaStyle: React.CSSProperties = {
-  ...inputStyle,
-  resize: "vertical",
-  lineHeight: 1.6,
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  border: "none",
-  borderRadius: 6,
-  padding: "9px 12px",
-  background: "var(--accent)",
-  color: "var(--accent-text)",
-  fontWeight: 800,
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  padding: "8px 11px",
-  background: "var(--bg-alt)",
-  color: "var(--text)",
-  fontWeight: 700,
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const emptyStyle: React.CSSProperties = {
-  margin: 0,
-  color: "var(--text-faint)",
-  fontSize: 13,
-  lineHeight: 1.6,
 };

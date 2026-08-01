@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 import { type Verse } from "@/lib/api";
+import { Icon } from "@/components/ui/Icon";
 
 type Props = {
   verses: Verse[];
@@ -11,6 +12,9 @@ type Props = {
   // 節番号の表示を差し替えたいとき（例: マルコの「短い結び」）に使う。
   // 省略時は verse.number をそのまま表示する。
   numberLabel?: (verse: Verse) => ReactNode;
+  // 編纂へまとめて集めるモード。節を押すと選び、印を付ける。
+  collecting?: boolean;
+  collectedVerseIds?: string[];
 };
 
 export function VerseList({
@@ -19,12 +23,16 @@ export function VerseList({
   onSelectVerse,
   highlightVerseNumber,
   numberLabel,
+  collecting = false,
+  collectedVerseIds = [],
 }: Props) {
+  const collected = new Set(collectedVerseIds);
 
   return (
     <div>
       {verses.map((verse) => {
-        const isSelected = selectedVerseId === verse.id;
+        const isCollected = collecting && collected.has(verse.id);
+        const isSelected = collecting ? isCollected : selectedVerseId === verse.id;
         const isHighlighted = !isSelected && verse.number === highlightVerseNumber;
 
         return (
@@ -32,8 +40,13 @@ export function VerseList({
             id={`verse-${verse.number}`}
             key={verse.id}
             data-testid="verse-item"
+            role={collecting ? "checkbox" : undefined}
+            aria-checked={collecting ? isCollected : undefined}
             onClick={() => onSelectVerse(verse.id)}
             style={{
+              display: collecting ? "flex" : undefined,
+              gap: collecting ? 10 : undefined,
+              alignItems: collecting ? "flex-start" : undefined,
               padding: "12px 16px",
               minHeight: 44,
               cursor: "pointer",
@@ -55,6 +68,27 @@ export function VerseList({
               }
             }}
           >
+            {collecting && (
+              <span
+                aria-hidden="true"
+                data-testid="verse-checkbox"
+                style={{
+                  flexShrink: 0,
+                  width: 18,
+                  height: 18,
+                  marginTop: 6,
+                  borderRadius: 4,
+                  border: `1px solid ${isCollected ? "var(--accent)" : "var(--border)"}`,
+                  background: isCollected ? "var(--accent)" : "var(--bg-alt)",
+                  color: "var(--accent-text)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {isCollected && <Icon name="check" size={13} />}
+              </span>
+            )}
             <span
               style={{
                 lineHeight: 1.9,

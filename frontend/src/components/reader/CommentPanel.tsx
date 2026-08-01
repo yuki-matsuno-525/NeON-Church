@@ -13,6 +13,7 @@ import {
   type Bookmark,
   type CompiledBook,
 } from "@/lib/api";
+import { trayLabel } from "@/lib/compilations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
@@ -119,6 +120,10 @@ export function CommentPanel({
     setComposeOpen(true);
   };
 
+  // 追加先に選ばれている編纂書の、断章ボックスの呼び名。
+  const selectedCompilationBook = compilations.find((book) => book.id === selectedCompilationId);
+  const selectedCompilationLabel = selectedCompilationBook ? trayLabel(selectedCompilationBook) : "断章ボックス";
+
   const handleOpenCompilation = async () => {
     if (!user) {
       setShowLoginModal(true);
@@ -147,7 +152,7 @@ export function CommentPanel({
         curator_note: compilationNote,
       });
       setCompilationNote("");
-      setCompilationMessage("未整理トレイへ追加しました。");
+      setCompilationMessage(`${selectedCompilationLabel}へ入れました。`);
     } catch {
       setCompilationMessage("追加できませんでした。");
     } finally {
@@ -475,7 +480,7 @@ export function CommentPanel({
                         fontFamily: "inherit",
                       }}
                     >
-                      {compilationBusy ? "追加中..." : "未整理トレイへ追加"}
+                      {compilationBusy ? "追加中..." : `${selectedCompilationLabel}へ入れる`}
                     </button>
                   </div>
                 )}

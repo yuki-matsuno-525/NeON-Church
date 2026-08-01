@@ -30,7 +30,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description ログアウト。Cookie の refresh_token をブラックリストに追加し、両方の Cookie を削除する。 */
+        /**
+         * @description ログアウト。Cookie の refresh_token をブラックリストに追加し、両方の Cookie を削除する。
+         *
+         *     アクセストークン期限切れ時にもログアウトを成立させたいため AllowAny にしている。
+         *     refresh_token が無ければ blacklist をスキップして Cookie 削除のみ行う。
+         */
         post: operations["api_auth_logout_create"];
         delete?: never;
         options?: never;
@@ -54,6 +59,74 @@ export interface paths {
         head?: never;
         /** @description GET /api/auth/me/  現在のログインユーザー情報を返す。PATCH でプロフィール更新。 */
         patch: operations["api_auth_me_partial_update"];
+        trace?: never;
+    };
+    "/api/auth/oauth/github/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/auth/oauth/github/ → GitHub 認証ページへリダイレクト */
+        get: operations["api_auth_oauth_github_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/github/callback/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/auth/oauth/github/callback/ → JWT Cookie 設定 → フロントへリダイレクト */
+        get: operations["api_auth_oauth_github_callback_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/google/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/auth/oauth/google/ → Google 認証ページへリダイレクト */
+        get: operations["api_auth_oauth_google_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/oauth/google/callback/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/auth/oauth/google/callback/ → JWT Cookie 設定 → フロントへリダイレクト */
+        get: operations["api_auth_oauth_google_callback_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/auth/register/": {
@@ -357,10 +430,219 @@ export interface paths {
         /**
          * @description GET /api/comments/qa/  Q&Aフラグ付きコメント一覧（認証不要）
          *
-         *     ?book_id=   書で絞り込み
+         *     ?book_id=   書で絞り込み（カンマ区切りで複数指定可。同一書の複数訳をまとめて絞る用）
          *     ?tag_id=    タグで絞り込み
          */
         get: operations["api_comments_qa_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comments/trending/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要） */
+        get: operations["api_comments_trending_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_compilations_list"];
+        put?: never;
+        post: operations["api_compilations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_compilations_retrieve"];
+        put: operations["api_compilations_update"];
+        post?: never;
+        delete: operations["api_compilations_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["api_compilations_partial_update"];
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/chapters/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_compilations_chapters_list"];
+        put?: never;
+        post: operations["api_compilations_chapters_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/chapters/{chapter_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["api_compilations_chapters_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["api_compilations_chapters_partial_update"];
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_compilations_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/unpublish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["api_compilations_unpublish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/verses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_compilations_verses_list"];
+        put?: never;
+        post: operations["api_compilations_verses_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/{book_id}/verses/{verse_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["api_compilations_verses_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["api_compilations_verses_partial_update"];
+        trace?: never;
+    };
+    "/api/compilations/comments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_compilations_comments_list"];
+        put?: never;
+        post: operations["api_compilations_comments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compilations/comments/{comment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["api_compilations_comments_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/motifs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_motifs_list"];
+        put?: never;
+        post: operations["api_motifs_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/motifs/{slug}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["api_motifs_retrieve"];
         put?: never;
         post?: never;
         delete?: never;
@@ -423,6 +705,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/unread-count/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/notifications/unread-count/  未読件数だけを軽量に返す。 */
+        get: operations["api_notifications_unread_count_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reading-progress/": {
         parameters: {
             query?: never;
@@ -451,6 +750,57 @@ export interface paths {
         put?: never;
         /** @description POST /api/reading-progress/save/  進捗を保存（upsert: user+book 単位で更新or作成） */
         post: operations["api_reading_progress_save_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/references/{slug}/books/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/references/<slug>/books/  その書の全版の書 id。 */
+        get: operations["api_references_books_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/references/{slug}/chapters/{chapter}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/references/<slug>/chapters/<chapter>/  その章の全版の章 id。 */
+        get: operations["api_references_chapters_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/references/{slug}/verses/{chapter}/{verse}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/references/<slug>/verses/<chapter>/<verse>/  その節の全版の節 id。 */
+        get: operations["api_references_verses_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -486,7 +836,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET /api/search/?q=  節テキストと書名を icontains で検索（口語訳のみ）。 */
+        /**
+         * @description GET /api/search/?q=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
+         *
+         *     - 検索対象は SEARCH_TRANSLATIONS の全訳。UI 言語では絞らない（検索語が言語を選ぶ）。
+         *     - kind（all/verses/books/comments）で返すセクションを絞る。
+         *     - book（canonical_book.slug）で書を絞る。
+         *     - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
+         *       books / comments は1ページ目のプレビュー用（ページングしない）。
+         */
         get: operations["api_search_retrieve"];
         put?: never;
         post?: never;
@@ -521,13 +879,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description GET  /api/translations/  公開中・進行中プロジェクト一覧（認証不要）
+         * @description GET  /api/translations/  プロジェクト一覧（認証不要・20件ページング）
+         *         ?status=published|active|draft でステータス列ごとに、?page=N でページ送りできる。
+         *         一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
          *     POST /api/translations/  プロジェクト作成（要認証）
          */
         get: operations["api_translations_list"];
         put?: never;
         /**
-         * @description GET  /api/translations/  公開中・進行中プロジェクト一覧（認証不要）
+         * @description GET  /api/translations/  プロジェクト一覧（認証不要・20件ページング）
+         *         ?status=published|active|draft でステータス列ごとに、?page=N でページ送りできる。
+         *         一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
          *     POST /api/translations/  プロジェクト作成（要認証）
          */
         post: operations["api_translations_create"];
@@ -545,22 +907,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * @description GET   /api/translations/{id}/  プロジェクト詳細
-         *     PATCH /api/translations/{id}/  編集（オーナーのみ）
+         * @description GET    /api/translations/{id}/  プロジェクト詳細
+         *     PATCH  /api/translations/{id}/  編集（オーナーのみ）
+         *     DELETE /api/translations/{id}/  削除（オーナーのみ）
          */
         get: operations["api_translations_retrieve"];
         /**
-         * @description GET   /api/translations/{id}/  プロジェクト詳細
-         *     PATCH /api/translations/{id}/  編集（オーナーのみ）
+         * @description GET    /api/translations/{id}/  プロジェクト詳細
+         *     PATCH  /api/translations/{id}/  編集（オーナーのみ）
+         *     DELETE /api/translations/{id}/  削除（オーナーのみ）
          */
         put: operations["api_translations_update"];
         post?: never;
-        delete?: never;
+        /**
+         * @description GET    /api/translations/{id}/  プロジェクト詳細
+         *     PATCH  /api/translations/{id}/  編集（オーナーのみ）
+         *     DELETE /api/translations/{id}/  削除（オーナーのみ）
+         */
+        delete: operations["api_translations_destroy"];
         options?: never;
         head?: never;
         /**
-         * @description GET   /api/translations/{id}/  プロジェクト詳細
-         *     PATCH /api/translations/{id}/  編集（オーナーのみ）
+         * @description GET    /api/translations/{id}/  プロジェクト詳細
+         *     PATCH  /api/translations/{id}/  編集（オーナーのみ）
+         *     DELETE /api/translations/{id}/  削除（オーナーのみ）
          */
         patch: operations["api_translations_partial_update"];
         trace?: never;
@@ -576,6 +946,27 @@ export interface paths {
         put?: never;
         /** @description POST /api/translations/{id}/activate/  募集開始 draft → active（オーナーのみ） */
         post: operations["api_translations_activate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/translations/{project_id}/add-book/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/translations/{id}/add-book/
+         *     指定した書のすべての節を翻訳ユニットとして一括追加（オーナーのみ）。
+         *     すでに存在するユニットはスキップ（冪等）。
+         */
+        post: operations["api_translations_add_book_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -629,6 +1020,30 @@ export interface paths {
         /** @description POST /api/translations/{id}/join/  参加申請（要認証） */
         post: operations["api_translations_join_create"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/translations/{project_id}/library/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST   /api/translations/{id}/library/  自分の /read に追加（公開済みのみ・冪等）
+         *     DELETE /api/translations/{id}/library/  自分の /read から削除（冪等）
+         */
+        post: operations["api_translations_library_create"];
+        /**
+         * @description POST   /api/translations/{id}/library/  自分の /read に追加（公開済みのみ・冪等）
+         *     DELETE /api/translations/{id}/library/  自分の /read から削除（冪等）
+         */
+        delete: operations["api_translations_library_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -704,6 +1119,26 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/translations/{project_id}/remove-book/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * @description DELETE /api/translations/{id}/remove-book/
+         *     指定した書のすべての翻訳ユニットを削除（オーナーのみ）。
+         */
+        delete: operations["api_translations_remove_book_destroy"];
         options?: never;
         head?: never;
         patch?: never;
@@ -813,6 +1248,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/translations/languages/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/translations/languages/  翻訳先言語一覧（誰でも閲覧可） */
+        get: operations["api_translations_languages_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/translations/library/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description GET /api/translations/library/  自分が /read に追加した公開翻訳一覧（要認証） */
+        get: operations["api_translations_library_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users/{username}/": {
         parameters: {
             query?: never;
@@ -837,7 +1306,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要・公開） */
+        /**
+         * @description GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要）
+         *
+         *     対象ユーザーの bookmarks_visibility が "public" のときのみ実データを返す。
+         *     "private"（既定）のときは空配列を返す。フロントエンドは公開プロフィールの
+         *     visibility を見てタブ表示自体を出し分ける。
+         */
         get: operations["api_users_bookmarks_list"];
         put?: never;
         post?: never;
@@ -871,7 +1346,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択） */
+        /**
+         * @description GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）
+         *
+         *     ?translation=KJV を渡すと、同じ日付インデックスの節を KJV テキストで返す。
+         *     口語訳の節順序を基準に日付で節を選び、canonical_book / chapter.number / verse.number で対応節を引く。
+         */
         get: operations["api_verse_of_the_day_retrieve"];
         put?: never;
         post?: never;
@@ -919,19 +1399,26 @@ export interface components {
             readonly id: string;
             name: string;
             translation: string;
-            /** Format: int64 */
             order: number;
         };
         Bookmark: {
             /** Format: uuid */
             readonly id: string;
             /** Format: uuid */
-            verse?: string | null;
+            verse?: string;
+            /** Format: uuid */
+            chapter?: string;
+            /** Format: uuid */
+            book?: string;
             /** Format: uuid */
             comment?: string | null;
-            readonly verse_detail: components["schemas"]["VerseBrief"];
+            /** Format: uuid */
+            translation_project?: string | null;
             readonly comment_detail: components["schemas"]["CommentBrief"];
+            readonly project_detail: components["schemas"]["ProjectBrief"];
             readonly target_type: string;
+            readonly reference: string;
+            readonly verse_text: string;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -940,7 +1427,6 @@ export interface components {
             readonly id: string;
             /** Format: uuid */
             book: string;
-            /** Format: int64 */
             number: number;
         };
         Comment: {
@@ -948,13 +1434,17 @@ export interface components {
             readonly id: string;
             readonly user: components["schemas"]["CommentAuthor"];
             /** Format: uuid */
-            verse?: string | null;
+            verse?: string;
             /** Format: uuid */
-            chapter?: string | null;
+            chapter?: string;
             /** Format: uuid */
-            book?: string | null;
+            book?: string;
+            /** Format: uuid */
+            translation_project?: string | null;
+            readonly version_label: string;
             /** Format: uuid */
             parent?: string | null;
+            title?: string;
             body: string;
             is_qa?: boolean;
             readonly is_deleted: boolean;
@@ -980,11 +1470,146 @@ export interface components {
             username: string;
             /** Format: date-time */
             created_at: string;
+            readonly location_label: string;
+            readonly book_slug: string;
+            readonly chapter_number: number;
+            readonly verse_number: number;
+            readonly source_translation: string;
         };
         CommentEdit: {
+            title?: string;
             body: string;
         };
-        /** @description 自分のコメント一覧用。投稿先の書名・章番号を含む。 */
+        CompiledBookDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            title: string;
+            readonly slug: string;
+            description?: string;
+            annotation?: string;
+            readonly owner_username: string;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            readonly motif_tags: components["schemas"]["MotifTag"][];
+            readonly chapter_count: number;
+            readonly verse_count: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            /** Format: uuid */
+            forked_from?: string | null;
+            readonly forked_from_title: string | null;
+            motif_names?: string[];
+            readonly chapters: components["schemas"]["CompiledChapter"][];
+            readonly tray: {
+                [key: string]: unknown;
+            }[];
+        };
+        CompiledBookSummary: {
+            /** Format: uuid */
+            readonly id: string;
+            title: string;
+            readonly slug: string;
+            description?: string;
+            annotation?: string;
+            readonly owner_username: string;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            readonly motif_tags: components["schemas"]["MotifTag"][];
+            readonly chapter_count: number;
+            readonly verse_count: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        CompiledChapter: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly book: string;
+            number?: number;
+            title?: string;
+            introduction?: string;
+            annotation?: string;
+            order?: number;
+            readonly motif_tags: components["schemas"]["MotifTag"][];
+            motif_names?: string[];
+            readonly verse_count: number;
+            readonly verses: components["schemas"]["CompiledVerse"][];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        CompiledComment: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly user: components["schemas"]["CompiledCommentAuthor"];
+            /** Format: uuid */
+            book?: string | null;
+            /** Format: uuid */
+            chapter?: string | null;
+            /** Format: uuid */
+            verse?: string | null;
+            /** Format: uuid */
+            parent?: string | null;
+            body: string;
+            readonly is_deleted: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        CompiledCommentAuthor: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+        };
+        CompiledVerse: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly book: string;
+            /** Format: uuid */
+            chapter?: string | null;
+            verse_number?: number | null;
+            order?: number;
+            source_kind?: components["schemas"]["SourceKindEnum"];
+            /** Format: uuid */
+            source_verse?: string | null;
+            /** Format: uuid */
+            source_translation_unit?: string | null;
+            /** Format: uuid */
+            source_compiled_verse?: string | null;
+            body_snapshot?: string;
+            readonly source_label: string;
+            readonly source_reference: {
+                [key: string]: unknown;
+            } | null;
+            curator_note?: string;
+            readonly motif_tags: components["schemas"]["MotifTag"][];
+            motif_names?: string[];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        Language: {
+            /** Format: uuid */
+            readonly id: string;
+            tag: string;
+            label: string;
+            order?: number;
+        };
+        MotifTag: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            readonly slug: string;
+            description?: string;
+        };
+        /**
+         * @description 自分のコメント一覧用。投稿先の書名・章番号に加え、
+         *     プロフィールからその箇所へリンクするための slug/章/節/訳も返す。
+         */
         MyComment: {
             /** Format: uuid */
             readonly id: string;
@@ -994,27 +1619,233 @@ export interface components {
             readonly created_at: string;
             readonly vote_count: number;
             readonly location_label: string;
+            readonly book_slug: string;
+            readonly chapter_number: number;
+            readonly verse_number: number;
+            readonly source_translation: string;
         };
         Notification: {
             /** Format: uuid */
             readonly id: string;
             notification_type: components["schemas"]["NotificationTypeEnum"];
             readonly actor_username: string;
-            /** Format: uuid */
-            readonly comment_id: string;
+            readonly comment_id: string | null;
             readonly comment_body_snippet: string;
+            readonly translation_project_id: string | null;
             is_read?: boolean;
             /** Format: date-time */
             readonly created_at: string;
+            /** @description ジャンプ先の種別。フロントの URL 組み立て分岐に使う。 */
+            readonly target_kind: string | null;
+            readonly book_name: string | null;
+            readonly chapter_number: number | null;
+            readonly verse_number: number | null;
+            readonly translation_unit_id: string | null;
+            readonly is_qa: boolean;
         };
         /**
-         * @description * `reply` - 返信
-         *     * `upvote` - いいね
+         * @description * `reply` - Reply
+         *     * `upvote` - Upvote
+         *     * `mention` - Mention
          * @enum {string}
          */
-        NotificationTypeEnum: "reply" | "upvote";
+        NotificationTypeEnum: "reply" | "upvote" | "mention";
+        PaginatedBookmarkList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Bookmark"][];
+        };
+        PaginatedCommentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Comment"][];
+        };
+        PaginatedCompiledBookSummaryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["CompiledBookSummary"][];
+        };
+        PaginatedCompiledCommentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["CompiledComment"][];
+        };
+        PaginatedMyCommentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["MyComment"][];
+        };
+        PaginatedNotificationList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Notification"][];
+        };
+        PaginatedQACommentList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["QAComment"][];
+        };
+        PaginatedTranslationProjectList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["TranslationProject"][];
+        };
         PatchedCommentEdit: {
+            title?: string;
             body?: string;
+        };
+        PatchedCompiledBookDetail: {
+            /** Format: uuid */
+            readonly id?: string;
+            title?: string;
+            readonly slug?: string;
+            description?: string;
+            annotation?: string;
+            readonly owner_username?: string;
+            visibility?: components["schemas"]["VisibilityEnum"];
+            readonly motif_tags?: components["schemas"]["MotifTag"][];
+            readonly chapter_count?: number;
+            readonly verse_count?: number;
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+            /** Format: uuid */
+            forked_from?: string | null;
+            readonly forked_from_title?: string | null;
+            motif_names?: string[];
+            readonly chapters?: components["schemas"]["CompiledChapter"][];
+            readonly tray?: {
+                [key: string]: unknown;
+            }[];
+        };
+        PatchedCompiledChapter: {
+            /** Format: uuid */
+            readonly id?: string;
+            /** Format: uuid */
+            readonly book?: string;
+            number?: number;
+            title?: string;
+            introduction?: string;
+            annotation?: string;
+            order?: number;
+            readonly motif_tags?: components["schemas"]["MotifTag"][];
+            motif_names?: string[];
+            readonly verse_count?: number;
+            readonly verses?: components["schemas"]["CompiledVerse"][];
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
+        };
+        PatchedCompiledVerse: {
+            /** Format: uuid */
+            readonly id?: string;
+            /** Format: uuid */
+            readonly book?: string;
+            /** Format: uuid */
+            chapter?: string | null;
+            verse_number?: number | null;
+            order?: number;
+            source_kind?: components["schemas"]["SourceKindEnum"];
+            /** Format: uuid */
+            source_verse?: string | null;
+            /** Format: uuid */
+            source_translation_unit?: string | null;
+            /** Format: uuid */
+            source_compiled_verse?: string | null;
+            body_snapshot?: string;
+            readonly source_label?: string;
+            readonly source_reference?: {
+                [key: string]: unknown;
+            } | null;
+            curator_note?: string;
+            readonly motif_tags?: components["schemas"]["MotifTag"][];
+            motif_names?: string[];
+            /** Format: date-time */
+            readonly created_at?: string;
+            /** Format: date-time */
+            readonly updated_at?: string;
         };
         PatchedTranslationProject: {
             /** Format: uuid */
@@ -1030,6 +1861,7 @@ export interface components {
             readonly unit_count?: string;
             readonly done_count?: string;
             readonly is_member?: string;
+            readonly is_in_library?: string;
             /** Format: date-time */
             readonly created_at?: string;
             /** Format: date-time */
@@ -1042,6 +1874,8 @@ export interface components {
             verse?: string;
             readonly verse_number?: number;
             readonly verse_text?: string;
+            /** Format: uuid */
+            readonly chapter?: string;
             readonly chapter_number?: number;
             /** Format: uuid */
             assigned_to?: string | null;
@@ -1053,10 +1887,16 @@ export interface components {
             /** Format: date-time */
             readonly updated_at?: string;
         };
+        ProjectBrief: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
         QAComment: {
             /** Format: uuid */
             readonly id: string;
             readonly user: components["schemas"]["CommentAuthor"];
+            title?: string;
             body: string;
             /** Format: date-time */
             readonly created_at: string;
@@ -1087,6 +1927,14 @@ export interface components {
          * @enum {string}
          */
         RoleEnum: "owner" | "member";
+        /**
+         * @description * `bible_verse` - Bible verse
+         *     * `translation_unit` - Translation unit
+         *     * `compiled_verse` - Compiled verse
+         *     * `note` - Note
+         * @enum {string}
+         */
+        SourceKindEnum: "bible_verse" | "translation_unit" | "compiled_verse" | "note";
         Tag: {
             readonly id: number;
             name: string;
@@ -1135,6 +1983,7 @@ export interface components {
             readonly unit_count: string;
             readonly done_count: string;
             readonly is_member: string;
+            readonly is_in_library: string;
             /** Format: date-time */
             readonly created_at: string;
             /** Format: date-time */
@@ -1154,6 +2003,8 @@ export interface components {
             verse: string;
             readonly verse_number: number;
             readonly verse_text: string;
+            /** Format: uuid */
+            readonly chapter: string;
             readonly chapter_number: number;
             /** Format: uuid */
             assigned_to?: string | null;
@@ -1178,19 +2029,16 @@ export interface components {
             readonly id: string;
             /** Format: uuid */
             chapter: string;
-            /** Format: int64 */
             number: number;
             text: string;
         };
-        VerseBrief: {
-            /** Format: uuid */
-            readonly id: string;
-            /** Format: int64 */
-            number: number;
-            text: string;
-            readonly chapter_number: number;
-            readonly book_name: string;
-        };
+        /**
+         * @description * `private` - Private
+         *     * `unlisted` - Unlisted
+         *     * `public` - Public
+         * @enum {string}
+         */
+        VisibilityEnum: "private" | "unlisted" | "public";
     };
     responses: never;
     parameters: never;
@@ -1272,6 +2120,78 @@ export interface operations {
             };
         };
     };
+    api_auth_oauth_github_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_auth_oauth_github_callback_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_auth_oauth_google_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_auth_oauth_google_callback_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     api_auth_register_create: {
         parameters: {
             query?: never;
@@ -1310,7 +2230,12 @@ export interface operations {
     };
     api_bookmarks_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1322,7 +2247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Bookmark"][];
+                    "application/json": components["schemas"]["PaginatedBookmarkList"];
                 };
             };
         };
@@ -1435,7 +2360,12 @@ export interface operations {
     };
     api_comments_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1447,7 +2377,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Comment"][];
+                    "application/json": components["schemas"]["PaginatedCommentList"];
                 };
             };
         };
@@ -1626,7 +2556,12 @@ export interface operations {
     };
     api_comments_mine_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1638,12 +2573,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyComment"][];
+                    "application/json": components["schemas"]["PaginatedMyCommentList"];
                 };
             };
         };
     };
     api_comments_qa_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedQACommentList"];
+                };
+            };
+        };
+    };
+    api_comments_trending_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -1662,7 +2621,454 @@ export interface operations {
             };
         };
     };
-    api_notifications_list: {
+    api_compilations_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCompiledBookSummaryList"];
+                };
+            };
+        };
+    };
+    api_compilations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompiledBookDetail"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompiledBookDetail"];
+                "multipart/form-data": components["schemas"]["CompiledBookDetail"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledBookDetail"];
+                };
+            };
+        };
+    };
+    api_compilations_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledBookDetail"];
+                };
+            };
+        };
+    };
+    api_compilations_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompiledBookDetail"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompiledBookDetail"];
+                "multipart/form-data": components["schemas"]["CompiledBookDetail"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledBookDetail"];
+                };
+            };
+        };
+    };
+    api_compilations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_compilations_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCompiledBookDetail"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCompiledBookDetail"];
+                "multipart/form-data": components["schemas"]["PatchedCompiledBookDetail"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledBookDetail"];
+                };
+            };
+        };
+    };
+    api_compilations_chapters_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledChapter"][];
+                };
+            };
+        };
+    };
+    api_compilations_chapters_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CompiledChapter"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompiledChapter"];
+                "multipart/form-data": components["schemas"]["CompiledChapter"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledChapter"];
+                };
+            };
+        };
+    };
+    api_compilations_chapters_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+                chapter_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_compilations_chapters_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+                chapter_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCompiledChapter"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCompiledChapter"];
+                "multipart/form-data": components["schemas"]["PatchedCompiledChapter"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledChapter"];
+                };
+            };
+        };
+    };
+    api_compilations_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_compilations_unpublish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_compilations_verses_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledVerse"][];
+                };
+            };
+        };
+    };
+    api_compilations_verses_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CompiledVerse"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompiledVerse"];
+                "multipart/form-data": components["schemas"]["CompiledVerse"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledVerse"];
+                };
+            };
+        };
+    };
+    api_compilations_verses_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+                verse_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_compilations_verses_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                book_id: string;
+                verse_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCompiledVerse"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCompiledVerse"];
+                "multipart/form-data": components["schemas"]["PatchedCompiledVerse"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledVerse"];
+                };
+            };
+        };
+    };
+    api_compilations_comments_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCompiledCommentList"];
+                };
+            };
+        };
+    };
+    api_compilations_comments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompiledComment"];
+                "application/x-www-form-urlencoded": components["schemas"]["CompiledComment"];
+                "multipart/form-data": components["schemas"]["CompiledComment"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompiledComment"];
+                };
+            };
+        };
+    };
+    api_compilations_comments_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_motifs_list: {
         parameters: {
             query?: never;
             header?: never;
@@ -1676,7 +3082,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Notification"][];
+                    "application/json": components["schemas"]["MotifTag"][];
+                };
+            };
+        };
+    };
+    api_motifs_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotifTag"];
+                "application/x-www-form-urlencoded": components["schemas"]["MotifTag"];
+                "multipart/form-data": components["schemas"]["MotifTag"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifTag"];
+                };
+            };
+        };
+    };
+    api_motifs_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MotifTag"];
+                };
+            };
+        };
+    };
+    api_notifications_list: {
+        parameters: {
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedNotificationList"];
                 };
             };
         };
@@ -1719,6 +3195,24 @@ export interface operations {
             };
         };
     };
+    api_notifications_unread_count_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     api_reading_progress_list: {
         parameters: {
             query?: never;
@@ -1743,6 +3237,69 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_references_books_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_references_chapters_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter: number;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_references_verses_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chapter: number;
+                slug: string;
+                verse: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1828,7 +3385,12 @@ export interface operations {
     };
     api_translations_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1840,7 +3402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TranslationProject"][];
+                    "application/json": components["schemas"]["PaginatedTranslationProjectList"];
                 };
             };
         };
@@ -1918,6 +3480,26 @@ export interface operations {
             };
         };
     };
+    api_translations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     api_translations_partial_update: {
         parameters: {
             query?: never;
@@ -1946,6 +3528,26 @@ export interface operations {
         };
     };
     api_translations_activate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_translations_add_book_create: {
         parameters: {
             query?: never;
             header?: never;
@@ -2054,6 +3656,46 @@ export interface operations {
             };
         };
     };
+    api_translations_library_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_translations_library_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     api_translations_members_list: {
         parameters: {
             query?: never;
@@ -2150,6 +3792,26 @@ export interface operations {
         responses: {
             /** @description No response body */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_translations_remove_book_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2374,6 +4036,44 @@ export interface operations {
             };
         };
     };
+    api_translations_languages_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Language"][];
+                };
+            };
+        };
+    };
+    api_translations_library_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranslationProject"][];
+                };
+            };
+        };
+    };
     api_users_retrieve: {
         parameters: {
             query?: never;
@@ -2396,7 +4096,12 @@ export interface operations {
     };
     api_users_bookmarks_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path: {
                 username: string;
@@ -2410,14 +4115,19 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Bookmark"][];
+                    "application/json": components["schemas"]["PaginatedBookmarkList"];
                 };
             };
         };
     };
     api_users_comments_list: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
             header?: never;
             path: {
                 username: string;
@@ -2431,7 +4141,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Comment"][];
+                    "application/json": components["schemas"]["PaginatedCommentList"];
                 };
             };
         };

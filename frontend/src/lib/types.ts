@@ -289,6 +289,8 @@ export type CompiledBook = {
   slug: string;
   description: string;
   annotation: string;
+  /** 断章ボックスの個別名。空なら「断章ボックス」と呼ぶ。 */
+  tray_name: string;
   owner_username: string;
   visibility: CompiledVisibility;
   motif_tags: MotifTag[];

@@ -45,4 +45,19 @@ describe("VerseList", () => {
     fireEvent.click(screen.getByTestId("verse-item"));
     expect(onSelectVerse).toHaveBeenCalledWith("v1");
   });
+
+  it("ふだんはチェックボックスを出さない", () => {
+    render(<VerseList {...defaultProps} />);
+    expect(screen.queryByTestId("verse-checkbox")).not.toBeInTheDocument();
+  });
+
+  it("集めるモードでは節ごとにチェックボックスを出し、選んだ節に印を付ける", () => {
+    const verses = [makeVerse(), makeVerse({ id: "v2", number: 2, text: "2つめの節" })];
+    render(<VerseList {...defaultProps} verses={verses} collecting collectedVerseIds={["v2"]} />);
+
+    expect(screen.getAllByTestId("verse-checkbox")).toHaveLength(2);
+    const items = screen.getAllByRole("checkbox");
+    expect(items[0]).toHaveAttribute("aria-checked", "false");
+    expect(items[1]).toHaveAttribute("aria-checked", "true");
+  });
 });

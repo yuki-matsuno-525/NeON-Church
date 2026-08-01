@@ -69,3 +69,56 @@ export function translationLabel(id: string, lang: string): string {
   if (!entry) return id;
   return lang === "en" ? entry.en : entry.ja;
 }
+
+// 訳 id → ライセンスと出典。ライセンスは訳ごとの性質（Brenton 訳は常にパブリックドメイン）
+// なので、書ではなく訳に持たせる。ある書のライセンスは、その書が持つ訳のライセンス。
+//
+// 収録している訳は現在すべてパブリックドメインだが、そうでない訳が将来入りうるので
+// 訳ごとに持つ。license は表示用の文言ではなく種別を表す（表示は licenseLabel が担う）。
+//
+// 出典はバックエンドの importer が持つ SOURCE 定数と、bible/seed/ibibles/README.md に対応する。
+type TranslationInfo = { license: "public-domain"; source: string };
+
+const TRANSLATION_INFO: Record<string, TranslationInfo> = {
+  "口語訳": { license: "public-domain", source: "日本聖書協会 1955 / ibibles.net" },
+  "KJV": { license: "public-domain", source: "King James Version 1611（1769 改訂）/ ibibles.net" },
+  "Nestle 1904 (GRC)": { license: "public-domain", source: "Nestle 1904 / biblicalhumanities.org（OSIS XML）" },
+  "TR (GRC)": { license: "public-domain", source: "Textus Receptus / ibibles.net" },
+  "LXX (GRC)": { license: "public-domain", source: "Septuagint / ibibles.net" },
+  "WLC (HEB)": { license: "public-domain", source: "Leningrad Codex 系 / ibibles.net" },
+  "文語訳": { license: "public-domain", source: "文語訳（明治・大正）/ ibibles.net" },
+  "R. H. Charles (EN)": { license: "public-domain", source: "R. H. Charles 1917 / Project Gutenberg" },
+  "Mark M. Mattison (EN)": { license: "public-domain", source: "Mark M. Mattison / gospels.net" },
+  "L. S. A. Wells (EN)": { license: "public-domain", source: "L. S. A. Wells（R. H. Charles 編）/ sacred-texts.com" },
+  "Samuel Zinner (EN)": { license: "public-domain", source: "Samuel Zinner / gospels.net" },
+  "L. C. L. Brenton (EN)": { license: "public-domain", source: "L. C. L. Brenton 1851 / eBible.org" },
+};
+
+const LICENSE_LABELS: Record<TranslationInfo["license"], { ja: string; en: string }> = {
+  "public-domain": { ja: "パブリックドメイン", en: "Public domain" },
+};
+
+/** 訳 id → ライセンス種別。未知の訳は null（表示側で出さない）。 */
+export function translationLicense(id: string): TranslationInfo["license"] | null {
+  return TRANSLATION_INFO[id]?.license ?? null;
+}
+
+/** 訳 id → 出典（訳者・底本・入手元）。未知の訳は null。 */
+export function translationSource(id: string): string | null {
+  return TRANSLATION_INFO[id]?.source ?? null;
+}
+
+export function licenseLabel(license: TranslationInfo["license"], lang: string): string {
+  const entry = LICENSE_LABELS[license];
+  return lang === "en" ? entry.en : entry.ja;
+}
+
+/**
+ * その書のライセンス。持っている訳すべてが同じライセンスならそれを、
+ * 混在していれば null を返す（1つの札で言い切れないため表示しない）。
+ */
+export function licenseForTranslations(ids: readonly string[], ): TranslationInfo["license"] | null {
+  const licenses = ids.map(translationLicense);
+  if (licenses.length === 0 || licenses.some((l) => l === null)) return null;
+  return licenses.every((l) => l === licenses[0]) ? licenses[0] : null;
+}

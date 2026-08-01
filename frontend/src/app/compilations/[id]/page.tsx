@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { fetchCompiledBook, type CompiledBook, type CompiledVerse } from "@/lib/api";
+import { trayLabel, visibilityLabel } from "@/lib/compilations";
 import { useAuth } from "@/contexts/AuthContext";
 import { CompiledComments } from "@/components/compilations/CompiledComments";
 import { Icon } from "@/components/ui/Icon";
@@ -38,7 +39,7 @@ export default function CompilationReadPage() {
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap", marginTop: 14 }}>
           <div>
             <p style={{ margin: "0 0 8px", color: "var(--text-faint)", fontSize: 12 }}>
-              {book.visibility} ・ {book.owner_username}
+              {visibilityLabel(book.visibility)} ・ {book.owner_username}
             </p>
             <h1 style={{ margin: 0, fontSize: 30, fontWeight: 900, fontFamily: '"Noto Serif JP", serif' }}>{book.title}</h1>
           </div>
@@ -63,7 +64,7 @@ export default function CompilationReadPage() {
 
       {(book.tray ?? []).length > 0 && (
         <section style={{ marginBottom: 28 }}>
-          <h2 style={chapterHeadingStyle}>未整理の断章</h2>
+          <h2 style={chapterHeadingStyle}>{trayLabel(book)}（章に入れていない断章）</h2>
           {(book.tray ?? []).map((verse) => (
             <ReadVerse key={verse.id} verse={verse} />
           ))}
