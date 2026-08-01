@@ -30,31 +30,27 @@ export class ApiError extends Error {
   }
 }
 
-// DRF 等のエラーレスポンスから人間可読な1行を取り出す。
-// 想定形: { detail: "..." } | { field: ["msg1", "msg2"], ... } | "string" | ["msg"]
-function extractErrorMessage(body: unknown): string | null {
-  if (body == null) return null;
-  if (typeof body === "string") return body;
-  if (Array.isArray(body)) {
-    for (const item of body) {
-      const msg = extractErrorMessage(item);
-      if (msg) return msg;
-    }
-    return null;
-  }
-  if (typeof body === "object") {
-    const obj = body as Record<string, unknown>;
-    if (typeof obj.detail === "string") return obj.detail;
-    for (const value of Object.values(obj)) {
-      const msg = extractErrorMessage(value);
-      if (msg) return msg;
-    }
-  }
-  return null;
-}
-
 // 常に相対パスで Next.js rewrites を経由する（クロスドメイン Cookie 問題を回避）
 const API_BASE = "";
+
+function getUiLanguage(): "ja" | "en" {
+  if (typeof window === "undefined") return "ja";
+  return localStorage.getItem("lang") === "en" ? "en" : "ja";
+}
+
+function localizedErrorMessage(status: number): string {
+  const en = getUiLanguage() === "en";
+  if (status === 400) return en ? "Please check your input." : "入力内容を確認してください。";
+  if (status === 401) return en ? "Please sign in and try again." : "ログインして、もう一度お試しください。";
+  if (status === 403) return en ? "You do not have permission to do that." : "この操作を行う権限がありません。";
+  if (status === 404) return en ? "The requested item was not found." : "対象が見つかりませんでした。";
+  if (status === 409) return en ? "This conflicts with an existing item." : "すでにある項目と重複しています。";
+  if (status === 429) return en ? "Too many requests. Please try again later." : "操作が多すぎます。時間を置いてお試しください。";
+  if (status >= 500) return en
+    ? "An unexpected error occurred. Please try again later."
+    : "予期しないエラーが発生しました。時間を置いて再度お試しください。";
+  return en ? "The request failed. Please try again." : "操作に失敗しました。もう一度お試しください。";
+}
 
 function getCsrfToken(): string | undefined {
   if (typeof document === "undefined") return undefined;
@@ -84,7 +80,10 @@ async function doRefresh(): Promise<void> {
   const res = await fetch(`${API_BASE}/api/auth/token/refresh/`, {
     method: "POST",
     credentials: "include",
-    headers: csrfToken ? { "X-CSRFToken": csrfToken } : {},
+    headers: {
+      "Accept-Language": getUiLanguage(),
+      ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+    },
   });
   if (!res.ok) throw new ApiError(res.status, "Token refresh failed");
 }
@@ -170,6 +169,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      "Accept-Language": getUiLanguage(),
       ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
       ...init?.headers,
     },
@@ -183,7 +183,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
       await refreshToken();
     } catch {
       notifySessionExpired();
-      throw new ApiError(401, "Unauthorized");
+      throw new ApiError(401, localizedErrorMessage(401));
     }
     return apiFetch<T>(path, init, true);
   }
@@ -194,21 +194,8 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
   }
 
   if (!res.ok) {
-    let message: string;
-    if (res.status >= 500) {
-      // 5xx ではサーバー由来の詳細をユーザーに見せず、汎用文言に固定する。
-      // 実際のエラー詳細は Sentry / バックエンドログから追える。
-      message = "予期しないエラーが発生しました。時間を置いて再度お試しください。";
-    } else {
-      message = res.statusText;
-      try {
-        const body = await res.json();
-        message = extractErrorMessage(body) ?? res.statusText;
-      } catch {
-        // ignore parse failure
-      }
-    }
-    throw new ApiError(res.status, message);
+    // バックエンドの文言や言語をそのまま UI に漏らさず、選択中の言語で一貫した文言を返す。
+    throw new ApiError(res.status, localizedErrorMessage(res.status));
   }
   if (res.status === 204) return undefined as T;
   const text = await res.text();

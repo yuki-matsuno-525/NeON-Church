@@ -50,7 +50,7 @@
 - PNG: 128枚
 - ビューポート: desktop `1365x900`、mobile `390x844`
 - テーマ: `dark` は実画面。`light-sim` は確認時の参考として撮ったが、方針決定により今後のレビュー基準から外す。
-- 対象: `/`、`/read`、`/[book]`、`/[book]/[chapter]`、コメントパネル、`/qa`、Q&A投稿フォーム、`/translations`、`/translations/new`、`/translations/[id]`、レビュータブ、翻訳読書ページ、翻訳読書コメントパネル、`/search`、検索結果、`/profile`、プロフィールコメント、公開プロフィール、`/bookmarks`、`/notifications`、`/login`、`/register`、`/about`、`/feedback`、`/guidelines`、`/licenses`、`/privacy`、`/terms`、`/demo` 系。
+- 対象: `/`、`/read`、`/[book]`、`/[book]/[chapter]`、コメントパネル、`/qa`、Q&A投稿フォーム、`/translations`、`/translations/new`、`/translations/[id]`、レビュータブ、翻訳読書ページ、翻訳読書コメントパネル、`/search`、検索結果、`/profile`、プロフィールコメント、公開プロフィール、`/bookmarks`、`/notifications`、`/login`、`/register`、`/about`、`/feedback`、`/guidelines`、`/licenses`、`/privacy`、`/terms`。
 
 補足: 現状は `ThemeProvider forcedTheme="dark"` のため、プロダクトとしてはダーク固定。以後の G-1 実装もダークテーマの完成度に集中し、ライトテーマ対応はタスク化しない。
 

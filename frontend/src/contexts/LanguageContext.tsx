@@ -14,8 +14,8 @@ const LanguageContext = createContext<LanguageContextType>({
   setLang: () => {},
 });
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("ja");
+export function LanguageProvider({ children, initialLang = "ja" }: { children: ReactNode; initialLang?: Lang }) {
+  const [lang, setLangState] = useState<Lang>(initialLang);
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
@@ -23,9 +23,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (saved === "en" || saved === "ja") setLangState(saved);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.cookie = `neon_lang=${lang}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  }, [lang]);
+
   const setLang = (l: Lang) => {
     setLangState(l);
     localStorage.setItem("lang", l);
+    document.documentElement.lang = l;
+    document.cookie = `neon_lang=${l}; Path=/; Max-Age=31536000; SameSite=Lax`;
   };
 
   return (

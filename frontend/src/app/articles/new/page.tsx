@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createArticle } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { useT } from "@/lib/i18n";
 
 /**
  * 新しい記事を始める。
@@ -13,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
  * 最初にあれこれ入力させると、書き始めるまでが遠くなるため。
  */
 export default function NewArticlePage() {
+  const t = useT();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState("");
@@ -28,7 +30,7 @@ export default function NewArticlePage() {
       const article = await createArticle({ title: trimmed, visibility: "private" });
       router.push(`/articles/${article.id}/edit`);
     } catch {
-      setError("記事を作れませんでした。");
+      setError(t.articleCreateFailed);
       setBusy(false);
     }
   };
@@ -36,9 +38,9 @@ export default function NewArticlePage() {
   if (!authLoading && !user) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>記事を書くにはログインが必要です。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleLoginRequired}</p>
         <Link href="/login?from=%2Farticles%2Fnew" style={{ color: "var(--accent)" }}>
-          ログインする
+          {t.loginBtn}
         </Link>
       </div>
     );
@@ -46,13 +48,13 @@ export default function NewArticlePage() {
 
   return (
     <div style={containerStyle}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>新しい記事</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.articleNewTitle}</h1>
       <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
-        題を決めると下書きができます。要約やタグはあとから足せます。
+        {t.articleNewDesc}
       </p>
 
       <label style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
-        題
+        {t.articleTitleLabel}
       </label>
       <input
         value={title}
@@ -60,7 +62,7 @@ export default function NewArticlePage() {
         onKeyDown={(event) => {
           if (event.key === "Enter") handleCreate();
         }}
-        placeholder="例: 断食について"
+        placeholder={t.articleTitlePlaceholder}
         autoFocus
         style={{
           width: "100%",
@@ -95,13 +97,13 @@ export default function NewArticlePage() {
             fontFamily: "inherit",
           }}
         >
-          {busy ? "作成中..." : "書きはじめる"}
+          {busy ? t.articleCreating : t.articleStartWriting}
         </button>
         <Link
           href="/articles"
           style={{ alignSelf: "center", fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}
         >
-          やめる
+          {t.articleCancel}
         </Link>
       </div>
     </div>

@@ -55,4 +55,9 @@ describe("formatRelativeTime", () => {
     expect(result).toMatch(/\d{4}/);
     expect(result).not.toContain("前");
   });
+
+  it("英語指定時は英語の相対表記を返す", () => {
+    const date = new Date(NOW.getTime() - 5 * 60 * 1000);
+    expect(formatRelativeTime(date.toISOString(), "en")).toBe("5m ago");
+  });
 });

@@ -1,6 +1,6 @@
 import type { Notification } from "./types";
 import { BOOKS } from "./books";
-import type { Translations } from "./i18n";
+import { formatBookLocation, type Translations } from "./i18n";
 
 function slugFromBookName(name: string | null): string | null {
   if (!name) return null;
@@ -51,19 +51,20 @@ export function notificationTargetUrl(n: Notification): string | null {
  * 通知の文脈ラベル（例: 「マタイ 3:12 への返信」「翻訳プロジェクトへのコメント」）。
  * URL とは独立に「どこへの何か」をユーザーに見せるための短文。
  */
-export function notificationContextLabel(n: Notification, t: Translations): string | null {
+export function notificationContextLabel(n: Notification, t: Translations, lang = "ja"): string | null {
+  const slug = slugFromBookName(n.book_name);
   switch (n.target_kind) {
     case "verse_comment":
-      if (!n.book_name || n.chapter_number == null || n.verse_number == null) return null;
-      return `${n.book_name} ${t.verseFmt(n.chapter_number, n.verse_number)}`;
+      if (!slug || n.chapter_number == null || n.verse_number == null) return null;
+      return formatBookLocation(slug, n.chapter_number, n.verse_number, lang);
     case "chapter_comment":
-      if (!n.book_name || n.chapter_number == null) return null;
-      return `${n.book_name} ${t.chapterOption(n.chapter_number)}`;
+      if (!slug || n.chapter_number == null) return null;
+      return formatBookLocation(slug, n.chapter_number, null, lang);
     case "book_comment":
-      return n.book_name ?? null;
+      return slug ? formatBookLocation(slug, null, null, lang) : null;
     case "qa":
-      if (n.book_name && n.chapter_number != null && n.verse_number != null) {
-        return `Q&A · ${n.book_name} ${t.verseFmt(n.chapter_number, n.verse_number)}`;
+      if (slug && n.chapter_number != null && n.verse_number != null) {
+        return `Q&A · ${formatBookLocation(slug, n.chapter_number, n.verse_number, lang)}`;
       }
       return "Q&A";
     case "translation_unit":

@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchArticles, fetchArticleTags, type Article, type ArticleTag } from "@/lib/api";
-import { visibilityLabel } from "@/lib/articles";
+import { articleTagLabel, visibilityLabel } from "@/lib/articles";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { SkeletonList } from "@/components/ui";
 
 export default function ArticlesPage() {
+  const t = useT();
   const { user } = useAuth();
   const [publicArticles, setPublicArticles] = useState<Article[]>([]);
   const [myArticles, setMyArticles] = useState<Article[]>([]);
@@ -44,25 +46,25 @@ export default function ArticlesPage() {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>記事</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.articlesTitle}</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            節を引きながら、主題について書いた文章。
+            {t.articlesDesc}
           </p>
         </div>
         {user && (
           <Link href="/articles/new" style={newButtonStyle}>
-            新しく書く
+            {t.articleNew}
           </Link>
         )}
       </div>
 
       {tags.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-          <TagChip label="すべて" active={activeTag === null} onClick={() => setActiveTag(null)} />
+          <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => setActiveTag(null)} />
           {tags.map((tag) => (
             <TagChip
               key={tag.id}
-              label={tag.name}
+              label={articleTagLabel(tag.slug, tag.name, t)}
               count={tag.article_count}
               active={activeTag === tag.slug}
               onClick={() => setActiveTag(tag.slug)}
@@ -74,26 +76,26 @@ export default function ArticlesPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }}>
         {user && (
           <ArticleColumn
-            title="自分の記事"
-            desc="下書きも含めて、自分が書いた記事。"
+            title={t.articleMineTitle}
+            desc={t.articleMineDesc}
             icon="book-open"
             color="var(--accent)"
             tint="var(--accent-tint)"
             articles={myArticles}
             loading={loading}
-            empty="まだ記事がありません。"
+            empty={t.articleMineEmpty}
             editable
           />
         )}
         <ArticleColumn
-          title="公開された記事"
-          desc="誰でも読める記事。"
+          title={t.articlePublicTitle}
+          desc={t.articlePublicDesc}
           icon="globe"
           color="var(--state-success)"
           tint="rgba(34,197,94,0.15)"
           articles={publicArticles}
           loading={loading}
-          empty="公開された記事はまだありません。"
+          empty={t.articlePublicEmpty}
         />
       </div>
     </div>
@@ -184,6 +186,7 @@ function ArticleColumn({
 }
 
 function ArticleCard({ article, editable }: { article: Article; editable: boolean }) {
+  const t = useT();
   const isPublic = article.visibility === "public";
   return (
     <Link
@@ -199,7 +202,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
               color: isPublic ? "var(--state-success)" : "var(--text-muted)",
             }}
           >
-            {visibilityLabel(article.visibility)}
+            {visibilityLabel(article.visibility, t)}
           </span>
         </div>
 
@@ -217,7 +220,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
           <span style={metaPillStyle}>{article.owner_username}</span>
           {article.tags.map((tag) => (
             <span key={tag.id} style={metaPillStyle}>
-              {tag.name}
+              {articleTagLabel(tag.slug, tag.name, t)}
             </span>
           ))}
         </div>

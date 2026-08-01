@@ -6,13 +6,13 @@ import {
   fetchCommentReplies,
   createComment,
   setBestAnswer,
-  formatRelativeTime,
   type QAComment,
   type Comment,
 } from "@/lib/api";
 import { slugFromDbName } from "@/lib/books";
 import { Icon } from "@/components/ui/Icon";
-import { useT } from "@/lib/i18n";
+import { formatBookLocation, useRelativeTime, useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
 
 function buildVerseUrl(comment: QAComment): string | null {
   // book_name はコメント対象の本の DB 名（訳ごとに日本語/英語が異なる）。
@@ -36,6 +36,8 @@ type Props = {
 
 export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPosted, onLoginRequired }: Props) {
   const t = useT();
+  const { lang } = useLang();
+  const formatRelativeTime = useRelativeTime();
   const [expanded, setExpanded] = useState(false);
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -45,6 +47,10 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
   const [replyError, setReplyError] = useState<string | null>(null);
 
   const url = buildVerseUrl(comment);
+  const locationSlug = slugFromDbName(comment.book_name);
+  const location = locationSlug
+    ? formatBookLocation(locationSlug, comment.chapter_number, comment.verse_number, lang)
+    : comment.location_label;
   const isOwner = currentUserId === comment.user.id;
 
   const loadReplies = () => {
@@ -130,7 +136,7 @@ export function QACard({ comment, currentUserId, onBestAnswerChange, onAnswerPos
         )}
         {url && (
           <Link href={url} style={qaLocationLinkStyle}>
-            {comment.location_label}
+            {location}
             <Icon name="chevron-right" size={12} />
           </Link>
         )}
