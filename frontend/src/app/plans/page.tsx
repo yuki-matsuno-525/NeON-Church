@@ -9,12 +9,14 @@ import {
   type PlanSubscription,
 } from "@/lib/api";
 import { visibilityLabel } from "@/lib/plans";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { SkeletonList } from "@/components/ui";
 
 export default function PlansPage() {
   const { user } = useAuth();
+  const t = useT();
   const [publicPlans, setPublicPlans] = useState<Plan[]>([]);
   const [myPlans, setMyPlans] = useState<Plan[]>([]);
   const [reading, setReading] = useState<PlanSubscription[]>([]);
@@ -44,21 +46,21 @@ export default function PlansPage() {
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>読書プラン</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.plansTitle}</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            書をまたいで章を並べ、日ごとに読んでいく道すじ。
+            {t.plansDesc}
           </p>
         </div>
         {user && (
           <Link href="/plans/new" style={newButtonStyle}>
-            新しいプラン
+            {t.planNew}
           </Link>
         )}
       </div>
 
       {reading.length > 0 && (
         <section style={{ ...columnStyle, marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>読んでいるプラン</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>{t.planReadingNow}</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {reading.map((subscription) => (
               <Link
@@ -77,26 +79,26 @@ export default function PlansPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }}>
         {user && (
           <PlanColumn
-            title="自分のプラン"
-            desc="下書きも含めて、自分が作ったプラン。"
+            title={t.planMineTitle}
+            desc={t.planMineDesc}
             icon="book-open"
             color="var(--accent)"
             tint="var(--accent-tint)"
             plans={myPlans}
             loading={loading}
-            empty="まだプランがありません。"
+            empty={t.planMineEmpty}
             editable
           />
         )}
         <PlanColumn
-          title="公開されたプラン"
-          desc="誰でも読めるプラン。"
+          title={t.planPublicTitle}
+          desc={t.planPublicDesc}
           icon="globe"
           color="var(--state-success)"
           tint="rgba(34,197,94,0.15)"
           plans={publicPlans}
           loading={loading}
-          empty="公開されたプランはまだありません。"
+          empty={t.planPublicEmpty}
         />
       </div>
     </div>
@@ -124,6 +126,7 @@ function PlanColumn({
   empty: string;
   editable?: boolean;
 }) {
+  const t = useT();
   return (
     <section style={columnStyle}>
       <div style={{ marginBottom: 16 }}>
@@ -159,7 +162,7 @@ function PlanColumn({
                       color: plan.visibility === "public" ? "var(--state-success)" : "var(--text-muted)",
                     }}
                   >
-                    {visibilityLabel(plan.visibility)}
+                    {visibilityLabel(plan.visibility, t)}
                   </span>
                 </div>
                 <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
@@ -172,8 +175,8 @@ function PlanColumn({
                 )}
                 <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", flexWrap: "wrap" }}>
                   <span style={metaPillStyle}>{plan.owner_username}</span>
-                  <span style={metaPillStyle}>{plan.day_count}日</span>
-                  {plan.reader_count > 0 && <span style={metaPillStyle}>{plan.reader_count}人が読書中</span>}
+                  <span style={metaPillStyle}>{t.planDayCount(plan.day_count)}</span>
+                  {plan.reader_count > 0 && <span style={metaPillStyle}>{t.planReaderCount(plan.reader_count)}</span>}
                 </div>
               </div>
             </Link>

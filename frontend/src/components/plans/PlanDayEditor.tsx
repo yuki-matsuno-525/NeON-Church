@@ -84,22 +84,22 @@ export function PlanDayEditor({
   return (
     <section className="card-glow" style={{ padding: "16px 18px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>第{day.number}日</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{t.planDayLabel(day.number)}</span>
         <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{saveStatusLabel(status, t)}</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           {canMoveUp && (
-            <button type="button" onClick={() => onMove(-1)} aria-label="上へ" style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(-1)} aria-label={t.planMoveUp} style={iconButtonStyle}>
               ↑
             </button>
           )}
           {canMoveDown && (
-            <button type="button" onClick={() => onMove(1)} aria-label="下へ" style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(1)} aria-label={t.planMoveDown} style={iconButtonStyle}>
               ↓
             </button>
           )}
           {canDelete && (
             <button type="button" onClick={onDelete} style={iconButtonStyle}>
-              削除
+              {t.delete}
             </button>
           )}
         </div>
@@ -108,7 +108,7 @@ export function PlanDayEditor({
       <input
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="この日の題（任意）"
+        placeholder={t.planDayTitlePlaceholder}
         style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
       />
 
@@ -127,13 +127,16 @@ export function PlanDayEditor({
               fontSize: 13,
             }}
           >
-            {reading.book_name ? readingLabel(reading as never) : `${reading.book} ${reading.chapter_number}章`}
+            {readingLabel(
+              { book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number },
+              t,
+            )}
             {reading.translation && (
               <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
             )}
             <button
               type="button"
-              aria-label="この章を外す"
+              aria-label={t.planRemoveChapter}
               onClick={() => setReadings((current) => current.filter((_, i) => i !== index))}
               style={{
                 border: "none",
@@ -152,12 +155,12 @@ export function PlanDayEditor({
         ))}
         {readings.length < MAX_READINGS_PER_DAY && !picking && (
           <button type="button" onClick={() => setPicking(true)} style={addChapterStyle}>
-            ＋ 章を足す
+            {t.planAddChapter}
           </button>
         )}
         {readings.length >= MAX_READINGS_PER_DAY && (
           <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
-            1日は{MAX_READINGS_PER_DAY}章までです
+            {t.planChapterLimit(MAX_READINGS_PER_DAY)}
           </span>
         )}
       </div>
@@ -168,7 +171,7 @@ export function PlanDayEditor({
         value={devotional}
         onChange={(event) => setDevotional(event.target.value)}
         rows={4}
-        placeholder="この日に添える文章（任意）"
+        placeholder={t.planDevotionalPlaceholder}
         style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
       />
     </section>

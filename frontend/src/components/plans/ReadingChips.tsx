@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { PlanReading } from "@/lib/types";
+import { useT, type Translations } from "@/lib/i18n";
 
 /** その章を読む画面へのリンク。訳の指定があればその訳で開く。 */
 export function readingHref(reading: { book: string; chapter_number: number; translation: string }): string {
@@ -11,14 +12,19 @@ export function readingHref(reading: { book: string; chapter_number: number; tra
   return `/${reading.book}/${reading.chapter_number}${query}`;
 }
 
-export function readingLabel(reading: PlanReading): string {
-  return `${reading.book_name} ${reading.chapter_number}章`;
+export function readingLabel(
+  reading: { book_name: string; chapter_number: number },
+  t: Translations,
+): string {
+  return t.planReadingLabel(reading.book_name, reading.chapter_number);
 }
 
 /** 読む画面で使う、章のリンク一覧。 */
 export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
+  const t = useT();
+
   if (readings.length === 0) {
-    return <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>読む章がまだありません。</p>;
+    return <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
   }
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -39,7 +45,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
             textDecoration: "none",
           }}
         >
-          {readingLabel(reading)}
+          {readingLabel(reading, t)}
           {reading.translation && (
             <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
           )}

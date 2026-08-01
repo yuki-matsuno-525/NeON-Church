@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT, type Translations } from "@/lib/i18n";
 
 /**
  * 「まとめて栞」モードの下のバー。
@@ -21,6 +22,8 @@ export function BulkBookmarkBar({
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const t = useT();
+
   return (
     <div
       data-testid="bulk-bookmark-bar"
@@ -42,12 +45,12 @@ export function BulkBookmarkBar({
       }}
     >
       <span style={{ fontSize: 13, fontWeight: 700 }}>
-        {pickedCount > 0 ? `${pickedCount}節を選んでいます` : "入れたい節を押してください"}
+        {pickedCount > 0 ? t.bulkPickedCount(pickedCount) : t.bulkPickPrompt}
       </span>
       {message && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{message}</span>}
       <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
         <button type="button" onClick={onCancel} style={cancelStyle}>
-          やめる
+          {t.articleCancel}
         </button>
         <button
           type="button"
@@ -59,7 +62,7 @@ export function BulkBookmarkBar({
             opacity: pickedCount === 0 || busy ? 0.6 : 1,
           }}
         >
-          {busy ? "入れています..." : "栞に入れる"}
+          {busy ? t.bulkSaving : t.bulkSave}
         </button>
       </div>
     </div>
@@ -94,7 +97,10 @@ const saveStyle: React.CSSProperties = {
  * 「まとめて栞」の状態をまとめて持つ。ページ側は使うだけにする。
  * 保存そのものは呼び出し側から渡す（栞の一覧の持ち方はページが知っているため）。
  */
-export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
+export function useBulkBookmark(
+  save: (verseIds: string[]) => Promise<number>,
+  t: Translations,
+) {
   const [pickMode, setPickMode] = useState(false);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -127,7 +133,7 @@ export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
     try {
       const added = await save(pickedIds);
       // すでに栞のある節は数に入らない。何件入ったかを出して、押した手応えを返す。
-      setMessage(added === pickedIds.length ? null : `${added}件を入れました（残りは栞ずみ）`);
+      setMessage(added === pickedIds.length ? null : t.bulkPartial(added));
       if (added === pickedIds.length) {
         setPickMode(false);
         setPickedIds([]);
@@ -135,7 +141,7 @@ export function useBulkBookmark(save: (verseIds: string[]) => Promise<number>) {
         setPickedIds([]);
       }
     } catch {
-      setMessage("入れられませんでした。");
+      setMessage(t.bulkFailed);
     } finally {
       setBusy(false);
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fetchBooks, fetchChapters } from "@/lib/api";
 import { bookNameForTranslation } from "@/lib/books";
+import { useT } from "@/lib/i18n";
 
 /**
  * その書・その訳にある章番号を引く。
@@ -11,6 +12,7 @@ import { bookNameForTranslation } from "@/lib/books";
  * 総章数から作らずに API から取る。記事の引用パネルとプランの章選びで共用する。
  */
 export function useChapterNumbers(slug: string | null, translation: string) {
+  const t = useT();
   const [numbers, setNumbers] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +24,7 @@ export function useChapterNumbers(slug: string | null, translation: string) {
     fetchBooks(translation)
       .then((books) => {
         const target = books.find((book) => book.name === bookNameForTranslation(slug, translation));
-        if (!target) throw new Error("この訳にはこの書がありません。");
+        if (!target) throw new Error(t.citationBookUnavailable);
         return fetchChapters(target.id);
       })
       .then((chapters) => {
@@ -36,7 +38,7 @@ export function useChapterNumbers(slug: string | null, translation: string) {
     return () => {
       alive = false;
     };
-  }, [slug, translation]);
+  }, [slug, translation, t]);
 
   return { numbers, error };
 }

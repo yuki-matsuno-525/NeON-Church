@@ -5,6 +5,7 @@ import { useState } from "react";
 import { BulkBookmarkBar, useBulkBookmark } from "./BulkBookmarkBar";
 import { VerseList } from "./VerseList";
 import type { Verse } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 const verses: Verse[] = [
   { id: "v1", chapter: "c1", number: 1, text: "はじめに" },
@@ -14,7 +15,8 @@ const verses: Verse[] = [
 
 /** 章ページの「まとめて栞」まわりだけを取り出した確認用の画面。 */
 function Harness({ save }: { save: (ids: string[]) => Promise<number> }) {
-  const bulk = useBulkBookmark(save);
+  const t = useT();
+  const bulk = useBulkBookmark(save, t);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
 
   return (
