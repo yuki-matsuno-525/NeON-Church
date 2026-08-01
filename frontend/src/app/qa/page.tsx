@@ -10,6 +10,7 @@ import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { SkeletonList, EmptyState, Button, LoadMoreButton } from "@/components/ui";
 import { useLoadMore } from "@/hooks/useLoadMore";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Icon } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useT, bookLabel } from "@/lib/i18n";
@@ -93,7 +94,9 @@ function QAContent() {
 
   // 列ごとに独立して読み足す。全件取ってから画面側で2列に振り分けていた頃は、
   // 件数バッジが「読み込めた分」の数になり、片方の列だけ増えるといった破綻が起きる。
-  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: questionSearch };
+  // 検索欄は手が止まってから投げる（1文字ごとに2列ぶんのリクエストが飛ぶのを防ぐ）。
+  const debouncedSearch = useDebouncedValue(questionSearch);
+  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: debouncedSearch };
   const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
 
   const fetchAnswered = useCallback(
