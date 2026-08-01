@@ -359,3 +359,51 @@ class TestBookmarkTypeFilter:
         ref = res.data["results"][0]["reference"]
         assert ref["chapter"] is not None
         assert ref["verse"] is None
+
+
+# ------------------------------------------------------------------
+# 箇所での絞り込み（読書画面用）
+#
+# 読書画面は「今開いている章の栞」しか要らない。以前は全件取ってから絞っていたので、
+# 栞が増えるほど章を開くのが遅くなっていた。サーバー側で絞れることを検証する。
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestBookmarkLocationFilter:
+    def test_chapter_scope_returns_chapter_verse_and_comment_bookmarks(
+        self, auth_client, one_of_each_type
+    ):
+        # 章のページで使う3種（章栞・節栞・その章のコメントへの栞）がまとめて返る。
+        res = auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 1})
+        assert res.status_code == status.HTTP_200_OK
+        kinds = {item["target_type"] for item in res.data["results"]}
+        assert kinds == {"verse", "chapter", "comment"}
+
+    def test_chapter_scope_excludes_book_and_project(self, auth_client, one_of_each_type):
+        res = auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 1})
+        kinds = {item["target_type"] for item in res.data["results"]}
+        assert "book" not in kinds
+        assert "project" not in kinds
+
+    def test_other_chapter_returns_nothing(self, auth_client, one_of_each_type):
+        res = auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 2})
+        assert res.data["count"] == 0
+
+    def test_book_scope_returns_only_book_bookmark(self, auth_client, one_of_each_type):
+        # 書のページは書栞だけを使う。節栞・章栞まで返すと件数が増えて元の木阿弥になる。
+        res = auth_client.get(BOOKMARKS_URL, {"book": "matthew"})
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == "book"
+
+    def test_project_scope_returns_only_that_project(self, auth_client, one_of_each_type, project):
+        res = auth_client.get(BOOKMARKS_URL, {"translation_project": str(project.id)})
+        assert res.data["count"] == 1
+        assert res.data["results"][0]["target_type"] == "project"
+
+    def test_location_scope_omits_counts(self, auth_client, one_of_each_type):
+        # 箇所で絞ったときはタブを出さないので、件数集計の往復を省いている。
+        res = auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 1})
+        assert "counts" not in res.data
+
+    def test_other_users_bookmarks_are_not_leaked(self, other_auth_client, one_of_each_type):
+        res = other_auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 1})
+        assert res.data["count"] == 0

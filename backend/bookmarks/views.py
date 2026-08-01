@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from bible.models import Verse
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
-from .filters import count_by_type, filter_by_type
+from .filters import count_by_type, filter_by_location, filter_by_type
 from .models import Bookmark
 from .serializers import BookmarkSerializer
 
@@ -43,6 +43,12 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
 
     一覧レスポンスには通常の count/next/results に加えて counts を付ける。
     counts は絞り込み前の全種類の件数で、画面のタブに出す数字に使う。
+
+    読書画面向けに箇所での絞り込みも受ける（`filters.filter_by_location` を参照）。
+    GET /api/bookmarks/?book=<書のslug>              その書の書栞
+    GET /api/bookmarks/?book=<書のslug>&chapter=<章> その章の章栞・節栞・コメント栞
+    GET /api/bookmarks/?translation_project=<id>     その翻訳企画の栞
+    箇所で絞ったときは counts を付けない（画面のタブに使わないため、集計の往復を省く）。
     """
 
     serializer_class = BookmarkSerializer
@@ -53,17 +59,34 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         """絞り込み前の自分の栞。件数集計にも使うので annotate は付けない。"""
         return Bookmark.objects.filter(user=self.request.user)
 
+    def _location_params(self):
+        """箇所での絞り込みの指定を取り出す。1つも指定が無ければ None を返す。"""
+        params = self.request.query_params
+        book_slug = params.get("book")
+        project_id = params.get("translation_project")
+        if not book_slug and not project_id:
+            return None
+        chapter = params.get("chapter")
+        chapter_number = int(chapter) if chapter and chapter.isdigit() else None
+        return book_slug, chapter_number, project_id
+
     def get_queryset(self):
         qs = self.get_base_queryset().select_related(
             "comment__user", "comment__canonical_book", "canonical_book",
             "translation_project",
         )
-        qs = filter_by_type(qs, self.request.query_params.get("type"))
+        location = self._location_params()
+        if location:
+            qs = filter_by_location(qs, *location)
+        else:
+            qs = filter_by_type(qs, self.request.query_params.get("type"))
         return annotate_verse_text(qs)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        response.data["counts"] = count_by_type(self.get_base_queryset())
+        # 箇所で絞ったときはタブを出さないので、件数集計の1往復を省く。
+        if self._location_params() is None:
+            response.data["counts"] = count_by_type(self.get_base_queryset())
         return response
 
     def perform_create(self, serializer):

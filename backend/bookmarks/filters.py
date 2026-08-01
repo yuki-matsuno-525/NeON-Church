@@ -42,6 +42,40 @@ def filter_by_type(queryset, target_type):
     return queryset.filter(condition)
 
 
+def filter_by_location(queryset, book_slug, chapter_number=None, project_id=None):
+    """読書画面が「今開いている箇所の栞だけ」を取るための絞り込み。
+
+    読書画面は「この節に栞が付いているか」を知りたいだけなので、栞を全件取ってから
+    絞ると件数が増えるほど遅くなる。ここでサーバー側に絞らせる。
+
+    - `book_slug` のみ  : その書の書栞（章・節を持たない行）だけ。書のページ用。
+    - `book_slug` + `chapter_number` : その章の章栞・節栞に加え、その章に付いたコメントへの
+      コメント栞も含める。章のページはこの3種すべてを使う。
+    - `project_id` のみ : その翻訳企画の栞だけ。企画のページ用。
+
+    どれも指定が無ければ絞らない（＝従来どおり全件）。
+    """
+    if project_id:
+        return queryset.filter(translation_project_id=project_id)
+    if not book_slug:
+        return queryset
+    if chapter_number is None:
+        return queryset.filter(
+            canonical_book__slug=book_slug,
+            chapter_number__isnull=True,
+            verse_number__isnull=True,
+        )
+    return queryset.filter(
+        # その章の章栞・節栞
+        Q(canonical_book__slug=book_slug, chapter_number=chapter_number)
+        # その章に付いたコメントへの栞
+        | Q(
+            comment__canonical_book__slug=book_slug,
+            comment__chapter_number=chapter_number,
+        )
+    )
+
+
 def count_by_type(queryset):
     """タブに出す件数を1回の問い合わせでまとめて数える。
 

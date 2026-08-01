@@ -25,13 +25,27 @@ import type {
 } from "./types";
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  /**
+   * `code` はサーバーが付ける機械可読な理由。画面が理由ごとに文言を変えたいときに使う
+   * （例: 章が無いのか、その訳にその書が無いのか）。無いことのほうが多い。
+   */
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
   }
 }
 
 // DRF 等のエラーレスポンスから人間可読な1行を取り出す。
 // 想定形: { detail: "..." } | { field: ["msg1", "msg2"], ... } | "string" | ["msg"]
+// サーバーが理由を機械可読に添えているとき（{ detail: "...", code: "chapter_not_found" }）
+// その code を取り出す。無ければ undefined。
+function extractErrorCode(body: unknown): string | undefined {
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const code = (body as Record<string, unknown>).code;
+    if (typeof code === "string") return code;
+  }
+  return undefined;
+}
+
 function extractErrorMessage(body: unknown): string | null {
   if (body == null) return null;
   if (typeof body === "string") return body;
@@ -195,6 +209,7 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
 
   if (!res.ok) {
     let message: string;
+    let code: string | undefined;
     if (res.status >= 500) {
       // 5xx ではサーバー由来の詳細をユーザーに見せず、汎用文言に固定する。
       // 実際のエラー詳細は Sentry / バックエンドログから追える。
@@ -204,11 +219,12 @@ async function apiFetch<T>(path: string, init?: RequestInit, isRetry = false): P
       try {
         const body = await res.json();
         message = extractErrorMessage(body) ?? res.statusText;
+        code = extractErrorCode(body);
       } catch {
         // ignore parse failure
       }
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, code);
   }
   if (res.status === 204) return undefined as T;
   const text = await res.text();
@@ -242,6 +258,30 @@ export function fetchReferenceChapters(slug: string, chapter: number): Promise<R
 
 export function fetchReferenceVerses(slug: string, chapter: number, verse: number): Promise<ReferenceItem[]> {
   return apiFetch<{ verses: ReferenceItem[] }>(`/references/${slug}/verses/${chapter}/${verse}/`).then((r) => r.verses);
+}
+
+/**
+ * 章のページに要る書・章・節を1回で取る。
+ *
+ * 以前は books → chapters → verses と3回、しかも前の返事を待ってから次を投げていた。
+ * 最初の1回は書の全一覧を落として1冊探すだけだったので、章を開くたびに待ち時間が積み上がっていた。
+ */
+export function fetchChapterRead(
+  slug: string,
+  chapter: number,
+  translation: string
+): Promise<{ book: Book; chapter: Chapter; verses: Verse[] }> {
+  return apiFetch(
+    `/references/${slug}/read/${chapter}/?translation=${encodeURIComponent(translation)}`
+  );
+}
+
+/** 書のページ（章グリッド）に要る書と全章を1回で取る。 */
+export function fetchBookRead(
+  slug: string,
+  translation: string
+): Promise<{ book: Book; chapters: Chapter[] }> {
+  return apiFetch(`/references/${slug}/book/?translation=${encodeURIComponent(translation)}`);
 }
 
 /**
@@ -323,14 +363,31 @@ export const EMPTY_BOOKMARK_COUNTS: BookmarkCounts = {
 };
 
 /**
- * 自分のお気に入りを全件取り切る。
+ * 章のページで使う栞だけを取る（その章の章栞・節栞と、その章のコメントへの栞）。
  *
- * 読書画面で「この節・章・書に栞が付いているか」を判定するために使う。
- * 一部しか持っていないと栞済みの印が出なくなるので、ここは取り切る必要がある。
- * 一覧画面には fetchBookmarkPage を使うこと。
+ * 以前は栞を全件取ってから絞っていたが、栞が増えるほど章を開くのが遅くなるので
+ * サーバー側で絞る。判定に漏れがあると栞済みの印が出なくなるため、絞ったうえで取り切る。
  */
-export function fetchBookmarks(): Promise<Bookmark[]> {
-  return apiFetchAll("/bookmarks/");
+export function fetchChapterBookmarks(bookSlug: string, chapter: number): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}&chapter=${chapter}`);
+}
+
+/** 書のページで使う栞（その書の書栞）だけを取る。 */
+export function fetchBookBookmarks(bookSlug: string): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}`);
+}
+
+/** 翻訳企画のページで使う栞（その企画の栞）だけを取る。 */
+export function fetchProjectBookmarks(projectId: string): Promise<Bookmark[]> {
+  return apiFetchAll(`/bookmarks/?translation_project=${encodeURIComponent(projectId)}`);
+}
+
+/**
+ * 節の栞だけを取る。記事を書くときの引用パネル（栞から節を選ぶ）で使う。
+ * 選ぶための一覧なので節栞は全部要るが、他の種類まで落とす必要はない。
+ */
+export function fetchVerseBookmarks(): Promise<Bookmark[]> {
+  return apiFetchAll("/bookmarks/?type=verse");
 }
 
 /** お気に入り一覧の1ページ分。type で種類を絞る（省略＝すべて）。 */

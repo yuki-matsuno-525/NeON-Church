@@ -6,7 +6,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    fetchBookmarks: vi.fn().mockResolvedValue([]),
+    fetchVerseBookmarks: vi.fn().mockResolvedValue([]),
     fetchBooks: vi.fn().mockResolvedValue([]),
     fetchChapters: vi.fn().mockResolvedValue([]),
     fetchVerses: vi.fn().mockResolvedValue([]),

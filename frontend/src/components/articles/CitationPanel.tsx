@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  fetchBookmarks,
+  fetchVerseBookmarks,
   fetchBooks,
   fetchChapters,
   fetchVerses,
@@ -417,8 +417,8 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookmarks()
-      .then((list) => setBookmarks(list.filter((bm) => bm.target_type === "verse" && bm.reference)))
+    fetchVerseBookmarks()
+      .then((list) => setBookmarks(list.filter((bm) => bm.reference)))
       .catch(() => setBookmarks([]))
       .finally(() => setLoading(false));
   }, []);
