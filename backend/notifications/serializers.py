@@ -10,6 +10,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     actor_username = serializers.CharField(source="actor.username", read_only=True)
     comment_id = serializers.SerializerMethodField()
     comment_body_snippet = serializers.SerializerMethodField()
+    comment_is_deleted = serializers.SerializerMethodField()
     translation_project_id = serializers.SerializerMethodField()
 
     # 通知のジャンプ先を表す情報。
@@ -29,6 +30,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "actor_username",
             "comment_id",
             "comment_body_snippet",
+            "comment_is_deleted",
             "translation_project_id",
             "is_read",
             "created_at",
@@ -56,6 +58,13 @@ class NotificationSerializer(serializers.ModelSerializer):
                 return DELETED_COMMENT_BODY
             return tc.body[:_SNIPPET_LENGTH]
         return ""
+
+    def get_comment_is_deleted(self, obj) -> bool:
+        if obj.comment_id:
+            return obj.comment.is_deleted
+        if obj.translation_comment_id:
+            return obj.translation_comment.is_deleted
+        return False
 
     def get_translation_project_id(self, obj) -> str | None:
         if obj.translation_comment_id:

@@ -130,5 +130,5 @@ class ArticleCommentSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.is_deleted:
-            data["body"] = "このコメントは削除されました。"
+            data["body"] = ""
         return data

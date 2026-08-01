@@ -310,4 +310,4 @@ def test_コメントの削除は本文を隠すだけ(auth_client, verses):
 
     listing = auth_client.get(url)
     assert listing.data["results"][0]["is_deleted"] is True
-    assert listing.data["results"][0]["body"] == "このコメントは削除されました。"
+    assert listing.data["results"][0]["body"] == ""

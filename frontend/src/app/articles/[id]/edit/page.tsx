@@ -13,7 +13,8 @@ import {
   type ArticleTag,
   type ArticleVisibility,
 } from "@/lib/api";
-import { VISIBILITY_OPTIONS } from "@/lib/articles";
+import { articleTagLabel, visibilityOptions } from "@/lib/articles";
+import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
@@ -24,6 +25,7 @@ import { ConfirmDialog, SkeletonList } from "@/components/ui";
 const MAX_TAGS = 3;
 
 export default function ArticleEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useT();
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -62,9 +64,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         setTagIds(data.tags.map((tag) => tag.id));
         setCitations(data.citations ?? []);
       })
-      .catch(() => setError("この記事は編集できません。"))
+      .catch(() => setError(t.articleCannotEdit))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, t]);
 
   const draft = useMemo(
     () => ({ title, summary, body, visibility, tag_ids: tagIds }),
@@ -122,7 +124,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       await deleteArticle(id);
       router.push("/articles");
     } catch {
-      setError("削除できませんでした。");
+      setError(t.articleDeleteFailed);
     }
   };
 
@@ -137,9 +139,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   if (error || !article) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? "この記事は編集できません。"}</p>
+        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotEdit}</p>
         <Link href="/articles" style={{ color: "var(--accent)" }}>
-          記事の一覧へ
+          {t.articleBackToList}
         </Link>
       </div>
     );
@@ -148,7 +150,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   if (user && user.username !== article.owner_username) {
     return (
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>この記事はあなたのものではありません。</p>
+        <p style={{ color: "var(--text-muted)" }}>{t.articleNotOwner}</p>
       </div>
     );
   }
@@ -159,7 +161,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       ref={bodyRef}
       value={body}
       onChange={(event) => setBody(event.target.value)}
-      placeholder={"本文を書きます。\n\n右の引用パネルから節を選ぶと、ここに引用が入ります。"}
+      placeholder={t.articleBodyPlaceholder}
       style={{
         width: "100%",
         flex: 1,
@@ -210,9 +212,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px 48px" }}>
       <ConfirmDialog
         open={confirmDelete}
-        title="この記事を削除しますか？"
-        description="記事とコメントが消えます。元には戻せません。"
-        confirmText="削除する"
+        title={t.articleDeleteConfirmTitle}
+        description={t.articleDeleteConfirmDesc}
+        confirmText={t.articleDeleteAction}
         destructive
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
@@ -223,7 +225,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="題"
+          placeholder={t.articleTitleLabel}
           style={{
             flex: "1 1 280px",
             padding: "10px 12px",
@@ -241,20 +243,20 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           onChange={(event) => setVisibility(event.target.value as ArticleVisibility)}
           style={selectStyle}
         >
-          {VISIBILITY_OPTIONS.map((option) => (
+          {visibilityOptions(t).map((option) => (
             <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
               {option.label}
             </option>
           ))}
         </select>
         <span style={{ fontSize: 12, color: status === "error" ? "var(--state-error)" : "var(--text-faint)", minWidth: 80 }}>
-          {saveStatusLabel(status)}
+          {saveStatusLabel(status, t)}
         </span>
         <Link href={`/articles/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
-          記事を見る
+          {t.articleView}
         </Link>
         <button type="button" onClick={() => setConfirmDelete(true)} style={deleteButtonStyle}>
-          削除
+          {t.delete}
         </button>
       </div>
 
@@ -262,7 +264,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       <input
         value={summary}
         onChange={(event) => setSummary(event.target.value)}
-        placeholder="要約（一覧に出る短い説明。公開するには必要です）"
+        placeholder={t.articleSummaryPlaceholder}
         maxLength={300}
         style={{
           width: "100%",
@@ -279,7 +281,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       />
       {!canPublish && (
         <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>
-          要約を書くと、公開できるようになります。
+          {t.articleSummaryRequired}
         </p>
       )}
 
@@ -304,12 +306,12 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
                 fontFamily: "inherit",
               }}
             >
-              {tag.name}
+              {articleTagLabel(tag.slug, tag.name, t)}
             </button>
           );
         })}
         <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
-          主題は{MAX_TAGS}つまで
+          {t.articleTopicsLimit(MAX_TAGS)}
         </span>
       </div>
 
@@ -317,13 +319,13 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         <div>
           <div style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
             <MobileTab active={mobileTab === "body"} onClick={() => setMobileTab("body")}>
-              本文
+              {t.articleTabBody}
             </MobileTab>
             <MobileTab active={mobileTab === "preview"} onClick={() => setMobileTab("preview")}>
-              見え方
+              {t.articleTabPreview}
             </MobileTab>
             <MobileTab active={mobileTab === "citations"} onClick={() => setMobileTab("citations")}>
-              引用
+              {t.articleTabCitations}
             </MobileTab>
           </div>
           {mobileTab === "body" && bodyPane}
@@ -335,7 +337,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0 }}>
             {bodyPane}
             <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-              <div style={{ fontSize: 11, color: "var(--text-faint)", marginBottom: 4 }}>見え方</div>
+              <div style={{ fontSize: 11, color: "var(--text-faint)", marginBottom: 4 }}>{t.articleTabPreview}</div>
               {previewPane}
             </div>
           </div>

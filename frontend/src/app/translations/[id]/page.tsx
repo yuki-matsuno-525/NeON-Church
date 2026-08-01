@@ -26,7 +26,6 @@ import {
   deleteTranslation,
   fetchTranslationMembers as fetchMembers,
   assignTranslationUnit,
-  formatRelativeTime,
   fetchProjectBookmarks,
   createProjectBookmark,
   removeBookmark,
@@ -40,7 +39,7 @@ import {
   type Bookmark,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useT } from "@/lib/i18n";
+import { useRelativeTime, useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, ConfirmDialog, Button, useToast } from "@/components/ui";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
@@ -184,6 +183,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const { user } = useAuth();
   const router = useRouter();
   const t = useT();
+  const formatRelativeTime = useRelativeTime();
   const [project, setProject] = useState<TranslationProject | null>(null);
   // 公開翻訳を自分の /read に追加済みか（トグルボタンの状態）
   const [inLibrary, setInLibrary] = useState(false);
@@ -1021,7 +1021,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             <span style={{ fontWeight: 600 }}>{c.username}</span>
                             <span style={{ color: "var(--text-faint)", fontSize: 11, marginLeft: 8 }}>{formatRelativeTime(c.created_at)}</span>
                             <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
-                              {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
+                              {c.is_deleted ? t.deletedComment : renderCommentBody(c.display_body)}
                             </p>
                           </div>
                         ))}

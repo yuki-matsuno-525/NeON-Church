@@ -138,7 +138,10 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
         {(["ja", "en"] as const).map((l) => (
           <button
             key={l}
-            onClick={() => setLang(l)}
+            onClick={() => {
+              setLang(l);
+              router.refresh();
+            }}
             // いま選ばれている言語は色と太さでしか示していなかったため、
             // 読み上げでは2つとも同じボタンに聞こえていた。選択状態を明示する。
             aria-pressed={lang === l}

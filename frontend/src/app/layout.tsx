@@ -3,6 +3,8 @@ import { Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
+import { siteCopy } from "@/lib/siteCopy";
+import { getRequestLanguage } from "@/lib/serverLanguage";
 
 // 本文はシステム日本語フォント（globals.css の --font-sans）を使い、Web フォントを読まない。
 // 見出しのみブランドの明朝体 Noto Serif JP を Web フォントで読む。
@@ -19,42 +21,42 @@ const notoSerifJp = Noto_Serif_JP({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
-export const metadata: Metadata = {
-  title: {
-    default: "NeON Church",
-    template: "%s | NeON Church",
-  },
-  description:
-    "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text, without ranking one above another.",
-  metadataBase: new URL(SITE_URL),
-  openGraph: {
-    title: "NeON Church",
-    description:
-      "Not a church as an institution, but an open field where texts and interpretations intersect. Read, discuss, and translate every text, without ranking one above another.",
-    url: SITE_URL,
-    siteName: "NeON Church",
-    locale: "en_US",
-    alternateLocale: ["ja_JP"],
-    type: "website",
-    images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "NeON Church",
-    description: "An open field where texts and interpretations intersect — every text read on equal footing.",
-    images: ["/img/logo-og.png"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const lang = await getRequestLanguage();
+  const copy = siteCopy[lang];
+  return {
+    title: { default: "NeON Church", template: "%s | NeON Church" },
+    description: copy.description,
+    metadataBase: new URL(SITE_URL),
+    openGraph: {
+      title: "NeON Church",
+      description: copy.description,
+      url: SITE_URL,
+      siteName: "NeON Church",
+      locale: lang === "en" ? "en_US" : "ja_JP",
+      alternateLocale: [lang === "en" ? "ja_JP" : "en_US"],
+      type: "website",
+      images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "NeON Church",
+      description: copy.socialDescription,
+      images: ["/img/logo-og.png"],
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const lang = await getRequestLanguage();
   return (
-    <html lang="ja" className={notoSerifJp.variable} suppressHydrationWarning>
+    <html lang={lang} className={notoSerifJp.variable} suppressHydrationWarning>
       <body>
-        <Providers>
+        <Providers initialLang={lang}>
           <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>

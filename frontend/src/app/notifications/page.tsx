@@ -10,11 +10,11 @@ import {
   EMPTY_NOTIFICATION_COUNTS,
   type Notification,
   type NotificationType,
-  formatRelativeTime,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { useT } from "@/lib/i18n";
+import { useRelativeTime, useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
 import { SkeletonList, EmptyState, ErrorState, FilterChips, LoadMoreButton, useToast, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
@@ -32,6 +32,7 @@ export default function NotificationsPage() {
   const { unreadCount, decrementUnread, clearUnread, refresh } = useNotifications();
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
   // null は「すべて」タブ
   const [kind, setKind] = useState<NotificationType | null>(null);
 
@@ -171,7 +172,7 @@ export default function NotificationsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {notifications.map((n) => {
               const url = notificationTargetUrl(n);
-              const contextLabel = notificationContextLabel(n, t);
+              const contextLabel = notificationContextLabel(n, t, lang);
               return (
                 <NotificationItem
                   key={n.id}
@@ -209,6 +210,7 @@ function NotificationItem({
   onActivate: () => void;
 }) {
   const t = useT();
+  const formatRelativeTime = useRelativeTime();
   const cardStyle: React.CSSProperties = {
     padding: "14px 16px",
     borderRadius: "var(--radius-md)",
@@ -225,7 +227,7 @@ function NotificationItem({
     <>
       {!n.is_read && (
         <span
-          aria-label={t.unreadMark}
+          aria-label={t.unreadLabel}
           style={{
             position: "absolute",
             top: 18,
@@ -261,7 +263,7 @@ function NotificationItem({
         </span>
       </div>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>
-        {n.comment_body_snippet}
+        {n.comment_is_deleted ? t.deletedComment : n.comment_body_snippet}
       </p>
     </>
   );

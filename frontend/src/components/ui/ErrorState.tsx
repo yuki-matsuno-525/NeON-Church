@@ -35,8 +35,8 @@ export function ErrorState({
 }: Props) {
   // ボタンの文言は表示言語に合わせる（以前は日本語で固定されていた）。
   const t = useT();
-  const retryText = retryLabel ?? t.errorRetry;
-  const backText = backLabel ?? t.errorBack;
+  const retryText = retryLabel ?? t.retry;
+  const backText = backLabel ?? t.back;
   const iconName: IconName = tone === "danger" ? "alert-circle" : "alert-triangle";
   const iconColor = tone === "danger" ? "var(--state-danger)" : "var(--state-warning)";
 

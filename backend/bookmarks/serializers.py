@@ -17,6 +17,7 @@ class CommentBriefSerializer(serializers.Serializer):
     chapter_number = serializers.IntegerField(read_only=True)
     verse_number = serializers.IntegerField(read_only=True)
     source_translation = serializers.CharField(read_only=True)
+    is_deleted = serializers.BooleanField(read_only=True)
 
     def get_body(self, obj):
         if obj.is_deleted:

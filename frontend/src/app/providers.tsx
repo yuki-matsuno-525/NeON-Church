@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import type { Lang } from "@/contexts/LanguageContext";
 
 /**
  * アプリ全体で共有する状態（ログイン・通知・表示言語）をまとめて渡す。
@@ -13,11 +14,11 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
  * 切り替えの部品は押しても何も起きないため、仕組みごと外してある
  * （方針は plan/design-review.md「ダークテーマに集中する」）。
  */
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, initialLang }: { children: ReactNode; initialLang: Lang }) {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider initialLang={initialLang}>{children}</LanguageProvider>
       </NotificationProvider>
     </AuthProvider>
   );

@@ -111,5 +111,5 @@ class TranslationCommentSerializer(serializers.ModelSerializer):
 
     def get_display_body(self, obj):
         if obj.is_deleted:
-            return "削除されました"
+            return ""
         return obj.body

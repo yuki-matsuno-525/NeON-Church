@@ -5,16 +5,18 @@ import Link from "next/link";
 import {
   fetchArticle,
   fetchArticles,
-  formatRelativeTime,
   type Article,
 } from "@/lib/api";
-import { visibilityLabel } from "@/lib/articles";
+import { articleTagLabel, visibilityLabel } from "@/lib/articles";
+import { useRelativeTime, useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { ArticleBody } from "@/components/articles/ArticleBody";
 import { ArticleComments } from "@/components/articles/ArticleComments";
 import { SkeletonList } from "@/components/ui";
 
 export default function ArticleDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useT();
+  const formatRelativeTime = useRelativeTime();
   const { id } = use(params);
   const { user } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
@@ -34,13 +36,13 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       })
       .catch(() => {
         if (!alive) return;
-        setError("この記事は読めません。");
+        setError(t.articleCannotRead);
         setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, t]);
 
   // 同じ主題の記事。最初のタグだけを見る（複数タグで混ぜると脈絡が薄くなるため）。
   useEffect(() => {
@@ -62,9 +64,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
   if (error || !article) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? "この記事は読めません。"}</p>
+        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotRead}</p>
         <Link href="/articles" style={{ color: "var(--accent)" }}>
-          記事の一覧へ
+          {t.articleBackToList}
         </Link>
       </div>
     );
@@ -77,7 +79,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {article.visibility !== "public" && (
           <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
-            {visibilityLabel(article.visibility)}
+            {visibilityLabel(article.visibility, t)}
           </span>
         )}
         {isOwner && (
@@ -85,7 +87,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
             href={`/articles/${article.id}/edit`}
             style={{ marginLeft: "auto", fontSize: 13, color: "var(--accent)", textDecoration: "none" }}
           >
-            編集する
+            {t.articleEdit}
           </Link>
         )}
       </div>
@@ -118,7 +120,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
                 textDecoration: "none",
               }}
             >
-              {tag.name}
+              {articleTagLabel(tag.slug, tag.name, t)}
             </Link>
           ))}
         </div>
@@ -126,7 +128,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
 
       {related.length > 0 && (
         <section style={{ marginTop: 36 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>同じ主題の記事</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{t.articleRelated}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {related.map((item) => (
               <Link

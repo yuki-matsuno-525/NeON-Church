@@ -42,7 +42,7 @@ describe("QACard", () => {
     expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /返信 2件/ })).toHaveAttribute("aria-expanded", "false");
 
-    const locationLink = screen.getByRole("link", { name: "マタイ 5:3" });
+    const locationLink = screen.getByRole("link", { name: "マタイによる福音書 5章3節" });
     expect(locationLink).toHaveAttribute("href", "/matthew/5#verse-3");
   });
 });
