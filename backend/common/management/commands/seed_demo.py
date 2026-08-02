@@ -128,6 +128,10 @@ SCALES = {
     },
 }
 
+# 数の多いもの（票・通知）は、この件数ごとに保存して手元から捨てる。
+# 全部を持ったまま走ると、本番の限られたメモリでは落ちるおそれがあるため。
+FLUSH_EVERY = 20000
+
 # 票数のばらつき。ほとんどのコメントは少なく、一部だけが伸びる形にする。
 VOTE_WEIGHTS = [0, 0, 0, 1, 1, 2, 3, 3, 5, 8, 13, 21, 34, 55]
 
@@ -591,7 +595,9 @@ class Command(BaseCommand):
         targets = self.rng.sample(
             alive, min(self.scale["vote_comments"], len(alive))
         )
-        votes, times = [], []
+        # 票は一番数が多いので、貯めきらずに小分けで保存する。
+        # 本番のコンテナはメモリが限られており、全部を持ったまま走ると落ちるおそれがある。
+        votes, times, total = [], [], 0
         for comment in targets:
             wanted = min(self.rng.choice(VOTE_WEIGHTS), len(people) - 1)
             if not wanted:
@@ -601,8 +607,13 @@ class Command(BaseCommand):
                     continue
                 votes.append(Vote(user=voter, comment=comment))
                 times.append(self._after(comment.created_at, max_days=60))
+            if len(votes) >= FLUSH_EVERY:
+                self._save(Vote, votes, times, "票")
+                total += len(votes)
+                votes, times = [], []
         self._save(Vote, votes, times, "票")
-        self.stdout.write(f"  票 {len(votes)} 件")
+        total += len(votes)
+        self.stdout.write(f"  票 {total} 件")
 
     # ── Q&A ────────────────────────────────────────────────────────────────
 
@@ -1312,7 +1323,14 @@ class Command(BaseCommand):
     def _seed_notifications(self, people, admin, comments, answers, project_comments):
         """通知。返信・投票・メンション・Q&A の回答・翻訳の議論をすべて入れる。"""
         by_id = {comment.id: comment for comment in comments}
-        objects, times = [], []
+        objects, times, total = [], [], 0
+
+        def flush():
+            # 通知も数が多いので、票と同じく小分けで保存して手元から捨てる。
+            nonlocal objects, times, total
+            self._save(Notification, objects, times, "通知")
+            total += len(objects)
+            objects, times = [], []
 
         def add(recipient_id, actor_id, kind, moment, **target):
             if recipient_id == actor_id:
@@ -1325,6 +1343,8 @@ class Command(BaseCommand):
                 **target,
             ))
             times.append(moment)
+            if len(objects) >= FLUSH_EVERY:
+                flush()
 
         replies = [c for c in comments if c.parent_id and not c.is_deleted]
         for reply in replies:
@@ -1380,8 +1400,8 @@ class Command(BaseCommand):
             ))
             times.append(self._past(bias=3.0))
 
-        self._save(Notification, objects, times, "通知")
-        self.stdout.write(f"  通知 {len(objects)} 件")
+        flush()
+        self.stdout.write(f"  通知 {total} 件")
 
     def _seed_reports(self, people, comments, questions, answers):
         """通報。コメント・質問・回答の 3 種、理由 4 種をすべて使う。"""
