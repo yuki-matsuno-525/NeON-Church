@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import QAPage from "./page";
-import type { ListPage, QAComment } from "@/lib/api";
+import type { ListPage, QAQuestion } from "@/lib/api";
 
 const replaceMock = vi.fn();
 
@@ -36,37 +36,38 @@ vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    fetchQACommentPage: vi.fn(),
+    fetchQuestionPage: vi.fn(),
     fetchTags: vi.fn(),
-    fetchCommentReplies: vi.fn().mockResolvedValue([]),
   };
 });
 
-const makeQuestion = (): QAComment => ({
+const makeQuestion = (): QAQuestion => ({
   id: "q1",
   user: { id: "u1", username: "alice" },
   title: "山上の説教について",
   body: "背景を知りたいです。",
   created_at: new Date().toISOString(),
-  vote_count: 0,
-  tags: [],
-  location_label: "マタイ 5:3",
+  is_deleted: false,
+  book_slug: "matthew",
   book_name: "マタイによる福音書",
   chapter_number: 5,
   verse_number: 3,
-  reply_count: 0,
+  location_label: "マタイによる福音書 5章 3節",
+  version_label: "口語訳",
+  tags: [],
   best_answer: null,
+  answer_count: 0,
 });
 
-const makePage = (results: QAComment[]): ListPage<QAComment> => ({
+const makePage = (results: QAQuestion[]): ListPage<QAQuestion> => ({
   results, count: results.length, hasMore: false, counts: undefined,
 });
 
 describe("QAPage search", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { fetchQACommentPage, fetchTags } = await import("@/lib/api");
-    vi.mocked(fetchQACommentPage).mockResolvedValue(makePage([makeQuestion()]));
+    const { fetchQuestionPage, fetchTags } = await import("@/lib/api");
+    vi.mocked(fetchQuestionPage).mockResolvedValue(makePage([makeQuestion()]));
     vi.mocked(fetchTags).mockResolvedValue([]);
   });
 
@@ -76,18 +77,18 @@ describe("QAPage search", () => {
     const searchBox = screen.getByRole("searchbox", { name: "質問を検索" });
     fireEvent.change(searchBox, { target: { value: "山上" } });
 
-    const { fetchQACommentPage } = await import("@/lib/api");
+    const { fetchQuestionPage } = await import("@/lib/api");
     await waitFor(() => {
-      expect(vi.mocked(fetchQACommentPage)).toHaveBeenCalledWith(expect.objectContaining({ q: "山上" }));
+      expect(vi.mocked(fetchQuestionPage)).toHaveBeenCalledWith(expect.objectContaining({ q: "山上" }));
     });
 
-    const callsBeforeClear = vi.mocked(fetchQACommentPage).mock.calls.length;
+    const callsBeforeClear = vi.mocked(fetchQuestionPage).mock.calls.length;
     fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
 
     expect(searchBox).toHaveValue("");
     await waitFor(() => {
-      expect(vi.mocked(fetchQACommentPage).mock.calls.length).toBeGreaterThan(callsBeforeClear);
+      expect(vi.mocked(fetchQuestionPage).mock.calls.length).toBeGreaterThan(callsBeforeClear);
     });
-    expect(vi.mocked(fetchQACommentPage).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({ q: "" }));
+    expect(vi.mocked(fetchQuestionPage).mock.calls.at(-1)?.[0]).toEqual(expect.objectContaining({ q: "" }));
   });
 });

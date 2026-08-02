@@ -289,7 +289,7 @@ function NotificationItem({
         </span>
       </div>
       <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", overflowWrap: "anywhere" }}>
-        {n.comment_is_deleted ? t.deletedComment : n.comment_body_snippet}
+        {n.body_is_deleted ? t.deletedComment : n.body_snippet}
       </p>
     </>
   );

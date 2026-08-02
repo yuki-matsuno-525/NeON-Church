@@ -18,7 +18,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     fetchVerseOfDay: vi.fn().mockResolvedValue(null),
-    fetchQAComments: vi.fn().mockResolvedValue([]),
+    fetchQuestionPage: vi.fn().mockResolvedValue({ results: [], count: 0, hasMore: false, counts: undefined }),
     fetchTrendingComments: vi.fn().mockResolvedValue([]),
   };
 });

@@ -64,8 +64,8 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
     };
   }, []);
 
-  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
-    const comment = await createComment({ ...target, title, body, is_qa: isQa, tag_ids: tagIds, translation_project: translationProject });
+  const handleSubmit = async (body: string, tagIds?: string[]) => {
+    const comment = await createComment({ ...target, body, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
   };
 
@@ -192,7 +192,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       </div>
 
       <div style={{ marginBottom: 24 }}>
-        <CommentInput onSubmit={handleSubmit} showQaOption showTagOption />
+        <CommentInput onSubmit={handleSubmit} showTagOption />
       </div>
 
       {loading ? (

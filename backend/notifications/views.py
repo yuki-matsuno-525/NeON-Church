@@ -50,6 +50,8 @@ class NotificationListView(generics.ListAPIView):
             "comment__parent__parent",
             "translation_comment",
             "translation_comment__project",
+            "answer",
+            "answer__question",
         )
         # 未知の種類は無視して全件（＝「すべて」タブ）にする。
         target_type = self.request.query_params.get("type")

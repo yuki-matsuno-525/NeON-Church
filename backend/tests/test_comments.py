@@ -317,208 +317,36 @@ class TestCommentUpdate:
 
 
 # ------------------------------------------------------------------
-# Q&A 投稿（段階6: Q&A・返信も書・章・節のちょうど1つの粒度が必須）
+# 箇所は必須（コメントも返信も、書・章・節のちょうど1つの粒度を持つ）
 # ------------------------------------------------------------------
 @pytest.mark.django_db
-class TestQAPost:
-    def test_qa_without_location_rejected(self, auth_client):
-        # 段階6: Q&A も箇所必須。ターゲット無しは 400。
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "場所なしQ&A", "is_qa": True, "title": "Q&Aタイトル"},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_qa_without_title_rejected(self, auth_client, book):
-        # ターゲット（book）は付けたうえで、タイトル欠落で 400 になることを確認する。
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "タイトルなしQ&A", "is_qa": True, "book": str(book.id)},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_qa_with_book_allowed(self, auth_client, book):
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "書付きQ&A", "is_qa": True, "title": "書付きタイトル", "book": str(book.id)},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_201_CREATED
-
-    def test_non_qa_without_location_rejected(self, auth_client):
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "場所なし通常コメント"},
-            format="json",
-        )
+class TestCommentLocationRequired:
+    def test_comment_without_location_rejected(self, auth_client):
+        res = auth_client.post(COMMENTS_URL, {"body": "場所なしコメント"}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_reply_without_location_rejected(self, auth_client, book):
-        # 段階6: 返信も箇所必須。ターゲット付き Q&A への、ターゲット無し返信は 400。
         parent = auth_client.post(
-            COMMENTS_URL,
-            {"body": "書付きQ&A", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
-            format="json",
+            COMMENTS_URL, {"body": "親コメント", "book": str(book.id)}, format="json"
         ).data
         res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "返信", "parent": parent["id"]},
-            format="json",
+            COMMENTS_URL, {"body": "返信", "parent": parent["id"]}, format="json"
         )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_filter_by_parent_id(self, auth_client, book):
         parent = auth_client.post(
-            COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
-            format="json",
+            COMMENTS_URL, {"body": "親コメント", "book": str(book.id)}, format="json"
         ).data
-        auth_client.post(
-            COMMENTS_URL,
-            {"body": "返信1", "parent": parent["id"], "book": str(book.id)},
-            format="json",
-        )
-        auth_client.post(
-            COMMENTS_URL,
-            {"body": "返信2", "parent": parent["id"], "book": str(book.id)},
-            format="json",
-        )
+        for body in ("返信1", "返信2"):
+            auth_client.post(
+                COMMENTS_URL,
+                {"body": body, "parent": parent["id"], "book": str(book.id)},
+                format="json",
+            )
         res = auth_client.get(COMMENTS_URL, {"parent_id": parent["id"]})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 2
-
-
-# ------------------------------------------------------------------
-# ベストアンサー
-# ------------------------------------------------------------------
-def best_answer_url(comment_id):
-    return f"/api/comments/{comment_id}/best-answer/"
-
-
-@pytest.mark.django_db
-class TestBestAnswer:
-    @pytest.fixture
-    def qa_question(self, auth_client, book):
-        res = auth_client.post(
-            COMMENTS_URL,
-            {"body": "Q&A質問", "is_qa": True, "title": "Q&Aタイトル", "book": str(book.id)},
-            format="json",
-        )
-        return res.data
-
-    @pytest.fixture
-    def qa_reply(self, other_auth_client, qa_question, book):
-        res = other_auth_client.post(
-            COMMENTS_URL,
-            {"body": "返信", "parent": qa_question["id"], "book": str(book.id)},
-            format="json",
-        )
-        return res.data
-
-    def test_owner_can_set_best_answer(self, auth_client, qa_question, qa_reply):
-        res = auth_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": qa_reply["id"]},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_200_OK
-
-    def test_owner_can_unset_best_answer(self, auth_client, qa_question, qa_reply):
-        auth_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": qa_reply["id"]},
-            format="json",
-        )
-        res = auth_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": None},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_200_OK
-
-    def test_non_owner_cannot_set_best_answer(self, other_auth_client, qa_question, qa_reply):
-        res = other_auth_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": qa_reply["id"]},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_anonymous_cannot_set_best_answer(self, api_client, qa_question, qa_reply):
-        res = api_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": qa_reply["id"]},
-            format="json",
-        )
-        assert res.status_code == status.HTTP_401_UNAUTHORIZED
-
-    def test_best_answer_appears_in_qa_list(self, auth_client, other_auth_client, qa_question, qa_reply, api_client):
-        auth_client.patch(
-            best_answer_url(qa_question["id"]),
-            {"answer_comment_id": qa_reply["id"]},
-            format="json",
-        )
-        res = api_client.get("/api/comments/qa/")
-        assert res.status_code == status.HTTP_200_OK
-        q = next(c for c in res.data["results"] if c["id"] == qa_question["id"])
-        assert q["best_answer"] is not None
-        assert q["best_answer"]["id"] == qa_reply["id"]
-
-
-# ------------------------------------------------------------------
-# Q&A 一覧の書フィルタ（複数 book_id 対応）
-# ------------------------------------------------------------------
-QA_URL = "/api/comments/qa/"
-
-
-@pytest.mark.django_db
-class TestQAListBookFilter:
-    def _post_qa(self, client, book, title):
-        return client.post(
-            COMMENTS_URL,
-            {"body": "本文", "is_qa": True, "title": title, "book": str(book.id)},
-            format="json",
-        ).data
-
-    def test_single_book_id_filters(self, auth_client, api_client, book):
-        from tests.factories import make_book
-
-        other = make_book("Matthew", "KJV", 2, slug="matthew")
-        self._post_qa(auth_client, book, "口語訳の質問")
-        self._post_qa(auth_client, other, "KJVの質問")
-
-        res = api_client.get(QA_URL, {"book_id": str(book.id)})
-        titles = [c["title"] for c in res.data["results"]]
-        # 段階6F: book_id は canonical へ解決され、同じ書の全訳の Q&A が訳横断で集約される。
-        assert set(titles) == {"口語訳の質問", "KJVの質問"}
-
-    def test_comma_separated_book_ids_filter_both(self, auth_client, api_client, book):
-        from tests.factories import make_book
-
-        other = make_book("Matthew", "KJV", 2, slug="matthew")
-        self._post_qa(auth_client, book, "口語訳の質問")
-        self._post_qa(auth_client, other, "KJVの質問")
-
-        res = api_client.get(QA_URL, {"book_id": f"{book.id},{other.id}"})
-        titles = sorted(c["title"] for c in res.data["results"])
-        assert titles == ["KJVの質問", "口語訳の質問"]
-
-
-# ------------------------------------------------------------------
-# トレンドコメント
-# ------------------------------------------------------------------
-    def test_search_filters_questions(self, auth_client, api_client, book):
-        first = self._post_qa(auth_client, book, "Database Christianity")
-        second = self._post_qa(auth_client, book, "Ordinary question")
-
-        res = api_client.get(QA_URL, {"q": "Database"})
-
-        assert res.status_code == status.HTTP_200_OK
-        ids = [c["id"] for c in res.data["results"]]
-        assert first["id"] in ids
-        assert second["id"] not in ids
 
 
 TRENDING_URL = "/api/comments/trending/"
@@ -789,37 +617,3 @@ class TestTopLevelOnlyListing:
         assert replies.data["count"] == 1
 
 
-# ------------------------------------------------------------------
-# Q&A 一覧の問い合わせ回数
-#
-# 書名の引き当ては Book テーブルへの問い合わせが要るのに、1件のコメントにつき
-# 4回（書名・章・節・ラベル）呼んでいたため、20件のページで約160回になっていた。
-# ------------------------------------------------------------------
-@pytest.mark.django_db
-class TestQAListQueryCount:
-    def test_query_count_does_not_grow_with_questions(
-        self, auth_client, api_client, book, chapter, django_assert_max_num_queries
-    ):
-        for i in range(15):
-            auth_client.post(
-                COMMENTS_URL,
-                {"body": "本文", "is_qa": True, "title": f"質問{i}", "chapter": str(chapter.id)},
-                format="json",
-            )
-
-        with django_assert_max_num_queries(10):
-            res = api_client.get(QA_URL)
-        assert len(res.data["results"]) == 15
-
-    def test_location_is_still_reported(self, auth_client, api_client, book, chapter):
-        # まとめて引くようにしても、返す箇所の情報は変わらない。
-        auth_client.post(
-            COMMENTS_URL,
-            {"body": "本文", "is_qa": True, "title": "箇所つきの質問", "chapter": str(chapter.id)},
-            format="json",
-        )
-        item = api_client.get(QA_URL).data["results"][0]
-        assert item["book_name"] == book.name
-        assert item["chapter_number"] == chapter.number
-        assert item["verse_number"] is None
-        assert item["location_label"] == f"{book.name} {chapter.number}章"

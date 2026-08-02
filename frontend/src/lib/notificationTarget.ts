@@ -13,7 +13,7 @@ function slugFromBookName(name: string | null): string | null {
  * - 節コメント (verse_comment): /{book_slug}/{chapter}#verse-{verse}
  * - 章コメント (chapter_comment): /{book_slug}/{chapter}#chapter-comments
  * - 書コメント (book_comment):   /{book_slug}#book-comments
- * - QA (qa):                   /qa (詳細ページが未実装のため一覧へ)
+ * - QA (qa):                   /qa/{question_id}
  * - 翻訳 (translation_unit):    /translations/{project_id}
  *
  * 解決できない場合は null を返す（呼び出し元で <Link> ではなく <div> にフォールバック）。
@@ -36,8 +36,8 @@ export function notificationTargetUrl(n: Notification): string | null {
       return `/${slug}#book-comments`;
     }
     case "qa":
-      // /qa/[id] 詳細ページは未実装 (Step UX-10 以降)
-      return "/qa";
+      if (!n.question_id) return null;
+      return `/qa/${n.question_id}`;
     case "translation_project_comment": {
       if (!n.translation_project_id) return null;
       const base = `/translations/${n.translation_project_id}/read`;

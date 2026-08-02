@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { fetchQACommentPage, fetchTags, type Tag } from "@/lib/api";
+import { fetchQuestionPage, fetchTags, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
@@ -113,13 +113,13 @@ function QAContent() {
   const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
 
   const fetchAnswered = useCallback(
-    (page: number) => fetchQACommentPage({ ...filters, answered: true, page }),
+    (page: number) => fetchQuestionPage({ ...filters, answered: true, page }),
     // filters は毎回作り直されるので、中身を表す filterKey を依存に使う
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [filterKey]
   );
   const fetchUnanswered = useCallback(
-    (page: number) => fetchQACommentPage({ ...filters, answered: false, page }),
+    (page: number) => fetchQuestionPage({ ...filters, answered: false, page }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [filterKey]
   );
@@ -130,8 +130,8 @@ function QAContent() {
 
   const reloadAnswered = answeredList.reload;
   const reloadUnanswered = unansweredList.reload;
-  // ベストアンサーの設定・解除で質問が列をまたぐので、両方を取り直す。
-  const loadComments = useCallback(() => {
+  // 質問を投稿すると未解決の列に増える。列をまたぐ変化に備えて両方を取り直す。
+  const reloadQuestions = useCallback(() => {
     reloadAnswered();
     reloadUnanswered();
   }, [reloadAnswered, reloadUnanswered]);
@@ -174,7 +174,7 @@ function QAContent() {
           tags={tags}
           onSubmitted={() => {
             setShowForm(false);
-            loadComments();
+            reloadQuestions();
           }}
           onCancel={() => setShowForm(false)}
         />
@@ -293,7 +293,7 @@ function QAContent() {
         <ErrorState
           title={t.loadErrorTitle}
           message={t.loadErrorDesc}
-          onRetry={loadComments}
+          onRetry={reloadQuestions}
           retryLabel={t.retry}
         />
       ) : totalCount === 0 ? (
@@ -379,15 +379,8 @@ function QAContent() {
                 ) : (
                   <>
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {items.map((c) => (
-                        <QACard
-                          key={c.id}
-                          comment={c}
-                          currentUserId={user?.id ?? null}
-                          onBestAnswerChange={loadComments}
-                          onAnswerPosted={loadComments}
-                          onLoginRequired={() => setShowLoginModal(true)}
-                        />
+                      {items.map((q) => (
+                        <QACard key={q.id} question={q} />
                       ))}
                     </div>
                     {/* 列ごとに独立して読み足す */}

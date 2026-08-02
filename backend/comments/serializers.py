@@ -2,36 +2,11 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
+from bible.passage import book_name_for, derive_location, format_location_label
+from common.text import clean_body as _clean_body
 from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
 
 User = get_user_model()
-
-# 投稿本文の上限。models.Comment.body の max_length=5000 と合わせる。
-# DB 制約より手前で弾くことで、サーバーエラーではなくフィールド単位のエラーを返す。
-_BODY_MAX_LENGTH = 5000
-
-
-def _clean_body(value: str | None) -> str:
-    """コメント本文を保存前に整える。
-
-    - None / 全空白は ValidationError
-    - NULL バイト等の制御文字を除去（ログ・通知メール埋め込み時の事故を防ぐ）
-    - 上限長を超える場合は ValidationError
-    """
-    if value is None:
-        raise serializers.ValidationError("Body is required.")
-    # 改行・タブ以外の制御文字（U+0000-U+0008, U+000B, U+000C, U+000E-U+001F, U+007F）を削除
-    cleaned = "".join(
-        ch for ch in value if ch in ("\n", "\r", "\t") or ord(ch) >= 0x20 and ch != "\x7f"
-    )
-    cleaned = cleaned.strip()
-    if not cleaned:
-        raise serializers.ValidationError("Body is required.")
-    if len(cleaned) > _BODY_MAX_LENGTH:
-        raise serializers.ValidationError(
-            f"Body must be {_BODY_MAX_LENGTH} characters or fewer."
-        )
-    return cleaned
 
 
 # ---------------------------------------------------------------------------
@@ -50,28 +25,13 @@ def book_name_cache(serializer) -> dict:
 def _get_location_parts(obj: Comment, cache: dict | None = None) -> tuple[str, int | None, int | None]:
     """コメントの書名・章番号・節番号を返す。
 
-    段階6F: 箇所は訳非依存の canonical_book / chapter_number / verse_number から取る。
-    書名は投稿時訳（source_translation）に一致する Book 名で解決する（無ければ同一 canonical の
-    いずれかの版名、それも無ければ slug）。返り値: (book_name, chapter_number, verse_number)
-
-    書名の引き当ては Book テーブルへの問い合わせが要るうえ、1件のコメントにつき
-    4回（書名・章・節・ラベル）呼ばれる作りになっている。20件のページで約160回になるため、
-    `cache`（book_name_cache が返す辞書）を渡して同じ組を使い回す。
+    書名の引き当て（訳ごとに呼び名が違う）は bible.passage.book_name_for が行う。
+    1件のコメントにつき4回（書名・章・節・ラベル）呼ばれるので、`cache`
+    （book_name_cache が返す辞書）を渡して同じ組を使い回す。
     """
     if not obj.canonical_book_id:
         return "", None, None
-
-    key = (obj.canonical_book_id, obj.source_translation)
-    if cache is not None and key in cache:
-        return cache[key], obj.chapter_number, obj.verse_number
-
-    book = (
-        Book.objects.filter(canonical_book_id=obj.canonical_book_id, translation=obj.source_translation).first()
-        or Book.objects.filter(canonical_book_id=obj.canonical_book_id).first()
-    )
-    name = book.name if book else (obj.canonical_book.slug if obj.canonical_book else "")
-    if cache is not None:
-        cache[key] = name
+    name = book_name_for(obj.canonical_book_id, obj.source_translation, cache)
     return name, obj.chapter_number, obj.verse_number
 
 
@@ -87,13 +47,7 @@ def _get_version_label(obj: Comment) -> str:
     return obj.source_translation or ""
 
 
-def _format_location_label(book: str, chapter: int | None, verse: int | None) -> str:
-    """書名・章番号・節番号を「マタイ 1章 1節」形式の文字列にする。"""
-    if verse is not None:
-        return f"{book} {chapter}章 {verse}節"
-    if chapter is not None:
-        return f"{book} {chapter}章"
-    return book
+_format_location_label = format_location_label
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -126,7 +80,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
+        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "body", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "reply_count", "version_label", "tags"]
 
     def get_vote_count(self, obj) -> int:
@@ -154,21 +108,14 @@ class CommentSerializer(serializers.ModelSerializer):
         chapter = data.get("chapter")
         book = data.get("book")
         parent = data.get("parent")
-        is_qa = data.get("is_qa", False)
 
         targets = [x for x in [verse, chapter, book] if x is not None]
-        # 段階6: Q&A・返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
-        # （箇所を実体にする移行の前提。3列すべて NULL は 6E の CHECK でも禁止する。）
+        # 返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
+        # （3列すべて NULL は DB の CHECK でも禁止している。）
         if len(targets) != 1:
             raise serializers.ValidationError(
                 "Specify exactly one of verse, chapter, or book."
             )
-
-        # Q&A質問（parent=None, is_qa=True）はタイトル必須
-        if is_qa and not parent:
-            title = data.get("title", "").strip()
-            if not title:
-                raise serializers.ValidationError({"title": "A title is required for Q&A questions."})
 
         if parent:
             # 段階6D: 返信は親と「同じ箇所」であればよい（訳が違っても可）。旧 verse_id 一致から
@@ -204,53 +151,29 @@ class CommentSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _derive_location(validated_data) -> dict:
-        """入力の verse/chapter/book（いずれか1つ）から箇所と投稿時訳を導出する。
-
-        source_translation は Book.translation の値をそのまま保存する（加工しない）。
-        """
-        verse = validated_data.get("verse")
-        chapter = validated_data.get("chapter")
-        book = validated_data.get("book")
-        if verse is not None:
-            b = verse.chapter.book
-            return {
-                "canonical_book": b.canonical_book,
-                "chapter_number": verse.chapter.number,
-                "verse_number": verse.number,
-                "source_translation": b.translation,
-            }
-        if chapter is not None:
-            b = chapter.book
-            return {
-                "canonical_book": b.canonical_book,
-                "chapter_number": chapter.number,
-                "verse_number": None,
-                "source_translation": b.translation,
-            }
-        if book is not None:
-            return {
-                "canonical_book": book.canonical_book,
-                "chapter_number": None,
-                "verse_number": None,
-                "source_translation": book.translation,
-            }
-        # validate() でちょうど1つの旧ターゲット FK があることを保証済み。ここへは到達しない。
-        raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
+        """入力の verse/chapter/book（いずれか1つ）から箇所と投稿時訳を導出する。"""
+        location = derive_location(
+            verse=validated_data.get("verse"),
+            chapter=validated_data.get("chapter"),
+            book=validated_data.get("book"),
+        )
+        if location is None:
+            # validate() でちょうど1つあることを保証済み。ここへは到達しない。
+            raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
+        return location
 
 
 class CommentEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["title", "body"]
+        fields = ["body"]
 
     def validate_body(self, value):
         return _clean_body(value)
 
     def update(self, instance, validated_data):
         instance.body = validated_data["body"]
-        if "title" in validated_data:
-            instance.title = validated_data["title"]
-        instance.save(update_fields=["title", "body", "updated_at"])
+        instance.save(update_fields=["body", "updated_at"])
         return instance
 
 
@@ -285,31 +208,23 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return obj.canonical_book.slug if obj.canonical_book_id else ""
 
 
-class BestAnswerSerializer(serializers.ModelSerializer):
-    user = CommentAuthorSerializer(read_only=True)
+class TrendingCommentSerializer(serializers.ModelSerializer):
+    """表紙の「盛り上がっているコメント」用。箇所へ飛べるだけの情報を添える。"""
 
-    class Meta:
-        model = Comment
-        fields = ["id", "user", "body", "created_at"]
-
-
-class QACommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
-    tags = TagSerializer(many=True, read_only=True)
     location_label = serializers.SerializerMethodField()
     book_name = serializers.SerializerMethodField()
     chapter_number = serializers.SerializerMethodField()
     verse_number = serializers.SerializerMethodField()
     reply_count = serializers.SerializerMethodField()
-    best_answer = BestAnswerSerializer(read_only=True)
 
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "title", "body", "created_at", "vote_count",
-            "tags", "location_label", "book_name", "chapter_number", "verse_number",
-            "reply_count", "best_answer",
+            "id", "user", "body", "created_at", "vote_count",
+            "location_label", "book_name", "chapter_number", "verse_number",
+            "reply_count",
         ]
 
     def get_vote_count(self, obj) -> int:

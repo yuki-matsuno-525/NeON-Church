@@ -18,11 +18,15 @@ def _root_comment(comment):
     return comment
 
 
-def _notification_target_path(*, comment=None, translation_comment=None) -> str:
+def _notification_target_path(*, comment=None, translation_comment=None, answer=None) -> str:
     """Build a user-safe frontend destination without relying on a notification row."""
     if translation_comment is not None:
         suffix = f"#unit-{translation_comment.unit_id}" if translation_comment.unit_id else ""
         return f"/translations/{translation_comment.project_id}{suffix}"
+
+    # Q&A は質問ごとのページへ送る（回答は質問にぶら下がる）。
+    if answer is not None:
+        return f"/qa/{answer.question_id}"
 
     if comment is None:
         return "/notifications"
@@ -35,8 +39,6 @@ def _notification_target_path(*, comment=None, translation_comment=None) -> str:
         if root.verse_number is None:
             return f"{base}/{root.chapter_number}#chapter-comments"
         return f"{base}/{root.chapter_number}#verse-{root.verse_number}"
-    if root.is_qa:
-        return f"/qa#question-{root.id}"
     if not root.canonical_book_id:
         return "/notifications"
 
@@ -56,6 +58,7 @@ def send_user_notification(
     notification_type: str,
     comment=None,
     translation_comment=None,
+    answer=None,
 ) -> Notification | None:
     """Deliver one user notification through each channel the recipient enabled."""
     if recipient == actor:
@@ -77,13 +80,14 @@ def send_user_notification(
             notification_type=notification_type,
             comment=comment,
             translation_comment=translation_comment,
+            answer=answer,
         )
 
     if recipient.email_notifications_enabled and recipient.email:
         action = _EMAIL_ACTIONS.get(notification_type, "sent you a notification")
         target_url = (
             f"{settings.FRONTEND_URL.rstrip('/')}"
-            f"{_notification_target_path(comment=comment, translation_comment=translation_comment)}"
+            f"{_notification_target_path(comment=comment, translation_comment=translation_comment, answer=answer)}"
         )
         send_mail(
             f"NeON Church: {actor.username} {action}",

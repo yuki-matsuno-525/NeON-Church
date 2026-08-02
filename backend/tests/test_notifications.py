@@ -140,10 +140,10 @@ class TestNotificationList:
         res = auth_client.get(NOTIFICATIONS_URL, {"unread": "1"})
         assert res.data["count"] == 0
 
-    def test_comment_body_snippet_shown(self, auth_client, other_auth_client, comment):
+    def test_body_snippet_shown(self, auth_client, other_auth_client, comment):
         other_auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(NOTIFICATIONS_URL)
-        assert res.data["results"][0]["comment_body_snippet"] == "テストコメント"
+        assert res.data["results"][0]["body_snippet"] == "テストコメント"
 
 
 # ------------------------------------------------------------------
@@ -203,7 +203,6 @@ class TestNotificationTarget:
         assert n["book_name"] == verse.chapter.book.name
         assert n["chapter_number"] == verse.chapter.number
         assert n["verse_number"] == verse.number
-        assert n["is_qa"] is False
 
     def test_upvote_on_verse_comment_target_fields(self, auth_client, other_auth_client, comment, verse):
         """upvote 通知でも root の verse 情報が target になる。"""
@@ -213,23 +212,36 @@ class TestNotificationTarget:
         assert n["book_name"] == verse.chapter.book.name
         assert n["verse_number"] == verse.number
 
-    def test_qa_reply_target_kind_is_qa(self, auth_client, other_auth_client, verse):
-        """is_qa=True のコメントへの返信は target_kind=qa を返す。"""
-        qa = auth_client.post(
-            COMMENTS_URL,
-            {"verse": str(verse.id), "body": "質問", "is_qa": True, "title": "通知テスト質問"},
+    def test_qa_answer_target_fields(self, auth_client, other_auth_client, verse):
+        """Q&A の回答が付くと、質問した人に target_kind=qa の通知が届く。"""
+        question = auth_client.post(
+            "/api/qa/questions/",
+            {"title": "通知テスト質問", "body": "質問", "verse": str(verse.id)},
             format="json",
         ).data
-        reply = other_auth_client.post(
-            COMMENTS_URL,
-            {"verse": str(verse.id), "body": "回答", "parent": qa["id"]},
-            format="json",
-        ).data
+        other_auth_client.post(
+            "/api/qa/answers/", {"question": question["id"], "body": "回答"}, format="json"
+        )
         n = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
         assert n["target_kind"] == "qa"
-        assert n["is_qa"] is True
-        # comment_id は通知トリガーになった返信側、root の質問は target_kind=qa の文脈で扱う
-        assert n["comment_id"] == reply["id"]
+        # フロントはこの id で /qa/{question_id} を組み立てる
+        assert n["question_id"] == question["id"]
+        assert n["body_snippet"] == "回答"
+        # 箇所は質問から取る（回答自身は箇所を持たない）
+        assert n["book_name"] == verse.chapter.book.name
+        assert n["verse_number"] == verse.number
+
+    def test_no_notification_for_self_answer(self, auth_client, verse):
+        """自分の質問に自分で答えたときは通知しない。"""
+        question = auth_client.post(
+            "/api/qa/questions/",
+            {"title": "自問自答", "body": "質問", "verse": str(verse.id)},
+            format="json",
+        ).data
+        auth_client.post(
+            "/api/qa/answers/", {"question": question["id"], "body": "自分で回答"}, format="json"
+        )
+        assert auth_client.get(NOTIFICATIONS_URL).data["count"] == 0
 
 
 # ------------------------------------------------------------------

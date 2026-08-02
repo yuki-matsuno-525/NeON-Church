@@ -6,7 +6,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    createComment: vi.fn(),
+    createQuestion: vi.fn(),
     fetchChapters: vi.fn(),
     fetchVerses: vi.fn(),
   };
@@ -18,7 +18,7 @@ describe("QAPostForm", () => {
   });
 
   it("必須入力が空のまま投稿すると、足りない項目を名指しする", async () => {
-    const { createComment } = await import("@/lib/api");
+    const { createQuestion } = await import("@/lib/api");
     render(
       <QAPostForm
         catalog={[]}
@@ -34,7 +34,7 @@ describe("QAPostForm", () => {
 
     fireEvent.click(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("タイトル・本文を入力してください。");
-    expect(vi.mocked(createComment)).not.toHaveBeenCalled();
+    expect(vi.mocked(createQuestion)).not.toHaveBeenCalled();
 
     // 片方だけ埋めたら、残っている方だけを名指しする。
     fireEvent.change(screen.getByPlaceholderText("質問のタイトル（必須）"), { target: { value: "質問タイトル" } });
@@ -43,8 +43,8 @@ describe("QAPostForm", () => {
   });
 
   it("タグ選択状態を aria-pressed に反映して投稿する", async () => {
-    const { createComment } = await import("@/lib/api");
-    vi.mocked(createComment).mockResolvedValue({ id: "c1" } as never);
+    const { createQuestion } = await import("@/lib/api");
+    vi.mocked(createQuestion).mockResolvedValue({ id: "c1" } as never);
     const onSubmitted = vi.fn();
 
     render(
@@ -67,10 +67,9 @@ describe("QAPostForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "質問を投稿する" }));
 
     await waitFor(() => {
-      expect(createComment).toHaveBeenCalledWith({
+      expect(createQuestion).toHaveBeenCalledWith({
         title: "質問タイトル",
         body: "質問本文",
-        is_qa: true,
         tag_ids: ["tag1"],
       });
     });

@@ -14,6 +14,7 @@ from bible.models import Book, Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import Comment, Report, Tag, Vote
 from notifications.models import Notification
+from qa.models import Answer, Question
 from reading_progress.models import ReadingProgress
 from translations.models import (
     TranslationComment,
@@ -282,7 +283,6 @@ class Command(BaseCommand):
                     user=user,
                     **_loc_from_verse(verse),
                     body=body,
-                    is_qa=False,
                 )
                 if tags and random.random() < 0.6:
                     selected_tags = random.sample(tags, k=random.randint(1, 2))
@@ -344,39 +344,27 @@ class Command(BaseCommand):
                         )
                         all_comments.append(depth3)
 
-        # Q&Aコメント（5件）
+        # Q&A（質問5件）。コメントとは別のデータなので Question / Answer で作る。
         qa_verses = random.sample(verses[:20], min(5, len(verses)))
         for verse, title, question, answer in zip(qa_verses, QA_TITLES, QA_QUESTIONS, QA_ANSWERS):
             asker = random.choice(users)
-            qa_comment = Comment.objects.create(
+            q = Question.objects.create(
                 user=asker,
                 **_loc_from_verse(verse),
                 title=title,
                 body=question,
-                is_qa=True,
             )
-            all_comments.append(qa_comment)
             answerer = random.choice([u for u in users if u != asker])
-            best = Comment.objects.create(
-                user=answerer,
-                **_loc_from_verse(verse),
-                body=answer,
-                parent=qa_comment,
-            )
-            all_comments.append(best)
-            # ベストアンサー設定
-            qa_comment.best_answer = best
-            qa_comment.save(update_fields=["best_answer"])
+            best = Answer.objects.create(question=q, user=answerer, body=answer)
+            q.best_answer = best
+            q.save(update_fields=["best_answer"])
             # 追加回答
             for _ in range(random.randint(1, 3)):
-                extra_answerer = random.choice(users)
-                extra = Comment.objects.create(
-                    user=extra_answerer,
-                    **_loc_from_verse(verse),
+                Answer.objects.create(
+                    question=q,
+                    user=random.choice(users),
                     body=random.choice(COMMENT_BODIES_VERSE),
-                    parent=qa_comment,
                 )
-                all_comments.append(extra)
 
         # 論理削除コメント（3件）
         for comment in random.sample(all_comments[:30], min(3, len(all_comments))):

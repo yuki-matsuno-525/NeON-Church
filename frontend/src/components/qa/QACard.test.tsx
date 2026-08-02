@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QACard } from "./QACard";
-import type { QAComment } from "@/lib/api";
+import type { QAQuestion } from "@/lib/api";
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
@@ -9,42 +9,68 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-const makeQuestion = (overrides: Partial<QAComment> = {}): QAComment => ({
+const makeQuestion = (overrides: Partial<QAQuestion> = {}): QAQuestion => ({
   id: "q1",
   user: { id: "u1", username: "alice" },
   title: "山上の説教の『心の貧しい人』とは？",
   body: "この表現の背景を知りたいです。",
   created_at: new Date().toISOString(),
-  vote_count: 4,
-  tags: [{ id: "tag1", name: "解説" }],
-  location_label: "マタイ 5:3",
+  is_deleted: false,
+  book_slug: "matthew",
   book_name: "マタイによる福音書",
   chapter_number: 5,
   verse_number: 3,
-  reply_count: 2,
+  location_label: "マタイによる福音書 5章 3節",
+  version_label: "口語訳",
+  tags: [{ id: "tag1", name: "解説" }],
   best_answer: null,
+  answer_count: 2,
   ...overrides,
 });
 
 describe("QACard", () => {
-  it("質問の見出し・状態・場所リンク・返信数を表示する", () => {
-    const { container } = render(
+  it("カード全体が詳細ページへのリンクになる", () => {
+    const { container } = render(<QACard question={makeQuestion()} />);
+    expect(screen.getByRole("link")).toHaveAttribute("href", "/qa/q1");
+    // 一覧へ戻ったときに元の質問へアンカーで戻れる
+    expect(container.querySelector("#question-q1")).toBeInTheDocument();
+  });
+
+  it("題・状態・箇所・タグ・回答件数を表示する", () => {
+    render(<QACard question={makeQuestion()} />);
+
+    expect(
+      screen.getByRole("heading", { name: "山上の説教の『心の貧しい人』とは？" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("未解決")).toBeInTheDocument();
+    expect(screen.getByText("マタイによる福音書 5章3節")).toBeInTheDocument();
+    expect(screen.getByText("解説")).toBeInTheDocument();
+    expect(screen.getByText("回答 2件")).toBeInTheDocument();
+  });
+
+  it("ベストアンサーがあれば解決済みと出す", () => {
+    render(
       <QACard
-        comment={makeQuestion()}
-        currentUserId={null}
-        onBestAnswerChange={vi.fn()}
+        question={makeQuestion({
+          best_answer: {
+            id: "a1",
+            user: { id: "u2", username: "bob" },
+            body: "旧約の背景があります",
+            created_at: new Date().toISOString(),
+          },
+        })}
       />
     );
+    expect(screen.getByText("解決済み")).toBeInTheDocument();
+  });
 
-    expect(container.querySelector("#question-q1")).toBeInTheDocument();
+  it("本文が長いときは省略する（一覧の高さを揃えるため）", () => {
+    render(<QACard question={makeQuestion({ body: "あ".repeat(200) })} />);
+    expect(screen.getByText(/…$/)).toBeInTheDocument();
+  });
 
-    expect(screen.getByRole("heading", { level: 3, name: "山上の説教の『心の貧しい人』とは？" })).toBeInTheDocument();
-    expect(screen.getByLabelText("未解決")).toBeInTheDocument();
-    expect(screen.getByText("解説")).toBeInTheDocument();
-    expect(screen.getByText("4")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /返信 2件/ })).toHaveAttribute("aria-expanded", "false");
-
-    const locationLink = screen.getByRole("link", { name: "マタイによる福音書 5章3節" });
-    expect(locationLink).toHaveAttribute("href", "/matthew/5#verse-3");
+  it("showLocation=false では箇所を出さない（読書ページのパネル用）", () => {
+    render(<QACard question={makeQuestion()} showLocation={false} />);
+    expect(screen.queryByText("マタイによる福音書 5章3節")).not.toBeInTheDocument();
   });
 });

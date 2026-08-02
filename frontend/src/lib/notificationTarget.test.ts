@@ -8,8 +8,9 @@ function makeN(overrides: Partial<Notification>): Notification {
     id: "n1",
     notification_type: "reply",
     actor_username: "alice",
+    body_snippet: "snippet",
     comment_id: "c1",
-    comment_body_snippet: "snippet",
+    question_id: null,
     translation_project_id: null,
     is_read: false,
     created_at: "",
@@ -18,7 +19,6 @@ function makeN(overrides: Partial<Notification>): Notification {
     chapter_number: null,
     verse_number: null,
     translation_unit_id: null,
-    is_qa: false,
     ...overrides,
   };
 }
@@ -45,8 +45,12 @@ describe("notificationTargetUrl", () => {
     expect(url).toMatch(/\/[a-z]+#book-comments$/);
   });
 
-  it("qa は /qa を返す（詳細ページ未実装のため）", () => {
-    expect(notificationTargetUrl(makeN({ target_kind: "qa" }))).toBe("/qa");
+  it("qa は /qa/{question_id} を返す", () => {
+    expect(notificationTargetUrl(makeN({ target_kind: "qa", question_id: "q1" }))).toBe("/qa/q1");
+  });
+
+  it("qa で question_id が無ければ null（リンクにしない）", () => {
+    expect(notificationTargetUrl(makeN({ target_kind: "qa" }))).toBeNull();
   });
 
   it("translation_unit は /translations/{project_id} を返す", () => {

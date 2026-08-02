@@ -60,21 +60,13 @@ describe("CommentInput", () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it("Q&A のタイトルが空のときは、タイトルも名指しする", async () => {
-    render(<CommentInput onSubmit={mockOnSubmit} showQaOption />);
-    fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "投稿する" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("タイトル・本文を入力してください。");
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
   it("投稿成功時に onSubmit が呼ばれてフォームがリセットされる", async () => {
     mockOnSubmit.mockResolvedValue(undefined);
     render(<CommentInput onSubmit={mockOnSubmit} />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "テストコメント" } });
     fireEvent.click(screen.getByRole("button", { name: "投稿する" }));
 
-    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith("テストコメント", undefined, undefined, undefined));
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledWith("テストコメント", undefined));
     expect(screen.getByRole("textbox")).toHaveValue("");
   });
 
@@ -96,15 +88,10 @@ describe("CommentInput", () => {
     expect(await screen.findByRole("button", { name: "投稿中..." })).toBeDisabled();
   });
 
-  it("showQaOption=true のとき Q&A チェックボックスが表示される", () => {
-    render(<CommentInput onSubmit={mockOnSubmit} showQaOption />);
-    expect(screen.getByRole("checkbox")).toBeInTheDocument();
-    expect(screen.getByText("Q&A")).toBeInTheDocument();
-  });
-
-  it("showQaOption=false のとき Q&A チェックボックスが表示されない", () => {
+  it("Q&A への切り替えは出さない（質問は Q&A の専用フォームから投稿する）", () => {
     render(<CommentInput onSubmit={mockOnSubmit} />);
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByText("Q&A")).not.toBeInTheDocument();
   });
 
   it("空白のみのボディは送信されない", async () => {

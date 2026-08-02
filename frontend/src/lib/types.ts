@@ -10,7 +10,6 @@ export type Comment = {
   version_label: string;
   parent: string | null;
   body: string;
-  is_qa: boolean;
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
@@ -72,9 +71,12 @@ export type Notification = {
   id: string;
   notification_type: "reply" | "upvote" | "mention";
   actor_username: string;
+  // 通知の対象になった文章。コメントでも Q&A の回答でもここに入る。
+  body_snippet: string;
+  body_is_deleted?: boolean;
   comment_id: string | null;
-  comment_body_snippet: string;
-  comment_is_deleted?: boolean;
+  // Q&A の通知のとき、飛び先の質問。
+  question_id: string | null;
   translation_project_id: string | null;
   is_read: boolean;
   created_at: string;
@@ -83,7 +85,6 @@ export type Notification = {
   chapter_number: number | null;
   verse_number: number | null;
   translation_unit_id: string | null;
-  is_qa: boolean;
 };
 export type User = {
   id: string;
@@ -146,25 +147,55 @@ export type ReadingProgress = {
   updated_at: string;
 };
 
-export type QAComment = {
+/** Q&A の質問。コメントとは別のデータ（backend の qa.Question）。 */
+export type QAQuestion = {
   id: string;
   user: CommentUser;
   title: string;
   body: string;
   created_at: string;
-  vote_count: number;
-  tags: Tag[];
-  location_label: string;
+  is_deleted: boolean;
+  /** 訳非依存の書。読書ページへのリンクを組み立てるのに使う。 */
+  book_slug: string;
+  /** 投稿時に見ていた訳での書名。 */
   book_name: string;
   chapter_number: number | null;
   verse_number: number | null;
-  reply_count: number;
+  location_label: string;
+  version_label: string;
+  tags: Tag[];
+  /** ベストアンサーが入っていれば「解決済み」。 */
   best_answer: {
     id: string;
     user: CommentUser;
     body: string;
     created_at: string;
   } | null;
+  answer_count: number;
+};
+
+/** Q&A の回答。ネストしない（回答への返信は無い）。 */
+export type QAAnswer = {
+  id: string;
+  user: CommentUser;
+  body: string;
+  is_deleted: boolean;
+  is_best: boolean;
+  created_at: string;
+};
+
+/** 表紙の「盛り上がっているコメント」1件。 */
+export type TrendingComment = {
+  id: string;
+  user: CommentUser;
+  body: string;
+  created_at: string;
+  vote_count: number;
+  location_label: string;
+  book_name: string;
+  chapter_number: number | null;
+  verse_number: number | null;
+  reply_count: number;
 };
 
 export type TranslationLanguage = {

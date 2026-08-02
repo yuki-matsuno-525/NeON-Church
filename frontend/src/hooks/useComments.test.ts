@@ -15,7 +15,6 @@ const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   version_label: "口語訳",
   parent: null,
   body: "テストコメント",
-  is_qa: false,
   is_deleted: false,
   created_at: new Date().toISOString(),
   vote_count: 0,
