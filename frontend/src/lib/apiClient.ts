@@ -11,6 +11,8 @@ import type {
   MyComment,
   ReadingProgress,
   QAComment,
+  QAQuestion,
+  QAAnswer,
   TranslationLanguage,
   TranslationProject,
   TranslationMembership,
@@ -530,6 +532,104 @@ export function register(
 
 export function logout(): Promise<void> {
   return apiFetch("/auth/logout/", { method: "POST" });
+}
+
+// ---------------------------------------------------------------------------
+// Q&A（質問・回答）
+//
+// コメントとは別のデータ。質問は箇所に紐づき、回答は質問にぶら下がる（ネストしない）。
+// ---------------------------------------------------------------------------
+
+/** 質問一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
+export function fetchQuestionPage(params?: {
+  /** 訳ごとの Book id。カンマ区切りで複数渡すと、同じ書の全訳をまとめて絞れる。 */
+  book_id?: string;
+  /** 箇所で絞る（読書ページの Q&A タブ用）。訳非依存の書 slug。 */
+  book_slug?: string;
+  chapter_number?: number;
+  verse_number?: number;
+  tag_id?: string;
+  answered?: boolean;
+  q?: string;
+  page?: number;
+}): Promise<ListPage<QAQuestion>> {
+  const qs = new URLSearchParams();
+  if (params?.book_id) qs.set("book_id", params.book_id);
+  if (params?.book_slug) qs.set("book_slug", params.book_slug);
+  if (params?.chapter_number) qs.set("chapter_number", String(params.chapter_number));
+  if (params?.verse_number) qs.set("verse_number", String(params.verse_number));
+  if (params?.tag_id) qs.set("tag_id", params.tag_id);
+  if (params?.answered !== undefined) qs.set("answered", String(params.answered));
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
+  if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  return apiFetchPage(`/qa/questions/?${qs}`);
+}
+
+export function fetchQuestion(id: string): Promise<QAQuestion> {
+  return apiFetch(`/qa/questions/${id}/`);
+}
+
+export function createQuestion(data: {
+  /** 箇所は verse / chapter / book のちょうど1つ（表示中の訳の id）。 */
+  verse?: string;
+  chapter?: string;
+  book?: string;
+  title: string;
+  body: string;
+  tag_ids?: string[];
+}): Promise<QAQuestion> {
+  return apiFetch("/qa/questions/", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function updateQuestion(id: string, data: { title: string; body: string }): Promise<QAQuestion> {
+  return apiFetch(`/qa/questions/${id}/`, { method: "PATCH", body: JSON.stringify(data) });
+}
+
+export function deleteQuestion(id: string): Promise<void> {
+  return apiFetch(`/qa/questions/${id}/`, { method: "DELETE" });
+}
+
+/** ある質問への回答の1ページ分（古い順）。 */
+export function fetchAnswerPage(questionId: string, page = 1): Promise<ListPage<QAAnswer>> {
+  const qs = page > 1 ? `?page=${page}` : "";
+  return apiFetchPage(`/qa/questions/${questionId}/answers/${qs}`);
+}
+
+export function createAnswer(questionId: string, body: string): Promise<QAAnswer> {
+  return apiFetch("/qa/answers/", {
+    method: "POST",
+    body: JSON.stringify({ question: questionId, body }),
+  });
+}
+
+export function updateAnswer(id: string, body: string): Promise<QAAnswer> {
+  return apiFetch(`/qa/answers/${id}/`, { method: "PATCH", body: JSON.stringify({ body }) });
+}
+
+export function deleteAnswer(id: string): Promise<void> {
+  return apiFetch(`/qa/answers/${id}/`, { method: "DELETE" });
+}
+
+/** ベストアンサーの設定・解除（質問者のみ）。null を渡すと解除。 */
+export function setQuestionBestAnswer(questionId: string, answerId: string | null): Promise<void> {
+  return apiFetch(`/qa/questions/${questionId}/best-answer/`, {
+    method: "PATCH",
+    body: JSON.stringify({ answer_id: answerId }),
+  });
+}
+
+export function reportQuestion(id: string, reason: string): Promise<void> {
+  return apiFetch(`/qa/questions/${id}/report/`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export function reportAnswer(id: string, reason: string): Promise<void> {
+  return apiFetch(`/qa/answers/${id}/report/`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
 }
 
 /** Q&A一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { fetchChapters, fetchVerses, createComment, type Chapter, type Tag, type Verse } from "@/lib/api";
+import { fetchChapters, fetchVerses, createQuestion, type Chapter, type Tag, type Verse } from "@/lib/api";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
@@ -13,6 +13,11 @@ type Props = {
   tags: Tag[];
   onSubmitted: () => void;
   onCancel: () => void;
+  /**
+   * 箇所をあらかじめ決めておく（読書ページから「この箇所について質問する」で開く場合）。
+   * 渡すと書・章・節の選択欄は出さず、その箇所で固定する。
+   */
+  fixedLocation?: { verse?: string; chapter?: string; book?: string; label?: string };
 };
 
 const inputStyle: React.CSSProperties = {
@@ -25,7 +30,7 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
+export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation }: Props) {
   const t = useT();
   const { lang } = useLang();
   const titleId = useId();
@@ -104,11 +109,20 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      await createComment({
+      // 箇所は verse / chapter / book のちょうど1つ。細かい方を優先する。
+      const location = fixedLocation
+        ? { verse: fixedLocation.verse, chapter: fixedLocation.chapter, book: fixedLocation.book }
+        : verseId
+          ? { verse: verseId }
+          : chapterId
+            ? { chapter: chapterId }
+            : bookId
+              ? { book: bookId }
+              : {};
+      await createQuestion({
         title: title.trim(),
         body: body.trim(),
-        is_qa: true,
-        ...(verseId ? { verse: verseId } : chapterId ? { chapter: chapterId } : bookId ? { book: bookId } : {}),
+        ...location,
         ...(tagIds.length > 0 ? { tag_ids: tagIds } : {}),
       });
       onSubmitted();
@@ -173,7 +187,14 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
         }}
       />
 
-      {/* 場所選択 */}
+      {/* 場所選択。読書ページから開いたときは、その箇所で固定なので選ばせない。 */}
+      {fixedLocation ? (
+        fixedLocation.label && (
+          <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+            {fixedLocation.label}
+          </p>
+        )
+      ) : (
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
         <label htmlFor={genreSelectId} className="sr-only">{t.allBooks}</label>
         <select
@@ -230,6 +251,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel }: Props) {
           </>
         )}
       </div>
+      )}
 
       {/* タグ選択 */}
       {tags.length > 0 && (

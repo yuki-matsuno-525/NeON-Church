@@ -131,6 +131,43 @@ export type ReadingProgress = {
   updated_at: string;
 };
 
+/** Q&A の質問。コメントとは別のデータ（backend の qa.Question）。 */
+export type QAQuestion = {
+  id: string;
+  user: CommentUser;
+  title: string;
+  body: string;
+  created_at: string;
+  is_deleted: boolean;
+  /** 訳非依存の書。読書ページへのリンクを組み立てるのに使う。 */
+  book_slug: string;
+  /** 投稿時に見ていた訳での書名。 */
+  book_name: string;
+  chapter_number: number | null;
+  verse_number: number | null;
+  location_label: string;
+  version_label: string;
+  tags: Tag[];
+  /** ベストアンサーが入っていれば「解決済み」。 */
+  best_answer: {
+    id: string;
+    user: CommentUser;
+    body: string;
+    created_at: string;
+  } | null;
+  answer_count: number;
+};
+
+/** Q&A の回答。ネストしない（回答への返信は無い）。 */
+export type QAAnswer = {
+  id: string;
+  user: CommentUser;
+  body: string;
+  is_deleted: boolean;
+  is_best: boolean;
+  created_at: string;
+};
+
 export type QAComment = {
   id: string;
   user: CommentUser;
