@@ -143,39 +143,49 @@ python manage.py import_others  # loads the texts (idempotent — safe to re-run
 <br/>
 
 Seed data reproduces what the service looks like once people are actually using it.
+Everything comes from one command, `seed_demo`, which mixes Japanese and English users.
 
 **With Docker:**
 
 ```bash
-# Add seed data to whatever is already there
-docker-compose exec backend python manage.py seed
+# Wipe existing user data and load the full-size seed (a few minutes)
+docker-compose exec backend python manage.py seed_demo --wipe
 
-# Wipe existing data first, for a clean slate
-docker-compose exec backend python manage.py seed --clear
+# A smaller set, enough to click through every screen
+docker-compose exec backend python manage.py seed_demo --wipe --scale large
 ```
 
 **Without Docker (SQLite E2E setup):**
 
 ```bash
 cd backend
-DJANGO_SETTINGS_MODULE=config.settings.e2e python manage.py seed --clear
+DJANGO_SETTINGS_MODULE=config.settings.e2e python manage.py seed_demo --wipe --scale small
 ```
 
-What gets created:
+`--wipe` removes every non-staff user and everything people created (comments, Q&A,
+articles, plans, translation projects, favorites, notifications). Scripture itself
+(`CanonicalBook` / `Book` / `Chapter` / `Verse`) is never touched. Without `--wipe` the
+command refuses to run on a database that already has data, so it cannot double up.
+
+What `--scale xl` (the default) creates:
 
 | Data | Count |
 |--------|------|
-| Users | 15 (varied bios and roles) |
-| Comments | 200+ (verse / chapter / book level, reply trees of depth 3, Q&A with best answers) |
-| Votes | 200+ |
-| Favorites | 100+ (both verses and comments) |
-| Notifications | 100+ (both reply and like types) |
-| Reading progress | 40+ (several books per user) |
-| Translation projects | 3 (one each: draft / active / published) |
-| Translation units | 60 (a mix of todo / in_progress / review / done) |
-| Translation comments | 20+ |
+| Users | 220 (half Japanese, half English, varied bios) |
+| Comments | 20,000+ (verse / chapter / book level, reply trees of depth 5, soft deletes) |
+| Votes | 80,000+ |
+| Q&A | 400 questions / 1,800+ answers (half solved, one question with 80+ answers) |
+| Articles | 400 (public / unlisted / draft, every citation form including a broken one) |
+| Article comments | 3,900 (one article carries 150) |
+| Plans | 120 (3 to 365 days, canon and apocrypha mixed, subscriptions and progress) |
+| Translation projects | 40 (all statuses, all membership states, all unit states) |
+| Favorites | 6,000+ (books, chapters, verses, comments, translation projects) |
+| Notifications | 14,000+ (reply / upvote / mention, read and unread) |
+| Reports | 300 (comments, questions and answers) |
 
-> Every seeded user has the password `Seed@pass123`.
+> The command prints one shared password for the seeded users when it finishes.
+> It also creates an admin account if the database has no superuser yet, and prints
+> that password once.
 
 </details>
 
