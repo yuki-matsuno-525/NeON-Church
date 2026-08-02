@@ -227,21 +227,6 @@ export function CommentItem({
           >
             {comment.user.username}
           </Link>
-          {comment.is_qa && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                background: "var(--accent)",
-                color: "var(--accent-text)",
-                padding: "1px 6px",
-                borderRadius: 999,
-                letterSpacing: "0.04em",
-              }}
-            >
-              Q&A
-            </span>
-          )}
           {showVersionBadge && comment.version_label && (
             <span
               style={{

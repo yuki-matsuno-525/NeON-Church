@@ -1,20 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   createBookmark,
   removeBookmark,
   createComment,
   fetchArticlesCitingVerse,
+  fetchQuestionPage,
+  fetchTags,
   type Verse,
   type Bookmark,
   type Article,
+  type QAQuestion,
+  type Tag,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
+import { QACard } from "@/components/qa/QACard";
+import { QAPostForm } from "@/components/qa/QAPostForm";
+import { useBookCatalog } from "@/lib/bookCatalog";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
@@ -62,7 +69,12 @@ export function CommentPanel({
   // この節を引用している記事。1件も無いときはタブ自体を出さない
   // （どの節にも「引用した記事 (0)」が並ぶと、押しても空という体験になるため）。
   const [citingArticles, setCitingArticles] = useState<Article[]>([]);
-  const [tab, setTab] = useState<"comments" | "articles">("comments");
+  // この節への質問。コメントとは別のデータなので、別のタブで分けて見せる。
+  const [questions, setQuestions] = useState<QAQuestion[]>([]);
+  const [askOpen, setAskOpen] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const catalog = useBookCatalog();
+  const [tab, setTab] = useState<"comments" | "qa" | "articles">("comments");
 
   useEffect(() => {
     if (!bookSlug) return;
@@ -76,10 +88,17 @@ export function CommentPanel({
         if (alive) setCitingArticles(response.results);
       })
       .catch(() => {});
+    loadQuestions();
     return () => {
       alive = false;
     };
+    // loadQuestions は同じ箇所のあいだ変わらない（下の useCallback）。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookSlug, chapterNumber, verse.number]);
+
+  useEffect(() => {
+    fetchTags().then(setTags).catch(() => {});
+  }, []);
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
@@ -127,11 +146,22 @@ export function CommentPanel({
     }
   };
 
-  const handleSubmit = async (body: string, isQa?: boolean, tagIds?: string[], title?: string) => {
-    const comment = await createComment({ verse: verse.id, title, body, is_qa: isQa, tag_ids: tagIds, translation_project: translationProject });
+  const handleSubmit = async (body: string, tagIds?: string[]) => {
+    const comment = await createComment({ verse: verse.id, body, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);
   };
+
+  /** この節の質問を取り直す。質問を投稿した直後にも呼ぶ。 */
+  const loadQuestions = useCallback(() => {
+    if (!bookSlug) {
+      setQuestions([]);
+      return;
+    }
+    fetchQuestionPage({ book_slug: bookSlug, chapter_number: chapterNumber, verse_number: verse.number })
+      .then((page) => setQuestions(page.results))
+      .catch(() => setQuestions([]));
+  }, [bookSlug, chapterNumber, verse.number]);
 
   const handleOpenCompose = () => {
     if (!user) {
@@ -357,19 +387,75 @@ export function CommentPanel({
           )}
         </div>
 
-        {/* コメントと「引用した記事」のタブ。記事が無いときは出さない */}
-        {citingArticles.length > 0 && (
-          <div style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
-            <PanelTab active={tab === "comments"} onClick={() => setTab("comments")}>
-              {t.tabComments}
-            </PanelTab>
+        {/* コメント / Q&A / 引用した記事。Q&A は別のデータなので常にタブを出す。
+            記事は1件も無いときに空タブを押させても仕方がないので、あるときだけ出す。 */}
+        <div style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
+          <PanelTab active={tab === "comments"} onClick={() => setTab("comments")}>
+            {t.tabComments}
+          </PanelTab>
+          <PanelTab active={tab === "qa"} onClick={() => setTab("qa")}>
+            {t.tabQa(questions.length)}
+          </PanelTab>
+          {citingArticles.length > 0 && (
             <PanelTab active={tab === "articles"} onClick={() => setTab("articles")}>
               {t.citingArticles(citingArticles.length)}
             </PanelTab>
-          </div>
-        )}
+          )}
+        </div>
 
-        {tab === "articles" ? (
+        {tab === "qa" ? (
+          <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            {askOpen ? (
+              <QAPostForm
+                catalog={catalog}
+                tags={tags}
+                fixedLocation={{
+                  verse: verse.id,
+                  label: t.chapterVerseHeader(chapterNumber, verse.number),
+                }}
+                onSubmitted={() => {
+                  setAskOpen(false);
+                  loadQuestions();
+                }}
+                onCancel={() => setAskOpen(false)}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) { setShowLoginModal(true); return; }
+                  setAskOpen(true);
+                }}
+                className="card-glow card-glow-interactive"
+                style={{
+                  width: "100%",
+                  padding: "11px 14px",
+                  minHeight: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  color: "var(--text)",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                }}
+              >
+                <Icon name="help-circle" size={16} />
+                {t.qaAskAboutThis}
+              </button>
+            )}
+            {questions.length === 0 ? (
+              <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "8px 0" }}>
+                {t.qaNoQuestionsHere}
+              </p>
+            ) : (
+              // 箇所はこの節だと分かっているので、カードには出さない。
+              questions.map((q) => <QACard key={q.id} question={q} showLocation={false} />)
+            )}
+          </div>
+        ) : tab === "articles" ? (
           <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
             {citingArticles.map((article) => (
               <Link
@@ -398,7 +484,6 @@ export function CommentPanel({
               onCancel={() => setComposeOpen(false)}
               placeholder={t.verseCommentInput}
               submitLabel={t.submitComment}
-              showQaOption
               showTagOption
               autoFocus
             />

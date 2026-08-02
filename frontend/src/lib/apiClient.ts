@@ -323,7 +323,6 @@ export function createComment(data: {
   title?: string;
   body: string;
   parent?: string;
-  is_qa?: boolean;
   tag_ids?: string[];
   translation_project?: string;
 }): Promise<Comment> {

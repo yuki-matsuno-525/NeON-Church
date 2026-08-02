@@ -8,21 +8,26 @@ import { fetchTags, type Tag } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 
 type Props = {
-  onSubmit: (body: string, isQa?: boolean, tagIds?: string[], title?: string) => Promise<void>;
+  onSubmit: (body: string, tagIds?: string[]) => Promise<void>;
   onCancel?: () => void;
   placeholder?: string;
   submitLabel?: string;
-  showQaOption?: boolean;
   showTagOption?: boolean;
   autoFocus?: boolean;
 };
 
+/**
+ * コメントの入力欄。
+ *
+ * 質問はここからは投稿しない（Q&A は別のデータで、専用のフォームがある）。
+ * 以前はチェックひとつでコメントが質問に変わる作りだったため、コメント一覧に
+ * 質問が混ざっていた。
+ */
 export function CommentInput({
   onSubmit,
   onCancel,
   placeholder,
   submitLabel,
-  showQaOption = false,
   showTagOption = false,
   autoFocus = false,
 }: Props) {
@@ -31,8 +36,6 @@ export function CommentInput({
   const pathname = usePathname();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
-  const [isQa, setIsQa] = useState(false);
-  const [qaTitle, setQaTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +81,6 @@ export function CommentInput({
     // 未入力のまま押せたときは、何が足りないのかを名指しする。
     // ボタンを押せなくして黙って止めると、理由が伝わらない。
     const missing: string[] = [];
-    if (showQaOption && isQa && !qaTitle.trim()) missing.push(t.fieldTitle);
     if (!body.trim()) missing.push(t.fieldBody);
     if (missing.length > 0) {
       setError(t.missingFields(missing));
@@ -89,13 +91,9 @@ export function CommentInput({
     try {
       await onSubmit(
         body.trim(),
-        showQaOption ? isQa : undefined,
         showTagOption && selectedTags.length > 0 ? selectedTags : undefined,
-        showQaOption && isQa ? qaTitle.trim() : undefined,
       );
       setBody("");
-      setIsQa(false);
-      setQaTitle("");
       setSelectedTags([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : t.postFailed);
@@ -109,28 +107,6 @@ export function CommentInput({
 
   return (
     <form onSubmit={handleSubmit}>
-      {showQaOption && isQa && (
-        <input
-          type="text"
-          value={qaTitle}
-          onChange={(e) => setQaTitle(e.target.value)}
-          placeholder={t.qaTitleInputPlaceholder}
-          aria-label={t.qaTitleInputPlaceholder}
-          style={{
-            width: "100%",
-            padding: "8px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontSize: 14,
-            fontFamily: "inherit",
-            outline: "none",
-            marginBottom: 8,
-            boxSizing: "border-box",
-          }}
-        />
-      )}
       <textarea
         ref={textareaRef}
         value={body}
@@ -183,17 +159,6 @@ export function CommentInput({
         </p>
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
-        {showQaOption && (
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text-muted)", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={isQa}
-              onChange={(e) => setIsQa(e.target.checked)}
-              style={{ cursor: "pointer" }}
-            />
-            Q&A
-          </label>
-        )}
         {onCancel && (
           <button
             type="button"
