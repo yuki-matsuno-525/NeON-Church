@@ -123,7 +123,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         project = serializer.validated_data.get("translation_project")
 
         if not any([verse, chapter, book, comment, project]):
-            raise ValidationError({"detail": "Specify verse, chapter, book, comment or project."})
+            raise ValidationError({"detail": "Specify a verse, chapter, book, comment or project to favorite."})
 
         comment_project = comment.translation_project if comment and comment.translation_project_id else None
         if project and not can_view_project_work(self.request.user, project):
@@ -157,11 +157,11 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
 
         # 同一ユーザー・同一対象の重複を弾く（章のお気に入り/書のお気に入りは verse/chapter が NULL の行だけを対象に一致）。
         if location and Bookmark.objects.filter(user=user, **location).exists():
-            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+            raise ValidationError({"detail": "Already in your favorites."}, code="duplicate")
         if comment and Bookmark.objects.filter(user=user, comment=comment).exists():
-            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+            raise ValidationError({"detail": "Already in your favorites."}, code="duplicate")
         if project and Bookmark.objects.filter(user=user, translation_project=project).exists():
-            raise ValidationError({"detail": "Already bookmarked."}, code="duplicate")
+            raise ValidationError({"detail": "Already in your favorites."}, code="duplicate")
 
         with transaction.atomic():
             serializer.save(user=user, **location)
