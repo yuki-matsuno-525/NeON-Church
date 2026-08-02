@@ -53,7 +53,6 @@ const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   book: null,
   parent: null,
   body: "テストコメント本文",
-  is_qa: false,
   is_deleted: false,
   created_at: "2024-01-01T00:00:00Z",
   vote_count: 3,

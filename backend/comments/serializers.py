@@ -80,7 +80,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "title", "body", "is_qa", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
+        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "body", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "reply_count", "version_label", "tags"]
 
     def get_vote_count(self, obj) -> int:
@@ -108,21 +108,14 @@ class CommentSerializer(serializers.ModelSerializer):
         chapter = data.get("chapter")
         book = data.get("book")
         parent = data.get("parent")
-        is_qa = data.get("is_qa", False)
 
         targets = [x for x in [verse, chapter, book] if x is not None]
-        # 段階6: Q&A・返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
-        # （箇所を実体にする移行の前提。3列すべて NULL は 6E の CHECK でも禁止する。）
+        # 返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
+        # （3列すべて NULL は DB の CHECK でも禁止している。）
         if len(targets) != 1:
             raise serializers.ValidationError(
                 "Specify exactly one of verse, chapter, or book."
             )
-
-        # Q&A質問（parent=None, is_qa=True）はタイトル必須
-        if is_qa and not parent:
-            title = data.get("title", "").strip()
-            if not title:
-                raise serializers.ValidationError({"title": "A title is required for Q&A questions."})
 
         if parent:
             # 段階6D: 返信は親と「同じ箇所」であればよい（訳が違っても可）。旧 verse_id 一致から
@@ -173,16 +166,14 @@ class CommentSerializer(serializers.ModelSerializer):
 class CommentEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["title", "body"]
+        fields = ["body"]
 
     def validate_body(self, value):
         return _clean_body(value)
 
     def update(self, instance, validated_data):
         instance.body = validated_data["body"]
-        if "title" in validated_data:
-            instance.title = validated_data["title"]
-        instance.save(update_fields=["title", "body", "updated_at"])
+        instance.save(update_fields=["body", "updated_at"])
         return instance
 
 
@@ -217,31 +208,23 @@ class MyCommentSerializer(serializers.ModelSerializer):
         return obj.canonical_book.slug if obj.canonical_book_id else ""
 
 
-class BestAnswerSerializer(serializers.ModelSerializer):
-    user = CommentAuthorSerializer(read_only=True)
+class TrendingCommentSerializer(serializers.ModelSerializer):
+    """表紙の「盛り上がっているコメント」用。箇所へ飛べるだけの情報を添える。"""
 
-    class Meta:
-        model = Comment
-        fields = ["id", "user", "body", "created_at"]
-
-
-class QACommentSerializer(serializers.ModelSerializer):
     user = CommentAuthorSerializer(read_only=True)
     vote_count = serializers.SerializerMethodField()
-    tags = TagSerializer(many=True, read_only=True)
     location_label = serializers.SerializerMethodField()
     book_name = serializers.SerializerMethodField()
     chapter_number = serializers.SerializerMethodField()
     verse_number = serializers.SerializerMethodField()
     reply_count = serializers.SerializerMethodField()
-    best_answer = BestAnswerSerializer(read_only=True)
 
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "title", "body", "created_at", "vote_count",
-            "tags", "location_label", "book_name", "chapter_number", "verse_number",
-            "reply_count", "best_answer",
+            "id", "user", "body", "created_at", "vote_count",
+            "location_label", "book_name", "chapter_number", "verse_number",
+            "reply_count",
         ]
 
     def get_vote_count(self, obj) -> int:

@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchVerseOfDay, fetchQACommentPage, fetchTrendingComments, type VerseOfDay, type QAComment } from "@/lib/api";
+import { fetchVerseOfDay, fetchQuestionPage, fetchTrendingComments, type VerseOfDay, type QAQuestion, type TrendingComment } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { formatBookLocation, useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -35,8 +35,8 @@ export default function Home() {
   const [verseOfDay, setVerseOfDay] = useState<VerseOfDay | null>(null);
   const [verseLoading, setVerseLoading] = useState(true);
   const [verseError, setVerseError] = useState(false);
-  const [recentQA, setRecentQA] = useState<QAComment[]>([]);
-  const [trending, setTrending] = useState<QAComment[]>([]);
+  const [recentQA, setRecentQA] = useState<QAQuestion[]>([]);
+  const [trending, setTrending] = useState<TrendingComment[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +55,7 @@ export default function Home() {
 
   useEffect(() => {
     // 表紙に出すのは冒頭の数件だけなので1ページ目で足りる。
-    fetchQACommentPage()
+    fetchQuestionPage()
       .then((page) => setRecentQA(page.results.slice(0, 4)))
       .catch(() => {});
     fetchTrendingComments().then(setTrending).catch(() => {});
@@ -425,14 +425,14 @@ export default function Home() {
   );
 }
 
-function ActivityCard({ qa }: { qa: QAComment }) {
+function ActivityCard({ qa }: { qa: QAQuestion }) {
   const t = useT();
   const { lang } = useLang();
   const relTime = useRelativeTime();
-  const slug = slugFromBookName(qa.book_name);
+  const slug = qa.book_slug;
   return (
     <Link
-      href="/qa"
+      href={`/qa/${qa.id}`}
       style={{
         display: "block",
         background: "rgba(255, 255, 255, 0.03)",
@@ -485,10 +485,10 @@ function ActivityCard({ qa }: { qa: QAComment }) {
         </span>
         <span>·</span>
         <span>{relTime(qa.created_at)}</span>
-        {qa.reply_count > 0 && (
+        {qa.answer_count > 0 && (
           <>
             <span>·</span>
-            <span>{t.replyLabel} {qa.reply_count}</span>
+            <span>{t.qaAnswerCount(qa.answer_count)}</span>
           </>
         )}
       </div>
@@ -496,7 +496,7 @@ function ActivityCard({ qa }: { qa: QAComment }) {
   );
 }
 
-function TrendingCard({ comment }: { comment: QAComment }) {
+function TrendingCard({ comment }: { comment: TrendingComment }) {
   const t = useT();
   const { lang } = useLang();
   const slug = slugFromBookName(comment.book_name);

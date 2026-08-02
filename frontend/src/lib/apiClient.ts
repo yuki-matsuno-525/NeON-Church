@@ -10,9 +10,9 @@ import type {
   VerseOfDay,
   MyComment,
   ReadingProgress,
-  QAComment,
   QAQuestion,
   QAAnswer,
+  TrendingComment,
   TranslationLanguage,
   TranslationProject,
   TranslationMembership,
@@ -631,23 +631,6 @@ export function reportAnswer(id: string, reason: string): Promise<void> {
   });
 }
 
-/** Q&A一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
-export function fetchQACommentPage(params?: {
-  book_id?: string;
-  tag_id?: string;
-  answered?: boolean;
-  q?: string;
-  page?: number;
-}): Promise<ListPage<QAComment>> {
-  const qs = new URLSearchParams();
-  if (params?.book_id) qs.set("book_id", params.book_id);
-  if (params?.tag_id) qs.set("tag_id", params.tag_id);
-  if (params?.answered !== undefined) qs.set("answered", String(params.answered));
-  if (params?.q?.trim()) qs.set("q", params.q.trim());
-  if (params?.page && params.page > 1) qs.set("page", String(params.page));
-  return apiFetchPage(`/comments/qa/?${qs}`);
-}
-
 /**
  * ある親コメントへの返信を全部取る。
  *
@@ -656,13 +639,6 @@ export function fetchQACommentPage(params?: {
  */
 export function fetchCommentReplies(parentId: string): Promise<Comment[]> {
   return apiFetchAll(`/comments/?parent_id=${parentId}`);
-}
-
-export function setBestAnswer(questionId: string, answerCommentId: string | null): Promise<void> {
-  return apiFetch(`/comments/${questionId}/best-answer/`, {
-    method: "PATCH",
-    body: JSON.stringify({ answer_comment_id: answerCommentId }),
-  });
 }
 
 export type SearchKind = "all" | "verses" | "books" | "comments";
@@ -903,7 +879,7 @@ export function fetchUserBookmarkPage(
   return apiFetchPage(`/users/${username}/bookmarks/${suffix}`);
 }
 
-export function fetchTrendingComments(): Promise<QAComment[]> {
+export function fetchTrendingComments(): Promise<TrendingComment[]> {
   return apiFetch("/comments/trending/");
 }
 

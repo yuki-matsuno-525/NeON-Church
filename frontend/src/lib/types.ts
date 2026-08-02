@@ -10,7 +10,6 @@ export type Comment = {
   version_label: string;
   parent: string | null;
   body: string;
-  is_qa: boolean;
   is_deleted: boolean;
   created_at: string;
   vote_count: number;
@@ -168,25 +167,18 @@ export type QAAnswer = {
   created_at: string;
 };
 
-export type QAComment = {
+/** 表紙の「盛り上がっているコメント」1件。 */
+export type TrendingComment = {
   id: string;
   user: CommentUser;
-  title: string;
   body: string;
   created_at: string;
   vote_count: number;
-  tags: Tag[];
   location_label: string;
   book_name: string;
   chapter_number: number | null;
   verse_number: number | null;
   reply_count: number;
-  best_answer: {
-    id: string;
-    user: CommentUser;
-    body: string;
-    created_at: string;
-  } | null;
 };
 
 export type TranslationLanguage = {

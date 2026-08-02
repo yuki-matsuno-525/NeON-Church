@@ -14,6 +14,7 @@ from bible.models import Book, Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import Comment, Report, Tag, Vote
 from notifications.models import Notification
+from qa.models import Answer, Question
 from reading_progress.models import ReadingProgress
 from translations.models import (
     TranslationComment,
@@ -337,7 +338,6 @@ class Command(BaseCommand):
                     user=user,
                     **_loc_from_verse(verse),
                     body=random.choice(COMMENT_BODIES_VERSE),
-                    is_qa=False,
                 )
                 if tags and random.random() < 0.65:
                     comment.tags.set(random.sample(tags, k=random.randint(1, 2)))
@@ -401,36 +401,26 @@ class Command(BaseCommand):
                             )
                             all_comments.append(depth4)
 
-        # Q&A threads
+        # Q&A（コメントとは別のデータ）
         qa_verses = random.sample(verses[:40], min(7, len(verses)))
         for verse, title, question, answer in zip(qa_verses, QA_TITLES, QA_QUESTIONS, QA_ANSWERS):
             asker = random.choice(users)
-            qa = Comment.objects.create(
+            q = Question.objects.create(
                 user=asker,
                 **_loc_from_verse(verse),
                 title=title,
                 body=question,
-                is_qa=True,
             )
-            all_comments.append(qa)
             answerer = random.choice([u for u in users if u != asker])
-            best = Comment.objects.create(
-                user=answerer,
-                **_loc_from_verse(verse),
-                body=answer,
-                parent=qa,
-            )
-            all_comments.append(best)
-            qa.best_answer = best
-            qa.save(update_fields=["best_answer"])
+            best = Answer.objects.create(question=q, user=answerer, body=answer)
+            q.best_answer = best
+            q.save(update_fields=["best_answer"])
             for _ in range(random.randint(2, 5)):
-                extra = Comment.objects.create(
+                Answer.objects.create(
+                    question=q,
                     user=random.choice(users),
-                    **_loc_from_verse(verse),
                     body=random.choice(COMMENT_BODIES_VERSE),
-                    parent=qa,
                 )
-                all_comments.append(extra)
 
         # Soft-delete a small fraction
         deletable = [c for c in all_comments if c.parent is None]

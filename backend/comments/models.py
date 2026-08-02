@@ -28,6 +28,8 @@ class Tag(models.Model):
 class Comment(BaseModel):
     """
     コメント。parent FK によるツリー構造、is_deleted による論理削除。
+
+    Q&A の質問・回答はここには入らない（qa.Question / qa.Answer が持つ）。
     論理削除時は body をクリアし、クライアント側で is_deleted に応じた文言を表示する。
     物理削除は行わない（子コメントの親参照を維持するため）。
     """
@@ -73,17 +75,7 @@ class Comment(BaseModel):
         on_delete=models.CASCADE,
         related_name="replies",
     )
-    # Q&A のベストアンサーとして選ばれた返信コメント。
-    best_answer = models.ForeignKey(
-        "self",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="best_answer_for",
-    )
-    title = models.CharField(max_length=200, blank=True, default="")
     body = models.TextField(max_length=5000)
-    is_qa = models.BooleanField(default=False, db_index=True)
     is_deleted = models.BooleanField(default=False, db_index=True)
     tags = models.ManyToManyField(Tag, blank=True, related_name="comments")
 
@@ -98,8 +90,6 @@ class Comment(BaseModel):
                 fields=["canonical_book", "chapter_number", "verse_number", "-created_at"],
                 name="comment_location_recent_idx",
             ),
-            # Q&A 一覧は質問（親なし・is_qa）を新しい順に出す。
-            models.Index(fields=["is_qa", "parent", "-created_at"], name="comment_qa_recent_idx"),
             # 返信の読み足しは親でぶら下がりを引く。
             models.Index(fields=["parent", "-created_at"], name="comment_replies_recent_idx"),
         ]

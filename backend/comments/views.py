@@ -266,87 +266,19 @@ class MyCommentListView(generics.ListAPIView):
         )
 
 
-class QACommentListView(generics.ListAPIView):
-    """GET /api/comments/qa/  Q&Aフラグ付きコメント一覧（認証不要）
-
-    ?book_id=   書で絞り込み（カンマ区切りで複数指定可。同一書の複数訳をまとめて絞る用）
-    ?tag_id=    タグで絞り込み
-    """
-
-    permission_classes = [permissions.AllowAny]
-    pagination_class = StandardPageNumberPagination
-
-    def get_serializer_class(self):
-        from .serializers import QACommentSerializer
-        return QACommentSerializer
-
-    def get_queryset(self):
-        qs = (
-            Comment.objects.filter(is_qa=True, is_deleted=False, parent=None, translation_project__isnull=True)
-            .select_related(
-                "user",
-                "canonical_book",
-                "best_answer__user",
-            )
-            .prefetch_related("tags")
-            .annotate(
-                vote_count=Count("votes", distinct=True),
-                reply_count=Count(
-                    "replies",
-                    distinct=True,
-                    filter=models.Q(replies__is_deleted=False),
-                ),
-            )
-            .order_by("-created_at")
-        )
-        params = self.request.query_params
-        book_id = params.get("book_id")
-        tag_id = params.get("tag_id")
-        if book_id:
-            # カンマ区切りで複数の Book id を受け付ける（同一書の複数訳をまとめて絞る）。
-            # 段階6F: 各コメントは canonical_book で保持するので、Book id を canonical へ解決して絞る。
-            book_ids = [b for b in book_id.split(",") if b]
-            from bible.models import Book
-            canonical_ids = list(
-                Book.objects.filter(id__in=book_ids).values_list("canonical_book_id", flat=True)
-            )
-            qs = qs.filter(canonical_book_id__in=canonical_ids)
-        if tag_id:
-            qs = qs.filter(tags__id=tag_id).distinct()
-        q = (params.get("q") or "").strip()
-        if q:
-            qs = qs.filter(
-                models.Q(title__icontains=q)
-                | models.Q(body__icontains=q)
-                | models.Q(user__username__icontains=q)
-                | models.Q(tags__name__icontains=q)
-                | models.Q(canonical_book__slug__icontains=q)
-            ).distinct()
-        answered = params.get("answered")
-        if answered == "true":
-            qs = qs.filter(best_answer__isnull=False)
-        elif answered == "false":
-            qs = qs.filter(best_answer__isnull=True)
-        return qs
-
-
 class TrendingCommentView(generics.ListAPIView):
     """GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要）"""
 
     permission_classes = [permissions.AllowAny]
 
     def get_serializer_class(self):
-        from .serializers import QACommentSerializer
-        return QACommentSerializer
+        from .serializers import TrendingCommentSerializer
+        return TrendingCommentSerializer
 
     def get_queryset(self):
         return (
             Comment.objects.filter(is_deleted=False, parent=None, translation_project__isnull=True)
-            .select_related(
-                "user",
-                "canonical_book",
-                "best_answer__user",
-            )
+            .select_related("user", "canonical_book")
             .prefetch_related("tags")
             .annotate(
                 vote_count=Count("votes", distinct=True),
@@ -358,32 +290,6 @@ class TrendingCommentView(generics.ListAPIView):
             )
             .order_by("-vote_count", "-created_at")[:5]
         )
-
-
-class SetBestAnswerView(APIView):
-    """PATCH /api/comments/{pk}/best-answer/  ベストアンサーの設定・解除（質問投稿者のみ）
-
-    body: { "answer_comment_id": "<uuid>" }  設定
-    body: { "answer_comment_id": null }      解除
-    """
-
-    permission_classes = [permissions.IsAuthenticated]
-
-    def patch(self, request, pk):
-        question = get_object_or_404(Comment, pk=pk, is_qa=True, parent=None)
-        if question.user != request.user:
-            return Response(
-                {"detail": "Only the question author can set the best answer."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        answer_id = request.data.get("answer_comment_id")
-        if answer_id is None:
-            question.best_answer = None
-        else:
-            answer = get_object_or_404(Comment, pk=answer_id, parent=question, is_deleted=False)
-            question.best_answer = answer
-        question.save(update_fields=["best_answer", "updated_at"])
-        return Response(status=status.HTTP_200_OK)
 
 
 class ReportView(APIView):
