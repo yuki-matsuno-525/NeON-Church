@@ -10,7 +10,7 @@ class CommentBriefSerializer(serializers.Serializer):
     body = serializers.SerializerMethodField()
     username = serializers.CharField(source="user.username")
     created_at = serializers.DateTimeField()
-    # コメント栞から「どの箇所へのコメントか」を表示し、その節へリンクするための素材。
+    # コメントのお気に入りから「どの箇所へのコメントか」を表示し、その節へリンクするための素材。
     # 表示用ラベルと、リンク組み立て用の slug/章/節/訳を返す（プロフィールのコメント一覧と同じ形）。
     location_label = serializers.SerializerMethodField()
     book_slug = serializers.SerializerMethodField()
@@ -26,7 +26,7 @@ class CommentBriefSerializer(serializers.Serializer):
 
     def get_location_label(self, obj):
         from comments.serializers import _format_location_label, _get_location_parts, book_name_cache
-        # 一覧のあいだ書名の引き当て結果を使い回す（栞1件ごとに Book を引かない）。
+        # 一覧のあいだ書名の引き当て結果を使い回す（お気に入り1件ごとに Book を引かない）。
         book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
 
@@ -35,7 +35,7 @@ class CommentBriefSerializer(serializers.Serializer):
 
 
 class ProjectBriefSerializer(serializers.Serializer):
-    # プロジェクト栞から「どのプロジェクトか」を表示し、そのページ（/translations/{id}）へ
+    # プロジェクトのお気に入りから「どのプロジェクトか」を表示し、そのページ（/translations/{id}）へ
     # リンクするための素材。プロジェクトは slug を持たず id で辿る。
     id = serializers.UUIDField()
     name = serializers.CharField()
@@ -44,7 +44,7 @@ class ProjectBriefSerializer(serializers.Serializer):
 class BookmarkSerializer(serializers.ModelSerializer):
     # verse/chapter/book は「箇所を特定するための入力」であり保存しない write-only 入力。
     # backend が canonical_book/章/節を導出して保存する（view.perform_create）。
-    # verse=節栞 / chapter=章栞 / book=書栞 / comment=コメント栞 / translation_project=プロジェクト栞。
+    # verse=節のお気に入り / chapter=章のお気に入り / book=書のお気に入り / comment=コメントのお気に入り / translation_project=プロジェクトのお気に入り。
     verse = serializers.PrimaryKeyRelatedField(
         queryset=Verse.objects.all(), write_only=True, required=False
     )
@@ -57,9 +57,9 @@ class BookmarkSerializer(serializers.ModelSerializer):
     comment_detail = CommentBriefSerializer(source="comment", read_only=True)
     project_detail = ProjectBriefSerializer(source="translation_project", read_only=True)
     target_type = serializers.SerializerMethodField()
-    # 訳非依存の箇所。フロントは Verse id ではなくこの箇所で栞判定・表示する。
+    # 訳非依存の箇所。フロントは Verse id ではなくこの箇所でお気に入り判定・表示する。
     reference = serializers.SerializerMethodField()
-    # 節栞の表示用本文（view が annotate。口語訳優先、それ以外の栞では null）。
+    # 節のお気に入りの表示用本文（view が annotate。口語訳優先、それ以外のお気に入りでは null）。
     verse_text = serializers.SerializerMethodField()
 
     class Meta:
@@ -89,8 +89,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
         return None
 
     def get_reference(self, obj):
-        # 箇所栞（書/章/節）なら {book: slug, chapter, verse} を返す。粒度に応じて章・節は null。
-        # comment/project 栞は null。
+        # 箇所のお気に入り（書/章/節）なら {book: slug, chapter, verse} を返す。粒度に応じて章・節は null。
+        # comment/project お気に入りは null。
         if obj.canonical_book_id:
             return {
                 "book": obj.canonical_book.slug,
@@ -100,7 +100,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
         return None
 
     def get_verse_text(self, obj):
-        # view が annotate した表示用本文。節栞以外や本文が引けない場合は null。
+        # view が annotate した表示用本文。節のお気に入り以外や本文が引けない場合は null。
         return getattr(obj, "verse_text", None)
 
     def create(self, validated_data):

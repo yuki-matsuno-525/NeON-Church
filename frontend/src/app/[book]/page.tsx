@@ -49,7 +49,7 @@ function BookContent() {
   const [versionError, setVersionError] = useState(false);
   const currentChapter = getLocalProgress(slug)?.chapterNumber ?? null;
 
-  // この書の書栞を拾っておく。サーバー側でこの書に絞って取る（全件は取らない）。
+  // この書に付いたお気に入りを拾っておく。サーバー側でこの書に絞って取る（全件は取らない）。
   useEffect(() => {
     if (!user) return;
     let active = true;

@@ -47,11 +47,11 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 - **Comments** — Post on a verse, a chapter, or a whole book. Threaded replies, upvotes, editing, deletion, and tagging.
 - **Q&A** — Comments flagged with `is_qa` are listed together, with best-answer selection and a resolved filter.
 - **Full-text search** — Searches across verse text, comment bodies, and book names.
-- **Bookmarks** — Bookmark verses and comments; browse them from your profile.
+- **Favorites** — Add verses and comments to your favorites; browse them from your profile.
 - **Notifications** — Get notified when someone replies to your comment, with an unread badge.
 - **Reading progress** — Remembers the last verse you read so you can pick up where you left off.
 - **Collaborative translation** — Start a translation project and assign translators verse by verse.
-- **Profiles** — Avatar, bio, comment history, and bookmarks. Other users' profiles are public too.
+- **Profiles** — Avatar, bio, comment history, and favorites. Other users' profiles are public too.
 
 ## Tech stack
 
@@ -163,7 +163,7 @@ DJANGO_SETTINGS_MODULE=config.settings.e2e python manage.py seed_demo --wipe --s
 ```
 
 `--wipe` removes every non-staff user and everything people created (comments, Q&A,
-articles, plans, translation projects, bookmarks, notifications). Scripture itself
+articles, plans, translation projects, favorites, notifications). Scripture itself
 (`CanonicalBook` / `Book` / `Chapter` / `Verse`) is never touched. Without `--wipe` the
 command refuses to run on a database that already has data, so it cannot double up.
 
@@ -172,15 +172,15 @@ What `--scale xl` (the default) creates:
 | Data | Count |
 |--------|------|
 | Users | 220 (half Japanese, half English, varied bios) |
-| Comments | 25,000+ (verse / chapter / book level, reply trees of depth 5, soft deletes) |
-| Votes | 60,000+ |
-| Q&A | 400 questions / 2,500+ answers (half solved, one question with 80 answers) |
+| Comments | 20,000+ (verse / chapter / book level, reply trees of depth 5, soft deletes) |
+| Votes | 80,000+ |
+| Q&A | 400 questions / 1,800+ answers (half solved, one question with 80+ answers) |
 | Articles | 400 (public / unlisted / draft, every citation form including a broken one) |
-| Article comments | 3,000+ (one article carries 120) |
+| Article comments | 3,900 (one article carries 150) |
 | Plans | 120 (3 to 365 days, canon and apocrypha mixed, subscriptions and progress) |
 | Translation projects | 40 (all statuses, all membership states, all unit states) |
-| Bookmarks | 5,000+ (books, chapters, verses, comments, translation projects) |
-| Notifications | 15,000+ (reply / upvote / mention, read and unread) |
+| Favorites | 6,000+ (books, chapters, verses, comments, translation projects) |
+| Notifications | 14,000+ (reply / upvote / mention, read and unread) |
 | Reports | 300 (comments, questions and answers) |
 
 > The command prints one shared password for the seeded users when it finishes.
@@ -265,7 +265,7 @@ Base URL: `http://localhost:8000/api/`
 | `GET /chapters/{id}/verses/` | List verses |
 | `GET/POST /comments/` | Read and post comments |
 | `POST /comments/{id}/upvote/` | Upvote |
-| `GET/POST /bookmarks/` | List and create bookmarks |
+| `GET/POST /bookmarks/` | List and create favorites |
 | `GET /notifications/` | List notifications |
 | `GET /search/?q=...` | Full-text search |
 | `GET /qa/` | List Q&A comments |
@@ -290,7 +290,7 @@ NeON-Church/
 ├── backend/             # Django REST Framework
 │   ├── bible/           # Book / chapter / verse models, search
 │   ├── comments/        # Comments, tags, upvotes, Q&A
-│   ├── bookmarks/       # Bookmarks
+│   ├── bookmarks/       # Favorites
 │   ├── notifications/   # Notifications
 │   ├── reading_progress/# Reading progress
 │   ├── translations/    # Collaborative translation projects

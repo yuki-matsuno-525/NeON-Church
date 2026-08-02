@@ -28,7 +28,7 @@ function useBookmarkTarget(bookmark: Bookmark) {
       : "";
     return {
       kindLabel: t.bookmarkKindComment,
-      // コメント栞も、そのコメントが付いた箇所へ飛べるようにする。
+      // コメントのお気に入りも、そのコメントが付いた箇所へ飛べるようにする。
       href: cd.book_slug ? passageHref(cd) : "",
       title: `${label ? `${label} · ` : ""}${t.commentBy(cd.username)}`,
       body: cd.is_deleted ? t.deletedComment : cd.body,
@@ -48,7 +48,7 @@ function useBookmarkTarget(bookmark: Bookmark) {
   const ref = bookmark.reference;
   if (!ref) return null;
 
-  // 箇所栞（節／章／書）。粒度に応じてラベル・リンク先・種別を変える。
+  // 箇所のお気に入り（節／章／書）。粒度に応じてラベル・リンク先・種別を変える。
   const book = bookLabel(ref.book, lang)?.name ?? ref.book;
   if (ref.verse != null && ref.chapter != null) {
     return {

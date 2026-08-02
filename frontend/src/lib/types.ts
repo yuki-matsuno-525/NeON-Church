@@ -30,7 +30,7 @@ export type BookmarkCommentDetail = {
   body: string;
   username: string;
   created_at: string;
-  // コメント栞から「どの箇所へのコメントか」を表示・リンクするための素材。
+  // コメントのお気に入りから「どの箇所へのコメントか」を表示・リンクするための素材。
   location_label: string;
   book_slug: string;
   chapter_number: number | null;
@@ -40,8 +40,8 @@ export type BookmarkCommentDetail = {
 };
 export type BookmarkReference = {
   book: string; // canonical_book.slug
-  chapter: number | null; // 章栞・書栞では粒度に応じて null
-  verse: number | null; // 章栞・書栞では null
+  chapter: number | null; // 章のお気に入り・書のお気に入りでは粒度に応じて null
+  verse: number | null; // 章のお気に入り・書のお気に入りでは null
 };
 export type BookmarkProjectDetail = {
   id: string;
@@ -54,8 +54,8 @@ export type Bookmark = {
   project_detail: BookmarkProjectDetail | null;
   // verse=節 / chapter=章 / book=書 / comment=コメント / project=翻訳プロジェクト
   target_type: "verse" | "chapter" | "book" | "comment" | "project" | null;
-  reference: BookmarkReference | null; // 訳非依存の箇所（箇所栞のみ。comment/project では null）
-  verse_text: string | null; // 節栞の表示用本文（口語訳優先。それ以外の栞では null）
+  reference: BookmarkReference | null; // 訳非依存の箇所（箇所のお気に入りのみ。comment/project では null）
+  verse_text: string | null; // 節のお気に入りの表示用本文（口語訳優先。それ以外のお気に入りでは null）
   created_at: string;
 };
 export type NotificationTargetKind =

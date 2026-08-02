@@ -11,7 +11,7 @@ from django.db.models import Count, Q
 # フロントのタブもこの名前をそのまま使う。
 BOOKMARK_TYPES = ("verse", "chapter", "book", "comment", "project")
 
-# 種類ごとの絞り込み条件。Bookmark の CheckConstraint により、1件の栞は
+# 種類ごとの絞り込み条件。Bookmark の CheckConstraint により、1件のお気に入りは
 # 必ずこのうちどれか1つだけに当てはまる。
 _TYPE_FILTERS = {
     "verse": Q(canonical_book__isnull=False, verse_number__isnull=False),
@@ -34,7 +34,7 @@ def filter_by_type(queryset, target_type):
     """`?type=` の指定で絞り込む。
 
     未指定・未知の値なら絞らない（＝「すべて」タブ）。不正な値でエラーにしないのは、
-    古いブックマーク URL を開いても一覧が空にならず「すべて」で表示されるようにするため。
+    古いお気に入り URL を開いても一覧が空にならず「すべて」で表示されるようにするため。
     """
     condition = _TYPE_FILTERS.get(target_type or "")
     if condition is None:
@@ -43,15 +43,15 @@ def filter_by_type(queryset, target_type):
 
 
 def filter_by_location(queryset, book_slug, chapter_number=None, project_id=None):
-    """読書画面が「今開いている箇所の栞だけ」を取るための絞り込み。
+    """読書画面が「今開いている箇所のお気に入りだけ」を取るための絞り込み。
 
-    読書画面は「この節に栞が付いているか」を知りたいだけなので、栞を全件取ってから
+    読書画面は「この節にお気に入りが付いているか」を知りたいだけなので、お気に入りを全件取ってから
     絞ると件数が増えるほど遅くなる。ここでサーバー側に絞らせる。
 
-    - `book_slug` のみ  : その書の書栞（章・節を持たない行）だけ。書のページ用。
-    - `book_slug` + `chapter_number` : その章の章栞・節栞に加え、その章に付いたコメントへの
-      コメント栞も含める。章のページはこの3種すべてを使う。
-    - `project_id` のみ : その翻訳企画の栞だけ。企画のページ用。
+    - `book_slug` のみ  : その書に付いたお気に入り（章・節を持たない行）だけ。書のページ用。
+    - `book_slug` + `chapter_number` : その章と、その章の節に付いたお気に入りに加え、その章に付いたコメントへの
+      コメントのお気に入りも含める。章のページはこの3種すべてを使う。
+    - `project_id` のみ : その翻訳企画のお気に入りだけ。企画のページ用。
 
     どれも指定が無ければ絞らない（＝従来どおり全件）。
     """
@@ -66,9 +66,9 @@ def filter_by_location(queryset, book_slug, chapter_number=None, project_id=None
             verse_number__isnull=True,
         )
     return queryset.filter(
-        # その章の章栞・節栞
+        # その章と、その章の節に付いたお気に入り
         Q(canonical_book__slug=book_slug, chapter_number=chapter_number)
-        # その章に付いたコメントへの栞
+        # その章に付いたコメントへのお気に入り
         | Q(
             comment__canonical_book__slug=book_slug,
             comment__chapter_number=chapter_number,

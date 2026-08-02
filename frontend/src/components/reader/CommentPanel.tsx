@@ -37,7 +37,7 @@ type Props = {
   commentBookmarkMap?: Record<string, string>;
   verseBookmarks?: Bookmark[];
   onVerseBookmarksChange?: (bookmarks: Bookmark[]) => void;
-  // 栞判定に使う訳非依存の書 slug（箇所一致に必要）。
+  // お気に入り判定に使う訳非依存の書 slug（箇所一致に必要）。
   bookSlug?: string;
   // 翻訳プロジェクトの読書ページから開いた場合、その翻訳専用のコメントとして扱う。
   translationProject?: string;
@@ -144,9 +144,9 @@ export function CommentPanel({
     translation_project: translationProject,
   });
 
-  // 栞は訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けた栞が
-  // KJV など別の訳を表示していても「ブックマーク済み」として扱われる（訳跨ぎハイライト）。
-  // 節を選び直すたびに作り直すと重いので、栞の一覧が変わったときだけ組み直す。
+  // お気に入りは訳非依存の箇所（book slug / 章 / 節）で判定する。これにより、口語訳で付けたお気に入りが
+  // KJV など別の訳を表示していても「お気に入り済み」として扱われる（訳跨ぎハイライト）。
+  // 節を選び直すたびに作り直すと重いので、お気に入りの一覧が変わったときだけ組み直す。
   const bookmarkByLocation = useMemo(
     () =>
       new Map(

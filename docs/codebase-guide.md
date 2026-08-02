@@ -6,7 +6,7 @@
 
 ## まず全体像
 
-NeON Church は、聖書本文を読みながらコメント、Q&A、ブックマーク、読書進捗、共同翻訳を扱う Web アプリです。
+NeON Church は、聖書本文を読みながらコメント、Q&A、お気に入り、読書進捗、共同翻訳を扱う Web アプリです。
 
 技術構成は大きく 3 層です。
 
@@ -93,7 +93,7 @@ NeON-Church/
   backend/
     bible/              聖書の書・章・節、検索、今日の聖句
     comments/           コメント、返信、Q&A、タグ、upvote、通報
-    bookmarks/          節またはコメントのブックマーク
+    bookmarks/          節またはコメントのお気に入り
     notifications/      返信・upvote 通知
     reading_progress/   ユーザーごとの読書進捗
     translations/       共同翻訳プロジェクト
@@ -226,7 +226,7 @@ API:
 | `PATCH /api/auth/me/` | `MeView` | プロフィール更新 |
 | `GET /api/users/{username}/` | `UserProfileView` | 公開プロフィール |
 | `GET /api/users/{username}/comments/` | `UserCommentsView` | 公開コメント一覧 |
-| `GET /api/users/{username}/bookmarks/` | `UserBookmarksView` | 公開ブックマーク一覧 |
+| `GET /api/users/{username}/bookmarks/` | `UserBookmarksView` | 公開お気に入り一覧 |
 
 フロント側の認証状態は `AuthProvider` が管理します。`frontend/src/contexts/AuthContext.tsx` は初回表示時に `/api/csrf/` で CSRF Cookie を取得し、その後 `fetchMe()` でログイン状態を確認します。
 
@@ -275,7 +275,7 @@ model:
 
 返信投稿時と upvote 時には `backend/comments/views.py` の `_notify` が `Notification` を作成します。自分自身への通知は作らない設計です。
 
-### ブックマーク
+### お気に入り
 
 実装:
 
@@ -292,9 +292,9 @@ model:
 
 | API | view | 用途 |
 | --- | --- | --- |
-| `GET /api/bookmarks/` | `BookmarkListCreateView` | 自分のブックマーク一覧 |
-| `POST /api/bookmarks/` | `BookmarkListCreateView` | 節またはコメントをブックマーク |
-| `DELETE /api/bookmarks/{id}/` | `BookmarkDestroyView` | 自分のブックマーク削除 |
+| `GET /api/bookmarks/` | `BookmarkListCreateView` | 自分のお気に入り一覧 |
+| `POST /api/bookmarks/` | `BookmarkListCreateView` | 節またはコメントをお気に入りに追加 |
+| `DELETE /api/bookmarks/{id}/` | `BookmarkDestroyView` | 自分のお気に入り削除 |
 
 ### 通知
 
@@ -392,7 +392,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | `/` | `frontend/src/app/page.tsx` | ホーム、今日の聖句、最近の Q&A、注目コメント |
 | `/read` | `frontend/src/app/read/page.tsx` | 読書入口 |
 | `/{book}` | `frontend/src/app/[book]/page.tsx` | 書の章一覧 |
-| `/{book}/{chapter}` | `frontend/src/app/[book]/[chapter]/page.tsx` | 章本文、節コメント、章コメント、ブックマーク、読書進捗 |
+| `/{book}/{chapter}` | `frontend/src/app/[book]/[chapter]/page.tsx` | 章本文、節コメント、章コメント、お気に入り、読書進捗 |
 | `/search` | `frontend/src/app/search/page.tsx` | 横断検索 |
 | `/qa` | `frontend/src/app/qa/page.tsx` | Q&A 一覧、投稿 |
 | `/translations` | `frontend/src/app/translations/page.tsx` | 翻訳プロジェクト一覧 |
@@ -403,7 +403,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | `/register` | `frontend/src/app/register/page.tsx` | 登録 |
 | `/profile` | `frontend/src/app/profile/page.tsx` | 自分のプロフィール |
 | `/profile/{username}` | `frontend/src/app/profile/[username]/page.tsx` | 公開プロフィール |
-| `/bookmarks` | `frontend/src/app/bookmarks/page.tsx` | 自分のブックマーク |
+| `/bookmarks` | `frontend/src/app/bookmarks/page.tsx` | 自分のお気に入り |
 | `/notifications` | `frontend/src/app/notifications/page.tsx` | 通知 |
 | `/about` | `frontend/src/app/about/page.tsx` | About |
 
@@ -427,7 +427,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | 聖書 | `fetchBooks`, `fetchChapters`, `fetchVerses`, `fetchVerseOfDay`, `searchBible` |
 | コメント | `fetchComments`, `createComment`, `updateComment`, `deleteComment`, `upvoteComment`, `removeUpvote` |
 | Q&A | `fetchQAComments`, `fetchCommentReplies`, `setBestAnswer`, `fetchTrendingComments`, `reportComment` |
-| ブックマーク | `fetchBookmarks`, `createBookmark`, `createCommentBookmark`, `removeBookmark` |
+| お気に入り | `fetchBookmarks`, `createBookmark`, `createCommentBookmark`, `removeBookmark` |
 | 認証 | `login`, `register`, `logout`, `fetchMe` |
 | プロフィール | `updateProfile`, `uploadAvatar`, `fetchUserProfile`, `fetchUserComments`, `fetchUserBookmarks` |
 | 通知 | `fetchNotifications`, `fetchUnreadCount`, `markNotificationRead`, `markAllNotificationsRead` |
@@ -507,7 +507,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | やりたいこと | 見る場所 |
 | --- | --- |
 | 章ページのレイアウトを変える | `frontend/src/app/[book]/[chapter]/page.tsx` |
-| 節ごとの表示やブックマーク UI を変える | `frontend/src/components/reader/VerseList.tsx` |
+| 節ごとの表示やお気に入り UI を変える | `frontend/src/components/reader/VerseList.tsx` |
 | 節コメントパネルを変える | `frontend/src/components/reader/CommentPanel.tsx` |
 | コメント取得条件を変える | `backend/comments/views.py` の `CommentListCreateView.get_queryset` |
 | 進捗保存の仕様を変える | `frontend/src/lib/readingProgress.ts`, `backend/reading_progress/views.py` |
@@ -602,7 +602,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | 最小文字数を変える | frontend と backend の両方 |
 | ハイライトを変える | `frontend/src/app/search/page.tsx` の `highlight` |
 
-### 6. ブックマークする
+### 6. お気に入りに追加する
 
 読むファイル:
 
@@ -616,10 +616,10 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 
 流れ:
 
-1. ログイン中のユーザーが節またはコメントをブックマークする。
+1. ログイン中のユーザーが節またはコメントをお気に入りに追加する。
 2. `createBookmark(verseId)` または `createCommentBookmark(commentId)` が `POST /api/bookmarks/` を呼ぶ。
 3. backend は `verse` または `comment` のどちらかが指定されているか確認する。
-4. 既に同じ対象がブックマーク済みなら 409 を返す。
+4. 既に同じ対象がお気に入り済みなら 409 を返す。
 5. 削除は `DELETE /api/bookmarks/{id}/`。
 
 ### 7. 通知を読む
@@ -695,7 +695,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | コメント表示 | `frontend/src/components/comments/CommentItem.tsx` |
 | Q&A | `frontend/src/app/qa/page.tsx`, `frontend/src/components/qa/` |
 | 検索 | `frontend/src/app/search/page.tsx`, `backend/bible/views.py` |
-| ブックマーク | `frontend/src/app/bookmarks/page.tsx`, `backend/bookmarks/` |
+| お気に入り | `frontend/src/app/bookmarks/page.tsx`, `backend/bookmarks/` |
 | 通知 | `frontend/src/app/notifications/page.tsx`, `backend/notifications/` |
 | プロフィール | `frontend/src/app/profile/`, `backend/users/` |
 | 共同翻訳 | `frontend/src/app/translations/`, `backend/translations/` |
@@ -734,7 +734,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | `backend/tests/test_auth.py` | 登録、ログイン、Cookie、認証 |
 | `backend/tests/test_bible.py` | 書・章・節 |
 | `backend/tests/test_comments.py` | コメント、返信、upvote |
-| `backend/tests/test_bookmarks.py` | ブックマーク |
+| `backend/tests/test_bookmarks.py` | お気に入り |
 | `backend/tests/test_notifications.py` | 通知 |
 | `backend/tests/test_reading_progress.py` | 読書進捗 |
 | `backend/tests/test_search.py` | 検索 |
@@ -843,7 +843,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 3. `backend/translations/models.py` を読む。
 4. unique 制約、ForeignKey、related_name に注目する。
 
-到達ライン: コメント、ブックマーク、翻訳 unit が何に紐づくか説明できる。
+到達ライン: コメント、お気に入り、翻訳 unit が何に紐づくか説明できる。
 
 ### Phase 4: 1 つの機能を縦に追う
 

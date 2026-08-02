@@ -7,8 +7,8 @@
 - 記事の一覧・作成・閲覧・編集・引用・コメント・公開範囲・自動保存を共通日英辞書へ移行
 - 記事タグ15件はDBの安定したslugをキーに日英表示名を切り替え（既存データとURLは変更なし）
 - 相対時刻を全実運用画面で `useRelativeTime()` に統一
-- Q&A、ホーム、通知、コメント栞の箇所表示を構造化データから選択言語で組み立て
-- 削除済みコメントはAPIが空本文＋削除フラグを返し、通常コメント・記事・翻訳・通知・栞の全てでクライアントが翻訳
+- Q&A、ホーム、通知、コメントのお気に入りの箇所表示を構造化データから選択言語で組み立て
+- 削除済みコメントはAPIが空本文＋削除フラグを返し、通常コメント・記事・翻訳・通知・お気に入りの全てでクライアントが翻訳
 - APIクライアントは `Accept-Language` を送り、バックエンド由来の混在文言を画面へ露出せず、選択言語のステータス別メッセージへ統一
 - `html lang`、既定SEO、Open Graph、Twitter、About・規約類・書・章・404のメタデータを言語cookieに追随
 - PWAマニフェストはOS取得時にも意味が通る日英併記へ変更
@@ -21,7 +21,7 @@
 
 - 読書プランの全画面（一覧・作成・閲覧・編集）と、日の編集・章選び・章リンク
 - プランの公開範囲は記事と同じ `visibility*` キーを共用（同じ意味の言葉を二重に持たない）
-- 読む画面の「まとめて栞」（開始ボタン・下のバー・件数・失敗時の知らせ）
+- 読む画面の「まとめてお気に入り」（開始ボタン・下のバー・件数・失敗時の知らせ）
 - `useChapterNumbers` が投げる「この訳にはこの書がありません。」を辞書経由に変更
 - 読み込み失敗の状態は文言ではなく真偽値で持つようにした。言語を切り替えても
   読み込みからやり直さずに済む（`/plans/[id]` と `/plans/[id]/edit`）
@@ -71,7 +71,7 @@ UI では、記事機能の画面文言がほぼ全て日本語固定、404 は�
 - `frontend/src/app/articles/[id]/edit/page.tsx`: 編集不可、削除、本文・要約・タグ・プレビュー・引用タブ
 - `frontend/src/components/articles/ArticleBody.tsx`: 空本文、引用解決失敗
 - `frontend/src/components/articles/ArticleComments.tsx`: 投稿・削除・空状態・ログイン案内
-- `frontend/src/components/articles/CitationPanel.tsx`: 検索、栞、書・章・節選択、範囲選択、挿入、エラー
+- `frontend/src/components/articles/CitationPanel.tsx`: 検索、お気に入り、書・章・節選択、範囲選択、挿入、エラー
 - `frontend/src/lib/articles.ts`: `公開`／`限定公開`／`下書き` と説明
 - `frontend/src/hooks/useAutosave.ts`: `保存中...`／`保存しました`／`保存できませんでした`
 - `frontend/src/app/profile/[username]/page.tsx`: `記事 (N)` タブだけ日本語固定
@@ -136,17 +136,17 @@ Q&A の定義済みタグ5件は `i18n.ts` の `tagNames` に日英の対応が�
 - `frontend/src/components/qa/QACard.tsx`
 - `frontend/src/app/page.tsx` の最近の Q&A とトレンド
 
-さらに、ラベルの書名は投稿時の `source_translation` の DB 書名なので、UI 言語ではなく投稿者が見ていた版の言語になる。`frontend/src/lib/i18n.ts` には `formatBookLocation()` があり、プロフィールとブックマークでは正しく使われているため、同じ箇所でも画面によってローカライズ有無が異なる。
+さらに、ラベルの書名は投稿時の `source_translation` の DB 書名なので、UI 言語ではなく投稿者が見ていた版の言語になる。`frontend/src/lib/i18n.ts` には `formatBookLocation()` があり、プロフィールとお気に入りでは正しく使われているため、同じ箇所でも画面によってローカライズ有無が異なる。
 
 ### 1.6 削除済みコメントの表示言語が機能ごとに不統一
 
 | 機能 | 固定言語 | 定義 |
 | --- | --- | --- |
-| 通常コメント・通知・コメント栞 | 英語 | `backend/comments/models.py` の `DELETED_COMMENT_BODY` |
+| 通常コメント・通知・コメントのお気に入り | 英語 | `backend/comments/models.py` の `DELETED_COMMENT_BODY` |
 | 翻訳プロジェクトコメント | 日本語 | `backend/translations/serializers.py` の `display_body` |
 | 記事コメント | 日本語 | `backend/articles/serializers.py` と `frontend/src/components/articles/ArticleComments.tsx` |
 
-通常の Q&A カードは `is_deleted` を見て共通辞書の `t.deletedComment` に差し替えるため日英対応済み。しかし、通知本文スニペットや削除済みコメント栞はバックエンド文字列をそのまま表示し得る。
+通常の Q&A カードは `is_deleted` を見て共通辞書の `t.deletedComment` に差し替えるため日英対応済み。しかし、通知本文スニペットや削除済みコメントのお気に入りはバックエンド文字列をそのまま表示し得る。
 
 ## 2. API エラー文言
 
@@ -156,7 +156,7 @@ API は UI 言語、`Accept-Language`、言語パラメータのいずれでも�
 
 - `backend/users/views.py`: ログイン失敗、ユーザー未検出、refresh token 関連
 - `backend/users/authentication.py`: CSRF 失敗
-- `backend/bookmarks/views.py`: 対象未指定、重複栞
+- `backend/bookmarks/views.py`: 対象未指定、重複お気に入り
 - `backend/bible/views.py`: 不明な書、本文データなし
 - `backend/comments/serializers.py`: 本文必須・長さ、対象指定、Q&A 題必須、返信先不一致
 - `backend/comments/views.py`: 投票、削除済み編集、ベストアンサー、通報
@@ -313,7 +313,7 @@ API は UI 言語、`Accept-Language`、言語パラメータのいずれでも�
 - Terms、Privacy、Guidelines、Licenses、Feedback の本文: 各 Content component に日英あり
 - 正典66書の本文: 日本語・英語ともあり
 - Q&A 定義済みタグ: 日本語 DB 名から英語 UI ラベルへの対応あり
-- ブックマークと自分のプロフィールの箇所表示: `formatBookLocation()` 経由で日英あり
+- お気に入りと自分のプロフィールの箇所表示: `formatBookLocation()` 経由で日英あり
 
 ## 8. 修正優先順位案
 

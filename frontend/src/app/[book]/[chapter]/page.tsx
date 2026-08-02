@@ -145,7 +145,7 @@ export default function ChapterPage() {
       .finally(() => setLoading(false));
   }, [slug, chapterNum, translation, meta, router, user, t, reloadToken]);
 
-  // この章に関わる栞（章栞・節栞・この章のコメントへの栞）だけをサーバー側で絞って取る。
+  // この章に関わるお気に入り（章のお気に入り・節のお気に入り・この章のコメントへのお気に入り）だけをサーバー側で絞って取る。
   useEffect(() => {
     if (!user) return;
     fetchChapterBookmarks(slug, chapterNum)
@@ -240,7 +240,7 @@ export default function ChapterPage() {
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
 
-  // まとめて栞。すでに栞のある節は飛ばして、入った分だけ一覧に足す。
+  // まとめてお気に入り。すでにお気に入りのある節は飛ばして、入った分だけ一覧に足す。
   const bulk = useBulkBookmark(async (verseIds) => {
     const already = new Set(
       bookmarks
@@ -265,7 +265,7 @@ export default function ChapterPage() {
     [slug, chapterNum, activeTranslationId, verses]
   );
 
-  // 栞の仕分けは毎回作り直すと子（コメント欄・パネル）まで描き直しになるので覚えておく。
+  // お気に入りの仕分けは毎回作り直すと子（コメント欄・パネル）まで描き直しになるので覚えておく。
   const commentBookmarkMap: Record<string, string> = useMemo(
     () =>
       Object.fromEntries(
@@ -280,7 +280,7 @@ export default function ChapterPage() {
     [bookmarks]
   );
 
-  // この章そのものの栞（章栞）。reference が同じ書・同じ章で、節を持たないものが該当。
+  // この章そのもののお気に入り（章のお気に入り）。reference が同じ書・同じ章で、節を持たないものが該当。
   const chapterBookmark = useMemo(
     () =>
       bookmarks.find(
@@ -539,7 +539,7 @@ export default function ChapterPage() {
             bookSlug={slug}
             allVersionVerseIds={allVersionVerseIds}
             onVerseBookmarksChange={(updated) =>
-              // 節栞だけ差し替え、コメント・章・書・プロジェクト栞はそのまま保持する。
+              // 節のお気に入りだけ差し替え、コメント・章・書・プロジェクトのお気に入りはそのまま保持する。
               setBookmarks((prev) => [
                 ...prev.filter((bm) => bm.target_type !== "verse" && bm.target_type !== null),
                 ...updated,

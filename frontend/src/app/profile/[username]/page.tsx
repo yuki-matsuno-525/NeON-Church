@@ -42,7 +42,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
     fetchUserProfile(username)
       .then((p) => {
         setProfile(p);
-        // ブックマーク公開ユーザーは favorites を初期タブにする
+        // お気に入り公開ユーザーは favorites を初期タブにする
         if (p.bookmarks_visibility === "public") {
           setActiveTab("favorites");
         }
@@ -176,7 +176,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         </p>
       )}
 
-      {/* タブ。ブックマークタブは visibility=public のときのみ表示 */}
+      {/* タブ。お気に入りタブは visibility=public のときのみ表示 */}
       <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex", overflowX: "auto" }}>
         {profile.bookmarks_visibility === "public" && (
           <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
@@ -224,7 +224,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       <div id={`public-profile-panel-${activeTab}`} role="tabpanel" aria-labelledby={`public-profile-tab-${activeTab}`}>
       {activeTab === "favorites" && profile.bookmarks_visibility === "public" ? (
         <>
-          {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+          {/* お気に入りが1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
           {bookmarkList.counts && bookmarkList.counts.all > 0 && (
             <FilterChips chips={bookmarkChips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
           )}

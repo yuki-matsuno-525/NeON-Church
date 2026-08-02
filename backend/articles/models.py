@@ -98,7 +98,7 @@ class ArticleCitation(BaseModel):
     記事の中の引用1つ。本文の印を読み取って作る索引で、直接編集はしない。
 
     これがあるので「この節を引用した記事」を節の側から引ける。
-    箇所は訳非依存（canonical_book + 章番号 + 節番号）で持ち、栞と同じ形になる。
+    箇所は訳非依存（canonical_book + 章番号 + 節番号）で持ち、お気に入りと同じ形になる。
     """
 
     KIND_INLINE = "inline"

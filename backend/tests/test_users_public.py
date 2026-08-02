@@ -76,7 +76,7 @@ def target_user_comment(db, target_user, verse):
 
 
 def _make_verse_bookmark(user, verse):
-    """段階5F: 栞は訳非依存の箇所3列で作る（verse FK なし）。"""
+    """段階5F: お気に入りは訳非依存の箇所3列で作る（verse FK なし）。"""
     from bookmarks.models import Bookmark
     ch = verse.chapter
     return Bookmark.objects.create(
@@ -89,7 +89,7 @@ def _make_verse_bookmark(user, verse):
 
 @pytest.fixture
 def target_user_bookmark(db, target_user, verse):
-    """target_user が作成したブックマーク。"""
+    """target_user が作成したお気に入り。"""
     return _make_verse_bookmark(target_user, verse)
 
 
@@ -208,7 +208,7 @@ class TestUserBookmarksView:
         res = api_client.get(user_bookmarks_url("nonexistentuser"))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_ブックマークにreferenceが含まれる(self, api_client, target_user, target_user_bookmark, verse):
+    def test_お気に入りにreferenceが含まれる(self, api_client, target_user, target_user_bookmark, verse):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
@@ -217,12 +217,12 @@ class TestUserBookmarksView:
         assert bm["reference"]["chapter"] == verse.chapter.number
         assert bm["reference"]["verse"] == verse.number
 
-    def test_他ユーザーのブックマークは含まれない(self, api_client, auth_client, target_user, target_user_bookmark, verse):
-        """auth_client (testuser) がブックマークしても targetuser の一覧には含まれない。"""
+    def test_他ユーザーのお気に入りは含まれない(self, api_client, auth_client, target_user, target_user_bookmark, verse):
+        """auth_client (testuser) がお気に入りしても targetuser の一覧には含まれない。"""
         auth_client.post("/api/bookmarks/", {"verse": str(verse.id)}, format="json")
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
-        # target_user のブックマークのみ
+        # target_user のお気に入りのみ
         assert res.data["count"] == 1
 
 

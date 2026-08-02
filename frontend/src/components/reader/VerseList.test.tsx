@@ -48,7 +48,7 @@ describe("VerseList", () => {
     expect(onSelectVerse).toHaveBeenCalledWith("v1");
   });
 
-  // 節を選ぶのはこのアプリの中心の操作（ここからコメント・栞・引用へ進む）。
+  // 節を選ぶのはこのアプリの中心の操作（ここからコメント・お気に入り・引用へ進む）。
   // 以前はただの div に onClick を付けていたため、キーボードだけの人は使えなかった。
   it("キーボードで節までたどり着ける", () => {
     render(<VerseList {...defaultProps} />);

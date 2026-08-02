@@ -74,7 +74,7 @@ describe("BookmarksPage", () => {
     expect(mockPush).toHaveBeenCalledWith("/login?from=/bookmarks");
   });
 
-  it("ブックマークがない場合「お気に入りはまだありません。」を表示する", async () => {
+  it("お気に入りがない場合「お気に入りはまだありません。」を表示する", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([]));
     loggedIn();
@@ -84,7 +84,7 @@ describe("BookmarksPage", () => {
     await screen.findByText("お気に入りはまだありません。");
   });
 
-  it("ブックマーク一覧を表示する（書名・章・節番号）", async () => {
+  it("お気に入り一覧を表示する（書名・章・節番号）", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
     loggedIn();
@@ -96,7 +96,7 @@ describe("BookmarksPage", () => {
     expect(screen.getByText(/3節/)).toBeInTheDocument();
   });
 
-  it("ブックマークのリンクが正しい章URLを持つ", async () => {
+  it("お気に入りのリンクが正しい章URLを持つ", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([makeBookmark()]));
     loggedIn();
@@ -107,7 +107,7 @@ describe("BookmarksPage", () => {
     expect(link).toHaveAttribute("href", "/matthew/1#verse-3");
   });
 
-  it("複数のブックマークがすべて表示される", async () => {
+  it("複数のお気に入りがすべて表示される", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(
       makePage([
@@ -124,7 +124,7 @@ describe("BookmarksPage", () => {
     expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
-  it("節の栞に本文（verse_text）を表示する", async () => {
+  it("節のお気に入りに本文（verse_text）を表示する", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(
       makePage([makeBookmark({ verse_text: "はじめに神は天と地とを創造された。" })])
@@ -136,7 +136,7 @@ describe("BookmarksPage", () => {
     await screen.findByText("はじめに神は天と地とを創造された。");
   });
 
-  it("コメントの栞は箇所ラベル付きでその節へリンクする", async () => {
+  it("コメントのお気に入りは箇所ラベル付きでその節へリンクする", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(
       makePage([
@@ -145,7 +145,7 @@ describe("BookmarksPage", () => {
           reference: null,
           comment_detail: {
             id: "cm1",
-            body: "栞したコメント本文",
+            body: "お気に入りに追加したコメント本文",
             username: "someone",
             created_at: "2024-01-01T00:00:00Z",
             location_label: "マタイによる福音書 1章 3節",
@@ -161,7 +161,7 @@ describe("BookmarksPage", () => {
 
     render(<BookmarksPage />);
 
-    const link = await screen.findByRole("link", { name: /栞したコメント本文/ });
+    const link = await screen.findByRole("link", { name: /お気に入りに追加したコメント本文/ });
     expect(link).toHaveAttribute("href", "/matthew/1?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3#verse-3");
     expect(screen.getByText(/マタイによる福音書 1章3節/)).toBeInTheDocument();
   });
@@ -225,7 +225,7 @@ describe("BookmarksPage", () => {
     expect(fetchBookmarkPage).toHaveBeenCalledWith({ type: "verse", page: 1 });
   });
 
-  it("栞が0件のときはチップを出さない", async () => {
+  it("お気に入りが0件のときはチップを出さない", async () => {
     const { fetchBookmarkPage } = await import("@/lib/api");
     vi.mocked(fetchBookmarkPage).mockResolvedValue(makePage([]));
     loggedIn();
