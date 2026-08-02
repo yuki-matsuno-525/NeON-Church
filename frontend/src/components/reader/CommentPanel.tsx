@@ -98,6 +98,17 @@ export function CommentPanel({
   const [panelError, setPanelError] = useState<string | null>(null);
   const [articlesError, setArticlesError] = useState(false);
 
+  /** この節の質問を取り直す。質問を投稿した直後にも呼ぶ。 */
+  const loadQuestions = useCallback(() => {
+    if (!bookSlug) {
+      setQuestions([]);
+      return;
+    }
+    fetchQuestionPage({ book_slug: bookSlug, chapter_number: chapterNumber, verse_number: verse.number })
+      .then((page) => setQuestions(page.results))
+      .catch(() => setQuestions([]));
+  }, [bookSlug, chapterNumber, verse.number]);
+
   useEffect(() => {
     if (!bookSlug) return;
     let alive = true;
@@ -117,7 +128,7 @@ export function CommentPanel({
     return () => {
       alive = false;
     };
-    // loadQuestions は同じ箇所のあいだ変わらない（下の useCallback）。
+    // loadQuestions は同じ箇所のあいだ変わらない（上の useCallback）。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookSlug, chapterNumber, verse.number]);
 
@@ -178,17 +189,6 @@ export function CommentPanel({
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);
   };
-
-  /** この節の質問を取り直す。質問を投稿した直後にも呼ぶ。 */
-  const loadQuestions = useCallback(() => {
-    if (!bookSlug) {
-      setQuestions([]);
-      return;
-    }
-    fetchQuestionPage({ book_slug: bookSlug, chapter_number: chapterNumber, verse_number: verse.number })
-      .then((page) => setQuestions(page.results))
-      .catch(() => setQuestions([]));
-  }, [bookSlug, chapterNumber, verse.number]);
 
   const handleOpenCompose = () => {
     if (!user) {

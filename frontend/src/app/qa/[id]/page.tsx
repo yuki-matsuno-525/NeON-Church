@@ -74,6 +74,8 @@ export default function QuestionDetailPage() {
   }, [questionId]);
 
   useEffect(() => {
+    // 開いた質問を最初に読む。読み込み中の表示に切り替えるので setState を伴う。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadQuestion();
   }, [loadQuestion]);
 
