@@ -60,6 +60,54 @@ describe("notificationTargetUrl", () => {
     expect(url).toBe("/translations/p1");
   });
 
+  it("translation_unit includes the exact unit anchor when available", () => {
+    expect(
+      notificationTargetUrl(
+        makeN({
+          target_kind: "translation_unit",
+          translation_project_id: "p1",
+          translation_unit_id: "u1",
+        })
+      )
+    ).toBe("/translations/p1#unit-u1");
+  });
+
+  it("translation project verse comments stay in the project reader", () => {
+    expect(
+      notificationTargetUrl(
+        makeN({
+          target_kind: "translation_project_comment",
+          translation_project_id: "p1",
+          chapter_number: 3,
+          verse_number: 12,
+        })
+      )
+    ).toBe("/translations/p1/read/3#verse-12");
+  });
+
+  it("translation project chapter and book comments use project comment anchors", () => {
+    expect(
+      notificationTargetUrl(
+        makeN({
+          target_kind: "translation_project_comment",
+          translation_project_id: "p1",
+          chapter_number: 3,
+          verse_number: null,
+        })
+      )
+    ).toBe("/translations/p1/read/3#chapter-comments");
+    expect(
+      notificationTargetUrl(
+        makeN({
+          target_kind: "translation_project_comment",
+          translation_project_id: "p1",
+          chapter_number: null,
+          verse_number: null,
+        })
+      )
+    ).toBe("/translations/p1/read#chapter-comments");
+  });
+
   it("解決できない book_name は null", () => {
     expect(
       notificationTargetUrl(
@@ -94,5 +142,19 @@ describe("notificationContextLabel", () => {
     expect(
       notificationContextLabel(makeN({ target_kind: "verse_comment" }), translations.ja)
     ).toBeNull();
+  });
+
+  it("translation project comments have an explicit translation context", () => {
+    const label = notificationContextLabel(
+      makeN({
+        target_kind: "translation_project_comment",
+        book_name: "Matthew",
+        chapter_number: 3,
+        verse_number: 12,
+      }),
+      translations.en
+    );
+    expect(label).toContain(translations.en.translationsTitle);
+    expect(label).toContain("Matthew");
   });
 });

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
+from translations.access import filter_by_project_visibility
 
 from .models import Notification
 from .serializers import NotificationSerializer
@@ -27,7 +28,12 @@ class NotificationListView(generics.ListAPIView):
 
     def get_base_queryset(self):
         """type で絞る前の通知。件数集計にも使う。"""
-        qs = Notification.objects.filter(recipient=self.request.user)
+        qs = filter_by_project_visibility(
+            Notification.objects.filter(recipient=self.request.user),
+            self.request.user,
+            "comment__translation_project",
+            "translation_comment__project",
+        )
         if self.request.query_params.get("unread") == "1":
             qs = qs.filter(is_read=False)
         return qs
@@ -39,9 +45,11 @@ class NotificationListView(generics.ListAPIView):
             "actor",
             "comment",
             "comment__canonical_book",
+            "comment__translation_project",
             "comment__parent",
             "comment__parent__parent",
             "translation_comment",
+            "translation_comment__project",
             "answer",
             "answer__question",
         )
@@ -69,7 +77,15 @@ class NotificationReadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+        notification = get_object_or_404(
+            filter_by_project_visibility(
+                Notification.objects.filter(recipient=request.user),
+                request.user,
+                "comment__translation_project",
+                "translation_comment__project",
+            ),
+            pk=pk,
+        )
         if not notification.is_read:
             notification.is_read = True
             notification.save(update_fields=["is_read", "updated_at"])
@@ -82,7 +98,12 @@ class NotificationReadAllView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        filter_by_project_visibility(
+            Notification.objects.filter(recipient=request.user, is_read=False),
+            request.user,
+            "comment__translation_project",
+            "translation_comment__project",
+        ).update(is_read=True)
         return Response(status=status.HTTP_200_OK)
 
 
@@ -92,7 +113,10 @@ class NotificationUnreadCountView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        count = Notification.objects.filter(
-            recipient=request.user, is_read=False
+        count = filter_by_project_visibility(
+            Notification.objects.filter(recipient=request.user, is_read=False),
+            request.user,
+            "comment__translation_project",
+            "translation_comment__project",
         ).count()
         return Response({"count": count}, status=status.HTTP_200_OK)

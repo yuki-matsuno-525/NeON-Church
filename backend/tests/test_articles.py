@@ -233,6 +233,17 @@ def test_書いた人で絞り込める(auth_client, api_client, verses):
 
 
 @pytest.mark.django_db
+def test_公開一覧から自分の記事を除外できる(auth_client, api_client, other_user_payload, verses):
+    _create_article(auth_client)
+    api_client.post("/api/auth/register/", other_user_payload, format="json")
+    _create_article(api_client, title="ほかの人の記事")
+
+    response = auth_client.get(ARTICLES_URL, {"exclude_mine": "true"})
+
+    assert [article["title"] for article in response.data["results"]] == ["ほかの人の記事"]
+
+
+@pytest.mark.django_db
 def test_タグで絞り込める(auth_client, verses):
     fasting = ArticleTag.objects.get(slug="fasting")
     _create_article(auth_client, tag_ids=[str(fasting.id)])

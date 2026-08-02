@@ -30,6 +30,7 @@ describe("VerseList", () => {
     render(<VerseList {...defaultProps} />);
     expect(screen.getByText("テスト節テキスト")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /テスト節テキスト/ })).toHaveAttribute("aria-pressed", "false");
   });
 
   it("節をクリックすると onSelectVerse が呼ばれる", () => {
@@ -42,6 +43,7 @@ describe("VerseList", () => {
   it("選択された節のクリックで同じ id の onSelectVerse が呼ばれる", () => {
     const onSelectVerse = vi.fn();
     render(<VerseList {...defaultProps} selectedVerseId="v1" onSelectVerse={onSelectVerse} />);
+    expect(screen.getByRole("button", { name: /テスト節テキスト/ })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByTestId("verse-item"));
     expect(onSelectVerse).toHaveBeenCalledWith("v1");
   });

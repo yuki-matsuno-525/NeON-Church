@@ -63,6 +63,7 @@ export type NotificationTargetKind =
   | "chapter_comment"
   | "book_comment"
   | "qa"
+  | "translation_project_comment"
   | "translation_unit"
   | null;
 
@@ -92,6 +93,22 @@ export type User = {
   bio: string;
   bookmarks_visibility: BookmarksVisibility;
   created_at: string;
+};
+export type AccountSettings = User & {
+  email_notifications_enabled: boolean;
+  in_app_notifications_enabled: boolean;
+  has_usable_password: boolean;
+  social_providers: string[];
+};
+export type NotificationPreferences = Pick<
+  AccountSettings,
+  "email_notifications_enabled" | "in_app_notifications_enabled"
+>;
+export type JwtSession = {
+  id: string;
+  created_at: string;
+  expires_at: string;
+  current: boolean;
 };
 export type Tag = {
   id: string;
@@ -200,6 +217,7 @@ export type TranslationProject = {
   unit_count: number;
   done_count: number;
   is_member: boolean;
+  membership_status: "pending" | "approved" | "rejected" | null;
   is_in_library: boolean;
   created_at: string;
   updated_at: string;

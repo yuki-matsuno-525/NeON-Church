@@ -1,39 +1,48 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { LoginRequiredModal } from "./LoginRequiredModal";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/qa",
+  usePathname: () => "/matthew/1",
 }));
 
-/**
- * このモーダルは「ログインが要る操作」を押したときに7か所から出てくる。
- * ダイアログとして正しく振る舞わないと、キーボードだけの人は背後の画面へ迷い込み、
- * 閉じ方も分からなくなる。
- */
+vi.mock("@/contexts/LanguageContext", () => ({
+  useLang: () => ({ lang: "ja", setLang: vi.fn() }),
+}));
+
 describe("LoginRequiredModal", () => {
-  it("ダイアログとして読み上げられる", () => {
-    render(<LoginRequiredModal onClose={vi.fn()} />);
+  it("ダイアログの名前と説明を関連付け、閉じる操作へ初期フォーカスする", () => {
+    render(<LoginRequiredModal onClose={vi.fn()} from="/matthew/1" />);
+
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
-    // 見出しと説明がダイアログの名前・説明として結び付いている
     expect(dialog).toHaveAccessibleName();
     expect(dialog).toHaveAccessibleDescription();
+    expect(screen.getByRole("button", { name: "閉じる" })).toHaveFocus();
+    expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute(
+      "href",
+      "/login?from=%2Fmatthew%2F1",
+    );
   });
 
-  it("開いた時点で中の要素にフォーカスが移る", () => {
+  it("from未指定時は現在のqueryとhashもログイン後の戻り先に含める", () => {
+    window.history.replaceState(null, "", "/matthew/1?verse=3#comments");
     render(<LoginRequiredModal onClose={vi.fn()} />);
-    expect(screen.getByRole("dialog")).toContainElement(document.activeElement as HTMLElement);
+
+    expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute(
+      "href",
+      "/login?from=%2Fmatthew%2F1%3Fverse%3D3%23comments",
+    );
   });
 
-  it("Escape キーで閉じられる", () => {
+  it("Escapeで閉じる", () => {
     const onClose = vi.fn();
     render(<LoginRequiredModal onClose={onClose} />);
     fireEvent.keyDown(window, { key: "Escape" });
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("Tab が最後の要素から先頭へ折り返す（背後の画面へ出ない）", () => {
+  it("Tabが最後の要素から先頭へ折り返す", () => {
     render(<LoginRequiredModal onClose={vi.fn()} />);
     const dialog = screen.getByRole("dialog");
     const focusables = dialog.querySelectorAll<HTMLElement>("a[href], button");

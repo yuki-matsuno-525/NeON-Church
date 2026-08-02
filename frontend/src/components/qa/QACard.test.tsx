@@ -30,8 +30,10 @@ const makeQuestion = (overrides: Partial<QAQuestion> = {}): QAQuestion => ({
 
 describe("QACard", () => {
   it("カード全体が詳細ページへのリンクになる", () => {
-    render(<QACard question={makeQuestion()} />);
+    const { container } = render(<QACard question={makeQuestion()} />);
     expect(screen.getByRole("link")).toHaveAttribute("href", "/qa/q1");
+    // 一覧へ戻ったときに元の質問へアンカーで戻れる
+    expect(container.querySelector("#question-q1")).toBeInTheDocument();
   });
 
   it("題・状態・箇所・タグ・回答件数を表示する", () => {

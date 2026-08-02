@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CommentPanel } from "./CommentPanel";
 import type { Article, Verse } from "@/lib/types";
 
@@ -60,7 +60,7 @@ describe("CommentPanel の「引用した記事」タブ", () => {
 
     renderPanel();
 
-    expect(await screen.findByRole("button", { name: "引用した記事 (1)" })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "引用した記事 (1)" })).toBeInTheDocument();
   });
 
   it("記事が1件も無いときはタブごと出さない", async () => {
@@ -77,7 +77,7 @@ describe("CommentPanel の「引用した記事」タブ", () => {
     await waitFor(() => {
       expect(fetchArticlesCitingVerse).toHaveBeenCalled();
     });
-    expect(screen.queryByRole("button", { name: /引用した記事/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /引用した記事/ })).not.toBeInTheDocument();
   });
 
   it("タブを押すと記事の一覧が出る（既定はコメント）", async () => {
@@ -91,7 +91,7 @@ describe("CommentPanel の「引用した記事」タブ", () => {
 
     renderPanel();
 
-    const tab = await screen.findByRole("button", { name: "引用した記事 (1)" });
+    const tab = await screen.findByRole("tab", { name: "引用した記事 (1)" });
     expect(screen.queryByText("断食について")).not.toBeInTheDocument();
 
     tab.click();
@@ -101,5 +101,34 @@ describe("CommentPanel の「引用した記事」タブ", () => {
       "href",
       "/articles/a1",
     );
+  });
+
+  it("閉じるボタンへフォーカスし、Escapeでパネルを閉じる", async () => {
+    const { fetchArticlesCitingVerse } = await import("@/lib/api");
+    vi.mocked(fetchArticlesCitingVerse).mockResolvedValue({
+      count: 0,
+      next: null,
+      previous: null,
+      results: [],
+    });
+    const onClose = vi.fn();
+    render(<CommentPanel verse={verse} chapterNumber={6} bookSlug="matthew" onClose={onClose} />);
+
+    const close = screen.getByRole("button", { name: "コメントパネルを閉じる" });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("区切り線をキーボードでリサイズできる", async () => {
+    const { fetchArticlesCitingVerse } = await import("@/lib/api");
+    vi.mocked(fetchArticlesCitingVerse).mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
+    renderPanel();
+    const separator = screen.getByRole("separator", { name: "コメントパネルの幅を変更" });
+
+    fireEvent.keyDown(separator, { key: "Home" });
+    expect(separator).toHaveAttribute("aria-valuenow", "280");
+    fireEvent.keyDown(separator, { key: "End" });
+    expect(separator).toHaveAttribute("aria-valuenow", "640");
   });
 });

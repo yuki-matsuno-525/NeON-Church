@@ -113,6 +113,10 @@ class NotificationSerializer(serializers.ModelSerializer):
     def get_translation_project_id(self, obj) -> str | None:
         if obj.translation_comment_id:
             return str(obj.translation_comment.project_id)
+        # 翻訳プロジェクトの読書画面に付いたコメントも、そのプロジェクトへ戻す。
+        root = self._root_comment(obj)
+        if root is not None and root.translation_project_id:
+            return str(root.translation_project_id)
         return None
 
     def get_translation_unit_id(self, obj) -> str | None:
@@ -132,6 +136,9 @@ class NotificationSerializer(serializers.ModelSerializer):
         root = self._root_comment(obj)
         if root is None:
             return None
+        # 翻訳プロジェクトの読書画面で付いたコメントは、そのプロジェクト内へ戻す。
+        if root.translation_project_id:
+            return "translation_project_comment"
         # 箇所は canonical_book/章/節の列で判定する。細かい粒度から順に見る。
         if root.verse_number is not None:
             return "verse_comment"

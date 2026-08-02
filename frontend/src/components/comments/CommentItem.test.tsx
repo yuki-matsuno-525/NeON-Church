@@ -32,9 +32,8 @@ vi.mock("@/contexts/AuthContext", () => ({
 const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   id: "c1",
   user: { id: "u1", username: "alice" },
-  verse: "v1",
-  chapter: null,
-  book: null,
+  translation_project: null,
+  version_label: "新共同訳",
   parent: null,
   body: "テストコメント本文",
   is_deleted: false,
@@ -42,6 +41,7 @@ const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
   vote_count: 3,
   // 返信は持たず件数だけ。開いたときに fetchCommentReplies で取りに行く。
   reply_count: 0,
+  tags: [],
   ...overrides,
 });
 
@@ -116,7 +116,7 @@ describe("CommentItem", () => {
   it("未ログインのとき投票ボタンがdisabled", () => {
     mockUseAuth.mockReturnValue({ user: null });
     render(<CommentItem comment={makeComment()} />);
-    expect(screen.getByRole("button", { name: /▲/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /承認/ })).toBeDisabled();
   });
 
   it("onReplyがあるとき返信ボタンが表示される", () => {

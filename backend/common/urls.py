@@ -1,6 +1,6 @@
 from django.urls import path
 
-from common.views import get_csrf_token, healthz
+from common.views import feedback, get_csrf_token, healthz
 
 urlpatterns = [
     path("", healthz, name="healthz"),
@@ -8,4 +8,5 @@ urlpatterns = [
 
 csrf_urlpatterns = [
     path("csrf/", get_csrf_token, name="csrf"),
+    path("feedback/", feedback, name="feedback"),
 ]

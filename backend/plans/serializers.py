@@ -86,7 +86,7 @@ class PlanDaySerializer(serializers.ModelSerializer):
 class PlanListSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source="owner.username", read_only=True)
     day_count = serializers.IntegerField(source="days.count", read_only=True)
-    reader_count = serializers.IntegerField(source="subscriptions.count", read_only=True)
+    reader_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Plan
@@ -101,6 +101,13 @@ class PlanListSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def get_reader_count(self, obj) -> int:
+        """「読書中」は、停止済みの購読を除いた現在の人数だけを返す。"""
+        annotated = getattr(obj, "active_reader_count", None)
+        if annotated is not None:
+            return annotated
+        return obj.subscriptions.filter(is_active=True).count()
 
 
 class PlanDetailSerializer(PlanListSerializer):
@@ -148,8 +155,9 @@ class PlanWriteSerializer(serializers.ModelSerializer):
         visibility = attrs.get(
             "visibility", getattr(self.instance, "visibility", Plan.VISIBILITY_PRIVATE)
         )
-        if visibility != Plan.VISIBILITY_PRIVATE and self.instance is not None:
-            if not self.instance.days.exists():
+        if visibility != Plan.VISIBILITY_PRIVATE:
+            # 作成時点ではまだ日を追加できないため、公開・限定公開での直接作成も拒否する。
+            if self.instance is None or not self.instance.days.exists():
                 raise serializers.ValidationError(
                     {"visibility": "公開するには、1日以上の中身が必要です。"}
                 )

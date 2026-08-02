@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
+const ALLOWED_DEV_ORIGINS = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const isDev = process.env.NODE_ENV === "development";
 
 // CSP の connect-src には開発用の localhost、本番用 API、Sentry を許可する。
@@ -30,6 +35,7 @@ const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  allowedDevOrigins: ALLOWED_DEV_ORIGINS,
   experimental: {
     // @/components/ui のような「まとめ口」から1つだけ読み込んでも、
     // 実際には中身が全部ついてくる。使ったものだけを読むようにする。

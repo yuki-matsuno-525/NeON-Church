@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   fetchArticleComments,
   createArticleComment,
@@ -22,12 +23,27 @@ export function ArticleComments({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<ArticleComment[]>([]);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+
+  const loadComments = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setComments(await fetchArticleComments(articleId));
+    } catch {
+      setError("コメントを読み込めませんでした。");
+    } finally {
+      setLoading(false);
+    }
+  }, [articleId]);
 
   useEffect(() => {
-    fetchArticleComments(articleId).then(setComments).catch(() => {});
-  }, [articleId]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadComments();
+  }, [loadComments]);
 
   const handleSubmit = async () => {
     const text = body.trim();
@@ -46,7 +62,9 @@ export function ArticleComments({ articleId }: { articleId: string }) {
   };
 
   const handleDelete = async (commentId: string) => {
-    setDeleting(null);
+    if (deleteBusy) return;
+    setDeleteBusy(true);
+    setError(null);
     try {
       await deleteArticleComment(commentId);
       setComments((prev) =>
@@ -56,8 +74,11 @@ export function ArticleComments({ articleId }: { articleId: string }) {
             : comment,
         ),
       );
+      setDeleting(null);
     } catch {
       setError(t.articleCommentDeleteFailed);
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -70,24 +91,31 @@ export function ArticleComments({ articleId }: { articleId: string }) {
         confirmText={t.articleDeleteAction}
         destructive
         onConfirm={() => deleting && handleDelete(deleting)}
-        onCancel={() => setDeleting(null)}
+        onCancel={() => !deleteBusy && setDeleting(null)}
       />
 
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
         {t.articleCommentsTitle} <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>{comments.length}</span>
       </h2>
 
-      {comments.length === 0 ? (
+      {loading ? (
+        <p role="status" style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</p>
+      ) : error && comments.length === 0 ? (
+        <div role="alert" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--state-danger)" }}>{error}</p>
+          <button type="button" onClick={() => void loadComments()} style={secondaryButtonStyle}>{t.retry}</button>
+        </div>
+      ) : comments.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-faint)" }}>{t.articleCommentsEmpty}</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           {comments.map((comment) => (
             <div key={comment.id} className="card-glow" style={{ padding: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 700 }}>{comment.username}</span>
-                <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
+                <Link href={`/profile/${comment.username}`} style={{ fontSize: 13, fontWeight: 700, color: "inherit", textDecoration: "none" }}>{comment.username}</Link>
+                <time dateTime={comment.created_at} style={{ fontSize: 12, color: "var(--text-muted)" }}>
                   {formatRelativeTime(comment.created_at)}
-                </span>
+                </time>
                 {user?.username === comment.username && !comment.is_deleted && (
                   <button
                     type="button"
@@ -98,6 +126,8 @@ export function ArticleComments({ articleId }: { articleId: string }) {
                       background: "none",
                       color: "var(--text-faint)",
                       fontSize: 12,
+                      minHeight: 44,
+                      padding: "8px 10px",
                       cursor: "pointer",
                       fontFamily: "inherit",
                     }}
@@ -124,7 +154,11 @@ export function ArticleComments({ articleId }: { articleId: string }) {
 
       {user ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <label htmlFor={`article-comment-${articleId}`} style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700 }}>
+            この記事へのコメント
+          </label>
           <textarea
+            id={`article-comment-${articleId}`}
             value={body}
             onChange={(event) => setBody(event.target.value)}
             rows={3}
@@ -138,11 +172,11 @@ export function ArticleComments({ articleId }: { articleId: string }) {
               background: "var(--bg)",
               color: "var(--text)",
               fontFamily: "inherit",
-              fontSize: 14,
+              fontSize: 16,
               resize: "vertical",
             }}
           />
-          {error && <p style={{ margin: 0, fontSize: 12, color: "var(--state-error)" }}>{error}</p>}
+          {error && <p role="alert" style={{ margin: 0, fontSize: 12, color: "var(--state-danger)" }}>{error}</p>}
           <button
             type="button"
             onClick={handleSubmit}
@@ -156,6 +190,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
               fontWeight: 700,
               fontSize: 14,
               padding: "8px 18px",
+              minHeight: 44,
               cursor: !body.trim() || busy ? "default" : "pointer",
               opacity: !body.trim() || busy ? 0.6 : 1,
               fontFamily: "inherit",
@@ -165,10 +200,22 @@ export function ArticleComments({ articleId }: { articleId: string }) {
           </button>
         </div>
       ) : (
-        <p style={{ fontSize: 13, color: "var(--text-faint)" }}>
-          {t.articleCommentLoginRequired}
+        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          {t.articleCommentLoginRequired}{" "}
+          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} style={{ color: "var(--accent)" }}>{t.login}</Link>
         </p>
       )}
     </section>
   );
 }
+
+const secondaryButtonStyle: React.CSSProperties = {
+  minHeight: 44,
+  padding: "8px 14px",
+  borderRadius: 8,
+  border: "1px solid var(--border)",
+  background: "transparent",
+  color: "var(--text)",
+  cursor: "pointer",
+  fontFamily: "inherit",
+};

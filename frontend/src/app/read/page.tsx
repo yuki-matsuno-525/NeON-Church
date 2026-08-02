@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useDeferredValue, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchReadingProgress, fetchTranslationLibrary, type TranslationProject } from "@/lib/api";
@@ -30,8 +30,18 @@ function matchesSearch(query: string, values: Array<string | null | undefined>) 
 }
 
 export default function ReadPage() {
+  const t = useT();
+  return (
+    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+      <ReadContent />
+    </Suspense>
+  );
+}
+
+function ReadContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useT();
   const { lang } = useLang();
   const resolved = useRef(false);
@@ -40,21 +50,53 @@ export default function ReadPage() {
   const [resume, setResume] = useState<ResumeTarget>(null);
   // ログインユーザーが /read に追加した公開翻訳（本棚）。未ログイン・0件なら何も出さない。
   const [library, setLibrary] = useState<TranslationProject[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState(false);
+  const [libraryRetryToken, setLibraryRetryToken] = useState(0);
+  const [resumeError, setResumeError] = useState(false);
+  const [resumeRetryToken, setResumeRetryToken] = useState(0);
   // 書が多いのでカテゴリ（ジャンル）を選んでから、その書だけ表示するドリルダウン。
   const [activeGenre, setActiveGenre] = useState<string>("");
-  const [bookSearch, setBookSearch] = useState("");
+  const urlBookSearch = searchParams.get("q") ?? "";
+  const [bookSearch, setBookSearch] = useState(urlBookSearch);
+  const [lastUrlBookSearch, setLastUrlBookSearch] = useState(urlBookSearch);
+  if (urlBookSearch !== lastUrlBookSearch) {
+    setLastUrlBookSearch(urlBookSearch);
+    setBookSearch(urlBookSearch);
+  }
+  const deferredBookSearch = useDeferredValue(bookSearch);
+
+  useEffect(() => {
+    if (bookSearch === urlBookSearch) return;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (bookSearch.trim()) params.set("q", bookSearch);
+      else params.delete("q");
+      const query = params.toString();
+      router.replace(query ? `/read?${query}` : "/read", { scroll: false });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [bookSearch, router, searchParams, urlBookSearch]);
 
   useEffect(() => {
     if (loading) return;
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLibrary([]);
+      setLibraryLoading(false);
+      setLibraryError(false);
       return;
     }
+    setLibraryLoading(true);
+    setLibraryError(false);
     fetchTranslationLibrary()
       .then(setLibrary)
-      .catch(() => setLibrary([]));
-  }, [loading, user]);
+      .catch(() => {
+        setLibrary([]);
+        setLibraryError(true);
+      })
+      .finally(() => setLibraryLoading(false));
+  }, [loading, user, libraryRetryToken]);
 
   useEffect(() => {
     const localSlug = getLastBookSlug();
@@ -73,6 +115,7 @@ export default function ReadPage() {
     if (!user) return;
     fetchReadingProgress()
       .then((list) => {
+        setResumeError(false);
         const latest = list[0];
         if (latest) {
           const slug = slugFromDbName(latest.book_name);
@@ -88,8 +131,8 @@ export default function ReadPage() {
           }
         }
       })
-      .catch(() => {});
-  }, [loading, user, router]);
+      .catch(() => setResumeError(true));
+  }, [loading, user, router, resumeRetryToken]);
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
@@ -105,8 +148,10 @@ export default function ReadPage() {
               color: "var(--accent)",
               fontSize: "var(--font-size-sm)",
               padding: "3px 10px",
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
               textDecoration: "none",
-              display: "inline-block",
             }}
           >
             {t.resumeReading(bookLabel(resume.slug, lang)?.name ?? resume.bookName, resume.chapter)}
@@ -126,6 +171,35 @@ export default function ReadPage() {
         />
       </label>
 
+      {libraryLoading && user && (
+        <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13 }}>
+          {t.loading}
+        </p>
+      )}
+      {resumeError && user && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => {
+              resolved.current = false;
+              setResumeRetryToken((value) => value + 1);
+            }}
+          >
+            {t.retry}
+          </button>
+        </div>
+      )}
+      {libraryError && user && (
+        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+          <button type="button" className="btn btn-ghost" onClick={() => setLibraryRetryToken((value) => value + 1)}>
+            {t.retry}
+          </button>
+        </div>
+      )}
+
       {(() => {
         const groups = GENRE_ORDER
           .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
@@ -134,7 +208,7 @@ export default function ReadPage() {
         const hasLibrary = library.length > 0;
         const isLibraryTab = activeGenre === TRANSLATION_TAB && hasLibrary;
         const active = isLibraryTab ? null : (groups.find((g) => g.genre === activeGenre) ?? groups[0]);
-        const normalizedQuery = normalizeSearch(bookSearch);
+        const normalizedQuery = normalizeSearch(deferredBookSearch);
         const matchingBooks = normalizedQuery
           ? BOOKS.filter((book) => {
               const lb = bookLabel(book.slug, lang);
@@ -164,6 +238,7 @@ export default function ReadPage() {
         const chipStyle = (isActive: boolean): React.CSSProperties => ({
           fontSize: "var(--font-size-sm)",
           padding: "6px 14px",
+          minHeight: 44,
           borderRadius: 999,
           border: "1px solid var(--border)",
           cursor: "pointer",
@@ -345,7 +420,7 @@ export default function ReadPage() {
 
 const readSearchInputStyle: React.CSSProperties = {
   width: "100%",
-  minHeight: 40,
+  minHeight: 44,
   padding: "8px 12px",
   border: "1px solid var(--border)",
   borderRadius: 8,

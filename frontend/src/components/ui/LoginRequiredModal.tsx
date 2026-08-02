@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n";
 import { useDialogBehavior } from "@/hooks/useDialogBehavior";
@@ -16,15 +17,19 @@ type Props = {
 export function LoginRequiredModal({ onClose, title, description, from }: Props) {
   const pathname = usePathname();
   const t = useT();
-  const loginHref = `/login?from=${encodeURIComponent(from ?? pathname)}`;
   const titleId = useId();
-  const descId = useId();
+  const descriptionId = useId();
+  const currentLocation = typeof window === "undefined"
+    ? pathname
+    : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const loginHref = `/login?from=${encodeURIComponent(from ?? currentLocation)}`;
   // ダイアログとして正しく振る舞わせる（Escape で閉じる・Tab が外へ出ない・閉じたら元へ戻る）。
   const dialogRef = useDialogBehavior<HTMLDivElement>(true, onClose);
 
   return (
     <>
       <div
+        aria-hidden="true"
         onClick={onClose}
         style={{
           position: "fixed",
@@ -38,7 +43,7 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={descId}
+        aria-describedby={descriptionId}
         style={{
           position: "fixed",
           top: "50%",
@@ -55,10 +60,10 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
           textAlign: "center",
         }}
       >
-        <p id={titleId} style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>
+        <h2 id={titleId} style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>
           {title ?? t.loginRequired}
-        </p>
-        <p id={descId} style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 24 }}>
+        </h2>
+        <p id={descriptionId} style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
           {description ?? t.loginRequiredDesc}
         </p>
         <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
@@ -66,6 +71,7 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
             onClick={onClose}
             style={{
               padding: "8px 20px",
+              minHeight: 44,
               border: "1px solid var(--border)",
               borderRadius: 8,
               background: "transparent",
@@ -77,10 +83,13 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
           >
             {t.close}
           </button>
-          <a
+          <Link
             href={loginHref}
             style={{
               padding: "8px 20px",
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
               // 主ボタンの色は1か所（--accent-primary-grad）にまとめている。
               background: "var(--accent-primary-grad)",
               color: "#fff",
@@ -92,7 +101,7 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
             }}
           >
             {t.loginBtn}
-          </a>
+          </Link>
         </div>
       </div>
     </>

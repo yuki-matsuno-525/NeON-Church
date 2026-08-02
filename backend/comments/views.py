@@ -1,5 +1,7 @@
 from django.db import models
 from django.db.models import Count
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -8,8 +10,21 @@ from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from translations.access import can_view_project_work, get_visible_project_or_404
 from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
+
+
+def _get_visible_comment_or_404(request, **lookup) -> Comment:
+    try:
+        comment = Comment.objects.select_related("translation_project").get(**lookup)
+    except (Comment.DoesNotExist, DjangoValidationError, TypeError, ValueError):
+        raise Http404
+    if comment.translation_project_id and not can_view_project_work(
+        request.user, comment.translation_project
+    ):
+        raise Http404
+    return comment
 
 
 def _location_from_target(*, verse_id=None, chapter_id=None, book_id=None):
@@ -52,10 +67,8 @@ def _location_from_target(*, verse_id=None, chapter_id=None, book_id=None):
 
 def _notify(recipient, actor, notification_type, comment):
     """通知を作成するヘルパー。自己通知はスキップ。"""
-    if recipient == actor:
-        return
-    from notifications.models import Notification
-    Notification.objects.create(
+    from notifications.services import send_user_notification
+    send_user_notification(
         recipient=recipient,
         actor=actor,
         notification_type=notification_type,
@@ -92,7 +105,26 @@ class CommentListCreateView(generics.ListCreateAPIView):
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
+    def create(self, request, *args, **kwargs):
+        # Resolve security-sensitive relations before serializer validation so
+        # hidden and unknown UUIDs cannot be distinguished by 404 vs 400.
+        project_id = request.data.get("translation_project")
+        if project_id:
+            get_visible_project_or_404(request.user, project_id)
+        parent_id = request.data.get("parent")
+        if parent_id:
+            _get_visible_comment_or_404(request, pk=parent_id)
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
+        parent = serializer.validated_data.get("parent")
+        project = (
+            parent.translation_project
+            if parent and parent.translation_project_id
+            else serializer.validated_data.get("translation_project")
+        )
+        if project and not can_view_project_work(self.request.user, project):
+            raise Http404
         comment = serializer.save()
         if comment.parent:
             _notify(
@@ -117,6 +149,13 @@ class CommentListCreateView(generics.ListCreateAPIView):
             )
         )
         params = self.request.query_params
+
+        translation_project_id = params.get("translation_project")
+        visible_translation_project = None
+        if translation_project_id:
+            visible_translation_project = get_visible_project_or_404(
+                self.request.user, translation_project_id
+            )
 
         verse_id = params.get("verse_id")
         chapter_id = params.get("chapter_id")
@@ -153,9 +192,8 @@ class CommentListCreateView(generics.ListCreateAPIView):
         # スコープ（翻訳プロジェクト／聖書本体）で分離する。混ぜない（訳横断集約は箇所で行い、
         # 本体コメントと特定PJコメントは別スレッド）。translation_project 指定でその PJ 専用、
         # 未指定で聖書本体（translation_project IS NULL）。
-        translation_project = params.get("translation_project")
-        if translation_project:
-            qs = qs.filter(translation_project_id=translation_project)
+        if visible_translation_project:
+            qs = qs.filter(translation_project=visible_translation_project)
         else:
             qs = qs.filter(translation_project__isnull=True)
 
@@ -182,7 +220,7 @@ class CommentUpvoteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
+        comment = _get_visible_comment_or_404(request, pk=pk)
         _, created = Vote.objects.get_or_create(user=request.user, comment=comment)
         if not created:
             return Response({"detail": "Already voted."}, status=status.HTTP_409_CONFLICT)
@@ -195,7 +233,7 @@ class CommentUpvoteView(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
     def delete(self, request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
+        comment = _get_visible_comment_or_404(request, pk=pk)
         deleted_count, _ = Vote.objects.filter(user=request.user, comment=comment).delete()
         if not deleted_count:
             return Response({"detail": "Vote not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -213,6 +251,11 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated, IsOwner]
     queryset = Comment.objects.all()
     http_method_names = ["patch", "delete", "head", "options"]
+
+    def get_object(self):
+        instance = _get_visible_comment_or_404(self.request, pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, instance)
+        return instance
 
     def get_serializer(self, *args, **kwargs):
         from .serializers import CommentEditSerializer
@@ -302,7 +345,7 @@ class ReportView(APIView):
     throttle_scope = "report"
 
     def post(self, request, pk):
-        comment = get_object_or_404(Comment, pk=pk)
+        comment = _get_visible_comment_or_404(request, pk=pk)
         if comment.user == request.user:
             return Response({"detail": "Cannot report your own comment."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = ReportSerializer(data=request.data)

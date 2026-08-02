@@ -26,6 +26,7 @@ test("A-1: 記事を書いて公開すると一覧に出る", async ({ page, req
 
   // 要約を入れると公開が選べるようになる
   await page.locator("select").first().selectOption("public");
+  await page.getByRole("button", { name: "変更して保存" }).click();
 
   await expect(page.getByText("保存しました")).toBeVisible({ timeout: 10000 });
 
@@ -52,7 +53,7 @@ test("A-3: 引用パネルから節を入れると、プレビューに節の本
   // さがす → 書 → 章 → 節 とたどる
   await page.getByPlaceholder("書をさがす").fill("マタイ");
   await page.getByRole("button", { name: "マタイによる福音書" }).click();
-  await page.getByRole("button", { name: "1", exact: true }).click();
+  await page.getByRole("button", { name: "第1章", exact: true }).click();
 
   // 最初の節を引用ブロックとして入れる
   await page.getByRole("button", { name: "引用して入れる" }).first().click();
@@ -72,13 +73,14 @@ test("A-4: 公開した記事は、引用した節のページから引ける", 
   await page.getByPlaceholder(/本文を書きます/).fill("[[matthew 1:1]] について。");
   await page.getByPlaceholder(/要約/).fill("系図のはじまりについて。");
   await page.locator("select").first().selectOption("public");
+  await page.getByRole("button", { name: "変更して保存" }).click();
   await expect(page.getByText("保存しました")).toBeVisible({ timeout: 10000 });
 
   // 引用した節のページを開く
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
 
-  const tab = page.getByRole("button", { name: /引用した記事/ });
+  const tab = page.getByRole("tab", { name: /引用した記事/ });
   await expect(tab).toBeVisible({ timeout: 10000 });
   await tab.click();
   await expect(page.getByText(title)).toBeVisible();
@@ -101,6 +103,7 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   await loginWithUI(otherPage, other.username, other.password);
   await otherPage.goto(url);
 
-  await expect(otherPage.getByText("この記事は読めません。")).toBeVisible();
+  await expect(otherPage.getByText(/記事が見つかりません。|この記事は非公開です。/).first()).toBeVisible();
+  await expect(otherPage.getByText("まだ人には見せない。")).toHaveCount(0);
   await context.close();
 });

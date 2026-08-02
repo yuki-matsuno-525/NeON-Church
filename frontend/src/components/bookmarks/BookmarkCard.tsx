@@ -112,7 +112,7 @@ export function BookmarkCard({
         {target.title}
       </p>
       {target.body && (
-        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>
+        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {target.body}
         </p>
       )}
@@ -172,7 +172,8 @@ const removeButtonStyle: React.CSSProperties = {
   background: "transparent",
   border: "none",
   cursor: "pointer",
-  padding: 0,
+  padding: "6px 8px",
+  minHeight: 44,
   fontFamily: "inherit",
 };
 
@@ -182,7 +183,8 @@ const undoButtonStyle: React.CSSProperties = {
   background: "transparent",
   border: "none",
   cursor: "pointer",
-  padding: 0,
+  padding: "6px 8px",
+  minHeight: 44,
   fontFamily: "inherit",
   fontWeight: 700,
 };

@@ -184,15 +184,15 @@ class AnswerCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         answer = serializer.save()
         # 質問した人に「回答が付いた」と知らせる。自分で自分の質問に答えたときは出さない。
-        if answer.question.user != answer.user:
-            from notifications.models import Notification
+        # 送り方（画面内・メール）は受け取る人の設定に従うので、共通の仕組みに任せる。
+        from notifications.services import send_user_notification
 
-            Notification.objects.create(
-                recipient=answer.question.user,
-                actor=answer.user,
-                notification_type="reply",
-                answer=answer,
-            )
+        send_user_notification(
+            recipient=answer.question.user,
+            actor=answer.user,
+            notification_type="reply",
+            answer=answer,
+        )
 
 
 class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):

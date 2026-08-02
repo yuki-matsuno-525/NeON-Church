@@ -229,8 +229,13 @@ See `.env.example`. The main ones:
 | `POSTGRES_*` | PostgreSQL connection settings |
 | `NEXT_PUBLIC_API_BASE_URL` | Backend API URL used by the frontend |
 | `NEXT_PUBLIC_SITE_URL` | Public domain (used as the OGP `metadataBase`) |
+| `NEXT_ALLOWED_DEV_ORIGINS` | Extra comma-separated hosts allowed to load the Next.js dev UI (local browser testing only) |
 | `GOOGLE_CLIENT_ID/SECRET` | Google OAuth credentials |
 | `GITHUB_CLIENT_ID/SECRET` | GitHub OAuth credentials |
+| `EMAIL_HOST/PORT/USE_TLS` | SMTP connection used for password reset and feedback |
+| `EMAIL_HOST_USER/PASSWORD` | SMTP credentials |
+| `DEFAULT_FROM_EMAIL` | Sender address for service emails |
+| `FEEDBACK_EMAIL` | Recipient for feedback submissions |
 | `NEXT_PUBLIC_OAUTH_*_ENABLED` | Feature flags for the OAuth buttons |
 | `SENTRY_DSN` | Sentry DSN (optional) |
 

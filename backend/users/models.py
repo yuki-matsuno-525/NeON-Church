@@ -28,6 +28,8 @@ class User(AbstractUser):
         choices=BOOKMARKS_VISIBILITY_CHOICES,
         default=BOOKMARKS_PRIVATE,
     )
+    email_notifications_enabled = models.BooleanField(default=False)
+    in_app_notifications_enabled = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -31,9 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // csrftoken Cookie の取得と認証状態の確認を同時に投げる。
-    // csrftoken は書き込み（POST など）にしか要らないので、読み取りの /auth/me を
-    // 待たせる理由がない。以前は直列だったため全ページで最初の表示が1往復ぶん遅れていた。
-    fetch("/api/csrf/", { credentials: "include" }).catch(() => {});
+    // csrftoken は書き込み（POST など）にしか要らないので、読み取りの /auth/me を待たせない。
+    fetch("/api/csrf/", { credentials: "include" })
+      .catch((error) => {
+        console.warn("Could not initialize CSRF protection; write actions may need a retry.", error);
+      });
     fetchMe()
       .then(setUser)
       .catch(() => setUser(null))
@@ -41,11 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await apiLogout();
-    } catch {
-      // ignore logout errors
-    }
+    await apiLogout();
     setUser(null);
   }, []);
 

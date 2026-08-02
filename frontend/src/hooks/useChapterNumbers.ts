@@ -15,12 +15,16 @@ export function useChapterNumbers(slug: string | null, translation: string) {
   const t = useT();
   const [numbers, setNumbers] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!slug) return;
     let alive = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
+    setNumbers([]);
+    setLoading(true);
     fetchBooks(translation)
       .then((books) => {
         const target = books.find((book) => book.name === bookNameForTranslation(slug, translation));
@@ -34,11 +38,14 @@ export function useChapterNumbers(slug: string | null, translation: string) {
         if (!alive) return;
         setNumbers([]);
         setError(err.message);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [slug, translation, t]);
+  }, [slug, translation, reloadKey, t.citationBookUnavailable]);
 
-  return { numbers, error };
+  return { numbers, error, loading, retry: () => setReloadKey((key) => key + 1) };
 }

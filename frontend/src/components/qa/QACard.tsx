@@ -37,6 +37,8 @@ export function QACard({ question, showLocation = true }: Props) {
 
   return (
     <Link
+      // 一覧内の特定の質問へアンカーで戻ってこられるようにする。
+      id={`question-${question.id}`}
       href={`/qa/${question.id}`}
       className="card-glow card-glow-interactive"
       style={{ display: "block", padding: 16, textDecoration: "none", color: "inherit" }}
@@ -62,8 +64,12 @@ export function QACard({ question, showLocation = true }: Props) {
       </div>
 
       <h3 style={titleStyle}>{question.title}</h3>
-      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)" }}>{body}</p>
+      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)", whiteSpace: "pre-wrap" }}>
+        {body}
+      </p>
 
+      {/* カード全体がリンクなので、ここでは投稿者名もリンクにしない（リンクの入れ子は押せない）。
+          投稿者のページへは詳細ページから辿る。 */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
         <span style={metaPillStyle}>{question.user.username}</span>
         <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>

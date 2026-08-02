@@ -88,8 +88,8 @@ function pageWindow(page: number, totalPages: number): (number | typeof ELLIPSIS
 }
 
 const baseButton: React.CSSProperties = {
-  minWidth: 32,
-  height: 32,
+  minWidth: 44,
+  height: 44,
   padding: "0 8px",
   border: "1px solid var(--border)",
   borderRadius: 8,

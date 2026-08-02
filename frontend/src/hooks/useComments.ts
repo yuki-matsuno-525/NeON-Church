@@ -38,7 +38,7 @@ export function useComments(params: Params) {
     [verse_id, chapter_id, book_id, ordering, tag_id, translation_project]
   );
 
-  const { items, setItems, total, loading, loadingMore, hasMore, loadMore, reload } =
+  const { items, setItems, total, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } =
     useLoadMore<Comment, undefined>(fetchPage);
 
   return {
@@ -48,7 +48,10 @@ export function useComments(params: Params) {
     loading,
     loadingMore,
     hasMore,
+    error,
+    loadMoreError,
     loadMore,
+    retry,
     reload,
   };
 }

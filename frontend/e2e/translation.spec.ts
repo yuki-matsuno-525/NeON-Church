@@ -103,6 +103,7 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
 
   // DRAFT → ACTIVE にして一覧に表示されるようにする
   await page.getByRole("button", { name: "募集開始" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "募集開始" }).click();
   await expect(page.getByRole("button", { name: "公開する" })).toBeVisible();
 
   // 一覧ページに移動してプロジェクトが表示されることを確認
@@ -134,6 +135,7 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
 
   // 「募集開始」ボタンをクリックして status を active にする
   await page.getByRole("button", { name: "募集開始" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "募集開始" }).click();
 
   // ステータスが変わることを確認（「公開する」ボタンが現れる）
   await expect(page.getByRole("button", { name: "公開する" })).toBeVisible();

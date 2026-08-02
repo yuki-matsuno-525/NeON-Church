@@ -24,7 +24,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
   const t = useT();
 
   if (readings.length === 0) {
-    return <p style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
+    return <p role="status" style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
   }
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -36,7 +36,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
             border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "6px 12px",
-            minHeight: 36,
+            minHeight: 44,
             display: "inline-flex",
             alignItems: "center",
             gap: 6,

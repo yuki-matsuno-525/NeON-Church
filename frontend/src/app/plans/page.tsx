@@ -11,36 +11,52 @@ import {
 import { visibilityLabel } from "@/lib/plans";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { SkeletonList } from "@/components/ui";
+import { ErrorState, SkeletonList } from "@/components/ui";
+import { planUiText } from "@/components/plans/planUiText";
 
 export default function PlansPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const t = useT();
+  const { lang } = useLang();
+  const supplementalText = planUiText(lang);
   const [publicPlans, setPublicPlans] = useState<Plan[]>([]);
   const [myPlans, setMyPlans] = useState<Plan[]>([]);
   const [reading, setReading] = useState<PlanSubscription[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    if (authLoading) return;
     let alive = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    setError(false);
     Promise.all([
-      fetchPlans().then((r) => r.results).catch(() => []),
-      user ? fetchPlans({ mine: true }).then((r) => r.results).catch(() => []) : Promise.resolve([]),
-      user ? fetchMyPlanSubscriptions().catch(() => []) : Promise.resolve([]),
-    ]).then(([published, mine, subscriptions]) => {
-      if (!alive) return;
-      setPublicPlans(published);
-      setMyPlans(mine);
-      setReading(subscriptions);
-      setLoading(false);
-    });
+      fetchPlans().then((response) => response.results),
+      user ? fetchPlans({ mine: true }).then((response) => response.results) : Promise.resolve([]),
+      user ? fetchMyPlanSubscriptions() : Promise.resolve([]),
+    ])
+      .then(([published, mine, subscriptions]) => {
+        if (!alive) return;
+        setPublicPlans(published);
+        setMyPlans(mine);
+        setReading(subscriptions);
+      })
+      .catch(() => {
+        if (alive) setError(true);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
     return () => {
       alive = false;
     };
-  }, [user]);
+  }, [user, authLoading, reloadKey]);
+
+  const pageLoading = authLoading || loading;
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
@@ -58,7 +74,7 @@ export default function PlansPage() {
         )}
       </div>
 
-      {reading.length > 0 && (
+      {!pageLoading && !error && reading.length > 0 && (
         <section style={{ ...columnStyle, marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>{t.planReadingNow}</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -67,7 +83,7 @@ export default function PlansPage() {
                 key={subscription.id}
                 href={`/plans/${subscription.plan}`}
                 className="card-glow card-glow-interactive"
-                style={{ padding: "10px 14px", textDecoration: "none", color: "inherit", fontSize: 14, fontWeight: 700 }}
+                style={{ padding: "10px 14px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", color: "inherit", fontSize: 14, fontWeight: 700 }}
               >
                 {subscription.plan_title}
               </Link>
@@ -76,31 +92,41 @@ export default function PlansPage() {
         </section>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }}>
-        {user && (
-          <PlanColumn
-            title={t.planMineTitle}
-            desc={t.planMineDesc}
-            icon="book-open"
-            color="var(--accent)"
-            tint="var(--accent-tint)"
-            plans={myPlans}
-            loading={loading}
-            empty={t.planMineEmpty}
-            editable
-          />
-        )}
-        <PlanColumn
-          title={t.planPublicTitle}
-          desc={t.planPublicDesc}
-          icon="globe"
-          color="var(--state-success)"
-          tint="rgba(34,197,94,0.15)"
-          plans={publicPlans}
-          loading={loading}
-          empty={t.planPublicEmpty}
+      {error && !pageLoading ? (
+        <ErrorState
+          tone="warning"
+          title={supplementalText.loadErrorTitle}
+          message={supplementalText.loadErrorDescription}
+          retryLabel={t.retry}
+          onRetry={() => setReloadKey((key) => key + 1)}
         />
-      </div>
+      ) : (
+        <div aria-busy={pageLoading} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 16, alignItems: "start" }}>
+          {user && (
+            <PlanColumn
+              title={t.planMineTitle}
+              desc={t.planMineDesc}
+              icon="book-open"
+              color="var(--accent)"
+              tint="var(--accent-tint)"
+              plans={myPlans}
+              loading={pageLoading}
+              empty={t.planMineEmpty}
+              editable
+            />
+          )}
+          <PlanColumn
+            title={t.planPublicTitle}
+            desc={t.planPublicDesc}
+            icon="globe"
+            color="var(--state-success)"
+            tint="rgba(34,197,94,0.15)"
+            plans={publicPlans}
+            loading={pageLoading}
+            empty={t.planPublicEmpty}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -157,8 +183,7 @@ function PlanColumn({
                   <span
                     className="badge"
                     style={{
-                      background:
-                        plan.visibility === "public" ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)",
+                      background: plan.visibility === "public" ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)",
                       color: plan.visibility === "public" ? "var(--state-success)" : "var(--text-muted)",
                     }}
                   >
@@ -225,4 +250,7 @@ const newButtonStyle: React.CSSProperties = {
   textDecoration: "none",
   fontWeight: 700,
   fontSize: 14,
+  minHeight: 44,
+  display: "inline-flex",
+  alignItems: "center",
 };

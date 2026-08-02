@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
@@ -8,6 +8,9 @@ import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { findSlugByBookName, resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { Button, SkeletonList } from "@/components/ui";
+import { translationUiText } from "../../../translationUiText";
 
 export default function TranslationReadChapterPage({
   params,
@@ -17,6 +20,8 @@ export default function TranslationReadChapterPage({
   const { id, chapter } = use(params);
   const chapterNum = Number(chapter);
   const t = useT();
+  const { lang } = useLang();
+  const ui = translationUiText(lang);
 
   const [project, setProject] = useState<TranslationProject | null>(null);
   // この章の節だけ。以前は全章取ってから1章分を抜き出し、残りを捨てていた。
@@ -30,45 +35,109 @@ export default function TranslationReadChapterPage({
   // 全バージョン表示用：この章・選択中の節の、各訳のid。
   const [allVersionChapterIds, setAllVersionChapterIds] = useState<string[]>([]);
   const [allVersionVerseIds, setAllVersionVerseIds] = useState<string[]>([]);
+  const [chapterVersionCommentsError, setChapterVersionCommentsError] = useState(false);
+  const [verseVersionCommentsError, setVerseVersionCommentsError] = useState(false);
+  const [showSourceText, setShowSourceText] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      fetchTranslation(id),
-      fetchTranslationRead(id, chapterNum),
-    ]).then(([proj, read]) => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [proj, read] = await Promise.all([fetchTranslation(id), fetchTranslationRead(id, chapterNum)]);
       setProject(proj);
       setChapterNums(read.chapters);
       setUnits(read.units);
-    }).catch(() => {
+    } catch {
       setError(t.notPublishedOrMissing);
-    }).finally(() => setLoading(false));
+    } finally {
+      setLoading(false);
+    }
+  }, [id, chapterNum, t.notPublishedOrMissing]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetchTranslation(id), fetchTranslationRead(id, chapterNum)])
+      .then(([proj, read]) => {
+        if (!active) return;
+        setProject(proj);
+        setChapterNums(read.chapters);
+        setUnits(read.units);
+      })
+      .catch(() => active && setError(t.notPublishedOrMissing))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
   }, [id, chapterNum, t.notPublishedOrMissing]);
 
   // 全バージョン表示用：元の書名から slug を逆引きし、この章の各訳の章idを集める。
-  useEffect(() => {
-    let cancelled = false;
+  const loadChapterVersionComments = useCallback(async () => {
     const slug = project ? findSlugByBookName(project.source_book_name) : null;
-    const p = slug ? resolveVersionChapterIds(slug, chapterNum) : Promise.resolve<string[]>([]);
-    p.then((ids) => !cancelled && setAllVersionChapterIds(ids)).catch(() => !cancelled && setAllVersionChapterIds([]));
-    return () => { cancelled = true; };
+    if (!slug) {
+      setAllVersionChapterIds([]);
+      setChapterVersionCommentsError(false);
+      return;
+    }
+    setChapterVersionCommentsError(false);
+    try {
+      setAllVersionChapterIds(await resolveVersionChapterIds(slug, chapterNum));
+    } catch {
+      setChapterVersionCommentsError(true);
+    }
+  }, [project, chapterNum]);
+
+  useEffect(() => {
+    let active = true;
+    const slug = project ? findSlugByBookName(project.source_book_name) : null;
+    const request = slug ? resolveVersionChapterIds(slug, chapterNum) : Promise.resolve<string[]>([]);
+    request
+      .then((ids) => {
+        if (!active) return;
+        setAllVersionChapterIds(ids);
+        setChapterVersionCommentsError(false);
+      })
+      .catch(() => active && setChapterVersionCommentsError(true));
+    return () => { active = false; };
   }, [project, chapterNum]);
 
   // 選択中の節の、各訳の節idを集める（節を選び直すたびに更新）。
-  useEffect(() => {
-    let cancelled = false;
+  const loadVerseVersionComments = useCallback(async () => {
     const slug = project && selectedUnit ? findSlugByBookName(project.source_book_name) : null;
-    const p = slug && selectedUnit
-      ? resolveVersionVerseIds(slug, chapterNum, selectedUnit.verse_number)
-      : Promise.resolve<string[]>([]);
-    p.then((ids) => !cancelled && setAllVersionVerseIds(ids)).catch(() => !cancelled && setAllVersionVerseIds([]));
-    return () => { cancelled = true; };
+    if (!slug || !selectedUnit) {
+      setAllVersionVerseIds([]);
+      setVerseVersionCommentsError(false);
+      return;
+    }
+    setVerseVersionCommentsError(false);
+    try {
+      setAllVersionVerseIds(await resolveVersionVerseIds(slug, chapterNum, selectedUnit.verse_number));
+    } catch {
+      setVerseVersionCommentsError(true);
+    }
   }, [project, chapterNum, selectedUnit]);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  useEffect(() => {
+    let active = true;
+    const slug = project && selectedUnit ? findSlugByBookName(project.source_book_name) : null;
+    const request = slug && selectedUnit
+      ? resolveVersionVerseIds(slug, chapterNum, selectedUnit.verse_number)
+      : Promise.resolve<string[]>([]);
+    request
+      .then((ids) => {
+        if (!active) return;
+        setAllVersionVerseIds(ids);
+        setVerseVersionCommentsError(false);
+      })
+      .catch(() => active && setVerseVersionCommentsError(true));
+    return () => { active = false; };
+  }, [project, chapterNum, selectedUnit]);
+
+  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={6} /></div>;
   if (error) return (
-    <div style={{ padding: 32, textAlign: "center" }}>
+    <div style={{ padding: 32, textAlign: "center" }} role="alert">
       <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <Link href="/translations" style={{ color: "var(--accent)" }}>{t.backToProjectList}</Link>
+      <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+        <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
+        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+      </div>
     </div>
   );
 
@@ -115,6 +184,13 @@ export default function TranslationReadChapterPage({
               {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
             </p>
 
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
+              <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{ui.sourceComparisonHelp}</span>
+              <Button variant="secondary" size="sm" aria-pressed={showSourceText} onClick={() => setShowSourceText((shown) => !shown)}>
+                {showSourceText ? ui.hideSource : ui.compareSource}
+              </Button>
+            </div>
+
             <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
             {units.length === 0 ? (
@@ -130,6 +206,9 @@ export default function TranslationReadChapterPage({
                       onClick={() => setSelectedUnit(isSelected ? null : unit)}
                       role="button"
                       tabIndex={0}
+                      aria-label={`${chapterNum}:${unit.verse_number} ${isSelected ? ui.closeComments : ui.openComments}`}
+                      aria-expanded={isSelected}
+                      aria-controls={isSelected ? "translation-comment-panel" : undefined}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
@@ -168,9 +247,11 @@ export default function TranslationReadChapterPage({
                         </sup>
                         {unit.body}
                       </span>
-                      <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
-                        {t.originalText} {unit.verse_text}
-                      </p>
+                      {showSourceText && (
+                        <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
+                          {t.originalText} {unit.verse_text}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
@@ -178,19 +259,37 @@ export default function TranslationReadChapterPage({
             )}
 
             {units.length > 0 && units[0]?.chapter && (
-              <ChapterComments
-                chapterId={units[0].chapter}
-                translationProject={id}
-                label={`${project?.name ?? ""} ${t.chapterFmt(chapterNum)}`}
-                commentBookmarkMap={{}}
-                allVersionIds={allVersionChapterIds}
-              />
+              <>
+                {chapterVersionCommentsError && (
+                  <div role="alert" style={{ padding: 12, margin: "16px 0 12px", border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+                    <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                    <Button variant="secondary" size="sm" onClick={() => void loadChapterVersionComments()}>
+                      {ui.retryRelatedComments}
+                    </Button>
+                  </div>
+                )}
+                <ChapterComments
+                  chapterId={units[0].chapter}
+                  translationProject={id}
+                  label={`${project?.name ?? ""} ${t.chapterFmt(chapterNum)}`}
+                  commentBookmarkMap={{}}
+                  allVersionIds={allVersionChapterIds}
+                />
+              </>
             )}
           </div>
         </div>
 
         {selectedUnit && (
-          <div className="reader-panel">
+          <div id="translation-comment-panel" className="reader-panel">
+            {verseVersionCommentsError && (
+              <div role="alert" style={{ padding: 12, margin: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+                <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                <Button variant="secondary" size="sm" onClick={() => void loadVerseVersionComments()}>
+                  {ui.retryRelatedComments}
+                </Button>
+              </div>
+            )}
             <CommentPanel
               verse={{
                 id: selectedUnit.verse,
