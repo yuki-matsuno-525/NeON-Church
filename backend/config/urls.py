@@ -39,6 +39,7 @@ urlpatterns += [
     path("api/users/", include("users.public_urls")),
     path("api/", include("bible.urls")),
     path("api/", include("comments.urls")),
+    path("api/qa/", include("qa.urls")),
     path("api/", include("bookmarks.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("reading_progress.urls")),
