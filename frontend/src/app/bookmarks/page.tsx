@@ -77,8 +77,8 @@ export default function BookmarksPage() {
     setActionBusy(true);
     setActionError(null);
     try {
-      // 削除を取り消して同じ対象の栞を作り直す。作成 API の入力は箇所を特定する id なので、
-      // 栞の種類ごとに元の id を解決してから再作成する。
+      // 削除を取り消して同じ対象のお気に入りを作り直す。作成 API の入力は箇所を特定する id なので、
+      // お気に入りの種類ごとに元の id を解決してから再作成する。
       let newBm: Bookmark;
       if (bm.target_type === "comment" && bm.comment_detail) {
         newBm = await createCommentBookmark(bm.comment_detail.id);
@@ -160,7 +160,7 @@ export default function BookmarksPage() {
         </p>
       )}
 
-      {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+      {/* お気に入りが1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
       {counts && counts.all > 0 && (
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}

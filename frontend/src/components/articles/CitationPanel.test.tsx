@@ -66,13 +66,13 @@ describe("CitationPanel", () => {
     expect(screen.getByRole("button", { name: "マタイによる福音書" })).toBeInTheDocument();
   });
 
-  it("栞が無いときは読む画面で栞をつけるよう案内する", async () => {
+  it("お気に入りが無いときは読む画面でお気に入りをつけるよう案内する", async () => {
     render(<CitationPanel onInsert={vi.fn()} />);
 
-    screen.getByRole("tab", { name: "栞" }).click();
+    screen.getByRole("tab", { name: "お気に入り" }).click();
 
     expect(
-      await screen.findByText(/節の栞がありません/),
+      await screen.findByText(/節のお気に入りがありません/),
     ).toBeInTheDocument();
   });
 });

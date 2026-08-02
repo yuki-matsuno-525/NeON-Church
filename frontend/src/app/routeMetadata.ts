@@ -22,8 +22,8 @@ export const routeMetadata = {
     robots: privateRoute,
   },
   bookmarks: {
-    title: "Bookmarks",
-    description: "Review the passages, comments, and translation projects saved to your account.",
+    title: "Favorites",
+    description: "Review the passages, comments, and translation projects you added to your favorites.",
     robots: privateRoute,
   },
   forgotPassword: {

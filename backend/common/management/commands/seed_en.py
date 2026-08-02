@@ -462,7 +462,7 @@ class Command(BaseCommand):
         count = 0
         for user in users:
             for verse in random.sample(verses, min(10, len(verses))):
-                # 段階5F: 栞は訳非依存の箇所で保存する。同一箇所（別訳含む）は1件に絞る。
+                # 段階5F: お気に入りは訳非依存の箇所で保存する。同一箇所（別訳含む）は1件に絞る。
                 chapter = verse.chapter
                 loc = {
                     "canonical_book_id": chapter.book.canonical_book_id,

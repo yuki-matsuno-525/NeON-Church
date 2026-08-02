@@ -3,7 +3,7 @@
 - 部分ユニーク: 節（unique_user_location_bookmark）/ 章（unique_user_chapter_bookmark）/
   書（unique_user_book_bookmark）/ コメント / プロジェクト
 - CHECK bookmark_single_target: 3種（箇所 / comment / project）の排他と、
-  箇所栞の入れ子（節があれば章も必須）
+  箇所のお気に入りの入れ子（節があれば章も必須）
 """
 
 import pytest
@@ -51,14 +51,14 @@ def test_verse_bookmark_ok(data):
 
 
 def test_chapter_bookmark_ok(data):
-    # 章栞: 書+章、節は NULL
+    # 章のお気に入り: 書+章、節は NULL
     bm = _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
     assert bm.pk
     assert bm.verse_number is None
 
 
 def test_book_bookmark_ok(data):
-    # 書栞: 書のみ、章・節は NULL
+    # 書のお気に入り: 書のみ、章・節は NULL
     bm = _create(user=data["user"], canonical_book=data["canon"])
     assert bm.pk
     assert bm.chapter_number is None
@@ -77,7 +77,7 @@ def test_project_bookmark_ok(data):
 
 
 def test_verse_chapter_book_coexist(data):
-    # 同じ書の節栞・章栞・書栞は別粒度なので共存できる
+    # 同じ書の節のお気に入り・章のお気に入り・書のお気に入りは別粒度なので共存できる
     _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
     _create(user=data["user"], canonical_book=data["canon"], chapter_number=3)
     _create(user=data["user"], canonical_book=data["canon"])

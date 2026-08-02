@@ -161,7 +161,7 @@ const MAX_PAGES = 100;
 /**
  * 全ページを辿って取り切る。
  *
- * 「この節に栞が付いているか」の判定のように、一部だけでは正しく判断できない用途に限って使う。
+ * 「この節にお気に入りが付いているか」の判定のように、一部だけでは正しく判断できない用途に限って使う。
  * 画面に並べる一覧では使わないこと（件数が増えるほど遅くなる）。そちらは apiFetchPage を使い、
  * 「もっと見る」で読み足す。
  */
@@ -364,28 +364,28 @@ export const EMPTY_BOOKMARK_COUNTS: BookmarkCounts = {
 };
 
 /**
- * 章のページで使う栞だけを取る（その章の章栞・節栞と、その章のコメントへの栞）。
+ * 章のページで使うお気に入りだけを取る（その章と、その章の節に付いたお気に入りと、その章のコメントへのお気に入り）。
  *
- * 以前は栞を全件取ってから絞っていたが、栞が増えるほど章を開くのが遅くなるので
- * サーバー側で絞る。判定に漏れがあると栞済みの印が出なくなるため、絞ったうえで取り切る。
+ * 以前はお気に入りを全件取ってから絞っていたが、お気に入りが増えるほど章を開くのが遅くなるので
+ * サーバー側で絞る。判定に漏れがあるとお気に入り済みの印が出なくなるため、絞ったうえで取り切る。
  */
 export function fetchChapterBookmarks(bookSlug: string, chapter: number): Promise<Bookmark[]> {
   return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}&chapter=${chapter}`);
 }
 
-/** 書のページで使う栞（その書の書栞）だけを取る。 */
+/** 書のページで使うお気に入り（その書に付いたお気に入り）だけを取る。 */
 export function fetchBookBookmarks(bookSlug: string): Promise<Bookmark[]> {
   return apiFetchAll(`/bookmarks/?book=${encodeURIComponent(bookSlug)}`);
 }
 
-/** 翻訳企画のページで使う栞（その企画の栞）だけを取る。 */
+/** 翻訳企画のページで使うお気に入り（その企画のお気に入り）だけを取る。 */
 export function fetchProjectBookmarks(projectId: string): Promise<Bookmark[]> {
   return apiFetchAll(`/bookmarks/?translation_project=${encodeURIComponent(projectId)}`);
 }
 
 /**
- * 節の栞だけを取る。記事を書くときの引用パネル（栞から節を選ぶ）で使う。
- * 選ぶための一覧なので節栞は全部要るが、他の種類まで落とす必要はない。
+ * 節のお気に入りだけを取る。記事を書くときの引用パネル（お気に入りから節を選ぶ）で使う。
+ * 選ぶための一覧なので節のお気に入りは全部要るが、他の種類まで落とす必要はない。
  */
 export function fetchVerseBookmarks(): Promise<Bookmark[]> {
   return apiFetchAll("/bookmarks/?type=verse");

@@ -11,7 +11,7 @@ type Props = {
   // 節番号の表示を差し替えたいとき（例: マルコの「短い結び」）に使う。
   // 省略時は verse.number をそのまま表示する。
   numberLabel?: (verse: Verse) => ReactNode;
-  // まとめて栞に入れるモード。節を押すとコメント欄が開く代わりに選び入り・選び外しになる。
+  // まとめてお気に入りに入れるモード。節を押すとコメント欄が開く代わりに選び入り・選び外しになる。
   pickMode?: boolean;
   pickedIds?: string[];
   onTogglePick?: (verseId: string) => void;
@@ -46,7 +46,7 @@ export function VerseList({
             id={`verse-${verse.number}`}
             key={verse.id}
             data-testid="verse-item"
-            // 節を選ぶのはこのアプリの中心の操作（ここからコメント・栞・引用へ進む）。
+            // 節を選ぶのはこのアプリの中心の操作（ここからコメント・お気に入り・引用へ進む）。
             // ただの div に onClick を付けていたため、キーボードだけの人はここで詰まっていた。
             // ボタンとして扱い、Tab で移動して Enter / Space で選べるようにする。
             role="button"

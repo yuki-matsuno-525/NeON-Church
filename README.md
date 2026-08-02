@@ -47,11 +47,11 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 - **Comments** — Post on a verse, a chapter, or a whole book. Threaded replies, upvotes, editing, deletion, and tagging.
 - **Q&A** — Comments flagged with `is_qa` are listed together, with best-answer selection and a resolved filter.
 - **Full-text search** — Searches across verse text, comment bodies, and book names.
-- **Bookmarks** — Bookmark verses and comments; browse them from your profile.
+- **Favorites** — Add verses and comments to your favorites; browse them from your profile.
 - **Notifications** — Get notified when someone replies to your comment, with an unread badge.
 - **Reading progress** — Remembers the last verse you read so you can pick up where you left off.
 - **Collaborative translation** — Start a translation project and assign translators verse by verse.
-- **Profiles** — Avatar, bio, comment history, and bookmarks. Other users' profiles are public too.
+- **Profiles** — Avatar, bio, comment history, and favorites. Other users' profiles are public too.
 
 ## Tech stack
 
@@ -168,7 +168,7 @@ What gets created:
 | Users | 15 (varied bios and roles) |
 | Comments | 200+ (verse / chapter / book level, reply trees of depth 3, Q&A with best answers) |
 | Votes | 200+ |
-| Bookmarks | 100+ (both verses and comments) |
+| Favorites | 100+ (both verses and comments) |
 | Notifications | 100+ (both reply and like types) |
 | Reading progress | 40+ (several books per user) |
 | Translation projects | 3 (one each: draft / active / published) |
@@ -255,7 +255,7 @@ Base URL: `http://localhost:8000/api/`
 | `GET /chapters/{id}/verses/` | List verses |
 | `GET/POST /comments/` | Read and post comments |
 | `POST /comments/{id}/upvote/` | Upvote |
-| `GET/POST /bookmarks/` | List and create bookmarks |
+| `GET/POST /bookmarks/` | List and create favorites |
 | `GET /notifications/` | List notifications |
 | `GET /search/?q=...` | Full-text search |
 | `GET /qa/` | List Q&A comments |
@@ -280,7 +280,7 @@ NeON-Church/
 ├── backend/             # Django REST Framework
 │   ├── bible/           # Book / chapter / verse models, search
 │   ├── comments/        # Comments, tags, upvotes, Q&A
-│   ├── bookmarks/       # Bookmarks
+│   ├── bookmarks/       # Favorites
 │   ├── notifications/   # Notifications
 │   ├── reading_progress/# Reading progress
 │   ├── translations/    # Collaborative translation projects

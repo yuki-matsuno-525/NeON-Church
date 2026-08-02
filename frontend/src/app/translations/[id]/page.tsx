@@ -321,7 +321,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   };
 
-  // このプロジェクトのお気に入り（プロジェクト栞）。
+  // このプロジェクトのお気に入り。
   const [projectBookmark, setProjectBookmark] = useState<Bookmark | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
 
