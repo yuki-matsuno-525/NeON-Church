@@ -2,7 +2,7 @@
 
 全66書＋複数訳を扱うための基盤整備。**モデルの全面作り直しではなく**、
 「フロント(`books.ts`)にしか無い訳非依存の書 slug を、backend にも最小限で置く」変更を土台に、
-コメント／ブックマークの保存を訳別 Verse から「箇所」へ段階的に移す。
+コメント／お気に入りの保存を訳別 Verse から「箇所」へ段階的に移す。
 
 ## 背景（調査で判明した事実）
 
@@ -12,7 +12,7 @@
   弱点は (a) 訳の数だけ API を叩く N+1、(b) 保存は依然 1 訳の Verse に貼り付く。
 - **backend に訳非依存の書が無い**：`Book = (name, translation)` で口語訳「マタイによる福音書」と
   KJV「Matthew」は別レコード。両者を束ねる slug は `books.ts` にしか存在しない。
-  → コメント／ブックマークを backend で箇所保存するには、まず**訳非依存の書 ID** が要る。
+  → コメント／お気に入りを backend で箇所保存するには、まず**訳非依存の書 ID** が要る。
 - **ReadingProgress は既に版依存**：`FK Book`（訳別）＋ユニーク `(user, book)`。
   「口語訳は10章／KJVは3章」を既に表現できており、**要件を満たすので触らない**。
 
@@ -103,7 +103,7 @@ class Book(BaseModel):
 段階3D：↑両方の確認後、別マイグレーションで Book.canonical_book を NOT NULL 化
 ```
 
-**完了条件**：migrate が通り、既存機能（読む・コメント・栞）が無傷。`CanonicalBook` は空でよい。
+**完了条件**：migrate が通り、既存機能（読む・コメント・お気に入り）が無傷。`CanonicalBook` は空でよい。
 
 **ロールバック**：マイグレーションを1つ戻す（`migrate bible 000X-1`）。FK と表はスキーマから消える。既存データ無影響。
 
@@ -231,22 +231,22 @@ reverse/forward・空 DB 統合テスト確認。**マージ時に Render の mi
 
 ## 段階5：Bookmark を訳別 Verse から「箇所」保存へ移行（5A〜5F）
 
-**目的**：栞を訳非依存の箇所に紐づけ、**訳を切り替えると栞が消える潜在バグ**を解消。
+**目的**：お気に入りを訳非依存の箇所に紐づけ、**訳を切り替えるとお気に入りが消える潜在バグ**を解消。
 新旧構造を一時併存させ、旧 `verse` FK は最後（5F）まで残す。
 
 **調査で判明した前提（実コード）**：
 - Bookmark は付加情報なし（`user/verse(FK)/comment(FK)`＋created_at のみ）→ 重複統合は「最古を残す」で単純。
-- 同一ユーザーが同じ箇所を複数訳で栞できる（unique は `(user, verse)`）→ 箇所基準では統合が要り得る。
+- 同一ユーザーが同じ箇所を複数訳でお気に入りに追加できる（unique は `(user, verse)`）→ 箇所基準では統合が要り得る。
 - 作成 API は `verse_id` を受け取る。一覧は `VerseBriefSerializer(source="verse")` で本文表示。
 - **一覧→読書画面の遷移 URL は既に `slug/章/節番号` ベース**（verse id 非依存）。
-- localStorage 栞は無い（サーバー専用・要認証）。外部モデルからの Bookmark 参照なし。
+- localStorage お気に入りは無い（サーバー専用・要認証）。外部モデルからの Bookmark 参照なし。
 - **バグの位置**：`CommentPanel.tsx` の `isBookmarked = bookmarkMap.has(verse.id)`（訳固有 id 一致）。
-  コメントは既に `allVersionVerseIds` で訳横断集約済み＝栞だけ取り残されている。
+  コメントは既に `allVersionVerseIds` で訳横断集約済み＝お気に入りだけ取り残されている。
 
 **作成/削除 API の方針（確定）**：入力は `verse_id` のまま維持し、**backend が verse_id から
 `canonical_book/章番号/節番号` を導出**して保存/検索する。クライアントから箇所値は受け取らない
 （偽装防止・実在 Verse から必ず計算）。作成・削除は transaction で囲み、Verse なし/canonical なし/
-章節取得不可/同一箇所の既存栞/新旧矛盾はエラー。**この方針なら 5F で作成 API を slug 入力へ変える必要はない**
+章節取得不可/同一箇所の既存お気に入り/新旧矛盾はエラー。**この方針なら 5F で作成 API を slug 入力へ変える必要はない**
 （`verse_id` は「保存先」ではなく「箇所を探す入力」として残せる）。
 
 ### 5A：箇所列の追加（スキーマのみ）【完了・PR #6 CI green】
@@ -255,11 +255,11 @@ reverse/forward・空 DB 統合テスト確認。**マージ時に Render の mi
 - migration（スキーマのみ、データ処理なし）。forward/reverse と既存 API 不変を確認。
 - 「新しい値を置ける空の箱を足すだけ」に限定。
 
-### 5B：既存栞のバックフィル（＋必要なら重複統合）【完了・本番実行済み。バックフィルコマンドは5E-2で削除】
+### 5B：既存お気に入りのバックフィル（＋必要なら重複統合）【完了・本番実行済み。バックフィルコマンドは5E-2で削除】
 
-本番重複調査＝**重複0**（verse栞300/総数443）。`backfill_bookmark_canonical`（冪等・--dry-run・
+本番重複調査＝**重複0**（節のお気に入り300/総数443）。`backfill_bookmark_canonical`（冪等・--dry-run・
 1トランザクション・重複/箇所NULL残存で安全停止）で本番300件をバックフィル済み（箇所NULL=0）。
-**このコマンドは5B用の一度きりツールで、5E-2 で「箇所なし verse 栞」自体が DB 禁止になったため削除した。**
+**このコマンドは5B用の一度きりツールで、5E-2 で「箇所なし 節のお気に入り」自体が DB 禁止になったため削除した。**
 - 本番の重複調査（読み取りクエリ）結果を確認してから実施。
 - `verse → canonical_book / chapter.number / number` を導出して新3列を埋める管理コマンド（冪等・本番手動・要承認）。
 - **重複が0なら統合せず単純バックフィル**。ただし**0前提をハードコードせず**、コマンド側で重複検出したら安全に停止。
@@ -270,16 +270,16 @@ reverse/forward・空 DB 統合テスト確認。**マージ時に Render の mi
 実装済み：作成 API 入力は `verse_id` のまま、backend が verse から箇所を導出して dual-write。
 **重複判定は「旧 verse 一致 or 同一箇所(user,canonical_book,章,節)」で 409**（別訳の同一箇所も二重不可＝
 location 一意化を先取り。DB ユニーク制約は 5E）。削除は id ベース維持
-（5D でもフロントは栞の id を持つため十分＝delete-by-verse は不要と判断）。comment 栞は箇所 NULL。
+（5D でもフロントはお気に入りの id を持つため十分＝delete-by-verse は不要と判断）。コメントのお気に入りは箇所 NULL。
 （5C デプロイ後の再バックフィルは実施済み。バックフィルコマンド自体は 5E-2 で削除。）
 - 作成 API 入力は `verse_id` のまま、新3列を backend 導出で保存（互換で `verse` FK も当面セット）。
-- 削除も `verse_id` → 箇所解決 → 同一ユーザーの箇所栞を削除（Bookmark id 削除 API は維持可）。
+- 削除も `verse_id` → 箇所解決 → 同一ユーザーの箇所のお気に入りを削除（Bookmark id 削除 API は維持可）。
 - フロントの作成/削除呼び出しは無改修。
 
 ### 5D-1：読書画面の判定を箇所基準へ 【完了・PR #9 CI green】
-- serializer に栞の箇所 `reference`（{book: slug, chapter, verse}。verse 栞のみ）を公開。一覧 queryset に canonical_book を select_related。
-- `CommentPanel` の判定を `verse.id 一致` → **箇所一致（bookSlug/章/節番号）**へ（訳跨ぎでハイライト維持＝本バグ解消）。作成は verse_id 送信のまま、削除は一致栞の id。reader page から bookSlug を渡す。`Bookmark` 型に reference 追加。
-- `verse` FK はまだ残す。翻訳読書ページは栞UIを出さないため対象外。**要 UI スモーク**（訳切替でハイライト維持）。
+- serializer にお気に入りの箇所 `reference`（{book: slug, chapter, verse}。節のお気に入りのみ）を公開。一覧 queryset に canonical_book を select_related。
+- `CommentPanel` の判定を `verse.id 一致` → **箇所一致（bookSlug/章/節番号）**へ（訳跨ぎでハイライト維持＝本バグ解消）。作成は verse_id 送信のまま、削除は一致お気に入りの id。reader page から bookSlug を渡す。`Bookmark` 型に reference 追加。
+- `verse` FK はまだ残す。翻訳読書ページはお気に入りUIを出さないため対象外。**要 UI スモーク**（訳切替でハイライト維持）。
 
 ### 5D-2：Bookmark 一覧の本文を現在訳で解決 【見送り】
 - 調査結果：一覧に「現在訳」の概念が無い（訳セレクタ無し／`verse_detail` の元訳本文を表示／遷移URLは既に slug ベース）。
@@ -287,15 +287,15 @@ location 一意化を先取り。DB ユニーク制約は 5E）。削除は id �
 
 ### 5E：本番安定確認・制約追加
 
-**訂正（確定・案B）**：comment 栞は箇所3列が NULL のままなので**列の単純 NOT NULL は不可**。
-判別軸は 5F で消える `verse` FK ではなく**恒久的に残る `comment`** を使う（verse 栞＝comment NULL）。
+**訂正（確定・案B）**：コメントのお気に入りは箇所3列が NULL のままなので**列の単純 NOT NULL は不可**。
+判別軸は 5F で消える `verse` FK ではなく**恒久的に残る `comment`** を使う（節のお気に入り＝comment NULL）。
 
 **5E-2 で追加する制約（別PR・私・5E-1 が全0のときのみ）**：
 1. **部分ユニーク** `unique_user_location_bookmark`：`(user, canonical_book, chapter_number, verse_number)`、
-   condition = 箇所3列すべて NOT NULL。同一ユーザー・同一箇所の重複栞を DB で禁止（5C の API dedup を DB でも担保）。
-2. **CHECK** `bookmark_comment_xor_location`：各栞は「comment 栞（comment NOT NULL・箇所3列すべて NULL）」か
-   「箇所栞（comment NULL・箇所3列すべて NOT NULL）」のどちらか。→ ①箇所 all-or-none ②verse 栞は箇所必須
-   ③comment 栞は箇所なし、を1つで担保。**verse FK 非依存＝5F 後もそのまま残せる**。
+   condition = 箇所3列すべて NOT NULL。同一ユーザー・同一箇所の重複お気に入りを DB で禁止（5C の API dedup を DB でも担保）。
+2. **CHECK** `bookmark_comment_xor_location`：各お気に入りは「コメントのお気に入り（comment NOT NULL・箇所3列すべて NULL）」か
+   「箇所のお気に入り（comment NULL・箇所3列すべて NOT NULL）」のどちらか。→ ①箇所 all-or-none ②節のお気に入りは箇所必須
+   ③コメントのお気に入りは箇所なし、を1つで担保。**verse FK 非依存＝5F 後もそのまま残せる**。
 - 注意：この CHECK は **verse/comment FK の排他までは保証しない**（例: verse+comment 両方・箇所全 NULL は通る）。
   本番に無いことは 5E-1 の `both_verse_and_comment` で確認。既存 `(user,verse)`・`(user,comment)` 部分ユニークは変更しない。
 - **テスト**：成功=（verseあり/commentなし/箇所3列あり）（commentあり/箇所全NULL）（同一箇所でもユーザー違いは可）
@@ -305,10 +305,10 @@ location 一意化を先取り。DB ユニーク制約は 5E）。削除は id �
 - 分割：**5E-1 本番事前確認（ユーザー・上記9項目すべて0）** → **5E-2 マイグレPR（私・`feature/bookmark-location-constraints`）**。
 
 ### 5F：旧 `verse` FK と互換コードの撤去【別PR・安定後】
-- `verse` FK・旧 serializer フィールド・verse-id 判定・互換コード・不要テストを削除。comment 栞は不変。
+- `verse` FK・旧 serializer フィールド・verse-id 判定・互換コード・不要テストを削除。コメントのお気に入りは不変。
 
 **本番の重複調査（5B 前・あなたが Render で実行）**：`(user, canonical_book, 章, 節)` で 2件以上を集計。
-報告項目：Bookmark 総数／verse 栞総数／重複グループ数／重複対象 Bookmark 総数／重複があれば最大20件。
+報告項目：Bookmark 総数／節のお気に入り総数／重複グループ数／重複対象 Bookmark 総数／重複があれば最大20件。
 
 ---
 
@@ -421,7 +421,7 @@ location 一意化を先取り。DB ユニーク制約は 5E）。削除は id �
    - 3C：Book 作成全経路を canonical 対応（共通 `get_or_create_canonical_book_for`）＋空 DB 初期構築を CI 確認
    - 3D：段階3B・3C 両方の確認後、別PRで `Book.canonical_book` を NOT NULL 化
 4. 箇所→各版 Verse 一括取得 API（汎用設計・N+1解消、FK は変えない）
-5. Bookmark を箇所保存へ（訳跨ぎ栞バグ解消／設計の試金石）
+5. Bookmark を箇所保存へ（訳跨ぎお気に入りバグ解消／設計の試金石）
 6. Comment を粒度整理後に箇所保存へ（`versions.ts` 撤去で純減／訳固有コメントの要否を先に確定）
 7. ReadingProgress / TranslationUnit は不変
 8. versification_code / 静的JSON は WLC/LXX 追加時まで後回し（体系コードは版側）
