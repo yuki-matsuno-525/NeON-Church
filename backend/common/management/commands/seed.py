@@ -404,11 +404,11 @@ class Command(BaseCommand):
         if not verses:
             return
         count = 0
-        # 節ブックマーク
+        # 節のお気に入り
         for user in users:
             bookmarked_verses = random.sample(verses, min(5, len(verses)))
             for verse in bookmarked_verses:
-                # 段階5F: 栞は訳非依存の箇所で保存する。同一箇所（別訳含む）は1件に絞る。
+                # 段階5F: お気に入りは訳非依存の箇所で保存する。同一箇所（別訳含む）は1件に絞る。
                 chapter = verse.chapter
                 loc = {
                     "canonical_book_id": chapter.book.canonical_book_id,
@@ -419,7 +419,7 @@ class Command(BaseCommand):
                     continue
                 Bookmark.objects.create(user=user, **loc)
                 count += 1
-        # コメントブックマーク
+        # コメントのお気に入り
         active_comments = [c for c in comments if not c.is_deleted][:40]
         for user in users:
             if active_comments:
@@ -429,7 +429,7 @@ class Command(BaseCommand):
                         _, created = Bookmark.objects.get_or_create(user=user, comment=comment)
                         if created:
                             count += 1
-        self.stdout.write(f"  ブックマーク {count} 件")
+        self.stdout.write(f"  お気に入り {count} 件")
 
     def _seed_notifications(self, users, comments):
         if not comments:

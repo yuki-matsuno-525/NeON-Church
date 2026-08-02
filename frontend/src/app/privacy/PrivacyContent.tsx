@@ -56,7 +56,7 @@ const content: Record<string, Content> = {
     sections: [
       {
         heading: "1. Information We Collect",
-        body: "We collect your username, email, hashed password, bio, posted comments / Q&A / translations, bookmarks, reading progress, notification preferences, IP address and User Agent (for abuse prevention).",
+        body: "We collect your username, email, hashed password, bio, posted comments / Q&A / translations, favorites, reading progress, notification preferences, IP address and User Agent (for abuse prevention).",
       },
       {
         heading: "2. How We Use Information",
@@ -72,7 +72,7 @@ const content: Record<string, Content> = {
       },
       {
         heading: "5. Visibility",
-        body: "Your username, bio, public comments, Q&A, and published translation projects are visible inside the Service and may be indexed by search engines. Bookmarks are private by default. You can change visibility from your profile settings.",
+        body: "Your username, bio, public comments, Q&A, and published translation projects are visible inside the Service and may be indexed by search engines. Favorites are private by default. You can change visibility from your profile settings.",
       },
       {
         heading: "6. Deletion and Correction",

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { registerUser, loginWithUI } from "./helpers";
 
-// 節を選択すると右の CommentPanel ヘッダーにブックマーク(リボン)アイコンが現れる。
+// 節を選択すると右の CommentPanel ヘッダーにお気に入り(リボン)アイコンが現れる。
 // アイコンのみで文字を持たないため、状態は aria-label で判定する。
 // (お気に入りに追加 = 未登録 / お気に入りを解除 = 登録済み)
 const verseBookmark = (page: import("@playwright/test").Page) =>
@@ -52,7 +52,7 @@ test("Bk-3: お気に入り一覧 — 登録後に一覧に表示される", asy
   await page.goto("/bookmarks");
   await expect(page.getByRole("heading", { name: "お気に入り" })).toBeVisible();
 
-  // マタイのブックマークが表示される
+  // マタイのお気に入りが表示される
   await expect(page.getByText(/マタイによる福音書/)).toBeVisible();
 });
 

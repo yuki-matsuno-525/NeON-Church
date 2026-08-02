@@ -179,7 +179,7 @@ describe("ProfilePage", () => {
     expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
   });
 
-  it("ブックマークタブにブックマーク一覧が表示される", async () => {
+  it("お気に入りタブにお気に入り一覧が表示される", async () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
@@ -198,7 +198,7 @@ describe("ProfilePage", () => {
     );
   });
 
-  it("コメントの栞は箇所ラベル付きでその節へリンクする", async () => {
+  it("コメントのお気に入りは箇所ラベル付きでその節へリンクする", async () => {
     const user = makeUser();
     mockUseAuth.mockReturnValue({ user, loading: false, setUser: vi.fn() });
 
@@ -209,7 +209,7 @@ describe("ProfilePage", () => {
         reference: null,
         comment_detail: {
           id: "cm1",
-          body: "栞したコメント本文",
+          body: "お気に入りに追加したコメント本文",
           username: "someone",
           created_at: "2024-01-01T00:00:00Z",
           location_label: "マタイによる福音書 1章 3節",
@@ -223,7 +223,7 @@ describe("ProfilePage", () => {
 
     render(<ProfilePage />);
 
-    const link = await screen.findByRole("link", { name: /栞したコメント本文/ });
+    const link = await screen.findByRole("link", { name: /お気に入りに追加したコメント本文/ });
     expect(link).toHaveAttribute(
       "href",
       "/matthew/1?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3#verse-3",

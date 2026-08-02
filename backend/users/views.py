@@ -268,7 +268,7 @@ class UserBookmarksView(generics.ListAPIView):
         return BookmarkSerializer
 
     def get_base_queryset(self):
-        """絞り込み前の対象ユーザーの栞。非公開なら空。件数集計にも使う。"""
+        """絞り込み前の対象ユーザーのお気に入り。非公開なら空。件数集計にも使う。"""
         from bookmarks.models import Bookmark
         from bookmarks.views import filter_by_translation_visibility
 

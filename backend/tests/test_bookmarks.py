@@ -33,7 +33,7 @@ def comment(db, auth_client, verse):
 
 
 # ------------------------------------------------------------------
-# ブックマーク追加
+# お気に入り追加
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestBookmarkCreate:
@@ -71,7 +71,7 @@ class TestBookmarkCreate:
         assert bm.verse_number is None
 
     def test_same_location_other_translation_is_409(self, auth_client, verse):
-        # 口語訳マタイ1:1 を栞 → 同じ箇所の KJV 版 Verse は 409（別訳でも同一箇所は二重不可）
+        # 口語訳マタイ1:1 をお気に入りに追加 → 同じ箇所の KJV 版 Verse は 409（別訳でも同一箇所は二重不可）
         from bible.models import Chapter, Verse
         from bookmarks.models import Bookmark
         from tests.factories import make_book
@@ -99,7 +99,7 @@ class TestBookmarkCreate:
         assert res.status_code == status.HTTP_201_CREATED
 
     def test_comment_bookmark_not_blocked_by_verse_location(self, auth_client, verse, comment):
-        # 同じ箇所に verse 栞があっても、その節へのコメント栞は作成できる
+        # 同じ箇所に節のお気に入りがあっても、その節へのコメントのお気に入りは作成できる
         auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
@@ -119,7 +119,7 @@ class TestBookmarkCreate:
 
 
 # ------------------------------------------------------------------
-# ブックマーク一覧
+# お気に入り一覧
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestBookmarkList:
@@ -133,7 +133,7 @@ class TestBookmarkList:
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_only_own_bookmarks_are_returned(self, auth_client, other_auth_client, verse, bookmark):
-        """他ユーザーのブックマークは見えない。"""
+        """他ユーザーのお気に入りは見えない。"""
         res = other_auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 0
@@ -154,7 +154,7 @@ class TestBookmarkList:
 
 
 # ------------------------------------------------------------------
-# ブックマーク削除
+# お気に入り削除
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestBookmarkDelete:
@@ -177,7 +177,7 @@ class TestBookmarkDelete:
 
 
 # ------------------------------------------------------------------
-# コメントブックマーク
+# コメントのお気に入り
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestCommentBookmark:
@@ -211,7 +211,7 @@ class TestCommentBookmark:
 
 
 # ------------------------------------------------------------------
-# 章・書ブックマーク（粒度）
+# 章・書のお気に入り（粒度）
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestLocationGranularityBookmark:
@@ -245,7 +245,7 @@ class TestLocationGranularityBookmark:
         assert res.status_code == status.HTTP_409_CONFLICT
 
     def test_chapter_and_verse_coexist(self, auth_client, verse, chapter):
-        # 節栞と章栞は別粒度なので両方付けられる
+        # 節のお気に入りと章のお気に入りは別粒度なので両方付けられる
         assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
         res = auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
@@ -259,7 +259,7 @@ class TestLocationGranularityBookmark:
 
 
 # ------------------------------------------------------------------
-# 翻訳プロジェクトブックマーク
+# 翻訳プロジェクトのお気に入り
 # ------------------------------------------------------------------
 @pytest.fixture
 def project(db, book):
@@ -314,7 +314,7 @@ class TestProjectBookmark:
 # ------------------------------------------------------------------
 @pytest.fixture
 def one_of_each_type(auth_client, verse, chapter, book, comment, project):
-    """5種類の栞を1件ずつ作る。粒度が違うので節・章・書は共存できる。"""
+    """5種類のお気に入りを1件ずつ作る。粒度が違うので節・章・書は共存できる。"""
     auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
     auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
     auth_client.post(BOOKMARKS_URL, {"book": str(book.id)}, format="json")
@@ -368,15 +368,15 @@ class TestBookmarkTypeFilter:
 # ------------------------------------------------------------------
 # 箇所での絞り込み（読書画面用）
 #
-# 読書画面は「今開いている章の栞」しか要らない。以前は全件取ってから絞っていたので、
-# 栞が増えるほど章を開くのが遅くなっていた。サーバー側で絞れることを検証する。
+# 読書画面は「今開いている章のお気に入り」しか要らない。以前は全件取ってから絞っていたので、
+# お気に入りが増えるほど章を開くのが遅くなっていた。サーバー側で絞れることを検証する。
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestBookmarkLocationFilter:
     def test_chapter_scope_returns_chapter_verse_and_comment_bookmarks(
         self, auth_client, one_of_each_type
     ):
-        # 章のページで使う3種（章栞・節栞・その章のコメントへの栞）がまとめて返る。
+        # 章のページで使う3種（章のお気に入り・節のお気に入り・その章のコメントへのお気に入り）がまとめて返る。
         res = auth_client.get(BOOKMARKS_URL, {"book": "matthew", "chapter": 1})
         assert res.status_code == status.HTTP_200_OK
         kinds = {item["target_type"] for item in res.data["results"]}
@@ -393,7 +393,7 @@ class TestBookmarkLocationFilter:
         assert res.data["count"] == 0
 
     def test_book_scope_returns_only_book_bookmark(self, auth_client, one_of_each_type):
-        # 書のページは書栞だけを使う。節栞・章栞まで返すと件数が増えて元の木阿弥になる。
+        # 書のページは書のお気に入りだけを使う。節のお気に入り・章のお気に入りまで返すと件数が増えて元の木阿弥になる。
         res = auth_client.get(BOOKMARKS_URL, {"book": "matthew"})
         assert res.data["count"] == 1
         assert res.data["results"][0]["target_type"] == "book"

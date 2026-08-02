@@ -43,14 +43,14 @@ test("Pr-2: bio を更新すると保存成功メッセージが表示される"
   await expect(page.getByText("プロフィールを更新しました。")).toBeVisible();
 });
 
-test("Pr-3: お気に入りタブにブックマーク一覧が表示される", async ({
+test("Pr-3: お気に入りタブにお気に入り一覧が表示される", async ({
   page,
   request,
 }) => {
   const { username, password } = await registerUser(request, "_pr3");
   await loginWithUI(page, username, password);
 
-  // 事前にお気に入りを登録する（CommentPanel のブックマークアイコン）
+  // 事前にお気に入りを登録する（CommentPanel のお気に入りアイコン）
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
   await page.getByTestId("verse-bookmark").click();
@@ -61,10 +61,10 @@ test("Pr-3: お気に入りタブにブックマーク一覧が表示される",
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // 「お気に入り」タブが表示されていることを確認（デフォルトで選択されている）
-  // ブックマークが1件以上あるので「お気に入り (1)」のようにカウントが表示される
+  // お気に入りが1件以上あるので「お気に入り (1)」のようにカウントが表示される
   await expect(page.getByRole("tab", { name: /お気に入り \(\d+\)/ })).toBeVisible();
 
-  // マタイのブックマークが表示される
+  // マタイのお気に入りが表示される
   await expect(page.getByText(/マタイによる福音書/)).toBeVisible();
 });
 

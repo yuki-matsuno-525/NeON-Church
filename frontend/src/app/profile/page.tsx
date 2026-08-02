@@ -400,7 +400,7 @@ function BookmarkList({
 
   return (
     <>
-      {/* 栞が1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
+      {/* お気に入りが1件も無いときはチップを出さない（空の「すべて(0)」だけが並ぶのを避ける） */}
       {counts && counts.all > 0 && (
         <FilterChips chips={chips} value={kind} onChange={onKindChange} ariaLabel={t.filterByKind} />
       )}

@@ -4,9 +4,9 @@ import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useT, type Translations } from "@/lib/i18n";
 
 /**
- * 「まとめて栞」モードの下のバー。
+ * 「まとめてお気に入り」モードの下のバー。
  *
- * 読んでいる途中で気になった節をいくつも見つけたとき、1つずつ開いて栞を付けるのは手間が多い。
+ * 読んでいる途中で気になった節をいくつも見つけたとき、1つずつ開いてお気に入りを付けるのは手間が多い。
  * 選んでからまとめて入れられるようにする。
  */
 export function BulkBookmarkBar({
@@ -112,8 +112,8 @@ const saveStyle: React.CSSProperties = {
 };
 
 /**
- * 「まとめて栞」の状態をまとめて持つ。ページ側は使うだけにする。
- * 保存そのものは呼び出し側から渡す（栞の一覧の持ち方はページが知っているため）。
+ * 「まとめてお気に入り」の状態をまとめて持つ。ページ側は使うだけにする。
+ * 保存そのものは呼び出し側から渡す（お気に入りの一覧の持ち方はページが知っているため）。
  */
 export function useBulkBookmark(
   save: (verseIds: string[]) => Promise<number>,
@@ -150,7 +150,7 @@ export function useBulkBookmark(
     setMessage(null);
     try {
       const added = await save(pickedIds);
-      // すでに栞のある節は数に入らない。何件入ったかを出して、押した手応えを返す。
+      // すでにお気に入りのある節は数に入らない。何件入ったかを出して、押した手応えを返す。
       setMessage(added === pickedIds.length ? null : t.bulkPartial(added));
       if (added === pickedIds.length) {
         setPickMode(false);

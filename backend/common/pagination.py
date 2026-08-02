@@ -1,7 +1,7 @@
 """一覧 API 用の共通ページネーション設定。
 
 DRF の `DEFAULT_PAGINATION_CLASS` は設定せず、無制限取得が危険な ListAPIView
-（コメント・通知・ブックマーク等）でだけ opt-in で適用する方針を取っている。
+（コメント・通知・お気に入り等）でだけ opt-in で適用する方針を取っている。
 """
 
 from rest_framework.pagination import PageNumberPagination

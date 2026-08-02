@@ -13,7 +13,7 @@ const verses: Verse[] = [
   { id: "v3", chapter: "c1", number: 3, text: "そして" },
 ];
 
-/** 章ページの「まとめて栞」まわりだけを取り出した確認用の画面。 */
+/** 章ページの「まとめてお気に入り」まわりだけを取り出した確認用の画面。 */
 function Harness({ save }: { save: (ids: string[]) => Promise<number> }) {
   const t = useT();
   const bulk = useBulkBookmark(save, t);
@@ -22,7 +22,7 @@ function Harness({ save }: { save: (ids: string[]) => Promise<number> }) {
   return (
     <div>
       <button type="button" onClick={bulk.start}>
-        まとめて栞
+        まとめてお気に入り
       </button>
       <div data-testid="opened">{selectedVerseId ?? "なし"}</div>
       <VerseList
@@ -46,19 +46,19 @@ function Harness({ save }: { save: (ids: string[]) => Promise<number> }) {
   );
 }
 
-describe("まとめて栞", () => {
-  it("選んだ節をまとめて栞に入れられる", async () => {
+describe("まとめてお気に入り", () => {
+  it("選んだ節をまとめてお気に入りに入れられる", async () => {
     const user = userEvent.setup();
     const save = vi.fn().mockResolvedValue(2);
     render(<Harness save={save} />);
 
-    await user.click(screen.getByRole("button", { name: "まとめて栞" }));
+    await user.click(screen.getByRole("button", { name: "まとめてお気に入り" }));
     await user.click(screen.getByText("はじめに"));
     await user.click(screen.getByText("そして"));
 
     expect(screen.getByText("2節を選んでいます")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "栞に入れる" }));
+    await user.click(screen.getByRole("button", { name: "お気に入りに追加" }));
 
     expect(save).toHaveBeenCalledWith(["v1", "v3"]);
     // 全部入ったらモードは終わる
@@ -67,11 +67,11 @@ describe("まとめて栞", () => {
     });
   });
 
-  it("まとめて栞のあいだは節を押してもコメント欄が開かない", async () => {
+  it("まとめてお気に入りのあいだは節を押してもコメント欄が開かない", async () => {
     const user = userEvent.setup();
     render(<Harness save={vi.fn().mockResolvedValue(1)} />);
 
-    await user.click(screen.getByRole("button", { name: "まとめて栞" }));
+    await user.click(screen.getByRole("button", { name: "まとめてお気に入り" }));
     await user.click(screen.getByText("はじめに"));
 
     expect(screen.getByTestId("opened")).toHaveTextContent("なし");
@@ -81,30 +81,30 @@ describe("まとめて栞", () => {
     const user = userEvent.setup();
     render(<Harness save={vi.fn().mockResolvedValue(0)} />);
 
-    await user.click(screen.getByRole("button", { name: "まとめて栞" }));
+    await user.click(screen.getByRole("button", { name: "まとめてお気に入り" }));
     await user.click(screen.getByText("はじめに"));
     await user.click(screen.getByText("はじめに"));
 
-    expect(screen.getByText("入れたい節を押してください")).toBeInTheDocument();
+    expect(screen.getByText("追加したい節を押してください")).toBeInTheDocument();
   });
 
-  it("すでに栞のある節が混ざっていたら、入った件数を伝える", async () => {
+  it("すでにお気に入りのある節が混ざっていたら、入った件数を伝える", async () => {
     const user = userEvent.setup();
     render(<Harness save={vi.fn().mockResolvedValue(1)} />);
 
-    await user.click(screen.getByRole("button", { name: "まとめて栞" }));
+    await user.click(screen.getByRole("button", { name: "まとめてお気に入り" }));
     await user.click(screen.getByText("はじめに"));
     await user.click(screen.getByText("つぎに"));
-    await user.click(screen.getByRole("button", { name: "栞に入れる" }));
+    await user.click(screen.getByRole("button", { name: "お気に入りに追加" }));
 
-    expect(await screen.findByText("1件を入れました（残りは栞ずみ）")).toBeInTheDocument();
+    expect(await screen.findByText("1件を追加しました（残りはお気に入りずみ）")).toBeInTheDocument();
   });
 
   it("やめるとモードが終わる", async () => {
     const user = userEvent.setup();
     render(<Harness save={vi.fn().mockResolvedValue(0)} />);
 
-    await user.click(screen.getByRole("button", { name: "まとめて栞" }));
+    await user.click(screen.getByRole("button", { name: "まとめてお気に入り" }));
     await user.click(screen.getByRole("button", { name: "やめる" }));
 
     expect(screen.queryByTestId("bulk-bookmark-bar")).not.toBeInTheDocument();
