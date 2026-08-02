@@ -146,8 +146,11 @@ class Vote(BaseModel):
 
 class Report(BaseModel):
     """
-    コメントへの通報。1ユーザー1コメント1件（unique_constraint で重複防止）。
-    管理者が Admin 画面で確認し、必要に応じて対象コメントを論理削除する。
+    投稿への通報。1ユーザー1投稿1件（unique_constraint で重複防止）。
+    管理者が Admin 画面で確認し、必要に応じて対象を論理削除する。
+
+    通報できるのはコメント・Q&A の質問・Q&A の回答の3種類。1件の通報が指すのは
+    そのうち1つだけ（report_has_exactly_one_target で保証）。
     """
 
     SPAM = "spam"
@@ -168,6 +171,22 @@ class Report(BaseModel):
     )
     comment = models.ForeignKey(
         Comment,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    question = models.ForeignKey(
+        "qa.Question",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    answer = models.ForeignKey(
+        "qa.Answer",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="reports",
     )
@@ -176,5 +195,30 @@ class Report(BaseModel):
     class Meta:
         db_table = "reports"
         constraints = [
-            models.UniqueConstraint(fields=["reporter", "comment"], name="unique_reporter_comment_report"),
+            # 同じ人が同じ対象を二重に通報できないようにする。対象ごとに別の制約を張るのは、
+            # NULL 同士は等しくないと扱われるため（3列まとめた1つの制約では効かない）。
+            models.UniqueConstraint(
+                fields=["reporter", "comment"],
+                condition=models.Q(comment__isnull=False),
+                name="unique_reporter_comment_report",
+            ),
+            models.UniqueConstraint(
+                fields=["reporter", "question"],
+                condition=models.Q(question__isnull=False),
+                name="unique_reporter_question_report",
+            ),
+            models.UniqueConstraint(
+                fields=["reporter", "answer"],
+                condition=models.Q(answer__isnull=False),
+                name="unique_reporter_answer_report",
+            ),
+            # 通報の対象はちょうど1つ。
+            models.CheckConstraint(
+                condition=(
+                    models.Q(comment__isnull=False, question__isnull=True, answer__isnull=True)
+                    | models.Q(comment__isnull=True, question__isnull=False, answer__isnull=True)
+                    | models.Q(comment__isnull=True, question__isnull=True, answer__isnull=False)
+                ),
+                name="report_has_exactly_one_target",
+            ),
         ]

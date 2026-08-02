@@ -71,9 +71,12 @@ export type Notification = {
   id: string;
   notification_type: "reply" | "upvote" | "mention";
   actor_username: string;
+  // 通知の対象になった文章。コメントでも Q&A の回答でもここに入る。
+  body_snippet: string;
+  body_is_deleted?: boolean;
   comment_id: string | null;
-  comment_body_snippet: string;
-  comment_is_deleted?: boolean;
+  // Q&A の通知のとき、飛び先の質問。
+  question_id: string | null;
   translation_project_id: string | null;
   is_read: boolean;
   created_at: string;
@@ -82,7 +85,6 @@ export type Notification = {
   chapter_number: number | null;
   verse_number: number | null;
   translation_unit_id: string | null;
-  is_qa: boolean;
 };
 export type User = {
   id: string;

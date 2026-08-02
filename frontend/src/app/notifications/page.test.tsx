@@ -34,8 +34,9 @@ const makeNotification = (overrides: Partial<Notification> = {}): Notification =
   id: "n1",
   notification_type: "reply",
   actor_username: "bob",
+  body_snippet: "返信テキスト",
   comment_id: "c1",
-  comment_body_snippet: "返信テキスト",
+  question_id: null,
   is_read: false,
   created_at: new Date().toISOString(),
   ...overrides,
@@ -87,7 +88,7 @@ describe("NotificationsPage", () => {
   it("通知一覧を表示する", async () => {
     const { fetchNotificationPage } = await import("@/lib/api");
     vi.mocked(fetchNotificationPage).mockResolvedValue(
-      makePage([makeNotification({ actor_username: "charlie", comment_body_snippet: "コメント本文" })])
+      makePage([makeNotification({ actor_username: "charlie", body_snippet: "コメント本文" })])
     );
     render(<NotificationsPage />);
     await screen.findByText("charlie");

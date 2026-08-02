@@ -24,7 +24,9 @@ class VoteAdmin(admin.ModelAdmin):
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ["id", "reporter", "comment", "reason", "created_at"]
+    list_display = ["id", "reporter", "comment", "question", "answer", "reason", "created_at"]
     list_filter = ["reason"]
     ordering = ["-created_at"]
-    readonly_fields = ["id", "reporter", "comment", "reason", "created_at", "updated_at"]
+    readonly_fields = [
+        "id", "reporter", "comment", "question", "answer", "reason", "created_at", "updated_at",
+    ]

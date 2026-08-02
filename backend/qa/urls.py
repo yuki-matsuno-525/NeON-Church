@@ -15,6 +15,12 @@ urlpatterns = [
         views.SetBestAnswerView.as_view(),
         name="qa-best-answer",
     ),
+    path(
+        "questions/<uuid:pk>/report/",
+        views.QuestionReportView.as_view(),
+        name="qa-question-report",
+    ),
     path("answers/", views.AnswerCreateView.as_view(), name="qa-answer-create"),
     path("answers/<uuid:pk>/", views.AnswerDetailView.as_view(), name="qa-answer-detail"),
+    path("answers/<uuid:pk>/report/", views.AnswerReportView.as_view(), name="qa-answer-report"),
 ]

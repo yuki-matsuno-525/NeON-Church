@@ -368,3 +368,49 @@ class TestBestAnswer:
         auth_client.patch(best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json")
         other_auth_client.delete(answer_url(answer["id"]))
         assert Question.objects.get(id=question["id"]).best_answer is None
+
+
+# ------------------------------------------------------------------
+# 通報
+# ------------------------------------------------------------------
+@pytest.mark.django_db
+class TestQAReport:
+    def test_can_report_question(self, other_auth_client, question):
+        res = other_auth_client.post(
+            f"{question_url(question['id'])}report/", {"reason": "spam"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+
+    def test_can_report_answer(self, auth_client, answer):
+        res = auth_client.post(
+            f"{answer_url(answer['id'])}report/", {"reason": "offensive"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED
+
+    def test_cannot_report_own_question(self, auth_client, question):
+        res = auth_client.post(
+            f"{question_url(question['id'])}report/", {"reason": "spam"}, format="json"
+        )
+        assert res.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_duplicate_report_is_conflict(self, other_auth_client, question):
+        url = f"{question_url(question['id'])}report/"
+        other_auth_client.post(url, {"reason": "spam"}, format="json")
+        res = other_auth_client.post(url, {"reason": "spam"}, format="json")
+        assert res.status_code == status.HTTP_409_CONFLICT
+
+    def test_anonymous_cannot_report(self, api_client, question):
+        res = api_client.post(
+            f"{question_url(question['id'])}report/", {"reason": "spam"}, format="json"
+        )
+        assert res.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_reporting_question_and_answer_are_independent(self, auth_client, other_auth_client, question, answer):
+        """同じ人が質問と回答をそれぞれ通報できる（重複扱いにならない）。"""
+        other_auth_client.post(
+            f"{question_url(question['id'])}report/", {"reason": "spam"}, format="json"
+        )
+        res = auth_client.post(
+            f"{answer_url(answer['id'])}report/", {"reason": "spam"}, format="json"
+        )
+        assert res.status_code == status.HTTP_201_CREATED

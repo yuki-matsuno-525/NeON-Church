@@ -181,6 +181,19 @@ class AnswerCreateView(generics.CreateAPIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "comment_create"
 
+    def perform_create(self, serializer):
+        answer = serializer.save()
+        # 質問した人に「回答が付いた」と知らせる。自分で自分の質問に答えたときは出さない。
+        if answer.question.user != answer.user:
+            from notifications.models import Notification
+
+            Notification.objects.create(
+                recipient=answer.question.user,
+                actor=answer.user,
+                notification_type="reply",
+                answer=answer,
+            )
+
 
 class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
     """
@@ -210,6 +223,55 @@ class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         # 削除された回答がベストアンサーのままだと「解決済み」の見た目だけ残る。
         if instance.best_answer_for.exists():
             Question.objects.filter(best_answer=instance).update(best_answer=None)
+
+
+class _QAReportView(APIView):
+    """質問・回答への通報。対象の種類だけが違うので共通の土台を持つ。
+
+    自分の投稿は通報できない。同じ対象への重複通報は 409。
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "report"
+
+    # 継承先で「対象のモデル」と「Report のどの列に入れるか」を決める。
+    model = None
+    report_field = ""
+
+    def post(self, request, pk):
+        from comments.models import Report
+        from comments.serializers import ReportSerializer
+
+        target = get_object_or_404(self.model, pk=pk)
+        if target.user == request.user:
+            return Response(
+                {"detail": "Cannot report your own post."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = ReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        _, created = Report.objects.get_or_create(
+            reporter=request.user,
+            **{self.report_field: target},
+            defaults={"reason": serializer.validated_data["reason"]},
+        )
+        if not created:
+            return Response({"detail": "Already reported."}, status=status.HTTP_409_CONFLICT)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class QuestionReportView(_QAReportView):
+    """POST /api/qa/questions/{pk}/report/  質問を通報（要認証）"""
+
+    model = Question
+    report_field = "question"
+
+
+class AnswerReportView(_QAReportView):
+    """POST /api/qa/answers/{pk}/report/  回答を通報（要認証）"""
+
+    model = Answer
+    report_field = "answer"
 
 
 class SetBestAnswerView(APIView):

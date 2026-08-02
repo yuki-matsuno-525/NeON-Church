@@ -9,7 +9,7 @@ class Notification(BaseModel):
     通知。返信・upvote・メンションのトリガーで作成される。
     recipient: 通知を受け取るユーザー
     actor: 通知をトリガーしたユーザー
-    comment / translation_comment のどちらか一方が設定される。
+    comment / translation_comment / answer のいずれか1つが設定される。
     """
 
     REPLY = "reply"
@@ -41,6 +41,14 @@ class Notification(BaseModel):
     )
     translation_comment = models.ForeignKey(
         "translations.TranslationComment",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    # Q&A の回答が付いたときの通知。飛び先の質問は answer.question から辿る。
+    answer = models.ForeignKey(
+        "qa.Answer",
         null=True,
         blank=True,
         on_delete=models.CASCADE,
