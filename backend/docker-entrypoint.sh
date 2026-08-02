@@ -3,14 +3,14 @@ set -e
 
 python manage.py migrate
 
-# シードユーザーが存在しない場合のみシードを投入する
+# 利用者データが1件も無いときだけ、開発用の軽いシードを投入する。
+# 聖書データがまだ入っていない環境ではシードは作れないので、失敗しても起動は続ける。
 if ! python manage.py shell -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-exit(0 if User.objects.filter(username='rev_james_whitfield').exists() else 1)
+from comments.models import Comment
+exit(0 if Comment.objects.exists() else 1)
 "; then
-    echo "シードデータを投入します..."
-    python manage.py seed_en
+    echo "開発用のシードデータを投入します..."
+    python manage.py seed_demo --scale small || echo "シードはスキップしました（聖書データ未投入）"
 fi
 
 exec python manage.py runserver 0.0.0.0:8000
