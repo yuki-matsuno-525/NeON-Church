@@ -472,7 +472,7 @@ export default function ChapterPage() {
           )}
         </div>
 
-        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+        <hr className="section-divider" />
 
         <VerseList
           verses={displayVerses}

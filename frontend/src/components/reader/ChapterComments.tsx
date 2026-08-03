@@ -83,7 +83,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
   return (
     <section id="chapter-comments" className="mt-8">
-      <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+      <hr className="section-divider" />
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="m-0 text-md font-bold">

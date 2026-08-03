@@ -52,7 +52,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
     <div className="page page-detail">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {article.visibility !== "public" && (
-          <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+          <span className="badge badge-muted">
             {visibilityLabel(article.visibility, t)}
           </span>
         )}

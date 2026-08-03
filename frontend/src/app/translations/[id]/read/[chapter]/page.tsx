@@ -136,7 +136,7 @@ export default function TranslationReadChapterPage({
       <p className="text-muted">{error}</p>
       <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
-        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+        <Link href="/translations" className="text-accent self-center">{t.backToProjectList}</Link>
       </div>
     </div>
   );
@@ -165,7 +165,7 @@ export default function TranslationReadChapterPage({
         className={`reader-wrapper${selectedUnit ? " has-verse" : ""}`}
       >
         <div className="reader-main" >
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <div className="mx-auto max-w-180">
             <h1 className="text-xl font-bold mb-1">
               {project?.name} {t.chapterFmt(chapterNum)}
             </h1>
@@ -180,7 +180,7 @@ export default function TranslationReadChapterPage({
               </Button>
             </div>
 
-            <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+            <hr className="section-divider" />
 
             {units.length === 0 ? (
               <p className="text-sm text-muted">{t.noPublishedVersesForChapter}</p>
@@ -204,40 +204,20 @@ export default function TranslationReadChapterPage({
                           setSelectedUnit(isSelected ? null : unit);
                         }
                       }}
-                      className="verse-row"
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: 5,
-                        color: "var(--text)",
-                        marginBottom: 2,
-                        cursor: "pointer",
-                        background: isSelected ? "var(--accent-tint)" : "transparent",
-                        scrollMarginTop: "calc(var(--navbar-height) + 56px)",
-                      }}
+                      className={`verse-row${isSelected ? " verse-row-selected" : ""}`}
                     >
                       <span
-                        style={{
-                          lineHeight: 1.9,
-                          fontSize: 17,
-                          fontFamily: "var(--font-serif)",
-                          whiteSpace: "pre-line",
-                        }}
+                        className="verse-text"
                       >
                         <sup
-                          style={{
-                            fontSize: 11,
-                            color: "var(--text-faint)",
-                            marginRight: 4,
-                            verticalAlign: "super",
-                            fontWeight: 700,
-                          }}
+                          className="verse-number"
                         >
                           {unit.verse_number}
                         </sup>
                         {unit.body}
                       </span>
                       {showSourceText && (
-                        <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
+                        <p className="mt-1 mb-0 ml-5 text-xs text-faint italic">
                           {t.originalText} {unit.verse_text}
                         </p>
                       )}
@@ -250,7 +230,7 @@ export default function TranslationReadChapterPage({
             {units.length > 0 && units[0]?.chapter && (
               <>
                 {chapterVersionCommentsError && (
-                  <div role="alert" style={{ padding: 12, margin: "16px 0 12px", border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+                  <div role="alert" className="alert-box mt-4 mx-0 mb-3">
                     <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                     <Button variant="secondary" size="sm" onClick={() => void loadChapterVersionComments()}>
                       {ui.retryRelatedComments}
@@ -272,7 +252,7 @@ export default function TranslationReadChapterPage({
         {selectedUnit && (
           <div id="translation-comment-panel" className="reader-panel">
             {verseVersionCommentsError && (
-              <div role="alert" style={{ padding: 12, margin: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+              <div role="alert" className="alert-box m-3">
                 <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                 <Button variant="secondary" size="sm" onClick={() => void loadVerseVersionComments()}>
                   {ui.retryRelatedComments}

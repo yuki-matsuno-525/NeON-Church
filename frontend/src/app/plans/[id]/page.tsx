@@ -164,18 +164,18 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
 
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {plan.visibility !== "public" && (
-          <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
+          <span className="badge badge-muted">
             {visibilityLabel(plan.visibility, t)}
           </span>
         )}
         {isOwner && (
-          <Link href={`/plans/${plan.id}/edit`} className="action-link" style={editLinkStyle}>
+          <Link href={`/plans/${plan.id}/edit`} className="action-link ml-auto text-sm no-underline">
             {t.articleEdit}
           </Link>
         )}
       </div>
 
-      <h1 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: 26, fontWeight: 700, margin: "0 0 8px", lineHeight: 1.5 }}>
+      <h1 className="page-title">
         {plan.title}
       </h1>
       <div className="text-sm text-muted mb-4">
@@ -188,7 +188,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
       {plan.description && <p className="text-sm leading-reading mt-0 mx-0 mb-4">{plan.description}</p>}
 
       {plan.note && (
-        <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", marginBottom: 20, background: "rgba(255,255,255,0.03)" }}>
+        <div className="note-box">
           <div className="text-xs text-faint mb-1">{t.planNoteLabel}</div>
           <p className="m-0 text-sm leading-reading whitespace-pre-wrap">{plan.note}</p>
         </div>
@@ -217,14 +217,14 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
 
       {isReading && (
         <div role="progressbar" aria-label={t.planProgress(doneCount, plan.day_count)} aria-valuemin={0} aria-valuemax={plan.day_count} aria-valuenow={doneCount} style={progressTrackStyle}>
-          <div style={{ width: `${plan.day_count ? Math.round((doneCount / plan.day_count) * 100) : 0}%`, height: "100%", borderRadius: 999, background: "var(--accent)" }} />
+          <div className="progress-fill" style={{ width: `${plan.day_count ? Math.round((doneCount / plan.day_count) * 100) : 0}%` }} />
         </div>
       )}
       {actionError && <p role="alert" className="text-danger text-sm mt-0 mx-0 mb-4">{actionError}</p>}
 
       <div className="flex flex-col gap-4">
         {(plan.days ?? []).map((day) => (
-          <section key={day.id} className="card-glow" style={{ padding: "16px 18px", opacity: day.completed ? 0.7 : 1 }}>
+          <section key={day.id} className={`card-glow py-4 px-5${day.completed ? " opacity-70" : ""}`}>
             <div className="flex items-center gap-3 mb-3 flex-wrap">
               <span className="text-sm font-bold text-accent">{t.planDayLabel(day.number)}</span>
               {day.title && <span className="text-sm font-bold">{day.title}</span>}
@@ -236,18 +236,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
                   aria-pressed={day.completed}
                   aria-busy={busyDayId === day.id}
                   disabled={busyDayId !== null}
-                  style={{
-                    marginLeft: "auto",
-                    border: `1px solid ${day.completed ? "var(--accent)" : "var(--border)"}`,
-                    background: day.completed ? "var(--accent-tint)" : "transparent",
-                    color: day.completed ? "var(--accent)" : "var(--text-muted)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    padding: "6px 12px",
-                    minHeight: 44,
-                    cursor: busyDayId ? "default" : "pointer",
-                    fontFamily: "inherit",
-                  }}
+                  className={`day-toggle${day.completed ? " day-toggle-done" : ""}`}
                 >
                   {day.completed ? t.planDayDone : t.planDayMarkDone}
                 </button>
@@ -289,5 +278,4 @@ const plainButtonStyle: React.CSSProperties = {
 };
 
 // .action-link に重ねて、右端へ寄せる
-const editLinkStyle: React.CSSProperties = { marginLeft: "auto", fontSize: 13, textDecoration: "none" };
 const progressTrackStyle: React.CSSProperties = { height: 6, width: "100%", borderRadius: 999, overflow: "hidden", background: "var(--border)", margin: "-12px 0 20px" };

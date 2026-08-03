@@ -1684,3 +1684,139 @@ textarea::placeholder {
   font-size: var(--font-size-sm);
   line-height: var(--leading-base);
 }
+
+/* 検索でひっかかった言葉。本文の中で目立たせる。 */
+.search-mark {
+  padding: 0 2px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* 検索結果の 1 件を包む枠。 */
+.result-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 本文と次の区画のあいだに引く太めの線。読書画面とコメント欄で使う。 */
+.section-divider {
+  margin-bottom: 24px;
+  border: none;
+  border-top: 2px solid var(--border);
+}
+
+/* 記事やプランの題。一覧のカードより大きく、明朝で見せる。 */
+.page-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 補足の覚え書きを囲む枠。 */
+.note-box {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* 読み終わった日に付ける印。押すたびに入り切りする。 */
+.day-toggle {
+  min-height: 44px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.day-toggle-done {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.day-toggle:disabled {
+  cursor: default;
+}
+
+/* 下書きなど、公開されていないことを示すバッジ。 */
+.badge-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+/* ----- 読書画面の 1 節 -----
+   聖書本文と翻訳プロジェクトの読書画面が、同じ見た目を別々に書いていた。
+   選んでいるときだけ色が変わるので、その分だけクラスの付け外しで表す。 */
+.verse-row {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 2px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-margin-top: calc(var(--navbar-height) + 56px);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+/* マウスを乗せたときと、キーボードで移動してきたときに同じ手応えを返す。
+   以前は JavaScript で背景色を付け外ししていた。 */
+.verse-row:hover,
+.verse-row:focus-visible {
+  background: var(--bg-hover);
+}
+.verse-row-selected,
+.verse-row-selected:hover,
+.verse-row-selected:focus-visible {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 本文そのもの。詩文（エノク書など）の節内改行を残す。 */
+.verse-text {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+/* 節番号。本文より小さく、控えめな色で上付きにする。 */
+.verse-number {
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: super;
+}
+.verse-row-selected .verse-number {
+  color: var(--accent);
+}
+/* まとめて選ぶときに、番号の前へ出す印。 */
+.verse-pick-mark {
+  display: inline-block;
+  width: 16px;
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+.verse-pick-mark-on {
+  color: var(--accent);
+}
+
+/* うまくいかなかったことを、その場で伝える小さな枠。 */
+.alert-box {
+  padding: 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+}

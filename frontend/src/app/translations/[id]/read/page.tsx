@@ -87,7 +87,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       <p className="text-muted">{error}</p>
       <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
-        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+        <Link href="/translations" className="text-accent self-center">{t.backToProjectList}</Link>
       </div>
     </div>
   );
