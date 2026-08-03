@@ -9,9 +9,10 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
-import { Button, SkeletonList } from "@/components/ui";
+import { AsyncList } from "@/components/ui";
+import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
 import { Pagination } from "@/components/ui/Pagination";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { type IconName } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "./translationUiText";
@@ -72,24 +73,21 @@ export default function TranslationsPage() {
 
   return (
     <div className="page page-full">
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
-        <div>
-          <h1 className="m-0 text-lg font-bold">{t.translationsTitle}</h1>
-          <p className="mt-1 mb-0 text-sm text-muted">
-            {t.translationsDesc}
-          </p>
-        </div>
-        {user && (
-          <Link
-            href="/translations/new"
-            className="bg-accent text-accent-text rounded-md py-2 px-4 no-underline font-bold text-sm"
-          >
-            {t.newProject}
-          </Link>
-        )}
-      </div>
+      <ListPageHeader
+        title={t.translationsTitle}
+        description={t.translationsDesc}
+        action={
+          user ? (
+            <Link
+              href="/translations/new"
+              className="bg-accent text-accent-text rounded-md py-2 px-4 no-underline font-bold text-sm"
+            >
+              {t.newProject}
+            </Link>
+          ) : undefined
+        }
+      />
 
-      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
       <label className="block mb-4">
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
@@ -102,61 +100,34 @@ export default function TranslationsPage() {
         />
       </label>
 
+      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
       {isMobile && (
-        <div className="flex gap-2 mb-4">
-          {visibleColumns.map((col) => {
-            const active = col.key === activeTab;
-            return (
-              <button
-                key={col.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setActiveTab(col.key)}
-                style={{
-                  flex: 1,
-                  minHeight: 44,
-                  padding: "8px 6px",
-                  border: `1px solid ${active ? col.color : "var(--border)"}`,
-                  borderRadius: 8,
-                  background: active ? col.tint : "var(--bg-alt)",
-                  color: active ? col.color : "var(--text-muted)",
-                  fontWeight: active ? 700 : 600,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                {columnLabel(col.key)}
-              </button>
-            );
-          })}
-        </div>
+        <ColumnTabs
+          tabs={visibleColumns.map((col) => ({ ...col, label: columnLabel(col.key) }))}
+          active={activeTab}
+          onChange={setActiveTab}
+          label={t.translationsTitle}
+          idPrefix="translations"
+        />
       )}
 
-      <div
-        style={
-          isMobile
-            ? { display: "block" }
-            : { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }
-        }
-      >
+      <div className="list-board">
         {visibleColumns.map((col) => (
-          <div
+          <TranslationColumn
             key={col.key}
-            style={{ display: isMobile && col.key !== activeTab ? "none" : "block" }}
-          >
-            <TranslationColumn
-              statusKey={col.key}
-              icon={col.icon}
-              color={col.color}
-              tint={col.tint}
-              label={columnLabel(col.key)}
-              desc={columnDesc(col.key)}
-              search={debouncedSearch}
-              retryLabel={ui.retry}
-              errorMessage={ui.loadError}
-            />
-          </div>
+            statusKey={col.key}
+            icon={col.icon}
+            color={col.color}
+            tint={col.tint}
+            label={columnLabel(col.key)}
+            desc={columnDesc(col.key)}
+            search={debouncedSearch}
+            retryLabel={ui.retry}
+            errorMessage={ui.loadError}
+            hidden={isMobile && col.key !== activeTab}
+            tabId={isMobile ? `translations-tab-${col.key}` : undefined}
+            panelId={`translations-panel-${col.key}`}
+          />
         ))}
       </div>
     </div>
@@ -173,6 +144,9 @@ function TranslationColumn({
   search,
   retryLabel,
   errorMessage,
+  hidden,
+  tabId,
+  panelId,
 }: {
   statusKey: StatusKey;
   icon: IconName;
@@ -183,6 +157,9 @@ function TranslationColumn({
   search: string;
   retryLabel: string;
   errorMessage: string;
+  hidden: boolean;
+  tabId?: string;
+  panelId: string;
 }) {
   const t = useT();
   const [items, setItems] = useState<TranslationProject[]>([]);
@@ -223,38 +200,33 @@ function TranslationColumn({
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
   return (
-    <section className="list-column">
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <span style={{ color, display: "inline-flex" }}>
-            <Icon name={icon} size={18} />
-          </span>
-          <h2 className="m-0 text-md font-bold">{label}</h2>
-          <span className="badge badge-count" style={{ background: tint, color }}>{count}</span>
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={label}
+      count={count}
+      description={desc}
+      hidden={hidden}
+      id={panelId}
+      labelledBy={tabId}
+    >
+      <AsyncList
+        loading={loading}
+        error={error ? errorMessage : null}
+        isEmpty={items.length === 0}
+        emptyText={t.emptyColumn}
+        onRetry={() => setReloadKey((key) => key + 1)}
+        retryLabel={retryLabel}
+      >
+        <div className="flex flex-col gap-3">
+          {items.map((p) => (
+            <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
+          ))}
         </div>
-        <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
-      </div>
-
-      {loading ? (
-        <SkeletonList count={2} />
-      ) : error ? (
-        <div role="alert" className="py-3 px-1">
-          <p className="text-sm text-muted mt-0 mx-0 mb-3">{errorMessage}</p>
-          <Button variant="ghost" size="sm" onClick={() => setReloadKey((key) => key + 1)}>{retryLabel}</Button>
-        </div>
-      ) : items.length === 0 ? (
-        <p className="px-1 py-2 text-sm text-faint">{t.emptyColumn}</p>
-      ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            {items.map((p) => (
-              <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
-            ))}
-          </div>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </>
-      )}
-    </section>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </AsyncList>
+    </ListColumn>
   );
 }
 

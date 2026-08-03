@@ -6,8 +6,9 @@ import { fetchArticles, fetchArticleTags, type Article, type ArticleTag } from "
 import { articleTagLabel, visibilityLabel } from "@/lib/articles";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { LoadMoreButton, SkeletonList } from "@/components/ui";
+import { type IconName } from "@/components/ui/Icon";
+import { AsyncList, LoadMoreButton } from "@/components/ui";
+import { ListColumn, ListPageHeader } from "@/components/list";
 
 type ArticleFeed = {
   articles: Article[];
@@ -98,19 +99,17 @@ export default function ArticlesPage() {
 
   return (
     <div className="page page-full">
-      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
-        <div>
-          <h1 className="m-0 text-lg font-bold">{t.articlesTitle}</h1>
-          <p className="mt-1 mb-0 text-sm text-muted">
-            {t.articlesDesc}
-          </p>
-        </div>
-        {user ? (
-          <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
-        ) : (
-          <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
-        )}
-      </div>
+      <ListPageHeader
+        title={t.articlesTitle}
+        description={t.articlesDesc}
+        action={
+          user ? (
+            <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
+          ) : (
+            <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
+          )
+        }
+      />
 
       <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
         <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => selectTag(null)} />
@@ -125,7 +124,7 @@ export default function ArticlesPage() {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 16, alignItems: "start" }}>
+      <div className="list-board">
         {user && (
           <ArticleColumn
             title={t.articleMineTitle}
@@ -189,36 +188,33 @@ function ArticleColumn({
   onRetry: () => void;
   onLoadMore: () => void;
 }) {
-  const t = useT();
   return (
-    <section className="list-column" aria-busy={feed.loading}>
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <span aria-hidden="true" style={{ color, display: "inline-flex" }}><Icon name={icon} size={18} /></span>
-          <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span aria-label={`${feed.total}件`} className="badge badge-count" style={{ background: tint, color }}>{feed.total}</span>
-        </div>
-        <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
-      </div>
-
-      {feed.loading && feed.articles.length === 0 ? (
-        <SkeletonList count={2} />
-      ) : feed.error && feed.articles.length === 0 ? (
-        <div role="alert">
-          <p className="text-sm text-danger">{feed.error}</p>
-          <button type="button" onClick={onRetry} style={inlineRetryStyle}>{t.retry}</button>
-        </div>
-      ) : feed.articles.length === 0 ? (
-        <p className="text-sm text-muted py-2 px-1">{empty}</p>
-      ) : (
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={title}
+      count={feed.total}
+      description={desc}
+      busy={feed.loading}
+    >
+      {/* 読み足しの途中（既に何件か出ている）ときは中身を消さない。
+          その間の読み込み中と失敗は下の LoadMoreButton が受け持つ。 */}
+      <AsyncList
+        loading={feed.loading && feed.articles.length === 0}
+        error={feed.articles.length === 0 ? feed.error : null}
+        isEmpty={feed.articles.length === 0}
+        emptyText={empty}
+        onRetry={onRetry}
+      >
         <div className="flex flex-col gap-3">
           {feed.articles.map((article) => <ArticleCard key={article.id} article={article} editable={editable} />)}
         </div>
-      )}
+      </AsyncList>
 
       {feed.error && feed.articles.length > 0 && <p role="alert" className="text-xs text-danger">{feed.error}</p>}
       <LoadMoreButton hasMore={feed.hasMore || !!feed.error} loading={feed.loading} error={!!feed.error} onClick={feed.error ? onRetry : onLoadMore} />
-    </section>
+    </ListColumn>
   );
 }
 

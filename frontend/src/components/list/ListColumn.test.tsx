@@ -61,10 +61,10 @@ describe("ColumnTabs", () => {
 
 describe("ListPageHeader", () => {
   it("見出し・説明・導線を並べる", () => {
-    render(<ListPageHeader title="記事" description="読み物です。" action={<a href="/new">新規</a>} />);
+    render(<ListPageHeader title="記事" description="読み物です。" action={<button>新規</button>} />);
 
     expect(screen.getByRole("heading", { level: 1, name: "記事" })).toBeInTheDocument();
     expect(screen.getByText("読み物です。")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "新規" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新規" })).toBeInTheDocument();
   });
 });

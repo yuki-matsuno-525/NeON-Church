@@ -12,8 +12,9 @@ import { visibilityLabel } from "@/lib/plans";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { ErrorState, SkeletonList } from "@/components/ui";
+import { type IconName } from "@/components/ui/Icon";
+import { AsyncList, ErrorState } from "@/components/ui";
+import { ListColumn, ListPageHeader } from "@/components/list";
 import { planUiText } from "@/components/plans/planUiText";
 
 export default function PlansPage() {
@@ -60,19 +61,17 @@ export default function PlansPage() {
 
   return (
     <div className="page page-full">
-      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
-        <div>
-          <h1 className="m-0 text-lg font-bold">{t.plansTitle}</h1>
-          <p className="mt-1 mb-0 text-sm text-muted">
-            {t.plansDesc}
-          </p>
-        </div>
-        {user && (
-          <Link href="/plans/new" style={newButtonStyle}>
-            {t.planNew}
-          </Link>
-        )}
-      </div>
+      <ListPageHeader
+        title={t.plansTitle}
+        description={t.plansDesc}
+        action={
+          user ? (
+            <Link href="/plans/new" style={newButtonStyle}>
+              {t.planNew}
+            </Link>
+          ) : undefined
+        }
+      />
 
       {!pageLoading && !error && reading.length > 0 && (
         <section className="list-column mb-4">
@@ -101,7 +100,7 @@ export default function PlansPage() {
           onRetry={() => setReloadKey((key) => key + 1)}
         />
       ) : (
-        <div aria-busy={pageLoading} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 16, alignItems: "start" }}>
+        <div aria-busy={pageLoading} className="list-board">
           {user && (
             <PlanColumn
               title={t.planMineTitle}
@@ -154,23 +153,15 @@ function PlanColumn({
 }) {
   const t = useT();
   return (
-    <section className="list-column">
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <span style={{ color, display: "inline-flex" }}>
-            <Icon name={icon} size={18} />
-          </span>
-          <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span className="badge badge-count" style={{ background: tint, color }}>{plans.length}</span>
-        </div>
-        <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
-      </div>
-
-      {loading ? (
-        <SkeletonList count={2} />
-      ) : plans.length === 0 ? (
-        <p className="px-1 py-2 text-sm text-faint">{empty}</p>
-      ) : (
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={title}
+      count={plans.length}
+      description={desc}
+    >
+      <AsyncList loading={loading} isEmpty={plans.length === 0} emptyText={empty}>
         <div className="flex flex-col gap-3">
           {plans.map((plan) => (
             <Link
@@ -207,8 +198,8 @@ function PlanColumn({
             </Link>
           ))}
         </div>
-      )}
-    </section>
+      </AsyncList>
+    </ListColumn>
   );
 }
 

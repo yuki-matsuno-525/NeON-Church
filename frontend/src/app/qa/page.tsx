@@ -8,7 +8,8 @@ import { fetchQuestionPage, fetchTags, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
-import { SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
+import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Icon } from "@/components/ui/Icon";
@@ -19,7 +20,6 @@ import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
 import { useBookCatalogState, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 import type { IconName } from "@/components/ui/Icon";
-import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 // 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
 type QAColumnKey = "answered" | "unanswered";
@@ -145,28 +145,28 @@ function QAContent() {
     key === "answered" ? t.qaColAnsweredDesc : t.qaColUnansweredDesc;
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-full">
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
-      <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
-        <h1 className="m-0 text-lg font-bold">{t.qaTitle}</h1>
-        {!showForm && (
-          <Button
-            variant="secondary"
-            leftIcon={<Icon name="help-circle" size={14} />}
-            onClick={() => {
-              if (!user) { setShowLoginModal(true); return; }
-              setShowForm(true);
-            }}
-          >
-            {t.askQuestion}
-          </Button>
-        )}
-      </div>
-      <p className="text-muted text-sm mb-6">
-        {t.qaDesc}
-      </p>
+      <ListPageHeader
+        title={t.qaTitle}
+        description={t.qaDesc}
+        action={
+          !showForm ? (
+            <Button
+              variant="secondary"
+              leftIcon={<Icon name="help-circle" size={14} />}
+              onClick={() => {
+                if (!user) { setShowLoginModal(true); return; }
+                setShowForm(true);
+              }}
+            >
+              {t.askQuestion}
+            </Button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <QAPostForm
@@ -316,84 +316,48 @@ function QAContent() {
         <>
         {/* スマホだけカラム切り替えタブを出す。PC はタブなしで2カラムを横並び。 */}
         {isMobile && (
-          <div role="tablist" aria-label={t.qaTitle} onKeyDown={handleHorizontalTabListKeyDown} className="flex gap-2 mb-4">
-            {QA_COLUMNS.map((col) => {
-              const active = col.key === activeTab;
-              // 表示中の件数ではなく、サーバーが数えたその列の総数
-              const num = columnList(col.key).total;
-              return (
-                <button
-                  key={col.key}
-                  type="button"
-                  id={`qa-tab-${col.key}`}
-                  role="tab"
-                  aria-selected={active}
-                  aria-controls={`qa-panel-${col.key}`}
-                  tabIndex={active ? 0 : -1}
-                  onClick={() => setActiveTab(col.key)}
-                  style={{
-                    flex: 1,
-                    padding: "8px 6px",
-                    border: `1px solid ${active ? col.color : "var(--border)"}`,
-                    borderRadius: 8,
-                    background: active ? col.tint : "var(--bg-alt)",
-                    color: active ? col.color : "var(--text-muted)",
-                    fontWeight: active ? 700 : 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {columnLabel(col.key)} ({num})
-                </button>
-              );
-            })}
-          </div>
+          <ColumnTabs
+            // 表示中の件数ではなく、サーバーが数えたその列の総数
+            tabs={QA_COLUMNS.map((col) => ({ ...col, label: columnLabel(col.key), count: columnList(col.key).total }))}
+            active={activeTab}
+            onChange={setActiveTab}
+            label={t.qaTitle}
+            idPrefix="qa"
+          />
         )}
-        <div style={isMobile ? { display: "block" } : boardGridStyle}>
+        <div className="list-board">
           {QA_COLUMNS.map((col) => {
             const list = columnList(col.key);
             const items = list.items;
             return (
-              <section
+              <ListColumn
                 key={col.key}
+                icon={col.icon}
+                color={col.color}
+                tint={col.tint}
+                title={columnLabel(col.key)}
+                // 表示中の件数ではなく、サーバーが数えたその列の総数
+                count={list.total}
+                description={columnDesc(col.key)}
+                hidden={isMobile && col.key !== activeTab}
                 id={`qa-panel-${col.key}`}
-                role={isMobile ? "tabpanel" : undefined}
-                aria-labelledby={isMobile ? `qa-tab-${col.key}` : undefined}
-                className="list-column"
-                style={{ display: isMobile && col.key !== activeTab ? "none" : undefined }}
+                labelledBy={isMobile ? `qa-tab-${col.key}` : undefined}
               >
-                <div className="mb-4">
-                  <div className="flex items-center gap-2">
-                    <span style={{ color: col.color, display: "inline-flex" }}>
-                      <Icon name={col.icon} size={18} />
-                    </span>
-                    <h2 className="m-0 text-md font-bold">{columnLabel(col.key)}</h2>
-                    {/* 表示中の件数ではなく、サーバーが数えたその列の総数 */}
-                    <span className="badge badge-count" style={{ background: col.tint, color: col.color }}>{list.total}</span>
+                <AsyncList loading={false} isEmpty={items.length === 0} emptyText={t.qaEmptyColumn}>
+                  <div className="flex flex-col gap-3">
+                    {items.map((q) => (
+                      <QACard key={q.id} question={q} />
+                    ))}
                   </div>
-                  <p className="mt-2 mb-0 text-xs text-muted">{columnDesc(col.key)}</p>
-                </div>
-
-                {items.length === 0 ? (
-                  <p className="px-1 py-2 text-sm text-faint">{t.qaEmptyColumn}</p>
-                ) : (
-                  <>
-                    <div className="flex flex-col gap-3">
-                      {items.map((q) => (
-                        <QACard key={q.id} question={q} />
-                      ))}
-                    </div>
-                    {/* 列ごとに独立して読み足す */}
-                    <LoadMoreButton
-                      hasMore={list.hasMore}
-                      loading={list.loadingMore}
-                      error={!!list.loadMoreError}
-                      onClick={list.loadMore}
-                    />
-                  </>
-                )}
-              </section>
+                  {/* 列ごとに独立して読み足す */}
+                  <LoadMoreButton
+                    hasMore={list.hasMore}
+                    loading={list.loadingMore}
+                    error={!!list.loadMoreError}
+                    onClick={list.loadMore}
+                  />
+                </AsyncList>
+              </ListColumn>
             );
           })}
         </div>
@@ -402,13 +366,6 @@ function QAContent() {
     </div>
   );
 }
-
-const boardGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 16,
-  alignItems: "start",
-};
 
 
 
