@@ -99,34 +99,61 @@ Next.js 16 の公式ドキュメント（`node_modules/next/dist/docs/01-app/01-
 
 ## 進め方
 
-| # | やること | 見た目の変化 |
-| --- | --- | --- |
-| 1 | このドキュメントを書く | なし |
-| 2 | `@theme` に値の表と色を登録する | **なし**（クラスが使えるようになるだけ） |
-| 3 | 基準の文字サイズを 14px → 16px にする | あり（全体が読みやすくなる） |
-| 4 | 共通部品（Button / Card / Badge / TextField）を Tailwind で作り直す | 小 |
-| 5 | 各画面のインラインを Tailwind へ移す（多い順） | 画面ごとに確認 |
-| 6 | `!important` 撤去・残インライン検査・テスト・PR | なし |
+| # | やること | 見た目の変化 | 状態 |
+| --- | --- | --- | --- |
+| 1 | このドキュメントを書く | なし | 完了 |
+| 2 | `@theme` に値の表と色を登録する | **なし** | 完了 |
+| 3 | 基準の文字サイズを 14px → 16px にする | あり | 完了 |
+| 4 | 共通部品を Tailwind で作り直す | 小 | 完了 |
+| 5 | 各画面のインラインを Tailwind へ移す | 画面ごとに確認 | **途中** |
+| 6 | `!important` 撤去・残インライン検査・テスト・PR | なし | 未 |
 
 各段階で http://localhost:3000 を目視確認しながら進めます。
 
-### 移行の優先順位（インラインが多い順）
+## 現在地（2026-08-03 時点）
 
 ```
-app/translations/[id]/page.tsx        107
-app/page.tsx                           39
-app/articles/[id]/edit/page.tsx        38
-components/comments/CommentItem.tsx    37
-components/articles/CitationPanel.tsx  36
-app/profile/page.tsx                   36
-app/search/page.tsx                    34
-app/read/page.tsx                      33
-components/reader/CommentPanel.tsx     31
-（以下、合計 84 ファイル）
+開始時   1,147 箇所 / 84 ファイル
+現在       581 箇所 / 約 60 ファイル   （566 箇所・49% 完了）
 ```
 
-ただし実際は **4（共通部品）を先に済ませます**。生の `<button>` が 167 箇所あり、
-これを共通部品に寄せるだけで各画面のインラインが大きく減るためです。
+`!important` は 9 個 → 2 個まで減りました。残る 2 個（スマホの入力欄 16px 底上げ、
+ハンバーガーの表示）も、対応する画面のインラインが消えれば外せます。
+
+### 完了したもの
+
+- 読み物ページ 7 枚（about / 規約 / プライバシー / ガイドライン / ライセンス / 意見）
+- 共通部品 10 個（`components/ui/`）
+- コメント欄・サイドバー・上部バー・トップページ・コメントパネル・プロフィール
+- 繰り返しの多いパターンの一括置換 2 回（251 箇所）
+
+### 残っているもの（インラインが多い順）
+
+```
+app/translations/[id]/page.tsx          約 90
+components/articles/CitationPanel.tsx   約 34
+app/articles/[id]/edit/page.tsx         約 29
+app/search/page.tsx                     約 28
+app/read/page.tsx                       約 28
+app/translations/page.tsx               約 21
+app/plans/[id]/page.tsx                 約 20
+（以下、合計 約 60 ファイル）
+```
+
+**ここから先は機械的な置換では減りません。** 残り 623 個に対して種類が 492 と、
+ほとんどが 1 回しか出てこない書き方だからです。画面ごとに手で移すことになります。
+
+### 作業の型（次に続ける人向け）
+
+1. 対象ファイルの `style={{` を全部見る
+2. 同じ形が 3 回以上出てくるものは共通クラスにする
+   - サイト全体で使えそう → `globals.css`
+   - その画面だけ → `<画面名>.module.css`
+3. 残りは Tailwind のクラスに置き換える（値は決定 1 の表から選ぶ）
+4. `npx tsc --noEmit` で `className` の二重指定が無いか確認する
+   （一括置換すると必ず何件か出る。型チェックが検出してくれる）
+5. `docker compose restart frontend` してから画面を見る（この環境は自動反映されない）
+6. `npm test` を通してからコミット
 
 ## このドキュメントの使い方
 
