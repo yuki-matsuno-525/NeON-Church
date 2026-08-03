@@ -139,17 +139,17 @@ function MentionInput({
         aria-label={placeholder}
         aria-autocomplete="list"
         rows={2}
-        style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
+        className="form-control resize-y text-sm leading-base"
       />
       {suggestions.length > 0 && (
-        <ul role="listbox" style={{ position: "absolute", bottom: "100%", left: 0, margin: 0, padding: 0, listStyle: "none", background: "var(--bg-alt)", border: "1px solid var(--border)", borderRadius: 8, width: "100%", zIndex: 10 }}>
+        <ul role="listbox" className="mention-list">
           {suggestions.map((s) => (
             <li key={s} role="option" aria-selected="false">
               <button
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => handleSelect(s)}
-                style={{ width: "100%", minHeight: 44, padding: "6px 12px", cursor: "pointer", fontSize: 13, textAlign: "left", background: "transparent", color: "var(--text)", border: 0 }}
+                className="mention-option"
               >
                 @{s}
               </button>
@@ -803,14 +803,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-wide">
         <SkeletonList count={4} />
       </div>
     );
   }
   if (loadError) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 24px", textAlign: "center" }} role="alert">
+      <div className="page page-narrow text-center" role="alert">
         <p className="text-muted">{ui.loadError}</p>
         <Button variant="secondary" onClick={() => void loadProject()}>{ui.retry}</Button>
       </div>
@@ -836,7 +836,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-wide">
       <div className="mb-2">
         <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
           {t.backToTranslations}
@@ -916,7 +916,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       </div>
 
       {project.membership_status === "pending" && !isOwner && (
-        <p role="status" style={{ padding: "10px 12px", border: "1px solid var(--state-warning)", borderRadius: 8, color: "var(--text-muted)", background: "rgba(245,158,11,0.10)" }}>
+        <p role="status" className="notice-warning">
           {ui.applicationPending}
         </p>
       )}
@@ -1001,7 +1001,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-valuenow={progressPct}
             className="progress-track"
           >
-            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s" }} />
+            <div className="progress-fill" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
         <div className="stat-item">
@@ -1026,17 +1026,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-controls={`translation-panel-${tabKey}`}
             tabIndex={tab === tabKey ? 0 : -1}
             onClick={() => changeTab(tabKey)}
-            style={{
-              minHeight: 44,
-              padding: "8px 18px",
-              background: "transparent",
-              border: "none",
-              borderBottom: tab === tabKey ? "2px solid var(--accent)" : "2px solid transparent",
-              color: tab === tabKey ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: tab === tabKey ? 700 : 400,
-              cursor: "pointer",
-              fontSize: 14,
-            }}
+            className={`tab-underline${tab === tabKey ? " tab-underline-active" : ""}`}
           >
             {tabLabel(tabKey)}
           </button>
@@ -1092,7 +1082,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       <select
                         value={unitVerseId}
                         onChange={(e) => setUnitVerseId(e.target.value)}
-                        style={{ padding: "8px 10px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 14 }}
+                        className="select-md"
                       >
                         <option value="">{t.addAllVerses}</option>
                         {unitVerses.map((v) => (
@@ -1131,11 +1121,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               />
             ) : (
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                  gap: 8,
-                }}
+                className="chapter-grid"
               >
                 {(summary?.chapters ?? []).map((chNum) => (
                   (() => {
@@ -1147,17 +1133,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     key={chNum}
                     onClick={() => changeChapter(chNum)}
                     aria-label={`${t.chapterFmt(chNum)} ${ui.chapterProgress(done, total)}`}
-                    className="card-glow card-glow-interactive"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: 48,
-                      color: "var(--text)",
-                      fontWeight: 700,
-                      fontSize: 14,
-                    }}
+                    className="card-glow card-glow-interactive chapter-tile"
                   >
                     <span>{chNum}</span>
                     {total > 0 && <span className="text-xs text-muted font-bold">{ui.chapterProgress(done, total)}</span>}
@@ -1173,7 +1149,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <div>
               <button
                 onClick={() => changeChapter(null)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 13, padding: "0 0 12px", display: "block" }}
+                className="text-button block pb-3 text-sm"
               >
                 {t.backToChapters}
               </button>
@@ -1223,12 +1199,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 <div
                   key={unit.id}
                   id={`unit-${unit.id}`}
-                  className="card-glow"
-                  style={{
-                    overflow: "hidden",
-                    boxShadow: scrollTargetUnit === unit.id ? "0 0 0 2px var(--accent)" : undefined,
-                    transition: "box-shadow 0.3s",
-                  }}
+                  className={`card-glow overflow-hidden${scrollTargetUnit === unit.id ? " is-scroll-target" : ""}`}
                 >
                   <div className="py-3 px-4">
                     <div className="flex items-center gap-3 flex-wrap mb-2">
@@ -1260,7 +1231,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div className="compare-grid">
                       <div className="sub-card">
                         <div className="col-label">{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                        <p className="source-text">
                           {unit.verse_text}
                         </p>
                       </div>
@@ -1274,7 +1245,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             onChange={(e) => setUnitDrafts((prev) => ({ ...prev, [unit.id]: e.target.value }))}
                             rows={5}
                             placeholder={t.translationPlaceholder}
-                            style={{ flex: 1, width: "100%", minHeight: 96, marginTop: 6, padding: 0, border: "none", background: "transparent", color: "var(--text)", fontSize: 14, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6, outline: "none" }}
+                            className="input-bare flex-1 mt-2 min-h-24"
                           />
                         ) : unit.body ? (
                           <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
@@ -1289,7 +1260,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
                     {canEdit && (
                       // 元テキスト側の下に担当者/ステータス、訳文側の下に保存ボタン（画像の構成に合わせる）。
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
+                      <div className="compare-grid mt-3">
                         <div className="flex gap-3 flex-wrap items-end">
                           {isOwner && (
                             <label className="flex flex-col min-w-0">
@@ -1298,7 +1269,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                                 value={unit.assigned_to ?? ""}
                                 onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
                                 disabled={actionBusy === `assign-${unit.id}`}
-                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                                className="select-sm"
                               >
                                 <option value="">{t.noAssignee}</option>
                                 {members.filter((m) => m.status === "approved").map((m) => (
@@ -1314,7 +1285,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                                 value={unit.status}
                                 onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
                                 disabled={actionBusy === `status-${unit.id}`}
-                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                                className="select-sm"
                               >
                                 <option value="todo">{t.statusPending}</option>
                                 <option value="in_progress">{t.statusInProgress}</option>
@@ -1360,7 +1331,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       onClick={() => handleLoadUnitComments(unit.id)}
                       aria-expanded={expandedUnit === unit.id}
                       aria-controls={`unit-discussion-${unit.id}`}
-                      style={{ minHeight: 44, background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 12, padding: "4px 0" }}
+                      className="text-button"
                     >
                       {expandedUnit === unit.id ? t.closeDiscussion : t.openDiscussion}
                       {unitComments[unit.id]?.length ? ` (${unitComments[unit.id].length})` : ""}
@@ -1373,10 +1344,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           <p className="text-xs text-faint">{ui.noDiscussion}</p>
                         )}
                         {(unitComments[unit.id] ?? []).map((c) => (
-                          <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                          <div key={c.id} className="discussion-row">
                             <span className="font-bold">{c.username}</span>
                             <span className="text-faint text-xs ml-2">{formatRelativeTime(c.created_at)}</span>
-                            <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
+                            <p className={c.is_deleted ? "mt-1 mb-0 text-faint" : "mt-1 mb-0"}>
                               {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
                             </p>
                           </div>

@@ -147,17 +147,7 @@ export default function TranslationReadChapterPage({
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
+      <div className="reader-sticky-header">
         <p className="m-0 text-sm font-normal text-muted">
           <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
@@ -173,9 +163,8 @@ export default function TranslationReadChapterPage({
 
       <div
         className={`reader-wrapper${selectedUnit ? " has-verse" : ""}`}
-        style={{ display: "flex" }}
       >
-        <div className="reader-main flex-1 min-w-0 py-8 px-8 overflow-y-auto" >
+        <div className="reader-main" >
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             <h1 className="text-xl font-bold mb-1">
               {project?.name} {t.chapterFmt(chapterNum)}
@@ -311,30 +300,7 @@ export default function TranslationReadChapterPage({
           href={`/translations/${id}/read/${prevChapter}`}
           title={t.chapterFmt(prevChapter)}
           aria-label={`${t.prevChapter} (${prevChapter})`}
-          className="chapter-nav-prev"
-          style={{
-            position: "fixed",
-            left: "var(--sidebar-width)",
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "18px 10px",
-            background: "var(--bg-alt)",
-            border: "1px solid var(--border)",
-            borderLeft: "none",
-            borderRadius: "0 8px 8px 0",
-            color: "var(--text)",
-            textDecoration: "none",
-            fontSize: 20,
-            opacity: 0.75,
-            zIndex: 20,
-            transition: "opacity 0.15s",
-            lineHeight: 1,
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+          className="chapter-nav chapter-nav-prev"
         >
           ‹
         </Link>
@@ -345,30 +311,7 @@ export default function TranslationReadChapterPage({
           href={`/translations/${id}/read/${nextChapter}`}
           title={t.chapterFmt(nextChapter)}
           aria-label={`${t.nextChapter} (${nextChapter})`}
-          className="chapter-nav-next"
-          style={{
-            position: "fixed",
-            right: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "18px 10px",
-            background: "var(--bg-alt)",
-            border: "1px solid var(--border)",
-            borderRight: "none",
-            borderRadius: "8px 0 0 8px",
-            color: "var(--text)",
-            textDecoration: "none",
-            fontSize: 20,
-            opacity: 0.75,
-            zIndex: 20,
-            transition: "opacity 0.15s",
-            lineHeight: 1,
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+          className="chapter-nav chapter-nav-next"
         >
           ›
         </Link>

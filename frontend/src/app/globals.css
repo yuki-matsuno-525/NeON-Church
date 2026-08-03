@@ -917,10 +917,81 @@ select:focus-visible {
   background: var(--bg-hover);
 }
 
-/* ハンバーガーボタン: デスクトップでは非表示
-   （Navbar 側のインライン style に勝たせるため !important が必要） */
+/* ハンバーガーボタン: 画面が広いときは出さない。
+   出す・出さないをこのクラスだけが決めるようにしたので、!important は要らない
+   （以前は要素側にも display の指定があり、それに勝つ必要があった）。 */
 .hamburger-btn {
-  display: none !important;
+  display: none;
+}
+
+/* ----- 章を送る左右のつまみ -----
+   画面の左右の端に貼り付く「‹ ›」。以前は 2 つの読書画面がそれぞれ
+   同じ指定を要素側に書き、さらに色の変化を JavaScript のマウス操作で
+   付け外ししていた。ここにまとめ、ホバーは CSS に任せる。 */
+.chapter-nav {
+  position: fixed;
+  top: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.75;
+  transform: translateY(-50%);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.chapter-nav:hover,
+.chapter-nav:focus-visible {
+  opacity: 1;
+}
+/* 前の章。サイドバーの右隣に置く（スマホではサイドバーが画面外なので 0 に戻す）。 */
+.chapter-nav-prev {
+  left: var(--sidebar-width);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+/* 次の章。画面の右端。 */
+.chapter-nav-next {
+  right: 0;
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* ----- 読書画面の上に貼り付く帯 -----
+   書名と章の送り、訳の切り替えが乗る。以前は見た目を要素側に書いていたため、
+   スマホ用の指定が勝てず !important が必要だった。 */
+.reader-sticky-header {
+  position: sticky;
+  top: var(--navbar-height);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass-nav);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ----- 読書画面の骨格 -----
+   本文（reader-main）と、節を選んだときに出るコメント欄（reader-panel）を横に並べる。
+   以前この 3 つの見た目は要素側の Tailwind だけが持っていた。そのためスマホ用の
+   指定（下のメディアクエリ）が勝てず、すべてに !important が必要だった。
+   ここに集約したので、スマホ側は普通に上書きできる。 */
+.reader-wrapper {
+  display: flex;
+}
+.reader-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  padding: var(--spacing-8);
+  overflow-y: auto;
 }
 
 /* ナビバー認証アイテム: モバイルでは非表示 */
@@ -985,7 +1056,7 @@ select:focus-visible {
   }
 
   .hamburger-btn {
-    display: flex !important;
+    display: flex;
   }
 
   .nav-desktop-only {
@@ -993,7 +1064,7 @@ select:focus-visible {
   }
 
   .sidebar-mobile-auth {
-    display: block !important;
+    display: block;
   }
 
   .sidebar {
@@ -1020,20 +1091,20 @@ select:focus-visible {
   /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
      本文の文脈 (前後の節) を失わずにコメントを書ける。 */
   .reader-wrapper.has-verse .reader-main {
-    display: block !important;
+    display: block;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
-    padding-bottom: 70dvh !important;
+    padding-bottom: 70dvh;
   }
   .reader-wrapper.has-verse .reader-panel {
-    position: fixed !important;
-    top: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    height: 70dvh !important;
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 70dvh;
     z-index: 50;
-    display: flex !important;
-    flex-direction: column !important;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
@@ -1049,11 +1120,11 @@ select:focus-visible {
     border-top: 1px solid var(--border) !important;
   }
   .reader-wrapper.has-verse .resize-handle {
-    display: none !important;
+    display: none;
   }
 
   .reader-main {
-    padding: 16px !important;
+    padding: var(--spacing-4);
   }
 
   /* 検索バーを2段目に折り返すぶん、ナビバーを2段の高さにする
@@ -1088,10 +1159,10 @@ select:focus-visible {
   }
 
   .reader-sticky-header {
-    position: static !important;
-    padding: 8px 16px !important;
+    position: static;
+    padding: 8px 16px;
     flex-direction: column;
-    align-items: stretch !important;
+    align-items: stretch;
     gap: 8px;
   }
 
@@ -1120,7 +1191,7 @@ select:focus-visible {
 
   /* モバイルではサイドバーが画面外のため、前章ナビを画面左端に戻す */
   .chapter-nav-prev {
-    left: 0 !important;
+    left: 0;
   }
 
 }
@@ -1194,14 +1265,6 @@ textarea::placeholder {
   background: var(--text-faint);
 }
 
-/* iOS Safari prevents focus zoom only when form controls use at least 16px. */
-@media (max-width: 768px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
 
 /* ----- 翻訳プロジェクトの詳細で使う部品 -----
    以前は page.tsx の末尾に React の style オブジェクトとして置かれていた。
@@ -1330,4 +1393,142 @@ textarea::placeholder {
   color: var(--text);
   font: inherit;
   font-size: 13px;
+}
+
+/* 進捗バーの中身。幅だけを画面側から渡す。 */
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+/* 「確認中です」のような、注意を促す一言。 */
+.notice-warning {
+  padding: 10px 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.10);
+  color: var(--text-muted);
+}
+
+/* 行の中に置く小さなプルダウン。form-control より詰めてある。 */
+.select-sm {
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+}
+/* 一回り大きい版。行に単独で置くとき用。 */
+.select-md {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+/* 原文の一節。読み比べるときに本文と区別が付くよう、明朝の斜体にする。 */
+.source-text {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-base);
+  font-style: italic;
+  line-height: var(--leading-reading);
+}
+
+/* 枠も背景も持たない入力欄。カードの中に直接書き込む形にしたいとき用。 */
+.input-bare {
+  width: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  resize: vertical;
+}
+
+/* 見た目を持たない、文字だけのボタン（「コメントを開く」など）。 */
+.text-button {
+  min-height: 44px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* @メンションの候補一覧。入力欄の上に浮かせる。 */
+.mention-list {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+.mention-option {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.mention-option:hover,
+.mention-option:focus-visible {
+  background: var(--bg-hover);
+}
+
+/* 作業メモの 1 件。下線で区切る。 */
+.discussion-row {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+/* 探している場所へ飛んだとき、その項目を一時的に光らせる。 */
+.is-scroll-target {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* 章を選ぶタイルを敷き詰める。入る幅だけ横に並べ、あふれたら折り返す。 */
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--spacing-2);
+}
+/* その 1 枚。章番号の下に「3/8 完了」を重ねるので 2 段にする。
+   .chapter-button（44px 四方の素っ気ない版）とは別物。 */
+.chapter-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
