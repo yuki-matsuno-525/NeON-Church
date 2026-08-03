@@ -308,7 +308,14 @@ select:focus-visible {
   --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", "YuGothic", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
   --font-serif: "Noto Serif JP", serif;
+}
 
+/* こちらは `inline` を付けない @theme。
+   `inline` を付けると Tailwind はクラスの中に値を直接埋め込むだけで、
+   `--text-md` のような CSS 変数そのものは出力しない。
+   下の値は globals.css の中からも var() で参照したいので、
+   変数として出力される通常の @theme に置く。 */
+@theme {
   /* ----- 文字サイズ 6 段 -----
      使い方: text-xs / text-sm / text-md / text-lg / text-xl / text-hero */
   --text-*: initial;
@@ -629,19 +636,36 @@ body {
   overflow-x: clip;
 }
 
+/* サイト全体の基準。ここで決めた大きさが、個別に指定していない文字すべてに効く。
+   長らく 14px だったため「どの画面も文字が小さい」状態になっていた。
+   読み物が中心のサイトなので、決定表の本文サイズ（16px）を基準に据える。 */
 body {
   background: #090516;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-md);
+  line-height: var(--leading-base);
 }
 
+/* 見出しの既定サイズ。Tailwind のリセットは見出しの大きさを本文と同じに戻すため、
+   ここで決めておかないと、個別指定を外した見出しが本文と同じ大きさになってしまう。
+   各画面のインライン指定を剥がしていく作業の受け皿になる。 */
 h1,
 h2,
 h3 {
   font-family: var(--font-serif), "Noto Serif JP", serif;
   letter-spacing: 0.02em;
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+h1 {
+  font-size: var(--text-xl);
+}
+h2 {
+  font-size: var(--text-lg);
+}
+h3 {
+  font-size: var(--text-md);
 }
 
 /* プレースホルダー */
