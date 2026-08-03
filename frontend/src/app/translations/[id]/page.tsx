@@ -49,14 +49,10 @@ import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "../translationUiText";
+import { ReviewTab } from "@/components/translations/ReviewTab";
+import { MembersTab } from "@/components/translations/MembersTab";
+import { STATUS_BADGE_STYLE, unitStatusLabel } from "@/components/translations/unitStatus";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
-
-const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
-  todo:        { bg: "var(--bg-hover)",             color: "var(--text-muted)"    },
-  in_progress: { bg: "var(--accent-tint)",          color: "var(--accent)"        },
-  review:      { bg: "rgba(245,158,11,0.15)",       color: "var(--state-warning)" },
-  done:        { bg: "rgba(34,197,94,0.15)",         color: "var(--state-success)" },
-};
 
 function MentionInput({
   value,
@@ -347,25 +343,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [addingBook, setAddingBook] = useState(false);
   const [removingBook, setRemovingBook] = useState(false);
 
-  const statusLabel = (status: string) => {
-    if (status === "todo") return t.statusPending;
-    if (status === "in_progress") return t.statusInProgress;
-    if (status === "review") return t.statusInReview;
-    if (status === "done") return t.statusDone;
-    return status;
-  };
-
   const projectStatusLabel = (status: string) => {
     if (status === "active") return t.statusActive;
     if (status === "published") return t.statusPublished;
     if (status === "draft") return t.colDraftLabel;
     return status;
-  };
-
-  const memberStatusLabel = (status: string) => {
-    if (status === "approved") return t.statusApproved;
-    if (status === "pending") return t.statusPendingApproval;
-    return t.statusRejected;
   };
 
   // 企画全体のユニットは取らない。章ボタンとレビュー件数は summary から出し、
@@ -882,34 +864,34 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         {isOwner && (
           <div className="flex gap-2 flex-wrap">
             {project.status === "draft" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("activate")} style={btnStyle("var(--accent)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("activate")} className="chip-btn">
                 {t.startRecruiting}
               </button>
             )}
             {project.status === "active" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("publish")} style={btnStyle("var(--state-success)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("publish")} className="chip-btn">
                 {t.publish}
               </button>
             )}
             {project.status === "published" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("unpublish")} style={btnStyle("var(--state-danger)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("unpublish")} className="chip-btn chip-btn-danger">
                 {t.unpublish}
               </button>
             )}
-            <button disabled={!!actionBusy} onClick={() => void handleOpenProjectSettings()} style={btnStyle("var(--text-muted)")}>
+            <button disabled={!!actionBusy} onClick={() => void handleOpenProjectSettings()} className="chip-btn chip-btn-neutral">
               {ui.projectSettings}
             </button>
-            <button disabled={!!actionBusy} onClick={() => setConfirmDelete(true)} style={btnStyle("var(--state-danger)")}>
+            <button disabled={!!actionBusy} onClick={() => setConfirmDelete(true)} className="chip-btn chip-btn-danger">
               {t.delete}
             </button>
           </div>
         )}
 
         {user && !isOwner && project.membership_status === null && project.status === "active" && (
-          <button disabled={actionBusy === "join"} onClick={handleJoin} style={btnStyle("var(--accent)")}>{t.applyMembership}</button>
+          <button disabled={actionBusy === "join"} onClick={handleJoin} className="chip-btn">{t.applyMembership}</button>
         )}
         {user && !isOwner && project.membership_status === "rejected" && project.status === "active" && (
-          <button disabled={actionBusy === "join"} onClick={handleJoin} style={btnStyle("var(--accent)")}>{ui.reapply}</button>
+          <button disabled={actionBusy === "join"} onClick={handleJoin} className="chip-btn">{ui.reapply}</button>
         )}
         {user && !isOwner && project.membership_status === null && project.status !== "active" && project.status !== "published" && (
           <span
@@ -919,14 +901,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           </span>
         )}
         {project.status === "published" && (
-          <Link href={`/translations/${id}/read`} onClick={guardNavigation} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>
+          <Link href={`/translations/${id}/read`} onClick={guardNavigation} className="chip-btn">
             {t.readTranslation}
           </Link>
         )}
         {user && project.status === "published" && (
           <button
             onClick={handleToggleLibrary}
-            style={btnStyle(inLibrary ? "var(--text-muted)" : "var(--accent)")}
+            className={inLibrary ? "chip-btn chip-btn-neutral" : "chip-btn"}
           >
             {inLibrary ? t.removeFromLibrary : t.addToLibrary}
           </button>
@@ -955,7 +937,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               onChange={(event) => setProjectNameDraft(event.target.value)}
               required
               maxLength={200}
-              style={settingsInputStyle}
+              className="form-control"
             />
           </label>
           <label htmlFor="translation-project-description" className="grid gap-2 text-sm text-muted">
@@ -965,7 +947,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               value={projectDescriptionDraft}
               onChange={(event) => setProjectDescriptionDraft(event.target.value)}
               rows={4}
-              style={{ ...settingsInputStyle, resize: "vertical" }}
+              className="form-control resize-y"
             />
           </label>
           <label htmlFor="translation-project-language" className="grid gap-2 text-sm text-muted">
@@ -975,7 +957,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               value={projectLanguageDraft}
               onChange={(event) => setProjectLanguageDraft(event.target.value)}
               required
-              style={settingsInputStyle}
+              className="form-control"
             >
               {(translationLanguages.length > 0
                 ? translationLanguages
@@ -998,17 +980,17 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </p>
       )}
 
-      <div style={projectSummaryGridStyle}>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.status}</span>
-          <strong style={projectSummaryValueStyle}>{projectStatusLabel(project.status)}</strong>
+      <div className="stat-grid">
+        <div className="stat-item">
+          <span className="stat-label">{t.status}</span>
+          <strong className="stat-value">{projectStatusLabel(project.status)}</strong>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.progress}</span>
-          <strong style={projectSummaryValueStyle}>{progressText}</strong>
+        <div className="stat-item">
+          <span className="stat-label">{t.progress}</span>
+          <strong className="stat-value">{progressText}</strong>
           {summary && (
             <span className="block mt-1 text-faint text-xs">
-              {statusLabel("todo")} {summary.status_counts.todo} · {statusLabel("in_progress")} {summary.status_counts.in_progress}
+              {unitStatusLabel("todo", t)} {summary.status_counts.todo} · {unitStatusLabel("in_progress", t)} {summary.status_counts.in_progress}
             </span>
           )}
           <div
@@ -1017,18 +999,18 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progressPct}
-            style={detailProgressTrackStyle}
+            className="progress-track"
           >
             <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s" }} />
           </div>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.review}</span>
-          <strong style={projectSummaryValueStyle}>{reviewCount}</strong>
+        <div className="stat-item">
+          <span className="stat-label">{t.review}</span>
+          <strong className="stat-value">{reviewCount}</strong>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.units}</span>
-          <strong style={projectSummaryValueStyle}>{project.unit_count}</strong>
+        <div className="stat-item">
+          <span className="stat-label">{t.units}</span>
+          <strong className="stat-value">{project.unit_count}</strong>
           {summary && user && <span className="block mt-1 text-faint text-xs">{ui.assignedToMe(summary.assigned_to_me)}</span>}
         </div>
       </div>
@@ -1073,19 +1055,19 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               <button
                 disabled={addingBook || !!actionBusy}
                 onClick={handleAddAllChapters}
-                style={btnStyle("var(--accent)")}
+                className="chip-btn"
               >
                 {addingBook ? t.adding : t.addAllChapters}
               </button>
               <button
                 disabled={removingBook || !!actionBusy}
                 onClick={() => setConfirmDeleteAllUnits(true)}
-                style={btnStyle("var(--state-danger)")}
+                className="chip-btn chip-btn-danger"
               >
                 {removingBook ? t.deleting : t.deleteAllUnits}
               </button>
               {!addingUnit ? (
-                <button disabled={!!actionBusy} onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
+                <button disabled={!!actionBusy} onClick={handleOpenAddUnit} className="chip-btn">
                   {t.addUnit}
                 </button>
               ) : (
@@ -1121,11 +1103,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   )}
                   {/* 未選択でも押せるようにする。select の required でブラウザが理由を出す。
                       押せなくすると、なぜ押せないのかが伝わらない。 */}
-                  <button type="submit" disabled={actionBusy === "add-unit"} style={btnStyle("var(--accent)")}>{t.add}</button>
+                  <button type="submit" disabled={actionBusy === "add-unit"} className="chip-btn">{t.add}</button>
                   <button
                     type="button"
                     onClick={() => { setAddingUnit(false); setUnitChapterId(""); setUnitVerseId(""); setUnitVerses([]); }}
-                    style={btnStyle("var(--border)")}
+                    className="chip-btn chip-btn-neutral"
                   >
                     {t.cancel}
                   </button>
@@ -1206,13 +1188,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       if (hasUnsavedUnits) setPendingDiscardNavigation({ kind: "status-filter", value });
                       else setUnitStatusFilter(value);
                     }}
-                    style={filterSelectStyle}
+                    className="filter-select"
                   >
                     <option value="all">{ui.allStatuses}</option>
-                    <option value="todo">{statusLabel("todo")}</option>
-                    <option value="in_progress">{statusLabel("in_progress")}</option>
-                    <option value="review">{statusLabel("review")}</option>
-                    <option value="done">{statusLabel("done")}</option>
+                    <option value="todo">{unitStatusLabel("todo", t)}</option>
+                    <option value="in_progress">{unitStatusLabel("in_progress", t)}</option>
+                    <option value="review">{unitStatusLabel("review", t)}</option>
+                    <option value="done">{unitStatusLabel("done", t)}</option>
                   </select>
                 </label>
                 {user && (
@@ -1225,7 +1207,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         if (hasUnsavedUnits) setPendingDiscardNavigation({ kind: "assignee-filter", value });
                         else setUnitAssigneeFilter(value);
                       }}
-                      style={filterSelectStyle}
+                      className="filter-select"
                     >
                       <option value="all">{ui.allUnits}</option>
                       <option value="me">{ui.myUnits}</option>
@@ -1263,7 +1245,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
                         }}
                       >
-                        {statusLabel(unit.status)}
+                        {unitStatusLabel(unit.status, t)}
                       </span>
                     </div>
 
@@ -1275,15 +1257,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       return (
                     <>
                     {/* 元テキスト（左）と訳文（右）を枠付きカードで並べ、見比べながら翻訳できるようにする。狭い画面では自動で縦に積む。 */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.sourceText}</div>
+                    <div className="compare-grid">
+                      <div className="sub-card">
+                        <div className="col-label">{t.sourceText}</div>
                         <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
                           {unit.verse_text}
                         </p>
                       </div>
-                      <div style={subCardStyle}>
-                        <label htmlFor={`translation-body-${unit.id}`} style={colLabelStyle}>{t.translationText}</label>
+                      <div className="sub-card">
+                        <label htmlFor={`translation-body-${unit.id}`} className="col-label">{t.translationText}</label>
                         {canEdit ? (
                           // 訳文欄は常時編集可能。「訳文編集」ボタンを押さずに直接入力できる。
                           <textarea
@@ -1311,7 +1293,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         <div className="flex gap-3 flex-wrap items-end">
                           {isOwner && (
                             <label className="flex flex-col min-w-0">
-                              <span style={fieldLabelStyle}>{t.assigneeLabel}</span>
+                              <span className="field-label">{t.assigneeLabel}</span>
                               <select
                                 value={unit.assigned_to ?? ""}
                                 onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
@@ -1327,7 +1309,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           )}
                           {unit.status !== "done" && (
                             <label className="flex flex-col min-w-0">
-                              <span style={fieldLabelStyle}>{t.statusFieldLabel}</span>
+                              <span className="field-label">{t.statusFieldLabel}</span>
                               <select
                                 value={unit.status}
                                 onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
@@ -1341,7 +1323,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             </label>
                           )}
                           {isOwner && unit.status === "done" && (
-                            <button disabled={actionBusy === `status-${unit.id}`} onClick={() => setConfirmSendBackUnit(unit.id)} style={btnStyle("var(--state-warning)")}>
+                            <button disabled={actionBusy === `status-${unit.id}`} onClick={() => setConfirmSendBackUnit(unit.id)} className="chip-btn chip-btn-warning">
                               {t.sendBack}
                             </button>
                           )}
@@ -1351,7 +1333,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           <button
                             onClick={() => handleSaveBody(unit.id)}
                             disabled={saving || !dirty}
-                            style={{ ...btnStyle("var(--accent)"), opacity: saving || !dirty ? 0.5 : 1, cursor: saving || !dirty ? "default" : "pointer" }}
+                            className="chip-btn"
                           >
                             {saving ? t.saving : t.save}
                           </button>
@@ -1360,7 +1342,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                               type="button"
                               onClick={() => setConfirmDeleteUnit(unit.id)}
                               disabled={actionBusy === `delete-unit-${unit.id}`}
-                              style={{ ...btnStyle("var(--state-danger)"), marginLeft: 8 }}
+                              className="chip-btn chip-btn-danger ml-2"
                             >
                               {ui.deleteUnit}
                             </button>
@@ -1422,133 +1404,28 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       )}
 
       {tab === "review" && (
-        <div id="translation-panel-review" role="tabpanel" aria-labelledby="translation-tab-review">
-          {reviewLoading ? (
-            <SkeletonList count={2} />
-          ) : reviewUnits.length === 0 ? (
-            <EmptyState title={t.noReviewUnits} description={t.emptyReviewUnitsDesc} />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {reviewUnits.map((unit) => (
-                <div key={unit.id} className="card-glow overflow-hidden" >
-                  <div className="py-3 px-4">
-                    <div className="flex items-center gap-3 flex-wrap mb-2">
-                      <div className="text-xs text-muted flex-1 min-w-0">
-                        {unit.chapter_number}:{unit.verse_number}
-                        {unit.assigned_to_username && (
-                          <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
-                        )}
-                      </div>
-                      <span
-                        className="badge"
-                        style={{
-                          background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
-                          color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
-                        }}
-                      >
-                        {statusLabel(unit.status)}
-                      </span>
-                    </div>
-
-                    {/* ユニットタブと同じ枠付きカードで元テキストと訳文を並べる。 */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
-                          {unit.verse_text}
-                        </p>
-                      </div>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.translationText}</div>
-                        {unit.body ? (
-                          <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
-                        ) : (
-                          <p className="mt-2 mx-0 mb-0 text-sm text-faint">{t.notTranslatedYet}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end items-center gap-2 flex-wrap mt-3">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenReviewTarget(unit)}
-                        style={btnStyle("var(--accent)")}
-                      >
-                        {t.openReviewTarget}
-                      </button>
-                      {isOwner && (
-                        <>
-                          <button
-                            disabled={actionBusy === `status-${unit.id}`}
-                            onClick={() => setConfirmSendBackUnit(unit.id)}
-                            style={btnStyle("var(--state-warning)")}
-                          >
-                            {t.sendBack}
-                          </button>
-                          <button
-                            disabled={actionBusy === `status-${unit.id}`}
-                            onClick={() => setConfirmApproveUnit(unit.id)}
-                            style={btnStyle("var(--state-success)")}
-                          >
-                            {t.approve}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ReviewTab
+          units={reviewUnits}
+          loading={reviewLoading}
+          isOwner={isOwner}
+          actionBusy={actionBusy}
+          onOpenTarget={handleOpenReviewTarget}
+          onSendBack={setConfirmSendBackUnit}
+          onApprove={setConfirmApproveUnit}
+        />
       )}
 
       {tab === "members" && (
-        <div id="translation-panel-members" role="tabpanel" aria-labelledby="translation-tab-members">
-          {!isApprovedMember ? (
-            <p className="text-sm text-muted">{t.membersOnly}</p>
-          ) : membersLoading ? (
-            <SkeletonList count={2} />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {members.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 py-3 px-4 border border-border rounded-md bg-bg-alt flex-wrap">
-                  <span className="font-bold text-sm flex-1">{m.username}</span>
-                  <span className="text-xs text-muted">
-                    {m.role === "owner" ? t.roleOwner : t.roleMember}
-                  </span>
-                  <span
-                    className="badge"
-                    style={{
-                      background: m.status === "approved" ? "rgba(34,197,94,0.15)" : m.status === "pending" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
-                      color: m.status === "approved" ? "var(--state-success)" : m.status === "pending" ? "var(--state-warning)" : "var(--state-danger)",
-                    }}
-                  >
-                    {memberStatusLabel(m.status)}
-                  </span>
-                  {m.status === "pending" && (
-                    <span className="text-xs text-faint">
-                      {ui.requestDate}: {formatRelativeTime(m.created_at)}
-                    </span>
-                  )}
-                  {isOwner && m.role !== "owner" && (
-                    <div className="flex gap-2">
-                      {m.status === "pending" && (
-                        <>
-                          <button disabled={actionBusy === `member-${m.id}`} onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("var(--state-success)", true)}>{t.approve}</button>
-                          <button disabled={actionBusy === `member-${m.id}`} onClick={() => setConfirmMemberAction({ id: m.id, action: "rejected" })} style={btnStyle("var(--state-danger)", true)}>{t.reject}</button>
-                        </>
-                      )}
-                      {m.status === "approved" && (
-                        <button disabled={actionBusy === `member-${m.id}`} onClick={() => setConfirmMemberAction({ id: m.id, action: "remove" })} style={btnStyle("var(--state-danger)", true)}>{t.kick}</button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MembersTab
+          members={members}
+          loading={membersLoading}
+          isApprovedMember={isApprovedMember}
+          isOwner={isOwner}
+          actionBusy={actionBusy}
+          onApprove={(id) => void handleMemberAction(id, "approved")}
+          onReject={(id) => setConfirmMemberAction({ id, action: "rejected" })}
+          onRemove={(id) => setConfirmMemberAction({ id, action: "remove" })}
+        />
       )}
 
       <ConfirmDialog
@@ -1660,99 +1537,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
 // resume バッジ風の淡いピル。色相で役割を残しつつ統一感を出す。
 // 緑(success)は統一感のためアクセント紫に寄せる。
-function btnStyle(color: string, small = false): React.CSSProperties {
-  const c = color === "var(--state-success)" ? "var(--accent)" : color;
-  const neutral = c === "var(--border)" || c === "var(--text-muted)";
-  const tint = neutral
-    ? "var(--bg-hover)"
-    : c === "var(--state-danger)"
-      ? "rgba(239, 68, 68, 0.15)"
-      : c === "var(--state-warning)"
-        ? "rgba(245, 158, 11, 0.15)"
-        : "var(--accent-tint)";
-  return {
-    background: tint,
-    color: neutral ? "var(--text-muted)" : c,
-    border: "none",
-    borderRadius: 999,
-    minHeight: 44,
-    padding: small ? "3px 10px" : "5px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: small ? 12 : 13,
-    whiteSpace: "nowrap" as const,
-    textDecoration: "none",
-    display: "inline-block",
-  };
-}
-
-const subCardStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  padding: "12px 14px",
-  border: "1px solid var(--border)",
-  borderRadius: 10,
-  background: "var(--bg-alt)",
-  minWidth: 0,
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: "var(--text-faint)",
-  marginBottom: 4,
-};
-
-const colLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: "var(--text-faint)",
-  marginBottom: 4,
-  textTransform: "uppercase",
-  letterSpacing: "0.03em",
-};
-
-const projectSummaryGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-  gap: 8,
-  marginBottom: 24,
-};
-
-const projectSummaryItemStyle: React.CSSProperties = {
-  minHeight: 70,
-  padding: "10px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  boxSizing: "border-box",
-};
-
-const projectSummaryLabelStyle: React.CSSProperties = {
-  display: "block",
-  marginBottom: 6,
-  color: "var(--text-muted)",
-  fontSize: 12,
-  fontWeight: 600,
-};
-
-const projectSummaryValueStyle: React.CSSProperties = {
-  display: "block",
-  color: "var(--text)",
-  fontSize: 16,
-  fontWeight: 700,
-  lineHeight: 1.3,
-};
-
-const detailProgressTrackStyle: React.CSSProperties = {
-  height: 6,
-  width: "100%",
-  marginTop: 8,
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "var(--border)",
-};
-
 type PendingDiscardNavigation =
   | { kind: "tab"; value: "units" | "review" | "members" }
   | { kind: "chapter"; value: number | null }
@@ -1761,25 +1545,3 @@ type PendingDiscardNavigation =
   | { kind: "status-filter"; value: "all" | TranslationUnit["status"] }
   | { kind: "assignee-filter"; value: "all" | "me" };
 
-const settingsInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "9px 11px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  font: "inherit",
-  boxSizing: "border-box",
-};
-
-const filterSelectStyle: React.CSSProperties = {
-  minHeight: 44,
-  padding: "6px 30px 6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  color: "var(--text)",
-  font: "inherit",
-  fontSize: 13,
-};

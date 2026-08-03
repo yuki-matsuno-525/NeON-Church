@@ -1202,3 +1202,132 @@ textarea::placeholder {
     font-size: 16px !important;
   }
 }
+
+/* ----- 翻訳プロジェクトの詳細で使う部品 -----
+   以前は page.tsx の末尾に React の style オブジェクトとして置かれていた。
+   同じ見た目を切り出した部品からも使うので、CSS 側に移している。 */
+
+/* 丸い小さな操作ボタン（承認・差し戻し・削除など）。
+   色は用途ごとに 4 種。btn とは別物で、こちらは一覧の行に並べる小粒な操作用。 */
+.chip-btn {
+  display: inline-block;
+  min-height: 44px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+.chip-btn-sm {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.chip-btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--state-danger);
+}
+.chip-btn-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--state-warning);
+}
+.chip-btn-neutral {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+}
+.chip-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* カードの中にもう一段置く枠。原文と訳文を並べるときに使う。 */
+.sub-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-alt);
+}
+
+/* 入力欄や枠の上に置く小さな見出し。 */
+.field-label {
+  margin-bottom: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+/* 原文 / 訳文 のように、列が何かを示す見出し。 */
+.col-label {
+  margin-bottom: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* 原文と訳文を横に並べる。狭いときは縦に積む。 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+/* 件数や進捗などの数字を並べる区画。 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.stat-item {
+  box-sizing: border-box;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+}
+.stat-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.stat-value {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 進捗バーの下地。中に幅だけを変えた帯を入れる。 */
+.progress-track {
+  width: 100%;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--border);
+}
+
+/* 絞り込みのプルダウン。form-control より小さく、行に並べる用。 */
+.filter-select {
+  min-height: 44px;
+  padding: 6px 30px 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
