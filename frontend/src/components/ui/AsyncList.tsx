@@ -2,14 +2,20 @@
 
 import type { ReactNode } from "react";
 import { SkeletonList } from "./SkeletonList";
+import { ErrorState } from "./ErrorState";
+import { LoadMoreButton } from "./LoadMoreButton";
 import { Button } from "./Button";
 import { useT } from "@/lib/i18n";
 
 type Props = {
   /** データを取りに行っている最中か */
   loading: boolean;
-  /** 失敗したときに出す文言。null / undefined / "" なら失敗していない */
-  error?: string | null;
+  /**
+   * 失敗したかどうか。null / undefined / false / "" なら失敗していない。
+   * - `true` を渡すと、共通の「読み込めませんでした」という大きな枠を出す
+   * - 文字列を渡すと、その一行だけを出す（カラムの中など狭い場所向け）
+   */
+  error?: string | boolean | null;
   /** 取れたけれど 0 件だったか */
   isEmpty: boolean;
   /** 0 件のときの一行メッセージ */
@@ -54,6 +60,17 @@ export function AsyncList({
   if (loading) return <SkeletonList count={skeletonCount} />;
 
   if (error) {
+    // 文言を渡されていないときは、どの画面でも同じ「読み込めませんでした」を出す。
+    if (error === true) {
+      return (
+        <ErrorState
+          title={t.loadErrorTitle}
+          message={t.loadErrorDesc}
+          onRetry={onRetry}
+          retryLabel={retryLabel}
+        />
+      );
+    }
     return (
       <div role="alert" className="py-3 px-1">
         <p className="mt-0 mx-0 mb-3 text-sm text-muted">{error}</p>
@@ -71,4 +88,55 @@ export function AsyncList({
   }
 
   return <>{children}</>;
+}
+
+/** useLoadMore が返すもののうち、AsyncPagedList が見る分だけ。 */
+type PagedListState = {
+  items: unknown[];
+  loading: boolean;
+  failed: boolean;
+  retry: () => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMoreError: Error | null;
+  loadMore: () => void;
+};
+
+type PagedProps = {
+  /** useLoadMore() の戻り値をそのまま渡す */
+  list: PagedListState;
+  /** 0 件のときの一行メッセージ */
+  emptyText?: string;
+  /** 0 件のときに EmptyState などを出したいとき */
+  empty?: ReactNode;
+  skeletonCount?: number;
+  children: ReactNode;
+};
+
+/**
+ * useLoadMore で読み足す一覧向けの AsyncList。
+ *
+ * 「読み込み中 / 失敗 / 0 件 / 中身 ＋ もっと見るボタン」という組み合わせを
+ * 20 以上の画面が同じ形で書いていた。渡すのは useLoadMore の戻り値だけにする。
+ */
+export function AsyncPagedList({ list, emptyText, empty, skeletonCount = 3, children }: PagedProps) {
+  return (
+    <AsyncList
+      loading={list.loading}
+      error={list.failed}
+      onRetry={list.retry}
+      isEmpty={list.items.length === 0}
+      emptyText={emptyText}
+      empty={empty}
+      skeletonCount={skeletonCount}
+    >
+      {children}
+      <LoadMoreButton
+        hasMore={list.hasMore}
+        loading={list.loadingMore}
+        error={!!list.loadMoreError}
+        onClick={list.loadMore}
+      />
+    </AsyncList>
+  );
 }

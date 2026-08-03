@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useRelativeTime, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-import { SkeletonList, EmptyState, ErrorState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
   notificationContextLabel,
@@ -72,10 +72,10 @@ export default function NotificationsPage() {
     loading: fetching,
     loadingMore,
     hasMore,
-    error,
     loadMoreError,
     loadMore,
     retry,
+    failed,
   } = useLoadMore(fetchPage);
 
   // 既読にできなかったときに画面だけ既読の見た目になると、未読の数字とも食い違う。
@@ -174,16 +174,14 @@ export default function NotificationsPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
-      ) : notifications.length === 0 ? (
-        <EmptyState
-          title={t.noNotifications}
-          description={t.emptyNotificationsDesc}
-        />
-      ) : (
-        <>
-          <div className="flex flex-col gap-1">
+      <AsyncList
+        loading={false}
+        error={failed}
+        onRetry={retry}
+        isEmpty={notifications.length === 0}
+        empty={<EmptyState title={t.noNotifications} description={t.emptyNotificationsDesc} />}
+      >
+        <div className="flex flex-col gap-1">
             {notifications.map((n) => {
               const url = notificationTargetUrl(n);
               const contextLabel = notificationContextLabel(n, t, lang);
@@ -200,10 +198,9 @@ export default function NotificationsPage() {
                 />
               );
             })}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
-        </>
-      )}
+        </div>
+        <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
+      </AsyncList>
     </div>
   );
 }

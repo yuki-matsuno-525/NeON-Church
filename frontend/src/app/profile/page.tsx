@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT, formatBookLocation, useRelativeTime } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
-import { SkeletonList, EmptyState, ErrorState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncPagedList, SkeletonList, EmptyState, Button, Toggle, FilterChips, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
@@ -254,36 +254,24 @@ export default function ProfilePage() {
 
       <div id={`profile-panel-${activeTab}`} role="tabpanel" aria-labelledby={`profile-tab-${activeTab}`}>
       {activeTab === "bookmarks" ? (
-        bookmarkList.loading ? (
-          <SkeletonList count={3} />
-        ) : (
-          <BookmarkList
-            bookmarks={bookmarkList.items}
-            counts={bookmarkList.counts}
-            kind={kind}
-            onKindChange={setKind}
-            hasMore={bookmarkList.hasMore}
-            loadingMore={bookmarkList.loadingMore}
-            error={bookmarkList.error}
-            loadMoreError={bookmarkList.loadMoreError}
-            onRetry={bookmarkList.retry}
-            onLoadMore={bookmarkList.loadMore}
-          />
-        )
-      ) : commentList.loading ? (
-        <SkeletonList count={3} />
-      ) : commentList.error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
+        <BookmarkList list={bookmarkList} kind={kind} onKindChange={setKind} />
       ) : (
-        <>
+        <AsyncPagedList
+          list={commentList}
+          empty={
+            <EmptyState
+              title={t.noMyComments}
+              description={t.emptyMyCommentsDesc}
+              action={
+                <Link href="/read" className="no-underline">
+                  <Button variant="primary">{t.emptyBookmarksCta}</Button>
+                </Link>
+              }
+            />
+          }
+        >
           <CommentList comments={commentList.items} />
-          <LoadMoreButton
-            hasMore={commentList.hasMore}
-            loading={commentList.loadingMore}
-            error={!!commentList.loadMoreError}
-            onClick={commentList.loadMore}
-          />
-        </>
+        </AsyncPagedList>
       )}
       </div>
     </div>
@@ -291,29 +279,17 @@ export default function ProfilePage() {
 }
 
 function BookmarkList({
-  bookmarks,
-  counts,
+  list,
   kind,
   onKindChange,
-  hasMore,
-  loadingMore,
-  error,
-  loadMoreError,
-  onRetry,
-  onLoadMore,
 }: {
-  bookmarks: Bookmark[];
-  counts: Record<BookmarkType | "all", number> | undefined;
+  /** useLoadMore() の戻り値。読み込み中・失敗・読み足しはまとめて AsyncPagedList に任せる */
+  list: ReturnType<typeof useLoadMore<Bookmark, Record<BookmarkType | "all", number>>>;
   kind: BookmarkType | null;
   onKindChange: (kind: BookmarkType | null) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  error: Error | null;
-  loadMoreError: Error | null;
-  onRetry: () => void;
-  onLoadMore: () => void;
 }) {
   const t = useT();
+  const counts = list.counts;
 
   // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
   const chips: FilterChip<BookmarkType>[] = counts
@@ -334,49 +310,33 @@ function BookmarkList({
         <FilterChips chips={chips} value={kind} onChange={onKindChange} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={onRetry} retryLabel={t.retry} />
-      ) : bookmarks.length === 0 ? (
-        <EmptyState
-          title={t.noMyBookmarks}
-          description={t.emptyMyBookmarksDesc}
-          action={
-            <Link href="/read" className="no-underline">
-              <Button variant="primary">{t.emptyBookmarksCta}</Button>
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            {bookmarks.map((bm) => (
-              <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
-            ))}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={onLoadMore} />
-        </>
-      )}
+      <AsyncPagedList
+        list={list}
+        empty={
+          <EmptyState
+            title={t.noMyBookmarks}
+            description={t.emptyMyBookmarksDesc}
+            action={
+              <Link href="/read" className="no-underline">
+                <Button variant="primary">{t.emptyBookmarksCta}</Button>
+              </Link>
+            }
+          />
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {list.items.map((bm) => (
+            <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+          ))}
+        </div>
+      </AsyncPagedList>
     </>
   );
 }
 
 function CommentList({ comments }: { comments: MyComment[] }) {
-  const t = useT();
   const { lang } = useLang();
   const formatRelativeTime = useRelativeTime();
-  if (comments.length === 0) {
-    return (
-      <EmptyState
-        title={t.noMyComments}
-        description={t.emptyMyCommentsDesc}
-        action={
-          <Link href="/read" className="no-underline">
-            <Button variant="primary">{t.emptyBookmarksCta}</Button>
-          </Link>
-        }
-      />
-    );
-  }
   return (
     <div className="flex flex-col gap-3">
       {comments.map((c) => {

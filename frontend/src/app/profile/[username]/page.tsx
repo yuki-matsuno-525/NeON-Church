@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useRelativeTime } from "@/lib/i18n";
-import { EmptyState, ErrorState, FilterChips, LoadMoreButton, SkeletonList, type FilterChip } from "@/components/ui";
+import { AsyncPagedList, EmptyState, ErrorState, FilterChips, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
@@ -193,30 +193,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
 
       {activeTab === "articles" && (
         <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" className="flex flex-col gap-3">
-          {articleList.loading ? (
-            <SkeletonList count={3} />
-          ) : articleList.error ? (
-            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={articleList.retry} retryLabel={t.retry} />
-          ) : articleList.items.length === 0 ? (
-            <EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />
-          ) : (
-            <>
-              {articleList.items.map((article) => (
-                <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-                  <p className="text-sm font-bold mt-0 mx-0 mb-1">{article.title}</p>
-                  <p className="m-0 text-sm text-muted leading-base">
-                    {article.summary}
-                  </p>
-                </Link>
-              ))}
-              <LoadMoreButton
-                hasMore={articleList.hasMore}
-                loading={articleList.loadingMore}
-                error={!!articleList.loadMoreError}
-                onClick={articleList.loadMore}
-              />
-            </>
-          )}
+          <AsyncPagedList list={articleList} empty={<EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />}>
+            {articleList.items.map((article) => (
+              <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+                <p className="text-sm font-bold mt-0 mx-0 mb-1">{article.title}</p>
+                <p className="m-0 text-sm text-muted leading-base">
+                  {article.summary}
+                </p>
+              </Link>
+            ))}
+          </AsyncPagedList>
         </div>
       )}
 
@@ -228,36 +214,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           {bookmarkList.counts && bookmarkList.counts.all > 0 && (
             <FilterChips chips={bookmarkChips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
           )}
-          {bookmarkList.loading ? (
-            <SkeletonList count={3} />
-          ) : bookmarkList.error ? (
-            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={bookmarkList.retry} retryLabel={t.retry} />
-          ) : bookmarkList.items.length === 0 ? (
-            <p className="text-sm text-muted">{t.noMyBookmarks}</p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-3">
-                {bookmarkList.items.map((bm) => (
-                  <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
-                ))}
-              </div>
-              <LoadMoreButton
-                hasMore={bookmarkList.hasMore}
-                loading={bookmarkList.loadingMore}
-                error={!!bookmarkList.loadMoreError}
-                onClick={bookmarkList.loadMore}
-              />
-            </>
-          )}
+          <AsyncPagedList list={bookmarkList} emptyText={t.noMyBookmarks}>
+            <div className="flex flex-col gap-3">
+              {bookmarkList.items.map((bm) => (
+                <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+              ))}
+            </div>
+          </AsyncPagedList>
         </>
-      ) : commentList.loading ? (
-        <SkeletonList count={3} />
-      ) : commentList.error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
-      ) : commentList.items.length === 0 ? (
-        <p className="text-sm text-muted">{t.noMyComments}</p>
       ) : (
-        <>
+        <AsyncPagedList list={commentList} emptyText={t.noMyComments}>
           <div className="flex flex-col gap-3">
             {commentList.items.map((c) => (
               <div key={c.id} style={cardStyle}>
@@ -270,13 +236,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
               </div>
             ))}
           </div>
-          <LoadMoreButton
-            hasMore={commentList.hasMore}
-            loading={commentList.loadingMore}
-            error={!!commentList.loadMoreError}
-            onClick={commentList.loadMore}
-          />
-        </>
+        </AsyncPagedList>
       )}
       </div>
       )}

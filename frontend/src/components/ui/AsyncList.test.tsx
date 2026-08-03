@@ -38,6 +38,17 @@ describe("AsyncList", () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it("文言を渡さない失敗は、どの画面でも同じ枠で伝える", () => {
+    render(
+      <AsyncList loading={false} error isEmpty emptyText="ありません" onRetry={vi.fn()}>
+        <p>中身</p>
+      </AsyncList>
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("読み込めませんでした");
+    expect(screen.getByRole("button", { name: /もう一度試す/ })).toBeInTheDocument();
+  });
+
   it("再試行の文言を画面側から差し替えられる", () => {
     render(
       <AsyncList loading={false} error="失敗" isEmpty={false} onRetry={vi.fn()} retryLabel="再試行">

@@ -18,7 +18,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveVersionVerseIds, resolveVersionChapterIds, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, ErrorState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 
@@ -51,7 +51,7 @@ export default function BookmarksPage() {
           }),
     [user, kind]
   );
-  const { items: bookmarks, setItems, counts, setCounts, loading: fetching, loadingMore, hasMore, error, loadMoreError, loadMore, retry } =
+  const { items: bookmarks, setItems, counts, setCounts, loading: fetching, loadingMore, hasMore, failed, loadMoreError, loadMore, retry } =
     useLoadMore(fetchPage);
 
   const handleRemove = async (bm: Bookmark) => {
@@ -165,33 +165,35 @@ export default function BookmarksPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
-      ) : bookmarks.length === 0 ? (
-        <EmptyState
-          title={t.noBookmarks}
-          description={t.emptyBookmarksDesc}
-          action={
-            <Link href="/read" className="no-underline">
-              <Button variant="primary">{t.emptyBookmarksCta}</Button>
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            {bookmarks.map((bm) => (
-              <BookmarkCard
-                key={bm.id}
-                bookmark={bm}
-                showKind={kind === null}
-                onRemove={actionBusy ? undefined : () => handleRemove(bm)}
-              />
-            ))}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
-        </>
-      )}
+      <AsyncList
+        loading={false}
+        error={failed}
+        onRetry={retry}
+        isEmpty={bookmarks.length === 0}
+        empty={
+          <EmptyState
+            title={t.noBookmarks}
+            description={t.emptyBookmarksDesc}
+            action={
+              <Link href="/read" className="no-underline">
+                <Button variant="primary">{t.emptyBookmarksCta}</Button>
+              </Link>
+            }
+          />
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {bookmarks.map((bm) => (
+            <BookmarkCard
+              key={bm.id}
+              bookmark={bm}
+              showKind={kind === null}
+              onRemove={actionBusy ? undefined : () => handleRemove(bm)}
+            />
+          ))}
+        </div>
+        <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
+      </AsyncList>
     </div>
   );
 }
