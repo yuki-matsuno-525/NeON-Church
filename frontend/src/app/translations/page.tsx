@@ -78,10 +78,7 @@ export default function TranslationsPage() {
         description={t.translationsDesc}
         action={
           user ? (
-            <Link
-              href="/translations/new"
-              className="bg-accent text-accent-text rounded-md py-2 px-4 no-underline font-bold text-sm"
-            >
+            <Link href="/translations/new" className="cta-button">
               {t.newProject}
             </Link>
           ) : undefined
@@ -95,7 +92,7 @@ export default function TranslationsPage() {
           onChange={handleProjectSearchChange}
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
-          inputStyle={projectSearchInputStyle}
+          inputClassName="form-control text-sm"
           wrapperStyle={{ width: "100%" }}
         />
       </label>
@@ -256,10 +253,10 @@ function ProjectCard({
           </span>
         </div>
 
-        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
+        <h3 className="card-title">{p.name}</h3>
 
         {p.description && (
-          <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+          <p className="card-summary">
             {p.description}
           </p>
         )}
@@ -281,9 +278,9 @@ function ProjectCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progressPct}
-            style={progressTrackStyle}
+            className="progress-track mt-0"
           >
-            <div style={{ width: `${progressPct}%`, height: "100%", background: accent, borderRadius: 999 }} />
+            <div className="progress-fill" style={{ width: `${progressPct}%`, background: accent }} />
           </div>
         </div>
       </div>
@@ -294,24 +291,4 @@ function ProjectCard({
 
 
 
-const projectSearchInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "8px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};
 
-const progressTrackStyle: React.CSSProperties = {
-  height: 7,
-  width: "100%",
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "rgba(255,255,255,0.12)",
-};
