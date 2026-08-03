@@ -1,6 +1,7 @@
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,6 +10,12 @@ from translations.access import filter_by_project_visibility
 
 from .models import Notification
 from .serializers import NotificationSerializer
+
+
+class UnreadCountSerializer(serializers.Serializer):
+    """未読件数だけを返す軽量レスポンス。"""
+
+    count = serializers.IntegerField()
 
 
 class NotificationListView(generics.ListAPIView):
@@ -76,6 +83,7 @@ class NotificationReadView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={200: None})
     def post(self, request, pk):
         notification = get_object_or_404(
             filter_by_project_visibility(
@@ -97,6 +105,7 @@ class NotificationReadAllView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={200: None})
     def post(self, request):
         filter_by_project_visibility(
             Notification.objects.filter(recipient=request.user, is_read=False),
@@ -112,6 +121,7 @@ class NotificationUnreadCountView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(responses={200: UnreadCountSerializer})
     def get(self, request):
         count = filter_by_project_visibility(
             Notification.objects.filter(recipient=request.user, is_read=False),

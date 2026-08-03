@@ -58,8 +58,16 @@ jobs:
       - name: Run tests
         run: pytest
 
+      # --validate だけでは形式の妥当性しか見ず、「シリアライザを推測できない」
+      # 等のエラーがあっても終了コード 0 で通ってしまう。--fail-on-warn を付けて
+      # 初めて、スキーマの欠落がフロントの型に漏れる前に止められる。
       - name: Validate OpenAPI schema
-        run: python manage.py spectacular --file schema.yaml --validate
+        run: python manage.py spectacular --file schema.yaml --validate --fail-on-warn
+
+      # schema.yaml はコミット済み。API の形が変わった PR では差分が本文に出るので、
+      # レビューで「何が変わったか」を読める。生成し直したものと食い違ったら落とす。
+      - name: Check committed schema is up to date
+        run: git diff --exit-code -- schema.yaml
 
       - name: Django deploy security check (prod settings)
         env:

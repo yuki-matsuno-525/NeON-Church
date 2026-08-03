@@ -6,12 +6,15 @@ from django.db import OperationalError, connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
+from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
+
+from .schema import DetailSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,20 @@ class FeedbackRateThrottle(SimpleRateThrottle):
         return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
 
 
+class HealthSerializer(serializers.Serializer):
+    """ヘルスチェックの応答。"""
+
+    status = serializers.ChoiceField(choices=("ok", "degraded"))
+    db = serializers.BooleanField()
+
+
+@extend_schema(
+    request=FeedbackSerializer,
+    responses={
+        201: DetailSerializer,
+        503: DetailSerializer,
+    },
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([FeedbackRateThrottle])
@@ -69,6 +86,7 @@ def feedback(request: Request) -> Response:
     return Response({"detail": "Feedback received."}, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(responses={200: HealthSerializer, 503: HealthSerializer})
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def healthz(request: Request) -> Response:

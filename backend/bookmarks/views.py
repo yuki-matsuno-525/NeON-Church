@@ -204,6 +204,9 @@ class BookmarkDestroyView(generics.DestroyAPIView):
     DELETE /api/bookmarks/{pk}/  お気に入り削除（自分のもののみ）
     """
 
+    # 削除は本文を返さないので実行時には使われないが、スキーマ生成が
+    # 対象の型を決められるように置いておく。
+    serializer_class = BookmarkSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
 
     def get_queryset(self):

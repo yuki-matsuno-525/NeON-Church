@@ -216,6 +216,9 @@ class ArticleCommentDestroyView(generics.DestroyAPIView):
     DELETE /api/article-comments/{id}/   自分のコメントを消す（論理削除。返信の親を保つため）
     """
 
+    # 削除は本文を返さないので実行時には使われないが、スキーマ生成が
+    # 対象の型を決められるように置いておく。
+    serializer_class = ArticleCommentSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = ArticleComment.objects.all()
 

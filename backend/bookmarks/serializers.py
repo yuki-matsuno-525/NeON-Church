@@ -1,9 +1,18 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
 from comments.models import DELETED_COMMENT_BODY
 
 from .models import Bookmark
+
+
+class BookmarkReferenceSerializer(serializers.Serializer):
+    """箇所のお気に入り（書/章/節）が指す位置。スキーマに形を出すためだけの宣言。"""
+
+    book = serializers.CharField(help_text="正典書の slug")
+    chapter = serializers.IntegerField(allow_null=True)
+    verse = serializers.IntegerField(allow_null=True)
 
 
 class CommentBriefSerializer(serializers.Serializer):
@@ -20,12 +29,12 @@ class CommentBriefSerializer(serializers.Serializer):
     source_translation = serializers.CharField(read_only=True)
     is_deleted = serializers.BooleanField(read_only=True)
 
-    def get_body(self, obj):
+    def get_body(self, obj) -> str:
         if obj.is_deleted:
             return DELETED_COMMENT_BODY
         return obj.body[:100]
 
-    def get_location_label(self, obj):
+    def get_location_label(self, obj) -> str:
         from comments.serializers import (
             _format_location_label,
             _get_location_parts,
@@ -36,7 +45,7 @@ class CommentBriefSerializer(serializers.Serializer):
         book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
 
-    def get_book_slug(self, obj):
+    def get_book_slug(self, obj) -> str:
         return obj.canonical_book.slug if obj.canonical_book_id else ""
 
 
@@ -90,7 +99,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
             "translation_project": {"write_only": True},
         }
 
-    def get_target_type(self, obj):
+    def get_target_type(self, obj) -> str | None:
         if obj.comment_id:
             return "comment"
         if obj.translation_project_id:
@@ -103,6 +112,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
             return "book"
         return None
 
+    @extend_schema_field(BookmarkReferenceSerializer(allow_null=True))
     def get_reference(self, obj):
         # 箇所のお気に入り（書/章/節）なら {book: slug, chapter, verse} を返す。粒度に応じて章・節は null。
         # comment/project お気に入りは null。
@@ -114,7 +124,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def get_verse_text(self, obj):
+    def get_verse_text(self, obj) -> str | None:
         # view が annotate した表示用本文。節のお気に入り以外や本文が引けない場合は null。
         return getattr(obj, "verse_text", None)
 

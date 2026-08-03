@@ -219,6 +219,16 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "NeON-Church API",
     "DESCRIPTION": "聖書読書・コメントプラットフォーム NeON-Church の REST API",
     "VERSION": "0.1.0",
+    # スキーマ本体には /api/schema/ 自身を載せない（フロントの型生成に不要）。
+    "SERVE_INCLUDE_SCHEMA": False,
+    # 「status」という名前の選択肢が3つのモデルにあり、放っておくと
+    # Status299Enum のような不安定な自動名になる。生成のたびに名前が変わると
+    # フロントの型の差分が読めなくなるので、ここで固定する。
+    "ENUM_NAME_OVERRIDES": {
+        "TranslationProjectStatusEnum": "translations.models.TranslationProject.STATUS_CHOICES",
+        "TranslationMembershipStatusEnum": "translations.models.TranslationMembership.STATUS_CHOICES",
+        "TranslationUnitStatusEnum": "translations.models.TranslationUnit.STATUS_CHOICES",
+    },
 }
 
 # ------------------------------------------------------------------

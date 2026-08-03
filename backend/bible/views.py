@@ -2,6 +2,7 @@ import datetime
 
 from django.core.cache import cache
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
@@ -10,11 +11,18 @@ from rest_framework.views import APIView
 
 from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
+from common.schema import DetailSerializer
 
 from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import (
     BookSerializer,
     ChapterSerializer,
+    ReferenceBookReadResponseSerializer,
+    ReferenceBooksResponseSerializer,
+    ReferenceChaptersResponseSerializer,
+    ReferenceReadResponseSerializer,
+    ReferenceVersesResponseSerializer,
+    SearchResponseSerializer,
     VerseOfDaySerializer,
     VerseSearchSerializer,
     VerseSerializer,
@@ -147,6 +155,7 @@ def _book_for_translation(slug: str, translation: str | None):
 class ReferenceBooksView(_ReferenceView):
     """GET /api/references/<slug>/books/  その書の全版の書 id。"""
 
+    @extend_schema(responses={200: ReferenceBooksResponseSerializer})
     def get(self, request, slug):
         self._require_slug(slug)
         books = Book.objects.filter(canonical_book__slug=slug).order_by("order", "translation")
@@ -161,6 +170,7 @@ class ReferenceBooksView(_ReferenceView):
 class ReferenceChaptersView(_ReferenceView):
     """GET /api/references/<slug>/chapters/<chapter>/  その章の全版の章 id。"""
 
+    @extend_schema(responses={200: ReferenceChaptersResponseSerializer})
     def get(self, request, slug, chapter):
         self._require_slug(slug)
         chapters = (
@@ -185,6 +195,7 @@ class ReferenceBookReadView(_ReferenceView):
     こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
     """
 
+    @extend_schema(responses={200: ReferenceBookReadResponseSerializer})
     def get(self, request, slug):
         self._require_slug(slug)
         book = _book_for_translation(slug, request.query_params.get("translation"))
@@ -211,6 +222,7 @@ class ReferenceReadView(_ReferenceView):
     「その章が無い」のかを言い分けられるようにする。
     """
 
+    @extend_schema(responses={200: ReferenceReadResponseSerializer})
     def get(self, request, slug, chapter):
         self._require_slug(slug)
         book = _book_for_translation(slug, request.query_params.get("translation"))
@@ -232,6 +244,7 @@ class ReferenceReadView(_ReferenceView):
 class ReferenceVersesView(_ReferenceView):
     """GET /api/references/<slug>/verses/<chapter>/<verse>/  その節の全版の節 id。"""
 
+    @extend_schema(responses={200: ReferenceVersesResponseSerializer})
     def get(self, request, slug, chapter, verse):
         self._require_slug(slug)
         verses = (
@@ -267,6 +280,7 @@ class SearchView(APIView):
     authentication_classes: list = []
     VERSE_PAGE_SIZE = 50
 
+    @extend_schema(responses={200: SearchResponseSerializer})
     def get(self, request):
         q = request.query_params.get("q", "").strip()
         kind = request.query_params.get("kind", "all")
@@ -343,6 +357,7 @@ class VerseOfDayView(APIView):
     # トークンを完全に無視する（iOS Safari の ITP でクッキーが部分的に破損する症状対策）。
     authentication_classes: list = []
 
+    @extend_schema(responses={200: VerseOfDaySerializer, 503: DetailSerializer})
     def get(self, request):
         translation = request.query_params.get("translation", "口語訳")
         today = timezone.localdate()

@@ -1,11 +1,13 @@
 from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
+from common.schema import DetailSerializer
 
 from .models import Plan, PlanDay, PlanDayProgress, PlanSubscription
 from .serializers import (
@@ -123,6 +125,19 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
         return context
 
 
+class PlanDayCreateRequestSerializer(serializers.Serializer):
+    """日を末尾に足すときの入力。どちらも省略できる（空で作って後から書ける）。"""
+
+    title = serializers.CharField(required=False, allow_blank=True)
+    devotional = serializers.CharField(required=False, allow_blank=True)
+
+
+class PlanDayReorderRequestSerializer(serializers.Serializer):
+    """並べ替えの入力。並べたい順に、その計画の全部の日の id を渡す。"""
+
+    day_ids = serializers.ListField(child=serializers.UUIDField())
+
+
 class PlanDayCreateView(APIView):
     """
     POST /api/plans/{id}/days/   日を末尾に足す（書いた人だけ）
@@ -133,6 +148,10 @@ class PlanDayCreateView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=PlanDayCreateRequestSerializer,
+        responses={201: PlanDaySerializer, 400: DetailSerializer},
+    )
     def post(self, request, pk):
         plan = _get_owned_plan(request, pk)
         check_day_limit(plan)
@@ -196,6 +215,10 @@ class PlanDayReorderView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=PlanDayReorderRequestSerializer,
+        responses={204: None, 400: DetailSerializer},
+    )
     def post(self, request, pk):
         plan = _get_owned_plan(request, pk)
         if plan.has_readers:
@@ -242,6 +265,10 @@ class PlanSubscribeView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=None,
+        responses={200: PlanSubscriptionSerializer, 201: PlanSubscriptionSerializer},
+    )
     def post(self, request, pk):
         plan = _readable_plan(request, pk)
         subscription, created = PlanSubscription.objects.get_or_create(user=request.user, plan=plan)
@@ -253,6 +280,7 @@ class PlanSubscribeView(APIView):
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk):
         subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
         subscription.is_active = False
@@ -267,6 +295,7 @@ class PlanRestartView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={200: PlanSubscriptionSerializer})
     def post(self, request, pk):
         subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
         with transaction.atomic():
@@ -288,6 +317,7 @@ class PlanDayCompleteView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={201: None})
     def post(self, request, pk, day_id):
         subscription = get_object_or_404(
             PlanSubscription,
@@ -299,6 +329,7 @@ class PlanDayCompleteView(APIView):
         PlanDayProgress.objects.get_or_create(subscription=subscription, day=day)
         return Response(status=status.HTTP_201_CREATED)
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk, day_id):
         subscription = get_object_or_404(
             PlanSubscription,

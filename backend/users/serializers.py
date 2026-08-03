@@ -79,10 +79,10 @@ class AccountSettingsSerializer(UserSerializer):
             "social_providers",
         ]
 
-    def get_has_usable_password(self, obj):
+    def get_has_usable_password(self, obj) -> bool:
         return obj.has_usable_password()
 
-    def get_social_providers(self, obj):
+    def get_social_providers(self, obj) -> list[str]:
         return list(obj.social_accounts.order_by("provider").values_list("provider", flat=True))
 
 
@@ -183,3 +183,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, min_length=8)
+
+
+class SessionSerializer(serializers.Serializer):
+    """ログイン中の端末（有効な refresh token）1件。current は今使っているもの。"""
+
+    id = serializers.CharField(help_text="トークンの jti")
+    created_at = serializers.DateTimeField()
+    expires_at = serializers.DateTimeField()
+    current = serializers.BooleanField()

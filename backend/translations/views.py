@@ -4,11 +4,13 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
+from common.schema import DetailSerializer
 from notifications.models import Notification
 from notifications.services import send_user_notification
 
@@ -25,12 +27,19 @@ from .models import (
     TranslationUnit,
 )
 from .serializers import (
+    BookAddedSerializer,
+    BookRemovedSerializer,
+    BookSelectionSerializer,
     LanguageSerializer,
+    MembershipDecisionSerializer,
     TranslationCommentSerializer,
     TranslationMembershipSerializer,
     TranslationProjectSerializer,
+    TranslationReadResponseSerializer,
     TranslationUnitCreateSerializer,
     TranslationUnitSerializer,
+    TranslationUnitSummaryResponseSerializer,
+    UnitAssignSerializer,
 )
 
 User = get_user_model()
@@ -225,6 +234,7 @@ class TranslationPublishView(APIView):
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
+    @extend_schema(request=None, responses={200: TranslationProjectSerializer})
     def post(self, request, project_id):
         return _set_project_status(self, request, project_id, TranslationProject.STATUS_PUBLISHED)
 
@@ -234,6 +244,7 @@ class TranslationUnpublishView(APIView):
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
+    @extend_schema(request=None, responses={200: TranslationProjectSerializer})
     def post(self, request, project_id):
         return _set_project_status(self, request, project_id, TranslationProject.STATUS_ACTIVE)
 
@@ -243,6 +254,7 @@ class TranslationActivateView(APIView):
 
     permission_classes = [permissions.IsAuthenticated, IsProjectOwner]
 
+    @extend_schema(request=None, responses={200: TranslationProjectSerializer})
     def post(self, request, project_id):
         return _set_project_status(self, request, project_id, TranslationProject.STATUS_ACTIVE)
 
@@ -257,6 +269,10 @@ class TranslationJoinView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=None,
+        responses={201: TranslationMembershipSerializer, 400: DetailSerializer},
+    )
     def post(self, request, project_id):
         project = _get_visible_project_or_404(request, project_id)
         if project.status != TranslationProject.STATUS_ACTIVE:
@@ -316,6 +332,10 @@ class TranslationMemberDetailView(APIView):
             self.permission_denied(request)
         return project
 
+    @extend_schema(
+        request=MembershipDecisionSerializer,
+        responses={200: TranslationMembershipSerializer, 400: DetailSerializer},
+    )
     def patch(self, request, project_id, membership_id):
         self._get_project(project_id, request)
         membership = get_object_or_404(
@@ -334,6 +354,7 @@ class TranslationMemberDetailView(APIView):
         membership.save(update_fields=["status"])
         return Response(TranslationMembershipSerializer(membership).data)
 
+    @extend_schema(responses={204: None})
     def delete(self, request, project_id, membership_id):
         self._get_project(project_id, request)
         membership = get_object_or_404(
@@ -442,6 +463,7 @@ class TranslationUnitSummaryView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(responses={200: TranslationUnitSummaryResponseSerializer})
     def get(self, request, project_id):
         _get_visible_project_or_404(request, project_id)
         units = TranslationUnit.objects.filter(project_id=project_id)
@@ -551,6 +573,10 @@ class TranslationUnitAssignView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=UnitAssignSerializer,
+        responses={200: TranslationUnitSerializer, 403: DetailSerializer},
+    )
     def post(self, request, project_id, unit_id):
         project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
@@ -620,6 +646,7 @@ class TranslationCommentDeleteView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(responses={204: None, 403: DetailSerializer})
     def delete(self, request, project_id, comment_id):
         _get_visible_project_or_404(request, project_id)
         comment = get_object_or_404(TranslationComment, pk=comment_id, project_id=project_id)
@@ -643,6 +670,10 @@ class TranslationAddBookView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=BookSelectionSerializer,
+        responses={201: BookAddedSerializer, 400: DetailSerializer, 403: DetailSerializer},
+    )
     def post(self, request, project_id):
         from bible.models import Book, Verse
 
@@ -690,6 +721,10 @@ class TranslationRemoveBookView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=BookSelectionSerializer,
+        responses={200: BookRemovedSerializer, 400: DetailSerializer, 403: DetailSerializer},
+    )
     def delete(self, request, project_id):
         from bible.models import Book
 
@@ -743,6 +778,7 @@ class TranslationLibraryView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={201: TranslationProjectSerializer})
     def post(self, request, project_id):
         project = get_object_or_404(
             TranslationProject,
@@ -755,6 +791,7 @@ class TranslationLibraryView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+    @extend_schema(responses={204: None})
     def delete(self, request, project_id):
         TranslationLibraryEntry.objects.filter(user=request.user, project_id=project_id).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -774,6 +811,7 @@ class TranslationReadView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(responses={200: TranslationReadResponseSerializer})
     def get(self, request, project_id):
         project = get_object_or_404(
             TranslationProject,

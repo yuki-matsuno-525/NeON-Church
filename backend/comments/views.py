@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -10,6 +11,7 @@ from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from common.schema import DetailSerializer
 from translations.access import can_view_project_work, get_visible_project_or_404
 
 from .models import Comment, Report, Tag, Vote
@@ -219,6 +221,7 @@ class CommentUpvoteView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={201: None, 409: DetailSerializer})
     def post(self, request, pk):
         comment = _get_visible_comment_or_404(request, pk=pk)
         _, created = Vote.objects.get_or_create(user=request.user, comment=comment)
@@ -232,6 +235,7 @@ class CommentUpvoteView(APIView):
         )
         return Response(status=status.HTTP_201_CREATED)
 
+    @extend_schema(responses={204: None, 404: DetailSerializer})
     def delete(self, request, pk):
         comment = _get_visible_comment_or_404(request, pk=pk)
         deleted_count, _ = Vote.objects.filter(user=request.user, comment=comment).delete()
@@ -352,6 +356,10 @@ class ReportView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "report"
 
+    @extend_schema(
+        request=ReportSerializer,
+        responses={201: ReportSerializer, 400: DetailSerializer, 409: DetailSerializer},
+    )
     def post(self, request, pk):
         comment = _get_visible_comment_or_404(request, pk=pk)
         if comment.user == request.user:
@@ -378,6 +386,7 @@ class AdminCommentModerateView(APIView):
 
     permission_classes = [permissions.IsAdminUser]
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk):
         comment = get_object_or_404(Comment, pk=pk)
         if not comment.is_deleted:

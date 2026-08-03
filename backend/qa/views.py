@@ -1,14 +1,17 @@
 from django.db import models
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from bible.passage import location_filter
+from comments.serializers import ReportSerializer
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from common.schema import DetailSerializer
 
 from .models import Answer, Question
 from .serializers import (
@@ -223,6 +226,12 @@ class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
             Question.objects.filter(best_answer=instance).update(best_answer=None)
 
 
+class BestAnswerRequestSerializer(serializers.Serializer):
+    """ベストアンサーの設定・解除。null を渡すと解除。"""
+
+    answer_id = serializers.UUIDField(allow_null=True)
+
+
 class _QAReportView(APIView):
     """質問・回答への通報。対象の種類だけが違うので共通の土台を持つ。
 
@@ -237,6 +246,10 @@ class _QAReportView(APIView):
     model: type[models.Model] | None = None
     report_field = ""
 
+    @extend_schema(
+        request=ReportSerializer,
+        responses={201: ReportSerializer, 400: DetailSerializer, 409: DetailSerializer},
+    )
     def post(self, request, pk):
         from comments.models import Report
         from comments.serializers import ReportSerializer
@@ -281,6 +294,10 @@ class SetBestAnswerView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=BestAnswerRequestSerializer,
+        responses={200: None, 403: DetailSerializer},
+    )
     def patch(self, request, pk):
         question = get_object_or_404(Question, pk=pk, is_deleted=False)
         if question.user != request.user:

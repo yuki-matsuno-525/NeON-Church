@@ -60,17 +60,17 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
     # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。
     # 一覧で annotate が無いと1件あたり4クエリ増えるので、一覧の queryset には必ず付けること。
 
-    def get_unit_count(self, obj):
+    def get_unit_count(self, obj) -> int:
         annotated = getattr(obj, "annotated_unit_count", None)
         return annotated if annotated is not None else obj.units.count()
 
-    def get_done_count(self, obj):
+    def get_done_count(self, obj) -> int:
         annotated = getattr(obj, "annotated_done_count", None)
         if annotated is not None:
             return annotated
         return obj.units.filter(status=TranslationUnit.STATUS_DONE).count()
 
-    def get_is_member(self, obj):
+    def get_is_member(self, obj) -> bool:
         annotated = getattr(obj, "annotated_is_member", None)
         if annotated is not None:
             return annotated
@@ -83,13 +83,13 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
             status=TranslationMembership.STATUS_APPROVED,
         ).exists()
 
-    def get_membership_status(self, obj):
+    def get_membership_status(self, obj) -> str | None:
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
         return obj.memberships.filter(user=request.user).values_list("status", flat=True).first()
 
-    def get_is_in_library(self, obj):
+    def get_is_in_library(self, obj) -> bool:
         annotated = getattr(obj, "annotated_is_in_library", None)
         if annotated is not None:
             return annotated
@@ -180,7 +180,86 @@ class TranslationCommentSerializer(serializers.ModelSerializer):
         fields = ["id", "unit", "username", "body", "display_body", "is_deleted", "created_at"]
         read_only_fields = ["id", "username", "is_deleted", "created_at"]
 
-    def get_display_body(self, obj):
+    def get_display_body(self, obj) -> str:
         if obj.is_deleted:
             return ""
         return obj.body
+
+
+# ---------------------------------------------------------------------------
+# 複合レスポンス・入力の宣言
+#
+# 下のシリアライザは保存にも検証にも使わない。集計や一括操作の戻り値・入力の形を
+# スキーマへ出すためだけに置く。
+# ---------------------------------------------------------------------------
+
+
+class UnitStatusCountsSerializer(serializers.Serializer):
+    """ユニットの状態ごとの件数。キーは TranslationUnit.STATUS_CHOICES と同じ。"""
+
+    todo = serializers.IntegerField()
+    in_progress = serializers.IntegerField()
+    review = serializers.IntegerField()
+    done = serializers.IntegerField()
+
+
+class ChapterSummarySerializer(serializers.Serializer):
+    """章ボタンに出す1章ぶんの内訳。"""
+
+    number = serializers.IntegerField()
+    total = serializers.IntegerField()
+    status_counts = UnitStatusCountsSerializer()
+
+
+class TranslationUnitSummaryResponseSerializer(serializers.Serializer):
+    """章ボタンと「レビュー(N)」バッジのための軽い集計。"""
+
+    chapters = serializers.ListField(child=serializers.IntegerField())
+    chapter_summaries = ChapterSummarySerializer(many=True)
+    status_counts = UnitStatusCountsSerializer()
+    assigned_to_me = serializers.IntegerField()
+    total = serializers.IntegerField()
+
+
+class TranslationReadResponseSerializer(serializers.Serializer):
+    """公開済み翻訳の閲覧。chapter 未指定なら units は空（目次用）。"""
+
+    chapters = serializers.ListField(child=serializers.IntegerField())
+    units = TranslationUnitSerializer(many=True)
+
+
+class MembershipDecisionSerializer(serializers.Serializer):
+    """参加申請の承認・拒否。"""
+
+    status = serializers.ChoiceField(
+        choices=[
+            TranslationMembership.STATUS_APPROVED,
+            TranslationMembership.STATUS_REJECTED,
+        ]
+    )
+
+
+class UnitAssignSerializer(serializers.Serializer):
+    """担当者の割り当て。null を渡すと担当を外す。"""
+
+    user_id = serializers.UUIDField(allow_null=True)
+
+
+class BookSelectionSerializer(serializers.Serializer):
+    """書の一括追加・削除の対象。表示中の訳の書 id。"""
+
+    book_id = serializers.UUIDField()
+
+
+class BookAddedSerializer(serializers.Serializer):
+    """一括追加の結果。created は実際に作られた数（既存はスキップ）。"""
+
+    created = serializers.IntegerField()
+    book_name = serializers.CharField()
+
+
+class BookRemovedSerializer(serializers.Serializer):
+    """一括削除の結果。"""
+
+    deleted = serializers.IntegerField()
+    book_name = serializers.CharField()

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
 from comments.models import Tag
+from comments.serializers import TagSerializer
 from common.text import clean_body
 
 from .models import DELETED_BODY, Answer, Question
@@ -79,12 +80,6 @@ class BestAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
         fields = ["id", "user", "body", "created_at"]
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ["id", "name"]
 
 
 class QuestionSerializer(serializers.ModelSerializer):

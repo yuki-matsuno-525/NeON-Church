@@ -14,6 +14,7 @@ from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import (
     AuthenticationFailed,
@@ -31,6 +32,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from common.pagination import StandardPageNumberPagination
+from common.schema import DetailSerializer
 
 from .serializers import (
     AccountDeletionSerializer,
@@ -44,6 +46,7 @@ from .serializers import (
     ProfileUpdateSerializer,
     PublicUserSerializer,
     RegisterSerializer,
+    SessionSerializer,
     UserSerializer,
 )
 
@@ -133,6 +136,7 @@ class RegisterView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=RegisterSerializer, responses={201: UserSerializer})
     def post(self, request: Request) -> Response:
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -153,6 +157,7 @@ class LoginView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=LoginSerializer, responses={200: UserSerializer})
     def post(self, request: Request) -> Response:
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -181,6 +186,7 @@ class LogoutView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(request=None, responses={204: None})
     def post(self, request: Request) -> Response:
         raw_refresh = request.COOKIES.get("refresh_token")
         if raw_refresh:
@@ -209,9 +215,11 @@ class MeView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: UserSerializer})
     def get(self, request: Request) -> Response:
         return Response(UserSerializer(request.user).data)
 
+    @extend_schema(request=ProfileUpdateSerializer, responses={200: UserSerializer})
     def patch(self, request: Request) -> Response:
         serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -224,6 +232,7 @@ class UserProfileView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(responses={200: PublicUserSerializer, 404: DetailSerializer})
     def get(self, request: Request, username: str) -> Response:
         try:
             user = User.objects.get(username=username)
@@ -330,6 +339,7 @@ class TokenRefreshView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(request=None, responses={200: DetailSerializer})
     def post(self, request: Request) -> Response:
         raw_refresh = request.COOKIES.get("refresh_token")
         if not raw_refresh:
@@ -366,6 +376,7 @@ class TokenRefreshView(APIView):
 class AccountSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: AccountSettingsSerializer})
     def get(self, request: Request) -> Response:
         return Response(AccountSettingsSerializer(request.user).data)
 
@@ -373,6 +384,7 @@ class AccountSettingsView(APIView):
 class IdentityUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=IdentityUpdateSerializer, responses={200: AccountSettingsSerializer})
     def patch(self, request: Request) -> Response:
         serializer = IdentityUpdateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
@@ -383,6 +395,10 @@ class IdentityUpdateView(APIView):
 class NotificationPreferencesView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=NotificationPreferencesSerializer,
+        responses={200: NotificationPreferencesSerializer},
+    )
     def patch(self, request: Request) -> Response:
         serializer = NotificationPreferencesSerializer(
             request.user, data=request.data, partial=True
@@ -395,6 +411,7 @@ class NotificationPreferencesView(APIView):
 class PasswordChangeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=PasswordChangeSerializer, responses={200: DetailSerializer})
     def post(self, request: Request) -> Response:
         serializer = PasswordChangeSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
@@ -412,6 +429,7 @@ class PasswordChangeView(APIView):
 class SessionListView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: SessionSerializer(many=True)})
     def get(self, request: Request) -> Response:
         current_jti = _current_refresh_jti(request)
         tokens = OutstandingToken.objects.filter(
@@ -435,6 +453,7 @@ class SessionListView(APIView):
 class SessionRevokeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={204: None, 404: DetailSerializer})
     def delete(self, request: Request, jti: str) -> Response:
         try:
             token = OutstandingToken.objects.get(
@@ -454,6 +473,7 @@ class SessionRevokeView(APIView):
 class RevokeOtherSessionsView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=None, responses={204: None})
     def post(self, request: Request) -> Response:
         _blacklist_user_sessions(request.user, except_jti=_current_refresh_jti(request))
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -462,6 +482,7 @@ class RevokeOtherSessionsView(APIView):
 class AccountDeletionView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(request=AccountDeletionSerializer, responses={204: None})
     def delete(self, request: Request) -> Response:
         serializer = AccountDeletionSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
@@ -478,6 +499,7 @@ class PasswordResetRequestView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=PasswordResetRequestSerializer, responses={200: DetailSerializer})
     def post(self, request: Request) -> Response:
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -511,6 +533,7 @@ class PasswordResetConfirmView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
 
+    @extend_schema(request=PasswordResetConfirmSerializer, responses={200: DetailSerializer})
     def post(self, request: Request) -> Response:
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -640,6 +663,17 @@ class GoogleOAuthView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "next",
+                str,
+                OpenApiParameter.QUERY,
+                description="認証後に戻る相対パス。/ で始まらないものは無視する。",
+            )
+        ],
+        responses={302: None},
+    )
     def get(self, request: Request) -> HttpResponseRedirect:
         next_path = _safe_next_path(request.GET.get("next"))
         state, nonce = _make_oauth_state(next_path)
@@ -662,6 +696,13 @@ class GoogleCallbackView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("code", str, OpenApiParameter.QUERY),
+            OpenApiParameter("state", str, OpenApiParameter.QUERY),
+        ],
+        responses={302: None},
+    )
     def get(self, request: Request) -> HttpResponseRedirect:
         code = request.GET.get("code")
         if not code:
@@ -721,6 +762,17 @@ class GithubOAuthView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "next",
+                str,
+                OpenApiParameter.QUERY,
+                description="認証後に戻る相対パス。/ で始まらないものは無視する。",
+            )
+        ],
+        responses={302: None},
+    )
     def get(self, request: Request) -> HttpResponseRedirect:
         next_path = _safe_next_path(request.GET.get("next"))
         state, nonce = _make_oauth_state(next_path)
@@ -741,6 +793,13 @@ class GithubCallbackView(APIView):
 
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("code", str, OpenApiParameter.QUERY),
+            OpenApiParameter("state", str, OpenApiParameter.QUERY),
+        ],
+        responses={302: None},
+    )
     def get(self, request: Request) -> HttpResponseRedirect:
         code = request.GET.get("code")
         if not code:

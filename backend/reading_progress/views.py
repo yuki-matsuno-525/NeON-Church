@@ -1,9 +1,19 @@
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.schema import DetailSerializer
+
 from .models import ReadingProgress
 from .serializers import ReadingProgressSerializer
+
+
+class ReadingProgressSaveRequestSerializer(serializers.Serializer):
+    """進捗保存の入力。book と chapter は表示中の訳の id。"""
+
+    book = serializers.UUIDField()
+    chapter = serializers.UUIDField()
 
 
 class ReadingProgressListView(generics.ListAPIView):
@@ -27,6 +37,14 @@ class ReadingProgressSaveView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=ReadingProgressSaveRequestSerializer,
+        responses={
+            200: ReadingProgressSerializer,
+            201: ReadingProgressSerializer,
+            400: DetailSerializer,
+        },
+    )
     def post(self, request, *args, **kwargs):
         book_id = request.data.get("book")
         chapter_id = request.data.get("chapter")
