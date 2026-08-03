@@ -263,6 +263,101 @@
 .badge-status-published { background: var(--state-success); color: #fff; }
 .badge-status-pending { background: var(--border); color: var(--text); }
 
+/* ----- 上部のバー -----
+   全ページで常に見えている。以前は見た目を Navbar.tsx のインラインで持っていたため、
+   画面が狭いときの調整（下のメディアクエリ）がインラインに勝てず、
+   !important を 5 か所使う必要があった。ここに移してその必要をなくす。 */
+.navbar-root {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-4);
+  height: var(--navbar-height);
+  padding: 0 var(--spacing-4);
+  background: var(--glass-nav);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background var(--duration-base) var(--ease-out);
+}
+/* 少しでもスクロールしたら、後ろの文字と重なっても読めるよう濃くする */
+.navbar-root.is-scrolled {
+  background: rgba(8, 4, 24, 0.88);
+}
+
+/* ロゴ画像。高さは上部バーに合わせた固定値で、余白の表とは無関係。 */
+.navbar-logo {
+  display: block;
+  height: 44px;
+  width: auto;
+}
+
+.navbar-link {
+  color: var(--text);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  opacity: 0.85;
+}
+.navbar-link-active {
+  color: var(--accent);
+}
+
+/* 検索バーと言語切替のまとまり。広い画面では中身をそのまま横に並べる。 */
+.navbar-search-group {
+  display: contents;
+}
+.navbar-search-form {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+.navbar-search-input {
+  width: 100%;
+  max-width: 280px;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: var(--text-sm);
+  outline: none;
+}
+
+.navbar-lang-btn {
+  padding: var(--spacing-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+/* いま選ばれている言語 */
+.navbar-lang-btn[aria-pressed="true"] {
+  font-weight: 700;
+  color: rgba(193, 143, 255, 1);
+}
+
+/* 利用者の頭文字を出す丸いアイコン。上部バーとコメント欄で同じものを使う。 */
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
+
 /* ダイアログ（確認・ログイン要求など）
    覆い（背後を暗くする層）と本体の見た目をここで 1 つに揃える。
    以前は画面ごとに透明度・角丸・重なり順が少しずつ違っていた。
@@ -503,6 +598,7 @@ select:focus-visible {
   --color-*: initial;
   --color-transparent: transparent;
   --color-current: currentColor;
+  --color-white: #fff;
 
   --color-bg: var(--bg);
   --color-bg-alt: var(--bg-alt);
@@ -642,7 +738,7 @@ select:focus-visible {
   }
 
   .nav-desktop-only {
-    display: none !important;
+    display: none;
   }
 
   .sidebar-mobile-auth {
@@ -717,17 +813,16 @@ select:focus-visible {
 
   .navbar-root {
     align-content: center;
-    row-gap: 8px !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
+    row-gap: var(--spacing-2);
+    padding-top: var(--spacing-2);
+    padding-bottom: var(--spacing-2);
   }
 
-  /* 検索バー＋言語切替を2段目に全幅で折り返す（1段目: ☰・ロゴのみ）。
-     グループは通常 display:contents なので、inline 指定に勝つよう display:flex を !important で上書き。 */
+  /* 検索バー＋言語切替を2段目に全幅で折り返す（1段目: ☰・ロゴのみ） */
   .navbar-search-group {
-    display: flex !important;
+    display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--spacing-3);
     order: 10;
     flex-basis: 100%;
   }
@@ -738,7 +833,7 @@ select:focus-visible {
   }
 
   .navbar-search-input {
-    max-width: none !important;
+    max-width: none;
   }
 
   .reader-sticky-header {

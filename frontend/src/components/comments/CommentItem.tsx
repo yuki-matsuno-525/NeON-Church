@@ -220,7 +220,7 @@ export function CommentItem({
           )}
           {!hasChildren && <span className={styles.togglePlaceholder} />}
 
-          <span className={styles.avatar}>
+          <span className="avatar-circle">
             {comment.user.username[0]?.toUpperCase() ?? "?"}
           </span>
           <Link

@@ -7,21 +7,6 @@
   margin-left: 52px;
 }
 
-/* 投稿者の頭文字を出す丸いアイコン */
-.avatar {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--text-xs);
-}
-
 /* 折りたたみボタンが無いときに、その分だけ空ける */
 .togglePlaceholder {
   width: 20px;
