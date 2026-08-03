@@ -1,0 +1,182 @@
+/* 節を選んだときに右側（スマホでは下から）に出るパネル。
+   幅だけは利用者がドラッグで変えられるので JavaScript 側で指定する。
+   それ以外の見た目はここに置く。 */
+
+.panel {
+  position: sticky;
+  top: var(--navbar-height);
+  height: calc(100vh - var(--navbar-height));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid var(--glass-border);
+}
+
+/* 左端の、つまんで幅を変える帯 */
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 10;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+/* パネル内の区切り。上下に線を引いて段を分ける。 */
+.section {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sectionTight {
+  padding: var(--spacing-2) var(--spacing-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* 節の本文。長いときは開いて途中までスクロールできるようにする。 */
+.verseText {
+  margin: var(--spacing-2) 0 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+.verseTextExpanded {
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* 上部の丸ボタン（お気に入り・閉じる） */
+.iconButton {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.iconButtonOn {
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+
+.closeButton {
+  color: var(--text-faint);
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+/* コメント / Q&A / 記事 の切り替えタブ */
+.tabList {
+  display: flex;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--spacing-2);
+  min-height: 44px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.tabActive {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* タブの中身（縦に積んでスクロールする） */
+.tabPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-3) var(--spacing-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+/* 「コメントを書く」「質問する」の大きな誘導ボタン */
+.ctaButton {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--spacing-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 並び順の切り替え（新着 / 高評価） */
+.orderButton {
+  min-height: 44px;
+  padding: var(--spacing-1) var(--spacing-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.orderButtonOn {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* パネル内の検索欄 */
+.search {
+  width: 100%;
+  padding: var(--spacing-1) var(--spacing-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  outline: none;
+}
+
+/* コメント一覧 */
+.commentList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--spacing-4);
+}
+
+/* 「まだありません」などの案内 */
+.notice {
+  padding: var(--spacing-4) 0;
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+}
+
+.noticeTight {
+  padding: var(--spacing-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-faint);
+}
