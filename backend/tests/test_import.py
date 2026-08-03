@@ -13,6 +13,7 @@ from django.core.management.base import CommandError
 
 # --- HTM テンプレートヘルパー ---
 
+
 def _make_htm(book_number: int, book_name_ja: str, book_name_en: str, verses: dict) -> str:
     """
     verses: {(chapter, verse): text}
@@ -20,9 +21,7 @@ def _make_htm(book_number: int, book_name_ja: str, book_name_en: str, verses: di
     """
     anchor_blocks = []
     for (ch, v), text in sorted(verses.items()):
-        anchor_blocks.append(
-            f'<a name="{book_number}-{ch}:{v}"></a><small>{v}</small>{text}'
-        )
+        anchor_blocks.append(f'<a name="{book_number}-{ch}:{v}"></a><small>{v}</small>{text}')
     body = "\n".join(anchor_blocks)
     return textwrap.dedent(f"""\
         <html><body>
@@ -34,16 +33,23 @@ def _make_htm(book_number: int, book_name_ja: str, book_name_en: str, verses: di
 
 # --- テスト ---
 
+
 @pytest.mark.django_db
 class TestImportGospel:
     def test_basic_import(self, tmp_path):
         """HTM ファイルから Book / Chapter / Verse が正しく作成される。"""
         from bible.models import Book, Chapter, Verse
-        htm = _make_htm(101, "マタイによる福音書", "Matthew", {
-            (1, 1): "節1-1",
-            (1, 2): "節1-2",
-            (2, 1): "節2-1",
-        })
+
+        htm = _make_htm(
+            101,
+            "マタイによる福音書",
+            "Matthew",
+            {
+                (1, 1): "節1-1",
+                (1, 2): "節1-2",
+                (2, 1): "節2-1",
+            },
+        )
         (tmp_path / "101Matthew.htm").write_text(htm, encoding="utf-8")
 
         call_command("import_gospel", "--path", str(tmp_path))
@@ -60,6 +66,7 @@ class TestImportGospel:
     def test_idempotent(self, tmp_path):
         """2回実行してもレコードが重複しない。"""
         from bible.models import Book, Chapter, Verse
+
         htm = _make_htm(101, "マタイによる福音書", "Matthew", {(1, 1): "節テキスト"})
         (tmp_path / "101Matthew.htm").write_text(htm, encoding="utf-8")
 
@@ -73,6 +80,7 @@ class TestImportGospel:
     def test_ordering(self, tmp_path):
         """ファイル名のソート順が Book.order に反映される。"""
         from bible.models import Book
+
         for num, ja, en in [
             (101, "マタイによる福音書", "Matthew"),
             (102, "マルコによる福音書", "Mark"),
@@ -99,6 +107,7 @@ class TestImportGospel:
     def test_verse_count(self, tmp_path):
         """複数章・複数節の合計節数が正しい。"""
         from bible.models import Book, Verse
+
         verses = {(ch, v): f"ch{ch}-v{v}" for ch in range(1, 4) for v in range(1, 4)}
         htm = _make_htm(101, "マタイによる福音書", "Matthew", verses)
         (tmp_path / "101Matthew.htm").write_text(htm, encoding="utf-8")

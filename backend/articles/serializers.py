@@ -91,14 +91,14 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
 
     def validate_tag_ids(self, value: list) -> list:
         if len(value) > MAX_TAGS_PER_ARTICLE:
-            raise serializers.ValidationError(
-                f"タグは{MAX_TAGS_PER_ARTICLE}つまでです。"
-            )
+            raise serializers.ValidationError(f"タグは{MAX_TAGS_PER_ARTICLE}つまでです。")
         return value
 
     def validate(self, attrs: dict) -> dict:
         # 要約が空のままでは公開できない（一覧が題だけの寂しい見た目になるため）。
-        visibility = attrs.get("visibility", getattr(self.instance, "visibility", Article.VISIBILITY_PRIVATE))
+        visibility = attrs.get(
+            "visibility", getattr(self.instance, "visibility", Article.VISIBILITY_PRIVATE)
+        )
         summary = attrs.get("summary", getattr(self.instance, "summary", ""))
         if visibility != Article.VISIBILITY_PRIVATE and not summary:
             raise serializers.ValidationError({"summary": "公開するには要約を入れてください。"})

@@ -34,13 +34,19 @@ def _make_books(triples):
 
 def _sample_json():
     return [
-        {"slug": "matthew", "books": [
-            {"translation": "口語訳", "name": "マタイによる福音書"},
-            {"translation": "KJV", "name": "Matthew"},
-        ]},
-        {"slug": "mark", "books": [
-            {"translation": "口語訳", "name": "マルコによる福音書"},
-        ]},
+        {
+            "slug": "matthew",
+            "books": [
+                {"translation": "口語訳", "name": "マタイによる福音書"},
+                {"translation": "KJV", "name": "Matthew"},
+            ],
+        },
+        {
+            "slug": "mark",
+            "books": [
+                {"translation": "口語訳", "name": "マルコによる福音書"},
+            ],
+        },
     ]
 
 

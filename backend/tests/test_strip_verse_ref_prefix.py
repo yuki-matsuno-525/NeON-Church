@@ -3,6 +3,7 @@
 公認本文（TR (GRC)）などで本文先頭に残る参照（例: 「Κατα Ματθαιον 1:1 」）を
 除去できること、既にクリーンな節や無関係な訳は変更しないことを保証する。
 """
+
 import pytest
 from django.core.management import call_command
 

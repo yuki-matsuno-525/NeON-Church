@@ -55,9 +55,7 @@ def validate(data: dict, expect_chapters: int | None = None) -> list[tuple[str, 
     for open_ch, close_ch in _BRACKET_PAIRS:
         no, nc = all_text.count(open_ch), all_text.count(close_ch)
         if no != nc:
-            issues.append(
-                ("warn", f"校訂記号 {open_ch}{close_ch} の数が不一致: 開 {no} / 閉 {nc}")
-            )
+            issues.append(("warn", f"校訂記号 {open_ch}{close_ch} の数が不一致: 開 {no} / 閉 {nc}"))
 
     # 章ごとの節チェック
     for c in chapters:
@@ -76,7 +74,10 @@ def validate(data: dict, expect_chapters: int | None = None) -> list[tuple[str, 
             strays = _STRAY_NUMBER.findall(text)
             if strays:
                 issues.append(
-                    ("info", f"{vlabel}: 孤立した数字あり（ページ番号の取りこぼし疑い）: {[s.strip() for s in strays]}")
+                    (
+                        "info",
+                        f"{vlabel}: 孤立した数字あり（ページ番号の取りこぼし疑い）: {[s.strip() for s in strays]}",
+                    )
                 )
 
     return issues

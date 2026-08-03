@@ -17,6 +17,7 @@ def comment_url(comment_id):
 def other_auth_client(db, other_user_payload):
     """別ユーザーの独立したクライアント。"""
     from rest_framework.test import APIClient
+
     client = APIClient()
     client.post(REGISTER_URL, other_user_payload, format="json")
     return client
@@ -68,6 +69,7 @@ class TestCommentCreate:
 
     def test_reply_to_different_verse_is_rejected(self, auth_client, verse, comment, chapter):
         from bible.models import Verse
+
         other_verse = Verse.objects.create(chapter=chapter, number=2, text="別の節")
         res = auth_client.post(
             COMMENTS_URL,
@@ -206,6 +208,7 @@ class TestCommentDelete:
 
     def test_soft_delete_keeps_record_in_db(self, auth_client, comment):
         from comments.models import Comment
+
         auth_client.delete(comment_url(comment["id"]))
         # 物理削除されていないことを確認
         assert Comment.objects.filter(id=comment["id"]).exists()
@@ -358,13 +361,19 @@ class TestTrendingComments:
         res = api_client.get(TRENDING_URL)
         assert res.status_code == status.HTTP_200_OK
 
-    def test_trending_ordered_by_vote_count(self, api_client, auth_client, other_auth_client, verse):
+    def test_trending_ordered_by_vote_count(
+        self, api_client, auth_client, other_auth_client, verse
+    ):
         # コメントAを投稿してupvote
-        res_a = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "人気コメント"}, format="json")
+        res_a = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "人気コメント"}, format="json"
+        )
         other_auth_client.post(f"/api/comments/{res_a.data['id']}/upvote/")
 
         # コメントBを投稿（upvoteなし）
-        auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "普通コメント"}, format="json")
+        auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "普通コメント"}, format="json"
+        )
 
         res = api_client.get(TRENDING_URL)
         assert res.status_code == status.HTTP_200_OK
@@ -373,14 +382,19 @@ class TestTrendingComments:
 
     def test_trending_excludes_deleted(self, api_client, auth_client, verse):
         from comments.models import Comment
-        res_c = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "削除対象"}, format="json")
+
+        res_c = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "削除対象"}, format="json"
+        )
         Comment.objects.filter(id=res_c.data["id"]).update(is_deleted=True)
         trending_ids = [c["id"] for c in api_client.get(TRENDING_URL).data]
         assert res_c.data["id"] not in trending_ids
 
     def test_trending_max_5(self, api_client, auth_client, verse):
         for i in range(7):
-            auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": f"コメント{i}"}, format="json")
+            auth_client.post(
+                COMMENTS_URL, {"verse": str(verse.id), "body": f"コメント{i}"}, format="json"
+            )
         res = api_client.get(TRENDING_URL)
         assert len(res.data) <= 5
 
@@ -393,6 +407,7 @@ class TestCommentLocationFieldsExist:
     def test_new_fields_are_writable(self, db, verse, django_user_model):
         """箇所列・source_translation を直接保存でき、値が永続化される（列の存在確認）。"""
         from comments.models import Comment
+
         user = django_user_model.objects.create_user(username="loc_user", password="pass12345")
         book = verse.chapter.book
         c = Comment.objects.create(
@@ -417,6 +432,7 @@ class TestCommentLocationFieldsExist:
 class TestCommentDualWrite:
     def _get(self, comment_id):
         from comments.models import Comment
+
         return Comment.objects.get(id=comment_id)
 
     def test_verse_comment_dual_writes_location(self, auth_client, verse, chapter, book):
@@ -500,14 +516,19 @@ class TestCommentLocationAggregation:
         # 同じ箇所（slug 共有 → 同一 canonical）の KJV 版 verse を作る。
         from bible.models import Chapter, Verse
         from tests.factories import make_book
+
         kjv = make_book("Matthew", "KJV", 2, slug="matthew")
         kjv_ch = Chapter.objects.create(book=kjv, number=chapter.number)
         return Verse.objects.create(chapter=kjv_ch, number=verse.number, text="For God so loved")
 
     def test_comments_aggregate_across_translations(self, auth_client, verse, chapter):
         kjv_v = self._kjv_verse(chapter, verse)
-        auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "口語訳コメント"}, format="json")
-        auth_client.post(COMMENTS_URL, {"verse": str(kjv_v.id), "body": "KJVコメント"}, format="json")
+        auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "口語訳コメント"}, format="json"
+        )
+        auth_client.post(
+            COMMENTS_URL, {"verse": str(kjv_v.id), "body": "KJVコメント"}, format="json"
+        )
         # 口語訳の verse_id で取得しても、同じ箇所の KJV コメントも集約されて返る。
         res = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
         bodies = {c["body"] for c in res.data["results"]}
@@ -515,13 +536,17 @@ class TestCommentLocationAggregation:
         assert "KJVコメント" in bodies
 
     def test_version_label_is_source_translation(self, auth_client, verse, book):
-        res = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "コメント"}, format="json")
+        res = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "コメント"}, format="json"
+        )
         got = auth_client.get(COMMENTS_URL, {"verse_id": str(verse.id)})
         c = next(x for x in got.data["results"] if x["id"] == res.data["id"])
         assert c["version_label"] == book.translation
 
     def test_reply_across_translation_same_passage_allowed(self, auth_client, verse, chapter):
-        parent = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "親(口語訳)"}, format="json").data
+        parent = auth_client.post(
+            COMMENTS_URL, {"verse": str(verse.id), "body": "親(口語訳)"}, format="json"
+        ).data
         kjv_v = self._kjv_verse(chapter, verse)
         res = auth_client.post(
             COMMENTS_URL,
@@ -615,5 +640,3 @@ class TestTopLevelOnlyListing:
         # 返信は親をたどれば必ず取れる
         replies = auth_client.get(COMMENTS_URL, {"parent_id": parents[0]["id"]})
         assert replies.data["count"] == 1
-
-

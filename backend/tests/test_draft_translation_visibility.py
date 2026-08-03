@@ -104,7 +104,9 @@ def _comment_list_url(data, *, published=False):
 class TestDraftGenericCommentVisibility:
     @pytest.mark.parametrize("viewer", ["anonymous", "pending", "rejected", "outsider"])
     def test_hidden_viewers_get_404_from_comment_list(self, draft_access, viewer):
-        client = draft_access["anonymous"] if viewer == "anonymous" else draft_access["clients"][viewer]
+        client = (
+            draft_access["anonymous"] if viewer == "anonymous" else draft_access["clients"][viewer]
+        )
         response = client.get(_comment_list_url(draft_access))
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
@@ -176,7 +178,12 @@ class TestDraftGenericCommentVisibility:
         hidden = post(hidden_id)
         unknown = post(uuid.uuid4())
         malformed = post("not-a-uuid")
-        assert hidden.status_code == unknown.status_code == malformed.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            hidden.status_code
+            == unknown.status_code
+            == malformed.status_code
+            == status.HTTP_404_NOT_FOUND
+        )
         assert hidden.data == unknown.data == malformed.data
 
     def test_comment_list_does_not_expose_registered_vs_unknown_project(self, draft_access):
@@ -194,7 +201,12 @@ class TestDraftGenericCommentVisibility:
         hidden = get(draft_access["project"].id)
         unknown = get(uuid.uuid4())
         malformed = get("not-a-uuid")
-        assert hidden.status_code == unknown.status_code == malformed.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            hidden.status_code
+            == unknown.status_code
+            == malformed.status_code
+            == status.HTTP_404_NOT_FOUND
+        )
         assert hidden.data == unknown.data == malformed.data
 
     def test_direct_comment_operations_do_not_expose_registered_vs_unknown_uuid(self, draft_access):
@@ -238,48 +250,84 @@ class TestDraftGenericCommentVisibility:
     def test_direct_comment_operations_do_not_reveal_draft(self, draft_access, viewer):
         client = draft_access["clients"][viewer]
         comment_id = draft_access["draft_comment"].id
-        assert client.post(f"/api/comments/{comment_id}/upvote/").status_code == status.HTTP_404_NOT_FOUND
-        assert client.delete(f"/api/comments/{comment_id}/upvote/").status_code == status.HTTP_404_NOT_FOUND
-        assert client.post(
-            f"/api/comments/{comment_id}/report/", {"reason": "spam"}, format="json"
-        ).status_code == status.HTTP_404_NOT_FOUND
-        assert client.patch(
-            f"/api/comments/{comment_id}/", {"body": "changed"}, format="json"
-        ).status_code == status.HTTP_404_NOT_FOUND
-        assert client.delete(f"/api/comments/{comment_id}/").status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            client.post(f"/api/comments/{comment_id}/upvote/").status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert (
+            client.delete(f"/api/comments/{comment_id}/upvote/").status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert (
+            client.post(
+                f"/api/comments/{comment_id}/report/", {"reason": "spam"}, format="json"
+            ).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert (
+            client.patch(
+                f"/api/comments/{comment_id}/", {"body": "changed"}, format="json"
+            ).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert (
+            client.delete(f"/api/comments/{comment_id}/").status_code == status.HTTP_404_NOT_FOUND
+        )
 
     def test_rejected_author_cannot_edit_or_delete_legacy_comment(self, draft_access):
         client = draft_access["clients"]["rejected"]
         comment_id = draft_access["rejected_comment"].id
-        assert client.patch(
-            f"/api/comments/{comment_id}/", {"body": "changed"}, format="json"
-        ).status_code == status.HTTP_404_NOT_FOUND
-        assert client.delete(f"/api/comments/{comment_id}/").status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            client.patch(
+                f"/api/comments/{comment_id}/", {"body": "changed"}, format="json"
+            ).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
+        assert (
+            client.delete(f"/api/comments/{comment_id}/").status_code == status.HTTP_404_NOT_FOUND
+        )
 
     def test_authorized_and_published_comment_operations_still_work(self, draft_access):
         owner = draft_access["clients"]["draft_owner"]
         approved = draft_access["clients"]["approved"]
         comment_id = draft_access["draft_comment"].id
-        assert owner.patch(
-            f"/api/comments/{comment_id}/", {"body": "owner edit"}, format="json"
-        ).status_code == status.HTTP_200_OK
-        assert approved.post(f"/api/comments/{comment_id}/upvote/").status_code == status.HTTP_201_CREATED
-        assert approved.post(
-            f"/api/comments/{comment_id}/report/", {"reason": "spam"}, format="json"
-        ).status_code == status.HTTP_201_CREATED
+        assert (
+            owner.patch(
+                f"/api/comments/{comment_id}/", {"body": "owner edit"}, format="json"
+            ).status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            approved.post(f"/api/comments/{comment_id}/upvote/").status_code
+            == status.HTTP_201_CREATED
+        )
+        assert (
+            approved.post(
+                f"/api/comments/{comment_id}/report/", {"reason": "spam"}, format="json"
+            ).status_code
+            == status.HTTP_201_CREATED
+        )
 
-        assert draft_access["anonymous"].get(
-            _comment_list_url(draft_access, published=True)
-        ).status_code == status.HTTP_200_OK
-        assert draft_access["clients"]["outsider"].post(
-            "/api/comments/",
-            {
-                "verse": str(draft_access["verse"].id),
-                "translation_project": str(draft_access["published_project"].id),
-                "body": "public contribution",
-            },
-            format="json",
-        ).status_code == status.HTTP_201_CREATED
+        assert (
+            draft_access["anonymous"]
+            .get(_comment_list_url(draft_access, published=True))
+            .status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            draft_access["clients"]["outsider"]
+            .post(
+                "/api/comments/",
+                {
+                    "verse": str(draft_access["verse"].id),
+                    "translation_project": str(draft_access["published_project"].id),
+                    "body": "public contribution",
+                },
+                format="json",
+            )
+            .status_code
+            == status.HTTP_201_CREATED
+        )
 
 
 @pytest.mark.django_db
@@ -318,9 +366,10 @@ class TestDraftBookmarkVisibility:
         assert listing.data["count"] == 2
         assert listing.data["counts"]["project"] == 1
         assert listing.data["counts"]["comment"] == 1
-        assert client.delete(
-            f"/api/bookmarks/{project_response.data['id']}/"
-        ).status_code == status.HTTP_204_NO_CONTENT
+        assert (
+            client.delete(f"/api/bookmarks/{project_response.data['id']}/").status_code
+            == status.HTTP_204_NO_CONTENT
+        )
 
     def test_hidden_legacy_bookmark_is_not_listed_or_deletable(self, draft_access):
         from bookmarks.models import Bookmark
@@ -351,11 +400,18 @@ class TestDraftBookmarkVisibility:
         hidden = post(hidden_id)
         unknown = post(uuid.uuid4())
         malformed = post("not-a-uuid")
-        assert hidden.status_code == unknown.status_code == malformed.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            hidden.status_code
+            == unknown.status_code
+            == malformed.status_code
+            == status.HTTP_404_NOT_FOUND
+        )
         assert hidden.data == unknown.data == malformed.data
 
     @pytest.mark.parametrize("viewer", ["anonymous", "pending", "rejected", "outsider"])
-    def test_public_bookmarks_hide_draft_targets_but_keep_public_targets(self, draft_access, viewer):
+    def test_public_bookmarks_hide_draft_targets_but_keep_public_targets(
+        self, draft_access, viewer
+    ):
         from django.contrib.auth import get_user_model
 
         from bookmarks.models import Bookmark
@@ -368,7 +424,9 @@ class TestDraftBookmarkVisibility:
         )
         Bookmark.objects.create(user=library_user, translation_project=draft_access["project"])
         Bookmark.objects.create(user=library_user, comment=draft_access["draft_comment"])
-        Bookmark.objects.create(user=library_user, translation_project=draft_access["published_project"])
+        Bookmark.objects.create(
+            user=library_user, translation_project=draft_access["published_project"]
+        )
         Bookmark.objects.create(user=library_user, comment=draft_access["published_comment"])
         verse = draft_access["verse"]
         Bookmark.objects.create(
@@ -378,7 +436,9 @@ class TestDraftBookmarkVisibility:
             verse_number=verse.number,
         )
 
-        client = draft_access["anonymous"] if viewer == "anonymous" else draft_access["clients"][viewer]
+        client = (
+            draft_access["anonymous"] if viewer == "anonymous" else draft_access["clients"][viewer]
+        )
         response = client.get(f"/api/users/{library_user.username}/bookmarks/")
         assert response.status_code == status.HTTP_200_OK
         assert response.data["count"] == 3
@@ -466,16 +526,21 @@ class TestDraftNotificationVisibility:
         actor = draft_access["clients"]["approved"]
         comment_id = draft_access["rejected_comment"].id
 
-        assert actor.post(f"/api/comments/{comment_id}/upvote/").status_code == status.HTTP_201_CREATED
-        assert actor.post(
-            "/api/comments/",
-            {
-                "verse": str(draft_access["verse"].id),
-                "parent": str(comment_id),
-                "body": "approved reply",
-            },
-            format="json",
-        ).status_code == status.HTTP_201_CREATED
+        assert (
+            actor.post(f"/api/comments/{comment_id}/upvote/").status_code == status.HTTP_201_CREATED
+        )
+        assert (
+            actor.post(
+                "/api/comments/",
+                {
+                    "verse": str(draft_access["verse"].id),
+                    "parent": str(comment_id),
+                    "body": "approved reply",
+                },
+                format="json",
+            ).status_code
+            == status.HTTP_201_CREATED
+        )
         assert not Notification.objects.filter(recipient=draft_access["users"]["rejected"]).exists()
         assert len(mail.outbox) == 0
 
@@ -484,18 +549,14 @@ class TestDraftNotificationVisibility:
 
         response = draft_access["clients"]["approved"].post(
             f"/api/translations/{draft_access['project'].id}/units/{draft_access['unit'].id}/comments/",
-            {
-                "body": (
-                    "@draft_owner @approved @pending @rejected @outsider "
-                    "please review"
-                )
-            },
+            {"body": ("@draft_owner @approved @pending @rejected @outsider please review")},
             format="json",
         )
         assert response.status_code == status.HTTP_201_CREATED
         recipients = set(
-            Notification.objects.filter(translation_comment__isnull=False)
-            .values_list("recipient__username", flat=True)
+            Notification.objects.filter(translation_comment__isnull=False).values_list(
+                "recipient__username", flat=True
+            )
         )
         assert recipients == {"draft_owner"}
 
@@ -532,9 +593,10 @@ class TestDraftNotificationVisibility:
         assert listing.data["count"] == 0
         assert listing.data["counts"]["all"] == 0
         assert client.get("/api/notifications/unread-count/").data == {"count": 0}
-        assert client.post(
-            f"/api/notifications/{generic_notification.id}/read/"
-        ).status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            client.post(f"/api/notifications/{generic_notification.id}/read/").status_code
+            == status.HTTP_404_NOT_FOUND
+        )
         hidden_read = client.post(f"/api/notifications/{translation_notification.id}/read/")
         unknown_read = client.post(f"/api/notifications/{uuid.uuid4()}/read/")
         assert hidden_read.status_code == unknown_read.status_code == status.HTTP_404_NOT_FOUND

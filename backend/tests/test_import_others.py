@@ -36,8 +36,12 @@ _BOOK_B = "The Gospel of Peter"
 def _seed_dir(tmp_path):
     d = tmp_path / "others"
     d.mkdir()
-    (d / "a.json").write_text(json.dumps(_book(_BOOK_A, _TRANSLATION, 1), ensure_ascii=False), encoding="utf-8")
-    (d / "b.json").write_text(json.dumps(_book(_BOOK_B, _TRANSLATION, 2), ensure_ascii=False), encoding="utf-8")
+    (d / "a.json").write_text(
+        json.dumps(_book(_BOOK_A, _TRANSLATION, 1), ensure_ascii=False), encoding="utf-8"
+    )
+    (d / "b.json").write_text(
+        json.dumps(_book(_BOOK_B, _TRANSLATION, 2), ensure_ascii=False), encoding="utf-8"
+    )
     return d
 
 

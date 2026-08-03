@@ -67,8 +67,7 @@ class Question(BaseModel):
             # 章NULLで節だけある、という中途半端な状態を禁止する。
             models.CheckConstraint(
                 condition=~(
-                    models.Q(chapter_number__isnull=True)
-                    & models.Q(verse_number__isnull=False)
+                    models.Q(chapter_number__isnull=True) & models.Q(verse_number__isnull=False)
                 ),
                 name="qa_question_location_grain_valid",
             ),

@@ -47,7 +47,7 @@ def test_chapter_patterns_and_cleaning():
     assert sorted(chapters) == [1, 2, 3]
 
     v1 = {v["number"]: v["text"] for v in chapters[1]["verses"]}
-    assert v1[1] == "First verse."       # ページ番号 32 が消えている
+    assert v1[1] == "First verse."  # ページ番号 32 が消えている
     assert v1[2] == "Second verse here."  # 脚注 [1] が消えている
 
     assert [v["number"] for v in chapters[2]["verses"]] == [1]
@@ -90,15 +90,24 @@ def test_calendar_number_not_treated_as_verse():
 
 def test_validate_detects_gap_and_empty_and_brackets():
     data = {
-        "book": "X", "translation": "Y", "order": 1, "source": "z",
+        "book": "X",
+        "translation": "Y",
+        "order": 1,
+        "source": "z",
         "chapters": [
-            {"number": 1, "verses": [
-                {"number": 1, "text": "ok ⌜fix⌝"},
-                {"number": 3, "text": "gap here"},   # 欠番 2
-            ]},
-            {"number": 2, "verses": [
-                {"number": 1, "text": "unbalanced ⌜oops"},  # 閉じ記号なし
-            ]},
+            {
+                "number": 1,
+                "verses": [
+                    {"number": 1, "text": "ok ⌜fix⌝"},
+                    {"number": 3, "text": "gap here"},  # 欠番 2
+                ],
+            },
+            {
+                "number": 2,
+                "verses": [
+                    {"number": 1, "text": "unbalanced ⌜oops"},  # 閉じ記号なし
+                ],
+            },
         ],
     }
     issues = validate(data, expect_chapters=2)

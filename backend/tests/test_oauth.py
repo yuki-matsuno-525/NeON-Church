@@ -58,6 +58,7 @@ def test_callback_success_creates_user_and_sets_jwt(mock_post, mock_get, api):
     # 使用後 nonce Cookie は削除される
     assert res.cookies[NONCE_COOKIE].value == ""
     from users.models import SocialAccount
+
     assert SocialAccount.objects.filter(provider="google", provider_uid="g-1").exists()
 
 

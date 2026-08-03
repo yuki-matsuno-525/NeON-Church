@@ -39,10 +39,7 @@ def test_sections_pages_and_colophon_cutoff():
 
 def test_curly_apostrophe_heading_matches():
     # 見出しの引用符が丸 (’) でも半角 (') の SECTION_HEADINGS と一致する
-    html = _page(
-        "<p>The Disciples’ Vision</p>"
-        "<p>38 Another day Jesus came up to them.</p>"
-    )
+    html = _page("<p>The Disciples’ Vision</p><p>38 Another day Jesus came up to them.</p>")
     data, _ = parse_judas(html)
     assert data["chapters"][0]["number"] == 1
     assert data["chapters"][0]["verses"][0]["number"] == 38

@@ -97,7 +97,9 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         qs = self.get_base_queryset().select_related(
-            "comment__user", "comment__canonical_book", "canonical_book",
+            "comment__user",
+            "comment__canonical_book",
+            "canonical_book",
             "translation_project",
         )
         location = self._location_params()
@@ -124,9 +126,13 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         project = serializer.validated_data.get("translation_project")
 
         if not any([verse, chapter, book, comment, project]):
-            raise ValidationError({"detail": "Specify a verse, chapter, book, comment or project to favorite."})
+            raise ValidationError(
+                {"detail": "Specify a verse, chapter, book, comment or project to favorite."}
+            )
 
-        comment_project = comment.translation_project if comment and comment.translation_project_id else None
+        comment_project = (
+            comment.translation_project if comment and comment.translation_project_id else None
+        )
         if project and not can_view_project_work(self.request.user, project):
             raise Http404
         if comment_project and not can_view_project_work(self.request.user, comment_project):
@@ -189,6 +195,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
             return super().create(request, *args, **kwargs)
         except ValidationError as exc:
             from rest_framework.response import Response
+
             return Response(exc.detail, status=status.HTTP_409_CONFLICT)
 
 

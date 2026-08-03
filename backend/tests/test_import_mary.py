@@ -16,7 +16,7 @@ def test_sections_become_chapters_pages_become_verses():
     html = _page(
         "<p>Symbols 7 Page Number</p>"  # 前書き（最初の見出しより前）は無視
         "<p>An Eternal Perspective</p>"
-        '<p>7 First page text.</p>'
+        "<p>7 First page text.</p>"
         "<p>Second paragraph still page 7.</p>"
         "<p>The Gospel</p>"
         "<p>Chapter start without a number, then 9 page nine here.</p>"
@@ -47,9 +47,7 @@ def test_sections_become_chapters_pages_become_verses():
 
 def test_missing_pages_note_kept_but_not_split():
     html = _page(
-        "<p>Mary and Jesus</p>"
-        "<p>10 page ten content.</p>"
-        "<p>Pages 11 through 14 are missing.</p>"
+        "<p>Mary and Jesus</p><p>10 page ten content.</p><p>Pages 11 through 14 are missing.</p>"
     )
     data, _ = parse_mary(html)
     verses = data["chapters"][0]["verses"]
@@ -60,10 +58,7 @@ def test_missing_pages_note_kept_but_not_split():
 
 
 def test_section_without_pages_is_single_verse():
-    html = _page(
-        "<p>Conflict over Authority</p>"
-        "<p>No page numbers at all in this section.</p>"
-    )
+    html = _page("<p>Conflict over Authority</p><p>No page numbers at all in this section.</p>")
     data, warnings = parse_mary(html)
     verses = data["chapters"][0]["verses"]
     assert [v["number"] for v in verses] == [1]

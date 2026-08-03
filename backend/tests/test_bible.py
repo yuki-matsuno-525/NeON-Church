@@ -18,18 +18,21 @@ def verse_url(chapter_id):
 @pytest.fixture
 def book(db):
     from tests.factories import make_book
+
     return make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
 
 @pytest.fixture
 def chapter(book):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book, number=1)
 
 
 @pytest.fixture
 def verse(chapter):
     from bible.models import Verse
+
     return Verse.objects.create(
         chapter=chapter,
         number=1,
@@ -57,6 +60,7 @@ class TestBookList:
 
     def test_ordered_by_order_field(self, db, api_client):
         from tests.factories import make_book
+
         make_book("ヨハネによる福音書", "口語訳", 4, slug="john")
         make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
@@ -80,6 +84,7 @@ class TestChapterList:
 
     def test_nonexistent_book_returns_404(self, api_client):
         import uuid
+
         res = api_client.get(chapter_url(uuid.uuid4()))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
@@ -103,6 +108,7 @@ class TestVerseList:
 
     def test_nonexistent_chapter_returns_404(self, api_client):
         import uuid
+
         res = api_client.get(verse_url(uuid.uuid4()))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
@@ -122,6 +128,7 @@ def kjv_verse(book):
     """口語訳マタイ1:1 と同じ書順・章・節の KJV 節。"""
     from bible.models import Chapter, Verse
     from tests.factories import make_book
+
     kjv_book = make_book("Matthew", "KJV", 1, slug="matthew")
     kjv_chapter = Chapter.objects.create(book=kjv_book, number=1)
     return Verse.objects.create(
@@ -136,6 +143,7 @@ class TestVerseOfDay:
     @pytest.fixture(autouse=True)
     def _clear_cache(self):
         from django.core.cache import cache
+
         cache.clear()
         yield
         cache.clear()
@@ -162,6 +170,7 @@ class TestVerseOfDay:
         # KJV の book.order を口語訳とズラしても、同じ箇所（canonical_book/章/節）の KJV 節を返す。
         from bible.models import Chapter, Verse
         from tests.factories import make_book
+
         kjv_book = make_book("Matthew", "KJV", 99, slug="matthew")  # order を意図的にズラす
         kjv_chapter = Chapter.objects.create(book=kjv_book, number=1)
         kjv_verse = Verse.objects.create(chapter=kjv_chapter, number=1, text="KJV Matthew 1:1")

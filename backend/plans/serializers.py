@@ -176,6 +176,4 @@ class PlanSubscriptionSerializer(serializers.ModelSerializer):
 
 def check_day_limit(plan: Plan) -> None:
     if plan.days.count() >= MAX_DAYS_PER_PLAN:
-        raise serializers.ValidationError(
-            {"detail": f"プランは{MAX_DAYS_PER_PLAN}日までです。"}
-        )
+        raise serializers.ValidationError({"detail": f"プランは{MAX_DAYS_PER_PLAN}日までです。"})

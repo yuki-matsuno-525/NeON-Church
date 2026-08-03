@@ -74,6 +74,7 @@ def _make_meta(entries: dict) -> str:
 
 # --- _parse_conllu のユニットテスト ---
 
+
 class TestParseConllu:
     def test_basic(self):
         result = _parse_conllu(MARK_CH1_CONTENT)
@@ -108,6 +109,7 @@ class TestParseConllu:
 
 # --- 統合テスト ---
 
+
 def _build_corpus_dir(root: Path, meta_entries: dict) -> None:
     """meta.json を root に書き出す。"""
     (root / "meta.json").write_text(_make_meta(meta_entries), encoding="utf-8")
@@ -136,7 +138,7 @@ class TestImportCopticMultiBook:
         call_command("import_coptic", str(tmp_path))
 
         book = Book.objects.get(name="Mark", translation="Sahidic Coptic")
-        assert book.order == 141   # 100 + 41
+        assert book.order == 141  # 100 + 41
 
         ch1 = Chapter.objects.get(book=book, number=1)
         verses = list(Verse.objects.filter(chapter=ch1).order_by("number"))
@@ -274,7 +276,7 @@ class TestImportCopticSingleBook:
         call_command("import_coptic", str(tmp_path))
 
         book = Book.objects.get(name="Jonah", translation="Sahidic Coptic")
-        assert book.order == 132   # 100 + 32
+        assert book.order == 132  # 100 + 32
         ch1 = Chapter.objects.get(book=book, number=1)
         assert Verse.objects.filter(chapter=ch1).count() == 1
 
@@ -312,7 +314,7 @@ class TestImportCopticZip:
         call_command("import_coptic", str(tmp_path))
 
         book = Book.objects.get(name="Genesis", translation="Sahidic Coptic")
-        assert book.order == 101   # 100 + 1
+        assert book.order == 101  # 100 + 1
         ch1 = Chapter.objects.get(book=book, number=1)
         verse = Verse.objects.get(chapter=ch1, number=1)
         assert verse.text == "ϩⲛⲁⲣⲭⲏ ⲁⲡⲛⲟⲩⲧⲉ ⲧⲁⲙⲓⲉ ."
@@ -343,7 +345,9 @@ class TestImportCopticLicense:
         _build_corpus_dir(tmp_path, meta)
         nt_dir = tmp_path / "sahidica.nt" / "sahidica.nt_CONLLU"
         nt_dir.mkdir(parents=True)
-        (nt_dir / "41_Mark_01.conllu").write_text(self._make_warren_wells_conllu(), encoding="utf-8")
+        (nt_dir / "41_Mark_01.conllu").write_text(
+            self._make_warren_wells_conllu(), encoding="utf-8"
+        )
 
         call_command("import_coptic", str(tmp_path), "--license", "open", "--skip-en")
 
@@ -361,7 +365,9 @@ class TestImportCopticLicense:
         _build_corpus_dir(tmp_path, meta)
         nt_dir = tmp_path / "sahidica.nt" / "sahidica.nt_CONLLU"
         nt_dir.mkdir(parents=True)
-        (nt_dir / "41_Mark_01.conllu").write_text(self._make_warren_wells_conllu(), encoding="utf-8")
+        (nt_dir / "41_Mark_01.conllu").write_text(
+            self._make_warren_wells_conllu(), encoding="utf-8"
+        )
 
         call_command("import_coptic", str(tmp_path), "--license", "all", "--skip-en")
 
@@ -383,7 +389,9 @@ class TestImportCopticLicense:
 
         call_command("import_coptic", str(tmp_path), "--license", "cc", "--skip-en")
 
-        assert Book.objects.filter(name="Apophthegmata Patrum", translation="Sahidic Coptic").exists()
+        assert Book.objects.filter(
+            name="Apophthegmata Patrum", translation="Sahidic Coptic"
+        ).exists()
 
     def test_license_open_excludes_nc(self, tmp_path):
         """--license open で CC BY-NC-SA 文書がスキップされる。"""

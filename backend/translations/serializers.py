@@ -27,12 +27,34 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = TranslationProject
         fields = [
-            "id", "name", "description", "owner_username",
-            "source_book", "source_book_name", "target_language",
-            "status", "unit_count", "done_count", "is_member", "membership_status", "is_in_library",
-            "created_at", "updated_at",
+            "id",
+            "name",
+            "description",
+            "owner_username",
+            "source_book",
+            "source_book_name",
+            "target_language",
+            "status",
+            "unit_count",
+            "done_count",
+            "is_member",
+            "membership_status",
+            "is_in_library",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "membership_status", "is_in_library", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "owner_username",
+            "source_book_name",
+            "unit_count",
+            "done_count",
+            "is_member",
+            "membership_status",
+            "is_in_library",
+            "created_at",
+            "updated_at",
+        ]
 
     # 以下4つは、一覧では views.annotate_project_summary が本体クエリでまとめて求める。
     # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。
@@ -91,18 +113,37 @@ class TranslationUnitSerializer(serializers.ModelSerializer):
     verse_text = serializers.CharField(source="verse.text", read_only=True)
     chapter = serializers.UUIDField(source="verse.chapter_id", read_only=True)
     chapter_number = serializers.IntegerField(source="verse.chapter.number", read_only=True)
-    assigned_to_username = serializers.CharField(source="assigned_to.username", read_only=True, allow_null=True)
+    assigned_to_username = serializers.CharField(
+        source="assigned_to.username", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = TranslationUnit
         fields = [
-            "id", "verse", "verse_number", "verse_text", "chapter", "chapter_number",
-            "assigned_to", "assigned_to_username",
-            "body", "status", "created_at", "updated_at",
+            "id",
+            "verse",
+            "verse_number",
+            "verse_text",
+            "chapter",
+            "chapter_number",
+            "assigned_to",
+            "assigned_to_username",
+            "body",
+            "status",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = [
-            "id", "verse", "verse_number", "verse_text", "chapter", "chapter_number",
-            "assigned_to", "assigned_to_username", "created_at", "updated_at",
+            "id",
+            "verse",
+            "verse_number",
+            "verse_text",
+            "chapter",
+            "chapter_number",
+            "assigned_to",
+            "assigned_to_username",
+            "created_at",
+            "updated_at",
         ]
 
     def validate(self, attrs):
@@ -110,8 +151,14 @@ class TranslationUnitSerializer(serializers.ModelSerializer):
         if self.instance is None:
             project = self.context.get("project")
             verse = attrs.get("verse")
-            if project and verse and TranslationUnit.objects.filter(project=project, verse=verse).exists():
-                raise serializers.ValidationError({"verse": "この節はすでにこのプロジェクトに登録されています。"})
+            if (
+                project
+                and verse
+                and TranslationUnit.objects.filter(project=project, verse=verse).exists()
+            ):
+                raise serializers.ValidationError(
+                    {"verse": "この節はすでにこのプロジェクトに登録されています。"}
+                )
         return attrs
 
 
@@ -120,9 +167,7 @@ class TranslationUnitCreateSerializer(TranslationUnitSerializer):
 
     class Meta(TranslationUnitSerializer.Meta):
         read_only_fields = [
-            field
-            for field in TranslationUnitSerializer.Meta.read_only_fields
-            if field != "verse"
+            field for field in TranslationUnitSerializer.Meta.read_only_fields if field != "verse"
         ]
 
 

@@ -47,9 +47,7 @@ def annotate_project_summary(queryset, user):
     """
     queryset = queryset.annotate(
         annotated_unit_count=Count("units"),
-        annotated_done_count=Count(
-            "units", filter=Q(units__status=TranslationUnit.STATUS_DONE)
-        ),
+        annotated_done_count=Count("units", filter=Q(units__status=TranslationUnit.STATUS_DONE)),
     )
     if user and user.is_authenticated:
         queryset = queryset.annotate(
@@ -120,6 +118,7 @@ def _get_visible_project_or_404(request, project_id):
 # ---------------------------------------------------------------------------
 # プロジェクト
 # ---------------------------------------------------------------------------
+
 
 class TranslationProjectListCreateView(generics.ListCreateAPIView):
     """
@@ -196,9 +195,7 @@ class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.IsAuthenticated(), IsProjectOwner()]
 
     def get_object(self):
-        visible_project = _get_visible_project_or_404(
-            self.request, self.kwargs["project_id"]
-        )
+        visible_project = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
         obj = get_object_or_404(
             annotate_project_summary(
                 TranslationProject.objects.select_related("owner", "source_book"),
@@ -254,6 +251,7 @@ class TranslationActivateView(APIView):
 # メンバーシップ
 # ---------------------------------------------------------------------------
 
+
 class TranslationJoinView(APIView):
     """POST /api/translations/{id}/join/  参加申請（要認証）"""
 
@@ -269,7 +267,10 @@ class TranslationJoinView(APIView):
         membership, created = TranslationMembership.objects.get_or_create(
             project=project,
             user=request.user,
-            defaults={"role": TranslationMembership.ROLE_MEMBER, "status": TranslationMembership.STATUS_PENDING},
+            defaults={
+                "role": TranslationMembership.ROLE_MEMBER,
+                "status": TranslationMembership.STATUS_PENDING,
+            },
         )
         if not created:
             if membership.status == TranslationMembership.STATUS_REJECTED:
@@ -277,7 +278,9 @@ class TranslationJoinView(APIView):
                 membership.save(update_fields=["status", "updated_at"])
             else:
                 return Response({"detail": "Already applied."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(TranslationMembershipSerializer(membership).data, status=status.HTTP_201_CREATED)
+        return Response(
+            TranslationMembershipSerializer(membership).data, status=status.HTTP_201_CREATED
+        )
 
 
 class TranslationMemberListView(generics.ListAPIView):
@@ -292,9 +295,11 @@ class TranslationMemberListView(generics.ListAPIView):
 
     def get_queryset(self):
         # ページングするので並び順を決めておく（既定の並びを持たないモデルのため）。
-        return TranslationMembership.objects.filter(
-            project_id=self.kwargs["project_id"]
-        ).select_related("user").order_by("created_at")
+        return (
+            TranslationMembership.objects.filter(project_id=self.kwargs["project_id"])
+            .select_related("user")
+            .order_by("created_at")
+        )
 
 
 class TranslationMemberDetailView(APIView):
@@ -313,9 +318,14 @@ class TranslationMemberDetailView(APIView):
 
     def patch(self, request, project_id, membership_id):
         self._get_project(project_id, request)
-        membership = get_object_or_404(TranslationMembership, pk=membership_id, project_id=project_id)
+        membership = get_object_or_404(
+            TranslationMembership, pk=membership_id, project_id=project_id
+        )
         new_status = request.data.get("status")
-        if new_status not in [TranslationMembership.STATUS_APPROVED, TranslationMembership.STATUS_REJECTED]:
+        if new_status not in [
+            TranslationMembership.STATUS_APPROVED,
+            TranslationMembership.STATUS_REJECTED,
+        ]:
             return Response(
                 {"detail": 'status must be "approved" or "rejected".'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -339,6 +349,7 @@ class TranslationMemberDetailView(APIView):
 # ---------------------------------------------------------------------------
 # ユニット
 # ---------------------------------------------------------------------------
+
 
 class ChapterPageNumberPagination(StandardPageNumberPagination):
     """1章分をまとめて返せる大きさのページ。
@@ -377,9 +388,9 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         _get_visible_project_or_404(self.request, self.kwargs["project_id"])
-        qs = TranslationUnit.objects.filter(
-            project_id=self.kwargs["project_id"]
-        ).select_related("verse__chapter", "assigned_to")
+        qs = TranslationUnit.objects.filter(project_id=self.kwargs["project_id"]).select_related(
+            "verse__chapter", "assigned_to"
+        )
         chapter = self.request.query_params.get("chapter")
         if chapter:
             # 数字以外が来たら絞らない（画面から来る値なので握りつぶしてよい）
@@ -454,23 +465,32 @@ class TranslationUnitSummaryView(APIView):
             .order_by("verse__chapter__number")
         ):
             number = row["verse__chapter__number"]
-            entry = chapter_counts.setdefault(number, {
-                "number": number,
-                "total": 0,
-                "status_counts": {name: 0 for name, _label in TranslationUnit.STATUS_CHOICES},
-            })
+            entry = chapter_counts.setdefault(
+                number,
+                {
+                    "number": number,
+                    "total": 0,
+                    "status_counts": {name: 0 for name, _label in TranslationUnit.STATUS_CHOICES},
+                },
+            )
             entry["status_counts"][row["status"]] = row["count"]
             entry["total"] += row["count"]
         mine = 0
         if request.user.is_authenticated:
-            mine = units.filter(assigned_to=request.user).exclude(status=TranslationUnit.STATUS_DONE).count()
-        return Response({
-            "chapters": chapters,
-            "chapter_summaries": list(chapter_counts.values()),
-            "status_counts": counts,
-            "assigned_to_me": mine,
-            "total": total,
-        })
+            mine = (
+                units.filter(assigned_to=request.user)
+                .exclude(status=TranslationUnit.STATUS_DONE)
+                .count()
+            )
+        return Response(
+            {
+                "chapters": chapters,
+                "chapter_summaries": list(chapter_counts.values()),
+                "status_counts": counts,
+                "assigned_to_me": mine,
+                "total": total,
+            }
+        )
 
 
 class TranslationUnitDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -510,7 +530,10 @@ class TranslationUnitDetailView(generics.RetrieveUpdateDestroyAPIView):
             ).exists()
         )
         if project.owner != request.user and not member_can_update:
-            return Response({"detail": "Only the assignee or owner can update."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only the assignee or owner can update."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
@@ -531,7 +554,10 @@ class TranslationUnitAssignView(APIView):
     def post(self, request, project_id, unit_id):
         project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
-            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only the owner can perform this action."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project)
         user_id = request.data.get("user_id")
         if user_id is None:
@@ -552,6 +578,7 @@ class TranslationUnitAssignView(APIView):
 # ---------------------------------------------------------------------------
 # コメント
 # ---------------------------------------------------------------------------
+
 
 class TranslationCommentListCreateView(generics.ListCreateAPIView):
     """プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
@@ -598,7 +625,9 @@ class TranslationCommentDeleteView(APIView):
         comment = get_object_or_404(TranslationComment, pk=comment_id, project_id=project_id)
         project = comment.project
         if comment.user != request.user and project.owner != request.user:
-            return Response({"detail": "Only the author or owner can delete."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only the author or owner can delete."}, status=status.HTTP_403_FORBIDDEN
+            )
         comment.is_deleted = True
         comment.body = ""
         comment.save(update_fields=["is_deleted", "body", "updated_at"])
@@ -616,9 +645,13 @@ class TranslationAddBookView(APIView):
 
     def post(self, request, project_id):
         from bible.models import Book, Verse
+
         project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
-            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only the owner can perform this action."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         book_id = request.data.get("book_id")
         if not book_id:
             return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -629,13 +662,11 @@ class TranslationAddBookView(APIView):
         # 1件ごとに2段の JOIN が付いていた。
         # 「既にあるぶん」を1回で引き、足りないぶんだけまとめて作る（3クエリで済む）。
         # values_list("id") で節そのものは読み込まない。
-        verse_ids = set(
-            Verse.objects.filter(chapter__book=book).values_list("id", flat=True)
-        )
+        verse_ids = set(Verse.objects.filter(chapter__book=book).values_list("id", flat=True))
         existing_ids = set(
-            TranslationUnit.objects.filter(
-                project=project, verse_id__in=verse_ids
-            ).values_list("verse_id", flat=True)
+            TranslationUnit.objects.filter(project=project, verse_id__in=verse_ids).values_list(
+                "verse_id", flat=True
+            )
         )
         missing_ids = verse_ids - existing_ids
 
@@ -661,14 +692,20 @@ class TranslationRemoveBookView(APIView):
 
     def delete(self, request, project_id):
         from bible.models import Book
+
         project = _get_visible_project_or_404(request, project_id)
         if project.owner != request.user:
-            return Response({"detail": "Only the owner can perform this action."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only the owner can perform this action."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         book_id = request.data.get("book_id")
         if not book_id:
             return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
         book = get_object_or_404(Book, pk=book_id)
-        deleted, _ = TranslationUnit.objects.filter(project=project, verse__chapter__book=book).delete()
+        deleted, _ = TranslationUnit.objects.filter(
+            project=project, verse__chapter__book=book
+        ).delete()
         return Response({"deleted": deleted, "book_name": book.name}, status=status.HTTP_200_OK)
 
 
@@ -743,9 +780,7 @@ class TranslationReadView(APIView):
             pk=project_id,
             status=TranslationProject.STATUS_PUBLISHED,
         )
-        done = TranslationUnit.objects.filter(
-            project=project, status=TranslationUnit.STATUS_DONE
-        )
+        done = TranslationUnit.objects.filter(project=project, status=TranslationUnit.STATUS_DONE)
         # order_by() で既定の並び順を外してから distinct する（節番号が裏で
         # SELECT に入って章が重複するのを防ぐ）。
         chapters = sorted(
@@ -765,7 +800,9 @@ class TranslationReadView(APIView):
                     .select_related("verse__chapter")
                     .order_by("verse__number")
                 )
-        return Response({
-            "chapters": chapters,
-            "units": TranslationUnitSerializer(units, many=True).data,
-        })
+        return Response(
+            {
+                "chapters": chapters,
+                "units": TranslationUnitSerializer(units, many=True).data,
+            }
+        )

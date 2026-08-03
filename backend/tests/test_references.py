@@ -51,9 +51,9 @@ def test_verses_returns_all_versions(api):
     data = res.json()
     assert data["reference"] == {"book": "matthew", "chapter": 3, "verse": 16}
     translations = [v["translation"] for v in data["verses"]]
-    assert translations == _SORTED_TRANSLATIONS          # 順序が安定
+    assert translations == _SORTED_TRANSLATIONS  # 順序が安定
     ids = [v["id"] for v in data["verses"]]
-    assert len(ids) == len(set(ids))                     # 重複なし
+    assert len(ids) == len(set(ids))  # 重複なし
 
 
 def test_verse_missing_in_a_version(api):

@@ -87,16 +87,17 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ArticleDetailSerializer if self.request.method == "GET" else ArticleWriteSerializer
 
     def get_queryset(self):
-        return (
-            Article.objects.select_related("owner")
-            .prefetch_related("tags", "citations__canonical_book")
+        return Article.objects.select_related("owner").prefetch_related(
+            "tags", "citations__canonical_book"
         )
 
     def get_object(self):
         article = super().get_object()
         # 読むだけなら、公開・限定公開は誰でも見てよい。下書きは書いた人だけ。
         if self.request.method == "GET":
-            is_owner = self.request.user.is_authenticated and article.owner_id == self.request.user.id
+            is_owner = (
+                self.request.user.is_authenticated and article.owner_id == self.request.user.id
+            )
             if article.visibility == Article.VISIBILITY_PRIVATE and not is_owner:
                 self.permission_denied(self.request, message="この記事は下書きです。")
         return article

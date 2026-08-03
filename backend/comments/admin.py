@@ -5,13 +5,28 @@ from .models import Comment, Report, Vote
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ["id", "user", "canonical_book", "chapter_number", "verse_number", "parent", "is_deleted", "created_at"]
+    list_display = [
+        "id",
+        "user",
+        "canonical_book",
+        "chapter_number",
+        "verse_number",
+        "parent",
+        "is_deleted",
+        "created_at",
+    ]
     list_filter = ["is_deleted"]
     ordering = ["-created_at"]
     readonly_fields = [
-        "id", "user", "parent",
-        "canonical_book", "chapter_number", "verse_number", "source_translation",
-        "created_at", "updated_at",
+        "id",
+        "user",
+        "parent",
+        "canonical_book",
+        "chapter_number",
+        "verse_number",
+        "source_translation",
+        "created_at",
+        "updated_at",
     ]
 
 
@@ -28,5 +43,12 @@ class ReportAdmin(admin.ModelAdmin):
     list_filter = ["reason"]
     ordering = ["-created_at"]
     readonly_fields = [
-        "id", "reporter", "comment", "question", "answer", "reason", "created_at", "updated_at",
+        "id",
+        "reporter",
+        "comment",
+        "question",
+        "answer",
+        "reason",
+        "created_at",
+        "updated_at",
     ]

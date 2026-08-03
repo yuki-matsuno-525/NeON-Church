@@ -7,13 +7,31 @@ urlpatterns = [
     path("books/<uuid:book_id>/chapters/", views.ChapterListView.as_view(), name="chapter-list"),
     path("chapters/<uuid:chapter_id>/verses/", views.VerseListView.as_view(), name="verse-list"),
     # 箇所（canonical slug）→ 各版の書/章/節をまとめて返す（N+1 解消）
-    path("references/<slug:slug>/books/", views.ReferenceBooksView.as_view(), name="reference-books"),
-    path("references/<slug:slug>/chapters/<int:chapter>/", views.ReferenceChaptersView.as_view(), name="reference-chapters"),
-    path("references/<slug:slug>/verses/<int:chapter>/<int:verse>/", views.ReferenceVersesView.as_view(), name="reference-verses"),
+    path(
+        "references/<slug:slug>/books/", views.ReferenceBooksView.as_view(), name="reference-books"
+    ),
+    path(
+        "references/<slug:slug>/chapters/<int:chapter>/",
+        views.ReferenceChaptersView.as_view(),
+        name="reference-chapters",
+    ),
+    path(
+        "references/<slug:slug>/verses/<int:chapter>/<int:verse>/",
+        views.ReferenceVersesView.as_view(),
+        name="reference-verses",
+    ),
     # 読書画面が1章を出すのに要る書・章・節を1回で返す（3往復の直列待ちを解消）
-    path("references/<slug:slug>/read/<int:chapter>/", views.ReferenceReadView.as_view(), name="reference-read"),
+    path(
+        "references/<slug:slug>/read/<int:chapter>/",
+        views.ReferenceReadView.as_view(),
+        name="reference-read",
+    ),
     # 書のページ（章グリッド）が要る書と全章を1回で返す
-    path("references/<slug:slug>/book/", views.ReferenceBookReadView.as_view(), name="reference-book-read"),
+    path(
+        "references/<slug:slug>/book/",
+        views.ReferenceBookReadView.as_view(),
+        name="reference-book-read",
+    ),
     path("verse-of-the-day/", views.VerseOfDayView.as_view(), name="verse-of-day"),
     path("search/", views.SearchView.as_view(), name="search"),
 ]

@@ -101,9 +101,7 @@ def sync_citations(article) -> None:
 
     # 書の slug をまとめて引く。存在しない slug の印は索引に載せない。
     slugs = {item["book_slug"] for item in parsed}
-    books_by_slug = {
-        book.slug: book for book in CanonicalBook.objects.filter(slug__in=slugs)
-    }
+    books_by_slug = {book.slug: book for book in CanonicalBook.objects.filter(slug__in=slugs)}
 
     article.citations.all().delete()
     ArticleCitation.objects.bulk_create(

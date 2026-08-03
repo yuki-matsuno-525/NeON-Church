@@ -49,7 +49,9 @@ class TranslationProject(BaseModel):
     )
 
     target_language = models.CharField(max_length=20)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT, db_index=True
+    )
 
     class Meta:
         db_table = "translation_projects"
@@ -97,7 +99,9 @@ class TranslationMembership(BaseModel):
     class Meta:
         db_table = "translation_memberships"
         constraints = [
-            models.UniqueConstraint(fields=["project", "user"], name="unique_project_user_membership"),
+            models.UniqueConstraint(
+                fields=["project", "user"], name="unique_project_user_membership"
+            ),
         ]
 
     def __str__(self) -> str:
@@ -139,7 +143,9 @@ class TranslationUnit(BaseModel):
         related_name="assigned_translation_units",
     )
     body = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_TODO, db_index=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_TODO, db_index=True
+    )
 
     class Meta:
         db_table = "translation_units"

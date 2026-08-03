@@ -4,19 +4,89 @@ LANG = "en"
 
 # ── People ──────────────────────────────────────────────────────────────────
 FAMILY_NAMES = [
-    "whitfield", "chen", "okonkwo", "hartwell", "reed", "adeyemi", "kowalski", "steinberg",
-    "brooks", "fletcher", "malone", "martinez", "osei", "thornton", "jacob", "sullivan",
-    "nguyen", "ashford", "kamau", "goldfarb", "dupont", "walker", "diallo", "mcallister",
-    "park", "obi", "brunner", "lindqvist", "oduya", "carrington", "mbeki", "santos",
-    "delacroix", "hughes", "abadi", "petrov", "ferreira", "kaplan", "oyelaran", "vance",
+    "whitfield",
+    "chen",
+    "okonkwo",
+    "hartwell",
+    "reed",
+    "adeyemi",
+    "kowalski",
+    "steinberg",
+    "brooks",
+    "fletcher",
+    "malone",
+    "martinez",
+    "osei",
+    "thornton",
+    "jacob",
+    "sullivan",
+    "nguyen",
+    "ashford",
+    "kamau",
+    "goldfarb",
+    "dupont",
+    "walker",
+    "diallo",
+    "mcallister",
+    "park",
+    "obi",
+    "brunner",
+    "lindqvist",
+    "oduya",
+    "carrington",
+    "mbeki",
+    "santos",
+    "delacroix",
+    "hughes",
+    "abadi",
+    "petrov",
+    "ferreira",
+    "kaplan",
+    "oyelaran",
+    "vance",
 ]
 
 GIVEN_NAMES = [
-    "james", "sarah", "michael", "emily", "thomas", "grace", "daniel", "rachel",
-    "elijah", "naomi", "patrick", "david", "abigail", "caleb", "priya", "margaret",
-    "deborah", "nathaniel", "lydia", "ben", "clara", "jerome", "amara", "ruth",
-    "jonathan", "esther", "felix", "hana", "isaiah", "miriam", "andrew", "phoebe",
-    "simon", "tabitha", "gideon", "hannah", "silas", "joanna", "amos", "keziah",
+    "james",
+    "sarah",
+    "michael",
+    "emily",
+    "thomas",
+    "grace",
+    "daniel",
+    "rachel",
+    "elijah",
+    "naomi",
+    "patrick",
+    "david",
+    "abigail",
+    "caleb",
+    "priya",
+    "margaret",
+    "deborah",
+    "nathaniel",
+    "lydia",
+    "ben",
+    "clara",
+    "jerome",
+    "amara",
+    "ruth",
+    "jonathan",
+    "esther",
+    "felix",
+    "hana",
+    "isaiah",
+    "miriam",
+    "andrew",
+    "phoebe",
+    "simon",
+    "tabitha",
+    "gideon",
+    "hannah",
+    "silas",
+    "joanna",
+    "amos",
+    "keziah",
 ]
 
 BIO_ROLES = [
@@ -253,46 +323,163 @@ BOOK_SENTENCES = [
 
 # ── Q&A ─────────────────────────────────────────────────────────────────────
 QUESTION_PAIRS = [
-    ("Eye of a needle: literal, or a gate in Jerusalem?", "Does the 'eye of a needle' refer to an actual needle or to a gate? I've heard both explanations confidently asserted and I'd like to know what the evidence actually supports."),
-    ("Reconciling Paul on the role of women", "How do we hold together the passages restricting women's speech with the same author naming women as coworkers and leaders?"),
-    ("Best commentaries without knowing Greek or Hebrew", "I want serious engagement with the text but I have no original languages. What should I be reading?"),
-    ("How much did the New Testament writers know of Enoch?", "Jude quotes it directly. How widely was 1 Enoch known and read in the early communities?"),
-    ("What do I do with the imprecatory Psalms?", "The Psalms that call down destruction on enemies disturb me. Is there a responsible way to pray them?"),
-    ("Literacy in first-century Palestine", "What do we actually know about literacy rates, and how should that shape how we read the Gospels?"),
-    ("Why does Mark have more than one ending?", "My study Bible notes that the earliest manuscripts end at verse 8. Can someone explain the situation?"),
-    ("Is reading the apocrypha discouraged?", "I've been reading Thomas and Enoch and people at church react oddly. Is there an actual objection here?"),
-    ("Which translation should I settle on?", "I keep switching between versions and never finishing anything. How do people choose?"),
-    ("Did Jesus claim to be God?", "The Gospels seem to phrase this quite differently from each other. How should I hold them together?"),
-    ("Is Revelation about the future?", "I grew up with an end-times reading and recently heard it described as protest literature. Which is it?"),
-    ("Does fasting still make sense?", "There's a lot of fasting in scripture. What place should it have now, if any?"),
-    ("Is the tithe a New Testament teaching?", "The ten percent figure gets quoted often. Where does it actually come from?"),
-    ("Can suffering be said to have meaning?", "Job doesn't resolve it for me. I'd like to hear how others hold this."),
-    ("What does the Bible actually say about the afterlife?", "How much description is there, and where? I suspect less than people assume."),
-    ("Should Christians keep the Sabbath?", "My job requires weekend work. How have others thought about this?"),
-    ("How do you handle Gospel discrepancies?", "The same event is reported differently. Does this create a problem, and if not, why not?"),
-    ("Do parables have a single correct meaning?", "Every commentary offers a different reading. Is one of them right?"),
-    ("How much of the Law still applies?", "Food rules, purity rules, festival rules. Where is the line drawn and on what basis?"),
-    ("What kind of document is the Gospel of Thomas?", "I read it and the atmosphere is completely different. What am I actually reading?"),
-    ("Is there a better order to read the Bible in?", "Genesis-first defeated me twice. What order do people recommend?"),
-    ("How do I get into the prophets?", "They feel impenetrable without background. Where should I start?"),
-    ("Is Proverbs just practical advice?", "It reads like a manual for getting ahead. Is that a misreading?"),
-    ("Do Paul and James contradict each other?", "Faith and works appear to be argued in opposite directions."),
-    ("What do I do when I find a contradiction?", "I noticed something that doesn't line up and I don't know what to do with it."),
-    ("Does reading alone, outside a church, count?", "Is there something essential I'm missing by reading on my own?"),
-    ("How do I teach the violent passages to children?", "I freeze every time a question comes up about the conquest narratives."),
-    ("What exactly is the Holy Spirit?", "The doctrinal formulas don't give me anything I can grasp."),
-    ("What is the Septuagint and why does it matter?", "It comes up constantly in footnotes and I've never understood its significance."),
-    ("How do the Dead Sea Scrolls relate to the Bible?", "What did they actually change about our understanding?"),
-    ("Can the resurrection be discussed historically?", "I'd like to understand the line between historical claim and confession of faith."),
-    ("How should I take the miracle accounts?", "I can't take them at face value. Does that disqualify me?"),
-    ("What does scripture say about communion?", "Traditions differ enormously. What does the text itself support?"),
-    ("How do I find the verse behind a hymn?", "Is there a good method for tracing hymn texts back to scripture?"),
-    ("How should the passages about same-sex relations be read?", "I want to understand the interpretive questions before forming a view."),
-    ("Why are there two creation accounts?", "Genesis 1 and 2 read very differently. What's the standard explanation?"),
+    (
+        "Eye of a needle: literal, or a gate in Jerusalem?",
+        "Does the 'eye of a needle' refer to an actual needle or to a gate? I've heard both explanations confidently asserted and I'd like to know what the evidence actually supports.",
+    ),
+    (
+        "Reconciling Paul on the role of women",
+        "How do we hold together the passages restricting women's speech with the same author naming women as coworkers and leaders?",
+    ),
+    (
+        "Best commentaries without knowing Greek or Hebrew",
+        "I want serious engagement with the text but I have no original languages. What should I be reading?",
+    ),
+    (
+        "How much did the New Testament writers know of Enoch?",
+        "Jude quotes it directly. How widely was 1 Enoch known and read in the early communities?",
+    ),
+    (
+        "What do I do with the imprecatory Psalms?",
+        "The Psalms that call down destruction on enemies disturb me. Is there a responsible way to pray them?",
+    ),
+    (
+        "Literacy in first-century Palestine",
+        "What do we actually know about literacy rates, and how should that shape how we read the Gospels?",
+    ),
+    (
+        "Why does Mark have more than one ending?",
+        "My study Bible notes that the earliest manuscripts end at verse 8. Can someone explain the situation?",
+    ),
+    (
+        "Is reading the apocrypha discouraged?",
+        "I've been reading Thomas and Enoch and people at church react oddly. Is there an actual objection here?",
+    ),
+    (
+        "Which translation should I settle on?",
+        "I keep switching between versions and never finishing anything. How do people choose?",
+    ),
+    (
+        "Did Jesus claim to be God?",
+        "The Gospels seem to phrase this quite differently from each other. How should I hold them together?",
+    ),
+    (
+        "Is Revelation about the future?",
+        "I grew up with an end-times reading and recently heard it described as protest literature. Which is it?",
+    ),
+    (
+        "Does fasting still make sense?",
+        "There's a lot of fasting in scripture. What place should it have now, if any?",
+    ),
+    (
+        "Is the tithe a New Testament teaching?",
+        "The ten percent figure gets quoted often. Where does it actually come from?",
+    ),
+    (
+        "Can suffering be said to have meaning?",
+        "Job doesn't resolve it for me. I'd like to hear how others hold this.",
+    ),
+    (
+        "What does the Bible actually say about the afterlife?",
+        "How much description is there, and where? I suspect less than people assume.",
+    ),
+    (
+        "Should Christians keep the Sabbath?",
+        "My job requires weekend work. How have others thought about this?",
+    ),
+    (
+        "How do you handle Gospel discrepancies?",
+        "The same event is reported differently. Does this create a problem, and if not, why not?",
+    ),
+    (
+        "Do parables have a single correct meaning?",
+        "Every commentary offers a different reading. Is one of them right?",
+    ),
+    (
+        "How much of the Law still applies?",
+        "Food rules, purity rules, festival rules. Where is the line drawn and on what basis?",
+    ),
+    (
+        "What kind of document is the Gospel of Thomas?",
+        "I read it and the atmosphere is completely different. What am I actually reading?",
+    ),
+    (
+        "Is there a better order to read the Bible in?",
+        "Genesis-first defeated me twice. What order do people recommend?",
+    ),
+    (
+        "How do I get into the prophets?",
+        "They feel impenetrable without background. Where should I start?",
+    ),
+    (
+        "Is Proverbs just practical advice?",
+        "It reads like a manual for getting ahead. Is that a misreading?",
+    ),
+    (
+        "Do Paul and James contradict each other?",
+        "Faith and works appear to be argued in opposite directions.",
+    ),
+    (
+        "What do I do when I find a contradiction?",
+        "I noticed something that doesn't line up and I don't know what to do with it.",
+    ),
+    (
+        "Does reading alone, outside a church, count?",
+        "Is there something essential I'm missing by reading on my own?",
+    ),
+    (
+        "How do I teach the violent passages to children?",
+        "I freeze every time a question comes up about the conquest narratives.",
+    ),
+    (
+        "What exactly is the Holy Spirit?",
+        "The doctrinal formulas don't give me anything I can grasp.",
+    ),
+    (
+        "What is the Septuagint and why does it matter?",
+        "It comes up constantly in footnotes and I've never understood its significance.",
+    ),
+    (
+        "How do the Dead Sea Scrolls relate to the Bible?",
+        "What did they actually change about our understanding?",
+    ),
+    (
+        "Can the resurrection be discussed historically?",
+        "I'd like to understand the line between historical claim and confession of faith.",
+    ),
+    (
+        "How should I take the miracle accounts?",
+        "I can't take them at face value. Does that disqualify me?",
+    ),
+    (
+        "What does scripture say about communion?",
+        "Traditions differ enormously. What does the text itself support?",
+    ),
+    (
+        "How do I find the verse behind a hymn?",
+        "Is there a good method for tracing hymn texts back to scripture?",
+    ),
+    (
+        "How should the passages about same-sex relations be read?",
+        "I want to understand the interpretive questions before forming a view.",
+    ),
+    (
+        "Why are there two creation accounts?",
+        "Genesis 1 and 2 read very differently. What's the standard explanation?",
+    ),
     ("Was the exodus a historical event?", "What's the state of the archaeological discussion?"),
-    ("Who wrote the Pentateuch?", "I've encountered the documentary hypothesis and would like a fair summary."),
-    ("What's the difference between the canons?", "Catholic, Orthodox and Protestant Bibles differ. How did that happen?"),
-    ("How literally should Genesis 1 be read?", "I'd like to understand the range of serious positions, not just the loudest ones."),
+    (
+        "Who wrote the Pentateuch?",
+        "I've encountered the documentary hypothesis and would like a fair summary.",
+    ),
+    (
+        "What's the difference between the canons?",
+        "Catholic, Orthodox and Protestant Bibles differ. How did that happen?",
+    ),
+    (
+        "How literally should Genesis 1 be read?",
+        "I'd like to understand the range of serious positions, not just the loudest ones.",
+    ),
 ]
 
 ANSWER_SENTENCES = [
@@ -330,17 +517,49 @@ ANSWER_SENTENCES = [
 
 # ── Articles ────────────────────────────────────────────────────────────────
 ARTICLE_TITLE_HEADS = [
-    "Reading", "Against", "The Silence in", "On Forgiving", "Notes on",
-    "Late Night", "Letting Go of", "At the Edge of", "Holding the Question in", "Unprayable",
-    "Anger and", "The Small Voice of", "Halfway Through", "From the Kitchen Table:", "The Unfinished",
-    "Still Broken:", "The Work of Waiting in", "White Space in", "The Long Way to", "Quiet in",
+    "Reading",
+    "Against",
+    "The Silence in",
+    "On Forgiving",
+    "Notes on",
+    "Late Night",
+    "Letting Go of",
+    "At the Edge of",
+    "Holding the Question in",
+    "Unprayable",
+    "Anger and",
+    "The Small Voice of",
+    "Halfway Through",
+    "From the Kitchen Table:",
+    "The Unfinished",
+    "Still Broken:",
+    "The Work of Waiting in",
+    "White Space in",
+    "The Long Way to",
+    "Quiet in",
 ]
 
 ARTICLE_TITLE_TAILS = [
-    "the Sermon on the Mount", "Job's Silence", "the Psalms", "the Prodigal Son", "Paul's Letters",
-    "the Morning of Genesis", "Enoch's Vision", "the Sayings of Thomas", "the City in Revelation", "the Exodus Road",
-    "Ruth's Choice", "Jeremiah's Lament", "Mary's Song", "Peter's Denial", "the Words from the Cross",
-    "the Sabbath", "the Day of Fasting", "the Shepherd Psalm", "Holy Week", "Easter Morning",
+    "the Sermon on the Mount",
+    "Job's Silence",
+    "the Psalms",
+    "the Prodigal Son",
+    "Paul's Letters",
+    "the Morning of Genesis",
+    "Enoch's Vision",
+    "the Sayings of Thomas",
+    "the City in Revelation",
+    "the Exodus Road",
+    "Ruth's Choice",
+    "Jeremiah's Lament",
+    "Mary's Song",
+    "Peter's Denial",
+    "the Words from the Cross",
+    "the Sabbath",
+    "the Day of Fasting",
+    "the Shepherd Psalm",
+    "Holy Week",
+    "Easter Morning",
 ]
 
 ARTICLE_SUMMARIES = [
@@ -359,9 +578,19 @@ ARTICLE_SUMMARIES = [
 ]
 
 ARTICLE_HEADINGS = [
-    "Before we start", "The text itself", "Comparing translations", "Following the context",
-    "One word that snags", "Another way to read it", "In its own century", "In an ordinary week",
-    "Leaving the question open", "Anticipating the objection", "Closing", "A note", "What I read",
+    "Before we start",
+    "The text itself",
+    "Comparing translations",
+    "Following the context",
+    "One word that snags",
+    "Another way to read it",
+    "In its own century",
+    "In an ordinary week",
+    "Leaving the question open",
+    "Anticipating the objection",
+    "Closing",
+    "A note",
+    "What I read",
 ]
 
 ARTICLE_PARAGRAPHS = [
@@ -401,15 +630,39 @@ ARTICLE_COMMENT_SENTENCES = [
 
 # ── Plans ───────────────────────────────────────────────────────────────────
 PLAN_TITLE_HEADS = [
-    "A First Look at", "Nights in", "Mornings in", "Quiet", "Reading with Questions:",
-    "In Hard Seasons:", "A Journey Through", "Kitchen Table", "Doubting Through", "Aloud in",
-    "Beginners'", "Returning to", "Across the Canon:", "Seasonal", "For Working People:",
+    "A First Look at",
+    "Nights in",
+    "Mornings in",
+    "Quiet",
+    "Reading with Questions:",
+    "In Hard Seasons:",
+    "A Journey Through",
+    "Kitchen Table",
+    "Doubting Through",
+    "Aloud in",
+    "Beginners'",
+    "Returning to",
+    "Across the Canon:",
+    "Seasonal",
+    "For Working People:",
 ]
 
 PLAN_TITLE_TAILS = [
-    "the Gospels", "the Psalms", "Paul's Journeys", "Genesis", "the Prophets",
-    "Holy Week", "Eastertide", "the Wisdom Books", "the Apocrypha", "Revelation",
-    "the Letters", "Exodus", "Job", "the Twelve", "Acts",
+    "the Gospels",
+    "the Psalms",
+    "Paul's Journeys",
+    "Genesis",
+    "the Prophets",
+    "Holy Week",
+    "Eastertide",
+    "the Wisdom Books",
+    "the Apocrypha",
+    "Revelation",
+    "the Letters",
+    "Exodus",
+    "Job",
+    "the Twelve",
+    "Acts",
 ]
 
 PLAN_DESCRIPTIONS = [
@@ -428,10 +681,26 @@ PLAN_DESCRIPTIONS = [
 ]
 
 PLAN_DAY_TITLES = [
-    "Beginning", "Asking", "Reading the Silence", "Light and Dark", "Setting Out",
-    "In the Wilderness", "A Word of Promise", "The Lament", "On Forgiving", "At the Table",
-    "Before Dawn", "The Way Back", "A Day of Fasting", "Called", "Waiting",
-    "The Fork in the Road", "Reading a Letter", "A New Name", "The Final Vision", "Toward Quiet",
+    "Beginning",
+    "Asking",
+    "Reading the Silence",
+    "Light and Dark",
+    "Setting Out",
+    "In the Wilderness",
+    "A Word of Promise",
+    "The Lament",
+    "On Forgiving",
+    "At the Table",
+    "Before Dawn",
+    "The Way Back",
+    "A Day of Fasting",
+    "Called",
+    "Waiting",
+    "The Fork in the Road",
+    "Reading a Letter",
+    "A New Name",
+    "The Final Vision",
+    "Toward Quiet",
 ]
 
 PLAN_DEVOTIONALS = [
@@ -459,8 +728,16 @@ PLAN_NOTES = [
 
 # ── Translation projects ────────────────────────────────────────────────────
 PROJECT_NAME_HEADS = [
-    "Contemporary English", "Plain Language", "A Reader's", "Children's", "Spoken",
-    "Poetic", "Annotated", "Collaborative", "Interlinear-Friendly", "Read-Aloud",
+    "Contemporary English",
+    "Plain Language",
+    "A Reader's",
+    "Children's",
+    "Spoken",
+    "Poetic",
+    "Annotated",
+    "Collaborative",
+    "Interlinear-Friendly",
+    "Read-Aloud",
 ]
 
 PROJECT_DESCRIPTIONS = [

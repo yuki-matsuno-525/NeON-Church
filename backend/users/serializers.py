@@ -98,7 +98,9 @@ class IdentityUpdateSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
         if not user.has_usable_password() or not user.check_password(attrs["current_password"]):
-            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect."}
+            )
         if "username" not in attrs and "email" not in attrs:
             raise serializers.ValidationError("Provide a username or email address.")
 
@@ -115,7 +117,9 @@ class IdentityUpdateSerializer(serializers.Serializer):
         if email is not None:
             email = User.objects.normalize_email(email).lower()
             if User.objects.exclude(pk=user.pk).filter(email__iexact=email).exists():
-                raise serializers.ValidationError({"email": "This email address is already in use."})
+                raise serializers.ValidationError(
+                    {"email": "This email address is already in use."}
+                )
             attrs["email"] = email
         return attrs
 
@@ -124,10 +128,12 @@ class IdentityUpdateSerializer(serializers.Serializer):
         for field in ("username", "email"):
             if field in self.validated_data:
                 setattr(user, field, self.validated_data[field])
-        user.save(update_fields=[
-            *(field for field in ("username", "email") if field in self.validated_data),
-            "updated_at",
-        ])
+        user.save(
+            update_fields=[
+                *(field for field in ("username", "email") if field in self.validated_data),
+                "updated_at",
+            ]
+        )
         return user
 
 
@@ -144,7 +150,9 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
         if not user.has_usable_password() or not user.check_password(attrs["current_password"]):
-            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect."}
+            )
         if attrs["current_password"] == attrs["new_password"]:
             raise serializers.ValidationError({"new_password": "Choose a different password."})
         try:

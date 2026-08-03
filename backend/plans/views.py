@@ -165,7 +165,9 @@ class PlanDayDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
 
     def get_object(self):
-        return get_object_or_404(self.get_queryset(), pk=self.kwargs["day_id"], plan_id=self.kwargs["pk"])
+        return get_object_or_404(
+            self.get_queryset(), pk=self.kwargs["day_id"], plan_id=self.kwargs["pk"]
+        )
 
     def destroy(self, request, *args, **kwargs):
         day = self.get_object()
@@ -242,9 +244,7 @@ class PlanSubscribeView(APIView):
 
     def post(self, request, pk):
         plan = _readable_plan(request, pk)
-        subscription, created = PlanSubscription.objects.get_or_create(
-            user=request.user, plan=plan
-        )
+        subscription, created = PlanSubscription.objects.get_or_create(user=request.user, plan=plan)
         if not created and not subscription.is_active:
             subscription.is_active = True
             subscription.save(update_fields=["is_active", "updated_at"])

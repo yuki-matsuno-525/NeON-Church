@@ -23,7 +23,7 @@ def strip_prefix(text: str, book_name: str, chapter: int, verse: int) -> str:
     """text が「書名 章:節 」で始まるときだけ、その参照を取り除いて返す。"""
     ref = f"{book_name} {chapter}:{verse} "
     if text.startswith(ref):
-        return text[len(ref):].lstrip()
+        return text[len(ref) :].lstrip()
     return text
 
 

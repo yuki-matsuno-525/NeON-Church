@@ -26,15 +26,27 @@ def make_comment(*, user, verse=None, chapter=None, book=None, **kwargs):
 
     if verse is not None:
         b = verse.chapter.book
-        loc = dict(canonical_book=b.canonical_book, chapter_number=verse.chapter.number,
-                   verse_number=verse.number, source_translation=b.translation)
+        loc = dict(
+            canonical_book=b.canonical_book,
+            chapter_number=verse.chapter.number,
+            verse_number=verse.number,
+            source_translation=b.translation,
+        )
     elif chapter is not None:
         b = chapter.book
-        loc = dict(canonical_book=b.canonical_book, chapter_number=chapter.number,
-                   verse_number=None, source_translation=b.translation)
+        loc = dict(
+            canonical_book=b.canonical_book,
+            chapter_number=chapter.number,
+            verse_number=None,
+            source_translation=b.translation,
+        )
     elif book is not None:
-        loc = dict(canonical_book=book.canonical_book, chapter_number=None,
-                   verse_number=None, source_translation=book.translation)
+        loc = dict(
+            canonical_book=book.canonical_book,
+            chapter_number=None,
+            verse_number=None,
+            source_translation=book.translation,
+        )
     else:
         loc = {}
     return Comment.objects.create(user=user, **loc, **kwargs)

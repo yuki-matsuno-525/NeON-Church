@@ -141,7 +141,9 @@ def cmd_all(args) -> int:
 
     print(f"JSON     : {json_path}")
     print(f"プレビュー: {preview_path}")
-    print(f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}\n")
+    print(
+        f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}\n"
+    )
     if warnings:
         print("[ パース時の気づき ]")
         for w in warnings:
@@ -167,7 +169,9 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--output", default="mary.json")
     p.set_defaults(func=cmd_parse_mary)
 
-    p = sub.add_parser("parse-infancy-thomas", help="トマスによる幼児福音書 HTML を正規化 JSON に変換")
+    p = sub.add_parser(
+        "parse-infancy-thomas", help="トマスによる幼児福音書 HTML を正規化 JSON に変換"
+    )
     p.add_argument("html")
     p.add_argument("-o", "--output", default="infancy-thomas.json")
     p.set_defaults(func=cmd_parse_infancy_thomas)

@@ -69,60 +69,80 @@ REGISTER_URL = "/api/auth/register/"
 # フィクスチャ
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def book(db):
     from tests.factories import make_book
+
     return make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
 
 @pytest.fixture
 def chapter(book):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book, number=1)
 
 
 @pytest.fixture
 def verse(chapter):
     from bible.models import Verse
+
     return Verse.objects.create(chapter=chapter, number=1, text="アブラハムの子")
 
 
 @pytest.fixture
 def verse2(chapter):
     from bible.models import Verse
+
     return Verse.objects.create(chapter=chapter, number=2, text="ダビデの子")
 
 
 @pytest.fixture
 def owner_client(db):
     from rest_framework.test import APIClient
+
     client = APIClient()
-    client.post(REGISTER_URL, {"username": "owner", "email": "owner@test.com", "password": "pass12345"}, format="json")
+    client.post(
+        REGISTER_URL,
+        {"username": "owner", "email": "owner@test.com", "password": "pass12345"},
+        format="json",
+    )
     return client
 
 
 @pytest.fixture
 def member_client(db):
     from rest_framework.test import APIClient
+
     client = APIClient()
-    client.post(REGISTER_URL, {"username": "member", "email": "member@test.com", "password": "pass12345"}, format="json")
+    client.post(
+        REGISTER_URL,
+        {"username": "member", "email": "member@test.com", "password": "pass12345"},
+        format="json",
+    )
     return client
 
 
 @pytest.fixture
 def anon_client():
     from rest_framework.test import APIClient
+
     return APIClient()
 
 
 @pytest.fixture
 def project(db, owner_client, book):
-    res = owner_client.post(LIST_URL, {
-        "name": "テスト翻訳プロジェクト",
-        "description": "説明文",
-        "source_book": str(book.id),
-        "target_language": "ja",
-    }, format="json")
+    res = owner_client.post(
+        LIST_URL,
+        {
+            "name": "テスト翻訳プロジェクト",
+            "description": "説明文",
+            "source_book": str(book.id),
+            "target_language": "ja",
+        },
+        format="json",
+    )
     assert res.status_code == status.HTTP_201_CREATED
     return res.data
 
@@ -144,6 +164,7 @@ def published_project(db, owner_client, active_project):
 # ---------------------------------------------------------------------------
 # プロジェクト CRUD
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 class TestTranslationProjectList:
@@ -172,6 +193,7 @@ class TestTranslationProjectList:
         from django.contrib.auth import get_user_model
 
         from translations.models import TranslationMembership
+
         member = get_user_model().objects.get(username="member")
         TranslationMembership.objects.create(
             project_id=project["id"],
@@ -184,11 +206,19 @@ class TestTranslationProjectList:
 
         assert project["id"] in [item["id"] for item in res.data["results"]]
 
-    def test_status_filter_returns_only_that_column(self, db, anon_client, owner_client, book, published_project):
+    def test_status_filter_returns_only_that_column(
+        self, db, anon_client, owner_client, book, published_project
+    ):
         # published_project とは別に、進行中プロジェクトを1件つくる。
-        res_c = owner_client.post(LIST_URL, {
-            "name": "進行中P", "source_book": str(book.id), "target_language": "en",
-        }, format="json")
+        res_c = owner_client.post(
+            LIST_URL,
+            {
+                "name": "進行中P",
+                "source_book": str(book.id),
+                "target_language": "en",
+            },
+            format="json",
+        )
         active_id = res_c.data["id"]
         owner_client.post(activate_url(active_id))
 
@@ -201,13 +231,25 @@ class TestTranslationProjectList:
         assert active_id not in ids
 
     def test_search_filters_projects(self, db, anon_client, owner_client, book):
-        matched = owner_client.post(LIST_URL, {
-            "name": "Azuma database reading", "source_book": str(book.id), "target_language": "en",
-        }, format="json").data["id"]
+        matched = owner_client.post(
+            LIST_URL,
+            {
+                "name": "Azuma database reading",
+                "source_book": str(book.id),
+                "target_language": "en",
+            },
+            format="json",
+        ).data["id"]
         owner_client.post(activate_url(matched))
-        missed = owner_client.post(LIST_URL, {
-            "name": "Quiet liturgy project", "source_book": str(book.id), "target_language": "en",
-        }, format="json").data["id"]
+        missed = owner_client.post(
+            LIST_URL,
+            {
+                "name": "Quiet liturgy project",
+                "source_book": str(book.id),
+                "target_language": "en",
+            },
+            format="json",
+        ).data["id"]
         owner_client.post(activate_url(missed))
 
         res = anon_client.get(LIST_URL, {"status": "active", "q": "Azuma"})
@@ -220,9 +262,15 @@ class TestTranslationProjectList:
     def test_list_is_paginated_20_per_page(self, db, anon_client, owner_client, book):
         # 公開列を21件つくると、1ページ目20件・2ページ目1件になる。
         for i in range(21):
-            res = owner_client.post(LIST_URL, {
-                "name": f"公開P{i}", "source_book": str(book.id), "target_language": "en",
-            }, format="json")
+            res = owner_client.post(
+                LIST_URL,
+                {
+                    "name": f"公開P{i}",
+                    "source_book": str(book.id),
+                    "target_language": "en",
+                },
+                format="json",
+            )
             pid = res.data["id"]
             owner_client.post(activate_url(pid))
             owner_client.post(publish_url(pid))
@@ -238,9 +286,15 @@ class TestTranslationProjectList:
         # 以前は1件につき4回（ユニット数・完了数・参加中か・本棚にあるか）問い合わせていたので、
         # 20件のページで80回の往復になっていた。件数が増えてもクエリ数が増えないことを確かめる。
         for i in range(10):
-            pid = owner_client.post(LIST_URL, {
-                "name": f"公開P{i}", "source_book": str(book.id), "target_language": "en",
-            }, format="json").data["id"]
+            pid = owner_client.post(
+                LIST_URL,
+                {
+                    "name": f"公開P{i}",
+                    "source_book": str(book.id),
+                    "target_language": "en",
+                },
+                format="json",
+            ).data["id"]
             owner_client.post(activate_url(pid))
             owner_client.post(publish_url(pid))
 
@@ -248,9 +302,13 @@ class TestTranslationProjectList:
             res = anon_client.get(LIST_URL, {"status": "published"})
         assert len(res.data["results"]) == 10
 
-    def test_list_still_reports_unit_and_done_counts(self, owner_client, active_project, verse, verse2):
+    def test_list_still_reports_unit_and_done_counts(
+        self, owner_client, active_project, verse, verse2
+    ):
         # まとめて数えるようにしても、返す数字は変わらない。
-        unit = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json").data
+        unit = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
         owner_client.post(units_url(active_project["id"]), {"verse": str(verse2.id)}, format="json")
         owner_client.patch(
             unit_detail_url(active_project["id"], unit["id"]),
@@ -265,15 +323,23 @@ class TestTranslationProjectList:
         assert found["is_member"] is True
 
     def test_create_requires_auth(self, anon_client, book):
-        res = anon_client.post(LIST_URL, {"name": "X", "source_book": str(book.id), "target_language": "en"}, format="json")
+        res = anon_client.post(
+            LIST_URL,
+            {"name": "X", "source_book": str(book.id), "target_language": "en"},
+            format="json",
+        )
         assert res.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
 
     def test_create_sets_owner_membership(self, db, owner_client, book):
-        res = owner_client.post(LIST_URL, {
-            "name": "新プロジェクト",
-            "source_book": str(book.id),
-            "target_language": "ja",
-        }, format="json")
+        res = owner_client.post(
+            LIST_URL,
+            {
+                "name": "新プロジェクト",
+                "source_book": str(book.id),
+                "target_language": "ja",
+            },
+            format="json",
+        )
         assert res.status_code == status.HTTP_201_CREATED
         project_id = res.data["id"]
         # オーナーはメンバーとして登録済みのはず（メンバーAPIで確認）
@@ -332,6 +398,7 @@ class TestTranslationStatusTransitions:
 # メンバーシップ
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestTranslationMembership:
     def test_join_creates_pending_membership(self, member_client, active_project):
@@ -359,14 +426,22 @@ class TestTranslationMembership:
     def test_owner_approves_member(self, owner_client, member_client, active_project):
         join_res = member_client.post(join_url(active_project["id"]))
         membership_id = join_res.data["id"]
-        res = owner_client.patch(member_detail_url(active_project["id"], membership_id), {"status": "approved"}, format="json")
+        res = owner_client.patch(
+            member_detail_url(active_project["id"], membership_id),
+            {"status": "approved"},
+            format="json",
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["status"] == "approved"
 
     def test_owner_rejects_member(self, owner_client, member_client, active_project):
         join_res = member_client.post(join_url(active_project["id"]))
         membership_id = join_res.data["id"]
-        res = owner_client.patch(member_detail_url(active_project["id"], membership_id), {"status": "rejected"}, format="json")
+        res = owner_client.patch(
+            member_detail_url(active_project["id"], membership_id),
+            {"status": "rejected"},
+            format="json",
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["status"] == "rejected"
 
@@ -386,18 +461,31 @@ class TestTranslationMembership:
     def test_non_owner_cannot_approve(self, member_client, owner_client, active_project):
         # 別のメンバーが参加申請
         from rest_framework.test import APIClient
+
         another = APIClient()
-        another.post(REGISTER_URL, {"username": "another", "email": "a@test.com", "password": "pass12345"}, format="json")
+        another.post(
+            REGISTER_URL,
+            {"username": "another", "email": "a@test.com", "password": "pass12345"},
+            format="json",
+        )
         join_res = another.post(join_url(active_project["id"]))
         membership_id = join_res.data["id"]
-        res = member_client.patch(member_detail_url(active_project["id"], membership_id), {"status": "approved"}, format="json")
+        res = member_client.patch(
+            member_detail_url(active_project["id"], membership_id),
+            {"status": "approved"},
+            format="json",
+        )
         assert res.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED]
 
     def test_owner_removes_member(self, owner_client, member_client, active_project):
         join_res = member_client.post(join_url(active_project["id"]))
         membership_id = join_res.data["id"]
         # まず承認
-        owner_client.patch(member_detail_url(active_project["id"], membership_id), {"status": "approved"}, format="json")
+        owner_client.patch(
+            member_detail_url(active_project["id"], membership_id),
+            {"status": "approved"},
+            format="json",
+        )
         # 除名
         res = owner_client.delete(member_detail_url(active_project["id"], membership_id))
         assert res.status_code == status.HTTP_204_NO_CONTENT
@@ -411,6 +499,7 @@ class TestTranslationMembership:
 # ユニット
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestTranslationUnit:
     def test_owner_can_add_unit(self, owner_client, project, verse):
@@ -421,7 +510,9 @@ class TestTranslationUnit:
         assert res.data["status"] == "todo"
 
     def test_non_owner_cannot_add_unit(self, member_client, active_project, verse):
-        res = member_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
+        res = member_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_duplicate_verse_unit_rejected(self, owner_client, project, verse):
@@ -429,37 +520,69 @@ class TestTranslationUnit:
         res = owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_list_units_anonymous_for_active_project(self, anon_client, owner_client, active_project, verse):
+    def test_list_units_anonymous_for_active_project(
+        self, anon_client, owner_client, active_project, verse
+    ):
         owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
         res = anon_client.get(units_url(active_project["id"]))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
 
     def test_draft_units_are_private(self, anon_client, owner_client, project, verse):
-        unit = owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json").data
+        unit = owner_client.post(
+            units_url(project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
         assert anon_client.get(units_url(project["id"])).status_code == status.HTTP_404_NOT_FOUND
-        assert anon_client.get(unit_detail_url(project["id"], unit["id"])).status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            anon_client.get(unit_detail_url(project["id"], unit["id"])).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
 
     def test_only_owner_can_delete_unit(self, owner_client, member_client, active_project, verse):
-        unit = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json").data
-        assert member_client.delete(unit_detail_url(active_project["id"], unit["id"])).status_code == status.HTTP_403_FORBIDDEN
-        assert owner_client.delete(unit_detail_url(active_project["id"], unit["id"])).status_code == status.HTTP_204_NO_CONTENT
+        unit = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
+        assert (
+            member_client.delete(unit_detail_url(active_project["id"], unit["id"])).status_code
+            == status.HTTP_403_FORBIDDEN
+        )
+        assert (
+            owner_client.delete(unit_detail_url(active_project["id"], unit["id"])).status_code
+            == status.HTTP_204_NO_CONTENT
+        )
 
-    def test_assigned_member_can_update_body(self, owner_client, member_client, active_project, verse):
+    def test_assigned_member_can_update_body(
+        self, owner_client, member_client, active_project, verse
+    ):
         # ユニット作成
-        unit_res = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
+        unit_res = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
         # メンバー参加・承認
         join_res = member_client.post(join_url(active_project["id"]))
-        owner_client.patch(member_detail_url(active_project["id"], join_res.data["id"]), {"status": "approved"}, format="json")
+        owner_client.patch(
+            member_detail_url(active_project["id"], join_res.data["id"]),
+            {"status": "approved"},
+            format="json",
+        )
         # メンバーIDを取得
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         member_user = User.objects.get(username="member")
         # 担当者割り当て
-        owner_client.post(unit_assign_url(active_project["id"], unit_id), {"user_id": str(member_user.id)}, format="json")
+        owner_client.post(
+            unit_assign_url(active_project["id"], unit_id),
+            {"user_id": str(member_user.id)},
+            format="json",
+        )
         # 訳文更新
-        res = member_client.patch(unit_detail_url(active_project["id"], unit_id), {"body": "The son of Abraham"}, format="json")
+        res = member_client.patch(
+            unit_detail_url(active_project["id"], unit_id),
+            {"body": "The son of Abraham"},
+            format="json",
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["body"] == "The son of Abraham"
 
@@ -818,39 +941,72 @@ class TestDraftTranslationUuidPrivacy:
         owner_client.post(activate_url(active["id"]))
 
         for project_id in (project["id"], active["id"], uuid.uuid4()):
-            assert owner_client.post(
-                f"/api/translations/{project_id}/library/"
-            ).status_code == status.HTTP_404_NOT_FOUND
+            assert (
+                owner_client.post(f"/api/translations/{project_id}/library/").status_code
+                == status.HTTP_404_NOT_FOUND
+            )
             assert anon_client.get(read_url(project_id)).status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
 class TestTranslationUnitPermissions:
-    def test_non_assigned_member_cannot_update(self, owner_client, member_client, active_project, verse):
-        unit_res = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
+    def test_non_assigned_member_cannot_update(
+        self, owner_client, member_client, active_project, verse
+    ):
+        unit_res = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
-        res = member_client.patch(unit_detail_url(active_project["id"], unit_id), {"body": "不正"}, format="json")
+        res = member_client.patch(
+            unit_detail_url(active_project["id"], unit_id), {"body": "不正"}, format="json"
+        )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_owner_can_assign_approved_member(self, owner_client, member_client, active_project, verse):
-        unit_res = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
+    def test_owner_can_assign_approved_member(
+        self, owner_client, member_client, active_project, verse
+    ):
+        unit_res = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
         join_res = member_client.post(join_url(active_project["id"]))
-        owner_client.patch(member_detail_url(active_project["id"], join_res.data["id"]), {"status": "approved"}, format="json")
+        owner_client.patch(
+            member_detail_url(active_project["id"], join_res.data["id"]),
+            {"status": "approved"},
+            format="json",
+        )
         from django.contrib.auth import get_user_model
+
         member_user = get_user_model().objects.get(username="member")
-        res = owner_client.post(unit_assign_url(active_project["id"], unit_id), {"user_id": str(member_user.id)}, format="json")
+        res = owner_client.post(
+            unit_assign_url(active_project["id"], unit_id),
+            {"user_id": str(member_user.id)},
+            format="json",
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["assigned_to_username"] == "member"
 
-    def test_assigned_to_me_filter(self, owner_client, member_client, active_project, verse, verse2):
-        first = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json").data
+    def test_assigned_to_me_filter(
+        self, owner_client, member_client, active_project, verse, verse2
+    ):
+        first = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
         owner_client.post(units_url(active_project["id"]), {"verse": str(verse2.id)}, format="json")
         join_res = member_client.post(join_url(active_project["id"]))
-        owner_client.patch(member_detail_url(active_project["id"], join_res.data["id"]), {"status": "approved"}, format="json")
+        owner_client.patch(
+            member_detail_url(active_project["id"], join_res.data["id"]),
+            {"status": "approved"},
+            format="json",
+        )
         from django.contrib.auth import get_user_model
+
         member = get_user_model().objects.get(username="member")
-        owner_client.post(unit_assign_url(active_project["id"], first["id"]), {"user_id": str(member.id)}, format="json")
+        owner_client.post(
+            unit_assign_url(active_project["id"], first["id"]),
+            {"user_id": str(member.id)},
+            format="json",
+        )
 
         res = member_client.get(units_url(active_project["id"]), {"assigned_to": "me"})
 
@@ -859,19 +1015,31 @@ class TestTranslationUnitPermissions:
         assert res.data["results"][0]["id"] == first["id"]
 
     def test_cannot_assign_non_member(self, owner_client, member_client, active_project, verse):
-        unit_res = owner_client.post(units_url(active_project["id"]), {"verse": str(verse.id)}, format="json")
+        unit_res = owner_client.post(
+            units_url(active_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
         # member_client はまだ参加していない
         from django.contrib.auth import get_user_model
-        member_client.post(REGISTER_URL, {"username": "stranger", "email": "s@test.com", "password": "pass12345"}, format="json")
+
+        member_client.post(
+            REGISTER_URL,
+            {"username": "stranger", "email": "s@test.com", "password": "pass12345"},
+            format="json",
+        )
         stranger = get_user_model().objects.get(username="stranger")
-        res = owner_client.post(unit_assign_url(active_project["id"], unit_id), {"user_id": str(stranger.id)}, format="json")
+        res = owner_client.post(
+            unit_assign_url(active_project["id"], unit_id),
+            {"user_id": str(stranger.id)},
+            format="json",
+        )
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
 
 # ---------------------------------------------------------------------------
 # コメント
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def approved_member_setup(owner_client, member_client, active_project):
@@ -887,9 +1055,13 @@ def approved_member_setup(owner_client, member_client, active_project):
 
 @pytest.mark.django_db
 class TestTranslationComment:
-    def test_approved_member_can_post_project_comment(self, owner_client, member_client, approved_member_setup):
+    def test_approved_member_can_post_project_comment(
+        self, owner_client, member_client, approved_member_setup
+    ):
         project = approved_member_setup
-        res = member_client.post(comments_url(project["id"]), {"body": "プロジェクト全体への質問"}, format="json")
+        res = member_client.post(
+            comments_url(project["id"]), {"body": "プロジェクト全体への質問"}, format="json"
+        )
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["username"] == "member"
 
@@ -897,12 +1069,18 @@ class TestTranslationComment:
         res = anon_client.post(comments_url(active_project["id"]), {"body": "不正"}, format="json")
         assert res.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED]
 
-    def test_unapproved_member_cannot_post_comment(self, owner_client, member_client, active_project):
+    def test_unapproved_member_cannot_post_comment(
+        self, owner_client, member_client, active_project
+    ):
         member_client.post(join_url(active_project["id"]))  # pending のまま
-        res = member_client.post(comments_url(active_project["id"]), {"body": "未承認"}, format="json")
+        res = member_client.post(
+            comments_url(active_project["id"]), {"body": "未承認"}, format="json"
+        )
         assert res.status_code in [status.HTTP_403_FORBIDDEN, status.HTTP_401_UNAUTHORIZED]
 
-    def test_list_project_comments_anonymous(self, owner_client, member_client, approved_member_setup, anon_client):
+    def test_list_project_comments_anonymous(
+        self, owner_client, member_client, approved_member_setup, anon_client
+    ):
         project = approved_member_setup
         member_client.post(comments_url(project["id"]), {"body": "コメント"}, format="json")
         res = anon_client.get(comments_url(project["id"]))
@@ -912,30 +1090,46 @@ class TestTranslationComment:
     def test_draft_comments_are_private(self, anon_client, project):
         assert anon_client.get(comments_url(project["id"])).status_code == status.HTTP_404_NOT_FOUND
 
-    def test_approved_member_can_post_unit_comment(self, owner_client, member_client, approved_member_setup, verse):
+    def test_approved_member_can_post_unit_comment(
+        self, owner_client, member_client, approved_member_setup, verse
+    ):
         project = approved_member_setup
-        unit_res = owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
+        unit_res = owner_client.post(
+            units_url(project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
-        res = member_client.post(unit_comments_url(project["id"], unit_id), {"body": "ユニットへの質問"}, format="json")
+        res = member_client.post(
+            unit_comments_url(project["id"], unit_id), {"body": "ユニットへの質問"}, format="json"
+        )
         assert res.status_code == status.HTTP_201_CREATED
 
-    def test_comment_soft_delete_by_author(self, owner_client, member_client, approved_member_setup):
+    def test_comment_soft_delete_by_author(
+        self, owner_client, member_client, approved_member_setup
+    ):
         project = approved_member_setup
-        post_res = member_client.post(comments_url(project["id"]), {"body": "削除対象"}, format="json")
+        post_res = member_client.post(
+            comments_url(project["id"]), {"body": "削除対象"}, format="json"
+        )
         comment_id = post_res.data["id"]
         res = member_client.delete(comment_delete_url(project["id"], comment_id))
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
     def test_comment_soft_delete_by_owner(self, owner_client, member_client, approved_member_setup):
         project = approved_member_setup
-        post_res = member_client.post(comments_url(project["id"]), {"body": "削除対象"}, format="json")
+        post_res = member_client.post(
+            comments_url(project["id"]), {"body": "削除対象"}, format="json"
+        )
         comment_id = post_res.data["id"]
         res = owner_client.delete(comment_delete_url(project["id"], comment_id))
         assert res.status_code == status.HTTP_204_NO_CONTENT
 
-    def test_other_member_cannot_delete_comment(self, owner_client, member_client, approved_member_setup):
+    def test_other_member_cannot_delete_comment(
+        self, owner_client, member_client, approved_member_setup
+    ):
         project = approved_member_setup
-        post_res = owner_client.post(comments_url(project["id"]), {"body": "オーナーのコメント"}, format="json")
+        post_res = owner_client.post(
+            comments_url(project["id"]), {"body": "オーナーのコメント"}, format="json"
+        )
         comment_id = post_res.data["id"]
         res = member_client.delete(comment_delete_url(project["id"], comment_id))
         assert res.status_code == status.HTTP_403_FORBIDDEN
@@ -993,24 +1187,34 @@ class TestTranslationComment:
         assert response.status_code == status.HTTP_201_CREATED
         assert not Notification.objects.filter(recipient=owner).exists()
         assert len(mail.outbox) == 1
-        assert f"/translations/{approved_member_setup['id']}#unit-{unit['id']}" in mail.outbox[0].body
+        assert (
+            f"/translations/{approved_member_setup['id']}#unit-{unit['id']}" in mail.outbox[0].body
+        )
 
 
 # ---------------------------------------------------------------------------
 # 閲覧（公開翻訳）
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestTranslationRead:
     def test_published_project_returns_done_units(self, owner_client, published_project, verse):
         # ユニット追加・done に更新
-        unit_res = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json")
+        unit_res = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse.id)}, format="json"
+        )
         unit_id = unit_res.data["id"]
-        owner_client.patch(unit_detail_url(published_project["id"], unit_id), {
-            "body": "The son of Abraham",
-            "status": "done",
-        }, format="json")
+        owner_client.patch(
+            unit_detail_url(published_project["id"], unit_id),
+            {
+                "body": "The son of Abraham",
+                "status": "done",
+            },
+            format="json",
+        )
         from rest_framework.test import APIClient
+
         # 章を指定しないと目次（章一覧）だけが返る
         index = APIClient().get(read_url(published_project["id"]))
         assert index.status_code == status.HTTP_200_OK
@@ -1024,16 +1228,26 @@ class TestTranslationRead:
 
     def test_non_published_project_read_forbidden(self, owner_client, active_project):
         from rest_framework.test import APIClient
+
         res = APIClient().get(read_url(active_project["id"]))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_todo_units_excluded_from_read(self, owner_client, published_project, verse, verse2):
         # doneユニット
-        unit1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
-        owner_client.patch(unit_detail_url(published_project["id"], unit1["id"]), {"status": "done", "body": "完了"}, format="json")
+        unit1 = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
+        owner_client.patch(
+            unit_detail_url(published_project["id"], unit1["id"]),
+            {"status": "done", "body": "完了"},
+            format="json",
+        )
         # todoユニット（未完了）
-        owner_client.post(units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json")
+        owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json"
+        )
         from rest_framework.test import APIClient
+
         res = APIClient().get(read_url(published_project["id"]), {"chapter": verse.chapter.number})
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["units"]) == 1
@@ -1046,21 +1260,31 @@ def add_book_url(project_id):
 @pytest.mark.django_db
 class TestTranslationAddBook:
     def test_owner_can_add_book(self, owner_client, active_project, book, chapter, verse):
-        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["created"] >= 1
 
     def test_non_owner_cannot_add_book(self, auth_client, active_project, book):
-        res = auth_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = auth_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_anonymous_cannot_add_book(self, api_client, active_project, book):
-        res = api_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = api_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_idempotent(self, owner_client, active_project, book, chapter, verse):
-        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
-        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
+        res = owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["created"] == 0
 
@@ -1076,7 +1300,9 @@ class TestTranslationAddBook:
         Verse.objects.bulk_create(
             [Verse(chapter=chapter, number=n, text=f"節{n}") for n in range(1, 31)]
         )
-        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
 
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["created"] == 30
@@ -1093,17 +1319,25 @@ class TestTranslationAddBook:
             [Verse(chapter=chapter, number=n, text=f"節{n}") for n in range(1, 101)]
         )
         with django_assert_max_num_queries(15):
-            res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+            res = owner_client.post(
+                add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+            )
         assert res.data["created"] == 100
 
-    def test_second_call_adds_only_the_new_verses(self, owner_client, active_project, book, chapter, verse):
+    def test_second_call_adds_only_the_new_verses(
+        self, owner_client, active_project, book, chapter, verse
+    ):
         # 途中まで登録済みの書に節が足された場合、足りないぶんだけ増える。
         from bible.models import Verse
 
-        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         Verse.objects.create(chapter=chapter, number=99, text="あとから足した節")
 
-        res = owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.data["created"] == 1
 
 
@@ -1114,17 +1348,25 @@ def remove_book_url(project_id):
 @pytest.mark.django_db
 class TestTranslationRemoveBook:
     def test_owner_can_remove_book(self, owner_client, active_project, book, chapter, verse):
-        owner_client.post(add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
-        res = owner_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        owner_client.post(
+            add_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
+        res = owner_client.delete(
+            remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.data["deleted"] >= 1
 
     def test_non_owner_cannot_remove_book(self, auth_client, active_project, book):
-        res = auth_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = auth_client.delete(
+            remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_anonymous_cannot_remove_book(self, api_client, active_project, book):
-        res = api_client.delete(remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json")
+        res = api_client.delete(
+            remove_book_url(active_project["id"]), {"book_id": str(book.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_missing_book_id_returns_400(self, owner_client, active_project):
@@ -1213,6 +1455,7 @@ def unit_summary_url(project_id):
 def two_chapter_units(owner_client, project, chapter, verse, verse2):
     """1章に2節、2章に1節のユニットを作る。"""
     from bible.models import Chapter, Verse
+
     owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
     owner_client.post(units_url(project["id"]), {"verse": str(verse2.id)}, format="json")
     ch2 = Chapter.objects.create(book=chapter.book, number=2)
@@ -1252,6 +1495,7 @@ class TestTranslationUnitChapterFilter:
     def test_one_chapter_fits_in_a_single_page(self, anon_client, owner_client, project, chapter):
         # 章の途中でページが切れると翻訳画面が使いものにならない。
         from bible.models import Verse
+
         for n in range(2, 130):
             v = Verse.objects.create(chapter=chapter, number=n, text=f"節{n}")
             owner_client.post(units_url(project["id"]), {"verse": str(v.id)}, format="json")
@@ -1272,8 +1516,16 @@ class TestTranslationUnitSummary:
         assert res.data["status_counts"]["todo"] == 3
         assert res.data["status_counts"]["review"] == 0
         assert res.data["chapter_summaries"] == [
-            {"number": 1, "total": 2, "status_counts": {"todo": 2, "in_progress": 0, "review": 0, "done": 0}},
-            {"number": 2, "total": 1, "status_counts": {"todo": 1, "in_progress": 0, "review": 0, "done": 0}},
+            {
+                "number": 1,
+                "total": 2,
+                "status_counts": {"todo": 2, "in_progress": 0, "review": 0, "done": 0},
+            },
+            {
+                "number": 2,
+                "total": 1,
+                "status_counts": {"todo": 1, "in_progress": 0, "review": 0, "done": 0},
+            },
         ]
 
     def test_review_count_reflects_updates(self, owner_client, anon_client, two_chapter_units):
@@ -1296,17 +1548,31 @@ class TestTranslationUnitSummary:
         assert res.data["total"] == 0
 
     def test_draft_summary_is_private(self, anon_client, project):
-        assert anon_client.get(unit_summary_url(project["id"])).status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            anon_client.get(unit_summary_url(project["id"])).status_code
+            == status.HTTP_404_NOT_FOUND
+        )
 
 
 @pytest.mark.django_db
 class TestTranslationReadChapter:
-    def test_index_returns_only_chapters_of_done_units(self, owner_client, published_project, verse, verse2):
+    def test_index_returns_only_chapters_of_done_units(
+        self, owner_client, published_project, verse, verse2
+    ):
         from rest_framework.test import APIClient
-        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
-        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "完了"}, format="json")
+
+        u1 = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
+        owner_client.patch(
+            unit_detail_url(published_project["id"], u1["id"]),
+            {"status": "done", "body": "完了"},
+            format="json",
+        )
         # 未完了の節は目次にも本文にも出さない
-        owner_client.post(units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json")
+        owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse2.id)}, format="json"
+        )
 
         res = APIClient().get(read_url(published_project["id"]))
         assert res.data["chapters"] == [verse.chapter.number]
@@ -1316,12 +1582,25 @@ class TestTranslationReadChapter:
         from rest_framework.test import APIClient
 
         from bible.models import Chapter, Verse
-        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
-        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "1章"}, format="json")
+
+        u1 = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
+        owner_client.patch(
+            unit_detail_url(published_project["id"], u1["id"]),
+            {"status": "done", "body": "1章"},
+            format="json",
+        )
         ch2 = Chapter.objects.create(book=chapter.book, number=2)
         v2 = Verse.objects.create(chapter=ch2, number=1, text="2章の節")
-        u2 = owner_client.post(units_url(published_project["id"]), {"verse": str(v2.id)}, format="json").data
-        owner_client.patch(unit_detail_url(published_project["id"], u2["id"]), {"status": "done", "body": "2章"}, format="json")
+        u2 = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(v2.id)}, format="json"
+        ).data
+        owner_client.patch(
+            unit_detail_url(published_project["id"], u2["id"]),
+            {"status": "done", "body": "2章"},
+            format="json",
+        )
 
         res = APIClient().get(read_url(published_project["id"]), {"chapter": 2})
         assert res.data["chapters"] == [1, 2]
@@ -1330,8 +1609,15 @@ class TestTranslationReadChapter:
 
     def test_invalid_chapter_returns_no_units(self, owner_client, published_project, verse):
         from rest_framework.test import APIClient
-        u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
-        owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "完了"}, format="json")
+
+        u1 = owner_client.post(
+            units_url(published_project["id"]), {"verse": str(verse.id)}, format="json"
+        ).data
+        owner_client.patch(
+            unit_detail_url(published_project["id"], u1["id"]),
+            {"status": "done", "body": "完了"},
+            format="json",
+        )
         res = APIClient().get(read_url(published_project["id"]), {"chapter": "abc"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["units"] == []

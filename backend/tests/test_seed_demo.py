@@ -92,14 +92,14 @@ def test_全機能にデータが入る(seeded):
 def test_栞は5種類すべて作られる(seeded):
     location = Bookmark.objects.filter(canonical_book__isnull=False)
     assert location.filter(chapter_number__isnull=True).exists(), "書の栞が無い"
-    assert location.filter(
-        chapter_number__isnull=False, verse_number__isnull=True
-    ).exists(), "章の栞が無い"
+    assert location.filter(chapter_number__isnull=False, verse_number__isnull=True).exists(), (
+        "章の栞が無い"
+    )
     assert location.filter(verse_number__isnull=False).exists(), "節の栞が無い"
     assert Bookmark.objects.filter(comment__isnull=False).exists(), "コメントの栞が無い"
-    assert Bookmark.objects.filter(
-        translation_project__isnull=False
-    ).exists(), "翻訳プロジェクトの栞が無い"
+    assert Bookmark.objects.filter(translation_project__isnull=False).exists(), (
+        "翻訳プロジェクトの栞が無い"
+    )
 
 
 def test_公開状態と解決状態が両方そろう(seeded):

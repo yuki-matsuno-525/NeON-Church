@@ -150,10 +150,12 @@ class ReferenceBooksView(_ReferenceView):
     def get(self, request, slug):
         self._require_slug(slug)
         books = Book.objects.filter(canonical_book__slug=slug).order_by("order", "translation")
-        return Response({
-            "reference": {"book": slug},
-            "books": [{"id": str(b.id), "translation": b.translation} for b in books],
-        })
+        return Response(
+            {
+                "reference": {"book": slug},
+                "books": [{"id": str(b.id), "translation": b.translation} for b in books],
+            }
+        )
 
 
 class ReferenceChaptersView(_ReferenceView):
@@ -166,10 +168,14 @@ class ReferenceChaptersView(_ReferenceView):
             .select_related("book")
             .order_by("book__order", "book__translation")
         )
-        return Response({
-            "reference": {"book": slug, "chapter": chapter},
-            "chapters": [{"id": str(c.id), "translation": c.book.translation} for c in chapters],
-        })
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter},
+                "chapters": [
+                    {"id": str(c.id), "translation": c.book.translation} for c in chapters
+                ],
+            }
+        )
 
 
 class ReferenceBookReadView(_ReferenceView):
@@ -183,11 +189,13 @@ class ReferenceBookReadView(_ReferenceView):
         self._require_slug(slug)
         book = _book_for_translation(slug, request.query_params.get("translation"))
         chapters = Chapter.objects.filter(book=book)
-        return Response({
-            "reference": {"book": slug},
-            "book": BookSerializer(book).data,
-            "chapters": ChapterSerializer(chapters, many=True).data,
-        })
+        return Response(
+            {
+                "reference": {"book": slug},
+                "book": BookSerializer(book).data,
+                "chapters": ChapterSerializer(chapters, many=True).data,
+            }
+        )
 
 
 class ReferenceReadView(_ReferenceView):
@@ -211,12 +219,14 @@ class ReferenceReadView(_ReferenceView):
             raise NotFound({"detail": "Chapter not found.", "code": "chapter_not_found"})
 
         verses = Verse.objects.filter(chapter=chapter_obj)
-        return Response({
-            "reference": {"book": slug, "chapter": chapter},
-            "book": BookSerializer(book).data,
-            "chapter": ChapterSerializer(chapter_obj).data,
-            "verses": VerseSerializer(verses, many=True).data,
-        })
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter},
+                "book": BookSerializer(book).data,
+                "chapter": ChapterSerializer(chapter_obj).data,
+                "verses": VerseSerializer(verses, many=True).data,
+            }
+        )
 
 
 class ReferenceVersesView(_ReferenceView):
@@ -233,10 +243,14 @@ class ReferenceVersesView(_ReferenceView):
             .select_related("chapter__book")
             .order_by("chapter__book__order", "chapter__book__translation")
         )
-        return Response({
-            "reference": {"book": slug, "chapter": chapter, "verse": verse},
-            "verses": [{"id": str(v.id), "translation": v.chapter.book.translation} for v in verses],
-        })
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter, "verse": verse},
+                "verses": [
+                    {"id": str(v.id), "translation": v.chapter.book.translation} for v in verses
+                ],
+            }
+        )
 
 
 class SearchView(APIView):
@@ -264,11 +278,15 @@ class SearchView(APIView):
         except ValueError:
             page = 1
         if len(q) < _min_query_len(q):
-            return Response({"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False})
+            return Response(
+                {"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False}
+            )
 
         # 代表訳に絞って書順で並べる（同じ書を重複して持つ訳は除いてあるので重複しない）。
         verses_qs = (
-            Verse.objects.filter(text__icontains=q, chapter__book__translation__in=SEARCH_TRANSLATIONS)
+            Verse.objects.filter(
+                text__icontains=q, chapter__book__translation__in=SEARCH_TRANSLATIONS
+            )
             .select_related("chapter__book", "chapter__book__canonical_book")
             .order_by("chapter__book__order", "chapter__number", "number")
         )
@@ -286,9 +304,13 @@ class SearchView(APIView):
             has_more = False
 
         # 書名・コメントは1ページ目のプレビュー（ページングしない）。
-        books_qs = Book.objects.filter(name__icontains=q, translation__in=SEARCH_TRANSLATIONS).order_by("order")
+        books_qs = Book.objects.filter(
+            name__icontains=q, translation__in=SEARCH_TRANSLATIONS
+        ).order_by("order")
         comments_qs = (
-            Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
+            Comment.objects.filter(
+                body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True
+            )
             .select_related("user", "canonical_book")
             .order_by("-created_at")
         )
@@ -298,13 +320,15 @@ class SearchView(APIView):
         books = books_qs[:20] if kind in ("all", "books") else []
         comments = comments_qs[:20] if kind in ("all", "comments") else []
 
-        return Response({
-            "verses": VerseSearchSerializer(verses, many=True).data,
-            "books": BookSerializer(books, many=True).data,
-            "comments": CommentSearchSerializer(comments, many=True).data,
-            "verse_total": verse_total,
-            "has_more": has_more,
-        })
+        return Response(
+            {
+                "verses": VerseSearchSerializer(verses, many=True).data,
+                "books": BookSerializer(books, many=True).data,
+                "comments": CommentSearchSerializer(comments, many=True).data,
+                "verse_total": verse_total,
+                "has_more": has_more,
+            }
+        )
 
 
 class VerseOfDayView(APIView):
@@ -332,10 +356,9 @@ class VerseOfDayView(APIView):
             if count == 0:
                 return Response({"detail": "Bible data not found."}, status=503)
             index = (day_of_year - 1) % count
-            base_verse = (
-                base_qs.select_related("chapter__book")
-                .order_by("chapter__book__order", "chapter__number", "number")[index]
-            )
+            base_verse = base_qs.select_related("chapter__book").order_by(
+                "chapter__book__order", "chapter__number", "number"
+            )[index]
 
             if translation == "口語訳":
                 verse = base_verse
@@ -346,15 +369,19 @@ class VerseOfDayView(APIView):
                 chapter_num = base_verse.chapter.number
                 verse_num = base_verse.number
                 verse = (
-                    Verse.objects.filter(
-                        chapter__book__translation=translation,
-                        chapter__book__canonical_book=canonical_book,
-                        chapter__number=chapter_num,
-                        number=verse_num,
+                    (
+                        Verse.objects.filter(
+                            chapter__book__translation=translation,
+                            chapter__book__canonical_book=canonical_book,
+                            chapter__number=chapter_num,
+                            number=verse_num,
+                        )
+                        .select_related("chapter__book")
+                        .first()
                     )
-                    .select_related("chapter__book")
-                    .first()
-                ) if canonical_book else None
+                    if canonical_book
+                    else None
+                )
                 verse = verse or base_verse  # 指定訳に対応節が無ければ口語訳にフォールバック
 
             data = VerseOfDaySerializer(verse).data

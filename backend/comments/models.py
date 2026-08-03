@@ -101,8 +101,7 @@ class Comment(BaseModel):
                 condition=(
                     models.Q(canonical_book__isnull=False)
                     & ~(
-                        models.Q(chapter_number__isnull=True)
-                        & models.Q(verse_number__isnull=False)
+                        models.Q(chapter_number__isnull=True) & models.Q(verse_number__isnull=False)
                     )
                 ),
                 name="comment_location_grain_valid",

@@ -28,8 +28,7 @@ def test_luke_chapter_and_verse_numbers_are_used():
 
 def test_preface_before_the_first_reference_is_dropped():
     html = _page(
-        "<p>Symbols [ ] Gap in the text ( ) Editorial insertion</p>"
-        "<p>(QLk 3:2) John [ . . . ]</p>"
+        "<p>Symbols [ ] Gap in the text ( ) Editorial insertion</p><p>(QLk 3:2) John [ . . . ]</p>"
     )
     data, _ = parse_quelle(html)
 

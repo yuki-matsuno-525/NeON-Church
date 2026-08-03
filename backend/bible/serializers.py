@@ -43,7 +43,17 @@ class VerseSearchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Verse
-        fields = ["id", "number", "text", "chapter_number", "chapter_id", "book_name", "book_id", "book_slug", "translation"]
+        fields = [
+            "id",
+            "number",
+            "text",
+            "chapter_number",
+            "chapter_id",
+            "book_name",
+            "book_id",
+            "book_slug",
+            "translation",
+        ]
 
     def get_book_slug(self, obj) -> str:
         cb = obj.chapter.book.canonical_book

@@ -23,11 +23,11 @@ _MASK_PATTERNS: list[tuple[re.Pattern, str]] = [
     # JWT / トークン系フィールド
     (re.compile(r'("(?:token|access|refresh)"\s*:\s*)"[^"]*"', re.IGNORECASE), r'\1"***"'),
     # Authorization ヘッダ
-    (re.compile(r'(Authorization:\s*(?:Bearer|Token)\s+)\S+', re.IGNORECASE), r'\1***'),
+    (re.compile(r"(Authorization:\s*(?:Bearer|Token)\s+)\S+", re.IGNORECASE), r"\1***"),
     # Cookie ヘッダ（値全体をマスク）
-    (re.compile(r'(Cookie:\s*).*', re.IGNORECASE), r'\1***'),
+    (re.compile(r"(Cookie:\s*).*", re.IGNORECASE), r"\1***"),
     # メールアドレス
-    (re.compile(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b'), '***@***.***'),
+    (re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"), "***@***.***"),
 ]
 
 

@@ -240,17 +240,24 @@ class UserCommentsView(generics.ListAPIView):
 
     def get_serializer_class(self):
         from comments.serializers import CommentSerializer
+
         return CommentSerializer
 
     def get_queryset(self):
         from django.db.models import Count
 
         from comments.models import Comment
+
         username = self.kwargs["username"]
         if not User.objects.filter(username=username).exists():
             raise NotFound("User not found.")
         return (
-            Comment.objects.filter(user__username=username, is_deleted=False, parent=None, translation_project__isnull=True)
+            Comment.objects.filter(
+                user__username=username,
+                is_deleted=False,
+                parent=None,
+                translation_project__isnull=True,
+            )
             .select_related("user")
             .prefetch_related("tags")
             .annotate(vote_count=Count("votes"))
@@ -271,6 +278,7 @@ class UserBookmarksView(generics.ListAPIView):
 
     def get_serializer_class(self):
         from bookmarks.serializers import BookmarkSerializer
+
         return BookmarkSerializer
 
     def get_base_queryset(self):
@@ -286,7 +294,9 @@ class UserBookmarksView(generics.ListAPIView):
         if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
             return Bookmark.objects.none()
 
-        return filter_by_translation_visibility(Bookmark.objects.filter(user=user), self.request.user)
+        return filter_by_translation_visibility(
+            Bookmark.objects.filter(user=user), self.request.user
+        )
 
     def get_queryset(self):
         # 自分の /bookmarks と同じ形（種類での絞り込み・節本文つき）で返す。
@@ -295,7 +305,9 @@ class UserBookmarksView(generics.ListAPIView):
         from bookmarks.views import annotate_verse_text
 
         qs = self.get_base_queryset().select_related(
-            "canonical_book", "comment__user", "comment__canonical_book",
+            "canonical_book",
+            "comment__user",
+            "comment__canonical_book",
             "translation_project",
         )
         qs = filter_by_type(qs, self.request.query_params.get("type"))
@@ -350,6 +362,7 @@ class TokenRefreshView(APIView):
 # OAuth ヘルパー
 # ---------------------------------------------------------------------------
 
+
 class AccountSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -371,7 +384,9 @@ class NotificationPreferencesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request: Request) -> Response:
-        serializer = NotificationPreferencesSerializer(request.user, data=request.data, partial=True)
+        serializer = NotificationPreferencesSerializer(
+            request.user, data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -404,15 +419,17 @@ class SessionListView(APIView):
             expires_at__gt=timezone.now(),
             blacklistedtoken__isnull=True,
         ).order_by("-created_at")
-        return Response([
-            {
-                "id": token.jti,
-                "created_at": token.created_at,
-                "expires_at": token.expires_at,
-                "current": token.jti == current_jti,
-            }
-            for token in tokens
-        ])
+        return Response(
+            [
+                {
+                    "id": token.jti,
+                    "created_at": token.created_at,
+                    "expires_at": token.expires_at,
+                    "current": token.jti == current_jti,
+                }
+                for token in tokens
+            ]
+        )
 
 
 class SessionRevokeView(APIView):
@@ -501,7 +518,9 @@ class PasswordResetConfirmView(APIView):
             user_id = force_str(urlsafe_base64_decode(serializer.validated_data["uid"]))
             user = User.objects.get(pk=user_id, is_active=True)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            raise ValidationError({"token": "This password reset link is invalid or expired."}) from None
+            raise ValidationError(
+                {"token": "This password reset link is invalid or expired."}
+            ) from None
         if not default_token_generator.check_token(user, serializer.validated_data["token"]):
             raise ValidationError({"token": "This password reset link is invalid or expired."})
         try:
@@ -526,14 +545,18 @@ _GITHUB_USERINFO_URL = "https://api.github.com/user"
 _GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
 
 
-def _get_or_create_social_user(provider: str, provider_uid: str, email: str | None, name: str | None) -> "User":
+def _get_or_create_social_user(
+    provider: str, provider_uid: str, email: str | None, name: str | None
+) -> "User":
     """SocialAccount からユーザーを取得または新規作成する。"""
     from .models import SocialAccount
 
     try:
-        return SocialAccount.objects.select_related("user").get(
-            provider=provider, provider_uid=provider_uid
-        ).user
+        return (
+            SocialAccount.objects.select_related("user")
+            .get(provider=provider, provider_uid=provider_uid)
+            .user
+        )
     except SocialAccount.DoesNotExist:
         pass
 
@@ -611,6 +634,7 @@ def _verify_oauth_state(request: Request) -> str:
 # Google OAuth
 # ---------------------------------------------------------------------------
 
+
 class GoogleOAuthView(APIView):
     """GET /api/auth/oauth/google/ → Google 認証ページへリダイレクト"""
 
@@ -647,13 +671,17 @@ class GoogleCallbackView(APIView):
         except signing.BadSignature:
             return _oauth_error_redirect()
 
-        token_resp = http_requests.post(_GOOGLE_TOKEN_URL, data={
-            "code": code,
-            "client_id": settings.GOOGLE_CLIENT_ID,
-            "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-            "grant_type": "authorization_code",
-        }, timeout=10)
+        token_resp = http_requests.post(
+            _GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
         if not token_resp.ok:
             return _oauth_error_redirect()
 
@@ -667,9 +695,15 @@ class GoogleCallbackView(APIView):
             return _oauth_error_redirect()
 
         info = userinfo_resp.json()
-        user = _get_or_create_social_user("google", info["sub"], info.get("email"), info.get("name"))
+        user = _get_or_create_social_user(
+            "google", info["sub"], info.get("email"), info.get("name")
+        )
 
-        redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
+        redirect_to = (
+            f"{settings.FRONTEND_URL}{next_path}?oauth=success"
+            if next_path
+            else f"{settings.FRONTEND_URL}?oauth=success"
+        )
         response = HttpResponseRedirect(redirect_to)
         refresh = RefreshToken.for_user(user)
         _set_auth_cookies(response, str(refresh.access_token), str(refresh))
@@ -680,6 +714,7 @@ class GoogleCallbackView(APIView):
 # ---------------------------------------------------------------------------
 # GitHub OAuth
 # ---------------------------------------------------------------------------
+
 
 class GithubOAuthView(APIView):
     """GET /api/auth/oauth/github/ → GitHub 認証ページへリダイレクト"""
@@ -730,7 +765,10 @@ class GithubCallbackView(APIView):
             return _oauth_error_redirect()
 
         gh_token = token_resp.json().get("access_token")
-        gh_headers = {"Authorization": f"Bearer {gh_token}", "Accept": "application/vnd.github+json"}
+        gh_headers = {
+            "Authorization": f"Bearer {gh_token}",
+            "Accept": "application/vnd.github+json",
+        }
 
         userinfo_resp = http_requests.get(_GITHUB_USERINFO_URL, headers=gh_headers, timeout=10)
         if not userinfo_resp.ok:
@@ -745,14 +783,22 @@ class GithubCallbackView(APIView):
             emails_resp = http_requests.get(_GITHUB_EMAILS_URL, headers=gh_headers, timeout=10)
             if emails_resp.ok:
                 primary = next(
-                    (e["email"] for e in emails_resp.json() if e.get("primary") and e.get("verified")),
+                    (
+                        e["email"]
+                        for e in emails_resp.json()
+                        if e.get("primary") and e.get("verified")
+                    ),
                     None,
                 )
                 email = primary
 
         user = _get_or_create_social_user("github", provider_uid, email, info.get("login"))
 
-        redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
+        redirect_to = (
+            f"{settings.FRONTEND_URL}{next_path}?oauth=success"
+            if next_path
+            else f"{settings.FRONTEND_URL}?oauth=success"
+        )
         response = HttpResponseRedirect(redirect_to)
         refresh = RefreshToken.for_user(user)
         _set_auth_cookies(response, str(refresh.access_token), str(refresh))

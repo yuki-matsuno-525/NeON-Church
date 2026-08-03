@@ -69,7 +69,7 @@ def _add_content(chapter: dict, text: str, is_chapter_start: bool) -> None:
 
     m = _VERSE.match(text)
     if m:
-        chapter["verses"].append({"number": int(m.group(1)), "text": text[m.end():].strip()})
+        chapter["verses"].append({"number": int(m.group(1)), "text": text[m.end() :].strip()})
         return
 
     if is_chapter_start and text.startswith("I "):  # 章 iii の "I"（=節1）
@@ -109,7 +109,7 @@ def parse_life_of_adam_and_eve(html: str) -> tuple[dict, list[str]]:
             value = roman_to_int(m.group(1))
             if value == current_num + 1:  # 連番のローマ数字だけを章として採用
                 new_num = value
-                rest = text[m.end():]
+                rest = text[m.end() :]
         if new_num is None:  # 章番号が脱落した章を書き出しで補う
             prefix = DROPPED_CHAPTERS.get(current_num + 1)
             if prefix and text.startswith(prefix):

@@ -99,9 +99,15 @@ class QuestionSerializer(serializers.ModelSerializer):
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True, write_only=True, required=False, source="tags"
     )
-    verse = serializers.PrimaryKeyRelatedField(queryset=Verse.objects.all(), write_only=True, required=False)
-    chapter = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), write_only=True, required=False)
-    book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all(), write_only=True, required=False)
+    verse = serializers.PrimaryKeyRelatedField(
+        queryset=Verse.objects.all(), write_only=True, required=False
+    )
+    chapter = serializers.PrimaryKeyRelatedField(
+        queryset=Chapter.objects.all(), write_only=True, required=False
+    )
+    book = serializers.PrimaryKeyRelatedField(
+        queryset=Book.objects.all(), write_only=True, required=False
+    )
 
     best_answer = BestAnswerSerializer(read_only=True)
     answer_count = serializers.SerializerMethodField()
@@ -113,15 +119,35 @@ class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = [
-            "id", "user", "title", "body", "created_at", "is_deleted",
-            "verse", "chapter", "book",
-            "book_slug", "book_name", "chapter_number", "verse_number",
-            "location_label", "version_label",
-            "tags", "tag_ids", "best_answer", "answer_count",
+            "id",
+            "user",
+            "title",
+            "body",
+            "created_at",
+            "is_deleted",
+            "verse",
+            "chapter",
+            "book",
+            "book_slug",
+            "book_name",
+            "chapter_number",
+            "verse_number",
+            "location_label",
+            "version_label",
+            "tags",
+            "tag_ids",
+            "best_answer",
+            "answer_count",
         ]
         read_only_fields = [
-            "id", "user", "created_at", "is_deleted",
-            "chapter_number", "verse_number", "tags", "best_answer",
+            "id",
+            "user",
+            "created_at",
+            "is_deleted",
+            "chapter_number",
+            "verse_number",
+            "tags",
+            "best_answer",
         ]
 
     def get_answer_count(self, obj) -> int:
@@ -165,11 +191,11 @@ class QuestionSerializer(serializers.ModelSerializer):
         return title
 
     def validate(self, data):
-        targets = [x for x in (data.get("verse"), data.get("chapter"), data.get("book")) if x is not None]
+        targets = [
+            x for x in (data.get("verse"), data.get("chapter"), data.get("book")) if x is not None
+        ]
         if len(targets) != 1:
-            raise serializers.ValidationError(
-                "Specify exactly one of verse, chapter, or book."
-            )
+            raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
         return data
 
     def create(self, validated_data):

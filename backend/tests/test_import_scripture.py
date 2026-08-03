@@ -27,13 +27,19 @@ def _sample() -> dict:
         "translation": "R. H. Charles (EN)",
         "order": 700,
         "chapters": [
-            {"number": 1, "verses": [
-                {"number": 1, "text": "The words of the blessing of Enoch."},
-                {"number": 2, "text": "And he took up his parable."},
-            ]},
-            {"number": 2, "verses": [
-                {"number": 1, "text": "Observe ye everything in the heaven."},
-            ]},
+            {
+                "number": 1,
+                "verses": [
+                    {"number": 1, "text": "The words of the blessing of Enoch."},
+                    {"number": 2, "text": "And he took up his parable."},
+                ],
+            },
+            {
+                "number": 2,
+                "verses": [
+                    {"number": 1, "text": "Observe ye everything in the heaven."},
+                ],
+            },
         ],
     }
 

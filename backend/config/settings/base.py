@@ -193,9 +193,9 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # ビューごとに ScopedRateThrottle を設定する（グローバルは未設定）
     "DEFAULT_THROTTLE_RATES": {
-        "auth": "5/min",           # login / register
-        "comment_create": "10/min", # コメント投稿
-        "report": "5/min",         # 通報
+        "auth": "5/min",  # login / register
+        "comment_create": "10/min",  # コメント投稿
+        "report": "5/min",  # 通報
         "feedback": "5/hour",
     },
 }

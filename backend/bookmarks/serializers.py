@@ -31,6 +31,7 @@ class CommentBriefSerializer(serializers.Serializer):
             _get_location_parts,
             book_name_cache,
         )
+
         # 一覧のあいだ書名の引き当て結果を使い回す（お気に入り1件ごとに Book を引かない）。
         book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)
@@ -70,9 +71,18 @@ class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookmark
         fields = [
-            "id", "verse", "chapter", "book", "comment", "translation_project",
-            "comment_detail", "project_detail", "target_type", "reference",
-            "verse_text", "created_at",
+            "id",
+            "verse",
+            "chapter",
+            "book",
+            "comment",
+            "translation_project",
+            "comment_detail",
+            "project_detail",
+            "target_type",
+            "reference",
+            "verse_text",
+            "created_at",
         ]
         read_only_fields = ["id", "created_at"]
         extra_kwargs = {

@@ -36,9 +36,7 @@ class Command(BaseCommand):
         except ValueError as e:
             raise CommandError(str(e)) from e
 
-        self.stdout.write(
-            f"{'作成' if created else '既存'}: {book.name}（{book.translation}）"
-        )
+        self.stdout.write(f"{'作成' if created else '既存'}: {book.name}（{book.translation}）")
         self.stdout.write(
             self.style.SUCCESS(
                 f"完了: {len(data['chapters'])} 章 / {total_verses} 節を投入しました。"

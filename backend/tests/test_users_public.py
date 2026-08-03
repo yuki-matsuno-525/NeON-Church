@@ -21,12 +21,14 @@ def user_bookmarks_url(username: str) -> str:
 # フィクスチャ
 # ------------------------------------------------------------------
 
+
 @pytest.fixture
 def target_user(db):
     """テスト対象の公開プロフィールを持つユーザー。
     既存テストの互換のためお気に入りは public にしておく。
     """
     from django.contrib.auth import get_user_model
+
     User = get_user_model()
     return User.objects.create_user(
         username="targetuser",
@@ -41,6 +43,7 @@ def target_user(db):
 def private_target_user(db):
     """お気に入り非公開のユーザー（デフォルト挙動の検証用）。"""
     from django.contrib.auth import get_user_model
+
     User = get_user_model()
     return User.objects.create_user(
         username="privateuser",
@@ -68,6 +71,7 @@ def target_auth_client(db, target_user) -> APIClient:
 def target_user_comment(db, target_user, verse):
     """target_user が作成したコメント。"""
     from tests.factories import make_comment
+
     return make_comment(
         user=target_user,
         verse=verse,
@@ -78,6 +82,7 @@ def target_user_comment(db, target_user, verse):
 def _make_verse_bookmark(user, verse):
     """段階5F: お気に入りは訳非依存の箇所3列で作る（verse FK なし）。"""
     from bookmarks.models import Bookmark
+
     ch = verse.chapter
     return Bookmark.objects.create(
         user=user,
@@ -96,6 +101,7 @@ def target_user_bookmark(db, target_user, verse):
 # ------------------------------------------------------------------
 # GET /api/users/{username}/ - 公開プロフィール
 # ------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 class TestUserProfileView:
@@ -142,6 +148,7 @@ class TestUserProfileView:
 # GET /api/users/{username}/comments/ - ユーザーのコメント一覧
 # ------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestUserCommentsView:
     def test_そのユーザーのコメント一覧を返す(self, api_client, target_user, target_user_comment):
@@ -167,7 +174,9 @@ class TestUserCommentsView:
         res = api_client.get(user_comments_url("nonexistentuser"))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_他ユーザーのコメントは含まれない(self, api_client, auth_client, target_user, target_user_comment, verse):
+    def test_他ユーザーのコメントは含まれない(
+        self, api_client, auth_client, target_user, target_user_comment, verse
+    ):
         """auth_client (testuser) がコメントを投稿しても targetuser の一覧には含まれない。"""
         auth_client.post(
             "/api/comments/",
@@ -184,9 +193,12 @@ class TestUserCommentsView:
 # GET /api/users/{username}/bookmarks/ - ユーザーのお気に入り一覧
 # ------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestUserBookmarksView:
-    def test_そのユーザーのお気に入り一覧を返す(self, api_client, target_user, target_user_bookmark):
+    def test_そのユーザーのお気に入り一覧を返す(
+        self, api_client, target_user, target_user_bookmark
+    ):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
@@ -208,7 +220,9 @@ class TestUserBookmarksView:
         res = api_client.get(user_bookmarks_url("nonexistentuser"))
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_お気に入りにreferenceが含まれる(self, api_client, target_user, target_user_bookmark, verse):
+    def test_お気に入りにreferenceが含まれる(
+        self, api_client, target_user, target_user_bookmark, verse
+    ):
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 1
@@ -217,7 +231,9 @@ class TestUserBookmarksView:
         assert bm["reference"]["chapter"] == verse.chapter.number
         assert bm["reference"]["verse"] == verse.number
 
-    def test_他ユーザーのお気に入りは含まれない(self, api_client, auth_client, target_user, target_user_bookmark, verse):
+    def test_他ユーザーのお気に入りは含まれない(
+        self, api_client, auth_client, target_user, target_user_bookmark, verse
+    ):
         """auth_client (testuser) がお気に入りしても targetuser の一覧には含まれない。"""
         auth_client.post("/api/bookmarks/", {"verse": str(verse.id)}, format="json")
         res = api_client.get(user_bookmarks_url("targetuser"))
@@ -230,10 +246,12 @@ class TestUserBookmarksView:
 # bookmarks_visibility プライバシー
 # ------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 class TestBookmarksVisibility:
     def test_default_is_private_for_new_user(self, private_target_user):
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         assert private_target_user.bookmarks_visibility == User.BOOKMARKS_PRIVATE
 
@@ -242,17 +260,13 @@ class TestBookmarksVisibility:
         assert res.status_code == status.HTTP_200_OK
         assert res.data["bookmarks_visibility"] == "public"
 
-    def test_private_user_bookmarks_returns_empty(
-        self, api_client, private_target_user, verse
-    ):
+    def test_private_user_bookmarks_returns_empty(self, api_client, private_target_user, verse):
         _make_verse_bookmark(private_target_user, verse)
         res = api_client.get(user_bookmarks_url("privateuser"))
         assert res.status_code == status.HTTP_200_OK
         assert res.data["count"] == 0
 
-    def test_public_user_bookmarks_returns_data(
-        self, api_client, target_user, verse
-    ):
+    def test_public_user_bookmarks_returns_data(self, api_client, target_user, verse):
         _make_verse_bookmark(target_user, verse)
         res = api_client.get(user_bookmarks_url("targetuser"))
         assert res.status_code == status.HTTP_200_OK
@@ -292,8 +306,11 @@ class TestBookmarksVisibility:
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestPublicBookmarksTypeFilter:
-    def test_counts_are_returned_per_type(self, api_client, target_user, target_user_bookmark, chapter):
+    def test_counts_are_returned_per_type(
+        self, api_client, target_user, target_user_bookmark, chapter
+    ):
         from bookmarks.models import Bookmark
+
         Bookmark.objects.create(
             user=target_user,
             canonical_book=chapter.book.canonical_book,
@@ -307,6 +324,7 @@ class TestPublicBookmarksTypeFilter:
 
     def test_filter_by_type(self, api_client, target_user, target_user_bookmark, chapter):
         from bookmarks.models import Bookmark
+
         Bookmark.objects.create(
             user=target_user,
             canonical_book=chapter.book.canonical_book,

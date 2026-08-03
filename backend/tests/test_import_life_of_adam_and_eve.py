@@ -35,9 +35,41 @@ def test_dropped_chapter_number_recovered():
     romans = "".join(
         f"<p>{r} 1 Chapter {i} body.</p>"
         for i, r in enumerate(
-            ["i","ii","iii","iv","v","vi","vii","viii","ix","x","xi","xii","xiii","xiv","xv",
-             "xvi","xvii","xviii","xix","xx","xxi","xxii","xxiii","xxiv","xxv","xxvi","xxvii",
-             "xxviii","xxix","xxx","xxxi"], start=1)
+            [
+                "i",
+                "ii",
+                "iii",
+                "iv",
+                "v",
+                "vi",
+                "vii",
+                "viii",
+                "ix",
+                "x",
+                "xi",
+                "xii",
+                "xiii",
+                "xiv",
+                "xv",
+                "xvi",
+                "xvii",
+                "xviii",
+                "xix",
+                "xx",
+                "xxi",
+                "xxii",
+                "xxiii",
+                "xxiv",
+                "xxv",
+                "xxvi",
+                "xxvii",
+                "xxviii",
+                "xxix",
+                "xxx",
+                "xxxi",
+            ],
+            start=1,
+        )
     )
     html = _page(
         romans
@@ -58,4 +90,5 @@ def test_newline_inside_paragraph_collapsed():
     # 35 章まで連番を満たすため前段を補う必要があるので、単体では 36→37 を直接検証する
     # ここでは改行の正規化だけを確認する（_normalize 経由）。
     from bible.importers.life_of_adam_and_eve import _normalize
+
     assert _normalize("Then Seth\n went") == "Then Seth went"

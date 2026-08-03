@@ -14,6 +14,7 @@ User = get_user_model()
 # 位置情報ヘルパー
 # ---------------------------------------------------------------------------
 
+
 def book_name_cache(serializer) -> dict:
     """書名の引き当て結果を1リクエストのあいだ使い回すための入れ物。
 
@@ -23,7 +24,9 @@ def book_name_cache(serializer) -> dict:
     return serializer.context.setdefault("_book_name_cache", {})
 
 
-def _get_location_parts(obj: Comment, cache: dict | None = None) -> tuple[str, int | None, int | None]:
+def _get_location_parts(
+    obj: Comment, cache: dict | None = None
+) -> tuple[str, int | None, int | None]:
     """コメントの書名・章番号・節番号を返す。
 
     書名の引き当て（訳ごとに呼び名が違う）は bible.passage.book_name_for が行う。
@@ -75,14 +78,45 @@ class CommentSerializer(serializers.ModelSerializer):
     )
     # 段階6F: verse/chapter/book は「箇所を引くための write-only 入力」。保存はしない
     # （Comment の実体は canonical_book/章/節）。レスポンスには含めない。
-    verse = serializers.PrimaryKeyRelatedField(queryset=Verse.objects.all(), write_only=True, required=False)
-    chapter = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), write_only=True, required=False)
-    book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all(), write_only=True, required=False)
+    verse = serializers.PrimaryKeyRelatedField(
+        queryset=Verse.objects.all(), write_only=True, required=False
+    )
+    chapter = serializers.PrimaryKeyRelatedField(
+        queryset=Chapter.objects.all(), write_only=True, required=False
+    )
+    book = serializers.PrimaryKeyRelatedField(
+        queryset=Book.objects.all(), write_only=True, required=False
+    )
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "body", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
-        read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "reply_count", "version_label", "tags"]
+        fields = [
+            "id",
+            "user",
+            "verse",
+            "chapter",
+            "book",
+            "translation_project",
+            "version_label",
+            "parent",
+            "body",
+            "is_deleted",
+            "created_at",
+            "vote_count",
+            "reply_count",
+            "tags",
+            "tag_ids",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "is_deleted",
+            "created_at",
+            "vote_count",
+            "reply_count",
+            "version_label",
+            "tags",
+        ]
 
     def get_vote_count(self, obj) -> int:
         return getattr(obj, "vote_count", 0)
@@ -114,9 +148,7 @@ class CommentSerializer(serializers.ModelSerializer):
         # 返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
         # （3列すべて NULL は DB の CHECK でも禁止している。）
         if len(targets) != 1:
-            raise serializers.ValidationError(
-                "Specify exactly one of verse, chapter, or book."
-            )
+            raise serializers.ValidationError("Specify exactly one of verse, chapter, or book.")
 
         if parent:
             # 段階6D: 返信は親と「同じ箇所」であればよい（訳が違っても可）。旧 verse_id 一致から
@@ -128,9 +160,7 @@ class CommentSerializer(serializers.ModelSerializer):
                 or loc["chapter_number"] != parent.chapter_number
                 or loc["verse_number"] != parent.verse_number
             ):
-                raise serializers.ValidationError(
-                    {"parent": "Reply must target the same passage."}
-                )
+                raise serializers.ValidationError({"parent": "Reply must target the same passage."})
             # 返信は親と同じスコープ（翻訳プロジェクト／聖書本体）に必ず属させる。
             data["translation_project"] = parent.translation_project
 
@@ -194,8 +224,16 @@ class MyCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "body", "created_at", "vote_count", "location_label",
-            "book_slug", "chapter_number", "verse_number", "source_translation",
+            "id",
+            "user",
+            "body",
+            "created_at",
+            "vote_count",
+            "location_label",
+            "book_slug",
+            "chapter_number",
+            "verse_number",
+            "source_translation",
         ]
 
     def get_vote_count(self, obj) -> int:
@@ -223,8 +261,15 @@ class TrendingCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
-            "id", "user", "body", "created_at", "vote_count",
-            "location_label", "book_name", "chapter_number", "verse_number",
+            "id",
+            "user",
+            "body",
+            "created_at",
+            "vote_count",
+            "location_label",
+            "book_name",
+            "chapter_number",
+            "verse_number",
             "reply_count",
         ]
 

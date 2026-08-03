@@ -33,13 +33,8 @@ def load_book(data: dict) -> tuple[Book, bool, int]:
     total_verses = 0
     for ch in data["chapters"]:
         chapter, _ = Chapter.objects.get_or_create(book=book, number=ch["number"])
-        verses = [
-            Verse(chapter=chapter, number=v["number"], text=v["text"])
-            for v in ch["verses"]
-        ]
-        created_verses = Verse.objects.bulk_create(
-            verses, batch_size=1000, ignore_conflicts=True
-        )
+        verses = [Verse(chapter=chapter, number=v["number"], text=v["text"]) for v in ch["verses"]]
+        created_verses = Verse.objects.bulk_create(verses, batch_size=1000, ignore_conflicts=True)
         total_verses += len(created_verses)
 
     return book, created, total_verses

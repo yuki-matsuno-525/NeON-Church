@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class FeedbackSerializer(serializers.Serializer):
-    category = serializers.ChoiceField(
-        choices=("feedback", "bug", "feature", "privacy", "other")
-    )
+    category = serializers.ChoiceField(choices=("feedback", "bug", "feature", "privacy", "other"))
     email = serializers.EmailField(required=False, allow_blank=True, max_length=254)
     message = serializers.CharField(min_length=10, max_length=4000, trim_whitespace=True)
     page_url = serializers.URLField(required=False, allow_blank=True, max_length=500)
@@ -51,10 +49,7 @@ def feedback(request: Request) -> Response:
     sender = data.get("email") or "not provided"
     page_url = data.get("page_url") or "not provided"
     body = (
-        f"Category: {data['category']}\n"
-        f"Reply-to: {sender}\n"
-        f"Page: {page_url}\n\n"
-        f"{data['message']}"
+        f"Category: {data['category']}\nReply-to: {sender}\nPage: {page_url}\n\n{data['message']}"
     )
     try:
         send_mail(
