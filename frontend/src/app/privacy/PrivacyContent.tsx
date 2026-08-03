@@ -91,9 +91,9 @@ export function PrivacyContent() {
   const { lang } = useLang();
   const c = content[lang] ?? content.en;
   return (
-    <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: "var(--font-serif)" }}>{c.title}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
+    <div className="content-page">
+      <h1 className="mb-4">{c.title}</h1>
+      <p className="mb-8 text-sm leading-reading text-muted">
         {c.intro}
       </p>
       <ContentPageMeta
@@ -109,22 +109,22 @@ export function PrivacyContent() {
           : { updated: "Last updated", contents: "Contents", related: "Related pages" }}
       />
       {c.sections.map((s, index) => (
-        <section id={`section-${index + 1}`} key={s.heading} style={{ marginBottom: 28, scrollMarginTop: 96 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--accent)", marginBottom: 10 }}>
+        <section id={`section-${index + 1}`} key={s.heading} className="mb-8">
+          <h2 className="mb-3 text-accent">
             {s.heading}
           </h2>
-          <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>{s.body}</p>
+          <p className="m-0 text-md leading-reading text-body">{s.body}</p>
         </section>
       ))}
-      <p style={{ marginTop: 32, fontSize: 14 }}>
-        <Link href="/feedback" style={{ color: "var(--accent)", fontWeight: 700 }}>
+      <p className="mt-8 text-sm">
+        <Link href="/feedback" className="font-bold text-accent">
           {lang === "ja" ? "プライバシーに関するお問い合わせ" : "Privacy questions and requests"}
         </Link>
       </p>
-      <div style={{ marginTop: 40 }}>
+      <div className="mt-8">
         <Link
           href="/"
-          style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 700, fontSize: 14 }}
+          className="text-sm font-bold text-accent no-underline"
         >
           {c.back}
         </Link>

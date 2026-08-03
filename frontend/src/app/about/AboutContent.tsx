@@ -10,15 +10,15 @@ export function AboutContent() {
   const { lang } = useLang();
 
   return (
-    <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, fontFamily: "var(--font-serif)" }}>
-        {t.aboutTitle}
-      </h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 40, whiteSpace: "pre-line" }}>
-        {t.aboutSubtitle}
-      </p>
+    /* 幅と余白は globals.css の .content-page が持つ（読み物ページ 6 枚で共通） */
+    <div className="content-page">
+      <h1 className="mb-2">{t.aboutTitle}</h1>
+      <p className="mb-8 whitespace-pre-line text-sm text-muted">{t.aboutSubtitle}</p>
 
-      <div role="status" style={{ display: "inline-flex", alignItems: "center", minHeight: 36, padding: "4px 12px", borderRadius: 999, background: "var(--bg-alt)", border: "1px solid var(--border)", color: "var(--text-muted)", fontSize: 13 }}>
+      <div
+        role="status"
+        className="inline-flex items-center rounded-full border border-border bg-bg-alt px-3 py-1 text-xs text-muted"
+      >
         {lang === "ja" ? "現在ベータ版として改善中です" : "Currently improving in public beta"}
       </div>
 
@@ -36,31 +36,23 @@ export function AboutContent() {
       />
 
       <Section id="section-1" title={t.aboutSection1Title}>
-        <p>{t.aboutSection1Body}</p>
+        <p className="m-0">{t.aboutSection1Body}</p>
       </Section>
 
       <Section id="section-2" title={t.aboutSection2Title}>
-        <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+        <ul className="m-0 list-disc pl-6 leading-reading">
           {t.aboutFeatures.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
       </Section>
 
       <Section id="section-3" title={t.aboutSection3Title}>
-        <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0 }}>
+        <ul className="m-0 list-disc pl-6 leading-reading">
           {t.aboutPlanned.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
       </Section>
 
-      <div style={{ marginTop: 40 }}>
-        <Link
-          href="/"
-          style={{
-            color: "var(--accent)",
-            textDecoration: "none",
-            fontWeight: 700,
-            fontSize: 14,
-          }}
-        >
+      <div className="mt-8">
+        <Link href="/" className="text-sm font-bold text-accent no-underline">
           {t.backToHome}
         </Link>
       </div>
@@ -70,13 +62,10 @@ export function AboutContent() {
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} style={{ marginBottom: 32, scrollMarginTop: 96 }}>
-      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12, color: "var(--accent)" }}>
-        {title}
-      </h2>
-      <div style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", whiteSpace: "pre-line" }}>
-        {children}
-      </div>
+    <section id={id} className="mb-8">
+      {/* 大きさは globals.css の h2 の既定（20px）に任せる */}
+      <h2 className="mb-3 text-accent">{title}</h2>
+      <div className="whitespace-pre-line text-md leading-reading text-body">{children}</div>
     </section>
   );
 }

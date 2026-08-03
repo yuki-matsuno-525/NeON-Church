@@ -16,38 +16,28 @@ export function ContentPageMeta({
   return (
     <aside
       aria-label={labels.contents}
-      style={{
-        margin: "24px 0 36px",
-        padding: 20,
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        background: "var(--bg-alt)",
-      }}
+      className="mt-6 mb-8 rounded-lg border border-border bg-bg-alt p-6"
     >
-      <p style={{ margin: "0 0 16px", color: "var(--text-muted)", fontSize: 13 }}>
+      <p className="mt-0 mb-4 text-xs text-muted">
         {labels.updated}: <time dateTime={updatedAt}>{updatedAt}</time>
       </p>
       <nav aria-label={labels.contents}>
-        <strong style={{ fontSize: 14 }}>{labels.contents}</strong>
-        <ol style={{ margin: "8px 0 0", paddingLeft: 24, lineHeight: 1.8 }}>
+        <strong className="text-sm">{labels.contents}</strong>
+        <ol className="mt-2 mb-0 list-decimal pl-6 leading-reading">
           {sections.map((section, index) => (
             <li key={`${index}-${section}`}>
-              <a href={`#section-${index + 1}`} style={{ color: "var(--accent)" }}>
+              <a href={`#section-${index + 1}`} className="text-accent">
                 {section.replace(/^\d+[.．]\s*/, "")}
               </a>
             </li>
           ))}
         </ol>
       </nav>
-      <nav aria-label={labels.related} style={{ marginTop: 18 }}>
-        <strong style={{ fontSize: 14 }}>{labels.related}</strong>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 8 }}>
+      <nav aria-label={labels.related} className="mt-4">
+        <strong className="text-sm">{labels.related}</strong>
+        <div className="mt-2 flex flex-wrap gap-4">
           {relatedLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" }}
-            >
+            <Link key={link.href} href={link.href} className="text-accent">
               {link.label}
             </Link>
           ))}

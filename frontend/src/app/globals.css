@@ -262,6 +262,20 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
+/* 入力欄（1行・複数行・選択）の共通の見た目。
+   画面ごとに少しずつ違う指定が書かれていたので、ここに 1 つだけ置く。 */
+.form-control {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--spacing-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--text-md);
+  font-family: inherit;
+}
+
 /* select の option はブラウザ依存 → 暗い背景を強制 */
 option {
   background: #160e2e;
@@ -333,6 +347,19 @@ select:focus-visible {
 
 .skip-link:focus {
   transform: translateY(0);
+}
+
+/* 読み物ページ（about / 規約 / プライバシー / ガイドライン / ライセンス / 意見）の外枠。
+   6 つのページが同じ幅と余白を使うので、各ページで書かずにここでまとめて決める。 */
+.content-page {
+  max-width: min(72ch, 100%);
+  margin: 0 auto;
+  padding: var(--spacing-12) var(--spacing-6);
+}
+
+/* 目次のリンクで飛んだとき、見出しが上部のバーに隠れないようにする隙間 */
+.content-page section {
+  scroll-margin-top: 96px;
 }
 
 .content-page a {
@@ -519,8 +546,11 @@ select:focus-visible {
 }
 
 @media (max-width: 768px) {
+  /* 画面が狭いときは余白を詰める。
+     以前は各ページがインラインで余白を指定していて、それに勝つために
+     !important が必要だった。指定を .content-page に集約したので不要になった。 */
   .content-page {
-    padding: 32px 20px !important;
+    padding: var(--spacing-8) var(--spacing-4);
   }
 
   /* iPhone の Safari は、文字が 16px 未満の入力欄をタップすると画面を勝手に拡大する。
