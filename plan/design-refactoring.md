@@ -110,6 +110,25 @@ Next.js 16 の公式ドキュメント（`node_modules/next/dist/docs/01-app/01-
 
 各段階で http://localhost:3000 を目視確認しながら進めます。
 
+## 再開のしかた
+
+作業ブランチは **`refactor/design-system`**（origin/main から作成、push 済み）。
+
+新しいセッションで再開するときは、次の順に確認してください。
+
+```
+git checkout refactor/design-system
+git pull
+docker compose up -d          # 開発環境（frontend:3000 / backend:8000 / db:5432）
+```
+
+そのうえで、このドキュメントの「現在地」と「作業の型」を読めば続きから進められます。
+残り件数はこのコマンドで数え直せます。
+
+```
+cd frontend/src && grep -ro 'style={{' --include=*.tsx . | grep -v test | wc -l
+```
+
 ## 現在地（2026-08-03 時点）
 
 ```
