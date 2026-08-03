@@ -374,6 +374,31 @@ select:focus-visible {
   transform: translateY(0);
 }
 
+/* 画面の中身を中央に置く外枠。
+   これまで各ページが maxWidth を 700/720/800/900/1200 とばらばらに指定していた。
+   中身の性質で 3 段階に絞る。
+   - narrow: 記事・フォームなど、1 列で読むもの
+   - wide:   一覧やカードが 2〜3 列並ぶもの
+   - full:   翻訳画面など、横に広く使うもの */
+.page {
+  margin: 0 auto;
+  padding: var(--spacing-8) var(--spacing-4);
+}
+.page-narrow {
+  max-width: 720px;
+}
+.page-wide {
+  max-width: 900px;
+}
+.page-full {
+  max-width: 1200px;
+}
+
+/* 上部のバーを除いた画面の高さいっぱい。中身が少ないページで下が余るのを防ぐ。 */
+.min-h-page {
+  min-height: calc(100vh - var(--navbar-height));
+}
+
 /* 読み物ページ（about / 規約 / プライバシー / ガイドライン / ライセンス / 意見）の外枠。
    6 つのページが同じ幅と余白を使うので、各ページで書かずにここでまとめて決める。 */
 .content-page {

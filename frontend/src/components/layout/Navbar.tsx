@@ -289,7 +289,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
         </div>
       )}
       {logoutError && (
-        <span role="alert" style={{ color: "var(--state-danger)", fontSize: 12 }}>
+        <span role="alert" className="text-xs text-danger">
           {lang === "ja" ? "ログアウトできませんでした。もう一度お試しください。" : "Could not sign out. Please try again."}
         </span>
       )}

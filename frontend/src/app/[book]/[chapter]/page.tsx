@@ -313,7 +313,7 @@ export default function ChapterPage() {
 
   if (loading) {
     return (
-      <div role="status" aria-label={t.loading} style={{ padding: 32 }}>
+      <div role="status" aria-label={t.loading} className="p-8">
         <SkeletonList count={5} />
       </div>
     );
@@ -321,7 +321,7 @@ export default function ChapterPage() {
 
   if (error) {
     return (
-      <div style={{ padding: 32 }}>
+      <div className="p-8">
         <ErrorState
           title={t.loadErrorTitle}
           message={error}
@@ -346,7 +346,7 @@ export default function ChapterPage() {
   }
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+    <div className="min-h-page">
       <div className="reader-sticky-header" style={{
         position: "sticky",
         top: "var(--navbar-height)",
@@ -359,18 +359,18 @@ export default function ChapterPage() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-          <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-            <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+          <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
+            <Link href="/read" className="text-muted no-underline">
               {t.bookList}
             </Link>
             {" › "}
-            <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            <Link href={`/${slug}?list=1`} className="text-muted no-underline">
               {label?.short ?? meta.short}
             </Link>
             {" › "}
             <span>{t.chapterFmt(chapterNum)}</span>
           </p>
-          <div className="reader-header-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="reader-header-actions flex items-center gap-2">
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
               <span>{t.translationLabel}</span>
               <select
@@ -419,7 +419,7 @@ export default function ChapterPage() {
 
       {(progressError || bookmarkLoadError || versionResolutionError) && (
         <div role="alert" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap", padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.actionFailed}</span>
+          <span className="text-sm text-danger">{t.actionFailed}</span>
           <button
             type="button"
             className="btn btn-ghost"

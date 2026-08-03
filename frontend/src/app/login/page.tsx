@@ -73,7 +73,7 @@ function LoginForm() {
   // 既ログイン or 認証ロード中はフォームを描画しない（チラつき防止）
   if (authLoading || user) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div className="p-8 text-muted">{t.loading}</div>
     );
   }
 
@@ -105,7 +105,7 @@ function LoginForm() {
         </h1>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
+          <div className="mb-4">
             <label
               htmlFor={usernameId}
               style={{
@@ -140,7 +140,7 @@ function LoginForm() {
             />
           </div>
 
-          <div style={{ marginBottom: 24 }}>
+          <div className="mb-6">
             <label
               htmlFor={passwordId}
               style={{
@@ -172,7 +172,7 @@ function LoginForm() {
               }}
             />
             <div style={{ textAlign: "right", marginTop: 8 }}>
-              <Link href="/forgot-password" style={{ color: "var(--accent)", fontSize: 13 }}>
+              <Link href="/forgot-password" className="text-sm text-accent">
                 {t.forgotPassword}
               </Link>
             </div>
@@ -192,8 +192,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary"
-            style={{ width: "100%" }}
+            className="btn btn-primary w-full"
           >
             {submitting ? t.loggingIn : t.loginTitle}
           </button>
@@ -202,9 +201,9 @@ function LoginForm() {
         {(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 0" }}>
-              <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
-              <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.oauthOr}</span>
-              <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
+              <hr className="flex-1 border-0 border-t border-border" />
+              <span className="text-xs text-faint">{t.oauthOr}</span>
+              <hr className="flex-1 border-0 border-t border-border" />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
               {OAUTH_GOOGLE_ENABLED && (
@@ -276,7 +275,7 @@ function LoginForm() {
 export default function LoginPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <LoginForm />
     </Suspense>
   );

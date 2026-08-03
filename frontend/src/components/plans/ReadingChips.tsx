@@ -47,7 +47,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
         >
           {readingLabel(reading, t)}
           {reading.translation && (
-            <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
+            <span className="text-xs text-faint">{reading.translation}</span>
           )}
         </Link>
       ))}

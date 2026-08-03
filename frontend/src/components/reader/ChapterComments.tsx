@@ -86,7 +86,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+        <h2 className="m-0 text-md font-bold">
           {heading}{" "}
           <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
             ({total})
@@ -191,7 +191,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         />
       </div>
 
-      <div style={{ marginBottom: 24 }}>
+      <div className="mb-6">
         <CommentInput onSubmit={handleSubmit} showTagOption />
       </div>
 

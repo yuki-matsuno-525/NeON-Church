@@ -166,11 +166,11 @@ export default function ProfilePage() {
         </span>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 20, fontWeight: 700, overflowWrap: "anywhere" }}>{user.username}</div>
-          <Link href={`/profile/${user.username}`} style={{ color: "var(--accent)", fontSize: 13 }}>
+          <Link href={`/profile/${user.username}`} className="text-sm text-accent">
             {t.profile}
           </Link>
           <span aria-hidden="true" style={{ color: "var(--text-faint)", margin: "0 8px" }}>·</span>
-          <Link href="/settings" style={{ color: "var(--accent)", fontSize: 13 }}>
+          <Link href="/settings" className="text-sm text-accent">
             {lang === "ja" ? "アカウント設定" : "Account settings"}
           </Link>
         </div>
@@ -209,7 +209,7 @@ export default function ProfilePage() {
       </div>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
-        <div style={{ marginBottom: 16 }}>
+        <div className="mb-4">
           <label
             htmlFor="bio"
             style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8 }}

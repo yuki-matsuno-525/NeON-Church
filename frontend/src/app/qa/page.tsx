@@ -31,7 +31,7 @@ const QA_COLUMNS: { key: QAColumnKey; icon: IconName; color: string; tint: strin
 export default function QAPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <QAContent />
     </Suspense>
   );
@@ -150,7 +150,7 @@ function QAContent() {
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.qaTitle}</h1>
+        <h1 className="m-0 text-lg font-bold">{t.qaTitle}</h1>
         {!showForm && (
           <Button
             variant="secondary"
@@ -180,10 +180,10 @@ function QAContent() {
         />
       )}
 
-      {catalogLoading && <p role="status" style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.loading}</p>}
+      {catalogLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
       {catalogError && (
-        <div role="alert" style={{ marginBottom: 16 }}>
-          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{lang === "ja" ? "書の一覧を読み込めませんでした。" : "Could not load the book list."}</p>
+        <div role="alert" className="mb-4">
+          <p className="text-sm text-danger">{lang === "ja" ? "書の一覧を読み込めませんでした。" : "Could not load the book list."}</p>
           <Button variant="ghost" size="sm" onClick={retryCatalog}>{t.retry}</Button>
         </div>
       )}
@@ -197,7 +197,7 @@ function QAContent() {
           <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>{t.qaFilters}</span>
           {/* 表示中の件数ではなく、絞り込み後の総数（2列の合計） */}
           {!loading && (
-            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.qaQuestionCount(totalCount)}</span>
+            <span className="text-xs text-faint">{t.qaQuestionCount(totalCount)}</span>
           )}
         </div>
         <div style={filterRowStyle}>
@@ -218,7 +218,7 @@ function QAContent() {
             return (
               <>
                 {/* カテゴリを先に選ぶと、次の書プルダウンがそのカテゴリの書に絞られる。 */}
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <label className="inline-flex items-center gap-2 text-sm text-muted">
                   <select
                     aria-label={t.genreFilterLabel}
                     disabled={catalogLoading || catalogError}
@@ -232,7 +232,7 @@ function QAContent() {
                     ))}
                   </select>
                 </label>
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <label className="inline-flex items-center gap-2 text-sm text-muted">
                   <select
                     aria-label={t.allBooks}
                     disabled={catalogLoading || catalogError}
@@ -251,7 +251,7 @@ function QAContent() {
           })()}
           {/* 訳（任意）。書を選んだときだけ出す。未指定ならその書の全訳が対象。 */}
           {selectedSlug && (
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+            <label className="inline-flex items-center gap-2 text-sm text-muted">
               <select
                 aria-label={t.allVersions}
                 value={selectedVersion}
@@ -265,7 +265,7 @@ function QAContent() {
               </select>
             </label>
           )}
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+          <label className="inline-flex items-center gap-2 text-sm text-muted">
             <select
               aria-label={t.allTags}
               value={selectedTagId}
@@ -362,23 +362,23 @@ function QAContent() {
                 aria-labelledby={isMobile ? `qa-tab-${col.key}` : undefined}
                 style={{ ...columnStyle, display: isMobile && col.key !== activeTab ? "none" : undefined }}
               >
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div className="mb-4">
+                  <div className="flex items-center gap-2">
                     <span style={{ color: col.color, display: "inline-flex" }}>
                       <Icon name={col.icon} size={18} />
                     </span>
-                    <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{columnLabel(col.key)}</h2>
+                    <h2 className="m-0 text-md font-bold">{columnLabel(col.key)}</h2>
                     {/* 表示中の件数ではなく、サーバーが数えたその列の総数 */}
                     <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{list.total}</span>
                   </div>
-                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{columnDesc(col.key)}</p>
+                  <p className="mt-2 mb-0 text-xs text-muted">{columnDesc(col.key)}</p>
                 </div>
 
                 {items.length === 0 ? (
                   <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.qaEmptyColumn}</p>
                 ) : (
                   <>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div className="flex flex-col gap-3">
                       {items.map((q) => (
                         <QACard key={q.id} question={q} />
                       ))}

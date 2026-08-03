@@ -163,7 +163,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (loading || authLoading) {
     return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
+      <div className="page page-full">
         <SkeletonList count={4} />
       </div>
     );
@@ -171,9 +171,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (error || !article) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotEdit}</p>
-        <Link href="/articles" style={{ color: "var(--accent)" }}>
+      <div className="page page-narrow">
+        <p className="text-muted">{error ?? t.articleCannotEdit}</p>
+        <Link href="/articles" className="text-accent">
           {t.articleBackToList}
         </Link>
       </div>
@@ -182,9 +182,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (!user) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleEditLoginRequired}</p>
-        <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} style={{ color: "var(--accent)" }}>
+      <div className="page page-narrow">
+        <p className="text-muted">{t.articleEditLoginRequired}</p>
+        <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} className="text-accent">
           {t.login}
         </Link>
       </div>
@@ -193,8 +193,8 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (user.username !== article.owner_username) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleNotOwner}</p>
+      <div className="page page-narrow">
+        <p className="text-muted">{t.articleNotOwner}</p>
       </div>
     );
   }

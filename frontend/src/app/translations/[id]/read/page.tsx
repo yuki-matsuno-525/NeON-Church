@@ -81,10 +81,10 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     return () => { active = false; };
   }, [project]);
 
-  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={5} /></div>;
+  if (loading) return <div className="page page-wide"><SkeletonList count={5} /></div>;
   if (error) return (
     <div style={{ padding: 32, textAlign: "center" }} role="alert">
-      <p style={{ color: "var(--text-muted)" }}>{error}</p>
+      <p className="text-muted">{error}</p>
       <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
         <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
@@ -93,7 +93,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   );
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+    <div className="min-h-page">
       <div className="reader-sticky-header" style={{
         position: "sticky",
         top: "var(--navbar-height)",
@@ -105,15 +105,15 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+        <p className="m-0 text-sm font-normal text-muted">
+          <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
           </Link>
           {" › "}
           <span>{t.selectChapterHeading}</span>
         </p>
       </div>
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-wide">
 
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{project?.name}</h1>
       <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
@@ -122,8 +122,8 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
 
       {chapterNums.length === 0 ? (
         <div style={{ padding: "24px 20px", border: "1px solid var(--border)", borderRadius: 12, textAlign: "center", background: "var(--bg-alt)" }}>
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVerses}</p>
-          <Link href={`/translations/${id}`} style={{ color: "var(--accent)", fontSize: 13 }}>{ui.noPublishedCta}</Link>
+          <p className="text-sm text-muted">{t.noPublishedVerses}</p>
+          <Link href={`/translations/${id}`} className="text-sm text-accent">{ui.noPublishedCta}</Link>
         </div>
       ) : (
         <>

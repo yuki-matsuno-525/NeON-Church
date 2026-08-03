@@ -55,7 +55,7 @@ export default function NewPlanPage() {
   if (!user) {
     return (
       <div style={containerStyle}>
-        <p role="status" style={{ color: "var(--text-muted)" }}>{t.planLoginRequired}</p>
+        <p role="status" className="text-muted">{t.planLoginRequired}</p>
         <Link href="/login?from=%2Fplans%2Fnew" style={loginLinkStyle}>
           {t.loginBtn}
         </Link>

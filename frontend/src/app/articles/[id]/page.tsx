@@ -70,11 +70,11 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
   if (error || !article) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotRead}</p>
+        <p className="text-muted">{error ?? t.articleCannotRead}</p>
         {error === t.articleLoadFailed && (
           <button type="button" onClick={() => void loadArticle()} style={retryButtonStyle}>{t.retry}</button>
         )}
-        <Link href="/articles" style={{ color: "var(--accent)" }}>
+        <Link href="/articles" className="text-accent">
           {t.articleBackToList}
         </Link>
       </div>
@@ -106,10 +106,10 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       </h1>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, color: "var(--text-muted)", marginBottom: 24, flexWrap: "wrap" }}>
-        <Link href={`/profile/${article.owner_username}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={`/profile/${article.owner_username}`} className="text-muted no-underline">
           {article.owner_username}
         </Link>
-        <time dateTime={article.created_at} title={new Date(article.created_at).toLocaleString("ja-JP")} style={{ color: "var(--text-muted)" }}>
+        <time dateTime={article.created_at} title={new Date(article.created_at).toLocaleString("ja-JP")} className="text-muted">
           {formatRelativeTime(article.created_at)}
         </time>
       </div>
@@ -145,7 +145,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       {related.length > 0 && (
         <section style={{ marginTop: 36 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{t.articleRelated}</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {related.map((item) => (
               <Link
                 key={item.id}
@@ -154,7 +154,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
                 style={{ padding: "12px 14px", textDecoration: "none", color: "inherit" }}
               >
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{item.summary}</div>
+                <div className="text-xs text-muted">{item.summary}</div>
               </Link>
             ))}
           </div>

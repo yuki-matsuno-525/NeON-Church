@@ -75,7 +75,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
           <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>{t.bestAnswer}</span>
         )}
         <span style={{ fontWeight: 700, fontSize: 13 }}>{answer.user.username}</span>
-        <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
+        <span className="text-xs text-faint">
           {formatRelativeTime(answer.created_at)}
         </span>
       </div>

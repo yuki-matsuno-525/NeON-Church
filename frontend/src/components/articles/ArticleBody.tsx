@@ -325,7 +325,7 @@ function renderMarkdownToken(token: string, key: string): ReactNode {
       <a
         key={key}
         href={href}
-        style={{ color: "var(--accent)" }}
+        className="text-accent"
         target={external ? "_blank" : undefined}
         rel={external ? "noreferrer" : undefined}
         aria-label={external ? `${label}（新しいタブで開く）` : undefined}

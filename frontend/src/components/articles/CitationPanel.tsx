@@ -387,9 +387,9 @@ function VerseList({
       )}
 
       {loading ? (
-        <p style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.loading}</p>
+        <p className="text-xs text-faint">{t.loading}</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {verses.map((verse) => {
             const inRange =
               rangeStart !== null &&

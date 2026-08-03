@@ -66,7 +66,7 @@ export function CommentInput({
 
   if (!user) {
     return (
-      <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+      <p className="text-sm text-muted">
         <Link
           href={`/login?from=${encodeURIComponent(pathname)}`}
           style={{ color: "var(--accent)", textDecoration: "underline" }}

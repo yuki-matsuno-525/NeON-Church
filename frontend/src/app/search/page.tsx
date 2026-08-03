@@ -136,7 +136,7 @@ function SearchContent() {
   const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.searchTitle}</h1>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
@@ -281,7 +281,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionBooks}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.books.map((b) => {
                   const slug = getSlugByName(b.name);
                   return (
@@ -313,7 +313,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionVerses}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.verses.map((v) => {
                   const slug = v.book_slug || getSlugByName(v.book_name);
                   const url = slug ? `/${slug}/${v.chapter_number}#verse-${v.number}` : null;
@@ -329,7 +329,7 @@ function SearchContent() {
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                        <span className="text-xs text-muted">
                           <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
                           {/* 検索は全訳を横断するので、どの訳の本文に当たったかを添える。 */}
@@ -368,7 +368,7 @@ function SearchContent() {
               <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
                 {t.sectionComments}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.comments.map((c) => {
                   const parts = highlight(c.body, q).split("**");
                   return (
@@ -421,7 +421,7 @@ function SearchContent() {
 export default function SearchPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div role="status" aria-live="polite" className="p-8 text-muted">{t.loading}</div>}>
       <SearchContent />
     </Suspense>
   );

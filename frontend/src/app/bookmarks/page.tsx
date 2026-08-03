@@ -133,7 +133,7 @@ export default function BookmarksPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-narrow">
         {heading}
         <SkeletonList count={3} />
       </div>
@@ -143,12 +143,12 @@ export default function BookmarksPage() {
   if (!user) return null;
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-narrow">
       {heading}
 
       {recentlyRemoved && (
         <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)" }}>
-          <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.bookmarkRemovedStatus}</span>
+          <span className="text-sm text-muted">{t.bookmarkRemovedStatus}</span>
           <button type="button" onClick={() => handleUndo(recentlyRemoved)} disabled={actionBusy} className="btn btn-ghost">
             {t.undo}
           </button>
@@ -179,7 +179,7 @@ export default function BookmarksPage() {
         />
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <div className="flex flex-col gap-3">
             {bookmarks.map((bm) => (
               <BookmarkCard
                 key={bm.id}

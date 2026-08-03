@@ -59,11 +59,11 @@ export default function PlansPage() {
   const pageLoading = authLoading || loading;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-full">
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.plansTitle}</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
+          <h1 className="m-0 text-lg font-bold">{t.plansTitle}</h1>
+          <p className="mt-1 mb-0 text-sm text-muted">
             {t.plansDesc}
           </p>
         </div>
@@ -155,15 +155,15 @@ function PlanColumn({
   const t = useT();
   return (
     <section style={columnStyle}>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className="mb-4">
+        <div className="flex items-center gap-2">
           <span style={{ color, display: "inline-flex" }}>
             <Icon name={icon} size={18} />
           </span>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h2>
+          <h2 className="m-0 text-md font-bold">{title}</h2>
           <span style={{ ...countBadgeStyle, background: tint, color }}>{plans.length}</span>
         </div>
-        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{desc}</p>
+        <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
       </div>
 
       {loading ? (
@@ -171,7 +171,7 @@ function PlanColumn({
       ) : plans.length === 0 ? (
         <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{empty}</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div className="flex flex-col gap-3">
           {plans.map((plan) => (
             <Link
               key={plan.id}

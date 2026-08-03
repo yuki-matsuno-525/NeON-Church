@@ -84,7 +84,7 @@ function RegisterForm() {
 
   if (authLoading || user) {
     return (
-      <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>
+      <div className="p-8 text-muted">{t.loading}</div>
     );
   }
 
@@ -135,7 +135,7 @@ function RegisterForm() {
         </h1>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
+          <div className="mb-4">
             <label htmlFor={usernameId} style={labelStyle}>{t.username}</label>
             <input
               id={usernameId}
@@ -154,7 +154,7 @@ function RegisterForm() {
             </p>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
+          <div className="mb-4">
             <label htmlFor={emailId} style={labelStyle}>{t.email}</label>
             <input
               id={emailId}
@@ -168,7 +168,7 @@ function RegisterForm() {
             />
           </div>
 
-          <div style={{ marginBottom: 24 }}>
+          <div className="mb-6">
             <label htmlFor={passwordId} style={labelStyle}>{t.passwordHint}</label>
             <PasswordField
               id={passwordId}
@@ -183,7 +183,7 @@ function RegisterForm() {
             />
           </div>
 
-          <div style={{ marginBottom: 24 }}>
+          <div className="mb-6">
             <label htmlFor={confirmPasswordId} style={labelStyle}>{t.confirmPassword}</label>
             <PasswordField
               id={confirmPasswordId}
@@ -212,8 +212,7 @@ function RegisterForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary"
-            style={{ width: "100%" }}
+            className="btn btn-primary w-full"
           >
             {submitting ? t.registering : t.registerBtn}
           </button>
@@ -222,9 +221,9 @@ function RegisterForm() {
         {(OAUTH_GOOGLE_ENABLED || OAUTH_GITHUB_ENABLED) && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0 0" }}>
-              <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
-              <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{t.oauthOr}</span>
-              <hr style={{ flex: 1, border: "none", borderTop: "1px solid var(--border)" }} />
+              <hr className="flex-1 border-0 border-t border-border" />
+              <span className="text-xs text-faint">{t.oauthOr}</span>
+              <hr className="flex-1 border-0 border-t border-border" />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
               {OAUTH_GOOGLE_ENABLED && (
@@ -296,7 +295,7 @@ function RegisterForm() {
 export default function RegisterPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <RegisterForm />
     </Suspense>
   );

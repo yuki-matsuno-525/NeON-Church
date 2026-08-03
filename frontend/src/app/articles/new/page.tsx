@@ -59,8 +59,8 @@ export default function NewArticlePage() {
   if (!user) {
     return (
       <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleLoginRequired}</p>
-        <Link href="/login?from=%2Farticles%2Fnew" style={{ color: "var(--accent)" }}>
+        <p className="text-muted">{t.articleLoginRequired}</p>
+        <Link href="/login?from=%2Farticles%2Fnew" className="text-accent">
           {t.loginBtn}
         </Link>
       </div>

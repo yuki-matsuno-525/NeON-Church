@@ -395,7 +395,7 @@ function PasswordInput({ id, label, value, onChange, autoComplete, hint }: { id:
     <div className={styles.field}>
       <label htmlFor={id}>{label}</label>
       <PasswordField id={id} value={value} onChange={onChange} autoComplete={autoComplete} required minLength={autoComplete === "new-password" ? 8 : undefined} inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
-      {hint && <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{hint}</span>}
+      {hint && <span className="text-xs text-faint">{hint}</span>}
     </div>
   );
 }

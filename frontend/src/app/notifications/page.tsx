@@ -127,7 +127,7 @@ export default function NotificationsPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-narrow">
         <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>{t.notificationsTitle}</h1>
         <SkeletonList count={4} />
       </div>
@@ -137,7 +137,7 @@ export default function NotificationsPage() {
   if (!user) return null;
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-narrow">
       <div
         style={{
           display: "flex",
@@ -284,7 +284,7 @@ function NotificationItem({
         {contextLabel && (
           <span style={{ color: "var(--text-muted)", fontSize: 12 }}>· {contextLabel}</span>
         )}
-        <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
+        <span className="text-xs text-faint">
           {formatRelativeTime(n.created_at)}
         </span>
       </div>

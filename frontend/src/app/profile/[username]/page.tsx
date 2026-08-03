@@ -95,9 +95,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   );
   const bookmarkList = useLoadMore(fetchBookmarks);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  if (loading) return <div className="p-8 text-muted">{t.loading}</div>;
   if (profileError) return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       <ErrorState
         title={t.profileLoadFailed}
         message={t.loadErrorDesc}
@@ -106,13 +106,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       />
     </div>
   );
-  if (notFound || !profile) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.userNotFound}</div>;
+  if (notFound || !profile) return <div className="p-8 text-muted">{t.userNotFound}</div>;
 
   if (me?.username === username) {
     return (
-      <div style={{ padding: 32 }}>
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-          {t.selfProfileBefore} <Link href="/profile" style={{ color: "var(--accent)" }}>{t.selfProfileLink}</Link>{t.selfProfileAfter}
+      <div className="p-8">
+        <p className="text-sm text-muted">
+          {t.selfProfileBefore} <Link href="/profile" className="text-accent">{t.selfProfileLink}</Link>{t.selfProfileAfter}
         </p>
       </div>
     );
@@ -151,7 +151,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       {/* プロフィールヘッダー */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
         <div style={{
@@ -192,7 +192,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       </div>
 
       {activeTab === "articles" && (
-        <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+        <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" className="flex flex-col gap-3">
           {articleList.loading ? (
             <SkeletonList count={3} />
           ) : articleList.error ? (
@@ -233,10 +233,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           ) : bookmarkList.error ? (
             <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={bookmarkList.retry} retryLabel={t.retry} />
           ) : bookmarkList.items.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
+            <p className="text-sm text-muted">{t.noMyBookmarks}</p>
           ) : (
             <>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {bookmarkList.items.map((bm) => (
                   <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
                 ))}
@@ -255,10 +255,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       ) : commentList.error ? (
         <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
       ) : commentList.items.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
+        <p className="text-sm text-muted">{t.noMyComments}</p>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <div className="flex flex-col gap-3">
             {commentList.items.map((c) => (
               <div key={c.id} style={cardStyle}>
                 <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>

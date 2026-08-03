@@ -65,7 +65,7 @@ export function BulkBookmarkBar({
       <span style={{ fontSize: 13, fontWeight: 700 }}>
         {pickedCount > 0 ? t.bulkPickedCount(pickedCount) : t.bulkPickPrompt}
       </span>
-      {message && <span role="status" aria-live="polite" style={{ fontSize: 12, color: "var(--text-muted)" }}>{message}</span>}
+      {message && <span role="status" aria-live="polite" className="text-xs text-muted">{message}</span>}
       <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
         <button type="button" onClick={onCancel} style={cancelStyle}>
           {t.articleCancel}

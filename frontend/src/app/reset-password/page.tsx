@@ -108,13 +108,13 @@ function ResetPasswordForm() {
               <div className={styles.field}>
                 <label htmlFor={passwordId}>{text.password}</label>
                 <PasswordField id={passwordId} value={password} onChange={setPassword} autoComplete="new-password" minLength={8} required inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
-                <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{text.hint}</span>
+                <span className="text-xs text-faint">{text.hint}</span>
               </div>
               <div className={styles.field}>
                 <label htmlFor={confirmId}>{text.confirm}</label>
                 <PasswordField id={confirmId} value={confirmation} onChange={setConfirmation} autoComplete="new-password" minLength={8} required inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
               </div>
-              <Button type="submit" loading={busy} style={{ width: "100%" }}>{busy ? text.saving : text.submit}</Button>
+              <Button type="submit" loading={busy} className="w-full">{busy ? text.saving : text.submit}</Button>
               {error && <p role="alert" aria-live="polite" className={`${styles.message} ${styles.error}`}>{error}</p>}
             </form>
           </>

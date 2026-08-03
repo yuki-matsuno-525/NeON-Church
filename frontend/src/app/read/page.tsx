@@ -32,7 +32,7 @@ function matchesSearch(query: string, values: Array<string | null | undefined>) 
 export default function ReadPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <ReadContent />
     </Suspense>
   );
@@ -135,7 +135,7 @@ function ReadContent() {
   }, [loading, user, router, resumeRetryToken]);
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-wide">
       <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.readTitle}</h1>
 
       {resume && (
@@ -172,13 +172,13 @@ function ReadContent() {
       </label>
 
       {libraryLoading && user && (
-        <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13 }}>
+        <p role="status" aria-live="polite" className="text-sm text-muted">
           {t.loading}
         </p>
       )}
       {resumeError && user && (
         <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"
             className="btn btn-ghost"
@@ -193,7 +193,7 @@ function ReadContent() {
       )}
       {libraryError && user && (
         <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button type="button" className="btn btn-ghost" onClick={() => setLibraryRetryToken((value) => value + 1)}>
             {t.retry}
           </button>

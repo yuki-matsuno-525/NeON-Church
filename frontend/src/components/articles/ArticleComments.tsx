@@ -99,7 +99,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       </h2>
 
       {loading ? (
-        <p role="status" style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</p>
+        <p role="status" className="text-sm text-muted">{t.loading}</p>
       ) : error && comments.length === 0 ? (
         <div role="alert" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <p style={{ margin: 0, fontSize: 13, color: "var(--state-danger)" }}>{error}</p>
@@ -113,7 +113,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
             <div key={comment.id} className="card-glow" style={{ padding: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <Link href={`/profile/${comment.username}`} style={{ fontSize: 13, fontWeight: 700, color: "inherit", textDecoration: "none" }}>{comment.username}</Link>
-                <time dateTime={comment.created_at} style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                <time dateTime={comment.created_at} className="text-xs text-muted">
                   {formatRelativeTime(comment.created_at)}
                 </time>
                 {user?.username === comment.username && !comment.is_deleted && (
@@ -153,7 +153,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       )}
 
       {user ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-col gap-2">
           <label htmlFor={`article-comment-${articleId}`} style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700 }}>
             この記事へのコメント
           </label>
@@ -200,9 +200,9 @@ export function ArticleComments({ articleId }: { articleId: string }) {
           </button>
         </div>
       ) : (
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+        <p className="text-sm text-muted">
           {t.articleCommentLoginRequired}{" "}
-          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} style={{ color: "var(--accent)" }}>{t.login}</Link>
+          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} className="text-accent">{t.login}</Link>
         </p>
       )}
     </section>

@@ -179,7 +179,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
         {plan.title}
       </h1>
       <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
-        <Link href={`/profile/${plan.owner_username}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={`/profile/${plan.owner_username}`} className="text-muted no-underline">
           {plan.owner_username}
         </Link>
         <span style={{ marginLeft: 8 }}>{t.planDayCount(plan.day_count)}</span>
@@ -204,7 +204,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
             <span style={{ fontSize: 14, fontWeight: 700 }}>
               {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
             </span>
-            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.planProgress(doneCount, plan.day_count)}</span>
+            <span className="text-sm text-muted">{t.planProgress(doneCount, plan.day_count)}</span>
             <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} style={plainButtonStyle}>{t.planRestart}</button>
             <button type="button" onClick={handleStop} disabled={busy} style={plainButtonStyle}>{t.planStop}</button>
           </>

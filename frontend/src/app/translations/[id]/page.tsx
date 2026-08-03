@@ -793,7 +793,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const renderCommentBody = (body: string) => {
     const parts = body.split(/(@[\w]+)/g);
     return parts.map((p, i) =>
-      p.startsWith("@") ? <strong key={i} style={{ color: "var(--accent)" }}>{p}</strong> : p
+      p.startsWith("@") ? <strong key={i} className="text-accent">{p}</strong> : p
     );
   };
 
@@ -839,12 +839,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   if (loadError) {
     return (
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 24px", textAlign: "center" }} role="alert">
-        <p style={{ color: "var(--text-muted)" }}>{ui.loadError}</p>
+        <p className="text-muted">{ui.loadError}</p>
         <Button variant="secondary" onClick={() => void loadProject()}>{ui.retry}</Button>
       </div>
     );
   }
-  if (!project) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.noProjects}</div>;
+  if (!project) return <div className="p-8 text-muted">{t.noProjects}</div>;
 
   const progressPct = project.unit_count > 0
     ? Math.round((project.done_count / project.unit_count) * 100)
@@ -884,7 +884,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               />
             )}
           </div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          <div className="text-sm text-muted">
             {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>
         </div>
@@ -1001,7 +1001,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 : [{ id: project.target_language, tag: project.target_language, label: languageLabel(project.target_language), order: 0 }]
               ).map((language) => <option key={language.id} value={language.tag}>{language.label}</option>)}
             </select>
-            <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{ui.targetLanguageHelp}</span>
+            <span className="text-xs text-faint">{ui.targetLanguageHelp}</span>
           </label>
           <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>{ui.licenseNotice}</p>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
@@ -1109,7 +1109,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 </button>
               ) : (
                 <form onSubmit={handleAddUnit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <label className="grid gap-1 text-xs text-muted">
                     {ui.selectChapterLabel}
                     <select
                       value={unitChapterId}
@@ -1124,7 +1124,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     </select>
                   </label>
                   {unitVerses.length > 0 && (
-                    <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                    <label className="grid gap-1 text-xs text-muted">
                       {ui.selectVerseLabel}
                       <select
                         value={unitVerseId}
@@ -1216,7 +1216,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               </button>
               <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{t.chapterFmt(selectedChapter)}</h3>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-                <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                <label className="grid gap-1 text-xs text-muted">
                   {ui.filterStatus}
                   <select
                     value={unitStatusFilter}
@@ -1235,7 +1235,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   </select>
                 </label>
                 {user && (
-                  <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <label className="grid gap-1 text-xs text-muted">
                     {ui.filterAssignee}
                     <select
                       value={unitAssigneeFilter}
@@ -1254,7 +1254,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               </div>
               {unitsLoading && <SkeletonList count={3} />}
               {!unitsLoading && units.length === 0 && <EmptyState title={ui.noUnitsInChapter} />}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="flex flex-col gap-2">
               {/* units はこの章の分だけ取ってあるので、ここでの絞り込みは不要 */}
               {units.map((unit) => (
                 <div
@@ -1405,9 +1405,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     {expandedUnit === unit.id && (
                       <div id={`unit-discussion-${unit.id}`} style={{ marginTop: 8 }}>
                         {unitCommentsLoading === unit.id && <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{t.loading}</p>}
-                        {unitCommentErrors[unit.id] && <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12 }}>{unitCommentErrors[unit.id]}</p>}
+                        {unitCommentErrors[unit.id] && <p role="alert" className="text-xs text-danger">{unitCommentErrors[unit.id]}</p>}
                         {unitCommentsLoading !== unit.id && !unitCommentErrors[unit.id] && (unitComments[unit.id] ?? []).length === 0 && (
-                          <p style={{ color: "var(--text-faint)", fontSize: 12 }}>{ui.noDiscussion}</p>
+                          <p className="text-xs text-faint">{ui.noDiscussion}</p>
                         )}
                         {(unitComments[unit.id] ?? []).map((c) => (
                           <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
@@ -1447,7 +1447,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           ) : reviewUnits.length === 0 ? (
             <EmptyState title={t.noReviewUnits} description={t.emptyReviewUnitsDesc} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {reviewUnits.map((unit) => (
                 <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
                   <div style={{ padding: "12px 16px" }}>
@@ -1525,15 +1525,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       {tab === "members" && (
         <div id="translation-panel-members" role="tabpanel" aria-labelledby="translation-tab-members">
           {!isApprovedMember ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.membersOnly}</p>
+            <p className="text-sm text-muted">{t.membersOnly}</p>
           ) : membersLoading ? (
             <SkeletonList count={2} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="flex flex-col gap-2">
               {members.map((m) => (
                 <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{m.username}</span>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                  <span className="text-xs text-muted">
                     {m.role === "owner" ? t.roleOwner : t.roleMember}
                   </span>
                   <span
@@ -1546,7 +1546,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     {memberStatusLabel(m.status)}
                   </span>
                   {m.status === "pending" && (
-                    <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
+                    <span className="text-xs text-faint">
                       {ui.requestDate}: {formatRelativeTime(m.created_at)}
                     </span>
                   )}

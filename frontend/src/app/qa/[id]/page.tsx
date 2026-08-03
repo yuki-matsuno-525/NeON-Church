@@ -304,7 +304,7 @@ export default function QuestionDetailPage() {
         <p style={{ color: "var(--text-faint)", fontSize: 14, padding: "8px 2px" }}>{t.qaNoAnswers}</p>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {answers.items.map((a) => (
               <AnswerItem
                 key={a.id}
