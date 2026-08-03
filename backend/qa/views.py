@@ -30,9 +30,7 @@ def _question_queryset():
         .select_related("user", "canonical_book", "best_answer__user")
         .prefetch_related("tags")
         .annotate(
-            answer_count=Count(
-                "answers", distinct=True, filter=models.Q(answers__is_deleted=False)
-            )
+            answer_count=Count("answers", distinct=True, filter=models.Q(answers__is_deleted=False))
         )
     )
 
@@ -236,7 +234,7 @@ class _QAReportView(APIView):
     throttle_scope = "report"
 
     # 継承先で「対象のモデル」と「Report のどの列に入れるか」を決める。
-    model = None
+    model: type[models.Model] | None = None
     report_field = ""
 
     def post(self, request, pk):

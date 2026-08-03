@@ -43,11 +43,22 @@ CI（`.github/workflows/`）と同じものを使う。ローカルで通れば 
 ### バックエンド
 
 ```
+docker compose exec backend ruff check .                        # CI 1 段目: lint
+docker compose exec backend ruff format .                       # 整形（CI は --check で検査）
+docker compose exec backend mypy .                              # CI 3 段目: 型チェック
 docker compose exec backend pytest                              # テスト
 docker compose exec backend python manage.py check              # システムチェック
 docker compose exec backend python manage.py makemigrations --check --dry-run
 docker compose exec backend python manage.py spectacular --file schema.yaml --validate
 ```
+
+**バックエンドを触ったら `ruff check` → `ruff format` → `mypy` → `pytest` の順で回す。**
+lint と型チェックは数秒で終わり、pytest は 4 分近くかかる。先に速いものを通す。
+
+`ruff check --fix` で直せる違反は自動修正される。設定は `backend/pyproject.toml`。
+mypy は段階導入で、型注釈の無い関数の中身は見ない。既存の型負債は
+`pyproject.toml` の overrides に理由付きで列挙してあり、触ったファイルから
+1 つずつ外していく方針。
 
 `DJANGO_SETTINGS_MODULE` は `backend/pytest.ini` で `config.settings.test` に固定済み。
 環境変数を明示的に渡す必要はない。Docker を使わない場合は `backend/` で同じコマンドを直接実行する。

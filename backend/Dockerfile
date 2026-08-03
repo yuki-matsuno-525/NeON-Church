@@ -16,9 +16,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
 # 依存パッケージのインストール
-# requirements.txt を先にコピーしてキャッシュを効かせる
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# requirements*.txt を先にコピーしてキャッシュを効かせる
+#
+# 開発コンテナから ruff / mypy を直接叩けるように dev 依存も入れる
+# （このイメージは開発用。本番は Render が requirements.txt だけを見る）。
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
 
 # ソースコードをコピー
 # docker-compose では volume マウントで上書きされるため、

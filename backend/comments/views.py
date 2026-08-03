@@ -21,7 +21,7 @@ def _get_visible_comment_or_404(request, **lookup) -> Comment:
         comment = Comment.objects.select_related("translation_project").get(**lookup)
     except (Comment.DoesNotExist, DjangoValidationError, TypeError, ValueError):
         raise Http404 from None
-    if comment.translation_project_id and not can_view_project_work(
+    if comment.translation_project is not None and not can_view_project_work(
         request.user, comment.translation_project
     ):
         raise Http404
@@ -69,6 +69,7 @@ def _location_from_target(*, verse_id=None, chapter_id=None, book_id=None):
 def _notify(recipient, actor, notification_type, comment):
     """通知を作成するヘルパー。自己通知はスキップ。"""
     from notifications.services import send_user_notification
+
     send_user_notification(
         recipient=recipient,
         actor=actor,
@@ -137,9 +138,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         qs = (
-            Comment.objects.select_related(
-                "user", "translation_project", "canonical_book"
-            )
+            Comment.objects.select_related("user", "translation_project", "canonical_book")
             .prefetch_related("tags")
             .annotate(
                 vote_count=Count("votes", distinct=True),
@@ -260,17 +259,21 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
 
     def get_serializer(self, *args, **kwargs):
         from .serializers import CommentEditSerializer
+
         kwargs.setdefault("context", self.get_serializer_context())
         return CommentEditSerializer(*args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.is_deleted:
-            return Response({"detail": "Cannot edit a deleted comment."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Cannot edit a deleted comment."}, status=status.HTTP_400_BAD_REQUEST
+            )
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         from .serializers import CommentSerializer
+
         return Response(CommentSerializer(instance).data)
 
     def perform_destroy(self, instance: Comment) -> None:
@@ -299,11 +302,14 @@ class MyCommentListView(generics.ListAPIView):
 
     def get_serializer_class(self):
         from .serializers import MyCommentSerializer
+
         return MyCommentSerializer
 
     def get_queryset(self):
         return (
-            Comment.objects.filter(user=self.request.user, is_deleted=False, translation_project__isnull=True)
+            Comment.objects.filter(
+                user=self.request.user, is_deleted=False, translation_project__isnull=True
+            )
             .select_related("canonical_book")
             .annotate(vote_count=Count("votes"))
             .order_by("-created_at")
@@ -317,6 +323,7 @@ class TrendingCommentView(generics.ListAPIView):
 
     def get_serializer_class(self):
         from .serializers import TrendingCommentSerializer
+
         return TrendingCommentSerializer
 
     def get_queryset(self):
@@ -348,7 +355,9 @@ class ReportView(APIView):
     def post(self, request, pk):
         comment = _get_visible_comment_or_404(request, pk=pk)
         if comment.user == request.user:
-            return Response({"detail": "Cannot report your own comment."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Cannot report your own comment."}, status=status.HTTP_400_BAD_REQUEST
+            )
         serializer = ReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         _, created = Report.objects.get_or_create(

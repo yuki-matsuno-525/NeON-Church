@@ -53,3 +53,67 @@ known-first-party = [
 [tool.ruff.format]
 # 既存コードは docstring を含めてダブルクォート。
 quote-style = "double"
+
+# ==============================================================
+# mypy
+#
+# 方針は「段階導入」。今は型注釈が付いている関数だけを検査し、
+# 注釈の無い関数の中身は見ない（check_untyped_defs = false）。
+# 型を書いた場所から順に守られていく形にして、CI を常時グリーンに保つ。
+#
+# 締めていく順番（余裕ができたら上から）:
+#   1. disallow_untyped_defs をアプリ単位で true にする
+#   2. check_untyped_defs を全体で true にする
+#   3. ignore_missing_imports を外して足りない stub を入れる
+# ==============================================================
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+# 検査しない場所:
+#   migrations       自動生成物
+#   bible/importers  BeautifulSoup の戻り値が Tag | NavigableString | PageElement | None で、
+#   bible/.../commands  型を通すには isinstance 判定を全行に足すことになる。
+#                    取り込みは固定の HTML を相手にする使い捨てスクリプトなので割に合わない。
+exclude = [
+    "/migrations/",
+    "^bible/importers/",
+    "^bible/management/commands/",
+]
+
+# 型注釈の無い関数の中身には立ち入らない（段階導入のため）。
+check_untyped_defs = false
+# stub の無いサードパーティは Any 扱いにして落とさない。
+ignore_missing_imports = true
+# 不要になった type: ignore を溜めない。
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+# --------------------------------------------------------------
+# 型負債のベースライン
+#
+# 下のモジュールは今は検査を止めている。触ったついでに 1 つずつ
+# ここから外していく。新しく足すモジュールは既定で検査対象になる。
+# --------------------------------------------------------------
+
+# BeautifulSoup の戻り値型が緩く（Tag | NavigableString | PageElement | None）、
+# 実害の無い union-attr で埋まるため。exclude だけでは import 経由で拾われる。
+[[tool.mypy.overrides]]
+module = ["bible.importers.*", "bible.management.commands.*"]
+ignore_errors = true
+
+# request.user が User | AnonymousUser 固定で、IsAuthenticated を通した後でも
+# 絞り込めない（django-stubs の既知の制約）。simplejwt の stub 差異も混ざる。
+[[tool.mypy.overrides]]
+module = ["users.views", "users.authentication"]
+ignore_errors = true
+
+# base.py からの star import で設定値の型が object に落ちるため。
+[[tool.mypy.overrides]]
+module = ["config.settings.*"]
+ignore_errors = true
+
+[tool.django-stubs]
+# 型解決用に読む設定モジュール。DB に触らないので test 設定でよい。
+django_settings_module = "config.settings.test"

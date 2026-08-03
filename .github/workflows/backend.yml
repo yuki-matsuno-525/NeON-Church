@@ -33,10 +33,21 @@ jobs:
         with:
           python-version: '3.13'
           cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/requirements*.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
+
+      # lint と format は他より速いので先に置く。壊れている入力を
+      # テストやスキーマ生成に流しても時間の無駄になるため。
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy .
 
       - name: Django system check
         run: python manage.py check
