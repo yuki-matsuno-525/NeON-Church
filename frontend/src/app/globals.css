@@ -224,6 +224,31 @@
   color: #fff;
 }
 
+/* 一覧の中に並ぶ、文字だけの小さな操作ボタン（賛成・返信・編集・削除・報告など）。
+   枠も背景も持たないが、指で押せる高さは確保する。
+   このサイトで一番数の多いボタンの形なので、1 か所にまとめておく。 */
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-text:disabled {
+  cursor: default;
+}
+/* 押した状態（賛成済み・お気に入り済み）を色で示す */
+.btn-text-on {
+  color: var(--accent);
+}
+
 /* バッジ */
 .badge {
   display: inline-flex;
@@ -536,13 +561,29 @@ select:focus-visible {
   display: none;
 }
 
-/* サイドバー内の文字サイズ。Sidebar.tsx はこの変数だけを参照し、px を直接持たない。
+/* サイドバー本体。文字サイズは変数で持ち、Sidebar.module.css がそれを見る。
    モバイルではドロワーとして指で操作するため、下のメディアクエリで一段大きくする。 */
 .sidebar {
-  --sidebar-font-item: var(--font-size-sm);
-  --sidebar-font-genre: var(--font-size-xs);
-  --sidebar-font-label: var(--font-size-xs);
+  --sidebar-font-item: var(--text-sm);
+  --sidebar-font-genre: var(--text-xs);
+  --sidebar-font-label: var(--text-xs);
   --sidebar-item-min-height: 44px;
+
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--glass-nav);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 開いているとき、後ろの画面を暗くする層 */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  top: var(--navbar-height);
+  z-index: 39;
+  background: rgba(0, 0, 0, 0.40);
 }
 
 @media (max-width: 768px) {

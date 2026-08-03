@@ -9,6 +9,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { BOOKS, GENRE_ORDER } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import styles from "./Sidebar.module.css";
 
 const NAV_HREFS = [
   { href: "/read", matchPrefixes: ["/read", ...BOOKS.map((book) => `/${book.slug}`)] },
@@ -96,19 +97,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
 
   return (
     <>
-      {open && (
-        <div
-          className="sidebar-overlay"
-          onClick={onClose}
-          style={{
-            position: "fixed",
-            inset: 0,
-            top: "var(--navbar-height)",
-            background: "rgba(0, 0, 0, 0.4)",
-            zIndex: 39,
-          }}
-        />
-      )}
+      {open && <div className="sidebar-overlay" onClick={onClose} />}
 
       <aside
         id="app-sidebar"
@@ -122,107 +111,35 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
         // キーボードで進むと見えないリンクにフォーカスが飛んでしまうので、閉じている間は
         // 中身ごと触れなくする（パソコンでは常に表示されているのでそのまま）。
         inert={isMobile && !open}
-        style={{
-          width: "var(--sidebar-width)",
-          minWidth: "var(--sidebar-width)",
-          background: "var(--glass-nav)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
-        }}
       >
-        <div
-          className="sidebar-inner"
-          style={{
-            position: "sticky",
-            top: "var(--navbar-height)",
-            height: "calc(100vh - var(--navbar-height))",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-        <div className="sidebar-mobile-auth" style={{ borderBottom: "1px solid var(--border)", padding: "8px 0" }}>
+        <div className={`sidebar-inner ${styles.inner}`}>
+        <div className="sidebar-mobile-auth border-b border-border py-2">
           {user ? (
             <>
-              <Link
-                href="/notifications"
-                onClick={onClose}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  fontSize: "var(--sidebar-font-item)",
-                  color: "var(--text)",
-                  position: "relative",
-                }}
-              >
+              <Link href="/notifications" onClick={onClose} className={styles.item}>
                 {t.notifications}
                 {unreadCount > 0 && (
-                  <span
-                    style={{
-                      background: "var(--accent)",
-                      color: "var(--accent-text)",
-                      borderRadius: "999px",
-                      fontSize: "0.7em",
-                      padding: "1px 5px",
-                      fontWeight: 700,
-                      lineHeight: 1.4,
-                    }}
-                  >
+                  <span className="badge bg-accent text-accent-text">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </Link>
-              <Link
-                href="/bookmarks"
-                onClick={onClose}
-                style={{
-                  display: "block",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  fontSize: "var(--sidebar-font-item)",
-                  color: "var(--text)",
-                }}
-              >
+              <Link href="/bookmarks" onClick={onClose} className={styles.item}>
                 {t.bookmarks}
               </Link>
-              <Link
-                href="/profile"
-                onClick={onClose}
-                style={{
-                  display: "block",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  fontSize: "var(--sidebar-font-item)",
-                  color: "var(--text)",
-                }}
-              >
+              <Link href="/profile" onClick={onClose} className={styles.item}>
                 {user.username}
               </Link>
               <button
                 onClick={handleLogout}
                 disabled={logoutBusy}
                 aria-busy={logoutBusy}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "10px 12px",
-                  background: "transparent",
-                  border: "none",
-                  fontSize: "var(--sidebar-font-item)",
-                  color: "var(--text-muted)",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
+                className={`${styles.item} ${styles.itemMuted}`}
               >
                 {logoutBusy ? t.loading : t.logout}
               </button>
               {logoutError && (
-                <p role="alert" style={{ margin: "4px 12px 8px", color: "var(--state-danger)", fontSize: 12 }}>
+                <p role="alert" className="mx-3 mt-1 mb-2 text-xs text-danger">
                   {lang === "ja" ? "ログアウトできませんでした。もう一度お試しください。" : "Could not sign out. Please try again."}
                 </p>
               )}
@@ -231,26 +148,15 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
             <Link
               href={`/login?from=${encodeURIComponent(pathname)}`}
               onClick={onClose}
-              style={{
-                display: "block",
-                margin: "8px 12px",
-                padding: "8px 14px",
-                background: "var(--accent)",
-                color: "var(--accent-text)",
-                borderRadius: 8,
-                textDecoration: "none",
-                fontWeight: 700,
-                fontSize: "var(--sidebar-font-item)",
-                textAlign: "center",
-              }}
+              className="btn btn-secondary mx-3 my-2 flex"
             >
               {t.login}
             </Link>
           )}
         </div>
 
-        <div style={{ flex: 1 }}>
-          <div style={{ padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+        <div className="flex-1">
+          <div className="border-b border-border py-2">
             {navItems.map((item) => {
               const isActive = item.matchPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
               return (
@@ -259,17 +165,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                   href={item.href}
                   onClick={onClose}
                   aria-current={isActive ? "page" : undefined}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "12px 12px",
-                    minHeight: 44,
-                    textDecoration: "none",
-                    fontSize: "var(--sidebar-font-item)",
-                    fontWeight: isActive ? 700 : 400,
-                    color: isActive ? "var(--accent)" : "var(--text)",
-                    background: isActive ? "var(--accent-tint)" : "transparent",
-                  }}
+                  className={`${styles.item} ${isActive ? styles.itemActive : ""}`}
                 >
                   {item.label}
                 </Link>
@@ -278,10 +174,8 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
           </div>
 
           {(pathname === "/read" || BOOKS.some((b) => pathname === `/${b.slug}` || pathname.startsWith(`/${b.slug}/`))) && (
-            <div style={{ padding: "8px 0" }}>
-              <p style={{ fontSize: "var(--sidebar-font-label)", color: "var(--text-faint)", padding: "4px 12px 4px", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {t.books}
-              </p>
+            <div className="py-2">
+              <p className={styles.sectionLabel}>{t.books}</p>
               {GENRE_ORDER
                 .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))
                 .filter(({ books }) => books.length > 0)
@@ -292,23 +186,10 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                       <button
                         onClick={() => toggleGenre(genre)}
                         aria-expanded={expanded}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                          padding: "8px 12px 8px 20px",
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          fontFamily: "inherit",
-                          fontSize: "var(--sidebar-font-genre)",
-                          fontWeight: 700,
-                          color: "var(--text-muted)",
-                        }}
+                        className={styles.genre}
                       >
                         <span>{t.genreNames[genre] ?? genre}</span>
-                        <span style={{ fontSize: "0.85em", opacity: 0.7 }}>{expanded ? "▾" : "▸"}</span>
+                        <span className="opacity-70">{expanded ? "▾" : "▸"}</span>
                       </button>
                       {expanded &&
                         books.map((meta) => {
@@ -319,17 +200,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
                               href={`/${meta.slug}?list=1`}
                               onClick={onClose}
                               aria-current={isActive ? "page" : undefined}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                padding: "8px 12px 8px 32px",
-                                minHeight: "var(--sidebar-item-min-height)",
-                                textDecoration: "none",
-                                fontSize: "var(--sidebar-font-item)",
-                                fontWeight: isActive ? 700 : 400,
-                                color: isActive ? "var(--accent)" : "var(--text)",
-                                background: isActive ? "var(--accent-tint)" : "transparent",
-                              }}
+                              className={`${styles.item} ${styles.book} ${isActive ? styles.itemActive : ""}`}
                             >
                               {lang === "en" ? meta.englishName : meta.short}
                             </Link>
