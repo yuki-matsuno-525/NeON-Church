@@ -35,19 +35,7 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div
-      onClick={onCancel}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0, 0, 0, 0.65)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-        zIndex: 1100,
-      }}
-    >
+    <div onClick={onCancel} className="dialog-overlay">
       <div
         ref={dialogRef}
         role="alertdialog"
@@ -55,43 +43,17 @@ export function ConfirmDialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          background: "rgba(16, 9, 50, 0.96)",
-          border: "1px solid rgba(145, 80, 240, 0.35)",
-          borderRadius: 12,
-          padding: "24px 24px 20px",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.55)",
-        }}
+        className="dialog-panel max-w-sm px-6 pt-6 pb-4"
       >
-        <h2
-          id={titleId}
-          style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text)" }}
-        >
+        <h2 id={titleId} className="m-0 text-md font-bold text-body">
           {title}
         </h2>
         {description && (
-          <p
-            id={descId}
-            style={{
-              margin: "10px 0 0",
-              fontSize: 14,
-              lineHeight: 1.6,
-              color: "var(--text-muted)",
-            }}
-          >
+          <p id={descId} className="mt-3 mb-0 text-sm text-muted leading-base">
             {description}
           </p>
         )}
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            justifyContent: "flex-end",
-            marginTop: 20,
-          }}
-        >
+        <div className="mt-4 flex justify-end gap-3">
           <Button variant="ghost" onClick={onCancel}>
             {cancelText ?? t.cancel}
           </Button>

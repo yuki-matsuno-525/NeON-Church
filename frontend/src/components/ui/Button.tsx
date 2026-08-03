@@ -15,45 +15,23 @@ type Props = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   children?: ReactNode;
 };
 
-const sizeStyles: Record<Size, { padding: string; fontSize: number; radius: number; minHeight: number }> = {
-  sm: { padding: "5px 12px", fontSize: 12, radius: 6, minHeight: 44 },
-  md: { padding: "9px 16px", fontSize: 14, radius: 8, minHeight: 44 },
+/**
+ * ボタンの見た目は globals.css の .btn / .btn-* が唯一の出どころ。
+ * この部品は「読み込み中の表示」「アイコンの配置」「押せない状態」だけを受け持つ。
+ *
+ * 以前はグラデーションや文字サイズをこのファイルにも書いていたため、
+ * globals.css 側だけを直すと <Link className="btn btn-primary"> との
+ * 見た目がずれる状態だった。定義を 1 か所に戻している。
+ */
+const variantClass: Record<Variant, string> = {
+  primary: "btn-primary",
+  secondary: "btn-secondary",
+  ghost: "btn-ghost",
+  destructive: "btn-destructive",
 };
 
-/**
- * 見た目は globals.css のトークンを参照する。
- * 以前は同じグラデーションが Button と .btn-primary の2か所に書かれていて、
- * 片方だけ直すと見た目がずれる状態だった。色の出どころを1つにする。
- */
-function variantStyles(variant: Variant): React.CSSProperties {
-  switch (variant) {
-    case "primary":
-      return {
-        background: "var(--accent-primary-grad)",
-        color: "#fff",
-        border: "none",
-        boxShadow: "0 0 14px rgba(198, 44, 170, 0.40)",
-      };
-    case "secondary":
-      return {
-        background: "var(--accent)",
-        color: "var(--accent-text)",
-        border: "none",
-      };
-    case "ghost":
-      return {
-        background: "transparent",
-        color: "var(--text-muted)",
-        border: "1px solid var(--border)",
-      };
-    case "destructive":
-      return {
-        background: "#b91c1c",
-        color: "#fff",
-        border: "none",
-      };
-  }
-}
+/** Spinner の大きさは文字サイズに合わせる（決定表の値） */
+const spinnerSize: Record<Size, number> = { sm: 12, md: 14 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   {
@@ -64,40 +42,27 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
     rightIcon,
     children,
     disabled,
-    style,
+    className,
     type = "button",
     ...rest
   },
   ref
 ) {
   const isDisabled = disabled || loading;
-  const sz = sizeStyles[size];
+  const classes = ["btn", size === "sm" ? "btn-sm" : null, variantClass[variant], className]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <button
       ref={ref}
       type={type}
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        padding: sz.padding,
-        fontSize: sz.fontSize,
-        borderRadius: sz.radius,
-        minHeight: sz.minHeight,
-        fontWeight: 700,
-        fontFamily: "inherit",
-        cursor: isDisabled ? "not-allowed" : "pointer",
-        opacity: isDisabled ? 0.6 : 1,
-        transition: "opacity 0.15s",
-        ...variantStyles(variant),
-        ...style,
-      }}
+      className={classes}
       {...rest}
     >
-      {loading ? <Spinner size={sz.fontSize} /> : leftIcon}
+      {loading ? <Spinner size={spinnerSize[size]} /> : leftIcon}
       {children}
       {!loading && rightIcon}
     </button>

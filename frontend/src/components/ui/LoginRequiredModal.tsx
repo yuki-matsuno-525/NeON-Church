@@ -27,83 +27,34 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
   const dialogRef = useDialogBehavior<HTMLDivElement>(true, onClose);
 
   return (
-    <>
-      <div
-        aria-hidden="true"
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0, 0, 0, 0.5)",
-          zIndex: 100,
-        }}
-      />
+    <div onClick={onClose} className="dialog-overlay">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          background: "rgba(16, 9, 50, 0.95)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(145, 80, 240, 0.35)",
-          borderRadius: 16,
-          padding: "32px 28px",
-          width: "min(360px, calc(100vw - 32px))",
-          zIndex: 101,
-          textAlign: "center",
-        }}
+        onClick={(e) => e.stopPropagation()}
+        className="dialog-panel max-w-sm p-6 text-center"
       >
-        <h2 id={titleId} style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>
+        <h2 id={titleId} className="mt-0 mb-2 text-md font-bold">
           {title ?? t.loginRequired}
         </h2>
-        <p id={descriptionId} style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+        <p id={descriptionId} className="mt-0 mb-6 text-sm text-muted">
           {description ?? t.loginRequiredDesc}
         </p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <button
-            onClick={onClose}
-            style={{
-              padding: "8px 20px",
-              minHeight: 44,
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              background: "transparent",
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "inherit",
-            }}
-          >
+        {/* ボタンの見た目は .btn / .btn-* が唯一の出どころ。
+            以前はここでグラデーションを書き直していたため、ボタンの色を
+            変えても、この画面だけ古い色のまま残っていた。 */}
+        <div className="flex justify-center gap-3">
+          <button type="button" onClick={onClose} className="btn btn-ghost">
             {t.close}
           </button>
-          <Link
-            href={loginHref}
-            style={{
-              padding: "8px 20px",
-              minHeight: 44,
-              display: "inline-flex",
-              alignItems: "center",
-              // 主ボタンの色は1か所（--accent-primary-grad）にまとめている。
-              background: "var(--accent-primary-grad)",
-              color: "#fff",
-              borderRadius: 8,
-              textDecoration: "none",
-              fontWeight: 700,
-              fontSize: 13,
-              boxShadow: "0 0 14px rgba(198, 44, 170, 0.45)",
-            }}
-          >
+          <Link href={loginHref} className="btn btn-primary">
             {t.loginBtn}
           </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }

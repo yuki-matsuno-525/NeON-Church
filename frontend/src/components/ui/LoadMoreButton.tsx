@@ -23,11 +23,9 @@ export function LoadMoreButton({
   const t = useT();
   if (!hasMore) return null;
   return (
-    <div
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "var(--space-4) 0" }}
-    >
+    <div className="flex flex-col items-center gap-2 py-4">
       {error && (
-        <p role="alert" style={{ margin: 0, color: "var(--state-danger)", fontSize: "var(--font-size-xs)" }}>
+        <p role="alert" className="m-0 text-xs text-danger">
           {t.loadMoreFailed}
         </p>
       )}
@@ -36,17 +34,10 @@ export function LoadMoreButton({
         onClick={onClick}
         disabled={loading}
         aria-busy={loading}
-        style={{
-          fontSize: "var(--font-size-sm)",
-          fontFamily: "inherit",
-          padding: "8px 20px",
-          minHeight: 44,
-          borderRadius: "var(--radius-md)",
-          border: "1px solid var(--border)",
-          background: "transparent",
-          color: loading ? "var(--text-faint)" : "var(--text-muted)",
-          cursor: loading ? "default" : "pointer",
-        }}
+        className={[
+          "tap-target rounded-md border border-border bg-transparent px-4 py-2 text-sm",
+          loading ? "cursor-default text-faint" : "cursor-pointer text-muted",
+        ].join(" ")}
       >
         {loading ? t.loading : error ? t.retry : t.loadMore}
       </button>

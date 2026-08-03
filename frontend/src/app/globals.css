@@ -120,14 +120,19 @@
   pointer-events: none;
 }
 
-/* ----- 共通 UI クラス (UX-12 第 1 弾) ----- */
+/* ----- 共通 UI クラス -----
+   ボタン・カード・バッジの「見た目そのもの」はここが唯一の置き場所。
+   components/ui/Button.tsx などの React 部品も、独自に色や大きさを持たず
+   ここのクラスを使う。定義が 2 か所にあると、片方だけ直したときに
+   画面によって見た目がずれるため。
+   大きさや余白の値は @theme の表（--text-* / --spacing-* / --radius-*）から取る。 */
 
 /* カード */
 .card {
   background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
+  padding: var(--spacing-4);
 }
 .card-hover {
   transition: border-color var(--duration-fast) var(--ease-out),
@@ -158,14 +163,16 @@
   box-shadow: 0 0 8px rgba(230, 130, 255, 0.80), 0 0 22px rgba(185, 80, 255, 0.45);
 }
 
-/* ボタン */
+/* ボタン
+   `<button>` にも `<Link>` にも同じ見た目を付けられるようにクラスで持つ。
+   使い方: class="btn btn-primary"、小さいものは class="btn btn-sm btn-ghost" */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
-  font-size: 14px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--text-sm);
   font-weight: 700;
   font-family: inherit;
   border-radius: var(--radius-md);
@@ -175,17 +182,25 @@
               transform var(--duration-fast) var(--ease-out);
   border: 1px solid transparent;
   text-decoration: none;
+  /* 指で確実に押せる最小の高さ。小さくしないこと。 */
   min-height: 44px;
+}
+/* 一回り小さいボタン。高さ 44px は触りやすさのため変えない。 */
+.btn-sm {
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
 }
 .btn:active:not(:disabled) {
   transform: translateY(1px);
 }
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled="true"] {
   opacity: 0.6;
   cursor: not-allowed;
 }
 .btn-primary {
-  /* 主ボタンの色は --accent-primary-grad が出どころ。components/ui/Button.tsx も同じ変数を見る。 */
   background: var(--accent-primary-grad);
   color: #fff;
   box-shadow: 0 0 14px rgba(198, 44, 170, 0.40);
@@ -202,20 +217,50 @@
 .btn-ghost:hover {
   background: var(--bg-hover);
 }
+/* 削除など取り返しのつかない操作。--state-danger(#ef4444) より暗いのは、
+   白文字を載せたときの読みやすさ（コントラスト比 4.5 以上）を満たすため。 */
+.btn-destructive {
+  background: #b91c1c;
+  color: #fff;
+}
 
 /* バッジ */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px var(--space-2);
-  font-size: 11px;
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--text-xs);
   font-weight: 700;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
 .badge-status-active { background: var(--accent); color: var(--accent-text); }
-.badge-status-published { background: #22c55e; color: #fff; }
+.badge-status-published { background: var(--state-success); color: #fff; }
 .badge-status-pending { background: var(--border); color: var(--text); }
+
+/* ダイアログ（確認・ログイン要求など）
+   覆い（背後を暗くする層）と本体の見た目をここで 1 つに揃える。
+   以前は画面ごとに透明度・角丸・重なり順が少しずつ違っていた。
+   使い方: 覆いの中に本体を入れる。覆いをクリックすると閉じる作りにする。 */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4);
+  background: rgba(0, 0, 0, 0.60);
+}
+.dialog-panel {
+  width: 100%;
+  background: rgba(16, 9, 50, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(145, 80, 240, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
 
 /* select の option はブラウザ依存 → 暗い背景を強制 */
 option {
@@ -246,6 +291,17 @@ select:focus-visible {
 }
 
 /* スクリーンリーダー専用テキスト */
+/* 指で確実に押せる最小の大きさ。押せるものが小さいと操作を取りこぼすため、
+   ボタン以外のクリックできる要素（チップなど）にも付ける。 */
+.tap-target {
+  min-height: 44px;
+}
+/* 数字やアイコンだけの正方形のボタン（ページ送りなど）用 */
+.tap-target-square {
+  min-width: 44px;
+  height: 44px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -337,6 +393,9 @@ select:focus-visible {
      1=4px 2=8px 3=12px 4=16px 6=24px 8=32px 12=48px
      間の数字（p-5 や p-7）は登録していないので効かない。 */
   --spacing: initial;
+  /* 0 は「余白の大きさ」ではなく「余白なし」。
+     見出しや段落に最初から付いている余白を打ち消すのに要るので必ず残す。 */
+  --spacing-0: 0px;
   --spacing-1: 4px;
   --spacing-2: 8px;
   --spacing-3: 12px;
@@ -383,6 +442,9 @@ select:focus-visible {
   --color-accent-active: var(--accent-active);
   --color-neon-pink: var(--neon-pink);
   --color-neon-purple: var(--neon-purple);
+
+  /* 入力欄の中の色。背景にうっすら白を重ねて「書き込める場所」を示す */
+  --color-field: rgba(255, 255, 255, 0.05);
 
   --color-success: var(--state-success);
   --color-warning: var(--state-warning);
