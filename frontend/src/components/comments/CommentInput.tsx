@@ -194,19 +194,7 @@ export function CommentInput({
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          style={{
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            border: "none",
-            borderRadius: 8,
-            padding: "7px 16px",
-            minHeight: 44,
-            cursor: isSubmitDisabled ? "not-allowed" : "pointer",
-            opacity: isSubmitDisabled ? 0.6 : 1,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="btn btn-secondary"
         >
           {submitting ? t.posting : effectiveLabel}
         </button>

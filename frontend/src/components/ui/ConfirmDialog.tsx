@@ -43,7 +43,7 @@ export function ConfirmDialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         onClick={(e) => e.stopPropagation()}
-        className="dialog-panel max-w-sm px-6 pt-6 pb-4"
+        className="panel-floating dialog-panel max-w-sm px-6 pt-6 pb-4"
       >
         <h2 id={titleId} className="m-0 text-md font-bold text-body">
           {title}

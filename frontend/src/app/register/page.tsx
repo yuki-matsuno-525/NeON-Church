@@ -101,19 +101,8 @@ function RegisterForm() {
     <div
       className="flex justify-center items-center min-h-page p-6"
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          background: "var(--bg-alt)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(145, 80, 240, 0.35)",
-          borderRadius: 16,
-          padding: "36px 32px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)",
-        }}
-      >
+      {/* 箱の見た目は globals.css の .panel-floating（ダイアログと共通） */}
+      <div className="panel-floating w-full max-w-sm p-8">
         <h1 className="text-lg font-bold mb-6">
           {t.registerTitle}
         </h1>

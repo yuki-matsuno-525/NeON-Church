@@ -181,20 +181,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
             type="button"
             onClick={handleSubmit}
             disabled={!body.trim() || busy}
-            style={{
-              alignSelf: "flex-start",
-              border: "none",
-              borderRadius: 8,
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              fontWeight: 700,
-              fontSize: 14,
-              padding: "8px 18px",
-              minHeight: 44,
-              cursor: !body.trim() || busy ? "default" : "pointer",
-              opacity: !body.trim() || busy ? 0.6 : 1,
-              fontFamily: "inherit",
-            }}
+            className="btn btn-secondary self-start"
           >
             {busy ? t.posting : t.articleCommentAction}
           </button>

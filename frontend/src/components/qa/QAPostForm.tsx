@@ -314,18 +314,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           type="submit"
           // 送信中だけ止める。未入力でも押せるようにして、押したら理由を出す。
           disabled={submitting}
-          style={{
-            padding: "7px 16px",
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            cursor: submitting ? "not-allowed" : "pointer",
-            opacity: submitting ? 0.6 : 1,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="btn btn-secondary"
         >
           {submitting ? t.posting : t.submitQuestion}
         </button>

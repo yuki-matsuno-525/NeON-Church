@@ -35,7 +35,7 @@ export function LoginRequiredModal({ onClose, title, description, from }: Props)
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         onClick={(e) => e.stopPropagation()}
-        className="dialog-panel max-w-sm p-6 text-center"
+        className="panel-floating dialog-panel max-w-sm p-6 text-center"
       >
         <h2 id={titleId} className="mt-0 mb-2 text-md font-bold">
           {title ?? t.loginRequired}

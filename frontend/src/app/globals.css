@@ -134,6 +134,25 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-4);
 }
+/* 一覧の中に並ぶカードより一回り大きい、ページの区画用 */
+.card-lg {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+}
+
+/* 補足のお知らせ。設定画面やパスワード再設定で使う。 */
+.notice-box {
+  margin: 0;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-tint);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+}
+
 .card-hover {
   transition: border-color var(--duration-fast) var(--ease-out),
               box-shadow var(--duration-fast) var(--ease-out);
@@ -469,14 +488,20 @@
   padding: var(--spacing-4);
   background: rgba(0, 0, 0, 0.60);
 }
-.dialog-panel {
-  width: 100%;
+/* 背景から浮かせた箱。ダイアログと、ログイン・新規登録・パスワード再設定の
+   カードで同じものを使う。以前はそれぞれの画面が別々に書いていた。 */
+.panel-floating {
   background: rgba(16, 9, 50, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(145, 80, 240, 0.35);
   border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ダイアログは覆いの中で横幅いっぱいに広げる */
+.dialog-panel {
+  width: 100%;
 }
 
 /* 入力欄（1行・複数行・選択）の共通の見た目。
