@@ -358,6 +358,47 @@
   font-size: var(--text-xs);
 }
 
+/* 左端にアクセント色の線を入れた囲み。
+   プロフィールや設定の「情報のかたまり」を示すのに使う。 */
+.panel-accent {
+  padding: var(--spacing-6);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+/* 一覧の中に並べる小さい版 */
+.panel-accent-sm {
+  padding: var(--spacing-3);
+  border-left-color: rgba(192, 64, 240, 0.50);
+}
+
+/* 下線で「いま選んでいる」を示すタブ */
+.tab-underline {
+  min-height: 44px;
+  padding: var(--spacing-2) var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.tab-underline-active {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 大きい版の丸い頭文字アイコン（プロフィール画面） */
+.avatar-circle-lg {
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--border);
+  font-size: var(--text-xl);
+}
+
 /* ダイアログ（確認・ログイン要求など）
    覆い（背後を暗くする層）と本体の見た目をここで 1 つに揃える。
    以前は画面ごとに透明度・角丸・重なり順が少しずつ違っていた。
