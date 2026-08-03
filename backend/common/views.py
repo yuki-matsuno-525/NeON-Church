@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db import connection, OperationalError
+from django.db import OperationalError, connection
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET
@@ -12,7 +12,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
-
 
 logger = logging.getLogger(__name__)
 

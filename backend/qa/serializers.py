@@ -6,7 +6,7 @@ from bible.passage import book_name_for, derive_location, format_location_label
 from comments.models import Tag
 from common.text import clean_body
 
-from .models import Answer, DELETED_BODY, Question
+from .models import DELETED_BODY, Answer, Question
 
 User = get_user_model()
 

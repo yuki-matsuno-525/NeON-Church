@@ -15,7 +15,12 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, status
-from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, NotFound, ValidationError
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    NotAuthenticated,
+    NotFound,
+    ValidationError,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -223,7 +228,7 @@ class UserProfileView(APIView):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise NotFound("User not found.")
+            raise NotFound("User not found.") from None
         return Response(PublicUserSerializer(user, context={"request": request}).data)
 
 
@@ -239,6 +244,7 @@ class UserCommentsView(generics.ListAPIView):
 
     def get_queryset(self):
         from django.db.models import Count
+
         from comments.models import Comment
         username = self.kwargs["username"]
         if not User.objects.filter(username=username).exists():
@@ -276,7 +282,7 @@ class UserBookmarksView(generics.ListAPIView):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            raise NotFound("User not found.")
+            raise NotFound("User not found.") from None
         if user.bookmarks_visibility != User.BOOKMARKS_PUBLIC:
             return Bookmark.objects.none()
 
@@ -337,7 +343,7 @@ class TokenRefreshView(APIView):
 
         except TokenError:
             # 詳細はログ / Sentry に上がっており、クライアントには汎用文言だけ返す
-            raise AuthenticationFailed("Invalid refresh token.")
+            raise AuthenticationFailed("Invalid refresh token.") from None
 
 
 # ---------------------------------------------------------------------------
@@ -420,7 +426,7 @@ class SessionRevokeView(APIView):
                 expires_at__gt=timezone.now(),
             )
         except OutstandingToken.DoesNotExist:
-            raise NotFound("Session not found.")
+            raise NotFound("Session not found.") from None
         BlacklistedToken.objects.get_or_create(token=token)
         response = Response(status=status.HTTP_204_NO_CONTENT)
         if jti == _current_refresh_jti(request):
@@ -495,13 +501,13 @@ class PasswordResetConfirmView(APIView):
             user_id = force_str(urlsafe_base64_decode(serializer.validated_data["uid"]))
             user = User.objects.get(pk=user_id, is_active=True)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            raise ValidationError({"token": "This password reset link is invalid or expired."})
+            raise ValidationError({"token": "This password reset link is invalid or expired."}) from None
         if not default_token_generator.check_token(user, serializer.validated_data["token"]):
             raise ValidationError({"token": "This password reset link is invalid or expired."})
         try:
             validate_password(serializer.validated_data["new_password"], user=user)
         except DjangoValidationError as exc:
-            raise ValidationError({"new_password": exc.messages})
+            raise ValidationError({"new_password": exc.messages}) from None
         user.set_password(serializer.validated_data["new_password"])
         user.save(update_fields=["password", "updated_at"])
         _blacklist_user_sessions(user)

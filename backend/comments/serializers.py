@@ -4,7 +4,8 @@ from rest_framework import serializers
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
 from common.text import clean_body as _clean_body
-from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
+
+from .models import DELETED_COMMENT_BODY, Comment, Report, Tag
 
 User = get_user_model()
 

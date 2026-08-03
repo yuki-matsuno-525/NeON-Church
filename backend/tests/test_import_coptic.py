@@ -12,8 +12,8 @@ from pathlib import Path
 import pytest
 from django.core.management import call_command
 
-from bible.models import Book, Chapter, Verse
 from bible.management.commands.import_coptic import _parse_conllu
+from bible.models import Book, Chapter, Verse
 
 # Coptic 版は canonical_books.json に未登録のため、段階3C で import_coptic は
 # 取り込み時にエラーになる（意図的に無効化）。書名・slug・出所・ライセンスを確認して

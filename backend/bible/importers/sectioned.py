@@ -207,7 +207,6 @@ def parse_sectioned(html: str, spec: BookSpec) -> tuple[dict, list[str]]:
     paragraphs = _find_body_paragraphs(soup, spec)
     warnings: list[str] = []
 
-    headings = set(spec.headings)
     chapter_pieces: list[list[str]] = []
     chapter_names: list[str] = []
     chapter_numbers: list[int] = []  # heading_pattern を使う書の章番号
@@ -266,7 +265,7 @@ def parse_sectioned(html: str, spec: BookSpec) -> tuple[dict, list[str]]:
 
     # 章名一覧（フロントの books.ts の chapterTitles に転記する用）
     if spec.heading_pattern is not None and chapter_names:
-        ordered = [n for _, n in sorted(zip(chapter_numbers, chapter_names))]
+        ordered = [n for _, n in sorted(zip(chapter_numbers, chapter_names, strict=True))]
         warnings.append("章タイトル（books.ts 用）: " + " / ".join(ordered))
 
     data = {

@@ -1,6 +1,6 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models import Count
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 from translations.access import can_view_project_work, get_visible_project_or_404
+
 from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
@@ -19,7 +20,7 @@ def _get_visible_comment_or_404(request, **lookup) -> Comment:
     try:
         comment = Comment.objects.select_related("translation_project").get(**lookup)
     except (Comment.DoesNotExist, DjangoValidationError, TypeError, ValueError):
-        raise Http404
+        raise Http404 from None
     if comment.translation_project_id and not can_view_project_work(
         request.user, comment.translation_project
     ):

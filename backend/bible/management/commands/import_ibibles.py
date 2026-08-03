@@ -115,11 +115,11 @@ class Command(BaseCommand):
         try:
             index_map = load_canonical_index()
         except CanonicalDataError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
         slug_to_name = {slug: name for (t, name), slug in index_map.items() if t == translation}
 
         imported = skipped_books = 0
-        for index, header_name, verses in books:
+        for index, _header_name, verses in books:
             slug = INDEX_TO_SLUG.get(index)
             name = slug_to_name.get(slug) if slug else None
             if name is None:
@@ -141,7 +141,7 @@ class Command(BaseCommand):
                 name=name, translation=translation, order=int(index)
             )
         except CanonicalDataError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
         added = 0
         for (ch_num, v_num), text in verses.items():

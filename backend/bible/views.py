@@ -3,16 +3,22 @@ import datetime
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework import generics
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework.exceptions import NotFound
-
 from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
+
 from .models import Book, CanonicalBook, Chapter, Verse
-from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
+from .serializers import (
+    BookSerializer,
+    ChapterSerializer,
+    VerseOfDaySerializer,
+    VerseSearchSerializer,
+    VerseSerializer,
+)
 
 # 検索対象の訳。UI 言語では絞らない。
 #

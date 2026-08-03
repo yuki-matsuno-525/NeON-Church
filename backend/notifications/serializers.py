@@ -1,5 +1,6 @@
-from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
+
+from comments.models import DELETED_COMMENT_BODY
 
 from .models import Notification
 

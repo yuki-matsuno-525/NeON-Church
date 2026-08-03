@@ -1,7 +1,8 @@
-from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
+from comments.models import DELETED_COMMENT_BODY
+
 from .models import Bookmark
 
 
@@ -25,7 +26,11 @@ class CommentBriefSerializer(serializers.Serializer):
         return obj.body[:100]
 
     def get_location_label(self, obj):
-        from comments.serializers import _format_location_label, _get_location_parts, book_name_cache
+        from comments.serializers import (
+            _format_location_label,
+            _get_location_parts,
+            book_name_cache,
+        )
         # 一覧のあいだ書名の引き当て結果を使い回す（お気に入り1件ごとに Book を引かない）。
         book, chapter, verse = _get_location_parts(obj, book_name_cache(self))
         return _format_location_label(book, chapter, verse)

@@ -1,7 +1,7 @@
 """Shared visibility policy for translation project work."""
 
-from django.db.models import Q
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Q
 from django.http import Http404
 
 from .models import TranslationMembership, TranslationProject
@@ -27,7 +27,7 @@ def get_visible_project_or_404(user, project_id) -> TranslationProject:
     try:
         project = TranslationProject.objects.get(pk=project_id)
     except (TranslationProject.DoesNotExist, DjangoValidationError, TypeError, ValueError):
-        raise Http404
+        raise Http404 from None
     if not can_view_project_work(user, project):
         raise Http404
     return project

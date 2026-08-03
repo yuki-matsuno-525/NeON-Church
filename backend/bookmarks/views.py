@@ -1,6 +1,6 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Case, IntegerField, OuterRef, Subquery, When
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -13,6 +13,7 @@ from translations.access import (
     filter_by_project_visibility,
     get_visible_project_or_404,
 )
+
 from .filters import count_by_type, filter_by_location, filter_by_type
 from .models import Bookmark
 from .serializers import BookmarkSerializer
@@ -179,7 +180,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
             try:
                 comment = Comment.objects.select_related("translation_project").get(pk=comment_id)
             except (Comment.DoesNotExist, DjangoValidationError, TypeError, ValueError):
-                raise Http404
+                raise Http404 from None
             if comment.translation_project_id and not can_view_project_work(
                 request.user, comment.translation_project
             ):

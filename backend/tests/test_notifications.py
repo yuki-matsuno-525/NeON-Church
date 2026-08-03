@@ -285,6 +285,7 @@ class TestNotificationUnreadCount:
 def mixed_notifications(db, auth_client, comment):
     """受信者(testuser)宛に 返信2件 / 高評価1件 / メンション1件 を作る。"""
     from django.contrib.auth import get_user_model
+
     from notifications.models import Notification
     User = get_user_model()
     recipient = User.objects.get(username="testuser")
@@ -352,6 +353,7 @@ class TestNotificationTypeFilter:
 def nested_reply_notifications(db, auth_client, comment, verse):
     """深さ2の返信スレッドを作り、その返信への通知を10件ぶら下げる。"""
     from django.contrib.auth import get_user_model
+
     from notifications.models import Notification
     from tests.factories import make_comment
 

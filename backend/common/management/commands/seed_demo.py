@@ -363,7 +363,7 @@ class Command(BaseCommand):
         if not objects:
             return objects
         model.objects.bulk_create(objects, batch_size=1000)
-        for obj, moment in zip(objects, times):
+        for obj, moment in zip(objects, times, strict=True):
             obj.created_at = moment
             obj.updated_at = moment
         model.objects.bulk_update(
@@ -461,7 +461,7 @@ class Command(BaseCommand):
             times.append(self._past(bias=1.2))
 
         User.objects.bulk_create(users, batch_size=500)
-        for user, moment in zip(users, times):
+        for user, moment in zip(users, times, strict=True):
             user.created_at = moment
             user.updated_at = moment
         User.objects.bulk_update(users, ["created_at", "updated_at"], batch_size=500)
@@ -533,7 +533,7 @@ class Command(BaseCommand):
         parents = self.rng.sample(
             verse_comments, min(self.scale["reply_parents"], len(verse_comments))
         )
-        parent_times = dict(zip(objects, times))
+        parent_times = dict(zip(objects, times, strict=True))
         for depth in range(5):
             objects, times = [], []
             next_parents = []
@@ -554,7 +554,7 @@ class Command(BaseCommand):
             if not objects:
                 break
             self._save(Comment, objects, times, "コメント")
-            parent_times.update(zip(objects, times))
+            parent_times.update(zip(objects, times, strict=True))
             created.extend(objects)
             parents = next_parents
 
@@ -647,7 +647,7 @@ class Command(BaseCommand):
         self._save(Question, questions, times, "質問")
         self._link_tags(Question.tags.through, "question_id", "tag_id", tag_rows)
 
-        question_times = dict(zip(questions, times))
+        question_times = dict(zip(questions, times, strict=True))
         answers, answer_times = [], []
         best_by_question = {}
         for question in questions:
@@ -935,7 +935,7 @@ class Command(BaseCommand):
 
         memberships, membership_times = [], []
         members_by_project = {}
-        for project, moment in zip(projects, times):
+        for project, moment in zip(projects, times, strict=True):
             memberships.append(TranslationMembership(
                 project=project,
                 user_id=project.owner_id,
@@ -996,7 +996,7 @@ class Command(BaseCommand):
             TranslationUnit.STATUS_REVIEW,
             TranslationUnit.STATUS_DONE,
         ]
-        for project, moment in zip(projects, times):
+        for project, moment in zip(projects, times, strict=True):
             verses = list(
                 Verse.objects.filter(chapter__book_id=project.source_book_id)
                 .order_by("chapter__number", "number")[: self.scale["project_units"]]
@@ -1026,7 +1026,7 @@ class Command(BaseCommand):
             units_by_project.setdefault(unit.project_id, []).append(unit)
 
         discussions, discussion_times = [], []
-        for project, moment in zip(projects, times):
+        for project, moment in zip(projects, times, strict=True):
             members = members_by_project[project.id]
             locale = LOCALES[0] if project.target_language == "ja" else LOCALES[1]
             # プロジェクト全体への投稿を 25 件超にして、議論のページ送りを試せるようにする。
@@ -1218,7 +1218,7 @@ class Command(BaseCommand):
 
         days, day_times, readings, reading_times = [], [], [], []
         days_by_plan = {}
-        for plan, moment, count in zip(plans, times, day_counts):
+        for plan, moment, count in zip(plans, times, day_counts, strict=True):
             for number in range(1, count + 1):
                 locale = self._locale()
                 day = PlanDay(
@@ -1285,7 +1285,7 @@ class Command(BaseCommand):
                 subscription_times.append(self._past(bias=3.0))
         # 同じ人が同じプランを二重に読むことはないので、重複を落としてから入れる。
         unique, unique_times, seen = [], [], set()
-        for subscription, moment in zip(subscriptions, subscription_times):
+        for subscription, moment in zip(subscriptions, subscription_times, strict=True):
             key = (subscription.user_id, subscription.plan_id)
             if key in seen:
                 continue
@@ -1293,7 +1293,7 @@ class Command(BaseCommand):
             unique.append(subscription)
             unique_times.append(moment)
         PlanSubscription.objects.bulk_create(unique, batch_size=1000)
-        for subscription, moment in zip(unique, unique_times):
+        for subscription, moment in zip(unique, unique_times, strict=True):
             subscription.created_at = moment
             subscription.updated_at = moment
             subscription.started_at = moment
@@ -1304,7 +1304,7 @@ class Command(BaseCommand):
 
         # 進捗。未着手・途中・完走を混ぜる。
         progress, progress_times = [], []
-        for subscription, moment in zip(unique, unique_times):
+        for subscription, moment in zip(unique, unique_times, strict=True):
             plan_days = days_by_plan.get(subscription.plan_id, [])
             if not plan_days:
                 continue

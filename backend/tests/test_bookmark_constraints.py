@@ -13,8 +13,8 @@ from django.db import IntegrityError, transaction
 from bible.models import Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import Comment
-from translations.models import TranslationProject
 from tests.factories import make_book
+from translations.models import TranslationProject
 
 pytestmark = pytest.mark.django_db
 User = get_user_model()

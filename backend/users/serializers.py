@@ -150,7 +150,7 @@ class PasswordChangeSerializer(serializers.Serializer):
         try:
             validate_password(attrs["new_password"], user=user)
         except DjangoValidationError as exc:
-            raise serializers.ValidationError({"new_password": exc.messages})
+            raise serializers.ValidationError({"new_password": exc.messages}) from None
         return attrs
 
 

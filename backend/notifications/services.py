@@ -2,8 +2,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 from translations.access import can_view_project_work
-from .models import Notification
 
+from .models import Notification
 
 _EMAIL_ACTIONS = {
     Notification.REPLY: "replied to your comment",

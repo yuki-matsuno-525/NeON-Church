@@ -11,6 +11,7 @@ def bookmark_url(bookmark_id):
 @pytest.fixture
 def other_auth_client(db, other_user_payload):
     from rest_framework.test import APIClient
+
     from tests.conftest import REGISTER_URL
     client = APIClient()
     client.post(REGISTER_URL, other_user_payload, format="json")
@@ -26,6 +27,7 @@ def bookmark(db, auth_client, verse):
 @pytest.fixture
 def comment(db, auth_client, verse):
     from django.contrib.auth import get_user_model
+
     from tests.factories import make_comment
     User = get_user_model()
     user = User.objects.get(username="testuser")
@@ -264,6 +266,7 @@ class TestLocationGranularityBookmark:
 @pytest.fixture
 def project(db, book):
     from django.contrib.auth import get_user_model
+
     from translations.models import TranslationProject
     User = get_user_model()
     owner = User.objects.create_user(username="proj_owner", password="pass12345")

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .citations import resolve_citations
-from .models import Article, ArticleComment, ArticleTag, MAX_TAGS_PER_ARTICLE
+from .models import MAX_TAGS_PER_ARTICLE, Article, ArticleComment, ArticleTag
 
 # 本文の上限。長文を想定しつつ、際限なく太らないように上限は置く。
 BODY_MAX_LENGTH = 60000

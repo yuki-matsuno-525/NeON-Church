@@ -54,11 +54,7 @@ def test_dropped_chapter_number_recovered():
 
 
 def test_newline_inside_paragraph_collapsed():
-    # 段落内の改行が空白に潰され、脱落章の書き出し照合が壊れないこと
-    html = _page(
-        "<p>xxxvi 1 And Adam said.</p>"
-        "<p>Then Seth and his mother\n went off towards the gates of paradise. Foo.</p>"
-    )
+    # 段落内の改行が空白に潰され、脱落章の書き出し照合が壊れないこと。
     # 35 章まで連番を満たすため前段を補う必要があるので、単体では 36→37 を直接検証する
     # ここでは改行の正規化だけを確認する（_normalize 経由）。
     from bible.importers.life_of_adam_and_eve import _normalize

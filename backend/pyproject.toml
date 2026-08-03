@@ -1,0 +1,55 @@
+# ==============================================================
+# バックエンドのツール設定
+#
+# ここは lint / format / 型チェックの設定だけを置く。
+# 依存パッケージは requirements.txt / requirements-dev.txt を正本とする。
+#
+# ローカル実行:
+#   docker compose exec backend ruff check .
+#   docker compose exec backend ruff format .
+#   docker compose exec backend mypy .
+# ==============================================================
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+# マイグレーションは Django の自動生成物なので整形も lint もしない。
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# E   pycodestyle    構文まわりの明らかな誤り（E402: import の位置ずれ など）
+# F   pyflakes       未使用 import・未定義名
+# I   isort          import の並び順
+# B   bugbear        壊れやすい書き方（可変デフォルト引数・ループ内クロージャ など）
+select = ["E", "F", "I", "B"]
+
+# E501（行長オーバー）はフォーマッタの担当。日本語コメントや長い URL は
+# フォーマッタでも折れないので、lint で落とすと noqa だらけになる。
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# 設定ファイルは base.py からの star import で組み立てる方式。
+"config/settings/*.py" = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+# `from x import a, b as c` を a と b で別々の文に割らせない。
+combine-as-imports = true
+known-first-party = [
+    "articles",
+    "bible",
+    "bookmarks",
+    "comments",
+    "common",
+    "config",
+    "notifications",
+    "plans",
+    "qa",
+    "reading_progress",
+    "translations",
+    "users",
+]
+
+[tool.ruff.format]
+# 既存コードは docstring を含めてダブルクォート。
+quote-style = "double"

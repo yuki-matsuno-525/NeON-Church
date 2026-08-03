@@ -6,8 +6,8 @@
 import pytest
 from django.core.management import call_command
 
-from bible.models import Chapter, Verse
 from bible.management.commands.strip_verse_ref_prefix import strip_prefix
+from bible.models import Chapter, Verse
 from tests.factories import make_book
 
 

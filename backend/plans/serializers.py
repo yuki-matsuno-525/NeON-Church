@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from bible.models import Book, CanonicalBook
+
 from .models import (
     MAX_DAYS_PER_PLAN,
     MAX_READINGS_PER_DAY,

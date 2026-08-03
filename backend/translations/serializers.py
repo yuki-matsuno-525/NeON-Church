@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
-
-from .models import Language, TranslationProject, TranslationMembership, TranslationUnit, TranslationComment
+from .models import (
+    Language,
+    TranslationComment,
+    TranslationMembership,
+    TranslationProject,
+    TranslationUnit,
+)
 
 
 class LanguageSerializer(serializers.ModelSerializer):

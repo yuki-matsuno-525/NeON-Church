@@ -18,18 +18,18 @@ import json
 import sys
 from pathlib import Path
 
+from .egerton import parse_egerton
 from .enoch import parse_enoch
+from .infancy_james import parse_infancy_james
 from .infancy_thomas import parse_infancy_thomas
 from .judas import parse_judas
 from .life_of_adam_and_eve import parse_life_of_adam_and_eve
 from .mary import parse_mary
-from .egerton import parse_egerton
-from .infancy_james import parse_infancy_james
 from .peter import parse_peter
-from .poxy5575 import parse_poxy5575
-from .quelle import parse_quelle
 from .philip import parse_philip
+from .poxy5575 import parse_poxy5575
 from .preview import render_preview
+from .quelle import parse_quelle
 from .secret_james import parse_secret_james
 from .secret_mark import parse_secret_mark
 from .stranger import parse_stranger

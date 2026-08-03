@@ -3,7 +3,6 @@ import re
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
-from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -12,11 +11,27 @@ from rest_framework.views import APIView
 from common.pagination import StandardPageNumberPagination
 from notifications.models import Notification
 from notifications.services import send_user_notification
+
 from .access import (
     can_view_project_work,
     get_visible_project_or_404 as resolve_visible_project_or_404,
 )
-from .models import TranslationProject, TranslationMembership, TranslationUnit, TranslationComment, TranslationLibraryEntry, Language
+from .models import (
+    Language,
+    TranslationComment,
+    TranslationLibraryEntry,
+    TranslationMembership,
+    TranslationProject,
+    TranslationUnit,
+)
+from .serializers import (
+    LanguageSerializer,
+    TranslationCommentSerializer,
+    TranslationMembershipSerializer,
+    TranslationProjectSerializer,
+    TranslationUnitCreateSerializer,
+    TranslationUnitSerializer,
+)
 
 User = get_user_model()
 
@@ -69,14 +84,6 @@ def _create_mention_notifications(comment: TranslationComment) -> None:
             notification_type=Notification.MENTION,
             translation_comment=comment,
         )
-from .serializers import (
-    LanguageSerializer,
-    TranslationProjectSerializer,
-    TranslationMembershipSerializer,
-    TranslationUnitSerializer,
-    TranslationUnitCreateSerializer,
-    TranslationCommentSerializer,
-)
 
 
 class IsProjectOwner(permissions.BasePermission):

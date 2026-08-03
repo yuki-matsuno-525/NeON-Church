@@ -18,7 +18,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from bible.canonical import get_or_create_book_with_canonical
-from bible.models import Book, Chapter, Verse
+from bible.models import Chapter, Verse
 
 TRANSLATION = "Nestle 1904 (GRC)"
 

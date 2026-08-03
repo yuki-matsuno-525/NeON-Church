@@ -141,6 +141,7 @@ class TestThrottle:
 
     def test_report_throttle(self, monkeypatch, other_auth_client, comment, db, verse):
         from rest_framework.throttling import SimpleRateThrottle
+
         from tests.factories import make_comment
         monkeypatch.setattr(SimpleRateThrottle, "THROTTLE_RATES", {
             "comment_create": "10/min",
@@ -150,7 +151,6 @@ class TestThrottle:
         # 別コメントを DB に直接作成して異なるコメントへ2件目の通報を試みる
         import django.contrib.auth
         User = django.contrib.auth.get_user_model()
-        reporter = User.objects.get(username="otheruser")
         owner = User.objects.get(username="testuser")
         second_comment = make_comment(user=owner, verse=verse, body="2件目通報対象")
         other_auth_client.post(report_url(comment["id"]), {"reason": "spam"}, format="json")

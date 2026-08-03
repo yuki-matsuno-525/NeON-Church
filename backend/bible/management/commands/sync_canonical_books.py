@@ -39,7 +39,7 @@ class Command(BaseCommand):
         try:
             pair_to_slug = load_canonical_index(options["path"])
         except CanonicalDataError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
         # 2) DB との完全一致を要求（片側だけに存在する Book はエラー）
         db_pairs = {(b.translation, b.name): b for b in Book.objects.all()}

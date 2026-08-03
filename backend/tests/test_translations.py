@@ -170,6 +170,7 @@ class TestTranslationProjectList:
         # 下書きは申請を受け付けないため、テスト用に承認済みmembershipを直接作る。
         assert membership.status_code == status.HTTP_404_NOT_FOUND
         from django.contrib.auth import get_user_model
+
         from translations.models import TranslationMembership
         member = get_user_model().objects.get(username="member")
         TranslationMembership.objects.create(
@@ -517,6 +518,7 @@ class TestTranslationUnit:
     ):
         from django.contrib.auth import get_user_model
         from rest_framework.test import APIClient
+
         from translations.models import TranslationMembership
 
         owner_client.post(units_url(project["id"]), {"verse": str(verse.id)}, format="json")
@@ -548,6 +550,7 @@ class TestTranslationUnit:
     ):
         from django.contrib.auth import get_user_model
         from rest_framework.test import APIClient
+
         from translations.models import TranslationMembership, TranslationUnit
 
         visible_unit = owner_client.post(
@@ -625,6 +628,7 @@ class TestDraftTranslationUuidPrivacy:
     ):
         from django.contrib.auth import get_user_model
         from rest_framework.test import APIClient
+
         from translations.models import TranslationMembership
 
         unit = owner_client.post(
@@ -748,6 +752,7 @@ class TestDraftTranslationUuidPrivacy:
         self, owner_client, member_client, project, verse, book
     ):
         from django.contrib.auth import get_user_model
+
         from translations.models import TranslationMembership
 
         approved = get_user_model().objects.get(username="member")
@@ -939,6 +944,7 @@ class TestTranslationComment:
         self, owner_client, member_client, approved_member_setup, verse
     ):
         from django.contrib.auth import get_user_model
+
         from notifications.models import Notification
 
         owner = get_user_model().objects.get(username="owner")
@@ -964,6 +970,7 @@ class TestTranslationComment:
     ):
         from django.contrib.auth import get_user_model
         from django.core import mail
+
         from notifications.models import Notification
 
         settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
@@ -1306,8 +1313,9 @@ class TestTranslationReadChapter:
         assert res.data["units"] == []
 
     def test_other_chapter_is_not_returned(self, owner_client, published_project, verse, chapter):
-        from bible.models import Chapter, Verse
         from rest_framework.test import APIClient
+
+        from bible.models import Chapter, Verse
         u1 = owner_client.post(units_url(published_project["id"]), {"verse": str(verse.id)}, format="json").data
         owner_client.patch(unit_detail_url(published_project["id"], u1["id"]), {"status": "done", "body": "1章"}, format="json")
         ch2 = Chapter.objects.create(book=chapter.book, number=2)

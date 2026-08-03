@@ -7,7 +7,6 @@ from rest_framework import status
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 SETTINGS_URL = "/api/auth/settings/"
 IDENTITY_URL = "/api/auth/settings/identity/"
 PREFERENCES_URL = "/api/auth/settings/preferences/"

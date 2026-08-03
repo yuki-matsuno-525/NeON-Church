@@ -34,7 +34,7 @@ def load_canonical_index(path: Path | str = DATA_PATH) -> dict[tuple[str, str], 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
-        raise CanonicalDataError(f"正本 JSON を読めません: {e}")
+        raise CanonicalDataError(f"正本 JSON を読めません: {e}") from e
 
     if not isinstance(data, list) or not data:
         raise CanonicalDataError("正本は空でない配列である必要があります。")

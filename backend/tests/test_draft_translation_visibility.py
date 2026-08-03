@@ -17,8 +17,9 @@ def _client(user=None):
 @pytest.fixture
 def draft_access(db, book, verse):
     from django.contrib.auth import get_user_model
-    from translations.models import TranslationMembership, TranslationProject, TranslationUnit
+
     from tests.factories import make_comment
+    from translations.models import TranslationMembership, TranslationProject, TranslationUnit
 
     User = get_user_model()
     users = {
@@ -355,8 +356,9 @@ class TestDraftBookmarkVisibility:
 
     @pytest.mark.parametrize("viewer", ["anonymous", "pending", "rejected", "outsider"])
     def test_public_bookmarks_hide_draft_targets_but_keep_public_targets(self, draft_access, viewer):
-        from bookmarks.models import Bookmark
         from django.contrib.auth import get_user_model
+
+        from bookmarks.models import Bookmark
 
         User = get_user_model()
         library_user = User.objects.create_user(
@@ -387,8 +389,9 @@ class TestDraftBookmarkVisibility:
 
     @pytest.mark.parametrize("viewer", ["draft_owner", "approved"])
     def test_public_bookmarks_show_draft_targets_to_authorized_viewers(self, draft_access, viewer):
-        from bookmarks.models import Bookmark
         from django.contrib.auth import get_user_model
+
+        from bookmarks.models import Bookmark
 
         User = get_user_model()
         library_user = User.objects.create_user(
@@ -453,6 +456,7 @@ class TestDraftNotificationVisibility:
         self, draft_access, settings
     ):
         from django.core import mail
+
         from notifications.models import Notification
 
         settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
