@@ -1,13 +1,15 @@
-"use client";
-
 import Link from "next/link";
-import { useT } from "@/lib/i18n";
-import { useLang } from "@/contexts/LanguageContext";
+import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { ContentPageMeta } from "@/components/ContentPageMeta";
 
-export function AboutContent() {
-  const t = useT();
-  const { lang } = useLang();
+/**
+ * この画面は文字を並べるだけで、押したり入力したりする部分が無い。
+ * 表示文言をサーバー側の getT() で取ることで `"use client"` が不要になり、
+ * ブラウザに JavaScript を送らずに描ける。
+ */
+export async function AboutContent() {
+  const t = await getT();
+  const lang = await getRequestLanguage();
 
   return (
     /* 幅と余白は globals.css の .content-page が持つ（読み物ページ 6 枚で共通） */

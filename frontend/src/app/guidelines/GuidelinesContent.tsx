@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useLang } from "@/contexts/LanguageContext";
+import { getRequestLanguage } from "@/lib/i18nServer";
 import { ContentPageMeta } from "@/components/ContentPageMeta";
 
 type Section = { heading: string; body: string };
@@ -87,8 +85,9 @@ const content: Record<string, Content> = {
   },
 };
 
-export function GuidelinesContent() {
-  const { lang } = useLang();
+// 文字を並べるだけの画面なので、サーバー側で描いてブラウザに JavaScript を送らない。
+export async function GuidelinesContent() {
+  const lang = await getRequestLanguage();
   const c = content[lang] ?? content.en;
   return (
     <div className="content-page">
