@@ -191,8 +191,8 @@ export default function QuestionDetailPage() {
         {t.qaBackToList}
       </Link>
 
-      <article className="card-glow" style={{ padding: 20, marginTop: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+      <article className="card-glow p-4 mt-3" >
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <span
             className="badge"
             style={{
@@ -215,7 +215,7 @@ export default function QuestionDetailPage() {
         </div>
 
         {editing ? (
-          <div style={{ marginTop: 12 }}>
+          <div className="mt-3">
             <input
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
@@ -230,7 +230,7 @@ export default function QuestionDetailPage() {
               aria-label={t.commentPlaceholder}
               style={inputStyle}
             />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+            <div className="flex gap-2 justify-end mt-2">
               <Button variant="secondary" onClick={() => setEditing(false)}>{t.cancel}</Button>
               <Button
                 variant="primary"
@@ -244,13 +244,13 @@ export default function QuestionDetailPage() {
         ) : (
           <>
             <h1 style={titleStyle}>{question.title}</h1>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+            <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
               {question.is_deleted ? t.qaDeletedQuestion : question.body}
             </p>
           </>
         )}
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
+        <div className="flex gap-2 flex-wrap items-center mt-4">
           <span style={metaPillStyle}>{question.user.username}</span>
           <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>
           {question.tags.map((tag) => (
@@ -259,7 +259,7 @@ export default function QuestionDetailPage() {
             </span>
           ))}
           {!editing && isOwner && (
-            <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+            <span className="ml-auto inline-flex gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -291,7 +291,7 @@ export default function QuestionDetailPage() {
 
       <h2 style={sectionHeadingStyle}>
         {t.qaAnswersHeading}
-        <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14, marginLeft: 8 }}>
+        <span className="text-faint font-normal text-sm ml-2">
           {answers.total}
         </span>
       </h2>
@@ -301,7 +301,7 @@ export default function QuestionDetailPage() {
       ) : answers.failed ? (
         <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={answers.reload} />
       ) : answers.items.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 14, padding: "8px 2px" }}>{t.qaNoAnswers}</p>
+        <p className="text-faint text-sm py-2 px-1">{t.qaNoAnswers}</p>
       ) : (
         <>
           <div className="flex flex-col gap-3">
@@ -325,7 +325,7 @@ export default function QuestionDetailPage() {
       )}
 
       {user ? (
-        <form onSubmit={handlePostAnswer} style={{ marginTop: 24 }}>
+        <form onSubmit={handlePostAnswer} className="mt-6">
           <textarea
             value={answerBody}
             onChange={(e) => setAnswerBody(e.target.value)}
@@ -335,14 +335,14 @@ export default function QuestionDetailPage() {
             style={inputStyle}
           />
           {postError && <p style={{ color: "var(--state-error)", fontSize: 12, margin: "4px 0" }}>{postError}</p>}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <div className="flex justify-end mt-2">
             <Button variant="primary" type="submit" disabled={posting || !answerBody.trim()}>
               {posting ? t.posting : t.qaSubmitAnswer}
             </Button>
           </div>
         </form>
       ) : (
-        <div style={{ marginTop: 24 }}>
+        <div className="mt-6">
           <Button variant="primary" onClick={() => setShowLoginModal(true)}>
             {t.qaLoginToAnswer}
           </Button>

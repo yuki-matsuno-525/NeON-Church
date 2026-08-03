@@ -153,7 +153,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   return (
     <div className="page page-narrow">
       {/* プロフィールヘッダー */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+      <div className="flex items-center gap-4 mb-6">
         <div style={{
           width: 64, height: 64, borderRadius: "50%",
           background: "var(--bg-alt)", border: "2px solid var(--border)",
@@ -163,15 +163,15 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           {profile.username[0].toUpperCase()}
         </div>
         <div>
-          <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>{profile.username}</h1>
-          <p style={{ fontSize: 12, color: "var(--text-faint)", margin: 0 }}>
+          <h1 className="text-lg font-bold mt-0 mx-0 mb-1">{profile.username}</h1>
+          <p className="text-xs text-faint m-0">
             {t.joinedOn(profile.created_at)}
           </p>
         </div>
       </div>
 
       {profile.bio && (
-        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 24, whiteSpace: "pre-wrap" }}>
+        <p className="text-sm text-muted leading-base mb-6 whitespace-pre-wrap">
           {profile.bio}
         </p>
       )}
@@ -203,8 +203,8 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
             <>
               {articleList.items.map((article) => (
                 <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
-                  <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                  <p className="text-sm font-bold mt-0 mx-0 mb-1">{article.title}</p>
+                  <p className="m-0 text-sm text-muted leading-base">
                     {article.summary}
                   </p>
                 </Link>
@@ -261,10 +261,10 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           <div className="flex flex-col gap-3">
             {commentList.items.map((c) => (
               <div key={c.id} style={cardStyle}>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                  <span style={{ whiteSpace: "pre-wrap" }}>{c.body}</span>
+                <p className="m-0 text-sm text-body leading-base">
+                  <span className="whitespace-pre-wrap">{c.body}</span>
                 </p>
-                <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+                <p className="mt-2 mx-0 mb-0 text-xs text-faint">
                   {relTime(c.created_at)} · ▲ {(c as Comment & { vote_count?: number }).vote_count ?? 0}
                 </p>
               </div>

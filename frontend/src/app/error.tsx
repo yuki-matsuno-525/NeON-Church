@@ -25,7 +25,7 @@ export default function AppError({
   const t = useT();
 
   return (
-    <main style={{ padding: "48px 20px" }}>
+    <main className="py-12 px-4">
       <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={reset} />
     </main>
   );

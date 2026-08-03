@@ -628,6 +628,7 @@ select:focus-visible {
   /* ----- 行間 -----
      使い方: leading-tight / leading-base / leading-reading */
   --leading-*: initial;
+  --leading-none: 1;        /* アイコンやロゴなど、行の高さを詰めたいとき */
   --leading-tight: 1.25;    /* 見出し */
   --leading-base: 1.6;      /* 本文 */
   --leading-reading: 1.85;  /* Reader の長文 */
@@ -640,6 +641,8 @@ select:focus-visible {
   --color-transparent: transparent;
   --color-current: currentColor;
   --color-white: #fff;
+  /* 親の文字色をそのまま引き継ぐ（リンクを本文と同じ色にしたいときなど） */
+  --color-inherit: inherit;
 
   --color-bg: var(--bg);
   --color-bg-alt: var(--bg-alt);

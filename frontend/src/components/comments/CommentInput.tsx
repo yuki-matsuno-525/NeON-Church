@@ -140,7 +140,7 @@ export function CommentInput({
         }}
       />
       {showTagOption && tags.length > 0 && (
-        <fieldset style={{ border: 0, padding: 0, margin: "8px 0 0" }}>
+        <fieldset className="border-0 p-0 mt-2 mx-0 mb-0">
           <legend style={inputLabelStyle}>{t.allTags}</legend>
           <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
@@ -171,32 +171,22 @@ export function CommentInput({
         </fieldset>
       )}
       {showTagOption && tagsError && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+        <div role="alert" className="flex items-center gap-2 mt-2 text-danger text-xs">
           <span>{t.tagsLoadFailed}</span>
           <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
       {error && (
-        <p id={errorId} role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p id={errorId} role="alert" aria-live="polite" className="text-danger text-xs mt-1 mx-0 mb-0">
           {error}
         </p>
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+      <div className="flex items-center justify-end gap-3 mt-2">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "6px 14px",
-              minHeight: 44,
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "inherit",
-            }}
+            className="bg-transparent border border-border rounded-md py-2 px-3 tap-target text-muted cursor-pointer text-sm"
           >
             {t.cancel}
           </button>

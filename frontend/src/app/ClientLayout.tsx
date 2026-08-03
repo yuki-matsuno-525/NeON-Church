@@ -28,7 +28,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       <Navbar menuOpen={sidebarOpen} onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
       <div style={{ display: "flex", position: "relative", zIndex: 2 }}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main id="main-content" tabIndex={-1} style={{ flex: 1, minWidth: 0 }}>
+        <main id="main-content" tabIndex={-1} className="flex-1 min-w-0">
           {children}
         </main>
       </div>

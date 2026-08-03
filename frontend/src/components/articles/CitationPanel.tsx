@@ -27,12 +27,12 @@ export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }
   const tabsId = useId();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+    <div className="flex flex-col h-full min-h-0">
       <div
         role="tablist"
         aria-label={t.articleTabCitations}
         onKeyDown={handleTabArrowKey}
-        style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 }}
+        className="flex border-b border-border shrink-0"
       >
         <TabButton id={`${tabsId}-search`} panelId={`${tabsId}-search-panel`} active={tab === "search"} onClick={() => setTab("search")}>
           {t.citationSearchTab}
@@ -184,7 +184,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
           placeholder={t.citationBookSearchPlaceholder}
           style={inputStyle}
         />
-        <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 10 }}>
+        <div className="flex flex-col gap-1 mt-3">
           {matched.map((book) => (
             <button
               key={book.slug}
@@ -207,8 +207,8 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
         {t.citationChooseBookAgain}
       </button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "10px 0" }}>
-        <strong style={{ fontSize: 13 }}>{displayMeta?.short}</strong>
+      <div className="flex items-center gap-2 my-3 mx-0">
+        <strong className="text-sm">{displayMeta?.short}</strong>
         <label htmlFor="citation-translation" style={visuallyHiddenStyle}>{t.translationLabel}</label>
         <select
           id="citation-translation"
@@ -229,8 +229,8 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
       </div>
 
       {error && (
-        <div role="alert" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
-          <p style={{ margin: 0, fontSize: 12, color: "var(--state-danger)" }}>{error}</p>
+        <div role="alert" className="flex gap-2 items-center flex-wrap mb-2">
+          <p className="m-0 text-xs text-danger">{error}</p>
           <button type="button" onClick={() => setReloadToken((value) => value + 1)} style={smallButtonStyle}>再試行</button>
         </div>
       )}
@@ -332,11 +332,11 @@ function VerseList({
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <div className="flex items-center gap-2 mb-2">
         <button type="button" onClick={onBack} style={backButtonStyle}>
           {t.citationBackToChapters}
         </button>
-        <span style={{ fontSize: 13, fontWeight: 700 }}>{t.chapterFmt(chapter)}</span>
+        <span className="text-sm font-bold">{t.chapterFmt(chapter)}</span>
         <button
           type="button"
           onClick={() => (rangeMode ? clearRange() : setRangeMode(true))}
@@ -352,7 +352,7 @@ function VerseList({
       </div>
 
       {rangeMode && (
-        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 8px" }}>
+        <p className="text-xs text-muted mt-0 mx-0 mb-2">
           {rangeStart === null
             ? t.citationPickStart
             : rangeEnd === null
@@ -362,7 +362,7 @@ function VerseList({
       )}
 
       {rangeMode && rangeStart !== null && rangeEnd !== null && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+        <div className="flex gap-2 mb-3">
           <button
             type="button"
             onClick={() => {
@@ -407,11 +407,11 @@ function VerseList({
                   background: inRange || isStart ? "var(--accent-tint)" : "transparent",
                 }}
               >
-                <div style={{ display: "flex", gap: 6, fontSize: 13, lineHeight: 1.7 }}>
-                  <span style={{ color: "var(--text-faint)", flexShrink: 0 }}>{verse.number}</span>
+                <div className="flex gap-2 text-sm leading-reading">
+                  <span className="text-faint shrink-0">{verse.number}</span>
                   <span>{verse.text}</span>
                 </div>
-                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <div className="flex gap-2 mt-2">
                   {rangeMode ? (
                     <button
                       type="button"
@@ -493,7 +493,7 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
     return (
       <div style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
         <p>{t.citationNoVerseBookmarks}</p>
-        <Link href="/read" style={{ color: "var(--accent)", display: "inline-flex", minHeight: 44, alignItems: "center" }}>{t.read}</Link>
+        <Link href="/read" className="text-accent inline-flex tap-target items-center">{t.read}</Link>
       </div>
     );
   }
@@ -528,16 +528,16 @@ function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onIn
   }));
 
   return (
-    <div style={{ border: "1px solid var(--border)", borderRadius: 8, padding: 10 }}>
-      <div style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, marginBottom: 4 }}>
+    <div className="border border-border rounded-md p-3">
+      <div className="text-xs text-accent font-bold mb-1">
         {displayMeta?.short ?? reference.book} {reference.chapter}:{reference.verse}
       </div>
-      {bookmark.verse_text && <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>{bookmark.verse_text}</p>}
+      {bookmark.verse_text && <p className="mt-0 mx-0 mb-2 text-sm text-muted leading-base">{bookmark.verse_text}</p>}
       <label htmlFor={selectId} style={fieldLabelStyle}>{t.translationLabel}</label>
       <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} style={{ ...inputStyle, marginBottom: 8 }}>
         {translations.map((item) => <option key={item.id} value={item.id}>{translationLabel(item.id, lang)}</option>)}
       </select>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="flex gap-2 flex-wrap">
         <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>{t.citationInsertInline}</button>
         <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>{t.citationInsertBlock}</button>
       </div>

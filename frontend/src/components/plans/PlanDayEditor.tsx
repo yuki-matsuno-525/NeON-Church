@@ -85,16 +85,16 @@ export function PlanDayEditor({
   };
 
   return (
-    <section className="card-glow" style={{ padding: "16px 18px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{dayLabel}</span>
+    <section className="card-glow py-4 px-4" >
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-sm font-bold text-accent">{dayLabel}</span>
         <span role="status" aria-live="polite" style={{ fontSize: 11, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)" }}>
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
           <button type="button" onClick={() => void autosave.retry()} style={retryButtonStyle}>{t.retry}</button>
         )}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+        <div className="ml-auto flex gap-2">
           {canMoveUp && (
             <button type="button" onClick={() => onMove(-1)} aria-label={lang === "ja" ? `${dayLabel}を上へ移動` : `Move ${dayLabel} up`} style={iconButtonStyle}>
               ↑
@@ -125,7 +125,7 @@ export function PlanDayEditor({
       </label>
 
       {/* 読む章 */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+      <div className="flex flex-wrap gap-2 mb-2">
         {readings.map((reading, index) => (
           <span
             key={`${reading.book}-${reading.chapter_number}-${index}`}

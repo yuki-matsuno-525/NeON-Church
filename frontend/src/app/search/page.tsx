@@ -137,11 +137,11 @@ function SearchContent() {
 
   return (
     <div className="page page-narrow">
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.searchTitle}</h1>
+      <h1 className="text-xl font-bold mb-6">{t.searchTitle}</h1>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+      <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
         <label htmlFor={inputId} className="sr-only">{t.searchKeyword}</label>
-        <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+        <div className="flex-1 relative flex items-center">
           <input
             id={inputId}
             name="q"
@@ -197,8 +197,8 @@ function SearchContent() {
         </button>
       </form>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
-        <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        <div className="inline-flex gap-1 flex-wrap">
           {SEARCH_KIND_OPTIONS.map((option) => {
             const active = option.value === kind;
             return (
@@ -272,12 +272,12 @@ function SearchContent() {
 
       {result && !loading && !error && (
         <>
-          <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 20 }}>
+          <p role="status" aria-live="polite" className="text-muted text-sm mb-4">
             {t.searchResults(q, totalHits)}
           </p>
 
           {page === 1 && result.books.length > 0 && (
-            <section style={{ marginBottom: 28 }}>
+            <section className="mb-6">
               <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionBooks}
               </h2>
@@ -328,23 +328,23 @@ function SearchContent() {
                         background: "var(--bg-alt)",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-muted">
                           <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
                           {/* 検索は全訳を横断するので、どの訳の本文に当たったかを添える。 */}
-                          <span style={{ color: "var(--text-faint)" }}> · {translationLabel(v.translation, lang)}</span>
+                          <span className="text-faint"> · {translationLabel(v.translation, lang)}</span>
                         </span>
                         {url && (
                           <Link
                             href={url}
-                            style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none" }}
+                            className="text-xs text-accent no-underline"
                           >
                             {t.readLink}
                           </Link>
                         )}
                       </div>
-                      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>
+                      <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
                             ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
@@ -364,7 +364,7 @@ function SearchContent() {
           )}
 
           {page === 1 && result.comments.length > 0 && (
-            <section style={{ marginBottom: 28 }}>
+            <section className="mb-6">
               <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionComments}
               </h2>
@@ -381,12 +381,12 @@ function SearchContent() {
                         background: "var(--bg-alt)",
                       }}
                     >
-                      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 6, alignItems: "center" }}>
+                      <div className="flex gap-2 text-xs text-muted mb-2 items-center">
                         <span style={KIND_BADGE_STYLE}>{t.searchKindComment}</span>
-                        <span style={{ fontWeight: 600 }}>{c.username}</span>
+                        <span className="font-bold">{c.username}</span>
                         {c.location && <span>· {c.location}</span>}
                       </div>
-                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+                      <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
                             ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 2, padding: "0 2px" }}>{part}</mark>
@@ -405,7 +405,7 @@ function SearchContent() {
               title={t.searchEmpty(q)}
               description={t.searchEmptyDesc}
               action={
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                <div className="flex gap-3 flex-wrap justify-center">
                   <Link href="/qa" className="btn btn-ghost">{t.searchEmptyGoQa}</Link>
                   <Link href="/read" className="btn btn-primary">{t.searchEmptyGoRead}</Link>
                 </div>

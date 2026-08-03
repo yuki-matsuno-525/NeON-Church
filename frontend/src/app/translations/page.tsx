@@ -72,7 +72,7 @@ export default function TranslationsPage() {
 
   return (
     <div className="page page-full">
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="m-0 text-lg font-bold">{t.translationsTitle}</h1>
           <p className="mt-1 mb-0 text-sm text-muted">
@@ -82,15 +82,7 @@ export default function TranslationsPage() {
         {user && (
           <Link
             href="/translations/new"
-            style={{
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              borderRadius: 8,
-              padding: "8px 18px",
-              textDecoration: "none",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
+            className="bg-accent text-accent-text rounded-md py-2 px-4 no-underline font-bold text-sm"
           >
             {t.newProject}
           </Link>
@@ -98,7 +90,7 @@ export default function TranslationsPage() {
       </div>
 
       {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
-      <label style={{ display: "block", marginBottom: 16 }}>
+      <label className="block mb-4">
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
           value={projectSearch}
@@ -111,7 +103,7 @@ export default function TranslationsPage() {
       </label>
 
       {isMobile && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+        <div className="flex gap-2 mb-4">
           {visibleColumns.map((col) => {
             const active = col.key === activeTab;
             return (
@@ -246,8 +238,8 @@ function TranslationColumn({
       {loading ? (
         <SkeletonList count={2} />
       ) : error ? (
-        <div role="alert" style={{ padding: "10px 2px" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 10px" }}>{errorMessage}</p>
+        <div role="alert" className="py-3 px-1">
+          <p className="text-sm text-muted mt-0 mx-0 mb-3">{errorMessage}</p>
           <Button variant="ghost" size="sm" onClick={() => setReloadKey((key) => key + 1)}>{retryLabel}</Button>
         </div>
       ) : items.length === 0 ? (
@@ -284,9 +276,9 @@ function ProjectCard({
     : `${p.done_count}/${p.unit_count}`;
 
   return (
-    <Link href={`/translations/${p.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-      <div className="card-glow card-glow-interactive" style={{ padding: "16px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-end", gap: 10, marginBottom: 12 }}>
+    <Link href={`/translations/${p.id}`} className="no-underline text-inherit">
+      <div className="card-glow card-glow-interactive py-4 px-4 flex flex-col" >
+        <div className="flex items-start justify-end gap-3 mb-3">
           <span className="badge" style={{ background: tint, color: accent, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
             {label}
           </span>
@@ -300,14 +292,14 @@ function ProjectCard({
           </p>
         )}
 
-        <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap", marginBottom: 12 }}>
+        <div className="flex gap-2 text-xs text-faint flex-wrap mb-3">
           <span style={metaPillStyle}>{p.source_book_name}</span>
           <span style={metaPillStyle}>{languageLabel(p.target_language)}</span>
           <span style={metaPillStyle}>{t.createdBy} {p.owner_username}</span>
         </div>
 
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: 5 }}>
+        <div className="mt-auto">
+          <div className="flex justify-between gap-3 text-xs text-muted mb-1">
             <span>{t.progress}</span>
             <span>{progressText}</span>
           </div>

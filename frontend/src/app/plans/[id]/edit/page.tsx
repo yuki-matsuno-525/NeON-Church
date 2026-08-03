@@ -205,7 +205,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         onCancel={() => setDeletingDayId(null)}
       />
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+      <div className="flex gap-3 items-center flex-wrap mb-3">
         <label style={{ flex: "1 1 280px" }}>
           <span className="sr-only">{t.planTitleLabel}</span>
           <input
@@ -250,9 +250,9 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         />
       </label>
 
-      {!canPublish && <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>{t.planDayRequired}</p>}
+      {!canPublish && <p className="text-xs text-faint mt-0 mx-0 mb-3">{t.planDayRequired}</p>}
 
-      <label htmlFor="plan-reader-note" style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+      <label htmlFor="plan-reader-note" className="block text-xs text-muted mb-1">
         {t.planNoteFieldLabel}
       </label>
       <textarea
@@ -264,9 +264,9 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         style={{ ...inputStyle, marginBottom: 8, resize: "vertical" }}
       />
 
-      {!canReorder && <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 16px", lineHeight: 1.7 }}>{t.planFrozenNotice}</p>}
+      {!canReorder && <p className="text-xs text-muted mt-0 mx-0 mb-4 leading-reading">{t.planFrozenNotice}</p>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
+      <div className="flex flex-col gap-4 mt-4">
         {days.map((day, index) => (
           <PlanDayEditor
             key={day.id}
@@ -286,7 +286,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       <button type="button" onClick={handleAddDay} disabled={!!busyAction} style={{ ...addDayStyle, opacity: busyAction ? 0.6 : 1 }}>
         {busyAction === "add-day" ? supplementalText.addingDay : t.planAddDay}
       </button>
-      {days.length > 0 && !canReorder && <p style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 8 }}>{t.planAddDayAlways}</p>}
+      {days.length > 0 && !canReorder && <p className="text-xs text-faint mt-2">{t.planAddDayAlways}</p>}
     </div>
   );
 }

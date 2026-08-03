@@ -60,7 +60,7 @@ export default function PlansPage() {
 
   return (
     <div className="page page-full">
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
           <h1 className="m-0 text-lg font-bold">{t.plansTitle}</h1>
           <p className="mt-1 mb-0 text-sm text-muted">
@@ -76,14 +76,14 @@ export default function PlansPage() {
 
       {!pageLoading && !error && reading.length > 0 && (
         <section style={{ ...columnStyle, marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>{t.planReadingNow}</h2>
+          <h2 className="text-md font-bold mt-0 mx-0 mb-3">{t.planReadingNow}</h2>
           <div className="flex flex-wrap gap-2">
             {reading.map((subscription) => (
               <Link
                 key={subscription.id}
                 href={`/plans/${subscription.plan}`}
-                className="card-glow card-glow-interactive"
-                style={{ padding: "10px 14px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", color: "inherit", fontSize: 14, fontWeight: 700 }}
+                className="card-glow card-glow-interactive py-3 px-3 tap-target inline-flex items-center no-underline text-inherit text-sm font-bold"
+                
               >
                 {subscription.plan_title}
               </Link>
@@ -176,10 +176,10 @@ function PlanColumn({
             <Link
               key={plan.id}
               href={editable ? `/plans/${plan.id}/edit` : `/plans/${plan.id}`}
-              style={{ textDecoration: "none", color: "inherit" }}
+              className="no-underline text-inherit"
             >
-              <div className="card-glow card-glow-interactive" style={{ padding: 16 }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+              <div className="card-glow card-glow-interactive p-4" >
+                <div className="flex justify-end mb-3">
                   <span
                     className="badge"
                     style={{
@@ -198,7 +198,7 @@ function PlanColumn({
                     {plan.description}
                   </p>
                 )}
-                <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", flexWrap: "wrap" }}>
+                <div className="flex gap-2 text-xs flex-wrap">
                   <span style={metaPillStyle}>{plan.owner_username}</span>
                   <span style={metaPillStyle}>{t.planDayCount(plan.day_count)}</span>
                   {plan.reader_count > 0 && <span style={metaPillStyle}>{t.planReaderCount(plan.reader_count)}</span>}

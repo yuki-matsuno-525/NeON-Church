@@ -30,7 +30,7 @@ export function PasswordField({
   const [visible, setVisible] = useState(false);
 
   return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+    <div className="relative flex items-center">
       <input
         id={id}
         type={visible ? "text" : "password"}

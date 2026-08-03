@@ -145,13 +145,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
   return (
     <form
       onSubmit={handleSubmit}
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "16px 18px",
-        marginBottom: 24,
-        background: "var(--bg-alt)",
-      }}
+      className="border border-border rounded-md py-4 px-4 mb-6 bg-bg-alt"
     >
       <label htmlFor={titleId} style={fieldLabelStyle}>{t.fieldTitle}</label>
       <input
@@ -203,13 +197,13 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
       {/* 場所選択。読書ページから開いたときは、その箇所で固定なので選ばせない。 */}
       {fixedLocation ? (
         fixedLocation.label && (
-          <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+          <p className="mt-3 mx-0 mb-0 text-xs text-muted">
             {fixedLocation.label}
           </p>
         )
       ) : (
       <>
-      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+      <div className="flex gap-2 mt-3 flex-wrap">
         <label htmlFor={genreSelectId} className="sr-only">{t.allBooks}</label>
         <select
           id={genreSelectId}
@@ -266,7 +260,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         )}
       </div>
       {locationError && (
-        <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12, margin: "6px 0 0" }}>
+        <p role="alert" className="text-danger text-xs mt-2 mx-0 mb-0">
           {locationError}
         </p>
       )}
@@ -275,7 +269,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
 
       {/* タグ選択 */}
       {tags.length > 0 && (
-        <fieldset style={{ border: 0, padding: 0, margin: "10px 0 0" }}>
+        <fieldset className="border-0 p-0 mt-3 mx-0 mb-0">
           <legend style={fieldLabelStyle}>{t.allTags}</legend>
           <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
@@ -317,20 +311,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
+      <div className="flex gap-2 justify-end mt-3">
         <button
           type="button"
           onClick={onCancel}
-          style={{
-            padding: "7px 14px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "transparent",
-            color: "var(--text-muted)",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="py-2 px-3 border border-border rounded-md bg-transparent text-muted cursor-pointer text-sm"
         >
           {t.cancel}
         </button>

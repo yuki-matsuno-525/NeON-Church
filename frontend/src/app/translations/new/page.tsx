@@ -127,14 +127,14 @@ export default function NewTranslationPage() {
           {t.backToTranslations}
         </Link>
       </div>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>{t.newTranslationTitle}</h1>
+      <h1 className="text-lg font-bold mb-6">{t.newTranslationTitle}</h1>
 
-      <div style={{ display: "grid", gap: 8, marginBottom: 24 }}>
+      <div className="grid gap-2 mb-6">
         <p style={noticeStyle}>{ui.lifecycleHelp}</p>
         <p style={noticeStyle}>{ui.licenseNotice}</p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor={nameId} style={labelStyle}>{t.projectName}</label>
           <input
@@ -236,13 +236,13 @@ export default function NewTranslationPage() {
             id={errorId}
             role="alert"
             aria-live="polite"
-            style={{ color: "var(--state-danger)", fontSize: "var(--font-size-sm)", margin: 0 }}
+            className="text-danger text-sm m-0"
           >
             {error}
           </p>
         )}
 
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className="flex gap-3">
           <button
             type="submit"
             disabled={submitting || languagesLoading || languagesError || catalogLoading || catalogError}

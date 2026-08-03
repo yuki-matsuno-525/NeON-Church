@@ -126,7 +126,7 @@ export default function BookmarksPage() {
     : [];
 
   const heading = (
-    <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
+    <h1 className="text-xl font-bold mb-8">
       {t.bookmarksTitle}
     </h1>
   );
@@ -147,7 +147,7 @@ export default function BookmarksPage() {
       {heading}
 
       {recentlyRemoved && (
-        <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)" }}>
+        <div role="status" aria-live="polite" className="flex items-center justify-between gap-3 mb-4 py-3 px-3 border border-border rounded-md bg-bg-alt">
           <span className="text-sm text-muted">{t.bookmarkRemovedStatus}</span>
           <button type="button" onClick={() => handleUndo(recentlyRemoved)} disabled={actionBusy} className="btn btn-ghost">
             {t.undo}
@@ -155,7 +155,7 @@ export default function BookmarksPage() {
         </div>
       )}
       {actionError && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 13, margin: "0 0 16px" }}>
+        <p role="alert" aria-live="polite" className="text-danger text-sm mt-0 mx-0 mb-4">
           {actionError}
         </p>
       )}
@@ -172,7 +172,7 @@ export default function BookmarksPage() {
           title={t.noBookmarks}
           description={t.emptyBookmarksDesc}
           action={
-            <Link href="/read" style={{ textDecoration: "none" }}>
+            <Link href="/read" className="no-underline">
               <Button variant="primary">{t.emptyBookmarksCta}</Button>
             </Link>
           }

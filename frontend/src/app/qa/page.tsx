@@ -149,7 +149,7 @@ function QAContent() {
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
+      <div className="flex items-center justify-between mb-2 gap-3 flex-wrap">
         <h1 className="m-0 text-lg font-bold">{t.qaTitle}</h1>
         {!showForm && (
           <Button
@@ -164,7 +164,7 @@ function QAContent() {
           </Button>
         )}
       </div>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 24 }}>
+      <p className="text-muted text-sm mb-6">
         {t.qaDesc}
       </p>
 
@@ -194,7 +194,7 @@ function QAContent() {
           {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
         </legend>
         <div style={filterPanelHeaderStyle}>
-          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>{t.qaFilters}</span>
+          <span className="text-muted text-xs font-bold">{t.qaFilters}</span>
           {/* 表示中の件数ではなく、絞り込み後の総数（2列の合計） */}
           {!loading && (
             <span className="text-xs text-faint">{t.qaQuestionCount(totalCount)}</span>
@@ -280,7 +280,7 @@ function QAContent() {
           </label>
         </div>
         {tagsError && (
-          <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+          <div role="alert" className="flex items-center gap-2 mt-2 text-danger text-xs">
             <span>{t.tagsLoadFailed}</span>
             <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
           </div>
@@ -316,7 +316,7 @@ function QAContent() {
         <>
         {/* スマホだけカラム切り替えタブを出す。PC はタブなしで2カラムを横並び。 */}
         {isMobile && (
-          <div role="tablist" aria-label={t.qaTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+          <div role="tablist" aria-label={t.qaTitle} onKeyDown={handleHorizontalTabListKeyDown} className="flex gap-2 mb-4">
             {QA_COLUMNS.map((col) => {
               const active = col.key === activeTab;
               // 表示中の件数ではなく、サーバーが数えたその列の総数

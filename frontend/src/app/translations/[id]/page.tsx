@@ -132,7 +132,7 @@ function MentionInput({
   };
 
   return (
-    <div style={{ position: "relative", marginTop: 8 }}>
+    <div className="relative mt-2">
       <textarea
         ref={textareaRef}
         value={value}
@@ -162,25 +162,15 @@ function MentionInput({
         </ul>
       )}
       {error && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p role="alert" aria-live="polite" className="text-danger text-xs mt-1 mx-0 mb-0">
           {error}
         </p>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+      <div className="flex justify-end mt-2">
         <button
           type="button"
           onClick={handleSubmit}
-          style={{
-            minHeight: 44,
-            padding: "6px 16px",
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--bg)",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: "pointer",
-          }}
+          className="tap-target py-2 px-4 border-0 rounded-md bg-accent text-bg font-bold text-sm cursor-pointer"
         >
           {sendLabel}
         </button>
@@ -865,16 +855,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ marginBottom: 6 }}>
+      <div className="mb-2">
         <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
           {t.backToTranslations}
         </Link>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+      <div className="flex items-start gap-3 mb-4 flex-wrap">
         <div className="flex-1">
-          <div style={{ display: "flex", alignItems: "center", gap: 4, margin: "0 0 4px" }}>
-            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>{project.name}</h1>
+          <div className="flex items-center gap-1 mt-0 mx-0 mb-1">
+            <h1 className="text-xl font-bold m-0">{project.name}</h1>
             {user && (
               <BookmarkStar
                 active={!!projectBookmark}
@@ -890,7 +880,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {isOwner && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div className="flex gap-2 flex-wrap">
             {project.status === "draft" && (
               <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("activate")} style={btnStyle("var(--accent)")}>
                 {t.startRecruiting}
@@ -923,16 +913,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         )}
         {user && !isOwner && project.membership_status === null && project.status !== "active" && project.status !== "published" && (
           <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              fontSize: 12,
-              color: "var(--text-muted)",
-              backgroundColor: "var(--bg-alt)",
-              border: "1px solid var(--border)",
-              borderRadius: 999,
-              padding: "4px 10px",
-            }}
+            className="inline-flex items-center text-xs text-muted bg-bg-alt border border-border rounded-full py-1 px-3"
           >
             {t.notRecruiting}
           </span>
@@ -958,14 +939,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </p>
       )}
       {project.membership_status === "rejected" && !isOwner && (
-        <p role="status" style={{ padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-muted)" }}>
+        <p role="status" className="py-3 px-3 border border-border rounded-md text-muted">
           {ui.applicationRejected}
         </p>
       )}
 
       {editingProject && isOwner && (
-        <form onSubmit={handleSaveProject} className="card" style={{ marginBottom: 20, display: "grid", gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 17 }}>{ui.projectSettings}</h2>
+        <form onSubmit={handleSaveProject} className="card mb-4 grid gap-3" >
+          <h2 className="m-0 text-md">{ui.projectSettings}</h2>
           <label htmlFor="translation-project-name" className="grid gap-2 text-sm text-muted">
             {t.projectName}
             <input
@@ -1003,8 +984,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             </select>
             <span className="text-xs text-faint">{ui.targetLanguageHelp}</span>
           </label>
-          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>{ui.licenseNotice}</p>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+          <p className="m-0 text-xs leading-base text-muted">{ui.licenseNotice}</p>
+          <div className="flex justify-end gap-2 flex-wrap">
             <Button variant="ghost" onClick={() => setEditingProject(false)}>{t.cancel}</Button>
             <Button type="submit" variant="secondary" loading={actionBusy === "project-settings"}>{ui.saveSettings}</Button>
           </div>
@@ -1012,7 +993,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       )}
 
       {project.description && (
-        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 16 }}>
+        <p className="text-sm text-muted leading-base mb-4">
           {project.description}
         </p>
       )}
@@ -1026,7 +1007,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           <span style={projectSummaryLabelStyle}>{t.progress}</span>
           <strong style={projectSummaryValueStyle}>{progressText}</strong>
           {summary && (
-            <span style={{ display: "block", marginTop: 4, color: "var(--text-faint)", fontSize: 11 }}>
+            <span className="block mt-1 text-faint text-xs">
               {statusLabel("todo")} {summary.status_counts.todo} · {statusLabel("in_progress")} {summary.status_counts.in_progress}
             </span>
           )}
@@ -1048,11 +1029,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         <div style={projectSummaryItemStyle}>
           <span style={projectSummaryLabelStyle}>{t.units}</span>
           <strong style={projectSummaryValueStyle}>{project.unit_count}</strong>
-          {summary && user && <span style={{ display: "block", marginTop: 4, color: "var(--text-faint)", fontSize: 11 }}>{ui.assignedToMe(summary.assigned_to_me)}</span>}
+          {summary && user && <span className="block mt-1 text-faint text-xs">{ui.assignedToMe(summary.assigned_to_me)}</span>}
         </div>
       </div>
 
-      {(isApprovedMember || project.status !== "published") && <div role="tablist" aria-label={t.translationsTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 24, gap: 0 }}>
+      {(isApprovedMember || project.status !== "published") && <div role="tablist" aria-label={t.translationsTitle} onKeyDown={handleHorizontalTabListKeyDown} className="flex border-b border-border mb-6 gap-0">
         {(["units", "review", "members"] as const).map((tabKey) => (
           <button
             type="button"
@@ -1088,7 +1069,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           aria-label={!isApprovedMember && project.status === "published" ? t.units : undefined}
         >
           {isOwner && (
-            <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <div className="mb-4 flex flex-wrap gap-2 items-center">
               <button
                 disabled={addingBook || !!actionBusy}
                 onClick={handleAddAllChapters}
@@ -1108,13 +1089,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   {t.addUnit}
                 </button>
               ) : (
-                <form onSubmit={handleAddUnit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <form onSubmit={handleAddUnit} className="flex gap-2 items-center flex-wrap">
                   <label className="grid gap-1 text-xs text-muted">
                     {ui.selectChapterLabel}
                     <select
                       value={unitChapterId}
                       onChange={handleUnitChapterChange}
-                      style={{ padding: "8px 10px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 14 }}
+                      className="py-2 px-3 tap-target border border-border rounded-md bg-bg-alt text-body text-sm"
                       required
                     >
                       <option value="">{t.selectChapter}</option>
@@ -1197,7 +1178,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     }}
                   >
                     <span>{chNum}</span>
-                    {total > 0 && <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500 }}>{ui.chapterProgress(done, total)}</span>}
+                    {total > 0 && <span className="text-xs text-muted font-bold">{ui.chapterProgress(done, total)}</span>}
                   </button>
                     );
                   })()
@@ -1214,8 +1195,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               >
                 {t.backToChapters}
               </button>
-              <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{t.chapterFmt(selectedChapter)}</h3>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+              <h3 className="text-md font-bold mb-3 pb-2 border-b border-border">{t.chapterFmt(selectedChapter)}</h3>
+              <div className="flex gap-3 flex-wrap mb-4">
                 <label className="grid gap-1 text-xs text-muted">
                   {ui.filterStatus}
                   <select
@@ -1267,9 +1248,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     transition: "box-shadow 0.3s",
                   }}
                 >
-                  <div style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                  <div className="py-3 px-4">
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      <div className="text-xs text-muted flex-1 min-w-0">
                         {unit.chapter_number}:{unit.verse_number}
                         {unit.assigned_to_username && (
                           <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
@@ -1314,22 +1295,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             style={{ flex: 1, width: "100%", minHeight: 96, marginTop: 6, padding: 0, border: "none", background: "transparent", color: "var(--text)", fontSize: 14, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6, outline: "none" }}
                           />
                         ) : unit.body ? (
-                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
                         ) : (
-                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm text-faint">{t.notTranslatedYet}</p>
                         )}
                       </div>
                     </div>
 
-                    {dirty && <p role="status" style={{ margin: "6px 0 0", color: "var(--state-warning)", fontSize: 12 }}>{ui.unsavedBadge}</p>}
-                    {unitErrors[unit.id] && <p role="alert" style={{ margin: "6px 0 0", color: "var(--state-danger)", fontSize: 12 }}>{unitErrors[unit.id]}</p>}
+                    {dirty && <p role="status" className="mt-2 mx-0 mb-0 text-warning text-xs">{ui.unsavedBadge}</p>}
+                    {unitErrors[unit.id] && <p role="alert" className="mt-2 mx-0 mb-0 text-danger text-xs">{unitErrors[unit.id]}</p>}
 
                     {canEdit && (
                       // 元テキスト側の下に担当者/ステータス、訳文側の下に保存ボタン（画像の構成に合わせる）。
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
-                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+                        <div className="flex gap-3 flex-wrap items-end">
                           {isOwner && (
-                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                            <label className="flex flex-col min-w-0">
                               <span style={fieldLabelStyle}>{t.assigneeLabel}</span>
                               <select
                                 value={unit.assigned_to ?? ""}
@@ -1345,7 +1326,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             </label>
                           )}
                           {unit.status !== "done" && (
-                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                            <label className="flex flex-col min-w-0">
                               <span style={fieldLabelStyle}>{t.statusFieldLabel}</span>
                               <select
                                 value={unit.status}
@@ -1365,7 +1346,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             </button>
                           )}
                         </div>
-                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
+                        <div className="flex justify-end items-start">
                           {/* 未保存の変更があるときだけ押せる。 */}
                           <button
                             onClick={() => handleSaveBody(unit.id)}
@@ -1392,7 +1373,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     })()}
                   </div>
 
-                  <div style={{ borderTop: "1px solid var(--border)", padding: "6px 16px" }}>
+                  <div className="border-t border-border py-2 px-4">
                     <button
                       onClick={() => handleLoadUnitComments(unit.id)}
                       aria-expanded={expandedUnit === unit.id}
@@ -1403,16 +1384,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       {unitComments[unit.id]?.length ? ` (${unitComments[unit.id].length})` : ""}
                     </button>
                     {expandedUnit === unit.id && (
-                      <div id={`unit-discussion-${unit.id}`} style={{ marginTop: 8 }}>
-                        {unitCommentsLoading === unit.id && <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{t.loading}</p>}
+                      <div id={`unit-discussion-${unit.id}`} className="mt-2">
+                        {unitCommentsLoading === unit.id && <p className="text-muted text-xs">{t.loading}</p>}
                         {unitCommentErrors[unit.id] && <p role="alert" className="text-xs text-danger">{unitCommentErrors[unit.id]}</p>}
                         {unitCommentsLoading !== unit.id && !unitCommentErrors[unit.id] && (unitComments[unit.id] ?? []).length === 0 && (
                           <p className="text-xs text-faint">{ui.noDiscussion}</p>
                         )}
                         {(unitComments[unit.id] ?? []).map((c) => (
                           <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                            <span style={{ fontWeight: 600 }}>{c.username}</span>
-                            <span style={{ color: "var(--text-faint)", fontSize: 11, marginLeft: 8 }}>{formatRelativeTime(c.created_at)}</span>
+                            <span className="font-bold">{c.username}</span>
+                            <span className="text-faint text-xs ml-2">{formatRelativeTime(c.created_at)}</span>
                             <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
                               {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
                             </p>
@@ -1449,10 +1430,10 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           ) : (
             <div className="flex flex-col gap-2">
               {reviewUnits.map((unit) => (
-                <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
-                  <div style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                <div key={unit.id} className="card-glow overflow-hidden" >
+                  <div className="py-3 px-4">
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      <div className="text-xs text-muted flex-1 min-w-0">
                         {unit.chapter_number}:{unit.verse_number}
                         {unit.assigned_to_username && (
                           <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
@@ -1480,14 +1461,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       <div style={subCardStyle}>
                         <div style={colLabelStyle}>{t.translationText}</div>
                         {unit.body ? (
-                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
                         ) : (
-                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm text-faint">{t.notTranslatedYet}</p>
                         )}
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                    <div className="flex justify-end items-center gap-2 flex-wrap mt-3">
                       <button
                         type="button"
                         onClick={() => handleOpenReviewTarget(unit)}
@@ -1531,8 +1512,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           ) : (
             <div className="flex flex-col gap-2">
               {members.map((m) => (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{m.username}</span>
+                <div key={m.id} className="flex items-center gap-3 py-3 px-4 border border-border rounded-md bg-bg-alt flex-wrap">
+                  <span className="font-bold text-sm flex-1">{m.username}</span>
                   <span className="text-xs text-muted">
                     {m.role === "owner" ? t.roleOwner : t.roleMember}
                   </span>
@@ -1551,7 +1532,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     </span>
                   )}
                   {isOwner && m.role !== "owner" && (
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div className="flex gap-2">
                       {m.status === "pending" && (
                         <>
                           <button disabled={actionBusy === `member-${m.id}`} onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("var(--state-success)", true)}>{t.approve}</button>

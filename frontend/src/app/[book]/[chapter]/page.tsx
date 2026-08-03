@@ -371,7 +371,7 @@ export default function ChapterPage() {
             <span>{t.chapterFmt(chapterNum)}</span>
           </p>
           <div className="reader-header-actions flex items-center gap-2">
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+            <label className="inline-flex items-center gap-2 text-xs text-muted">
               <span>{t.translationLabel}</span>
               <select
                 value={activeTranslationId}
@@ -398,18 +398,7 @@ export default function ChapterPage() {
             {chapter && (
               <a
                 href="#chapter-comments"
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-faint)",
-                  textDecoration: "none",
-                  padding: "3px 10px",
-                  minHeight: 44,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  whiteSpace: "nowrap",
-                }}
+                className="text-xs text-faint no-underline py-1 px-3 tap-target inline-flex items-center border border-border rounded-lg whitespace-nowrap"
               >
                 {t.toComments}
               </a>
@@ -418,7 +407,7 @@ export default function ChapterPage() {
       </div>
 
       {(progressError || bookmarkLoadError || versionResolutionError) && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap", padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
+        <div role="alert" className="flex items-center justify-center gap-3 flex-wrap py-2 px-4 border-b border-border">
           <span className="text-sm text-danger">{t.actionFailed}</span>
           <button
             type="button"
@@ -452,20 +441,15 @@ export default function ChapterPage() {
         style={{ display: "flex" }}
       >
         <div
-          className="reader-main"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: "32px 32px",
-            overflowY: "auto",
-          }}
+          className="reader-main flex-1 min-w-0 py-8 px-8 overflow-y-auto"
+          
         >
 
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
-          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>
+        <div className="flex items-center gap-1 mb-6">
+          <h1 className="text-xl font-bold m-0">
             {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
             {chapterName && (
-              <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
+              <span className="text-muted font-bold">
                 {" — "}{chapterName}
               </span>
             )}

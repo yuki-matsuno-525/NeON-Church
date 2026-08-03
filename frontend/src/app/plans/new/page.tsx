@@ -116,7 +116,7 @@ export default function NewPlanPage() {
 
         {error && <p id="new-plan-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+        <div className="flex gap-3 mt-4 flex-wrap">
           <button
             type="submit"
             disabled={!title.trim() || busy}

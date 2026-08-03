@@ -160,8 +160,8 @@ function BookContent() {
       </div>
     <div className="page page-wide">
 
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+      <div className="flex items-center gap-1 mb-6">
+        <h1 className="text-xl font-bold m-0">
           {label?.name ?? meta.name}
         </h1>
         {user && bookId && (
@@ -190,7 +190,7 @@ function BookContent() {
         </div>
       )}
 
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
+      <h2 className="text-sm font-bold text-muted mb-3">
         {t.selectChapterHeading}
       </h2>
 

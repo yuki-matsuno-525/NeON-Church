@@ -70,11 +70,11 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
         background: answer.is_best ? "var(--accent-tint)" : "var(--bg-alt)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         {answer.is_best && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>{t.bestAnswer}</span>
+          <span className="text-xs font-bold text-accent">{t.bestAnswer}</span>
         )}
-        <span style={{ fontWeight: 700, fontSize: 13 }}>{answer.user.username}</span>
+        <span className="font-bold text-sm">{answer.user.username}</span>
         <span className="text-xs text-faint">
           {formatRelativeTime(answer.created_at)}
         </span>
@@ -89,7 +89,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
             aria-label={t.qaAnswerPlaceholder}
             style={textareaStyle}
           />
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+          <div className="flex gap-2 justify-end mt-2">
             <Button variant="secondary" onClick={() => { setEditing(false); setDraft(answer.body); }}>
               {t.cancel}
             </Button>
@@ -99,13 +99,13 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
           </div>
         </>
       ) : (
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+        <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
           {answer.is_deleted ? t.qaDeletedAnswer : answer.body}
         </p>
       )}
 
       {!editing && !answer.is_deleted && (
-        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="flex gap-2 mt-3 flex-wrap items-center">
           {canPickBest && (
             <button
               type="button"

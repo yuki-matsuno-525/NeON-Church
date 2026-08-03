@@ -12,7 +12,7 @@ export default function Loading() {
       className="page page-narrow"
     >
       <Skeleton width="45%" height={26} />
-      <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 28 }}>
+      <div className="flex flex-col gap-4 mt-6">
         {Array.from({ length: 8 }, (_, i) => (
           <div key={i} className="flex flex-col gap-2">
             <Skeleton width="100%" height={13} />

@@ -49,7 +49,7 @@ export function ChapterPicker({
   if (!slug) {
     return (
       <div role="group" aria-label={t.citationBookSearchPlaceholder} style={boxStyle}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        <div className="flex gap-2 mb-2">
           <label className="flex-1">
             <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
             <input
@@ -87,11 +87,11 @@ export function ChapterPicker({
 
   return (
     <div role="group" aria-label={`${t.planAddChapter}: ${localizedShortName}`} style={boxStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <button type="button" onClick={() => { setSlug(null); setTranslation(""); }} style={plainButtonStyle}>
           {t.planBackToBooks}
         </button>
-        <strong style={{ fontSize: 13 }}>{localizedShortName}</strong>
+        <strong className="text-sm">{localizedShortName}</strong>
         <select
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}

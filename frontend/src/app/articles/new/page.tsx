@@ -115,14 +115,14 @@ export default function NewArticlePage() {
             fontSize: 16,
           }}
         />
-        <div id="new-article-title-help" style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>
+        <div id="new-article-title-help" className="flex justify-between gap-3 mt-2 text-xs text-muted">
           <span>{t.articleDraftNext}</span>
           <span>{title.length}/{MAX_TITLE_LENGTH}</span>
         </div>
 
         {error && <p id="new-article-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+        <div className="flex gap-3 mt-4">
         <button
           type="submit"
           disabled={!title.trim() || busy}

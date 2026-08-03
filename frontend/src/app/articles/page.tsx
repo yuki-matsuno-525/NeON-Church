@@ -98,7 +98,7 @@ export default function ArticlesPage() {
 
   return (
     <div className="page page-full">
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+      <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
         <div>
           <h1 className="m-0 text-lg font-bold">{t.articlesTitle}</h1>
           <p className="mt-1 mb-0 text-sm text-muted">
@@ -112,13 +112,13 @@ export default function ArticlesPage() {
         )}
       </div>
 
-      <div role="group" aria-label={t.articleTopicsLabel} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+      <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
         <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => selectTag(null)} />
         {tags.map((tag) => (
           <TagChip key={tag.id} label={articleTagLabel(tag.slug, tag.name, t)} count={tag.article_count} active={activeTag === tag.slug} onClick={() => selectTag(tag.slug)} />
         ))}
         {tagError && (
-          <span role="alert" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--state-danger)" }}>
+          <span role="alert" className="inline-flex items-center gap-2 text-xs text-danger">
             {t.articleTopicsLoadFailed}
             <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
           </span>
@@ -170,7 +170,7 @@ function TagChip({ label, count, active, onClick }: { label: string; count?: num
       cursor: "pointer",
       fontFamily: "inherit",
     }}>
-      {label}{count !== undefined && <span style={{ marginLeft: 5, fontSize: 11 }}>({count})</span>}
+      {label}{count !== undefined && <span className="ml-1 text-xs">({count})</span>}
     </button>
   );
 }
@@ -209,7 +209,7 @@ function ArticleColumn({
           <button type="button" onClick={onRetry} style={inlineRetryStyle}>{t.retry}</button>
         </div>
       ) : feed.articles.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 2px" }}>{empty}</p>
+        <p className="text-sm text-muted py-2 px-1">{empty}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {feed.articles.map((article) => <ArticleCard key={article.id} article={article} editable={editable} />)}
@@ -226,18 +226,18 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
   const t = useT();
   const isPublic = article.visibility === "public";
   return (
-    <article className="card-glow" style={{ padding: 16, display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+    <article className="card-glow p-4 flex flex-col" >
+      <div className="flex justify-between items-center gap-2 mb-3">
         <span className="badge" style={{ background: isPublic ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)", color: isPublic ? "var(--state-success)" : "var(--text-muted)" }}>
           {visibilityLabel(article.visibility, t)}
         </span>
         {editable && <Link href={`/articles/${article.id}/edit`} style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center", padding: "0 6px" }}>{t.articleEditShort}</Link>}
       </div>
       <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
-        <Link href={`/articles/${article.id}`} style={{ color: "inherit", textDecoration: "none" }}>{article.title}</Link>
+        <Link href={`/articles/${article.id}`} className="text-inherit no-underline">{article.title}</Link>
       </h3>
       {article.summary && <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>{article.summary}</p>}
-      <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", flexWrap: "wrap" }}>
+      <div className="flex gap-2 text-xs text-muted flex-wrap">
         <Link href={`/profile/${article.owner_username}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{article.owner_username}</Link>
         {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
       </div>

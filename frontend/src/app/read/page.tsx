@@ -136,30 +136,21 @@ function ReadContent() {
 
   return (
     <div className="page page-wide">
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.readTitle}</h1>
+      <h1 className="text-xl font-bold mb-6">{t.readTitle}</h1>
 
       {resume && (
-        <div style={{ marginBottom: "var(--space-5)" }}>
+        <div className="mb-6">
           <Link
             href={`/${resume.slug}/${resume.chapter}`}
-            className="badge"
-            style={{
-              background: "var(--accent-tint)",
-              color: "var(--accent)",
-              fontSize: "var(--font-size-sm)",
-              padding: "3px 10px",
-              minHeight: 44,
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
-            }}
+            className="badge bg-accent-tint text-accent text-sm py-1 px-3 tap-target inline-flex items-center no-underline"
+            
           >
             {t.resumeReading(bookLabel(resume.slug, lang)?.name ?? resume.bookName, resume.chapter)}
           </Link>
         </div>
       )}
 
-      <label style={{ display: "block", marginBottom: "var(--space-5)" }}>
+      <label className="block mb-6">
         <span className="sr-only">{t.bookSearchLabel}</span>
         <ClearableSearchInput
           value={bookSearch}
@@ -251,7 +242,7 @@ function ReadContent() {
           return (
             <div className="mb-8">
               {totalMatches === 0 ? (
-                <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <p className="text-sm text-muted">
                   {t.listSearchEmpty}
                 </p>
               ) : (
@@ -268,19 +259,13 @@ function ReadContent() {
                       <Link
                         key={book.slug}
                         href={`/${book.slug}?list=1`}
-                        className="card-glow card-glow-interactive"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "20px 18px",
-                          textDecoration: "none",
-                          color: "var(--text)",
-                        }}
+                        className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                        
                       >
                         <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
                           {lb?.name ?? book.name}
                         </span>
-                        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                        <span className="text-xs text-faint mt-2">
                           {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
                       </Link>
@@ -290,17 +275,11 @@ function ReadContent() {
                     <Link
                       key={proj.id}
                       href={`/translations/${proj.id}/read`}
-                      className="card-glow card-glow-interactive"
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "20px 18px",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                      }}
+                      className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                      
                     >
-                      <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
-                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                      <span className="font-bold text-md">{proj.name}</span>
+                      <span className="text-xs text-muted mt-2">
                         {proj.source_book_name} → {languageLabel(proj.target_language)}
                       </span>
                     </Link>
@@ -313,7 +292,7 @@ function ReadContent() {
         return (
           <>
             {/* カテゴリ選択（チップ）。ジャンルに加えて翻訳本棚も1カテゴリとして並べる。 */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "var(--space-5)" }}>
+            <div className="flex flex-wrap gap-2 mb-6">
               {groups.map(({ genre, books }) => {
                 const isActive = !isLibraryTab && active?.genre === genre;
                 return (
@@ -324,7 +303,7 @@ function ReadContent() {
                     style={chipStyle(isActive)}
                   >
                     {t.genreNames[genre] ?? genre}{" "}
-                    <span style={{ opacity: 0.7 }}>({books.length})</span>
+                    <span className="opacity-70">({books.length})</span>
                   </button>
                 );
               })}
@@ -336,7 +315,7 @@ function ReadContent() {
                   style={chipStyle(isLibraryTab)}
                 >
                   {t.myTranslationsHeading}{" "}
-                  <span style={{ opacity: 0.7 }}>({library.length})</span>
+                  <span className="opacity-70">({library.length})</span>
                 </button>
               )}
             </div>
@@ -357,19 +336,13 @@ function ReadContent() {
                       <Link
                         key={book.slug}
                         href={`/${book.slug}?list=1`}
-                        className="card-glow card-glow-interactive"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "20px 18px",
-                          textDecoration: "none",
-                          color: "var(--text)",
-                        }}
+                        className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                        
                       >
                         <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
                           {lb?.name ?? book.name}
                         </span>
-                        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                        <span className="text-xs text-faint mt-2">
                           {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
                       </Link>
@@ -393,17 +366,11 @@ function ReadContent() {
                     <Link
                       key={proj.id}
                       href={`/translations/${proj.id}/read`}
-                      className="card-glow card-glow-interactive"
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "20px 18px",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                      }}
+                      className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                      
                     >
-                      <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
-                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                      <span className="font-bold text-md">{proj.name}</span>
+                      <span className="text-xs text-muted mt-2">
                         {proj.source_book_name} → {languageLabel(proj.target_language)}
                       </span>
                     </Link>

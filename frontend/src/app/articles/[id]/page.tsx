@@ -85,7 +85,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div style={containerStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         {article.visibility !== "public" && (
           <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
             {visibilityLabel(article.visibility, t)}
@@ -94,7 +94,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         {isOwner && (
           <Link
             href={`/articles/${article.id}/edit`}
-            style={{ marginLeft: "auto", fontSize: 13, color: "var(--accent)", textDecoration: "none" }}
+            className="ml-auto text-sm text-accent no-underline"
           >
             {t.articleEdit}
           </Link>
@@ -105,7 +105,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         {article.title}
       </h1>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, color: "var(--text-muted)", marginBottom: 24, flexWrap: "wrap" }}>
+      <div className="flex gap-3 items-center text-sm text-muted mb-6 flex-wrap">
         <Link href={`/profile/${article.owner_username}`} className="text-muted no-underline">
           {article.owner_username}
         </Link>
@@ -114,27 +114,17 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
         </time>
       </div>
 
-      {article.summary && <p style={{ margin: "0 0 28px", color: "var(--text-muted)", lineHeight: 1.8, fontSize: 15 }}>{article.summary}</p>}
+      {article.summary && <p className="mt-0 mx-0 mb-6 text-muted leading-reading text-sm">{article.summary}</p>}
 
       <ArticleBody body={article.body ?? ""} citations={article.citations ?? []} />
 
       {article.tags.length > 0 && (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 32 }}>
+        <div className="flex gap-2 flex-wrap mt-8">
           {article.tags.map((tag) => (
             <Link
               key={tag.id}
               href={`/articles?tag=${tag.slug}`}
-              style={{
-                border: "1px solid var(--border)",
-                borderRadius: 999,
-                padding: "4px 12px",
-                minHeight: 44,
-                display: "inline-flex",
-                alignItems: "center",
-                fontSize: 13,
-                color: "var(--text-muted)",
-                textDecoration: "none",
-              }}
+              className="border border-border rounded-full py-1 px-3 tap-target inline-flex items-center text-sm text-muted no-underline"
             >
               {articleTagLabel(tag.slug, tag.name, t)}
             </Link>
@@ -143,25 +133,25 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
       )}
 
       {related.length > 0 && (
-        <section style={{ marginTop: 36 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>{t.articleRelated}</h2>
+        <section className="mt-8">
+          <h2 className="text-md font-bold mt-0 mx-0 mb-3">{t.articleRelated}</h2>
           <div className="flex flex-col gap-2">
             {related.map((item) => (
               <Link
                 key={item.id}
                 href={`/articles/${item.id}`}
-                className="card-glow card-glow-interactive"
-                style={{ padding: "12px 14px", textDecoration: "none", color: "inherit" }}
+                className="card-glow card-glow-interactive py-3 px-3 no-underline text-inherit"
+                
               >
-                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{item.title}</div>
+                <div className="text-sm font-bold mb-1">{item.title}</div>
                 <div className="text-xs text-muted">{item.summary}</div>
               </Link>
             ))}
           </div>
         </section>
       )}
-      {relatedLoading && <p role="status" style={{ marginTop: 24, color: "var(--text-muted)", fontSize: 13 }}>関連記事を読み込んでいます…</p>}
-      {relatedError && <p role="alert" style={{ marginTop: 24, color: "var(--state-danger)", fontSize: 13 }}>関連記事を読み込めませんでした。</p>}
+      {relatedLoading && <p role="status" className="mt-6 text-muted text-sm">関連記事を読み込んでいます…</p>}
+      {relatedError && <p role="alert" className="mt-6 text-danger text-sm">関連記事を読み込めませんでした。</p>}
 
       <ArticleComments articleId={article.id} />
     </div>
