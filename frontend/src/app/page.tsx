@@ -94,14 +94,14 @@ export default function Home() {
         {/* 今日の聖句。読み込み中・失敗・本体で同じネオンカードを使う。 */}
         {(verseLoading || verseOfDay || verseError) && (
           verseLoading || verseError ? (
-            <div className={styles.neonCard}>
+            <div className={`card-glow card-glow-strong ${styles.neonCardPad}`}>
               <p className={styles.verseLabel}>{t.todayVerse}</p>
               <p className="m-0 text-sm text-muted">
                 {verseLoading ? t.loading : t.verseUnavailable}
               </p>
             </div>
           ) : (
-            <Link href={verseHref} className={styles.neonCard}>
+            <Link href={verseHref} className={`card-glow card-glow-strong card-glow-interactive ${styles.neonCardPad}`}>
               <p className={styles.verseLabel}>{t.todayVerse}</p>
               <blockquote className={styles.verseText}>{verseOfDay!.text}</blockquote>
               <p className={styles.verseSource}>
@@ -253,9 +253,9 @@ function SectionCard({
   // 以前は JavaScript で style を直接書き換えていたため、キーボードで
   // 選んだときには光らなかった。
   const cardClass = [
-    styles.neonCard,
+    "card-glow card-glow-strong card-glow-interactive",
     styles.sectionCard,
-    featured ? styles.neonCardFeatured : null,
+    featured ? "card-glow-featured" : null,
     disabled ? "opacity-70" : null,
   ]
     .filter(Boolean)
