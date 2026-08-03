@@ -157,7 +157,7 @@ function ReadContent() {
           onChange={setBookSearch}
           placeholder={t.bookSearchPlaceholder}
           ariaLabel={t.bookSearchLabel}
-          inputStyle={readSearchInputStyle}
+          inputClassName="form-control"
           wrapperStyle={{ width: "100%" }}
         />
       </label>
@@ -385,16 +385,3 @@ function ReadContent() {
   );
 }
 
-const readSearchInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "8px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};

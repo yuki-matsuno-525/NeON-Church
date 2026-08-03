@@ -20,15 +20,6 @@ type Props = {
   fixedLocation?: { verse?: string; chapter?: string; book?: string; label?: string };
 };
 
-const inputStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: 13,
-  fontFamily: "inherit",
-};
 
 export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation }: Props) {
   const t = useT();
@@ -209,7 +200,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           id={genreSelectId}
           value={genreFilter}
           onChange={(e) => { setGenreFilter(e.target.value); selectBook(""); }}
-          style={inputStyle}
+          className="form-control"
         >
           <option value="">{t.allBooks}</option>
           {groupCatalogByGenre(catalog).map(({ genre }) => (
@@ -217,7 +208,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           ))}
         </select>
         <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
-        <select id={bookSelectId} value={slug} onChange={handleSlugChange} style={inputStyle}>
+        <select id={bookSelectId} value={slug} onChange={handleSlugChange} className="form-control">
           <option value="">{t.qaSelectBookOptional}</option>
           {(genreFilter
             ? groupCatalogByGenre(catalog).find((g) => g.genre === genreFilter)?.entries ?? []
@@ -229,7 +220,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {slug && (
           <>
             <label htmlFor={versionSelectId} className="sr-only">{t.bibleVersion}</label>
-            <select id={versionSelectId} value={version} onChange={handleVersionChange} style={inputStyle}>
+            <select id={versionSelectId} value={version} onChange={handleVersionChange} className="form-control">
               {(getBookBySlug(slug)?.translations ?? []).map((tr) => (
                 <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
               ))}
@@ -239,7 +230,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {chapters.length > 0 && (
           <>
             <label htmlFor={chapterSelectId} className="sr-only">{t.qaSelectChapterOptional}</label>
-            <select id={chapterSelectId} value={chapterId} onChange={handleChapterChange} style={inputStyle}>
+            <select id={chapterSelectId} value={chapterId} onChange={handleChapterChange} className="form-control">
               <option value="">{t.qaSelectChapterOptional}</option>
               {chapters.map((c) => (
                 <option key={c.id} value={c.id}>{t.chapterOption(c.number)}</option>
@@ -250,7 +241,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {verses.length > 0 && (
           <>
             <label htmlFor={verseSelectId} className="sr-only">{t.qaSelectVerseOptional}</label>
-            <select id={verseSelectId} value={verseId} onChange={(e) => setVerseId(e.target.value)} style={inputStyle}>
+            <select id={verseSelectId} value={verseId} onChange={(e) => setVerseId(e.target.value)} className="form-control">
               <option value="">{t.qaSelectVerseOptional}</option>
               {verses.map((v) => (
                 <option key={v.id} value={v.id}>{t.verseOption(v.number)}</option>

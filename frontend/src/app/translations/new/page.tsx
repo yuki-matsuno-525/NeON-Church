@@ -100,17 +100,6 @@ export default function NewTranslationPage() {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    minHeight: 44,
-    padding: "8px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    background: "var(--bg-alt)",
-    color: "var(--text)",
-    fontSize: 14,
-    boxSizing: "border-box",
-  };
 
   const labelStyle: React.CSSProperties = {
     display: "block",
@@ -142,7 +131,7 @@ export default function NewTranslationPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.projectNamePlaceholder}
-            style={inputStyle}
+            className="form-control"
             required
             autoComplete="off"
           />
@@ -157,7 +146,7 @@ export default function NewTranslationPage() {
             placeholder={t.descPlaceholder}
             rows={3}
             autoComplete="off"
-            style={{ ...inputStyle, resize: "vertical" }}
+            className="form-control resize-y"
           />
         </div>
 
@@ -169,7 +158,7 @@ export default function NewTranslationPage() {
             disabled={catalogLoading || catalogError}
             value={genreFilter}
             onChange={(e) => { setGenreFilter(e.target.value); handleSlugChange(""); }}
-            style={inputStyle}
+            className="form-control"
           >
             <option value="">{t.all}</option>
             {groupCatalogByGenre(catalog).map(({ genre }) => (
@@ -185,7 +174,7 @@ export default function NewTranslationPage() {
             disabled={catalogLoading || catalogError}
             value={sourceSlug}
             onChange={(e) => handleSlugChange(e.target.value)}
-            style={inputStyle}
+            className="form-control"
             required
           >
             <option value="">{t.selectBookOption}</option>
@@ -205,7 +194,7 @@ export default function NewTranslationPage() {
               id={versionId}
               value={sourceVersion}
               onChange={(e) => setSourceVersion(e.target.value)}
-              style={inputStyle}
+              className="form-control"
               required
             >
               {(catalogEntry(catalog, sourceSlug)?.translations ?? []).map((tr) => (
@@ -221,7 +210,7 @@ export default function NewTranslationPage() {
             id={languageId}
             value={targetLanguage}
             onChange={(e) => setTargetLanguage(e.target.value)}
-            style={inputStyle}
+            className="form-control"
             required
           >
             <option value="">{t.selectLangOption}</option>

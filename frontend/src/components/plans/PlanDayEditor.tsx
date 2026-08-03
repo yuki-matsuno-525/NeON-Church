@@ -120,7 +120,7 @@ export function PlanDayEditor({
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t.planDayTitlePlaceholder}
           maxLength={200}
-          style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
+          className="form-control mb-3 font-bold"
         />
       </label>
 
@@ -189,25 +189,13 @@ export function PlanDayEditor({
           onChange={(event) => setDevotional(event.target.value)}
           rows={4}
           placeholder={t.planDevotionalPlaceholder}
-          style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
+          className="form-control mt-3 resize-y leading-reading"
         />
       </label>
     </section>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 14,
-  minHeight: 44,
-};
 
 const iconButtonStyle: React.CSSProperties = {
   border: "1px solid var(--border)",

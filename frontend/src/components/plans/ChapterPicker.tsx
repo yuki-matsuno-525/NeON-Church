@@ -58,7 +58,7 @@ export function ChapterPicker({
               onChange={(event) => setKeyword(event.target.value)}
               placeholder={t.citationBookSearchPlaceholder}
               autoFocus
-              style={{ ...inputStyle, width: "100%" }}
+              className="form-control w-full"
             />
           </label>
           <button type="button" onClick={onCancel} style={plainButtonStyle}>
@@ -96,7 +96,7 @@ export function ChapterPicker({
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}
           aria-label={t.planTranslationLabel}
-          style={{ ...inputStyle, width: "auto" }}
+          className="form-control w-auto"
         >
           <option value="">{t.planReaderTranslation}</option>
           {(meta?.translations ?? []).map((tr) => (
@@ -149,17 +149,6 @@ const boxStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.02)",
 };
 
-const inputStyle: React.CSSProperties = {
-  boxSizing: "border-box",
-  padding: "7px 8px",
-  borderRadius: 6,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 13,
-  minHeight: 44,
-};
 
 const rowButtonStyle: React.CSSProperties = {
   display: "block",

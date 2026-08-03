@@ -182,7 +182,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
           placeholder={t.citationBookSearchPlaceholder}
-          style={inputStyle}
+          className="form-control"
         />
         <div className="flex flex-col gap-1 mt-3">
           {matched.map((book) => (
@@ -217,7 +217,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
             setTranslation(event.target.value);
             setVerses([]);
           }}
-          style={{ ...inputStyle, width: "auto", flex: 1, padding: "5px 6px" }}
+          className="form-control w-auto flex-1 p-1"
         >
           {/* その書に実際にある訳だけを出す */}
           {(meta?.translations ?? []).map((tr) => (
@@ -534,7 +534,7 @@ function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onIn
       </div>
       {bookmark.verse_text && <p className="mt-0 mx-0 mb-2 text-sm text-muted leading-base">{bookmark.verse_text}</p>}
       <label htmlFor={selectId} style={fieldLabelStyle}>{t.translationLabel}</label>
-      <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} style={{ ...inputStyle, marginBottom: 8 }}>
+      <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} className="form-control mb-2">
         {translations.map((item) => <option key={item.id} value={item.id}>{translationLabel(item.id, lang)}</option>)}
       </select>
       <div className="flex gap-2 flex-wrap">
@@ -588,17 +588,6 @@ function TabButton({
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "7px 8px",
-  borderRadius: 6,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 16,
-};
 
 const rowButtonStyle: React.CSSProperties = {
   textAlign: "left",

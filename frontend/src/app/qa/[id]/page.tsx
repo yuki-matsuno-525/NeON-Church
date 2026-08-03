@@ -221,14 +221,14 @@ export default function QuestionDetailPage() {
               onChange={(e) => setDraftTitle(e.target.value)}
               aria-label={t.qaTitleInputPlaceholder}
               placeholder={t.qaTitleInputPlaceholder}
-              style={{ ...inputStyle, fontWeight: 700, marginBottom: 8 }}
+              className="form-control mb-2 font-bold"
             />
             <textarea
               value={draftBody}
               onChange={(e) => setDraftBody(e.target.value)}
               rows={6}
               aria-label={t.commentPlaceholder}
-              style={inputStyle}
+              className="form-control resize-y"
             />
             <div className="flex gap-2 justify-end mt-2">
               <Button variant="secondary" onClick={() => setEditing(false)}>{t.cancel}</Button>
@@ -332,7 +332,7 @@ export default function QuestionDetailPage() {
             placeholder={t.qaAnswerPlaceholder}
             aria-label={t.qaAnswerPlaceholder}
             rows={4}
-            style={inputStyle}
+            className="form-control resize-y"
           />
           {postError && <p style={{ color: "var(--state-error)", fontSize: 12, margin: "4px 0" }}>{postError}</p>}
           <div className="flex justify-end mt-2">
@@ -399,21 +399,6 @@ const sectionHeadingStyle: React.CSSProperties = {
   margin: "28px 0 12px",
   display: "flex",
   alignItems: "center",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: 14,
-  lineHeight: 1.7,
-  resize: "vertical",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
 };
 
 const metaPillStyle: React.CSSProperties = {

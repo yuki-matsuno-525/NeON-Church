@@ -88,16 +88,6 @@ function RegisterForm() {
     );
   }
 
-  const fieldStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "9px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)",
-    background: "var(--bg-alt)",
-    color: "var(--text)",
-    fontSize: "var(--font-size-sm)",
-    fontFamily: "inherit",
-  };
 
   const labelStyle: React.CSSProperties = {
     display: "block",
@@ -141,7 +131,7 @@ function RegisterForm() {
               autoComplete="username"
               aria-invalid={errorField === "username" ? true : undefined}
               aria-describedby={[usernameHintId, errorField === "username" ? errorId : null].filter(Boolean).join(" ")}
-              style={fieldStyle}
+              className="form-control"
             />
             <p id={usernameHintId} className="mt-1 mx-0 mb-0 text-faint text-xs">
               {t.usernameHint}
@@ -158,7 +148,7 @@ function RegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              style={fieldStyle}
+              className="form-control"
             />
           </div>
 
@@ -173,7 +163,7 @@ function RegisterForm() {
               minLength={PASSWORD_MIN_LENGTH}
               ariaInvalid={errorField === "password" ? true : undefined}
               ariaDescribedby={errorField === "password" ? errorId : undefined}
-              inputStyle={fieldStyle}
+              inputClassName="form-control"
             />
           </div>
 
@@ -188,7 +178,7 @@ function RegisterForm() {
               minLength={PASSWORD_MIN_LENGTH}
               ariaInvalid={errorField === "confirm" ? true : undefined}
               ariaDescribedby={errorField === "confirm" ? errorId : undefined}
-              inputStyle={fieldStyle}
+              inputClassName="form-control"
             />
           </div>
 

@@ -209,7 +209,7 @@ function QAContent() {
             }}
             placeholder={t.qaSearchPlaceholder}
             ariaLabel={t.qaSearchLabel}
-            inputStyle={qaSearchInputStyle}
+            inputClassName="form-control"
             wrapperStyle={{ minWidth: 220, flex: "1 1 240px" }}
           />
           {(() => {
@@ -462,16 +462,3 @@ const qaSelectStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const qaSearchInputStyle: React.CSSProperties = {
-  minHeight: 44,
-  minWidth: 220,
-  flex: "1 1 240px",
-  padding: "6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-};

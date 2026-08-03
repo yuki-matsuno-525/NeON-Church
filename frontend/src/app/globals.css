@@ -493,6 +493,27 @@
   font-family: inherit;
 }
 
+/* 検索欄の右端に出る「消す」ボタン */
+.clear-input-btn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
 /* select の option はブラウザ依存 → 暗い背景を強制 */
 option {
   background: #160e2e;

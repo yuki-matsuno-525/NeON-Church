@@ -215,12 +215,12 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             maxLength={200}
             aria-invalid={!title.trim()}
             aria-describedby={!title.trim() ? "plan-title-error" : undefined}
-            style={{ ...inputStyle, borderColor: !title.trim() ? "var(--state-danger)" : "var(--border)", fontSize: 18, fontWeight: 700 }}
+            className={`form-control text-lg font-bold ${title.trim() ? "border-border" : "border-danger"}`}
           />
         </label>
         <label>
           <span className="sr-only">{supplementalText.visibilityLabelText}</span>
-          <select value={visibility} onChange={(event) => setVisibility(event.target.value as PlanVisibility)} style={{ ...inputStyle, width: "auto" }}>
+          <select value={visibility} onChange={(event) => setVisibility(event.target.value as PlanVisibility)} className="form-control w-auto">
             {visibilityOptions(t).map((option) => (
               <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
                 {option.label}
@@ -246,7 +246,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
           onChange={(event) => setDescription(event.target.value)}
           placeholder={t.planDescPlaceholder}
           maxLength={300}
-          style={{ ...inputStyle, marginBottom: 10 }}
+          className="form-control mb-3"
         />
       </label>
 
@@ -261,7 +261,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         onChange={(event) => setNote(event.target.value)}
         rows={2}
         placeholder={t.planNotePlaceholder}
-        style={{ ...inputStyle, marginBottom: 8, resize: "vertical" }}
+        className="form-control mb-2 resize-y"
       />
 
       {!canReorder && <p className="text-xs text-muted mt-0 mx-0 mb-4 leading-reading">{t.planFrozenNotice}</p>}
@@ -293,18 +293,6 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
 const containerStyle: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "24px 16px 64px" };
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "9px 12px",
-  minHeight: 44,
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 14,
-};
 
 const plainButtonStyle: React.CSSProperties = {
   border: "1px solid var(--border)",

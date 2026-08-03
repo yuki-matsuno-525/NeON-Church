@@ -115,16 +115,7 @@ function LoginForm() {
               autoComplete="username"
               aria-invalid={error ? true : undefined}
               aria-describedby={error ? errorId : undefined}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-alt)",
-                color: "var(--text)",
-                fontSize: "var(--font-size-sm)",
-                fontFamily: "inherit",
-              }}
+              className="form-control"
             />
           </div>
 
@@ -143,15 +134,7 @@ function LoginForm() {
               required
               ariaInvalid={error ? true : undefined}
               ariaDescribedby={error ? errorId : undefined}
-              inputStyle={{
-                padding: "9px 12px",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-alt)",
-                color: "var(--text)",
-                fontSize: "var(--font-size-sm)",
-                fontFamily: "inherit",
-              }}
+              inputClassName="form-control"
             />
             <div className="text-right mt-2">
               <Link href="/forgot-password" className="text-sm text-accent">
