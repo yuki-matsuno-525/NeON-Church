@@ -59,7 +59,6 @@ describe("apiFetch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setCookie("");
-    localStorage.setItem("lang", "ja");
   });
 
   it("成功時に JSON をパースして返す", async () => {
@@ -205,7 +204,7 @@ describe("apiFetch", () => {
   });
 
   it("英語選択時は Accept-Language とエラー文言を英語にする", async () => {
-    localStorage.setItem("lang", "en");
+    setCookie("neon_lang=en");
     mockFetch.mockResolvedValueOnce(makeRes(403, { detail: "日本語の詳細" }));
     const err = await fetchBooks().catch((e) => e);
     const [, init] = mockFetch.mock.calls[0];
