@@ -8,7 +8,8 @@ import { fetchQuestionPage, fetchTags, type Tag } from "@/lib/api";
 import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
-import { SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
+import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Icon } from "@/components/ui/Icon";
@@ -19,7 +20,6 @@ import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
 import { useBookCatalogState, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 import type { IconName } from "@/components/ui/Icon";
-import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 // 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
 type QAColumnKey = "answered" | "unanswered";
@@ -31,7 +31,7 @@ const QA_COLUMNS: { key: QAColumnKey; icon: IconName; color: string; tint: strin
 export default function QAPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <QAContent />
     </Suspense>
   );
@@ -145,28 +145,28 @@ function QAContent() {
     key === "answered" ? t.qaColAnsweredDesc : t.qaColUnansweredDesc;
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-full">
       {showLoginModal && (
         <LoginRequiredModal onClose={() => setShowLoginModal(false)} />
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 12, flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.qaTitle}</h1>
-        {!showForm && (
-          <Button
-            variant="secondary"
-            leftIcon={<Icon name="help-circle" size={14} />}
-            onClick={() => {
-              if (!user) { setShowLoginModal(true); return; }
-              setShowForm(true);
-            }}
-          >
-            {t.askQuestion}
-          </Button>
-        )}
-      </div>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 24 }}>
-        {t.qaDesc}
-      </p>
+      <ListPageHeader
+        title={t.qaTitle}
+        description={t.qaDesc}
+        action={
+          !showForm ? (
+            <Button
+              variant="secondary"
+              leftIcon={<Icon name="help-circle" size={14} />}
+              onClick={() => {
+                if (!user) { setShowLoginModal(true); return; }
+                setShowForm(true);
+              }}
+            >
+              {t.askQuestion}
+            </Button>
+          ) : undefined
+        }
+      />
 
       {showForm && (
         <QAPostForm
@@ -180,10 +180,10 @@ function QAContent() {
         />
       )}
 
-      {catalogLoading && <p role="status" style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.loading}</p>}
+      {catalogLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
       {catalogError && (
-        <div role="alert" style={{ marginBottom: 16 }}>
-          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{lang === "ja" ? "書の一覧を読み込めませんでした。" : "Could not load the book list."}</p>
+        <div role="alert" className="mb-4">
+          <p className="text-sm text-danger">{lang === "ja" ? "書の一覧を読み込めませんでした。" : "Could not load the book list."}</p>
           <Button variant="ghost" size="sm" onClick={retryCatalog}>{t.retry}</Button>
         </div>
       )}
@@ -194,10 +194,10 @@ function QAContent() {
           {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
         </legend>
         <div style={filterPanelHeaderStyle}>
-          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 700 }}>{t.qaFilters}</span>
+          <span className="text-muted text-xs font-bold">{t.qaFilters}</span>
           {/* 表示中の件数ではなく、絞り込み後の総数（2列の合計） */}
           {!loading && (
-            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.qaQuestionCount(totalCount)}</span>
+            <span className="text-xs text-faint">{t.qaQuestionCount(totalCount)}</span>
           )}
         </div>
         <div style={filterRowStyle}>
@@ -209,7 +209,7 @@ function QAContent() {
             }}
             placeholder={t.qaSearchPlaceholder}
             ariaLabel={t.qaSearchLabel}
-            inputStyle={qaSearchInputStyle}
+            inputClassName="form-control"
             wrapperStyle={{ minWidth: 220, flex: "1 1 240px" }}
           />
           {(() => {
@@ -218,7 +218,7 @@ function QAContent() {
             return (
               <>
                 {/* カテゴリを先に選ぶと、次の書プルダウンがそのカテゴリの書に絞られる。 */}
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <label className="inline-flex items-center gap-2 text-sm text-muted">
                   <select
                     aria-label={t.genreFilterLabel}
                     disabled={catalogLoading || catalogError}
@@ -232,7 +232,7 @@ function QAContent() {
                     ))}
                   </select>
                 </label>
-                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <label className="inline-flex items-center gap-2 text-sm text-muted">
                   <select
                     aria-label={t.allBooks}
                     disabled={catalogLoading || catalogError}
@@ -251,7 +251,7 @@ function QAContent() {
           })()}
           {/* 訳（任意）。書を選んだときだけ出す。未指定ならその書の全訳が対象。 */}
           {selectedSlug && (
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+            <label className="inline-flex items-center gap-2 text-sm text-muted">
               <select
                 aria-label={t.allVersions}
                 value={selectedVersion}
@@ -265,7 +265,7 @@ function QAContent() {
               </select>
             </label>
           )}
-          <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+          <label className="inline-flex items-center gap-2 text-sm text-muted">
             <select
               aria-label={t.allTags}
               value={selectedTagId}
@@ -280,9 +280,9 @@ function QAContent() {
           </label>
         </div>
         {tagsError && (
-          <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+          <div role="alert" className="flex items-center gap-2 mt-2 text-danger text-xs">
             <span>{t.tagsLoadFailed}</span>
-            <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+            <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
           </div>
         )}
       </fieldset>
@@ -316,83 +316,48 @@ function QAContent() {
         <>
         {/* スマホだけカラム切り替えタブを出す。PC はタブなしで2カラムを横並び。 */}
         {isMobile && (
-          <div role="tablist" aria-label={t.qaTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-            {QA_COLUMNS.map((col) => {
-              const active = col.key === activeTab;
-              // 表示中の件数ではなく、サーバーが数えたその列の総数
-              const num = columnList(col.key).total;
-              return (
-                <button
-                  key={col.key}
-                  type="button"
-                  id={`qa-tab-${col.key}`}
-                  role="tab"
-                  aria-selected={active}
-                  aria-controls={`qa-panel-${col.key}`}
-                  tabIndex={active ? 0 : -1}
-                  onClick={() => setActiveTab(col.key)}
-                  style={{
-                    flex: 1,
-                    padding: "8px 6px",
-                    border: `1px solid ${active ? col.color : "var(--border)"}`,
-                    borderRadius: 8,
-                    background: active ? col.tint : "var(--bg-alt)",
-                    color: active ? col.color : "var(--text-muted)",
-                    fontWeight: active ? 700 : 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {columnLabel(col.key)} ({num})
-                </button>
-              );
-            })}
-          </div>
+          <ColumnTabs
+            // 表示中の件数ではなく、サーバーが数えたその列の総数
+            tabs={QA_COLUMNS.map((col) => ({ ...col, label: columnLabel(col.key), count: columnList(col.key).total }))}
+            active={activeTab}
+            onChange={setActiveTab}
+            label={t.qaTitle}
+            idPrefix="qa"
+          />
         )}
-        <div style={isMobile ? { display: "block" } : boardGridStyle}>
+        <div className="list-board">
           {QA_COLUMNS.map((col) => {
             const list = columnList(col.key);
             const items = list.items;
             return (
-              <section
+              <ListColumn
                 key={col.key}
+                icon={col.icon}
+                color={col.color}
+                tint={col.tint}
+                title={columnLabel(col.key)}
+                // 表示中の件数ではなく、サーバーが数えたその列の総数
+                count={list.total}
+                description={columnDesc(col.key)}
+                hidden={isMobile && col.key !== activeTab}
                 id={`qa-panel-${col.key}`}
-                role={isMobile ? "tabpanel" : undefined}
-                aria-labelledby={isMobile ? `qa-tab-${col.key}` : undefined}
-                style={{ ...columnStyle, display: isMobile && col.key !== activeTab ? "none" : undefined }}
+                labelledBy={isMobile ? `qa-tab-${col.key}` : undefined}
               >
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: col.color, display: "inline-flex" }}>
-                      <Icon name={col.icon} size={18} />
-                    </span>
-                    <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{columnLabel(col.key)}</h2>
-                    {/* 表示中の件数ではなく、サーバーが数えたその列の総数 */}
-                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{list.total}</span>
+                <AsyncList loading={false} isEmpty={items.length === 0} emptyText={t.qaEmptyColumn}>
+                  <div className="flex flex-col gap-3">
+                    {items.map((q) => (
+                      <QACard key={q.id} question={q} />
+                    ))}
                   </div>
-                  <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{columnDesc(col.key)}</p>
-                </div>
-
-                {items.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.qaEmptyColumn}</p>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {items.map((q) => (
-                        <QACard key={q.id} question={q} />
-                      ))}
-                    </div>
-                    {/* 列ごとに独立して読み足す */}
-                    <LoadMoreButton
-                      hasMore={list.hasMore}
-                      loading={list.loadingMore}
-                      error={!!list.loadMoreError}
-                      onClick={list.loadMore}
-                    />
-                  </>
-                )}
-              </section>
+                  {/* 列ごとに独立して読み足す */}
+                  <LoadMoreButton
+                    hasMore={list.hasMore}
+                    loading={list.loadingMore}
+                    error={!!list.loadMoreError}
+                    onClick={list.loadMore}
+                  />
+                </AsyncList>
+              </ListColumn>
             );
           })}
         </div>
@@ -402,31 +367,7 @@ function QAContent() {
   );
 }
 
-const boardGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-  gap: 16,
-  alignItems: "start",
-};
 
-const columnStyle: React.CSSProperties = {
-  padding: "18px 16px",
-  border: "1px solid var(--border)",
-  borderRadius: 14,
-  background: "rgba(255,255,255,0.02)",
-};
-
-const countBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 22,
-  height: 22,
-  padding: "0 7px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 700,
-};
 
 const filterPanelStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
@@ -462,16 +403,3 @@ const qaSelectStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const qaSearchInputStyle: React.CSSProperties = {
-  minHeight: 44,
-  minWidth: 220,
-  flex: "1 1 240px",
-  padding: "6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-};

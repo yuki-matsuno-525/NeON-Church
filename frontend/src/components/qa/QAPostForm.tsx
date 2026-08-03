@@ -20,15 +20,6 @@ type Props = {
   fixedLocation?: { verse?: string; chapter?: string; book?: string; label?: string };
 };
 
-const inputStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: 13,
-  fontFamily: "inherit",
-};
 
 export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation }: Props) {
   const t = useT();
@@ -145,13 +136,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
   return (
     <form
       onSubmit={handleSubmit}
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 8,
-        padding: "16px 18px",
-        marginBottom: 24,
-        background: "var(--bg-alt)",
-      }}
+      className="border border-border rounded-md py-4 px-4 mb-6 bg-bg-alt"
     >
       <label htmlFor={titleId} style={fieldLabelStyle}>{t.fieldTitle}</label>
       <input
@@ -203,19 +188,19 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
       {/* 場所選択。読書ページから開いたときは、その箇所で固定なので選ばせない。 */}
       {fixedLocation ? (
         fixedLocation.label && (
-          <p style={{ margin: "10px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+          <p className="mt-3 mx-0 mb-0 text-xs text-muted">
             {fixedLocation.label}
           </p>
         )
       ) : (
       <>
-      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+      <div className="flex gap-2 mt-3 flex-wrap">
         <label htmlFor={genreSelectId} className="sr-only">{t.allBooks}</label>
         <select
           id={genreSelectId}
           value={genreFilter}
           onChange={(e) => { setGenreFilter(e.target.value); selectBook(""); }}
-          style={inputStyle}
+          className="form-control"
         >
           <option value="">{t.allBooks}</option>
           {groupCatalogByGenre(catalog).map(({ genre }) => (
@@ -223,7 +208,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           ))}
         </select>
         <label htmlFor={bookSelectId} className="sr-only">{t.qaSelectBookOptional}</label>
-        <select id={bookSelectId} value={slug} onChange={handleSlugChange} style={inputStyle}>
+        <select id={bookSelectId} value={slug} onChange={handleSlugChange} className="form-control">
           <option value="">{t.qaSelectBookOptional}</option>
           {(genreFilter
             ? groupCatalogByGenre(catalog).find((g) => g.genre === genreFilter)?.entries ?? []
@@ -235,7 +220,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {slug && (
           <>
             <label htmlFor={versionSelectId} className="sr-only">{t.bibleVersion}</label>
-            <select id={versionSelectId} value={version} onChange={handleVersionChange} style={inputStyle}>
+            <select id={versionSelectId} value={version} onChange={handleVersionChange} className="form-control">
               {(getBookBySlug(slug)?.translations ?? []).map((tr) => (
                 <option key={tr.id} value={tr.id}>{translationLabel(tr.id, lang)}</option>
               ))}
@@ -245,7 +230,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {chapters.length > 0 && (
           <>
             <label htmlFor={chapterSelectId} className="sr-only">{t.qaSelectChapterOptional}</label>
-            <select id={chapterSelectId} value={chapterId} onChange={handleChapterChange} style={inputStyle}>
+            <select id={chapterSelectId} value={chapterId} onChange={handleChapterChange} className="form-control">
               <option value="">{t.qaSelectChapterOptional}</option>
               {chapters.map((c) => (
                 <option key={c.id} value={c.id}>{t.chapterOption(c.number)}</option>
@@ -256,7 +241,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         {verses.length > 0 && (
           <>
             <label htmlFor={verseSelectId} className="sr-only">{t.qaSelectVerseOptional}</label>
-            <select id={verseSelectId} value={verseId} onChange={(e) => setVerseId(e.target.value)} style={inputStyle}>
+            <select id={verseSelectId} value={verseId} onChange={(e) => setVerseId(e.target.value)} className="form-control">
               <option value="">{t.qaSelectVerseOptional}</option>
               {verses.map((v) => (
                 <option key={v.id} value={v.id}>{t.verseOption(v.number)}</option>
@@ -266,7 +251,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         )}
       </div>
       {locationError && (
-        <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12, margin: "6px 0 0" }}>
+        <p role="alert" className="text-danger text-xs mt-2 mx-0 mb-0">
           {locationError}
         </p>
       )}
@@ -275,9 +260,9 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
 
       {/* タグ選択 */}
       {tags.length > 0 && (
-        <fieldset style={{ border: 0, padding: 0, margin: "10px 0 0" }}>
+        <fieldset className="border-0 p-0 mt-3 mx-0 mb-0">
           <legend style={fieldLabelStyle}>{t.allTags}</legend>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = tagIds.includes(tag.id);
             return (
@@ -317,20 +302,11 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         </p>
       )}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
+      <div className="flex gap-2 justify-end mt-3">
         <button
           type="button"
           onClick={onCancel}
-          style={{
-            padding: "7px 14px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "transparent",
-            color: "var(--text-muted)",
-            cursor: "pointer",
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="py-2 px-3 border border-border rounded-md bg-transparent text-muted cursor-pointer text-sm"
         >
           {t.cancel}
         </button>
@@ -338,18 +314,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           type="submit"
           // 送信中だけ止める。未入力でも押せるようにして、押したら理由を出す。
           disabled={submitting}
-          style={{
-            padding: "7px 16px",
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            cursor: submitting ? "not-allowed" : "pointer",
-            opacity: submitting ? 0.6 : 1,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="btn btn-secondary"
         >
           {submitting ? t.posting : t.submitQuestion}
         </button>

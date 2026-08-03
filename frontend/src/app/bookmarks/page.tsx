@@ -18,7 +18,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveVersionVerseIds, resolveVersionChapterIds, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
-import { SkeletonList, EmptyState, ErrorState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, Button, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 
@@ -51,7 +51,7 @@ export default function BookmarksPage() {
           }),
     [user, kind]
   );
-  const { items: bookmarks, setItems, counts, setCounts, loading: fetching, loadingMore, hasMore, error, loadMoreError, loadMore, retry } =
+  const { items: bookmarks, setItems, counts, setCounts, loading: fetching, loadingMore, hasMore, failed, loadMoreError, loadMore, retry } =
     useLoadMore(fetchPage);
 
   const handleRemove = async (bm: Bookmark) => {
@@ -126,14 +126,14 @@ export default function BookmarksPage() {
     : [];
 
   const heading = (
-    <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
+    <h1 className="text-xl font-bold mb-8">
       {t.bookmarksTitle}
     </h1>
   );
 
   if (loading || fetching) {
     return (
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-narrow">
         {heading}
         <SkeletonList count={3} />
       </div>
@@ -143,19 +143,19 @@ export default function BookmarksPage() {
   if (!user) return null;
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-narrow">
       {heading}
 
       {recentlyRemoved && (
-        <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)" }}>
-          <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.bookmarkRemovedStatus}</span>
+        <div role="status" aria-live="polite" className="flex items-center justify-between gap-3 mb-4 py-3 px-3 border border-border rounded-md bg-bg-alt">
+          <span className="text-sm text-muted">{t.bookmarkRemovedStatus}</span>
           <button type="button" onClick={() => handleUndo(recentlyRemoved)} disabled={actionBusy} className="btn btn-ghost">
             {t.undo}
           </button>
         </div>
       )}
       {actionError && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 13, margin: "0 0 16px" }}>
+        <p role="alert" aria-live="polite" className="text-danger text-sm mt-0 mx-0 mb-4">
           {actionError}
         </p>
       )}
@@ -165,33 +165,35 @@ export default function BookmarksPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
-      ) : bookmarks.length === 0 ? (
-        <EmptyState
-          title={t.noBookmarks}
-          description={t.emptyBookmarksDesc}
-          action={
-            <Link href="/read" style={{ textDecoration: "none" }}>
-              <Button variant="primary">{t.emptyBookmarksCta}</Button>
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {bookmarks.map((bm) => (
-              <BookmarkCard
-                key={bm.id}
-                bookmark={bm}
-                showKind={kind === null}
-                onRemove={actionBusy ? undefined : () => handleRemove(bm)}
-              />
-            ))}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
-        </>
-      )}
+      <AsyncList
+        loading={false}
+        error={failed}
+        onRetry={retry}
+        isEmpty={bookmarks.length === 0}
+        empty={
+          <EmptyState
+            title={t.noBookmarks}
+            description={t.emptyBookmarksDesc}
+            action={
+              <Link href="/read" className="no-underline">
+                <Button variant="primary">{t.emptyBookmarksCta}</Button>
+              </Link>
+            }
+          />
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {bookmarks.map((bm) => (
+            <BookmarkCard
+              key={bm.id}
+              bookmark={bm}
+              showKind={kind === null}
+              onRemove={actionBusy ? undefined : () => handleRemove(bm)}
+            />
+          ))}
+        </div>
+        <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
+      </AsyncList>
     </div>
   );
 }

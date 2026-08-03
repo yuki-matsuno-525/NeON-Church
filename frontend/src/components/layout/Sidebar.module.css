@@ -1,0 +1,73 @@
+/* サイドバーの中身。項目の高さと字下げはこの部品固有の寸法なので、ここで持つ。
+   文字サイズは .sidebar が持つ変数（--sidebar-font-*）を見る。
+   画面が狭いときは globals.css 側でその変数だけを一段大きくしている。 */
+
+.inner {
+  position: sticky;
+  top: var(--navbar-height);
+  height: calc(100vh - var(--navbar-height));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* リンクでもボタンでも同じ見た目になる 1 行 */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-3);
+  min-height: var(--sidebar-item-min-height);
+  background: transparent;
+  border: none;
+  text-align: left;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: var(--sidebar-font-item);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* 今いるページの行 */
+.itemActive {
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* ログアウトなど、移動ではない操作の行は控えめにする */
+.itemMuted {
+  color: var(--text-muted);
+}
+
+/* カテゴリの見出し（1 段字下げ） */
+.genre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) var(--spacing-6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--sidebar-font-genre);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* 書名（2 段字下げ） */
+.book {
+  padding-left: var(--spacing-8);
+}
+
+/* 「書」などの区分ラベル */
+.sectionLabel {
+  margin: 0;
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--sidebar-font-label);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

@@ -6,8 +6,9 @@ import { fetchArticles, fetchArticleTags, type Article, type ArticleTag } from "
 import { articleTagLabel, visibilityLabel } from "@/lib/articles";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { LoadMoreButton, SkeletonList } from "@/components/ui";
+import { type IconName } from "@/components/ui/Icon";
+import { AsyncList, LoadMoreButton } from "@/components/ui";
+import { ListColumn, ListPageHeader } from "@/components/list";
 
 type ArticleFeed = {
   articles: Article[];
@@ -97,35 +98,33 @@ export default function ArticlesPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.articlesTitle}</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            {t.articlesDesc}
-          </p>
-        </div>
-        {user ? (
-          <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
-        ) : (
-          <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
-        )}
-      </div>
+    <div className="page page-full">
+      <ListPageHeader
+        title={t.articlesTitle}
+        description={t.articlesDesc}
+        action={
+          user ? (
+            <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
+          ) : (
+            <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
+          )
+        }
+      />
 
-      <div role="group" aria-label={t.articleTopicsLabel} style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+      <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
         <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => selectTag(null)} />
         {tags.map((tag) => (
           <TagChip key={tag.id} label={articleTagLabel(tag.slug, tag.name, t)} count={tag.article_count} active={activeTag === tag.slug} onClick={() => selectTag(tag.slug)} />
         ))}
         {tagError && (
-          <span role="alert" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--state-danger)" }}>
+          <span role="alert" className="inline-flex items-center gap-2 text-xs text-danger">
             {t.articleTopicsLoadFailed}
             <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
           </span>
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))", gap: 16, alignItems: "start" }}>
+      <div className="list-board">
         {user && (
           <ArticleColumn
             title={t.articleMineTitle}
@@ -170,7 +169,7 @@ function TagChip({ label, count, active, onClick }: { label: string; count?: num
       cursor: "pointer",
       fontFamily: "inherit",
     }}>
-      {label}{count !== undefined && <span style={{ marginLeft: 5, fontSize: 11 }}>({count})</span>}
+      {label}{count !== undefined && <span className="ml-1 text-xs">({count})</span>}
     </button>
   );
 }
@@ -189,36 +188,33 @@ function ArticleColumn({
   onRetry: () => void;
   onLoadMore: () => void;
 }) {
-  const t = useT();
   return (
-    <section style={columnStyle} aria-busy={feed.loading}>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span aria-hidden="true" style={{ color, display: "inline-flex" }}><Icon name={icon} size={18} /></span>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h2>
-          <span aria-label={`${feed.total}件`} style={{ ...countBadgeStyle, background: tint, color }}>{feed.total}</span>
-        </div>
-        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{desc}</p>
-      </div>
-
-      {feed.loading && feed.articles.length === 0 ? (
-        <SkeletonList count={2} />
-      ) : feed.error && feed.articles.length === 0 ? (
-        <div role="alert">
-          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{feed.error}</p>
-          <button type="button" onClick={onRetry} style={inlineRetryStyle}>{t.retry}</button>
-        </div>
-      ) : feed.articles.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 2px" }}>{empty}</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={title}
+      count={feed.total}
+      description={desc}
+      busy={feed.loading}
+    >
+      {/* 読み足しの途中（既に何件か出ている）ときは中身を消さない。
+          その間の読み込み中と失敗は下の LoadMoreButton が受け持つ。 */}
+      <AsyncList
+        loading={feed.loading && feed.articles.length === 0}
+        error={feed.articles.length === 0 ? feed.error : null}
+        isEmpty={feed.articles.length === 0}
+        emptyText={empty}
+        onRetry={onRetry}
+      >
+        <div className="flex flex-col gap-3">
           {feed.articles.map((article) => <ArticleCard key={article.id} article={article} editable={editable} />)}
         </div>
-      )}
+      </AsyncList>
 
-      {feed.error && feed.articles.length > 0 && <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12 }}>{feed.error}</p>}
+      {feed.error && feed.articles.length > 0 && <p role="alert" className="text-xs text-danger">{feed.error}</p>}
       <LoadMoreButton hasMore={feed.hasMore || !!feed.error} loading={feed.loading} error={!!feed.error} onClick={feed.error ? onRetry : onLoadMore} />
-    </section>
+    </ListColumn>
   );
 }
 
@@ -226,28 +222,25 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
   const t = useT();
   const isPublic = article.visibility === "public";
   return (
-    <article className="card-glow" style={{ padding: 16, display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+    <article className="card-glow p-4 flex flex-col" >
+      <div className="flex justify-between items-center gap-2 mb-3">
         <span className="badge" style={{ background: isPublic ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)", color: isPublic ? "var(--state-success)" : "var(--text-muted)" }}>
           {visibilityLabel(article.visibility, t)}
         </span>
         {editable && <Link href={`/articles/${article.id}/edit`} style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center", padding: "0 6px" }}>{t.articleEditShort}</Link>}
       </div>
       <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
-        <Link href={`/articles/${article.id}`} style={{ color: "inherit", textDecoration: "none" }}>{article.title}</Link>
+        <Link href={`/articles/${article.id}`} className="text-inherit no-underline">{article.title}</Link>
       </h3>
       {article.summary && <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>{article.summary}</p>}
-      <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", flexWrap: "wrap" }}>
-        <Link href={`/profile/${article.owner_username}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{article.owner_username}</Link>
-        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
+      <div className="flex gap-2 text-xs text-muted flex-wrap">
+        <Link href={`/profile/${article.owner_username}`} className="meta-pill meta-pill-link">{article.owner_username}</Link>
+        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} className="meta-pill meta-pill-link">{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
       </div>
     </article>
   );
 }
 
-const columnStyle: React.CSSProperties = { padding: "18px 16px", border: "1px solid var(--border)", borderRadius: 14, background: "rgba(255,255,255,0.02)" };
-const countBadgeStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 22, height: 22, padding: "0 7px", borderRadius: 999, fontSize: 12, fontWeight: 700 };
-const metaPillStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", minHeight: 44, padding: "8px 10px", borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "var(--text-muted)" };
 const newButtonStyle: React.CSSProperties = { background: "var(--accent)", color: "var(--accent-text)", borderRadius: 8, padding: "10px 18px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", fontWeight: 700, fontSize: 14 };
 const secondaryLinkStyle: React.CSSProperties = { ...newButtonStyle, background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)" };
 const inlineRetryStyle: React.CSSProperties = { minHeight: 44, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", cursor: "pointer", fontFamily: "inherit" };

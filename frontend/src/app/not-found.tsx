@@ -12,16 +12,7 @@ export default async function NotFound() {
   const copy = siteCopy[await getRequestLanguage()];
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "calc(100vh - var(--navbar-height))",
-        padding: "40px 24px",
-        textAlign: "center",
-        gap: 16,
-      }}
+      className="flex flex-col items-center justify-center min-h-page py-8 px-6 text-center gap-4"
     >
       <p
         style={{
@@ -36,12 +27,7 @@ export default async function NotFound() {
         404
       </p>
       <h1
-        style={{
-          fontSize: 20,
-          fontWeight: 700,
-          color: "var(--text)",
-          margin: 0,
-        }}
+        className="text-lg font-bold text-body m-0"
       >
         {copy.notFoundTitle}
       </h1>
@@ -50,8 +36,8 @@ export default async function NotFound() {
       </p>
       <Link
         href="/"
-        className="btn btn-primary"
-        style={{ marginTop: 8 }}
+        className="btn btn-primary mt-2"
+        
       >
         {copy.notFoundHome}
       </Link>

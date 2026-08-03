@@ -149,7 +149,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         <ErrorState
           title={t.planCannotEdit}
           message={t.planLoginRequired}
-          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} style={actionLinkStyle}>{t.loginBtn}</Link>}
+          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} className="action-link">{t.loginBtn}</Link>}
         />
       </div>
     );
@@ -166,7 +166,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             load().catch(() => setLoadError(editUnavailableDescription)).finally(() => setLoading(false));
           }}
           retryLabel={t.retry}
-          extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>}
+          extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>}
         />
       </div>
     );
@@ -175,7 +175,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   if (user.username !== plan.owner_username) {
     return (
       <div style={containerStyle}>
-        <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>} />
+        <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>} />
       </div>
     );
   }
@@ -205,7 +205,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         onCancel={() => setDeletingDayId(null)}
       />
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+      <div className="flex gap-3 items-center flex-wrap mb-3">
         <label style={{ flex: "1 1 280px" }}>
           <span className="sr-only">{t.planTitleLabel}</span>
           <input
@@ -215,12 +215,12 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             maxLength={200}
             aria-invalid={!title.trim()}
             aria-describedby={!title.trim() ? "plan-title-error" : undefined}
-            style={{ ...inputStyle, borderColor: !title.trim() ? "var(--state-danger)" : "var(--border)", fontSize: 18, fontWeight: 700 }}
+            className={`form-control text-lg font-bold ${title.trim() ? "border-border" : "border-danger"}`}
           />
         </label>
         <label>
           <span className="sr-only">{supplementalText.visibilityLabelText}</span>
-          <select value={visibility} onChange={(event) => setVisibility(event.target.value as PlanVisibility)} style={{ ...inputStyle, width: "auto" }}>
+          <select value={visibility} onChange={(event) => setVisibility(event.target.value as PlanVisibility)} className="form-control w-auto">
             {visibilityOptions(t).map((option) => (
               <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
                 {option.label}
@@ -232,7 +232,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} style={inlineRetryStyle}>{t.retry}</button>}
-        <Link href={`/plans/${id}`} style={viewLinkStyle}>{t.planView}</Link>
+        <Link href={`/plans/${id}`} className="action-link" style={viewLinkStyle}>{t.planView}</Link>
         <button type="button" onClick={() => setConfirmDelete(true)} style={plainButtonStyle}>{t.delete}</button>
       </div>
 
@@ -246,13 +246,13 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
           onChange={(event) => setDescription(event.target.value)}
           placeholder={t.planDescPlaceholder}
           maxLength={300}
-          style={{ ...inputStyle, marginBottom: 10 }}
+          className="form-control mb-3"
         />
       </label>
 
-      {!canPublish && <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>{t.planDayRequired}</p>}
+      {!canPublish && <p className="text-xs text-faint mt-0 mx-0 mb-3">{t.planDayRequired}</p>}
 
-      <label htmlFor="plan-reader-note" style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+      <label htmlFor="plan-reader-note" className="block text-xs text-muted mb-1">
         {t.planNoteFieldLabel}
       </label>
       <textarea
@@ -261,12 +261,12 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         onChange={(event) => setNote(event.target.value)}
         rows={2}
         placeholder={t.planNotePlaceholder}
-        style={{ ...inputStyle, marginBottom: 8, resize: "vertical" }}
+        className="form-control mb-2 resize-y"
       />
 
-      {!canReorder && <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 16px", lineHeight: 1.7 }}>{t.planFrozenNotice}</p>}
+      {!canReorder && <p className="text-xs text-muted mt-0 mx-0 mb-4 leading-reading">{t.planFrozenNotice}</p>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 16 }}>
+      <div className="flex flex-col gap-4 mt-4">
         {days.map((day, index) => (
           <PlanDayEditor
             key={day.id}
@@ -286,25 +286,13 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       <button type="button" onClick={handleAddDay} disabled={!!busyAction} style={{ ...addDayStyle, opacity: busyAction ? 0.6 : 1 }}>
         {busyAction === "add-day" ? supplementalText.addingDay : t.planAddDay}
       </button>
-      {days.length > 0 && !canReorder && <p style={{ fontSize: 12, color: "var(--text-faint)", marginTop: 8 }}>{t.planAddDayAlways}</p>}
+      {days.length > 0 && !canReorder && <p className="text-xs text-faint mt-2">{t.planAddDayAlways}</p>}
     </div>
   );
 }
 
 const containerStyle: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "24px 16px 64px" };
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "9px 12px",
-  minHeight: 44,
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 14,
-};
 
 const plainButtonStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
@@ -318,8 +306,8 @@ const plainButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const actionLinkStyle: React.CSSProperties = { color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" };
-const viewLinkStyle: React.CSSProperties = { ...actionLinkStyle, fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
+// .action-link に重ねて、色と字の大きさだけ控えめにする
+const viewLinkStyle: React.CSSProperties = { fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
 const inlineRetryStyle: React.CSSProperties = { border: 0, background: "transparent", color: "var(--accent)", textDecoration: "underline", minHeight: 44, cursor: "pointer" };
 const errorTextStyle: React.CSSProperties = { color: "var(--state-danger)", fontSize: 13, margin: "4px 0 10px" };
 

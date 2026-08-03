@@ -53,14 +53,14 @@ export default function NewArticlePage() {
   };
 
   if (authLoading) {
-    return <div style={containerStyle}><SkeletonList count={3} /></div>;
+    return <div className="page page-form"><SkeletonList count={3} /></div>;
   }
 
   if (!user) {
     return (
-      <div style={containerStyle}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleLoginRequired}</p>
-        <Link href="/login?from=%2Farticles%2Fnew" style={{ color: "var(--accent)" }}>
+      <div className="page page-form">
+        <p className="text-muted">{t.articleLoginRequired}</p>
+        <Link href="/login?from=%2Farticles%2Fnew" className="text-accent">
           {t.loginBtn}
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-form">
       <ConfirmDialog
         open={confirmCancel}
         title={t.articleDiscardTitle}
@@ -78,13 +78,13 @@ export default function NewArticlePage() {
         onConfirm={() => router.push("/articles")}
         onCancel={() => setConfirmCancel(false)}
       />
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.articleNewTitle}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
+      <h1 className="mt-0 mb-2 text-lg font-bold">{t.articleNewTitle}</h1>
+      <p className="mt-0 mb-6 text-sm text-muted">
         {t.articleNewDesc}
       </p>
 
       <form onSubmit={(event) => { event.preventDefault(); void handleCreate(); }} noValidate>
-        <label htmlFor="new-article-title" style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
+        <label htmlFor="new-article-title" className="mb-2 block text-sm text-muted">
           {t.articleTitleLabel} <span aria-hidden="true">*</span>
         </label>
         <input
@@ -115,30 +115,18 @@ export default function NewArticlePage() {
             fontSize: 16,
           }}
         />
-        <div id="new-article-title-help" style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>
+        <div id="new-article-title-help" className="flex justify-between gap-3 mt-2 text-xs text-muted">
           <span>{t.articleDraftNext}</span>
           <span>{title.length}/{MAX_TITLE_LENGTH}</span>
         </div>
 
-        {error && <p id="new-article-error" role="alert" style={{ fontSize: 13, color: "var(--state-danger)", marginTop: 8 }}>{error}</p>}
+        {error && <p id="new-article-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+        <div className="flex gap-3 mt-4">
         <button
           type="submit"
           disabled={!title.trim() || busy}
-          style={{
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            fontWeight: 700,
-            fontSize: 14,
-            padding: "10px 22px",
-            minHeight: 44,
-            cursor: !title.trim() || busy ? "default" : "pointer",
-            opacity: !title.trim() || busy ? 0.6 : 1,
-            fontFamily: "inherit",
-          }}
+          className="btn btn-secondary"
         >
           {busy ? t.articleCreating : t.articleStartWriting}
         </button>
@@ -155,8 +143,3 @@ export default function NewArticlePage() {
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 560,
-  margin: "0 auto",
-  padding: "48px 16px",
-};

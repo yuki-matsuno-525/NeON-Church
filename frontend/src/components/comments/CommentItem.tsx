@@ -8,6 +8,7 @@ import { CommentInput } from "./CommentInput";
 import { Icon } from "@/components/ui/Icon";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useT, useRelativeTime } from "@/lib/i18n";
+import styles from "./CommentItem.module.css";
 
 type Props = {
   // 返信はここに含まれない。件数（reply_count）だけ持っていて、開いたときに取りに行く。
@@ -192,7 +193,7 @@ export function CommentItem({
   };
 
   return (
-    <div style={{ marginLeft: depth > 0 ? 20 : 0 }}>
+    <div className={depth > 0 ? "ml-4" : undefined}>
       <ConfirmDialog
         open={confirmDelete}
         title={t.confirmDeleteCommentTitle}
@@ -202,22 +203,9 @@ export function CommentItem({
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
       />
-      <div
-        style={{
-          padding: "12px 0",
-          borderTop: depth === 0 ? "1px solid var(--border)" : "none",
-        }}
-      >
-        {/* Header row with collapse toggle */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: collapsed ? 0 : 6,
-          }}
-        >
-          {/* Collapse toggle (vertical line) */}
+      <div className={`py-3 ${depth === 0 ? "border-t border-border" : ""}`}>
+        {/* 投稿者と時刻の行。左端は折りたたみボタン。 */}
+        <div className={`flex items-center gap-2 ${collapsed ? "mb-0" : "mb-2"}`}>
           {hasChildren && (
             <button
               type="button"
@@ -225,67 +213,32 @@ export function CommentItem({
               aria-label={collapsed ? t.expand : t.collapse}
               aria-expanded={!collapsed}
               title={collapsed ? t.expand : t.collapse}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                minWidth: 44,
-                minHeight: 44,
-                color: "var(--text-faint)",
-                display: "inline-flex",
-                alignItems: "center",
-                flexShrink: 0,
-                lineHeight: 1,
-              }}
+              className="tap-target-square inline-flex shrink-0 cursor-pointer items-center border-0 bg-transparent p-0 text-faint"
             >
               <Icon name={collapsed ? "chevron-right" : "chevron-down"} size={14} />
             </button>
           )}
-          {!hasChildren && <span style={{ width: 20, flexShrink: 0 }} />}
+          {!hasChildren && <span className={styles.togglePlaceholder} />}
 
-          <span
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 700,
-              fontSize: 12,
-              flexShrink: 0,
-            }}
-          >
+          <span className="avatar-circle">
             {comment.user.username[0]?.toUpperCase() ?? "?"}
           </span>
           <Link
             href={`/profile/${comment.user.username}`}
-            style={{ fontWeight: 700, fontSize: 13, color: "inherit", textDecoration: "none" }}
+            className="text-sm font-bold text-body no-underline"
           >
             {comment.user.username}
           </Link>
           {showVersionBadge && comment.version_label && (
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                background: "var(--accent-tint)",
-                color: "var(--accent)",
-                padding: "1px 7px",
-                borderRadius: 999,
-              }}
-            >
+            <span className="badge bg-accent-tint text-accent">
               {comment.version_label}
             </span>
           )}
-          <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
+          <span className="text-xs text-faint">
             {relTime(comment.created_at)}
           </span>
           {collapsed && hasChildren && (
-            <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
+            <span className="text-xs text-faint">
               ({t.numReplies(replyCount)})
             </span>
           )}
@@ -294,56 +247,21 @@ export function CommentItem({
         {!collapsed && (
           <>
             {editing ? (
-              <div style={{ margin: "0 0 8px 52px" }}>
+              <div className={`mb-2 ${styles.indent}`}>
                 <textarea
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   rows={3}
-                  style={{
-                    width: "100%",
-                    padding: "8px",
-                    fontSize: 16,
-                    border: "1px solid var(--border)",
-                    borderRadius: 4,
-                    background: "var(--bg)",
-                    color: "var(--text)",
-                    resize: "vertical",
-                    fontFamily: "inherit",
-                    boxSizing: "border-box",
-                  }}
+                  className="form-control resize-y"
                 />
-                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                  <button
-                    type="button"
-                    onClick={handleEditSubmit}
-                    style={{
-                      padding: "4px 12px",
-                      fontSize: 12,
-                      background: "var(--accent)",
-                      color: "var(--accent-text)",
-                      border: "none",
-                      borderRadius: 4,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      minHeight: 44,
-                    }}
-                  >
+                <div className="mt-1 flex gap-2">
+                  <button type="button" onClick={handleEditSubmit} className="btn btn-sm btn-secondary">
                     {t.save}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setEditing(false); setEditBody(currentBody); }}
-                    style={{
-                      padding: "4px 12px",
-                      fontSize: 12,
-                      background: "transparent",
-                      color: "var(--text-faint)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 4,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      minHeight: 44,
-                    }}
+                    className="btn btn-sm btn-ghost"
                   >
                     {t.cancel}
                   </button>
@@ -351,65 +269,32 @@ export function CommentItem({
               </div>
             ) : (
               <p
-                style={{
-                  margin: "0 0 8px 52px",
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  color: comment.is_deleted ? "var(--text-faint)" : "var(--text)",
-                  fontStyle: comment.is_deleted ? "italic" : "normal",
-                }}
+                className={`mt-0 mb-2 text-sm leading-base ${styles.indent} ${
+                  comment.is_deleted ? "text-faint italic" : "text-body"
+                }`}
               >
-                <span style={{ whiteSpace: "pre-wrap" }}>{comment.is_deleted ? t.deletedComment : currentBody}</span>
+                <span className="whitespace-pre-wrap">{comment.is_deleted ? t.deletedComment : currentBody}</span>
               </p>
             )}
 
             {comment.tags && comment.tags.length > 0 && (
-              <div style={{ display: "flex", gap: 4, marginLeft: 52, marginBottom: 6, flexWrap: "wrap" }}>
+              <div className={`mb-2 flex flex-wrap gap-1 ${styles.indent}`}>
                 {comment.tags.map((tag: Tag) => (
-                  <span
-                    key={tag.id}
-                    style={{
-                      fontSize: 10,
-                      padding: "1px 7px",
-                      borderRadius: 999,
-                      border: "1px solid var(--border)",
-                      color: "var(--text-muted)",
-                    }}
-                  >
+                  <span key={tag.id} className="badge border border-border font-normal text-muted">
                     {t.tagNames[tag.name] ?? tag.name}
                   </span>
                 ))}
               </div>
             )}
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginLeft: 52,
-                flexWrap: "wrap",
-              }}
-            >
+            <div className={`flex flex-wrap items-center gap-3 ${styles.indent}`}>
               <button
                 type="button"
                 onClick={handleUpvote}
                 disabled={!user || busyAction === "vote"}
                 aria-pressed={upvoted}
                 aria-label={`${t.approve}: ${voteCount}`}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: user && busyAction !== "vote" ? "pointer" : "default",
-                  color: upvoted ? "var(--accent)" : "var(--text-faint)",
-                  fontSize: 13,
-                  padding: "4px 6px",
-                  minHeight: 44,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  fontFamily: "inherit",
-                }}
+                className={`btn-text ${upvoted ? "btn-text-on" : ""}`}
               >
                 ▲ {voteCount}
               </button>
@@ -419,16 +304,7 @@ export function CommentItem({
                   type="button"
                   onClick={() => setShowReplyForm((v) => !v)}
                   aria-expanded={showReplyForm}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-faint)",
-                    fontSize: 13,
-                    padding: "4px 6px",
-                    minHeight: 44,
-                    fontFamily: "inherit",
-                  }}
+                  className="btn-text"
                 >
                   {t.replyShort}
                 </button>
@@ -442,18 +318,7 @@ export function CommentItem({
                   aria-pressed={!!bookmarkId}
                   aria-label={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
                   title={bookmarkId ? t.bookmarkRemove : t.bookmarkAdd}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: bookmarkId ? "var(--accent)" : "var(--text-faint)",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "4px 6px",
-                    minHeight: 44,
-                    fontFamily: "inherit",
-                    filter: bookmarkId ? "drop-shadow(0 0 4px var(--accent))" : undefined,
-                  }}
+                  className={`btn-text ${bookmarkId ? `btn-text-on ${styles.bookmarked}` : ""}`}
                 >
                   <Icon name="bookmark" size={15} fill={bookmarkId ? "currentColor" : "none"} />
                 </button>
@@ -464,16 +329,7 @@ export function CommentItem({
                   <button
                     type="button"
                     onClick={() => { setActionError(null); setEditing(true); }}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--text-faint)",
-                      fontSize: 13,
-                      padding: "4px 6px",
-                      minHeight: 44,
-                      fontFamily: "inherit",
-                    }}
+                    className="btn-text"
                   >
                     {t.edit}
                   </button>
@@ -482,16 +338,7 @@ export function CommentItem({
                     onClick={() => setConfirmDelete(true)}
                     disabled={busyAction === "delete"}
                     data-testid="delete-comment"
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      color: "var(--text-faint)",
-                      fontSize: 13,
-                      padding: "4px 6px",
-                      minHeight: 44,
-                      fontFamily: "inherit",
-                    }}
+                    className="btn-text"
                   >
                     {t.delete}
                   </button>
@@ -503,48 +350,39 @@ export function CommentItem({
                   type="button"
                   onClick={() => setShowReportForm((v) => !v)}
                   aria-expanded={showReportForm}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "var(--text-faint)",
-                    fontSize: 12,
-                    padding: "4px 6px",
-                    minHeight: 44,
-                    fontFamily: "inherit",
-                  }}
+                  className="btn-text"
                 >
                   {t.report}
                 </button>
               )}
               {reportStatus === "done" && (
-                <span role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reported}</span>
+                <span role="status" aria-live="polite" className="text-xs text-faint">{t.reported}</span>
               )}
               {reportStatus === "dup" && (
-                <span role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 12 }}>{t.reportedDup}</span>
+                <span role="status" aria-live="polite" className="text-xs text-faint">{t.reportedDup}</span>
               )}
             </div>
 
             {actionError && (
-              <p role="alert" aria-live="polite" style={{ margin: "6px 0 0 52px", color: "var(--state-danger)", fontSize: 12 }}>
+              <p role="alert" aria-live="polite" className={`mt-2 mb-0 text-xs text-danger ${styles.indent}`}>
                 {actionError}
               </p>
             )}
 
             {showReplyForm && (
-              <div style={{ marginLeft: 52, marginTop: 8 }}>
+              <div className={`mt-2 ${styles.indent}`}>
                 <CommentInput onSubmit={handleReply} placeholder={t.replyPlaceholder} submitLabel={t.replyBtn} />
               </div>
             )}
 
             {showReportForm && (
-              <div style={{ marginLeft: 52, marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <div className={`mt-2 flex flex-wrap items-center gap-2 ${styles.indent}`}>
                 <label className="sr-only" htmlFor={`report-reason-${comment.id}`}>{t.reportReasonLabel}</label>
                 <select
                   id={`report-reason-${comment.id}`}
                   value={reportReason}
                   onChange={(e) => setReportReason(e.target.value)}
-                  style={{ fontSize: 12, padding: "3px 8px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg)", color: "var(--text)", fontFamily: "inherit" }}
+                  className="tap-target rounded-md border border-border bg-bg px-2 text-sm text-body"
                 >
                   <option value="spam">{t.reportReasonSpam}</option>
                   <option value="offensive">{t.reportReasonOffensive}</option>
@@ -555,14 +393,14 @@ export function CommentItem({
                   type="button"
                   onClick={handleReport}
                   disabled={busyAction === "report"}
-                  style={{ fontSize: 12, padding: "3px 10px", minHeight: 44, background: "var(--accent)", color: "var(--accent-text)", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                  className="btn btn-sm btn-secondary"
                 >
                   {t.submit}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowReportForm(false)}
-                  style={{ fontSize: 12, padding: "3px 10px", minHeight: 44, background: "transparent", color: "var(--text-faint)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", fontFamily: "inherit" }}
+                  className="btn btn-sm btn-ghost"
                 >
                   {t.cancel}
                 </button>
@@ -574,9 +412,9 @@ export function CommentItem({
 
       {/* 返信は件数だけ先に出し、押したときに取りに行く（Q&A のカードと同じ作り） */}
       {!collapsed && hasChildren && !repliesShown && (
-        <div style={{ marginLeft: depth > 0 ? 20 : 0, paddingBottom: 10 }}>
+        <div className={`pb-3 ${depth > 0 ? "ml-4" : ""}`}>
           {repliesError && (
-            <span role="alert" style={{ color: "var(--state-danger)", fontSize: 12, marginRight: 8 }}>
+            <span role="alert" className="mr-2 text-xs text-danger">
               {t.answersLoadFailed}
             </span>
           )}
@@ -584,16 +422,7 @@ export function CommentItem({
             type="button"
             onClick={loadReplies}
             disabled={repliesLoading}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: repliesLoading ? "default" : "pointer",
-              color: "var(--accent)",
-              fontSize: 13,
-              fontWeight: 700,
-              padding: "4px 0",
-              fontFamily: "inherit",
-            }}
+            className="btn-text btn-text-on font-bold"
           >
             {repliesLoading ? t.loading : repliesError ? t.retry : t.showReplies(replyCount)}
           </button>

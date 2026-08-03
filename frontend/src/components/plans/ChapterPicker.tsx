@@ -49,8 +49,8 @@ export function ChapterPicker({
   if (!slug) {
     return (
       <div role="group" aria-label={t.citationBookSearchPlaceholder} style={boxStyle}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <label style={{ flex: 1 }}>
+        <div className="flex gap-2 mb-2">
+          <label className="flex-1">
             <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
             <input
               type="search"
@@ -58,7 +58,7 @@ export function ChapterPicker({
               onChange={(event) => setKeyword(event.target.value)}
               placeholder={t.citationBookSearchPlaceholder}
               autoFocus
-              style={{ ...inputStyle, width: "100%" }}
+              className="form-control w-full"
             />
           </label>
           <button type="button" onClick={onCancel} style={plainButtonStyle}>
@@ -87,16 +87,16 @@ export function ChapterPicker({
 
   return (
     <div role="group" aria-label={`${t.planAddChapter}: ${localizedShortName}`} style={boxStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <button type="button" onClick={() => { setSlug(null); setTranslation(""); }} style={plainButtonStyle}>
           {t.planBackToBooks}
         </button>
-        <strong style={{ fontSize: 13 }}>{localizedShortName}</strong>
+        <strong className="text-sm">{localizedShortName}</strong>
         <select
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}
           aria-label={t.planTranslationLabel}
-          style={{ ...inputStyle, width: "auto" }}
+          className="form-control w-auto"
         >
           <option value="">{t.planReaderTranslation}</option>
           {(meta?.translations ?? []).map((tr) => (
@@ -130,7 +130,7 @@ export function ChapterPicker({
               chapter_number: number,
               translation,
             })}
-            style={chapterButtonStyle}
+            className="chapter-button"
           >
             {number}
           </button>
@@ -149,17 +149,6 @@ const boxStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.02)",
 };
 
-const inputStyle: React.CSSProperties = {
-  boxSizing: "border-box",
-  padding: "7px 8px",
-  borderRadius: 6,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 13,
-  minHeight: 44,
-};
 
 const rowButtonStyle: React.CSSProperties = {
   display: "block",
@@ -203,14 +192,3 @@ const inlineRetryStyle: React.CSSProperties = {
   minHeight: 44,
 };
 
-const chapterButtonStyle: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

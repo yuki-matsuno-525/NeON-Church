@@ -100,77 +100,72 @@ export function FeedbackContent() {
     }
   }
 
-  const controlStyle = {
-    width: "100%",
-    minHeight: 44,
-    padding: "10px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    background: "var(--bg)",
-    color: "var(--text)",
-    fontSize: 16,
-  } as const;
+  // 入力欄の見た目は globals.css の .form-control が持つ
+  const isSubmitDisabled = isSending || message.trim().length < 10;
 
   return (
-    <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, fontFamily: "var(--font-serif)" }}>{c.title}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
+    <div className="content-page">
+      <h1 className="mb-3">{c.title}</h1>
+      <p className="mb-8 text-sm leading-reading text-muted">
         {c.intro}
       </p>
 
-      <form onSubmit={submit} aria-describedby="feedback-result" style={{ display: "grid", gap: 20 }}>
-        <h2 style={{ fontSize: 20, margin: 0 }}>{c.formTitle}</h2>
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="feedback-category" style={{ fontWeight: 700 }}>{c.category}</label>
-          <select id="feedback-category" value={category} onChange={(event) => setCategory(event.target.value as FeedbackCategory)} style={controlStyle}>
+      <form onSubmit={submit} aria-describedby="feedback-result" className="grid gap-6">
+        <h2 className="m-0">{c.formTitle}</h2>
+        <div className="grid gap-2">
+          <label htmlFor="feedback-category" className="font-bold">{c.category}</label>
+          <select id="feedback-category" value={category} onChange={(event) => setCategory(event.target.value as FeedbackCategory)} className="form-control">
             {(Object.keys(c.categories) as FeedbackCategory[]).map((value) => (
               <option key={value} value={value}>{c.categories[value]}</option>
             ))}
           </select>
         </div>
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="feedback-email" style={{ fontWeight: 700 }}>{c.email}</label>
-          <input id="feedback-email" aria-describedby="feedback-email-hint" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} style={controlStyle} />
-          <span id="feedback-email-hint" style={{ color: "var(--text-muted)", fontSize: 13 }}>{c.emailHint}</span>
+        <div className="grid gap-2">
+          <label htmlFor="feedback-email" className="font-bold">{c.email}</label>
+          <input id="feedback-email" aria-describedby="feedback-email-hint" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="form-control" />
+          <span id="feedback-email-hint" className="text-sm text-muted">{c.emailHint}</span>
         </div>
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="feedback-page" style={{ fontWeight: 700 }}>{c.page}</label>
-          <input id="feedback-page" type="url" inputMode="url" value={pageUrl} onChange={(event) => setPageUrl(event.target.value)} placeholder="https://" style={controlStyle} />
+        <div className="grid gap-2">
+          <label htmlFor="feedback-page" className="font-bold">{c.page}</label>
+          <input id="feedback-page" type="url" inputMode="url" value={pageUrl} onChange={(event) => setPageUrl(event.target.value)} placeholder="https://" className="form-control" />
         </div>
-        <label aria-hidden="true" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
+        {/* 自動投稿よけの隠し欄。人には見えないが、プログラムは書き込んでしまう。 */}
+        <label aria-hidden="true" className="sr-only">
           Website
           <input name="website" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
         </label>
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="feedback-message" style={{ fontWeight: 700 }}>{c.message}</label>
-          <textarea id="feedback-message" aria-describedby="feedback-message-hint feedback-message-count" required minLength={10} maxLength={4000} rows={8} value={message} onChange={(event) => setMessage(event.target.value)} style={{ ...controlStyle, resize: "vertical" }} />
-          <span style={{ display: "flex", justifyContent: "space-between", gap: 12, color: "var(--text-muted)", fontSize: 13 }}>
+        <div className="grid gap-2">
+          <label htmlFor="feedback-message" className="font-bold">{c.message}</label>
+          <textarea id="feedback-message" aria-describedby="feedback-message-hint feedback-message-count" required minLength={10} maxLength={4000} rows={8} value={message} onChange={(event) => setMessage(event.target.value)} className="form-control resize-y" />
+          <span className="flex justify-between gap-3 text-sm text-muted">
             <span id="feedback-message-hint">{c.messageHint}</span><span id="feedback-message-count">{message.length}/4000</span>
           </span>
         </div>
-        <button type="submit" disabled={isSending || message.trim().length < 10} style={{ minHeight: 44, padding: "10px 18px", border: 0, borderRadius: 8, background: "var(--accent)", color: "var(--accent-text)", fontWeight: 800, cursor: isSending || message.trim().length < 10 ? "not-allowed" : "pointer", opacity: isSending || message.trim().length < 10 ? 0.6 : 1 }}>
+        <button type="submit" disabled={isSubmitDisabled} className="btn btn-secondary">
           {isSending ? c.sending : c.submit}
         </button>
-        <div id="feedback-result" aria-live="polite" role={result === "error" ? "alert" : "status"} style={{ minHeight: 24, color: result === "error" ? "var(--state-error)" : "var(--text)" }}>
+        {/* 送信結果。エラー色は --state-error という存在しない変数を見ていたため、
+            これまで赤くならなかった。決定表の危険色に直している。 */}
+        <div id="feedback-result" aria-live="polite" role={result === "error" ? "alert" : "status"} className={`min-h-6 ${result === "error" ? "text-danger" : "text-body"}`}>
           {result === "sent" ? c.sent : result === "error" ? c.failed : ""}
         </div>
       </form>
 
-      <section aria-labelledby="feedback-fallback" style={{ marginTop: 36, paddingTop: 28, borderTop: "1px solid var(--border)" }}>
-        <h2 id="feedback-fallback" style={{ fontSize: 18 }}>{c.fallback}</h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-          <a href={`mailto:${CONTACT_EMAIL}`} style={{ minHeight: 44, display: "inline-flex", alignItems: "center", color: "var(--accent)", fontWeight: 700 }}>{c.emailCta}</a>
-          <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer" style={{ minHeight: 44, display: "inline-flex", alignItems: "center", color: "var(--accent)", fontWeight: 700 }}>{c.issuesCta}</a>
+      <section aria-labelledby="feedback-fallback" className="mt-8 border-t border-border pt-6">
+        <h2 id="feedback-fallback">{c.fallback}</h2>
+        <div className="flex flex-wrap gap-4">
+          <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold text-accent">{c.emailCta}</a>
+          <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer" className="font-bold text-accent">{c.issuesCta}</a>
         </div>
       </section>
 
-      <section aria-labelledby="report-content" style={{ marginTop: 28 }}>
-        <h2 id="report-content" style={{ fontSize: 18 }}>{c.reportTitle}</h2>
-        <p style={{ lineHeight: 1.8 }}>{c.reportBody}</p>
-        <Link href="/guidelines" style={{ minHeight: 44, display: "inline-flex", alignItems: "center", color: "var(--accent)", fontWeight: 700 }}>Community Guidelines</Link>
+      <section aria-labelledby="report-content" className="mt-6">
+        <h2 id="report-content">{c.reportTitle}</h2>
+        <p className="leading-reading">{c.reportBody}</p>
+        <Link href="/guidelines" className="font-bold text-accent">Community Guidelines</Link>
       </section>
 
-      <Link href="/" style={{ marginTop: 40, minHeight: 44, display: "inline-flex", alignItems: "center", color: "var(--accent)", fontWeight: 700 }}>{c.back}</Link>
+      <Link href="/" className="mt-8 font-bold text-accent">{c.back}</Link>
     </div>
   );
 }

@@ -40,13 +40,12 @@
   text-decoration: none;
 }
 
+/* 見た目は globals.css の .card-lg（背景・枠・角丸・余白）に任せ、
+   ここでは並びに関する指定だけを足す。 */
 .section {
-  scroll-margin-top: calc(var(--navbar-height) + 16px);
-  margin-bottom: 18px;
-  padding: 24px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-alt);
+  composes: card-lg from global;
+  scroll-margin-top: calc(var(--navbar-height) + var(--spacing-4));
+  margin-bottom: var(--spacing-4);
 }
 
 .danger {
@@ -123,14 +122,9 @@
   color: var(--state-success, #16a34a);
 }
 
+/* 見た目は globals.css の .notice-box と共通（パスワード再設定画面と同じもの） */
 .notice {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  background: var(--accent-tint);
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.65;
+  composes: notice-box from global;
 }
 
 .sessionList {

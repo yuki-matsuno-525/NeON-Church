@@ -38,51 +38,29 @@ export function ErrorState({
   const retryText = retryLabel ?? t.retry;
   const backText = backLabel ?? t.back;
   const iconName: IconName = tone === "danger" ? "alert-circle" : "alert-triangle";
-  const iconColor = tone === "danger" ? "var(--state-danger)" : "var(--state-warning)";
+  const iconClass = tone === "danger" ? "text-danger" : "text-warning";
 
   return (
     <div
       role="alert"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        padding: "40px 24px",
-        color: "var(--text-muted)",
-        gap: 12,
-      }}
+      className="flex flex-col items-center justify-center gap-3 px-6 py-8 text-center text-muted"
     >
-      <div aria-hidden="true" style={{ color: iconColor }}>
+      <div aria-hidden="true" className={iconClass}>
         <Icon name={iconName} size={36} />
       </div>
-      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-        {title}
-      </h2>
-      {message && (
-        <p style={{ margin: 0, fontSize: 13, maxWidth: 360, lineHeight: 1.6 }}>{message}</p>
-      )}
+      <h2 className="m-0 text-md font-bold text-body">{title}</h2>
+      {message && <p className="m-0 max-w-sm text-sm leading-base">{message}</p>}
       {(onRetry || onBack || extraAction) && (
-        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+        /* 並び方と間隔だけを指定する。ボタン自身の見た目は .btn が持つ。 */
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
           {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="btn btn-primary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-            >
+            <button type="button" onClick={onRetry} className="btn btn-primary">
               <Icon name="refresh-cw" size={14} />
               {retryText}
             </button>
           )}
           {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="btn btn-ghost"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-            >
+            <button type="button" onClick={onBack} className="btn btn-ghost">
               <Icon name="arrow-left" size={14} />
               {backText}
             </button>

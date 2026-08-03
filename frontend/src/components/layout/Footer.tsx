@@ -46,7 +46,7 @@ export function Footer() {
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "var(--text-muted)", textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}
+              className="text-muted no-underline tap-target inline-flex items-center"
             >
               {link.label}
             </a>
@@ -54,7 +54,7 @@ export function Footer() {
             <Link
               key={link.href}
               href={link.href}
-              style={{ color: "var(--text-muted)", textDecoration: "none", minHeight: 44, display: "inline-flex", alignItems: "center" }}
+              className="text-muted no-underline tap-target inline-flex items-center"
             >
               {link.label}
             </Link>

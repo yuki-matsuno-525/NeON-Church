@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
             <label htmlFor={emailId}>{text.email}</label>
             <input id={emailId} className={styles.input} type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={busy} />
           </div>
-          <Button type="submit" loading={busy} style={{ width: "100%" }}>{busy ? text.sending : text.submit}</Button>
+          <Button type="submit" loading={busy} className="w-full">{busy ? text.sending : text.submit}</Button>
           {message && <p role={message.type === "error" ? "alert" : "status"} aria-live="polite" className={`${styles.message} ${message.type === "error" ? styles.error : ""}`}>{message.text}</p>}
         </form>
         <Link className={styles.back} href="/login">{text.back}</Link>

@@ -9,35 +9,23 @@ type Props = {
   action?: ReactNode;
 };
 
+/** 中身が無いことを伝える共通の枠。ErrorState と同じ見た目の骨格を使う。 */
 export function EmptyState({ icon, title, description, action }: Props) {
   return (
     <div
       role="status"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        padding: "40px 24px",
-        color: "var(--text-muted)",
-        gap: 12,
-      }}
+      className="flex flex-col items-center justify-center gap-3 px-6 py-8 text-center text-muted"
     >
       {icon && (
-        <div aria-hidden="true" style={{ color: "var(--accent)", opacity: 0.7 }}>
+        <div aria-hidden="true" className="text-accent opacity-70">
           {icon}
         </div>
       )}
-      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-        {title}
-      </h2>
+      <h2 className="m-0 text-md font-bold text-body">{title}</h2>
       {description && (
-        <p style={{ margin: 0, fontSize: 13, maxWidth: 360, lineHeight: 1.6 }}>
-          {description}
-        </p>
+        <p className="m-0 max-w-sm text-sm leading-base">{description}</p>
       )}
-      {action && <div style={{ marginTop: 8 }}>{action}</div>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

@@ -130,11 +130,11 @@ export default function TranslationReadChapterPage({
     return () => { active = false; };
   }, [project, chapterNum, selectedUnit]);
 
-  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={6} /></div>;
+  if (loading) return <div className="page page-wide"><SkeletonList count={6} /></div>;
   if (error) return (
-    <div style={{ padding: 32, textAlign: "center" }} role="alert">
-      <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+    <div className="p-8 text-center" role="alert">
+      <p className="text-muted">{error}</p>
+      <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
         <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
       </div>
@@ -146,7 +146,7 @@ export default function TranslationReadChapterPage({
   const nextChapter = currentIndex < chapterNums.length - 1 ? chapterNums[currentIndex + 1] : null;
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+    <div className="min-h-page">
       <div className="reader-sticky-header" style={{
         position: "sticky",
         top: "var(--navbar-height)",
@@ -158,12 +158,12 @@ export default function TranslationReadChapterPage({
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+        <p className="m-0 text-sm font-normal text-muted">
+          <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
           </Link>
           {" › "}
-          <Link href={`/translations/${id}/read`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+          <Link href={`/translations/${id}/read`} className="text-muted no-underline">
             {t.chapterList}
           </Link>
           {" › "}
@@ -175,17 +175,17 @@ export default function TranslationReadChapterPage({
         className={`reader-wrapper${selectedUnit ? " has-verse" : ""}`}
         style={{ display: "flex" }}
       >
-        <div className="reader-main" style={{ flex: 1, minWidth: 0, padding: "32px 32px", overflowY: "auto" }}>
+        <div className="reader-main flex-1 min-w-0 py-8 px-8 overflow-y-auto" >
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 4 }}>
+            <h1 className="text-xl font-bold mb-1">
               {project?.name} {t.chapterFmt(chapterNum)}
             </h1>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+            <p className="text-sm text-muted mt-0 mx-0 mb-6">
               {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
             </p>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-              <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{ui.sourceComparisonHelp}</span>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <span className="text-xs text-faint">{ui.sourceComparisonHelp}</span>
               <Button variant="secondary" size="sm" aria-pressed={showSourceText} onClick={() => setShowSourceText((shown) => !shown)}>
                 {showSourceText ? ui.hideSource : ui.compareSource}
               </Button>
@@ -194,7 +194,7 @@ export default function TranslationReadChapterPage({
             <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
             {units.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
+              <p className="text-sm text-muted">{t.noPublishedVersesForChapter}</p>
             ) : (
               <div>
                 {units.map((unit) => {
@@ -262,7 +262,7 @@ export default function TranslationReadChapterPage({
               <>
                 {chapterVersionCommentsError && (
                   <div role="alert" style={{ padding: 12, margin: "16px 0 12px", border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                    <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                    <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                     <Button variant="secondary" size="sm" onClick={() => void loadChapterVersionComments()}>
                       {ui.retryRelatedComments}
                     </Button>
@@ -284,7 +284,7 @@ export default function TranslationReadChapterPage({
           <div id="translation-comment-panel" className="reader-panel">
             {verseVersionCommentsError && (
               <div role="alert" style={{ padding: 12, margin: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                 <Button variant="secondary" size="sm" onClick={() => void loadVerseVersionComments()}>
                   {ui.retryRelatedComments}
                 </Button>

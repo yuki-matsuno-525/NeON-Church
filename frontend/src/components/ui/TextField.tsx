@@ -10,8 +10,13 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
   labelHidden?: boolean;
 };
 
+/**
+ * 大きさ・余白・色は Tailwind のクラスで指定する。
+ * クラス名の値は globals.css の @theme に登録した表から来ているので、
+ * ここに 13px のような表にない値は書けない（書いてもクラスが作られない）。
+ */
 export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
-  { label, hint, error, labelHidden, style, ...rest },
+  { label, hint, error, labelHidden, className, ...rest },
   ref
 ) {
   const id = useId();
@@ -22,19 +27,10 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
     .join(" ") || undefined;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div className="flex flex-col gap-2">
       <label
         htmlFor={id}
-        className={labelHidden ? "sr-only" : undefined}
-        style={
-          labelHidden
-            ? undefined
-            : {
-                fontSize: 13,
-                fontWeight: 700,
-                color: "var(--text-muted)",
-              }
-        }
+        className={labelHidden ? "sr-only" : "text-sm font-bold text-muted"}
       >
         {label}
       </label>
@@ -43,30 +39,22 @@ export const TextField = forwardRef<HTMLInputElement, Props>(function TextField(
         ref={ref}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        style={{
-          padding: "9px 12px",
-          border: `1px solid ${error ? "#ef4444" : "var(--border)"}`,
-          borderRadius: 8,
-          background: "rgba(255, 255, 255, 0.05)",
-          color: "var(--text)",
-          fontSize: 14,
-          fontFamily: "inherit",
-          ...style,
-        }}
+        className={[
+          "px-3 py-2 rounded-md border bg-field text-body text-sm",
+          error ? "border-danger" : "border-border",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
         {...rest}
       />
       {hint && !error && (
-        <p id={hintId} style={{ margin: 0, fontSize: 12, color: "var(--text-faint)" }}>
+        <p id={hintId} className="m-0 text-xs text-faint">
           {hint}
         </p>
       )}
       {error && (
-        <p
-          id={errorId}
-          role="alert"
-          aria-live="polite"
-          style={{ margin: 0, fontSize: 12, color: "#ef4444" }}
-        >
+        <p id={errorId} role="alert" aria-live="polite" className="m-0 text-xs text-danger">
           {error}
         </p>
       )}

@@ -85,16 +85,16 @@ export function PlanDayEditor({
   };
 
   return (
-    <section className="card-glow" style={{ padding: "16px 18px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{dayLabel}</span>
+    <section className="card-glow py-4 px-4" >
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-sm font-bold text-accent">{dayLabel}</span>
         <span role="status" aria-live="polite" style={{ fontSize: 11, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)" }}>
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
           <button type="button" onClick={() => void autosave.retry()} style={retryButtonStyle}>{t.retry}</button>
         )}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+        <div className="ml-auto flex gap-2">
           {canMoveUp && (
             <button type="button" onClick={() => onMove(-1)} aria-label={lang === "ja" ? `${dayLabel}を上へ移動` : `Move ${dayLabel} up`} style={iconButtonStyle}>
               ↑
@@ -120,12 +120,12 @@ export function PlanDayEditor({
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t.planDayTitlePlaceholder}
           maxLength={200}
-          style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
+          className="form-control mb-3 font-bold"
         />
       </label>
 
       {/* 読む章 */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+      <div className="flex flex-wrap gap-2 mb-2">
         {readings.map((reading, index) => (
           <span
             key={`${reading.book}-${reading.chapter_number}-${index}`}
@@ -144,7 +144,7 @@ export function PlanDayEditor({
               t,
             )}
             {reading.translation && (
-              <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
+              <span className="text-xs text-faint">{reading.translation}</span>
             )}
             <button
               type="button"
@@ -189,25 +189,13 @@ export function PlanDayEditor({
           onChange={(event) => setDevotional(event.target.value)}
           rows={4}
           placeholder={t.planDevotionalPlaceholder}
-          style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
+          className="form-control mt-3 resize-y leading-reading"
         />
       </label>
     </section>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 14,
-  minHeight: 44,
-};
 
 const iconButtonStyle: React.CSSProperties = {
   border: "1px solid var(--border)",

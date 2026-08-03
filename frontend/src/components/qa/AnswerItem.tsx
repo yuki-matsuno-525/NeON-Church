@@ -70,12 +70,12 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
         background: answer.is_best ? "var(--accent-tint)" : "var(--bg-alt)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         {answer.is_best && (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)" }}>{t.bestAnswer}</span>
+          <span className="text-xs font-bold text-accent">{t.bestAnswer}</span>
         )}
-        <span style={{ fontWeight: 700, fontSize: 13 }}>{answer.user.username}</span>
-        <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
+        <span className="font-bold text-sm">{answer.user.username}</span>
+        <span className="text-xs text-faint">
           {formatRelativeTime(answer.created_at)}
         </span>
       </div>
@@ -89,7 +89,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
             aria-label={t.qaAnswerPlaceholder}
             style={textareaStyle}
           />
-          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+          <div className="flex gap-2 justify-end mt-2">
             <Button variant="secondary" onClick={() => { setEditing(false); setDraft(answer.body); }}>
               {t.cancel}
             </Button>
@@ -99,19 +99,19 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
           </div>
         </>
       ) : (
-        <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+        <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
           {answer.is_deleted ? t.qaDeletedAnswer : answer.body}
         </p>
       )}
 
       {!editing && !answer.is_deleted && (
-        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="flex gap-2 mt-3 flex-wrap items-center">
           {canPickBest && (
             <button
               type="button"
               onClick={() => onPickBest(answer.is_best ? null : answer.id)}
+              className="action-chip"
               style={{
-                ...actionButtonStyle,
                 border: `1px solid ${answer.is_best ? "var(--accent)" : "var(--border)"}`,
                 background: answer.is_best ? "var(--accent)" : "transparent",
                 color: answer.is_best ? "var(--accent-text)" : "var(--text-muted)",
@@ -122,10 +122,10 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
           )}
           {isOwner ? (
             <>
-              <button type="button" onClick={() => setEditing(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setEditing(true)} className="action-chip">
                 {t.edit}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setConfirmDelete(true)} className="action-chip">
                 {t.delete}
               </button>
             </>
@@ -134,7 +134,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
               <button
                 type="button"
                 onClick={handleReport}
-                style={{ ...actionButtonStyle, marginLeft: "auto" }}
+                className="action-chip ml-auto"
               >
                 <Icon name="alert-triangle" size={11} />
                 {t.report}
@@ -171,17 +171,3 @@ const textareaStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-const actionButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  minHeight: 28,
-  padding: "3px 10px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

@@ -49,14 +49,10 @@ import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "../translationUiText";
+import { ReviewTab } from "@/components/translations/ReviewTab";
+import { MembersTab } from "@/components/translations/MembersTab";
+import { STATUS_BADGE_STYLE, unitStatusLabel } from "@/components/translations/unitStatus";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
-
-const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
-  todo:        { bg: "var(--bg-hover)",             color: "var(--text-muted)"    },
-  in_progress: { bg: "var(--accent-tint)",          color: "var(--accent)"        },
-  review:      { bg: "rgba(245,158,11,0.15)",       color: "var(--state-warning)" },
-  done:        { bg: "rgba(34,197,94,0.15)",         color: "var(--state-success)" },
-};
 
 function MentionInput({
   value,
@@ -132,7 +128,7 @@ function MentionInput({
   };
 
   return (
-    <div style={{ position: "relative", marginTop: 8 }}>
+    <div className="relative mt-2">
       <textarea
         ref={textareaRef}
         value={value}
@@ -162,25 +158,15 @@ function MentionInput({
         </ul>
       )}
       {error && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p role="alert" aria-live="polite" className="text-danger text-xs mt-1 mx-0 mb-0">
           {error}
         </p>
       )}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+      <div className="flex justify-end mt-2">
         <button
           type="button"
           onClick={handleSubmit}
-          style={{
-            minHeight: 44,
-            padding: "6px 16px",
-            border: "none",
-            borderRadius: 8,
-            background: "var(--accent)",
-            color: "var(--bg)",
-            fontWeight: 700,
-            fontSize: 13,
-            cursor: "pointer",
-          }}
+          className="tap-target py-2 px-4 border-0 rounded-md bg-accent text-bg font-bold text-sm cursor-pointer"
         >
           {sendLabel}
         </button>
@@ -357,25 +343,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const [addingBook, setAddingBook] = useState(false);
   const [removingBook, setRemovingBook] = useState(false);
 
-  const statusLabel = (status: string) => {
-    if (status === "todo") return t.statusPending;
-    if (status === "in_progress") return t.statusInProgress;
-    if (status === "review") return t.statusInReview;
-    if (status === "done") return t.statusDone;
-    return status;
-  };
-
   const projectStatusLabel = (status: string) => {
     if (status === "active") return t.statusActive;
     if (status === "published") return t.statusPublished;
     if (status === "draft") return t.colDraftLabel;
     return status;
-  };
-
-  const memberStatusLabel = (status: string) => {
-    if (status === "approved") return t.statusApproved;
-    if (status === "pending") return t.statusPendingApproval;
-    return t.statusRejected;
   };
 
   // 企画全体のユニットは取らない。章ボタンとレビュー件数は summary から出し、
@@ -793,7 +765,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   const renderCommentBody = (body: string) => {
     const parts = body.split(/(@[\w]+)/g);
     return parts.map((p, i) =>
-      p.startsWith("@") ? <strong key={i} style={{ color: "var(--accent)" }}>{p}</strong> : p
+      p.startsWith("@") ? <strong key={i} className="text-accent">{p}</strong> : p
     );
   };
 
@@ -839,12 +811,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   if (loadError) {
     return (
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 24px", textAlign: "center" }} role="alert">
-        <p style={{ color: "var(--text-muted)" }}>{ui.loadError}</p>
+        <p className="text-muted">{ui.loadError}</p>
         <Button variant="secondary" onClick={() => void loadProject()}>{ui.retry}</Button>
       </div>
     );
   }
-  if (!project) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.noProjects}</div>;
+  if (!project) return <div className="p-8 text-muted">{t.noProjects}</div>;
 
   const progressPct = project.unit_count > 0
     ? Math.round((project.done_count / project.unit_count) * 100)
@@ -865,16 +837,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ marginBottom: 6 }}>
-        <Link href="/translations" onClick={guardNavigation} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+      <div className="mb-2">
+        <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
           {t.backToTranslations}
         </Link>
       </div>
 
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, margin: "0 0 4px" }}>
-            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>{project.name}</h1>
+      <div className="flex items-start gap-3 mb-4 flex-wrap">
+        <div className="flex-1">
+          <div className="flex items-center gap-1 mt-0 mx-0 mb-1">
+            <h1 className="text-xl font-bold m-0">{project.name}</h1>
             {user && (
               <BookmarkStar
                 active={!!projectBookmark}
@@ -884,68 +856,59 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               />
             )}
           </div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+          <div className="text-sm text-muted">
             {project.source_book_name} → {languageLabel(project.target_language)} ／ {t.createdBy} {project.owner_username}
           </div>
         </div>
 
         {isOwner && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div className="flex gap-2 flex-wrap">
             {project.status === "draft" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("activate")} style={btnStyle("var(--accent)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("activate")} className="chip-btn">
                 {t.startRecruiting}
               </button>
             )}
             {project.status === "active" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("publish")} style={btnStyle("var(--state-success)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("publish")} className="chip-btn">
                 {t.publish}
               </button>
             )}
             {project.status === "published" && (
-              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("unpublish")} style={btnStyle("var(--state-danger)")}>
+              <button disabled={!!actionBusy} onClick={() => setConfirmStatusAction("unpublish")} className="chip-btn chip-btn-danger">
                 {t.unpublish}
               </button>
             )}
-            <button disabled={!!actionBusy} onClick={() => void handleOpenProjectSettings()} style={btnStyle("var(--text-muted)")}>
+            <button disabled={!!actionBusy} onClick={() => void handleOpenProjectSettings()} className="chip-btn chip-btn-neutral">
               {ui.projectSettings}
             </button>
-            <button disabled={!!actionBusy} onClick={() => setConfirmDelete(true)} style={btnStyle("var(--state-danger)")}>
+            <button disabled={!!actionBusy} onClick={() => setConfirmDelete(true)} className="chip-btn chip-btn-danger">
               {t.delete}
             </button>
           </div>
         )}
 
         {user && !isOwner && project.membership_status === null && project.status === "active" && (
-          <button disabled={actionBusy === "join"} onClick={handleJoin} style={btnStyle("var(--accent)")}>{t.applyMembership}</button>
+          <button disabled={actionBusy === "join"} onClick={handleJoin} className="chip-btn">{t.applyMembership}</button>
         )}
         {user && !isOwner && project.membership_status === "rejected" && project.status === "active" && (
-          <button disabled={actionBusy === "join"} onClick={handleJoin} style={btnStyle("var(--accent)")}>{ui.reapply}</button>
+          <button disabled={actionBusy === "join"} onClick={handleJoin} className="chip-btn">{ui.reapply}</button>
         )}
         {user && !isOwner && project.membership_status === null && project.status !== "active" && project.status !== "published" && (
           <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              fontSize: 12,
-              color: "var(--text-muted)",
-              backgroundColor: "var(--bg-alt)",
-              border: "1px solid var(--border)",
-              borderRadius: 999,
-              padding: "4px 10px",
-            }}
+            className="inline-flex items-center text-xs text-muted bg-bg-alt border border-border rounded-full py-1 px-3"
           >
             {t.notRecruiting}
           </span>
         )}
         {project.status === "published" && (
-          <Link href={`/translations/${id}/read`} onClick={guardNavigation} style={{ ...btnStyle("var(--accent)"), textDecoration: "none" }}>
+          <Link href={`/translations/${id}/read`} onClick={guardNavigation} className="chip-btn">
             {t.readTranslation}
           </Link>
         )}
         {user && project.status === "published" && (
           <button
             onClick={handleToggleLibrary}
-            style={btnStyle(inLibrary ? "var(--text-muted)" : "var(--accent)")}
+            className={inLibrary ? "chip-btn chip-btn-neutral" : "chip-btn"}
           >
             {inLibrary ? t.removeFromLibrary : t.addToLibrary}
           </button>
@@ -958,15 +921,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
         </p>
       )}
       {project.membership_status === "rejected" && !isOwner && (
-        <p role="status" style={{ padding: "10px 12px", border: "1px solid var(--border)", borderRadius: 8, color: "var(--text-muted)" }}>
+        <p role="status" className="py-3 px-3 border border-border rounded-md text-muted">
           {ui.applicationRejected}
         </p>
       )}
 
       {editingProject && isOwner && (
-        <form onSubmit={handleSaveProject} className="card" style={{ marginBottom: 20, display: "grid", gap: 14 }}>
-          <h2 style={{ margin: 0, fontSize: 17 }}>{ui.projectSettings}</h2>
-          <label htmlFor="translation-project-name" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+        <form onSubmit={handleSaveProject} className="card mb-4 grid gap-3" >
+          <h2 className="m-0 text-md">{ui.projectSettings}</h2>
+          <label htmlFor="translation-project-name" className="grid gap-2 text-sm text-muted">
             {t.projectName}
             <input
               id="translation-project-name"
@@ -974,37 +937,37 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               onChange={(event) => setProjectNameDraft(event.target.value)}
               required
               maxLength={200}
-              style={settingsInputStyle}
+              className="form-control"
             />
           </label>
-          <label htmlFor="translation-project-description" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+          <label htmlFor="translation-project-description" className="grid gap-2 text-sm text-muted">
             {t.description}
             <textarea
               id="translation-project-description"
               value={projectDescriptionDraft}
               onChange={(event) => setProjectDescriptionDraft(event.target.value)}
               rows={4}
-              style={{ ...settingsInputStyle, resize: "vertical" }}
+              className="form-control resize-y"
             />
           </label>
-          <label htmlFor="translation-project-language" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+          <label htmlFor="translation-project-language" className="grid gap-2 text-sm text-muted">
             {t.targetLanguage}
             <select
               id="translation-project-language"
               value={projectLanguageDraft}
               onChange={(event) => setProjectLanguageDraft(event.target.value)}
               required
-              style={settingsInputStyle}
+              className="form-control"
             >
               {(translationLanguages.length > 0
                 ? translationLanguages
                 : [{ id: project.target_language, tag: project.target_language, label: languageLabel(project.target_language), order: 0 }]
               ).map((language) => <option key={language.id} value={language.tag}>{language.label}</option>)}
             </select>
-            <span style={{ fontSize: 12, color: "var(--text-faint)" }}>{ui.targetLanguageHelp}</span>
+            <span className="text-xs text-faint">{ui.targetLanguageHelp}</span>
           </label>
-          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>{ui.licenseNotice}</p>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+          <p className="m-0 text-xs leading-base text-muted">{ui.licenseNotice}</p>
+          <div className="flex justify-end gap-2 flex-wrap">
             <Button variant="ghost" onClick={() => setEditingProject(false)}>{t.cancel}</Button>
             <Button type="submit" variant="secondary" loading={actionBusy === "project-settings"}>{ui.saveSettings}</Button>
           </div>
@@ -1012,22 +975,22 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       )}
 
       {project.description && (
-        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 16 }}>
+        <p className="text-sm text-muted leading-base mb-4">
           {project.description}
         </p>
       )}
 
-      <div style={projectSummaryGridStyle}>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.status}</span>
-          <strong style={projectSummaryValueStyle}>{projectStatusLabel(project.status)}</strong>
+      <div className="stat-grid">
+        <div className="stat-item">
+          <span className="stat-label">{t.status}</span>
+          <strong className="stat-value">{projectStatusLabel(project.status)}</strong>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.progress}</span>
-          <strong style={projectSummaryValueStyle}>{progressText}</strong>
+        <div className="stat-item">
+          <span className="stat-label">{t.progress}</span>
+          <strong className="stat-value">{progressText}</strong>
           {summary && (
-            <span style={{ display: "block", marginTop: 4, color: "var(--text-faint)", fontSize: 11 }}>
-              {statusLabel("todo")} {summary.status_counts.todo} · {statusLabel("in_progress")} {summary.status_counts.in_progress}
+            <span className="block mt-1 text-faint text-xs">
+              {unitStatusLabel("todo", t)} {summary.status_counts.todo} · {unitStatusLabel("in_progress", t)} {summary.status_counts.in_progress}
             </span>
           )}
           <div
@@ -1036,23 +999,23 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progressPct}
-            style={detailProgressTrackStyle}
+            className="progress-track"
           >
             <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s" }} />
           </div>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.review}</span>
-          <strong style={projectSummaryValueStyle}>{reviewCount}</strong>
+        <div className="stat-item">
+          <span className="stat-label">{t.review}</span>
+          <strong className="stat-value">{reviewCount}</strong>
         </div>
-        <div style={projectSummaryItemStyle}>
-          <span style={projectSummaryLabelStyle}>{t.units}</span>
-          <strong style={projectSummaryValueStyle}>{project.unit_count}</strong>
-          {summary && user && <span style={{ display: "block", marginTop: 4, color: "var(--text-faint)", fontSize: 11 }}>{ui.assignedToMe(summary.assigned_to_me)}</span>}
+        <div className="stat-item">
+          <span className="stat-label">{t.units}</span>
+          <strong className="stat-value">{project.unit_count}</strong>
+          {summary && user && <span className="block mt-1 text-faint text-xs">{ui.assignedToMe(summary.assigned_to_me)}</span>}
         </div>
       </div>
 
-      {(isApprovedMember || project.status !== "published") && <div role="tablist" aria-label={t.translationsTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 24, gap: 0 }}>
+      {(isApprovedMember || project.status !== "published") && <div role="tablist" aria-label={t.translationsTitle} onKeyDown={handleHorizontalTabListKeyDown} className="flex border-b border-border mb-6 gap-0">
         {(["units", "review", "members"] as const).map((tabKey) => (
           <button
             type="button"
@@ -1088,33 +1051,33 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
           aria-label={!isApprovedMember && project.status === "published" ? t.units : undefined}
         >
           {isOwner && (
-            <div style={{ marginBottom: 16, display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <div className="mb-4 flex flex-wrap gap-2 items-center">
               <button
                 disabled={addingBook || !!actionBusy}
                 onClick={handleAddAllChapters}
-                style={btnStyle("var(--accent)")}
+                className="chip-btn"
               >
                 {addingBook ? t.adding : t.addAllChapters}
               </button>
               <button
                 disabled={removingBook || !!actionBusy}
                 onClick={() => setConfirmDeleteAllUnits(true)}
-                style={btnStyle("var(--state-danger)")}
+                className="chip-btn chip-btn-danger"
               >
                 {removingBook ? t.deleting : t.deleteAllUnits}
               </button>
               {!addingUnit ? (
-                <button disabled={!!actionBusy} onClick={handleOpenAddUnit} style={btnStyle("var(--accent)")}>
+                <button disabled={!!actionBusy} onClick={handleOpenAddUnit} className="chip-btn">
                   {t.addUnit}
                 </button>
               ) : (
-                <form onSubmit={handleAddUnit} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                <form onSubmit={handleAddUnit} className="flex gap-2 items-center flex-wrap">
+                  <label className="grid gap-1 text-xs text-muted">
                     {ui.selectChapterLabel}
                     <select
                       value={unitChapterId}
                       onChange={handleUnitChapterChange}
-                      style={{ padding: "8px 10px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 14 }}
+                      className="py-2 px-3 tap-target border border-border rounded-md bg-bg-alt text-body text-sm"
                       required
                     >
                       <option value="">{t.selectChapter}</option>
@@ -1124,7 +1087,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     </select>
                   </label>
                   {unitVerses.length > 0 && (
-                    <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                    <label className="grid gap-1 text-xs text-muted">
                       {ui.selectVerseLabel}
                       <select
                         value={unitVerseId}
@@ -1140,11 +1103,11 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                   )}
                   {/* 未選択でも押せるようにする。select の required でブラウザが理由を出す。
                       押せなくすると、なぜ押せないのかが伝わらない。 */}
-                  <button type="submit" disabled={actionBusy === "add-unit"} style={btnStyle("var(--accent)")}>{t.add}</button>
+                  <button type="submit" disabled={actionBusy === "add-unit"} className="chip-btn">{t.add}</button>
                   <button
                     type="button"
                     onClick={() => { setAddingUnit(false); setUnitChapterId(""); setUnitVerseId(""); setUnitVerses([]); }}
-                    style={btnStyle("var(--border)")}
+                    className="chip-btn chip-btn-neutral"
                   >
                     {t.cancel}
                   </button>
@@ -1197,7 +1160,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     }}
                   >
                     <span>{chNum}</span>
-                    {total > 0 && <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 500 }}>{ui.chapterProgress(done, total)}</span>}
+                    {total > 0 && <span className="text-xs text-muted font-bold">{ui.chapterProgress(done, total)}</span>}
                   </button>
                     );
                   })()
@@ -1214,9 +1177,9 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               >
                 {t.backToChapters}
               </button>
-              <h3 style={{ fontSize: "var(--font-size-md)", fontWeight: 700, marginBottom: "var(--space-3)", paddingBottom: "var(--space-2)", borderBottom: "1px solid var(--border)" }}>{t.chapterFmt(selectedChapter)}</h3>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-                <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+              <h3 className="text-md font-bold mb-3 pb-2 border-b border-border">{t.chapterFmt(selectedChapter)}</h3>
+              <div className="flex gap-3 flex-wrap mb-4">
+                <label className="grid gap-1 text-xs text-muted">
                   {ui.filterStatus}
                   <select
                     value={unitStatusFilter}
@@ -1225,17 +1188,17 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       if (hasUnsavedUnits) setPendingDiscardNavigation({ kind: "status-filter", value });
                       else setUnitStatusFilter(value);
                     }}
-                    style={filterSelectStyle}
+                    className="filter-select"
                   >
                     <option value="all">{ui.allStatuses}</option>
-                    <option value="todo">{statusLabel("todo")}</option>
-                    <option value="in_progress">{statusLabel("in_progress")}</option>
-                    <option value="review">{statusLabel("review")}</option>
-                    <option value="done">{statusLabel("done")}</option>
+                    <option value="todo">{unitStatusLabel("todo", t)}</option>
+                    <option value="in_progress">{unitStatusLabel("in_progress", t)}</option>
+                    <option value="review">{unitStatusLabel("review", t)}</option>
+                    <option value="done">{unitStatusLabel("done", t)}</option>
                   </select>
                 </label>
                 {user && (
-                  <label style={{ display: "grid", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>
+                  <label className="grid gap-1 text-xs text-muted">
                     {ui.filterAssignee}
                     <select
                       value={unitAssigneeFilter}
@@ -1244,7 +1207,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                         if (hasUnsavedUnits) setPendingDiscardNavigation({ kind: "assignee-filter", value });
                         else setUnitAssigneeFilter(value);
                       }}
-                      style={filterSelectStyle}
+                      className="filter-select"
                     >
                       <option value="all">{ui.allUnits}</option>
                       <option value="me">{ui.myUnits}</option>
@@ -1254,7 +1217,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               </div>
               {unitsLoading && <SkeletonList count={3} />}
               {!unitsLoading && units.length === 0 && <EmptyState title={ui.noUnitsInChapter} />}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="flex flex-col gap-2">
               {/* units はこの章の分だけ取ってあるので、ここでの絞り込みは不要 */}
               {units.map((unit) => (
                 <div
@@ -1267,12 +1230,12 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     transition: "box-shadow 0.3s",
                   }}
                 >
-                  <div style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
+                  <div className="py-3 px-4">
+                    <div className="flex items-center gap-3 flex-wrap mb-2">
+                      <div className="text-xs text-muted flex-1 min-w-0">
                         {unit.chapter_number}:{unit.verse_number}
                         {unit.assigned_to_username && (
-                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
+                          <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
                         )}
                       </div>
                       <span
@@ -1282,7 +1245,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
                         }}
                       >
-                        {statusLabel(unit.status)}
+                        {unitStatusLabel(unit.status, t)}
                       </span>
                     </div>
 
@@ -1294,15 +1257,15 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       return (
                     <>
                     {/* 元テキスト（左）と訳文（右）を枠付きカードで並べ、見比べながら翻訳できるようにする。狭い画面では自動で縦に積む。 */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.sourceText}</div>
+                    <div className="compare-grid">
+                      <div className="sub-card">
+                        <div className="col-label">{t.sourceText}</div>
                         <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
                           {unit.verse_text}
                         </p>
                       </div>
-                      <div style={subCardStyle}>
-                        <label htmlFor={`translation-body-${unit.id}`} style={colLabelStyle}>{t.translationText}</label>
+                      <div className="sub-card">
+                        <label htmlFor={`translation-body-${unit.id}`} className="col-label">{t.translationText}</label>
                         {canEdit ? (
                           // 訳文欄は常時編集可能。「訳文編集」ボタンを押さずに直接入力できる。
                           <textarea
@@ -1314,23 +1277,23 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             style={{ flex: 1, width: "100%", minHeight: 96, marginTop: 6, padding: 0, border: "none", background: "transparent", color: "var(--text)", fontSize: 14, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6, outline: "none" }}
                           />
                         ) : unit.body ? (
-                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
                         ) : (
-                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
+                          <p className="mt-2 mx-0 mb-0 text-sm text-faint">{t.notTranslatedYet}</p>
                         )}
                       </div>
                     </div>
 
-                    {dirty && <p role="status" style={{ margin: "6px 0 0", color: "var(--state-warning)", fontSize: 12 }}>{ui.unsavedBadge}</p>}
-                    {unitErrors[unit.id] && <p role="alert" style={{ margin: "6px 0 0", color: "var(--state-danger)", fontSize: 12 }}>{unitErrors[unit.id]}</p>}
+                    {dirty && <p role="status" className="mt-2 mx-0 mb-0 text-warning text-xs">{ui.unsavedBadge}</p>}
+                    {unitErrors[unit.id] && <p role="alert" className="mt-2 mx-0 mb-0 text-danger text-xs">{unitErrors[unit.id]}</p>}
 
                     {canEdit && (
                       // 元テキスト側の下に担当者/ステータス、訳文側の下に保存ボタン（画像の構成に合わせる）。
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
-                        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+                        <div className="flex gap-3 flex-wrap items-end">
                           {isOwner && (
-                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                              <span style={fieldLabelStyle}>{t.assigneeLabel}</span>
+                            <label className="flex flex-col min-w-0">
+                              <span className="field-label">{t.assigneeLabel}</span>
                               <select
                                 value={unit.assigned_to ?? ""}
                                 onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
@@ -1345,8 +1308,8 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             </label>
                           )}
                           {unit.status !== "done" && (
-                            <label style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                              <span style={fieldLabelStyle}>{t.statusFieldLabel}</span>
+                            <label className="flex flex-col min-w-0">
+                              <span className="field-label">{t.statusFieldLabel}</span>
                               <select
                                 value={unit.status}
                                 onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
@@ -1360,17 +1323,17 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             </label>
                           )}
                           {isOwner && unit.status === "done" && (
-                            <button disabled={actionBusy === `status-${unit.id}`} onClick={() => setConfirmSendBackUnit(unit.id)} style={btnStyle("var(--state-warning)")}>
+                            <button disabled={actionBusy === `status-${unit.id}`} onClick={() => setConfirmSendBackUnit(unit.id)} className="chip-btn chip-btn-warning">
                               {t.sendBack}
                             </button>
                           )}
                         </div>
-                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
+                        <div className="flex justify-end items-start">
                           {/* 未保存の変更があるときだけ押せる。 */}
                           <button
                             onClick={() => handleSaveBody(unit.id)}
                             disabled={saving || !dirty}
-                            style={{ ...btnStyle("var(--accent)"), opacity: saving || !dirty ? 0.5 : 1, cursor: saving || !dirty ? "default" : "pointer" }}
+                            className="chip-btn"
                           >
                             {saving ? t.saving : t.save}
                           </button>
@@ -1379,7 +1342,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                               type="button"
                               onClick={() => setConfirmDeleteUnit(unit.id)}
                               disabled={actionBusy === `delete-unit-${unit.id}`}
-                              style={{ ...btnStyle("var(--state-danger)"), marginLeft: 8 }}
+                              className="chip-btn chip-btn-danger ml-2"
                             >
                               {ui.deleteUnit}
                             </button>
@@ -1392,7 +1355,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     })()}
                   </div>
 
-                  <div style={{ borderTop: "1px solid var(--border)", padding: "6px 16px" }}>
+                  <div className="border-t border-border py-2 px-4">
                     <button
                       onClick={() => handleLoadUnitComments(unit.id)}
                       aria-expanded={expandedUnit === unit.id}
@@ -1403,16 +1366,16 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       {unitComments[unit.id]?.length ? ` (${unitComments[unit.id].length})` : ""}
                     </button>
                     {expandedUnit === unit.id && (
-                      <div id={`unit-discussion-${unit.id}`} style={{ marginTop: 8 }}>
-                        {unitCommentsLoading === unit.id && <p style={{ color: "var(--text-muted)", fontSize: 12 }}>{t.loading}</p>}
-                        {unitCommentErrors[unit.id] && <p role="alert" style={{ color: "var(--state-danger)", fontSize: 12 }}>{unitCommentErrors[unit.id]}</p>}
+                      <div id={`unit-discussion-${unit.id}`} className="mt-2">
+                        {unitCommentsLoading === unit.id && <p className="text-muted text-xs">{t.loading}</p>}
+                        {unitCommentErrors[unit.id] && <p role="alert" className="text-xs text-danger">{unitCommentErrors[unit.id]}</p>}
                         {unitCommentsLoading !== unit.id && !unitCommentErrors[unit.id] && (unitComments[unit.id] ?? []).length === 0 && (
-                          <p style={{ color: "var(--text-faint)", fontSize: 12 }}>{ui.noDiscussion}</p>
+                          <p className="text-xs text-faint">{ui.noDiscussion}</p>
                         )}
                         {(unitComments[unit.id] ?? []).map((c) => (
                           <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                            <span style={{ fontWeight: 600 }}>{c.username}</span>
-                            <span style={{ color: "var(--text-faint)", fontSize: 11, marginLeft: 8 }}>{formatRelativeTime(c.created_at)}</span>
+                            <span className="font-bold">{c.username}</span>
+                            <span className="text-faint text-xs ml-2">{formatRelativeTime(c.created_at)}</span>
                             <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
                               {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
                             </p>
@@ -1441,133 +1404,28 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       )}
 
       {tab === "review" && (
-        <div id="translation-panel-review" role="tabpanel" aria-labelledby="translation-tab-review">
-          {reviewLoading ? (
-            <SkeletonList count={2} />
-          ) : reviewUnits.length === 0 ? (
-            <EmptyState title={t.noReviewUnits} description={t.emptyReviewUnitsDesc} />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {reviewUnits.map((unit) => (
-                <div key={unit.id} className="card-glow" style={{ overflow: "hidden" }}>
-                  <div style={{ padding: "12px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
-                        {unit.chapter_number}:{unit.verse_number}
-                        {unit.assigned_to_username && (
-                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
-                        )}
-                      </div>
-                      <span
-                        className="badge"
-                        style={{
-                          background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
-                          color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
-                        }}
-                      >
-                        {statusLabel(unit.status)}
-                      </span>
-                    </div>
-
-                    {/* ユニットタブと同じ枠付きカードで元テキストと訳文を並べる。 */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
-                          {unit.verse_text}
-                        </p>
-                      </div>
-                      <div style={subCardStyle}>
-                        <div style={colLabelStyle}>{t.translationText}</div>
-                        {unit.body ? (
-                          <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6 }}>{unit.body}</p>
-                        ) : (
-                          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--text-faint)" }}>{t.notTranslatedYet}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenReviewTarget(unit)}
-                        style={btnStyle("var(--accent)")}
-                      >
-                        {t.openReviewTarget}
-                      </button>
-                      {isOwner && (
-                        <>
-                          <button
-                            disabled={actionBusy === `status-${unit.id}`}
-                            onClick={() => setConfirmSendBackUnit(unit.id)}
-                            style={btnStyle("var(--state-warning)")}
-                          >
-                            {t.sendBack}
-                          </button>
-                          <button
-                            disabled={actionBusy === `status-${unit.id}`}
-                            onClick={() => setConfirmApproveUnit(unit.id)}
-                            style={btnStyle("var(--state-success)")}
-                          >
-                            {t.approve}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ReviewTab
+          units={reviewUnits}
+          loading={reviewLoading}
+          isOwner={isOwner}
+          actionBusy={actionBusy}
+          onOpenTarget={handleOpenReviewTarget}
+          onSendBack={setConfirmSendBackUnit}
+          onApprove={setConfirmApproveUnit}
+        />
       )}
 
       {tab === "members" && (
-        <div id="translation-panel-members" role="tabpanel" aria-labelledby="translation-tab-members">
-          {!isApprovedMember ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.membersOnly}</p>
-          ) : membersLoading ? (
-            <SkeletonList count={2} />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {members.map((m) => (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{m.username}</span>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                    {m.role === "owner" ? t.roleOwner : t.roleMember}
-                  </span>
-                  <span
-                    className="badge"
-                    style={{
-                      background: m.status === "approved" ? "rgba(34,197,94,0.15)" : m.status === "pending" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
-                      color: m.status === "approved" ? "var(--state-success)" : m.status === "pending" ? "var(--state-warning)" : "var(--state-danger)",
-                    }}
-                  >
-                    {memberStatusLabel(m.status)}
-                  </span>
-                  {m.status === "pending" && (
-                    <span style={{ fontSize: 11, color: "var(--text-faint)" }}>
-                      {ui.requestDate}: {formatRelativeTime(m.created_at)}
-                    </span>
-                  )}
-                  {isOwner && m.role !== "owner" && (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {m.status === "pending" && (
-                        <>
-                          <button disabled={actionBusy === `member-${m.id}`} onClick={() => handleMemberAction(m.id, "approved")} style={btnStyle("var(--state-success)", true)}>{t.approve}</button>
-                          <button disabled={actionBusy === `member-${m.id}`} onClick={() => setConfirmMemberAction({ id: m.id, action: "rejected" })} style={btnStyle("var(--state-danger)", true)}>{t.reject}</button>
-                        </>
-                      )}
-                      {m.status === "approved" && (
-                        <button disabled={actionBusy === `member-${m.id}`} onClick={() => setConfirmMemberAction({ id: m.id, action: "remove" })} style={btnStyle("var(--state-danger)", true)}>{t.kick}</button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MembersTab
+          members={members}
+          loading={membersLoading}
+          isApprovedMember={isApprovedMember}
+          isOwner={isOwner}
+          actionBusy={actionBusy}
+          onApprove={(id) => void handleMemberAction(id, "approved")}
+          onReject={(id) => setConfirmMemberAction({ id, action: "rejected" })}
+          onRemove={(id) => setConfirmMemberAction({ id, action: "remove" })}
+        />
       )}
 
       <ConfirmDialog
@@ -1679,99 +1537,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
 // resume バッジ風の淡いピル。色相で役割を残しつつ統一感を出す。
 // 緑(success)は統一感のためアクセント紫に寄せる。
-function btnStyle(color: string, small = false): React.CSSProperties {
-  const c = color === "var(--state-success)" ? "var(--accent)" : color;
-  const neutral = c === "var(--border)" || c === "var(--text-muted)";
-  const tint = neutral
-    ? "var(--bg-hover)"
-    : c === "var(--state-danger)"
-      ? "rgba(239, 68, 68, 0.15)"
-      : c === "var(--state-warning)"
-        ? "rgba(245, 158, 11, 0.15)"
-        : "var(--accent-tint)";
-  return {
-    background: tint,
-    color: neutral ? "var(--text-muted)" : c,
-    border: "none",
-    borderRadius: 999,
-    minHeight: 44,
-    padding: small ? "3px 10px" : "5px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: small ? 12 : 13,
-    whiteSpace: "nowrap" as const,
-    textDecoration: "none",
-    display: "inline-block",
-  };
-}
-
-const subCardStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  padding: "12px 14px",
-  border: "1px solid var(--border)",
-  borderRadius: 10,
-  background: "var(--bg-alt)",
-  minWidth: 0,
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: "var(--text-faint)",
-  marginBottom: 4,
-};
-
-const colLabelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: "var(--text-faint)",
-  marginBottom: 4,
-  textTransform: "uppercase",
-  letterSpacing: "0.03em",
-};
-
-const projectSummaryGridStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-  gap: 8,
-  marginBottom: 24,
-};
-
-const projectSummaryItemStyle: React.CSSProperties = {
-  minHeight: 70,
-  padding: "10px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  boxSizing: "border-box",
-};
-
-const projectSummaryLabelStyle: React.CSSProperties = {
-  display: "block",
-  marginBottom: 6,
-  color: "var(--text-muted)",
-  fontSize: 12,
-  fontWeight: 600,
-};
-
-const projectSummaryValueStyle: React.CSSProperties = {
-  display: "block",
-  color: "var(--text)",
-  fontSize: 16,
-  fontWeight: 700,
-  lineHeight: 1.3,
-};
-
-const detailProgressTrackStyle: React.CSSProperties = {
-  height: 6,
-  width: "100%",
-  marginTop: 8,
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "var(--border)",
-};
-
 type PendingDiscardNavigation =
   | { kind: "tab"; value: "units" | "review" | "members" }
   | { kind: "chapter"; value: number | null }
@@ -1780,25 +1545,3 @@ type PendingDiscardNavigation =
   | { kind: "status-filter"; value: "all" | TranslationUnit["status"] }
   | { kind: "assignee-filter"; value: "all" | "me" };
 
-const settingsInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "9px 11px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  font: "inherit",
-  boxSizing: "border-box",
-};
-
-const filterSelectStyle: React.CSSProperties = {
-  minHeight: 44,
-  padding: "6px 30px 6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  color: "var(--text)",
-  font: "inherit",
-  fontSize: 13,
-};

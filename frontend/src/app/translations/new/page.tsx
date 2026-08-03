@@ -100,17 +100,6 @@ export default function NewTranslationPage() {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    minHeight: 44,
-    padding: "8px 12px",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    background: "var(--bg-alt)",
-    color: "var(--text)",
-    fontSize: 14,
-    boxSizing: "border-box",
-  };
 
   const labelStyle: React.CSSProperties = {
     display: "block",
@@ -122,19 +111,19 @@ export default function NewTranslationPage() {
 
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ marginBottom: 24 }}>
-        <Link href="/translations" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+      <div className="mb-6">
+        <Link href="/translations" className="text-sm text-muted no-underline">
           {t.backToTranslations}
         </Link>
       </div>
-      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>{t.newTranslationTitle}</h1>
+      <h1 className="text-lg font-bold mb-6">{t.newTranslationTitle}</h1>
 
-      <div style={{ display: "grid", gap: 8, marginBottom: 24 }}>
+      <div className="grid gap-2 mb-6">
         <p style={noticeStyle}>{ui.lifecycleHelp}</p>
         <p style={noticeStyle}>{ui.licenseNotice}</p>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor={nameId} style={labelStyle}>{t.projectName}</label>
           <input
@@ -142,7 +131,7 @@ export default function NewTranslationPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.projectNamePlaceholder}
-            style={inputStyle}
+            className="form-control"
             required
             autoComplete="off"
           />
@@ -157,7 +146,7 @@ export default function NewTranslationPage() {
             placeholder={t.descPlaceholder}
             rows={3}
             autoComplete="off"
-            style={{ ...inputStyle, resize: "vertical" }}
+            className="form-control resize-y"
           />
         </div>
 
@@ -169,7 +158,7 @@ export default function NewTranslationPage() {
             disabled={catalogLoading || catalogError}
             value={genreFilter}
             onChange={(e) => { setGenreFilter(e.target.value); handleSlugChange(""); }}
-            style={inputStyle}
+            className="form-control"
           >
             <option value="">{t.all}</option>
             {groupCatalogByGenre(catalog).map(({ genre }) => (
@@ -185,7 +174,7 @@ export default function NewTranslationPage() {
             disabled={catalogLoading || catalogError}
             value={sourceSlug}
             onChange={(e) => handleSlugChange(e.target.value)}
-            style={inputStyle}
+            className="form-control"
             required
           >
             <option value="">{t.selectBookOption}</option>
@@ -205,7 +194,7 @@ export default function NewTranslationPage() {
               id={versionId}
               value={sourceVersion}
               onChange={(e) => setSourceVersion(e.target.value)}
-              style={inputStyle}
+              className="form-control"
               required
             >
               {(catalogEntry(catalog, sourceSlug)?.translations ?? []).map((tr) => (
@@ -221,7 +210,7 @@ export default function NewTranslationPage() {
             id={languageId}
             value={targetLanguage}
             onChange={(e) => setTargetLanguage(e.target.value)}
-            style={inputStyle}
+            className="form-control"
             required
           >
             <option value="">{t.selectLangOption}</option>
@@ -236,18 +225,17 @@ export default function NewTranslationPage() {
             id={errorId}
             role="alert"
             aria-live="polite"
-            style={{ color: "var(--state-danger)", fontSize: "var(--font-size-sm)", margin: 0 }}
+            className="text-danger text-sm m-0"
           >
             {error}
           </p>
         )}
 
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className="flex gap-3">
           <button
             type="submit"
             disabled={submitting || languagesLoading || languagesError || catalogLoading || catalogError}
-            className="btn btn-primary"
-            style={{ flex: 1 }}
+            className="btn btn-primary flex-1"
           >
             {submitting ? t.creating : t.createProject}
           </button>
@@ -259,17 +247,17 @@ export default function NewTranslationPage() {
           </Link>
         </div>
       </form>
-      {languagesLoading && <p role="status" style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.loading}</p>}
-      {catalogLoading && <p role="status" style={{ color: "var(--text-muted)", fontSize: 13 }}>{t.loading}</p>}
+      {languagesLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
+      {catalogLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
       {catalogError && (
-        <div role="alert" style={{ marginTop: 16 }}>
-          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{ui.loadError}</p>
+        <div role="alert" className="mt-4">
+          <p className="text-sm text-danger">{ui.loadError}</p>
           <Button variant="ghost" size="sm" onClick={retryCatalog}>{ui.retry}</Button>
         </div>
       )}
       {languagesError && (
-        <div role="alert" style={{ marginTop: 16 }}>
-          <p style={{ color: "var(--state-danger)", fontSize: 13 }}>{ui.loadError}</p>
+        <div role="alert" className="mt-4">
+          <p className="text-sm text-danger">{ui.loadError}</p>
           <Button variant="ghost" size="sm" onClick={loadLanguages}>{ui.retry}</Button>
         </div>
       )}

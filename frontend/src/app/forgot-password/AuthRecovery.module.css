@@ -57,14 +57,9 @@
   font-size: 16px;
 }
 
+/* 見た目は globals.css の .notice-box と共通（設定画面と同じもの） */
 .message {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
-  background: var(--accent-tint);
-  font-size: 13px;
-  line-height: 1.65;
+  composes: notice-box from global;
 }
 
 .error {

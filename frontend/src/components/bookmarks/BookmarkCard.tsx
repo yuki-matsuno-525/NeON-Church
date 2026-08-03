@@ -104,11 +104,11 @@ export function BookmarkCard({
   const inner = (
     <>
       {showKind && (
-        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-faint)", margin: "0 0 4px" }}>
+        <p className="text-xs font-bold text-faint mt-0 mx-0 mb-1">
           {target.kindLabel}
         </p>
       )}
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", margin: 0 }}>
+      <p className="text-sm font-bold text-accent m-0">
         {target.title}
       </p>
       {target.body && (
@@ -125,14 +125,14 @@ export function BookmarkCard({
   return (
     <div style={cardStyle}>
       {inactive ? (
-        <div style={{ color: "var(--text)" }}>{inner}</div>
+        <div className="text-body">{inner}</div>
       ) : (
-        <Link href={target.href} style={{ display: "block", textDecoration: "none", color: "var(--text)" }}>
+        <Link href={target.href} className="block no-underline text-body">
           {inner}
         </Link>
       )}
       {onRemove && (
-        <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
+        <div className="mt-2 flex gap-3">
           {removed ? (
             <button type="button" onClick={onUndo} style={undoButtonStyle}>
               {t.undo}

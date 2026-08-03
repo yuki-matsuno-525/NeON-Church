@@ -127,7 +127,7 @@ function BookContent() {
 
   if (loading) {
     return (
-      <div role="status" aria-label={t.loading} style={{ padding: 32 }}><SkeletonList count={5} /></div>
+      <div role="status" aria-label={t.loading} className="p-8"><SkeletonList count={5} /></div>
     );
   }
 
@@ -138,7 +138,7 @@ function BookContent() {
   }
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
+    <div className="min-h-page">
       <div className="reader-sticky-header" style={{
         position: "sticky",
         top: "var(--navbar-height)",
@@ -150,18 +150,18 @@ function BookContent() {
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--border)",
       }}>
-        <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+        <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
+          <Link href="/read" className="text-muted no-underline">
             {t.bookList}
           </Link>
           {" › "}
           <span>{label?.short ?? meta.short}</span>
         </p>
       </div>
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-wide">
 
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+      <div className="flex items-center gap-1 mb-6">
+        <h1 className="text-xl font-bold m-0">
           {label?.name ?? meta.name}
         </h1>
         {user && bookId && (
@@ -175,8 +175,8 @@ function BookContent() {
       </div>
 
       {(bookmarkLoadError || versionError) && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"
             className="btn btn-ghost"
@@ -190,7 +190,7 @@ function BookContent() {
         </div>
       )}
 
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
+      <h2 className="text-sm font-bold text-muted mb-3">
         {t.selectChapterHeading}
       </h2>
 
@@ -286,7 +286,7 @@ function BookContent() {
 
 function LoadingFallback() {
   const t = useT();
-  return <div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  return <div role="status" aria-live="polite" className="p-8 text-muted">{t.loading}</div>;
 }
 
 export default function BookPage() {

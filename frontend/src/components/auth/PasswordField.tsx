@@ -12,6 +12,8 @@ type Props = {
   minLength?: number;
   ariaInvalid?: boolean;
   ariaDescribedby?: string;
+  /** 入力欄に付けるクラス。見た目は基本 .form-control に任せる。 */
+  inputClassName?: string;
   inputStyle?: React.CSSProperties;
 };
 
@@ -24,13 +26,14 @@ export function PasswordField({
   minLength,
   ariaInvalid,
   ariaDescribedby,
+  inputClassName,
   inputStyle,
 }: Props) {
   const t = useT();
   const [visible, setVisible] = useState(false);
 
   return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+    <div className="relative flex items-center">
       <input
         id={id}
         type={visible ? "text" : "password"}
@@ -41,35 +44,16 @@ export function PasswordField({
         autoComplete={autoComplete}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
-        style={{
-          width: "100%",
-          paddingRight: 40,
-          ...inputStyle,
-        }}
+        className={inputClassName}
+        // 目のアイコンと文字が重ならないよう右に余白を空ける
+        style={{ width: "100%", paddingRight: 40, ...inputStyle }}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
         aria-pressed={visible}
         aria-label={visible ? t.hidePassword : t.showPassword}
-        style={{
-          position: "absolute",
-          right: 6,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 44,
-          height: 44,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "transparent",
-          border: "none",
-          color: "var(--text-muted)",
-          cursor: "pointer",
-          padding: 0,
-          borderRadius: 4,
-          fontFamily: "inherit",
-        }}
+        className="clear-input-btn"
       >
         {visible ? <EyeOffIcon /> : <EyeIcon />}
       </button>

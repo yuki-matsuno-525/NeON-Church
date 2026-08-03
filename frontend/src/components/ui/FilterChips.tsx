@@ -28,16 +28,7 @@ export function FilterChips<T extends string>({
   ariaLabel: string;
 }) {
   return (
-    <div
-      role="group"
-      aria-label={ariaLabel}
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 8,
-        marginBottom: "var(--space-5)",
-      }}
-    >
+    <div role="group" aria-label={ariaLabel} className="mb-6 flex flex-wrap gap-2">
       {chips.map((chip) => {
         const isActive = chip.value === value;
         return (
@@ -46,19 +37,12 @@ export function FilterChips<T extends string>({
             type="button"
             onClick={() => onChange(chip.value)}
             aria-pressed={isActive}
-            style={{
-              fontSize: "var(--font-size-sm)",
-              padding: "6px 14px",
-              minHeight: 44,
-              borderRadius: 999,
-              border: "1px solid var(--border)",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              background: isActive ? "var(--accent)" : "transparent",
-              color: isActive ? "var(--accent-text)" : "var(--text-muted)",
-            }}
+            className={[
+              "tap-target cursor-pointer rounded-full border border-border px-3 py-2 text-sm",
+              isActive ? "bg-accent text-accent-text" : "bg-transparent text-muted",
+            ].join(" ")}
           >
-            {chip.label} <span style={{ opacity: 0.7 }}>({chip.count})</span>
+            {chip.label} <span className="opacity-70">({chip.count})</span>
           </button>
         );
       })}

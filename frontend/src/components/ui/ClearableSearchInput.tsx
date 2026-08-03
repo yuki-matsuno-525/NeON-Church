@@ -8,7 +8,11 @@ type ClearableSearchInputProps = {
   onChange: (value: string) => void;
   placeholder: string;
   ariaLabel: string;
+  /** 入力欄に付けるクラス。見た目は基本 .form-control に任せる。 */
+  inputClassName?: string;
+  /** 幅など、その画面だけの調整が要るときに使う */
   inputStyle?: CSSProperties;
+  wrapperClassName?: string;
   wrapperStyle?: CSSProperties;
 };
 
@@ -17,13 +21,18 @@ export function ClearableSearchInput({
   onChange,
   placeholder,
   ariaLabel,
+  inputClassName,
   inputStyle,
+  wrapperClassName,
   wrapperStyle,
 }: ClearableSearchInputProps) {
   const t = useT();
 
   return (
-    <div style={{ position: "relative", display: "flex", alignItems: "center", ...wrapperStyle }}>
+    <div
+      className={`relative flex items-center ${wrapperClassName ?? ""}`}
+      style={wrapperStyle}
+    >
       <input
         type="search"
         value={value}
@@ -31,17 +40,16 @@ export function ClearableSearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         autoComplete="off"
-        style={{
-          ...inputStyle,
-          paddingRight: value ? 48 : inputStyle?.paddingRight,
-        }}
+        className={inputClassName}
+        // 消すボタンと文字が重ならないよう、入力があるときだけ右に余白を足す
+        style={{ ...inputStyle, paddingRight: value ? 48 : inputStyle?.paddingRight }}
       />
       {value && (
         <button
           type="button"
           onClick={() => onChange("")}
           aria-label={t.clearInput}
-          style={clearButtonStyle}
+          className="clear-input-btn"
         >
           &times;
         </button>
@@ -49,23 +57,3 @@ export function ClearableSearchInput({
     </div>
   );
 }
-
-const clearButtonStyle: CSSProperties = {
-  position: "absolute",
-  right: 2,
-  top: "50%",
-  transform: "translateY(-50%)",
-  width: 44,
-  height: 44,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "transparent",
-  border: "none",
-  color: "var(--text-muted)",
-  cursor: "pointer",
-  fontSize: 18,
-  lineHeight: 1,
-  borderRadius: 4,
-  fontFamily: "inherit",
-};

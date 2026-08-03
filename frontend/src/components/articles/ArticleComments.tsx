@@ -83,7 +83,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
   };
 
   return (
-    <section style={{ marginTop: 40 }}>
+    <section className="mt-8">
       <ConfirmDialog
         open={deleting !== null}
         title={t.articleCommentDeleteConfirmTitle}
@@ -94,26 +94,26 @@ export function ArticleComments({ articleId }: { articleId: string }) {
         onCancel={() => !deleteBusy && setDeleting(null)}
       />
 
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>
-        {t.articleCommentsTitle} <span style={{ color: "var(--text-faint)", fontWeight: 400 }}>{comments.length}</span>
+      <h2 className="text-md font-bold mt-0 mx-0 mb-4">
+        {t.articleCommentsTitle} <span className="text-faint font-normal">{comments.length}</span>
       </h2>
 
       {loading ? (
-        <p role="status" style={{ fontSize: 13, color: "var(--text-muted)" }}>{t.loading}</p>
+        <p role="status" className="text-sm text-muted">{t.loading}</p>
       ) : error && comments.length === 0 ? (
-        <div role="alert" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--state-danger)" }}>{error}</p>
+        <div role="alert" className="flex items-center flex-wrap gap-3">
+          <p className="m-0 text-sm text-danger">{error}</p>
           <button type="button" onClick={() => void loadComments()} style={secondaryButtonStyle}>{t.retry}</button>
         </div>
       ) : comments.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)" }}>{t.articleCommentsEmpty}</p>
+        <p className="text-sm text-faint">{t.articleCommentsEmpty}</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+        <div className="flex flex-col gap-3 mb-4">
           {comments.map((comment) => (
-            <div key={comment.id} className="card-glow" style={{ padding: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <Link href={`/profile/${comment.username}`} style={{ fontSize: 13, fontWeight: 700, color: "inherit", textDecoration: "none" }}>{comment.username}</Link>
-                <time dateTime={comment.created_at} style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            <div key={comment.id} className="card-glow p-3" >
+              <div className="flex items-center gap-2 mb-2">
+                <Link href={`/profile/${comment.username}`} className="text-sm font-bold text-inherit no-underline">{comment.username}</Link>
+                <time dateTime={comment.created_at} className="text-xs text-muted">
                   {formatRelativeTime(comment.created_at)}
                 </time>
                 {user?.username === comment.username && !comment.is_deleted && (
@@ -153,8 +153,8 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       )}
 
       {user ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <label htmlFor={`article-comment-${articleId}`} style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 700 }}>
+        <div className="flex flex-col gap-2">
+          <label htmlFor={`article-comment-${articleId}`} className="text-sm text-muted font-bold">
             この記事へのコメント
           </label>
           <textarea
@@ -176,33 +176,20 @@ export function ArticleComments({ articleId }: { articleId: string }) {
               resize: "vertical",
             }}
           />
-          {error && <p role="alert" style={{ margin: 0, fontSize: 12, color: "var(--state-danger)" }}>{error}</p>}
+          {error && <p role="alert" className="m-0 text-xs text-danger">{error}</p>}
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!body.trim() || busy}
-            style={{
-              alignSelf: "flex-start",
-              border: "none",
-              borderRadius: 8,
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              fontWeight: 700,
-              fontSize: 14,
-              padding: "8px 18px",
-              minHeight: 44,
-              cursor: !body.trim() || busy ? "default" : "pointer",
-              opacity: !body.trim() || busy ? 0.6 : 1,
-              fontFamily: "inherit",
-            }}
+            className="btn btn-secondary self-start"
           >
             {busy ? t.posting : t.articleCommentAction}
           </button>
         </div>
       ) : (
-        <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+        <p className="text-sm text-muted">
           {t.articleCommentLoginRequired}{" "}
-          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} style={{ color: "var(--accent)" }}>{t.login}</Link>
+          <Link href={`/login?from=${encodeURIComponent(`/articles/${articleId}`)}`} className="text-accent">{t.login}</Link>
         </p>
       )}
     </section>

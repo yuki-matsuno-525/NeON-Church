@@ -82,18 +82,18 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
     : comments;
 
   return (
-    <section id="chapter-comments" style={{ marginTop: 40 }}>
+    <section id="chapter-comments" className="mt-8">
       <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="m-0 text-md font-bold">
           {heading}{" "}
-          <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
+          <span className="text-faint font-normal text-sm">
             ({total})
           </span>
         </h2>
 
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
@@ -120,7 +120,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
       {/* タグフィルタ */}
       {tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
             type="button"
             onClick={() => setActiveTagId(null)}
@@ -163,13 +163,13 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         </div>
       )}
       {tagsError && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--state-danger)", fontSize: 12 }}>
+        <div role="alert" className="flex items-center gap-2 mb-3 text-danger text-xs">
           <span>{t.tagsLoadFailed}</span>
-          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
 
-      <div style={{ marginBottom: 12 }}>
+      <div className="mb-3">
         <input
           type="search"
           value={searchQuery}
@@ -191,16 +191,16 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         />
       </div>
 
-      <div style={{ marginBottom: 24 }}>
+      <div className="mb-6">
         <CommentInput onSubmit={handleSubmit} showTagOption />
       </div>
 
       {loading ? (
-        <p role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
+        <p role="status" aria-live="polite" className="text-faint text-sm">{t.loading}</p>
       ) : error ? (
         <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
       ) : visibleComments.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>
+        <p className="text-faint text-sm">
           {q ? t.filterCommentsNoMatch : t.noCommentsYet}
         </p>
       ) : (

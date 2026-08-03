@@ -12,8 +12,9 @@ import { visibilityLabel } from "@/lib/plans";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
-import { Icon, type IconName } from "@/components/ui/Icon";
-import { ErrorState, SkeletonList } from "@/components/ui";
+import { type IconName } from "@/components/ui/Icon";
+import { AsyncList, ErrorState } from "@/components/ui";
+import { ListColumn, ListPageHeader } from "@/components/list";
 import { planUiText } from "@/components/plans/planUiText";
 
 export default function PlansPage() {
@@ -59,31 +60,29 @@ export default function PlansPage() {
   const pageLoading = authLoading || loading;
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.plansTitle}</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            {t.plansDesc}
-          </p>
-        </div>
-        {user && (
-          <Link href="/plans/new" style={newButtonStyle}>
-            {t.planNew}
-          </Link>
-        )}
-      </div>
+    <div className="page page-full">
+      <ListPageHeader
+        title={t.plansTitle}
+        description={t.plansDesc}
+        action={
+          user ? (
+            <Link href="/plans/new" style={newButtonStyle}>
+              {t.planNew}
+            </Link>
+          ) : undefined
+        }
+      />
 
       {!pageLoading && !error && reading.length > 0 && (
-        <section style={{ ...columnStyle, marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>{t.planReadingNow}</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <section className="list-column mb-4">
+          <h2 className="text-md font-bold mt-0 mx-0 mb-3">{t.planReadingNow}</h2>
+          <div className="flex flex-wrap gap-2">
             {reading.map((subscription) => (
               <Link
                 key={subscription.id}
                 href={`/plans/${subscription.plan}`}
-                className="card-glow card-glow-interactive"
-                style={{ padding: "10px 14px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", color: "inherit", fontSize: 14, fontWeight: 700 }}
+                className="card-glow card-glow-interactive py-3 px-3 tap-target inline-flex items-center no-underline text-inherit text-sm font-bold"
+                
               >
                 {subscription.plan_title}
               </Link>
@@ -101,7 +100,7 @@ export default function PlansPage() {
           onRetry={() => setReloadKey((key) => key + 1)}
         />
       ) : (
-        <div aria-busy={pageLoading} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 16, alignItems: "start" }}>
+        <div aria-busy={pageLoading} className="list-board">
           {user && (
             <PlanColumn
               title={t.planMineTitle}
@@ -154,32 +153,24 @@ function PlanColumn({
 }) {
   const t = useT();
   return (
-    <section style={columnStyle}>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color, display: "inline-flex" }}>
-            <Icon name={icon} size={18} />
-          </span>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{title}</h2>
-          <span style={{ ...countBadgeStyle, background: tint, color }}>{plans.length}</span>
-        </div>
-        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{desc}</p>
-      </div>
-
-      {loading ? (
-        <SkeletonList count={2} />
-      ) : plans.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{empty}</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={title}
+      count={plans.length}
+      description={desc}
+    >
+      <AsyncList loading={loading} isEmpty={plans.length === 0} emptyText={empty}>
+        <div className="flex flex-col gap-3">
           {plans.map((plan) => (
             <Link
               key={plan.id}
               href={editable ? `/plans/${plan.id}/edit` : `/plans/${plan.id}`}
-              style={{ textDecoration: "none", color: "inherit" }}
+              className="no-underline text-inherit"
             >
-              <div className="card-glow card-glow-interactive" style={{ padding: 16 }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+              <div className="card-glow card-glow-interactive p-4" >
+                <div className="flex justify-end mb-3">
                   <span
                     className="badge"
                     style={{
@@ -198,49 +189,22 @@ function PlanColumn({
                     {plan.description}
                   </p>
                 )}
-                <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", flexWrap: "wrap" }}>
-                  <span style={metaPillStyle}>{plan.owner_username}</span>
-                  <span style={metaPillStyle}>{t.planDayCount(plan.day_count)}</span>
-                  {plan.reader_count > 0 && <span style={metaPillStyle}>{t.planReaderCount(plan.reader_count)}</span>}
+                <div className="flex gap-2 text-xs flex-wrap">
+                  <span className="meta-pill">{plan.owner_username}</span>
+                  <span className="meta-pill">{t.planDayCount(plan.day_count)}</span>
+                  {plan.reader_count > 0 && <span className="meta-pill">{t.planReaderCount(plan.reader_count)}</span>}
                 </div>
               </div>
             </Link>
           ))}
         </div>
-      )}
-    </section>
+      </AsyncList>
+    </ListColumn>
   );
 }
 
-const columnStyle: React.CSSProperties = {
-  padding: "18px 16px",
-  border: "1px solid var(--border)",
-  borderRadius: 14,
-  background: "rgba(255,255,255,0.02)",
-};
 
-const countBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 22,
-  height: 22,
-  padding: "0 7px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 700,
-};
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-};
 
 const newButtonStyle: React.CSSProperties = {
   background: "var(--accent)",

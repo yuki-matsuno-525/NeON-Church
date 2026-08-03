@@ -163,7 +163,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (loading || authLoading) {
     return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
+      <div className="page page-full">
         <SkeletonList count={4} />
       </div>
     );
@@ -171,9 +171,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (error || !article) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{error ?? t.articleCannotEdit}</p>
-        <Link href="/articles" style={{ color: "var(--accent)" }}>
+      <div className="page page-narrow">
+        <p className="text-muted">{error ?? t.articleCannotEdit}</p>
+        <Link href="/articles" className="text-accent">
           {t.articleBackToList}
         </Link>
       </div>
@@ -182,9 +182,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (!user) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleEditLoginRequired}</p>
-        <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} style={{ color: "var(--accent)" }}>
+      <div className="page page-narrow">
+        <p className="text-muted">{t.articleEditLoginRequired}</p>
+        <Link href={`/login?from=${encodeURIComponent(`/articles/${id}/edit`)}`} className="text-accent">
           {t.login}
         </Link>
       </div>
@@ -193,15 +193,15 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
   if (user.username !== article.owner_username) {
     return (
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-        <p style={{ color: "var(--text-muted)" }}>{t.articleNotOwner}</p>
+      <div className="page page-narrow">
+        <p className="text-muted">{t.articleNotOwner}</p>
       </div>
     );
   }
 
   const canPublish = summary.trim().length > 0;
   const bodyPane = (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+    <div className="flex flex-col min-h-0">
       <label htmlFor="article-body" style={fieldLabelStyle}>{t.articleTabBody}</label>
       <textarea
         id="article-body"
@@ -225,9 +225,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           resize: "vertical",
         }}
       />
-      <details id="article-markdown-help" style={{ marginTop: 8, color: "var(--text-muted)", fontSize: 12 }}>
-        <summary style={{ cursor: "pointer", minHeight: 44, display: "flex", alignItems: "center" }}>{t.articleFormatHelp}</summary>
-        <p style={{ margin: "4px 0 0", lineHeight: 1.7 }}>
+      <details id="article-markdown-help" className="mt-2 text-muted text-xs">
+        <summary className="cursor-pointer tap-target flex items-center">{t.articleFormatHelp}</summary>
+        <p className="mt-1 mx-0 mb-0 leading-reading">
           {t.articleFormatDescription}
         </p>
       </details>
@@ -287,8 +287,8 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       />
 
       {/* 題と公開範囲 */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-        <label htmlFor="article-title" style={visuallyHiddenStyle}>{t.articleTitleLabel}</label>
+      <div className="flex gap-3 items-center flex-wrap mb-3">
+        <label htmlFor="article-title" className="sr-only">{t.articleTitleLabel}</label>
         <input
           id="article-title"
           value={title}
@@ -310,7 +310,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             fontWeight: 700,
           }}
         />
-        <label htmlFor="article-visibility" style={visuallyHiddenStyle}>{t.articleVisibilityLabel}</label>
+        <label htmlFor="article-visibility" className="sr-only">{t.articleVisibilityLabel}</label>
         <select
           id="article-visibility"
           value={visibility}
@@ -337,7 +337,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         {autosave.status === "error" && (
           <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>{t.retry}</button>
         )}
-        <Link href={`/articles/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
         <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} style={deleteButtonStyle}>
@@ -378,15 +378,15 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         {summary.length}/{MAX_SUMMARY_LENGTH}
       </div>
       {!canPublish && (
-        <p style={{ fontSize: 12, color: "var(--text-faint)", margin: "0 0 10px" }}>
+        <p className="text-xs text-faint mt-0 mx-0 mb-3">
           {t.articleSummaryRequired}
         </p>
       )}
 
       {/* タグ */}
-      <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
+      <fieldset className="border-0 p-0 mt-0 mx-0 mb-4">
         <legend style={fieldLabelStyle}>{t.articleTopicsLimit(MAX_TAGS)}</legend>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div className="flex flex-wrap gap-2">
         {tags.map((tag) => {
           const active = tagIds.includes(tag.id);
           return (
@@ -413,16 +413,16 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         })}
         </div>
         {tagLoadError && (
-          <p role="alert" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>
+          <p role="alert" className="mt-2 mx-0 mb-0 text-danger text-xs">
             {t.articleTopicsLoadFailed} <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
           </p>
         )}
-        {tagNotice && <p role="status" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>{tagNotice}</p>}
+        {tagNotice && <p role="status" className="mt-2 mx-0 mb-0 text-danger text-xs">{tagNotice}</p>}
       </fieldset>
 
       {isMobile ? (
         <div>
-          <div role="tablist" aria-label={t.articleEditTabsLabel} onKeyDown={handleTabArrowKey} style={{ display: "flex", borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
+          <div role="tablist" aria-label={t.articleEditTabsLabel} onKeyDown={handleTabArrowKey} className="flex border-b border-border mb-3">
             <MobileTab id="body" active={mobileTab === "body"} onClick={() => setMobileTab("body")}>
               {t.articleTabBody}
             </MobileTab>
@@ -441,9 +441,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 380px)", gap: 20, alignItems: "start" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0 }}>
+          <div className="flex flex-col gap-4 min-h-0">
             {bodyPane}
-            <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+            <div className="flex flex-col min-h-0">
               <div style={fieldLabelStyle}>{t.articleTabPreview}</div>
               {previewPane}
             </div>
@@ -549,17 +549,6 @@ const fieldLabelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
-const visuallyHiddenStyle: React.CSSProperties = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0, 0, 0, 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};
 
 function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {
   if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;
