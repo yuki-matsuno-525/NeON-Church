@@ -75,7 +75,7 @@ export default function PlansPage() {
       </div>
 
       {!pageLoading && !error && reading.length > 0 && (
-        <section style={{ ...columnStyle, marginBottom: 16 }}>
+        <section className="list-column mb-4">
           <h2 className="text-md font-bold mt-0 mx-0 mb-3">{t.planReadingNow}</h2>
           <div className="flex flex-wrap gap-2">
             {reading.map((subscription) => (
@@ -154,14 +154,14 @@ function PlanColumn({
 }) {
   const t = useT();
   return (
-    <section style={columnStyle}>
+    <section className="list-column">
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <span style={{ color, display: "inline-flex" }}>
             <Icon name={icon} size={18} />
           </span>
           <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span style={{ ...countBadgeStyle, background: tint, color }}>{plans.length}</span>
+          <span className="badge badge-count" style={{ background: tint, color }}>{plans.length}</span>
         </div>
         <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
       </div>
@@ -199,9 +199,9 @@ function PlanColumn({
                   </p>
                 )}
                 <div className="flex gap-2 text-xs flex-wrap">
-                  <span style={metaPillStyle}>{plan.owner_username}</span>
-                  <span style={metaPillStyle}>{t.planDayCount(plan.day_count)}</span>
-                  {plan.reader_count > 0 && <span style={metaPillStyle}>{t.planReaderCount(plan.reader_count)}</span>}
+                  <span className="meta-pill">{plan.owner_username}</span>
+                  <span className="meta-pill">{t.planDayCount(plan.day_count)}</span>
+                  {plan.reader_count > 0 && <span className="meta-pill">{t.planReaderCount(plan.reader_count)}</span>}
                 </div>
               </div>
             </Link>
@@ -212,35 +212,8 @@ function PlanColumn({
   );
 }
 
-const columnStyle: React.CSSProperties = {
-  padding: "18px 16px",
-  border: "1px solid var(--border)",
-  borderRadius: 14,
-  background: "rgba(255,255,255,0.02)",
-};
 
-const countBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 22,
-  height: 22,
-  padding: "0 7px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 700,
-};
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-};
 
 const newButtonStyle: React.CSSProperties = {
   background: "var(--accent)",

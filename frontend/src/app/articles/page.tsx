@@ -191,12 +191,12 @@ function ArticleColumn({
 }) {
   const t = useT();
   return (
-    <section style={columnStyle} aria-busy={feed.loading}>
+    <section className="list-column" aria-busy={feed.loading}>
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <span aria-hidden="true" style={{ color, display: "inline-flex" }}><Icon name={icon} size={18} /></span>
           <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span aria-label={`${feed.total}件`} style={{ ...countBadgeStyle, background: tint, color }}>{feed.total}</span>
+          <span aria-label={`${feed.total}件`} className="badge badge-count" style={{ background: tint, color }}>{feed.total}</span>
         </div>
         <p className="mt-2 mb-0 text-xs text-muted">{desc}</p>
       </div>
@@ -238,16 +238,13 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
       </h3>
       {article.summary && <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>{article.summary}</p>}
       <div className="flex gap-2 text-xs text-muted flex-wrap">
-        <Link href={`/profile/${article.owner_username}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{article.owner_username}</Link>
-        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} style={{ ...metaPillStyle, textDecoration: "none" }}>{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
+        <Link href={`/profile/${article.owner_username}`} className="meta-pill meta-pill-link">{article.owner_username}</Link>
+        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} className="meta-pill meta-pill-link">{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
       </div>
     </article>
   );
 }
 
-const columnStyle: React.CSSProperties = { padding: "18px 16px", border: "1px solid var(--border)", borderRadius: 14, background: "rgba(255,255,255,0.02)" };
-const countBadgeStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 22, height: 22, padding: "0 7px", borderRadius: 999, fontSize: 12, fontWeight: 700 };
-const metaPillStyle: React.CSSProperties = { display: "inline-flex", alignItems: "center", minHeight: 44, padding: "8px 10px", borderRadius: 6, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", color: "var(--text-muted)" };
 const newButtonStyle: React.CSSProperties = { background: "var(--accent)", color: "var(--accent-text)", borderRadius: 8, padding: "10px 18px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", fontWeight: 700, fontSize: 14 };
 const secondaryLinkStyle: React.CSSProperties = { ...newButtonStyle, background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)" };
 const inlineRetryStyle: React.CSSProperties = { minHeight: 44, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", cursor: "pointer", fontFamily: "inherit" };

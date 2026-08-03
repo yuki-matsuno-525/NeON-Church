@@ -71,10 +71,10 @@ export function QACard({ question, showLocation = true }: Props) {
       {/* カード全体がリンクなので、ここでは投稿者名もリンクにしない（リンクの入れ子は押せない）。
           投稿者のページへは詳細ページから辿る。 */}
       <div className="flex gap-2 flex-wrap items-center mt-3">
-        <span style={metaPillStyle}>{question.user.username}</span>
-        <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>
+        <span className="meta-pill">{question.user.username}</span>
+        <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
         {question.tags.map((tag) => (
-          <span key={tag.id} style={metaPillStyle}>
+          <span key={tag.id} className="meta-pill">
             {t.tagNames[tag.name] ?? tag.name}
           </span>
         ))}
@@ -110,17 +110,6 @@ const titleStyle: React.CSSProperties = {
   margin: "0 0 var(--space-2)",
 };
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-  fontSize: "var(--font-size-xs)",
-};
 
 const countPillStyle: React.CSSProperties = {
   marginLeft: "auto",

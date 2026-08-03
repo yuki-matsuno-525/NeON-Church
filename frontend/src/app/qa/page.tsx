@@ -360,7 +360,8 @@ function QAContent() {
                 id={`qa-panel-${col.key}`}
                 role={isMobile ? "tabpanel" : undefined}
                 aria-labelledby={isMobile ? `qa-tab-${col.key}` : undefined}
-                style={{ ...columnStyle, display: isMobile && col.key !== activeTab ? "none" : undefined }}
+                className="list-column"
+                style={{ display: isMobile && col.key !== activeTab ? "none" : undefined }}
               >
                 <div className="mb-4">
                   <div className="flex items-center gap-2">
@@ -369,7 +370,7 @@ function QAContent() {
                     </span>
                     <h2 className="m-0 text-md font-bold">{columnLabel(col.key)}</h2>
                     {/* 表示中の件数ではなく、サーバーが数えたその列の総数 */}
-                    <span style={{ ...countBadgeStyle, background: col.tint, color: col.color }}>{list.total}</span>
+                    <span className="badge badge-count" style={{ background: col.tint, color: col.color }}>{list.total}</span>
                   </div>
                   <p className="mt-2 mb-0 text-xs text-muted">{columnDesc(col.key)}</p>
                 </div>
@@ -409,24 +410,7 @@ const boardGridStyle: React.CSSProperties = {
   alignItems: "start",
 };
 
-const columnStyle: React.CSSProperties = {
-  padding: "18px 16px",
-  border: "1px solid var(--border)",
-  borderRadius: 14,
-  background: "rgba(255,255,255,0.02)",
-};
 
-const countBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 22,
-  height: 22,
-  padding: "0 7px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 700,
-};
 
 const filterPanelStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
