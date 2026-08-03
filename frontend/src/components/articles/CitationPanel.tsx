@@ -209,7 +209,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
       <div className="flex items-center gap-2 my-3 mx-0">
         <strong className="text-sm">{displayMeta?.short}</strong>
-        <label htmlFor="citation-translation" style={visuallyHiddenStyle}>{t.translationLabel}</label>
+        <label htmlFor="citation-translation" className="sr-only">{t.translationLabel}</label>
         <select
           id="citation-translation"
           value={translation}
@@ -242,9 +242,9 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               key={number}
               type="button"
               onClick={() => setChapter(number)}
-              style={chapterButtonStyle}
+              className="chapter-button"
             >
-              <span aria-hidden="true">{number}</span><span style={visuallyHiddenStyle}>第{number}章</span>
+              <span aria-hidden="true">{number}</span><span className="sr-only">第{number}章</span>
             </button>
           ))}
           {!error && chapterNumbers.length === 0 && <p style={mutedTextStyle}>この翻訳には章がありません。</p>}
@@ -613,17 +613,6 @@ const backButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const chapterButtonStyle: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
 
 const smallButtonStyle: React.CSSProperties = {
   border: "1px solid var(--border)",
@@ -663,17 +652,6 @@ const mutedTextStyle: React.CSSProperties = {
   lineHeight: 1.7,
 };
 
-const visuallyHiddenStyle: React.CSSProperties = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0, 0, 0, 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};
 
 function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {
   if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;

@@ -288,7 +288,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
       {/* 題と公開範囲 */}
       <div className="flex gap-3 items-center flex-wrap mb-3">
-        <label htmlFor="article-title" style={visuallyHiddenStyle}>{t.articleTitleLabel}</label>
+        <label htmlFor="article-title" className="sr-only">{t.articleTitleLabel}</label>
         <input
           id="article-title"
           value={title}
@@ -310,7 +310,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             fontWeight: 700,
           }}
         />
-        <label htmlFor="article-visibility" style={visuallyHiddenStyle}>{t.articleVisibilityLabel}</label>
+        <label htmlFor="article-visibility" className="sr-only">{t.articleVisibilityLabel}</label>
         <select
           id="article-visibility"
           value={visibility}
@@ -549,17 +549,6 @@ const fieldLabelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
-const visuallyHiddenStyle: React.CSSProperties = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0, 0, 0, 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};
 
 function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {
   if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") return;

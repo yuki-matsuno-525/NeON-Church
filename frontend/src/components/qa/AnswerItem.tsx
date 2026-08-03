@@ -110,8 +110,8 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
             <button
               type="button"
               onClick={() => onPickBest(answer.is_best ? null : answer.id)}
+              className="action-chip"
               style={{
-                ...actionButtonStyle,
                 border: `1px solid ${answer.is_best ? "var(--accent)" : "var(--border)"}`,
                 background: answer.is_best ? "var(--accent)" : "transparent",
                 color: answer.is_best ? "var(--accent-text)" : "var(--text-muted)",
@@ -122,10 +122,10 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
           )}
           {isOwner ? (
             <>
-              <button type="button" onClick={() => setEditing(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setEditing(true)} className="action-chip">
                 {t.edit}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setConfirmDelete(true)} className="action-chip">
                 {t.delete}
               </button>
             </>
@@ -134,7 +134,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
               <button
                 type="button"
                 onClick={handleReport}
-                style={{ ...actionButtonStyle, marginLeft: "auto" }}
+                className="action-chip ml-auto"
               >
                 <Icon name="alert-triangle" size={11} />
                 {t.report}
@@ -171,17 +171,3 @@ const textareaStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-const actionButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  minHeight: 28,
-  padding: "3px 10px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

@@ -130,7 +130,7 @@ export function ChapterPicker({
               chapter_number: number,
               translation,
             })}
-            style={chapterButtonStyle}
+            className="chapter-button"
           >
             {number}
           </button>
@@ -192,14 +192,3 @@ const inlineRetryStyle: React.CSSProperties = {
   minHeight: 44,
 };
 
-const chapterButtonStyle: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

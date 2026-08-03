@@ -49,12 +49,12 @@ export default function NewPlanPage() {
   };
 
   if (authLoading) {
-    return <div style={containerStyle}><SkeletonList count={2} /></div>;
+    return <div className="page page-form"><SkeletonList count={2} /></div>;
   }
 
   if (!user) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-form">
         <p role="status" className="text-muted">{t.planLoginRequired}</p>
         <Link href="/login?from=%2Fplans%2Fnew" style={loginLinkStyle}>
           {t.loginBtn}
@@ -64,7 +64,7 @@ export default function NewPlanPage() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-form">
       <ConfirmDialog
         open={confirmCancel}
         title={supplementalText.discardNewTitle}
@@ -139,11 +139,6 @@ export default function NewPlanPage() {
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 560,
-  margin: "0 auto",
-  padding: "48px 16px",
-};
 
 const loginLinkStyle: React.CSSProperties = {
   color: "var(--accent)",

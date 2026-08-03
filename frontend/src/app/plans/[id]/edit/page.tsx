@@ -149,7 +149,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         <ErrorState
           title={t.planCannotEdit}
           message={t.planLoginRequired}
-          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} style={actionLinkStyle}>{t.loginBtn}</Link>}
+          extraAction={<Link href={`/login?from=${encodeURIComponent(`/plans/${id}/edit`)}`} className="action-link">{t.loginBtn}</Link>}
         />
       </div>
     );
@@ -166,7 +166,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             load().catch(() => setLoadError(editUnavailableDescription)).finally(() => setLoading(false));
           }}
           retryLabel={t.retry}
-          extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>}
+          extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>}
         />
       </div>
     );
@@ -175,7 +175,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   if (user.username !== plan.owner_username) {
     return (
       <div style={containerStyle}>
-        <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>} />
+        <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>} />
       </div>
     );
   }
@@ -232,7 +232,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} style={inlineRetryStyle}>{t.retry}</button>}
-        <Link href={`/plans/${id}`} style={viewLinkStyle}>{t.planView}</Link>
+        <Link href={`/plans/${id}`} className="action-link" style={viewLinkStyle}>{t.planView}</Link>
         <button type="button" onClick={() => setConfirmDelete(true)} style={plainButtonStyle}>{t.delete}</button>
       </div>
 
@@ -306,8 +306,8 @@ const plainButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const actionLinkStyle: React.CSSProperties = { color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" };
-const viewLinkStyle: React.CSSProperties = { ...actionLinkStyle, fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
+// .action-link に重ねて、色と字の大きさだけ控えめにする
+const viewLinkStyle: React.CSSProperties = { fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
 const inlineRetryStyle: React.CSSProperties = { border: 0, background: "transparent", color: "var(--accent)", textDecoration: "underline", minHeight: 44, cursor: "pointer" };
 const errorTextStyle: React.CSSProperties = { color: "var(--state-danger)", fontSize: 13, margin: "4px 0 10px" };
 

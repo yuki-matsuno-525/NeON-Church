@@ -61,7 +61,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <SkeletonList count={3} />
       </div>
     );
@@ -69,7 +69,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
 
   if (error || !article) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <p className="text-muted">{error ?? t.articleCannotRead}</p>
         {error === t.articleLoadFailed && (
           <button type="button" onClick={() => void loadArticle()} style={retryButtonStyle}>{t.retry}</button>
@@ -84,7 +84,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
   const isOwner = user?.username === article.owner_username;
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-detail">
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {article.visibility !== "public" && (
           <span className="badge" style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-muted)" }}>
@@ -158,11 +158,6 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ id: st
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 720,
-  margin: "0 auto",
-  padding: "32px 16px 64px",
-};
 
 const retryButtonStyle: React.CSSProperties = {
   minHeight: 44,

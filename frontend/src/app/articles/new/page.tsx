@@ -53,12 +53,12 @@ export default function NewArticlePage() {
   };
 
   if (authLoading) {
-    return <div style={containerStyle}><SkeletonList count={3} /></div>;
+    return <div className="page page-form"><SkeletonList count={3} /></div>;
   }
 
   if (!user) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-form">
         <p className="text-muted">{t.articleLoginRequired}</p>
         <Link href="/login?from=%2Farticles%2Fnew" className="text-accent">
           {t.loginBtn}
@@ -68,7 +68,7 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-form">
       <ConfirmDialog
         open={confirmCancel}
         title={t.articleDiscardTitle}
@@ -143,8 +143,3 @@ export default function NewArticlePage() {
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 560,
-  margin: "0 auto",
-  padding: "48px 16px",
-};

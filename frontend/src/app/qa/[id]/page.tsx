@@ -251,10 +251,10 @@ export default function QuestionDetailPage() {
         )}
 
         <div className="flex gap-2 flex-wrap items-center mt-4">
-          <span style={metaPillStyle}>{question.user.username}</span>
-          <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>
+          <span className="meta-pill">{question.user.username}</span>
+          <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
           {question.tags.map((tag) => (
-            <span key={tag.id} style={metaPillStyle}>
+            <span key={tag.id} className="meta-pill">
               {t.tagNames[tag.name] ?? tag.name}
             </span>
           ))}
@@ -267,11 +267,11 @@ export default function QuestionDetailPage() {
                   setDraftBody(question.body);
                   setEditing(true);
                 }}
-                style={actionButtonStyle}
+                className="action-chip"
               >
                 {t.edit}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setConfirmDelete(true)} className="action-chip">
                 {t.delete}
               </button>
             </span>
@@ -280,7 +280,7 @@ export default function QuestionDetailPage() {
             <button
               type="button"
               onClick={handleReport}
-              style={{ ...actionButtonStyle, marginLeft: "auto" }}
+              className="action-chip ml-auto"
             >
               <Icon name="alert-triangle" size={11} />
               {t.report}
@@ -401,29 +401,4 @@ const sectionHeadingStyle: React.CSSProperties = {
   alignItems: "center",
 };
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-  fontSize: "var(--font-size-xs)",
-};
 
-const actionButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  minHeight: 28,
-  padding: "3px 10px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

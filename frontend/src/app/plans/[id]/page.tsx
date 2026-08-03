@@ -129,18 +129,18 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   };
 
   if (loading || authLoading) {
-    return <div style={containerStyle}><SkeletonList count={3} /></div>;
+    return <div className="page page-detail"><SkeletonList count={3} /></div>;
   }
 
   if (error || !plan) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <ErrorState
           title={t.planCannotRead}
           message={error ?? unreadableDescription}
           onRetry={retryLoad}
           retryLabel={t.retry}
-          extraAction={<Link href="/plans" style={actionLinkStyle}>{t.planBackToList}</Link>}
+          extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>}
         />
       </div>
     );
@@ -151,7 +151,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   const doneCount = plan.days?.filter((day) => day.completed).length ?? 0;
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-detail">
       <ConfirmDialog
         open={confirmRestart}
         title={t.planRestartConfirmTitle}
@@ -169,7 +169,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
           </span>
         )}
         {isOwner && (
-          <Link href={`/plans/${plan.id}/edit`} style={editLinkStyle}>
+          <Link href={`/plans/${plan.id}/edit`} className="action-link" style={editLinkStyle}>
             {t.articleEdit}
           </Link>
         )}
@@ -196,7 +196,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
 
       <div className="flex items-center gap-3 flex-wrap mb-6">
         {!user ? (
-          <Link href={`/login?from=${encodeURIComponent(`/plans/${id}`)}`} style={actionLinkStyle}>
+          <Link href={`/login?from=${encodeURIComponent(`/plans/${id}`)}`} className="action-link">
             {t.planReadLoginRequired}
           </Link>
         ) : isReading ? (
@@ -263,8 +263,6 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-const containerStyle: React.CSSProperties = { maxWidth: 720, margin: "0 auto", padding: "32px 16px 64px" };
-
 const startButtonStyle: React.CSSProperties = {
   border: "none",
   borderRadius: 8,
@@ -290,6 +288,6 @@ const plainButtonStyle: React.CSSProperties = {
   fontFamily: "inherit",
 };
 
-const actionLinkStyle: React.CSSProperties = { color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center" };
-const editLinkStyle: React.CSSProperties = { ...actionLinkStyle, marginLeft: "auto", fontSize: 13, textDecoration: "none" };
+// .action-link に重ねて、右端へ寄せる
+const editLinkStyle: React.CSSProperties = { marginLeft: "auto", fontSize: 13, textDecoration: "none" };
 const progressTrackStyle: React.CSSProperties = { height: 6, width: "100%", borderRadius: 999, overflow: "hidden", background: "var(--border)", margin: "-12px 0 20px" };
