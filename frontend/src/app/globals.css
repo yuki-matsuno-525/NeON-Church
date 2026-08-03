@@ -290,11 +290,103 @@ select:focus-visible {
   overflow-wrap: anywhere;
 }
 
+/* ============================================================
+   Tailwind に「このサイトで使ってよい値」を教える場所。
+   決定版は plan/design-refactoring.md。
+
+   各項目の先頭にある `--xxx-*: initial;` は「Tailwind が最初から持っている
+   値を全部消す」という指定。そのうえで、下に並べた値だけを登録する。
+   ここに無い値はクラス自体が作られないので、書いても効かない。
+   つまり 13px や 10px のような場当たりの値が入り込めなくなる。
+
+   値を増やしたくなったときは、まず plan/design-refactoring.md を更新して
+   「本当に新しい段が要るのか」を確かめてから、ここに足すこと。
+   ============================================================ */
 @theme inline {
+  /* ----- フォント ----- */
   /* 本文はシステム日本語フォント（Web フォントを読まず高速化）。見出しのみ Web フォントの明朝体。 */
   --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", "YuGothic", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
   --font-serif: "Noto Serif JP", serif;
+
+  /* ----- 文字サイズ 6 段 -----
+     使い方: text-xs / text-sm / text-md / text-lg / text-xl / text-hero */
+  --text-*: initial;
+  --text-xs: 12px;    /* ラベル・バッジ・日時 */
+  --text-sm: 14px;    /* 補足・メタ情報・ボタン */
+  --text-md: 16px;    /* 本文（基準） */
+  --text-lg: 20px;    /* 小見出し */
+  --text-xl: 28px;    /* ページ見出し */
+  --text-hero: 40px;  /* トップのヒーローだけ */
+
+  /* ----- 文字の太さ 2 段 -----
+     使い方: font-normal / font-bold */
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  /* ----- 余白 7 段 -----
+     使い方: p-1 / m-2 / gap-4 など。数字 × 4px と覚える。
+     1=4px 2=8px 3=12px 4=16px 6=24px 8=32px 12=48px
+     間の数字（p-5 や p-7）は登録していないので効かない。 */
+  --spacing: initial;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* ----- 角丸 4 段 -----
+     使い方: rounded-sm / rounded-md / rounded-lg / rounded-full */
+  --radius-*: initial;
+  --radius-sm: 4px;    /* 小さなタグ */
+  --radius-md: 8px;    /* 標準 */
+  --radius-lg: 12px;   /* カード */
+  --radius-full: 999px;
+
+  /* ----- 行間 -----
+     使い方: leading-tight / leading-base / leading-reading */
+  --leading-*: initial;
+  --leading-tight: 1.25;    /* 見出し */
+  --leading-base: 1.6;      /* 本文 */
+  --leading-reading: 1.85;  /* Reader の長文 */
+
+  /* ----- 色 -----
+     Tailwind が最初から持っている色（red-500 など）は全部消し、
+     :root にあるこのサイトのテーマ色だけを登録する。
+     使い方: text-muted / bg-alt / border-border / bg-accent など */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-bg-hover: var(--bg-hover);
+  --color-border: var(--border);
+
+  --color-body: var(--text);         /* 本文の文字色 */
+  --color-muted: var(--text-muted);  /* 控えめな文字 */
+  --color-faint: var(--text-faint);  /* さらに控えめ（日時など） */
+
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-active: var(--accent-active);
+  --color-neon-pink: var(--neon-pink);
+  --color-neon-purple: var(--neon-purple);
+
+  --color-success: var(--state-success);
+  --color-warning: var(--state-warning);
+  --color-danger: var(--state-danger);
+  --color-info: var(--state-info);
+
+  /* ----- 影 -----
+     使い方: shadow-card / shadow-card-hover / shadow-glow */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.40);
+  --shadow-glow: 0 0 14px var(--glow-purple);
 }
 
 @keyframes verse-flash {
