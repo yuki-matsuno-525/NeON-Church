@@ -50,7 +50,7 @@ export function ChapterPicker({
     return (
       <div role="group" aria-label={t.citationBookSearchPlaceholder} style={boxStyle}>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <label style={{ flex: 1 }}>
+          <label className="flex-1">
             <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
             <input
               type="search"

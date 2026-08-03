@@ -69,7 +69,7 @@ export function CommentInput({
       <p className="text-sm text-muted">
         <Link
           href={`/login?from=${encodeURIComponent(pathname)}`}
-          style={{ color: "var(--accent)", textDecoration: "underline" }}
+          className="text-accent underline"
         >
           {t.login}
         </Link>
@@ -142,7 +142,7 @@ export function CommentInput({
       {showTagOption && tags.length > 0 && (
         <fieldset style={{ border: 0, padding: 0, margin: "8px 0 0" }}>
           <legend style={inputLabelStyle}>{t.allTags}</legend>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = selectedTags.includes(tag.id);
             return (
@@ -173,7 +173,7 @@ export function CommentInput({
       {showTagOption && tagsError && (
         <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
           <span>{t.tagsLoadFailed}</span>
-          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
       {error && (

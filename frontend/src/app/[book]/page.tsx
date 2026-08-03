@@ -175,7 +175,7 @@ function BookContent() {
       </div>
 
       {(bookmarkLoadError || versionError) && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"

@@ -278,7 +278,7 @@ function SearchContent() {
 
           {page === 1 && result.books.length > 0 && (
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionBooks}
               </h2>
               <div className="flex flex-col gap-3">
@@ -310,7 +310,7 @@ function SearchContent() {
 
           {result.verses.length > 0 && (
             <section>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionVerses}
               </h2>
               <div className="flex flex-col gap-3">
@@ -365,7 +365,7 @@ function SearchContent() {
 
           {page === 1 && result.comments.length > 0 && (
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionComments}
               </h2>
               <div className="flex flex-col gap-3">

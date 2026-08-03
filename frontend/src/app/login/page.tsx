@@ -263,7 +263,7 @@ function LoginForm() {
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "var(--text-muted)" }}>
           {t.noAccount}{" "}
-          <Link href={from ? `/register?from=${encodeURIComponent(safeRedirectTarget(from))}` : "/register"} style={{ color: "var(--accent)", textDecoration: "underline" }}>
+          <Link href={from ? `/register?from=${encodeURIComponent(safeRedirectTarget(from))}` : "/register"} className="text-accent underline">
             {t.register}
           </Link>
         </p>

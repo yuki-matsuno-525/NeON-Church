@@ -262,7 +262,7 @@ export default function TranslationReadChapterPage({
               <>
                 {chapterVersionCommentsError && (
                   <div role="alert" style={{ padding: 12, margin: "16px 0 12px", border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                    <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                    <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                     <Button variant="secondary" size="sm" onClick={() => void loadChapterVersionComments()}>
                       {ui.retryRelatedComments}
                     </Button>
@@ -284,7 +284,7 @@ export default function TranslationReadChapterPage({
           <div id="translation-comment-panel" className="reader-panel">
             {verseVersionCommentsError && (
               <div role="alert" style={{ padding: 12, margin: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                 <Button variant="secondary" size="sm" onClick={() => void loadVerseVersionComments()}>
                   {ui.retryRelatedComments}
                 </Button>

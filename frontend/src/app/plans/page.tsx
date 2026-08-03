@@ -77,7 +77,7 @@ export default function PlansPage() {
       {!pageLoading && !error && reading.length > 0 && (
         <section style={{ ...columnStyle, marginBottom: 16 }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px" }}>{t.planReadingNow}</h2>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <div className="flex flex-wrap gap-2">
             {reading.map((subscription) => (
               <Link
                 key={subscription.id}
@@ -169,7 +169,7 @@ function PlanColumn({
       {loading ? (
         <SkeletonList count={2} />
       ) : plans.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{empty}</p>
+        <p className="px-1 py-2 text-sm text-faint">{empty}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {plans.map((plan) => (

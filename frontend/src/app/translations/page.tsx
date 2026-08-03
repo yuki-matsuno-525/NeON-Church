@@ -251,7 +251,7 @@ function TranslationColumn({
           <Button variant="ghost" size="sm" onClick={() => setReloadKey((key) => key + 1)}>{retryLabel}</Button>
         </div>
       ) : items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.emptyColumn}</p>
+        <p className="px-1 py-2 text-sm text-faint">{t.emptyColumn}</p>
       ) : (
         <>
           <div className="flex flex-col gap-3">

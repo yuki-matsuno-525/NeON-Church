@@ -123,7 +123,7 @@ export default function NewTranslationPage() {
   return (
     <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
       <div className="mb-6">
-        <Link href="/translations" style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href="/translations" className="text-sm text-muted no-underline">
           {t.backToTranslations}
         </Link>
       </div>
@@ -246,8 +246,7 @@ export default function NewTranslationPage() {
           <button
             type="submit"
             disabled={submitting || languagesLoading || languagesError || catalogLoading || catalogError}
-            className="btn btn-primary"
-            style={{ flex: 1 }}
+            className="btn btn-primary flex-1"
           >
             {submitting ? t.creating : t.createProject}
           </button>
@@ -262,13 +261,13 @@ export default function NewTranslationPage() {
       {languagesLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
       {catalogLoading && <p role="status" className="text-sm text-muted">{t.loading}</p>}
       {catalogError && (
-        <div role="alert" style={{ marginTop: 16 }}>
+        <div role="alert" className="mt-4">
           <p className="text-sm text-danger">{ui.loadError}</p>
           <Button variant="ghost" size="sm" onClick={retryCatalog}>{ui.retry}</Button>
         </div>
       )}
       {languagesError && (
-        <div role="alert" style={{ marginTop: 16 }}>
+        <div role="alert" className="mt-4">
           <p className="text-sm text-danger">{ui.loadError}</p>
           <Button variant="ghost" size="sm" onClick={loadLanguages}>{ui.retry}</Button>
         </div>

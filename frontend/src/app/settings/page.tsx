@@ -280,7 +280,7 @@ function IdentitySection({ settings, text, onUpdated }: { settings: AccountSetti
         <p className={styles.notice}>{text.oauthIdentity}</p>
       ) : (
         <form className={styles.form} onSubmit={submit} aria-busy={busy}>
-          <fieldset className={styles.form} disabled={busy} style={{ border: 0, padding: 0, margin: 0 }}>
+          <fieldset className={`${styles.form} m-0 border-0 p-0`} disabled={busy}>
             <label className={styles.field}>
               <span>{text.username}</span>
               <input className={styles.input} value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" maxLength={150} required />
@@ -377,7 +377,7 @@ function PasswordSection({ settings, text, onChanged }: { settings: AccountSetti
         <p className={styles.notice}>{text.oauthPassword}</p>
       ) : (
         <form className={styles.form} onSubmit={submit} aria-busy={busy}>
-          <fieldset className={styles.form} disabled={busy} style={{ border: 0, padding: 0, margin: 0 }}>
+          <fieldset className={`${styles.form} m-0 border-0 p-0`} disabled={busy}>
             <PasswordInput id={currentId} label={text.currentPassword} value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" />
             <PasswordInput id={newId} label={text.newPassword} value={newPassword} onChange={setNewPassword} autoComplete="new-password" hint={text.passwordHint} />
             <PasswordInput id={confirmId} label={text.confirmPassword} value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" />
@@ -484,7 +484,7 @@ function SessionsSection({ text, reloadToken, onCurrentRevoked }: { text: Text; 
           ))}
         </ul>
       )}
-      <div className={styles.actions} style={{ marginTop: 16 }}>
+      <div className={`${styles.actions} mt-4`}>
         <Button variant="ghost" disabled={busy || sessions.filter((session) => !session.current).length === 0} onClick={() => setConfirmation({ kind: "others" })}>{text.revokeOthers}</Button>
       </div>
       <InlineMessage message={message} />
@@ -528,7 +528,7 @@ function DangerSection({ settings, text, onDeleted }: { settings: AccountSetting
       <h2 id="danger-heading">{text.danger}</h2>
       <p className={styles.description}>{text.dangerDesc}</p>
       <form className={styles.form} aria-busy={busy} onSubmit={(event) => { event.preventDefault(); setConfirmation(true); }}>
-        <fieldset className={styles.form} disabled={busy} style={{ border: 0, padding: 0, margin: 0 }}>
+        <fieldset className={`${styles.form} m-0 border-0 p-0`} disabled={busy}>
           <label className={styles.field}>
             <span>{text.confirmUsername}</span>
             <input className={styles.input} value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="off" required />

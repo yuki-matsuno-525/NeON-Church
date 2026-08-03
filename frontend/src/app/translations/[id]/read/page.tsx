@@ -184,7 +184,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
         <>
           {versionCommentsError && (
             <div role="alert" style={{ padding: 12, marginBottom: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-              <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+              <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
               <Button variant="secondary" size="sm" onClick={() => void loadVersionComments()}>
                 {ui.retryRelatedComments}
               </Button>

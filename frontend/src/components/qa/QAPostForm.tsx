@@ -277,7 +277,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
       {tags.length > 0 && (
         <fieldset style={{ border: 0, padding: 0, margin: "10px 0 0" }}>
           <legend style={fieldLabelStyle}>{t.allTags}</legend>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = tagIds.includes(tag.id);
             return (

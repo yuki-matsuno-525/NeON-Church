@@ -866,13 +866,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
       <div style={{ marginBottom: 6 }}>
-        <Link href="/translations" onClick={guardNavigation} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
           {t.backToTranslations}
         </Link>
       </div>
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-        <div style={{ flex: 1 }}>
+        <div className="flex-1">
           <div style={{ display: "flex", alignItems: "center", gap: 4, margin: "0 0 4px" }}>
             <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>{project.name}</h1>
             {user && (
@@ -966,7 +966,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       {editingProject && isOwner && (
         <form onSubmit={handleSaveProject} className="card" style={{ marginBottom: 20, display: "grid", gap: 14 }}>
           <h2 style={{ margin: 0, fontSize: 17 }}>{ui.projectSettings}</h2>
-          <label htmlFor="translation-project-name" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+          <label htmlFor="translation-project-name" className="grid gap-2 text-sm text-muted">
             {t.projectName}
             <input
               id="translation-project-name"
@@ -977,7 +977,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               style={settingsInputStyle}
             />
           </label>
-          <label htmlFor="translation-project-description" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+          <label htmlFor="translation-project-description" className="grid gap-2 text-sm text-muted">
             {t.description}
             <textarea
               id="translation-project-description"
@@ -987,7 +987,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               style={{ ...settingsInputStyle, resize: "vertical" }}
             />
           </label>
-          <label htmlFor="translation-project-language" style={{ display: "grid", gap: 6, fontSize: 13, color: "var(--text-muted)" }}>
+          <label htmlFor="translation-project-language" className="grid gap-2 text-sm text-muted">
             {t.targetLanguage}
             <select
               id="translation-project-language"
@@ -1272,7 +1272,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
                         {unit.chapter_number}:{unit.verse_number}
                         {unit.assigned_to_username && (
-                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
+                          <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
                         )}
                       </div>
                       <span
@@ -1455,7 +1455,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       <div style={{ fontSize: 12, color: "var(--text-muted)", flex: 1, minWidth: 0 }}>
                         {unit.chapter_number}:{unit.verse_number}
                         {unit.assigned_to_username && (
-                          <span style={{ marginLeft: 8 }}>{t.assignee} {unit.assigned_to_username}</span>
+                          <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
                         )}
                       </div>
                       <span

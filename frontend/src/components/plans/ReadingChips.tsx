@@ -27,7 +27,7 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
     return <p role="status" style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
   }
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    <div className="flex flex-wrap gap-2">
       {readings.map((reading) => (
         <Link
           key={reading.id}

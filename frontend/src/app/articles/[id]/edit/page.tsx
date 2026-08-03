@@ -337,7 +337,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         {autosave.status === "error" && (
           <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>{t.retry}</button>
         )}
-        <Link href={`/articles/${id}`} style={{ fontSize: 13, color: "var(--text-muted)", textDecoration: "none" }}>
+        <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
         <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} style={deleteButtonStyle}>
@@ -386,7 +386,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       {/* タグ */}
       <fieldset style={{ border: 0, padding: 0, margin: "0 0 16px" }}>
         <legend style={fieldLabelStyle}>{t.articleTopicsLimit(MAX_TAGS)}</legend>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div className="flex flex-wrap gap-2">
         {tags.map((tag) => {
           const active = tagIds.includes(tag.id);
           return (

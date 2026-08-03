@@ -282,7 +282,7 @@ function QAContent() {
         {tagsError && (
           <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
             <span>{t.tagsLoadFailed}</span>
-            <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+            <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
           </div>
         )}
       </fieldset>
@@ -375,7 +375,7 @@ function QAContent() {
                 </div>
 
                 {items.length === 0 ? (
-                  <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.qaEmptyColumn}</p>
+                  <p className="px-1 py-2 text-sm text-faint">{t.qaEmptyColumn}</p>
                 ) : (
                   <>
                     <div className="flex flex-col gap-3">

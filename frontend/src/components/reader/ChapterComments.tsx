@@ -165,7 +165,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       {tagsError && (
         <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--state-danger)", fontSize: 12 }}>
           <span>{t.tagsLoadFailed}</span>
-          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
 

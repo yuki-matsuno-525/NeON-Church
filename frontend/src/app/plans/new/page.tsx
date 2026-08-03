@@ -74,13 +74,13 @@ export default function NewPlanPage() {
         onConfirm={() => router.push("/plans")}
         onCancel={() => setConfirmCancel(false)}
       />
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.planNewTitle}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
+      <h1 className="mt-0 mb-2 text-lg font-bold">{t.planNewTitle}</h1>
+      <p className="mt-0 mb-6 text-sm text-muted">
         {t.planNewDesc}
       </p>
 
       <form onSubmit={(event) => { event.preventDefault(); void handleCreate(); }}>
-        <label htmlFor="new-plan-title" style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
+        <label htmlFor="new-plan-title" className="mb-2 block text-sm text-muted">
           {t.planTitleLabel}
         </label>
         <input
@@ -114,7 +114,7 @@ export default function NewPlanPage() {
           }}
         />
 
-        {error && <p id="new-plan-error" role="alert" style={{ fontSize: 13, color: "var(--state-danger)", marginTop: 8 }}>{error}</p>}
+        {error && <p id="new-plan-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}
 
         <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
           <button

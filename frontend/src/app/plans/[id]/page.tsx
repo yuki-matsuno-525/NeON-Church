@@ -182,7 +182,7 @@ export default function PlanDetailPage({ params }: { params: Promise<{ id: strin
         <Link href={`/profile/${plan.owner_username}`} className="text-muted no-underline">
           {plan.owner_username}
         </Link>
-        <span style={{ marginLeft: 8 }}>{t.planDayCount(plan.day_count)}</span>
+        <span className="ml-2">{t.planDayCount(plan.day_count)}</span>
       </div>
 
       {plan.description && <p style={{ fontSize: 15, lineHeight: 1.8, margin: "0 0 16px" }}>{plan.description}</p>}

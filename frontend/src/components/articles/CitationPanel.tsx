@@ -175,7 +175,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
   if (!slug) {
     return (
-      <div style={{ padding: "0 12px" }}>
+      <div className="px-3">
         <label htmlFor="citation-book-search" style={fieldLabelStyle}>引用する書をさがす</label>
         <input
           id="citation-book-search"
@@ -202,7 +202,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   }
 
   return (
-    <div style={{ padding: "0 12px" }}>
+    <div className="px-3">
       <button type="button" onClick={() => resetTo(null)} style={backButtonStyle}>
         {t.citationChooseBookAgain}
       </button>
@@ -236,7 +236,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
       )}
 
       {chapter === null ? (
-        loadingChapters ? <p role="status" style={mutedTextStyle}>章を読み込んでいます…</p> : <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        loadingChapters ? <p role="status" style={mutedTextStyle}>章を読み込んでいます…</p> : <div className="flex flex-wrap gap-2">
           {chapterNumbers.map((number) => (
             <button
               key={number}
@@ -482,7 +482,7 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
   if (error) {
     return (
-      <div role="alert" style={{ padding: "0 12px" }}>
+      <div role="alert" className="px-3">
         <p style={{ ...mutedTextStyle, color: "var(--state-danger)" }}>{error}</p>
         <button type="button" onClick={() => void loadBookmarks()} style={smallButtonStyle}>{t.retry}</button>
       </div>

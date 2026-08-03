@@ -177,7 +177,7 @@ function ReadContent() {
         </p>
       )}
       {resumeError && user && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"
@@ -192,7 +192,7 @@ function ReadContent() {
         </div>
       )}
       {libraryError && user && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
           <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button type="button" className="btn btn-ghost" onClick={() => setLibraryRetryToken((value) => value + 1)}>
             {t.retry}
@@ -249,7 +249,7 @@ function ReadContent() {
         if (normalizedQuery) {
           const totalMatches = matchingBooks.length + matchingProjects.length;
           return (
-            <div style={{ marginBottom: "var(--space-6)" }}>
+            <div className="mb-8">
               {totalMatches === 0 ? (
                 <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
                   {t.listSearchEmpty}
@@ -343,7 +343,7 @@ function ReadContent() {
 
             {/* 選択カテゴリの書 */}
             {active && (
-              <div style={{ marginBottom: "var(--space-6)" }}>
+              <div className="mb-8">
                 <div
                   style={{
                     display: "grid",
@@ -381,7 +381,7 @@ function ReadContent() {
 
             {/* 翻訳本棚カテゴリ：本棚に追加した公開翻訳を書と同じグリッドで並べる。 */}
             {isLibraryTab && (
-              <div style={{ marginBottom: "var(--space-6)" }}>
+              <div className="mb-8">
                 <div
                   style={{
                     display: "grid",
