@@ -399,7 +399,7 @@ const qaSelectStyle: React.CSSProperties = {
   borderRadius: 8,
   background: "var(--bg)",
   color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
+  fontSize: "var(--text-sm)",
   fontFamily: "inherit",
 };
 

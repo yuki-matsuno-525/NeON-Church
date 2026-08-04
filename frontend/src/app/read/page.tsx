@@ -227,7 +227,7 @@ function ReadContent() {
             )
           : [];
         const chipStyle = (isActive: boolean): React.CSSProperties => ({
-          fontSize: "var(--font-size-sm)",
+          fontSize: "var(--text-sm)",
           padding: "6px 14px",
           minHeight: 44,
           borderRadius: 999,

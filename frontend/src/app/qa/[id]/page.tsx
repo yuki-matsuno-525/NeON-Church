@@ -327,7 +327,9 @@ export default function QuestionDetailPage() {
             rows={4}
             className="form-control resize-y"
           />
-          {postError && <p style={{ color: "var(--state-error)", fontSize: 12, margin: "4px 0" }}>{postError}</p>}
+          {/* エラー色は --state-error という存在しない変数を見ていたため、これまで赤くならなかった。
+              意見フォームと同じく、決定表の危険色（text-danger）に直している。 */}
+          {postError && <p className="my-1 text-xs text-danger">{postError}</p>}
           <div className="flex justify-end mt-2">
             <Button variant="primary" type="submit" disabled={posting || !answerBody.trim()}>
               {posting ? t.posting : t.qaSubmitAnswer}

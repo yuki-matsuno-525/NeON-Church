@@ -1,14 +1,18 @@
+/* パスワードを忘れた／再設定の 2 画面で共通の並び。
+   色・大きさ・余白は tokens.css の表から取る。
+   以前はここだけ 13px / 18px / 9px のような表に無い値を直接書いていた。 */
+
 .shell {
   display: flex;
   min-height: calc(100vh - var(--navbar-height));
   align-items: center;
   justify-content: center;
-  padding: 32px 20px;
+  padding: var(--spacing-8) var(--spacing-6);
 }
 
 .card {
   width: min(100%, 420px);
-  padding: 32px;
+  padding: var(--spacing-8);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--bg-alt);
@@ -17,47 +21,41 @@
 
 .card h1 {
   margin: 0;
-  font-size: var(--font-size-xl);
+  font-size: var(--text-lg);
 }
 
 .lead {
-  margin: 10px 0 24px;
+  margin: var(--spacing-3) 0 var(--spacing-6);
   color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--spacing-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-2);
 }
 
 .field label {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
+/* 入力欄の見た目は form.css の .form-control と同じものを使う。
+   以前はここに 4 つ目の写しが置かれていた。 */
 .input {
-  min-height: 44px;
-  box-sizing: border-box;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 16px;
+  composes: form-control from global;
 }
 
-/* 見た目は globals.css の .notice-box と共通（設定画面と同じもの） */
+/* 見た目は card.css の .notice-box と共通（設定画面と同じもの） */
 .message {
   composes: notice-box from global;
 }
@@ -71,18 +69,18 @@
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  margin-top: 18px;
+  margin-top: var(--spacing-4);
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
   .shell {
     align-items: flex-start;
-    padding: 24px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
   }
 
   .card {
-    padding: 24px 20px;
+    padding: var(--spacing-6) var(--spacing-4);
   }
 }
