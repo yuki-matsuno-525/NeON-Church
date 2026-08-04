@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, type Article } from "@/lib/api";
 import { serverFetch, serverFetchPage } from "@/lib/apiServer";
@@ -7,6 +8,27 @@ import { ArticleBody } from "@/components/articles/ArticleBody";
 import { ArticleComments } from "@/components/articles/ArticleComments";
 import { ArticleOwnerActions } from "@/components/articles/ArticleOwnerActions";
 import { RelativeTime } from "@/components/ui/RelativeTime";
+
+/**
+ * 共有したときやタブに出る題を、その記事のものにする。
+ *
+ * 以前は「記事」という同じ題が全記事に付いていたので、リンクを貼っても
+ * 何の記事か分からなかった。取れなければ元の題のままにする。
+ */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const article = await serverFetch<Article>(`/articles/${id}/`);
+    return {
+      title: article.title,
+      description: article.summary ?? undefined,
+      openGraph: { title: article.title, description: article.summary ?? undefined },
+      twitter: { title: article.title, description: article.summary ?? undefined },
+    };
+  } catch {
+    return {};
+  }
+}
 
 /**
  * 記事を読む画面。

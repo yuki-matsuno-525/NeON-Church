@@ -88,9 +88,17 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      # 開発サーバー（npm run dev）ではなく、本番と同じビルドで動かす。
+      # 開発サーバーはページを「初めて開かれたとき」に組み立てるため、
+      # 組み立てが終わる前に来たリクエストへ 404 を返す。テストは初めて開く
+      # ページばかりなので、これが時々失敗する原因になっていた。
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
       - name: Start frontend server
         working-directory: frontend
-        run: npm run dev &
+        run: npm run start &
 
       - name: Wait for frontend
         run: |
