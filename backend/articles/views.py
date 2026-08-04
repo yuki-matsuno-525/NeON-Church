@@ -1,13 +1,17 @@
-from django.db import transaction
-from django.db.models import Count, Q
+"""記事の HTTP 入口。
+
+どの記事が誰に見えるかは selectors.py、保存と引用の抽出は services.py。
+"""
+
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
 from common.pagination import StandardPageNumberPagination
+from common.permissions import IsOwnerOf
 
-from .citations import sync_citations
-from .models import Article, ArticleComment, ArticleTag
+from . import selectors, services
+from .models import Article, ArticleComment
 from .serializers import (
     ArticleCommentSerializer,
     ArticleDetailSerializer,
@@ -17,19 +21,8 @@ from .serializers import (
 )
 
 
-class IsArticleOwner(permissions.BasePermission):
-    """記事の書き手だけに許す。Article は user ではなく owner を持つので専用に用意する。"""
-
-    def has_object_permission(self, request, view, obj):
-        return obj.owner_id == request.user.id
-
-
-def _visible_articles(user):
-    """その人が見てよい記事だけに絞る。公開は誰でも、下書き・限定公開は書いた人だけ。"""
-    visible = Q(visibility=Article.VISIBILITY_PUBLIC)
-    if user and user.is_authenticated:
-        visible |= Q(owner=user)
-    return Article.objects.filter(visible)
+class IsArticleOwner(IsOwnerOf):
+    """記事の書き手だけに許す。"""
 
 
 class ArticleListCreateView(generics.ListCreateAPIView):
@@ -48,30 +41,10 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         return ArticleWriteSerializer if self.request.method == "POST" else ArticleListSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if self.request.query_params.get("mine") == "true" and user.is_authenticated:
-            queryset = Article.objects.filter(owner=user)
-        else:
-            # 一覧に出るのは公開記事だけ（限定公開はURLを知っている人だけが見る）。
-            queryset = Article.objects.filter(visibility=Article.VISIBILITY_PUBLIC)
-            if self.request.query_params.get("exclude_mine") == "true" and user.is_authenticated:
-                queryset = queryset.exclude(owner=user)
-
-        tag_slug = self.request.query_params.get("tag")
-        if tag_slug:
-            queryset = queryset.filter(tags__slug=tag_slug)
-
-        # プロフィールの記事タブで使う。公開記事だけが対象なので、下書きは漏れない。
-        author = self.request.query_params.get("author")
-        if author:
-            queryset = queryset.filter(owner__username=author)
-
-        return queryset.select_related("owner").prefetch_related("tags").distinct()
+        return selectors.list_articles(self.request.user, self.request.query_params)
 
     def perform_create(self, serializer):
-        with transaction.atomic():
-            article = serializer.save(owner=self.request.user)
-            sync_citations(article)
+        services.save_with_citations(serializer, owner=self.request.user)
 
 
 class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -87,9 +60,7 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ArticleDetailSerializer if self.request.method == "GET" else ArticleWriteSerializer
 
     def get_queryset(self):
-        return Article.objects.select_related("owner").prefetch_related(
-            "tags", "citations__canonical_book"
-        )
+        return selectors.articles_with_citations()
 
     def get_object(self):
         article = super().get_object()
@@ -108,9 +79,7 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
             super().check_object_permissions(request, obj)
 
     def perform_update(self, serializer):
-        with transaction.atomic():
-            article = serializer.save()
-            sync_citations(article)
+        services.save_with_citations(serializer)
 
 
 class ArticleCitingListView(generics.ListAPIView):
@@ -125,30 +94,7 @@ class ArticleCitingListView(generics.ListAPIView):
     pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
-        params = self.request.query_params
-        book_slug = params.get("book")
-        chapter = params.get("chapter")
-        verse = params.get("verse")
-        if not book_slug or not chapter:
-            return Article.objects.none()
-
-        condition = Q(
-            citations__canonical_book__slug=book_slug,
-            citations__chapter_number=chapter,
-        )
-        if verse:
-            # 節の指定があるときは、その節を含む引用（範囲引用も含む）と章まるごとの参照を拾う。
-            condition &= Q(
-                citations__verse_number_start__lte=verse,
-                citations__verse_number_end__gte=verse,
-            ) | Q(citations__verse_number_start__isnull=True)
-
-        return (
-            Article.objects.filter(condition, visibility=Article.VISIBILITY_PUBLIC)
-            .select_related("owner")
-            .prefetch_related("tags")
-            .distinct()
-        )
+        return selectors.articles_citing(self.request.query_params)
 
 
 class ArticleTagListView(generics.ListAPIView):
@@ -161,17 +107,7 @@ class ArticleTagListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return (
-            ArticleTag.objects.annotate(
-                article_count=Count(
-                    "articles",
-                    filter=Q(articles__visibility=Article.VISIBILITY_PUBLIC),
-                    distinct=True,
-                )
-            )
-            .filter(article_count__gt=0)
-            .order_by("name")
-        )
+        return selectors.used_tags()
 
 
 class ArticleCommentListCreateView(generics.ListCreateAPIView):
@@ -191,7 +127,7 @@ class ArticleCommentListCreateView(generics.ListCreateAPIView):
         # 1リクエストにつき1回だけ引く（そのままだと同じ問い合わせが2回走る）。
         if not hasattr(self, "_article"):
             self._article = get_object_or_404(
-                _visible_articles(self.request.user), pk=self.kwargs["pk"]
+                selectors.visible_articles(self.request.user), pk=self.kwargs["pk"]
             )
         return self._article
 
@@ -201,11 +137,7 @@ class ArticleCommentListCreateView(generics.ListCreateAPIView):
         return context
 
     def get_queryset(self):
-        return (
-            ArticleComment.objects.filter(article=self.get_article())
-            .select_related("user")
-            .order_by("created_at")
-        )
+        return selectors.article_comments(self.get_article())
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user, article=self.get_article())
@@ -226,6 +158,5 @@ class ArticleCommentDestroyView(generics.DestroyAPIView):
         comment = self.get_object()
         if comment.user_id != request.user.id:
             return Response(status=status.HTTP_403_FORBIDDEN)
-        comment.is_deleted = True
-        comment.save(update_fields=["is_deleted", "updated_at"])
+        services.soft_delete_comment(comment)
         return Response(status=status.HTTP_204_NO_CONTENT)

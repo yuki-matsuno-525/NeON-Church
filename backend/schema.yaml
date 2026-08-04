@@ -911,13 +911,8 @@ paths:
         GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
         POST /api/comments/                                コメント投稿（要認証）
 
-        verse_id / chapter_id / book_id のいずれかが必須。
-        指定なしの場合は空リストを返す。
-
-        箇所で絞るときは **親コメントだけ** を返す（返信は parent_id で別に取る）。
-        以前は親も返信も混ぜた1本の列を返し、フロントが親子に組み直していたが、
-        ページで区切ると親と返信が別ページに分かれ、親が見つからない返信が
-        エラーも出さずに画面から消えていた。親と返信を分けて数えることでこれを防ぐ。
+        verse_id / chapter_id / book_id / book_slug / parent_id のいずれかが必須。
+        指定なしの場合は空リストを返す。絞り込みの詳しい規則は selectors.thread_comments。
       parameters:
       - name: page
         required: false
@@ -950,13 +945,8 @@ paths:
         GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
         POST /api/comments/                                コメント投稿（要認証）
 
-        verse_id / chapter_id / book_id のいずれかが必須。
-        指定なしの場合は空リストを返す。
-
-        箇所で絞るときは **親コメントだけ** を返す（返信は parent_id で別に取る）。
-        以前は親も返信も混ぜた1本の列を返し、フロントが親子に組み直していたが、
-        ページで区切ると親と返信が別ページに分かれ、親が見つからない返信が
-        エラーも出さずに画面から消えていた。親と返信を分けて数えることでこれを防ぐ。
+        verse_id / chapter_id / book_id / book_slug / parent_id のいずれかが必須。
+        指定なしの場合は空リストを返す。絞り込みの詳しい規則は selectors.thread_comments。
       tags:
       - api
       requestBody:

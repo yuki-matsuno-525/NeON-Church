@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
+from common.permissions import IsOwnerOf
 from common.schema import DetailSerializer
 
 from . import selectors, services
@@ -39,11 +40,10 @@ from .serializers import (
 annotate_project_summary = selectors.annotate_project_summary
 
 
-class IsProjectOwner(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if isinstance(obj, TranslationProject):
-            return obj.owner == request.user
-        return obj.project.owner == request.user
+class IsProjectOwner(IsOwnerOf):
+    """企画を立てた人だけに許す。ユニット等が渡ったら企画をたどる。"""
+
+    parent_attr = "project"
 
 
 class IsApprovedMember(permissions.BasePermission):
