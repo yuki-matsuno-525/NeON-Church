@@ -63,8 +63,6 @@ const makeComment = (overrides: Partial<Comment> = {}): Comment => ({
 
 const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   id: "bm1",
-  // 一覧は verse_detail に依存せず reference（訳非依存の箇所）だけで表示する。
-  verse_detail: null,
   project_detail: null,
   comment_detail: null,
   target_type: "verse",

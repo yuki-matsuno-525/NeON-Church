@@ -88,13 +88,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
         required: true
       security:
       - cookieAuth: []
@@ -150,13 +150,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ArticleWrite'
+              $ref: '#/components/schemas/ArticleWriteRequest'
         required: true
       security:
       - cookieAuth: []
@@ -186,13 +186,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedArticleWrite'
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedArticleWrite'
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedArticleWrite'
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
       security:
       - cookieAuth: []
       responses:
@@ -281,13 +281,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ArticleComment'
+              $ref: '#/components/schemas/ArticleCommentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ArticleComment'
+              $ref: '#/components/schemas/ArticleCommentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ArticleComment'
+              $ref: '#/components/schemas/ArticleCommentRequest'
         required: true
       security:
       - cookieAuth: []
@@ -340,13 +340,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Login'
+              $ref: '#/components/schemas/LoginRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Login'
+              $ref: '#/components/schemas/LoginRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Login'
+              $ref: '#/components/schemas/LoginRequest'
         required: true
       security:
       - cookieAuth: []
@@ -398,13 +398,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedProfileUpdate'
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedProfileUpdate'
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedProfileUpdate'
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
       security:
       - cookieAuth: []
       responses:
@@ -501,13 +501,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetRequest'
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PasswordResetRequest'
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PasswordResetRequest'
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
         required: true
       security:
       - cookieAuth: []
@@ -528,13 +528,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PasswordResetConfirm'
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
         required: true
       security:
       - cookieAuth: []
@@ -558,13 +558,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Register'
+              $ref: '#/components/schemas/RegisterRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Register'
+              $ref: '#/components/schemas/RegisterRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Register'
+              $ref: '#/components/schemas/RegisterRequest'
         required: true
       security:
       - cookieAuth: []
@@ -609,13 +609,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedIdentityUpdate'
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedIdentityUpdate'
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedIdentityUpdate'
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
       security:
       - cookieAuth: []
       responses:
@@ -634,13 +634,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PasswordChange'
+              $ref: '#/components/schemas/PasswordChangeRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PasswordChange'
+              $ref: '#/components/schemas/PasswordChangeRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PasswordChange'
+              $ref: '#/components/schemas/PasswordChangeRequest'
         required: true
       security:
       - cookieAuth: []
@@ -660,13 +660,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferences'
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferences'
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedNotificationPreferences'
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
       security:
       - cookieAuth: []
       responses:
@@ -804,13 +804,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Bookmark'
+              $ref: '#/components/schemas/BookmarkRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Bookmark'
+              $ref: '#/components/schemas/BookmarkRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Bookmark'
+              $ref: '#/components/schemas/BookmarkRequest'
       security:
       - cookieAuth: []
       responses:
@@ -953,13 +953,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Comment'
+              $ref: '#/components/schemas/CommentRequest'
         required: true
       security:
       - cookieAuth: []
@@ -991,13 +991,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCommentEdit'
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCommentEdit'
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCommentEdit'
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1065,13 +1065,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1202,13 +1202,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Feedback'
+              $ref: '#/components/schemas/FeedbackRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Feedback'
+              $ref: '#/components/schemas/FeedbackRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Feedback'
+              $ref: '#/components/schemas/FeedbackRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1364,13 +1364,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1426,13 +1426,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PlanWrite'
+              $ref: '#/components/schemas/PlanWriteRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1462,13 +1462,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedPlanWrite'
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedPlanWrite'
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedPlanWrite'
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1519,13 +1519,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanDayCreateRequest'
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PlanDayCreateRequest'
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PlanDayCreateRequest'
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1601,13 +1601,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanDay'
+              $ref: '#/components/schemas/PlanDayRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PlanDay'
+              $ref: '#/components/schemas/PlanDayRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PlanDay'
+              $ref: '#/components/schemas/PlanDayRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1644,13 +1644,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedPlanDay'
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedPlanDay'
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedPlanDay'
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1759,13 +1759,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanDayReorderRequest'
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PlanDayReorderRequest'
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PlanDayReorderRequest'
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1859,13 +1859,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Answer'
+              $ref: '#/components/schemas/AnswerRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Answer'
+              $ref: '#/components/schemas/AnswerRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Answer'
+              $ref: '#/components/schemas/AnswerRequest'
         required: true
       security:
       - cookieAuth: []
@@ -1895,13 +1895,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedAnswerEdit'
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedAnswerEdit'
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedAnswerEdit'
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
       security:
       - cookieAuth: []
       responses:
@@ -1947,13 +1947,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2034,13 +2034,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Question'
+              $ref: '#/components/schemas/QuestionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Question'
+              $ref: '#/components/schemas/QuestionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Question'
+              $ref: '#/components/schemas/QuestionRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2096,13 +2096,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedQuestionEdit'
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedQuestionEdit'
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedQuestionEdit'
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
       security:
       - cookieAuth: []
       responses:
@@ -2153,13 +2153,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedBestAnswerRequest'
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedBestAnswerRequest'
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedBestAnswerRequest'
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
       security:
       - cookieAuth: []
       responses:
@@ -2188,13 +2188,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Report'
+              $ref: '#/components/schemas/ReportRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2279,13 +2279,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReadingProgressSaveRequest'
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ReadingProgressSaveRequest'
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ReadingProgressSaveRequest'
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2534,13 +2534,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2596,13 +2596,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationProject'
+              $ref: '#/components/schemas/TranslationProjectRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2632,13 +2632,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationProject'
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationProject'
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationProject'
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
       security:
       - cookieAuth: []
       responses:
@@ -2710,13 +2710,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookSelection'
+              $ref: '#/components/schemas/BookSelectionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/BookSelection'
+              $ref: '#/components/schemas/BookSelectionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/BookSelection'
+              $ref: '#/components/schemas/BookSelectionRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2798,13 +2798,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
         required: true
       security:
       - cookieAuth: []
@@ -2978,13 +2978,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedMembershipDecision'
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedMembershipDecision'
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedMembershipDecision'
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
       security:
       - cookieAuth: []
       responses:
@@ -3173,13 +3173,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationUnitCreate'
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationUnitCreate'
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationUnitCreate'
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
         required: true
       security:
       - cookieAuth: []
@@ -3245,13 +3245,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationUnit'
+              $ref: '#/components/schemas/TranslationUnitRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationUnit'
+              $ref: '#/components/schemas/TranslationUnitRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationUnit'
+              $ref: '#/components/schemas/TranslationUnitRequest'
       security:
       - cookieAuth: []
       responses:
@@ -3285,13 +3285,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationUnit'
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationUnit'
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedTranslationUnit'
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
       security:
       - cookieAuth: []
       responses:
@@ -3349,13 +3349,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UnitAssign'
+              $ref: '#/components/schemas/UnitAssignRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/UnitAssign'
+              $ref: '#/components/schemas/UnitAssignRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/UnitAssign'
+              $ref: '#/components/schemas/UnitAssignRequest'
         required: true
       security:
       - cookieAuth: []
@@ -3443,13 +3443,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TranslationComment'
+              $ref: '#/components/schemas/TranslationCommentRequest'
         required: true
       security:
       - cookieAuth: []
@@ -3763,10 +3763,6 @@ components:
           type: string
           format: uuid
           readOnly: true
-        question:
-          type: string
-          format: uuid
-          writeOnly: true
         user:
           allOf:
           - $ref: '#/components/schemas/QAAuthor'
@@ -3790,7 +3786,6 @@ components:
       - id
       - is_best
       - is_deleted
-      - question
       - user
     AnswerEdit:
       type: object
@@ -3800,6 +3795,20 @@ components:
           maxLength: 5000
       required:
       - body
+    AnswerRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          format: uuid
+          writeOnly: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+      required:
+      - body
+      - question
     ArticleComment:
       type: object
       properties:
@@ -3829,6 +3838,18 @@ components:
       - id
       - is_deleted
       - username
+    ArticleCommentRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - body
     ArticleDetail:
       type: object
       properties:
@@ -3969,6 +3990,27 @@ components:
       - citations
       - id
       - title
+    ArticleWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        body:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - title
     BestAnswer:
       type: object
       description: 質問カード・詳細の先頭に出すベストアンサーの要約。
@@ -3993,6 +4035,16 @@ components:
       - created_at
       - id
       - user
+    BestAnswerRequest:
+      type: object
+      description: 質問カード・詳細の先頭に出すベストアンサーの要約。
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+      required:
+      - body
     Book:
       type: object
       properties:
@@ -4038,7 +4090,7 @@ components:
       required:
       - book_name
       - deleted
-    BookSelection:
+    BookSelectionRequest:
       type: object
       description: 書の一括追加・削除の対象。表示中の訳の書 id。
       properties:
@@ -4054,40 +4106,22 @@ components:
           type: string
           format: uuid
           readOnly: true
-        verse:
-          type: string
-          format: uuid
-          writeOnly: true
-        chapter:
-          type: string
-          format: uuid
-          writeOnly: true
-        book:
-          type: string
-          format: uuid
-          writeOnly: true
-        comment:
-          type: string
-          format: uuid
-          writeOnly: true
-          nullable: true
-        translation_project:
-          type: string
-          format: uuid
-          writeOnly: true
-          nullable: true
         comment_detail:
           allOf:
           - $ref: '#/components/schemas/CommentBrief'
           readOnly: true
+          nullable: true
         project_detail:
           allOf:
           - $ref: '#/components/schemas/ProjectBrief'
           readOnly: true
+          nullable: true
         target_type:
-          type: string
           nullable: true
           readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/TargetTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
         reference:
           allOf:
           - $ref: '#/components/schemas/BookmarkReference'
@@ -4126,6 +4160,31 @@ components:
       - book
       - chapter
       - verse
+    BookmarkRequest:
+      type: object
+      properties:
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        comment:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+        translation_project:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
     BookmarksVisibilityEnum:
       enum:
       - private
@@ -4192,18 +4251,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/CommentAuthor'
           readOnly: true
-        verse:
-          type: string
-          format: uuid
-          writeOnly: true
-        chapter:
-          type: string
-          format: uuid
-          writeOnly: true
-        book:
-          type: string
-          format: uuid
-          writeOnly: true
         translation_project:
           type: string
           format: uuid
@@ -4236,12 +4283,6 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           readOnly: true
-        tag_ids:
-          type: array
-          items:
-            type: integer
-            writeOnly: true
-          writeOnly: true
       required:
       - body
       - created_at
@@ -4268,6 +4309,18 @@ components:
       required:
       - id
       - username
+    CommentAuthorRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - username
     CommentBrief:
       type: object
       properties:
@@ -4291,9 +4344,11 @@ components:
         chapter_number:
           type: integer
           readOnly: true
+          nullable: true
         verse_number:
           type: integer
           readOnly: true
+          nullable: true
         source_translation:
           type: string
           readOnly: true
@@ -4311,12 +4366,63 @@ components:
       - source_translation
       - username
       - verse_number
+    CommentBriefRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 1
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - id
+      - username
     CommentEdit:
       type: object
       properties:
         body:
           type: string
           maxLength: 5000
+      required:
+      - body
+    CommentRequest:
+      type: object
+      properties:
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        translation_project:
+          type: string
+          format: uuid
+          nullable: true
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
       required:
       - body
     CommentSearch:
@@ -4357,7 +4463,7 @@ components:
           type: string
       required:
       - detail
-    Feedback:
+    FeedbackRequest:
       type: object
       properties:
         category:
@@ -4368,8 +4474,8 @@ components:
           maxLength: 254
         message:
           type: string
-          maxLength: 4000
           minLength: 10
+          maxLength: 4000
         page_url:
           type: string
           format: uri
@@ -4421,14 +4527,16 @@ components:
       - id
       - label
       - tag
-    Login:
+    LoginRequest:
       type: object
       properties:
         username:
           type: string
+          minLength: 1
         password:
           type: string
           writeOnly: true
+          minLength: 1
       required:
       - password
       - username
@@ -4473,9 +4581,11 @@ components:
         chapter_number:
           type: integer
           readOnly: true
+          nullable: true
         verse_number:
           type: integer
           readOnly: true
+          nullable: true
         source_translation:
           type: string
           readOnly: true
@@ -4586,6 +4696,9 @@ components:
         * `reply` - Reply
         * `upvote` - Upvote
         * `mention` - Mention
+    NullEnum:
+      enum:
+      - null
     PaginatedAnswerList:
       type: object
       required:
@@ -4885,12 +4998,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TranslationUnit'
-    PasswordChange:
+    PasswordChangeRequest:
       type: object
       properties:
         current_password:
           type: string
           writeOnly: true
+          minLength: 1
         new_password:
           type: string
           writeOnly: true
@@ -4898,13 +5012,15 @@ components:
       required:
       - current_password
       - new_password
-    PasswordResetConfirm:
+    PasswordResetConfirmRequest:
       type: object
       properties:
         uid:
           type: string
+          minLength: 1
         token:
           type: string
+          minLength: 1
         new_password:
           type: string
           writeOnly: true
@@ -4913,29 +5029,28 @@ components:
       - new_password
       - token
       - uid
-    PasswordResetRequest:
+    PasswordResetRequestRequest:
       type: object
       properties:
         email:
           type: string
           format: email
+          minLength: 1
       required:
       - email
-    PatchedAnswerEdit:
+    PatchedAnswerEditRequest:
       type: object
       properties:
         body:
           type: string
+          minLength: 1
           maxLength: 5000
-    PatchedArticleWrite:
+    PatchedArticleWriteRequest:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
         title:
           type: string
+          minLength: 1
           maxLength: 200
         summary:
           type: string
@@ -4949,13 +5064,7 @@ components:
           items:
             type: string
             format: uuid
-        citations:
-          type: array
-          items:
-            type: object
-            additionalProperties: {}
-          readOnly: true
-    PatchedBestAnswerRequest:
+    PatchedBestAnswerRequestRequest:
       type: object
       description: ベストアンサーの設定・解除。null を渡すと解除。
       properties:
@@ -4963,49 +5072,46 @@ components:
           type: string
           format: uuid
           nullable: true
-    PatchedCommentEdit:
+    PatchedCommentEditRequest:
       type: object
       properties:
         body:
           type: string
+          minLength: 1
           maxLength: 5000
-    PatchedIdentityUpdate:
+    PatchedIdentityUpdateRequest:
       type: object
       properties:
         username:
           type: string
+          minLength: 1
           pattern: ^[\w.@+-]+$
           maxLength: 150
         email:
           type: string
           format: email
+          minLength: 1
           maxLength: 254
         current_password:
           type: string
           writeOnly: true
-    PatchedMembershipDecision:
+          minLength: 1
+    PatchedMembershipDecisionRequest:
       type: object
       description: 参加申請の承認・拒否。
       properties:
         status:
           $ref: '#/components/schemas/MembershipDecisionStatusEnum'
-    PatchedNotificationPreferences:
+    PatchedNotificationPreferencesRequest:
       type: object
       properties:
         email_notifications_enabled:
           type: boolean
         in_app_notifications_enabled:
           type: boolean
-    PatchedPlanDay:
+    PatchedPlanDayRequest:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        number:
-          type: integer
-          readOnly: true
         title:
           type: string
           maxLength: 200
@@ -5014,19 +5120,13 @@ components:
         readings:
           type: array
           items:
-            $ref: '#/components/schemas/PlanReading'
-        completed:
-          type: boolean
-          readOnly: true
-    PatchedPlanWrite:
+            $ref: '#/components/schemas/PlanReadingRequest'
+    PatchedPlanWriteRequest:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
         title:
           type: string
+          minLength: 1
           maxLength: 200
         description:
           type: string
@@ -5035,7 +5135,7 @@ components:
           type: string
         visibility:
           $ref: '#/components/schemas/VisibilityEnum'
-    PatchedProfileUpdate:
+    PatchedProfileUpdateRequest:
       type: object
       description: プロフィール更新用。bio / bookmarks_visibility を変更可能。
       properties:
@@ -5044,111 +5144,43 @@ components:
           maxLength: 500
         bookmarks_visibility:
           $ref: '#/components/schemas/BookmarksVisibilityEnum'
-    PatchedQuestionEdit:
+    PatchedQuestionEditRequest:
       type: object
       description: 質問の編集。箇所は変えられない（変えたいなら立て直す）。
       properties:
         title:
           type: string
+          minLength: 1
           maxLength: 200
         body:
           type: string
+          minLength: 1
           maxLength: 5000
-    PatchedTranslationProject:
+    PatchedTranslationProjectRequest:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
         name:
           type: string
+          minLength: 1
           maxLength: 200
         description:
           type: string
-        owner_username:
-          type: string
-          readOnly: true
         source_book:
           type: string
           format: uuid
-        source_book_name:
-          type: string
-          readOnly: true
         target_language:
           type: string
+          minLength: 1
           maxLength: 20
         status:
           $ref: '#/components/schemas/TranslationProjectStatusEnum'
-        unit_count:
-          type: integer
-          readOnly: true
-        done_count:
-          type: integer
-          readOnly: true
-        is_member:
-          type: boolean
-          readOnly: true
-        membership_status:
-          type: string
-          nullable: true
-          readOnly: true
-        is_in_library:
-          type: boolean
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-    PatchedTranslationUnit:
+    PatchedTranslationUnitRequest:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        verse:
-          type: string
-          format: uuid
-          readOnly: true
-        verse_number:
-          type: integer
-          readOnly: true
-        verse_text:
-          type: string
-          readOnly: true
-        chapter:
-          type: string
-          format: uuid
-          readOnly: true
-        chapter_number:
-          type: integer
-          readOnly: true
-        assigned_to:
-          type: string
-          format: uuid
-          readOnly: true
-          nullable: true
-        assigned_to_username:
-          type: string
-          readOnly: true
-          nullable: true
         body:
           type: string
         status:
           $ref: '#/components/schemas/TranslationUnitStatusEnum'
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
     PlanDay:
       type: object
       properties:
@@ -5175,7 +5207,7 @@ components:
       - completed
       - id
       - number
-    PlanDayCreateRequest:
+    PlanDayCreateRequestRequest:
       type: object
       description: 日を末尾に足すときの入力。どちらも省略できる（空で作って後から書ける）。
       properties:
@@ -5183,7 +5215,7 @@ components:
           type: string
         devotional:
           type: string
-    PlanDayReorderRequest:
+    PlanDayReorderRequestRequest:
       type: object
       description: 並べ替えの入力。並べたい順に、その計画の全部の日の id を渡す。
       properties:
@@ -5194,6 +5226,18 @@ components:
             format: uuid
       required:
       - day_ids
+    PlanDayRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        devotional:
+          type: string
+        readings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanReadingRequest'
     PlanDetail:
       type: object
       properties:
@@ -5324,6 +5368,24 @@ components:
       - chapter_number
       - id
       - order
+    PlanReadingRequest:
+      type: object
+      description: 'その日に読む章1つ。入出力とも訳非依存の書 slug（例: "matthew"）でやりとりする。'
+      properties:
+        book:
+          type: string
+          minLength: 1
+        chapter_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        translation:
+          type: string
+          maxLength: 50
+      required:
+      - book
+      - chapter_number
     PlanSubscription:
       type: object
       properties:
@@ -5371,6 +5433,22 @@ components:
       required:
       - id
       - title
+    PlanWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        note:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+      required:
+      - title
     ProjectBrief:
       type: object
       properties:
@@ -5379,6 +5457,18 @@ components:
           format: uuid
         name:
           type: string
+      required:
+      - id
+      - name
+    ProjectBriefRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
       required:
       - id
       - name
@@ -5425,6 +5515,18 @@ components:
       required:
       - id
       - username
+    QAAuthorRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - username
     Question:
       type: object
       description: |-
@@ -5454,18 +5556,6 @@ components:
         is_deleted:
           type: boolean
           readOnly: true
-        verse:
-          type: string
-          format: uuid
-          writeOnly: true
-        chapter:
-          type: string
-          format: uuid
-          writeOnly: true
-        book:
-          type: string
-          format: uuid
-          writeOnly: true
         book_slug:
           type: string
           readOnly: true
@@ -5492,16 +5582,11 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           readOnly: true
-        tag_ids:
-          type: array
-          items:
-            type: integer
-            writeOnly: true
-          writeOnly: true
         best_answer:
           allOf:
           - $ref: '#/components/schemas/BestAnswer'
           readOnly: true
+          nullable: true
         answer_count:
           type: integer
           readOnly: true
@@ -5531,6 +5616,43 @@ components:
         body:
           type: string
           maxLength: 5000
+      required:
+      - body
+      - title
+    QuestionRequest:
+      type: object
+      description: |-
+        質問の読み書き。一覧・詳細・投稿で共用する。
+
+        箇所の入力は verse / chapter / book のいずれか1つ（表示中の訳の id）。
+        保存されるのは訳非依存の箇所なので、これらは write-only。
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
       required:
       - body
       - title
@@ -5564,7 +5686,7 @@ components:
       - chapter_number
       - id
       - updated_at
-    ReadingProgressSaveRequest:
+    ReadingProgressSaveRequestRequest:
       type: object
       description: 進捗保存の入力。book と chapter は表示中の訳の id。
       properties:
@@ -5673,12 +5795,13 @@ components:
       required:
       - reference
       - verses
-    Register:
+    RegisterRequest:
       type: object
       description: ユーザー登録用。password は write_only で最低8文字。
       properties:
         username:
           type: string
+          minLength: 1
           title: ユーザー名
           description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
           pattern: ^[\w.@+-]+$
@@ -5712,6 +5835,13 @@ components:
       required:
       - created_at
       - id
+      - reason
+    ReportRequest:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+      required:
       - reason
     RoleEnum:
       enum:
@@ -5779,6 +5909,29 @@ components:
       required:
       - id
       - name
+    TagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+      required:
+      - name
+    TargetTypeEnum:
+      enum:
+      - verse
+      - chapter
+      - book
+      - comment
+      - project
+      type: string
+      description: |-
+        * `verse` - verse
+        * `chapter` - chapter
+        * `book` - book
+        * `comment` - comment
+        * `project` - project
     TranslationComment:
       type: object
       properties:
@@ -5812,6 +5965,18 @@ components:
       - id
       - is_deleted
       - username
+    TranslationCommentRequest:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+      required:
+      - body
     TranslationId:
       type: object
       description: 「この訳ではこの id」の対応。訳の切り替えで使う。
@@ -5897,9 +6062,11 @@ components:
           type: boolean
           readOnly: true
         membership_status:
-          type: string
           nullable: true
           readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/TranslationMembershipStatusEnum'
+          - $ref: '#/components/schemas/NullEnum'
         is_in_library:
           type: boolean
           readOnly: true
@@ -5925,6 +6092,28 @@ components:
       - target_language
       - unit_count
       - updated_at
+    TranslationProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        source_book:
+          type: string
+          format: uuid
+        target_language:
+          type: string
+          minLength: 1
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/TranslationProjectStatusEnum'
+      required:
+      - name
+      - source_book
+      - target_language
     TranslationProjectStatusEnum:
       enum:
       - draft
@@ -6063,6 +6252,27 @@ components:
       - verse
       - verse_number
       - verse_text
+    TranslationUnitCreateRequest:
+      type: object
+      description: Owner-only unit creation input; assignment stays on the dedicated
+        endpoint.
+      properties:
+        verse:
+          type: string
+          format: uuid
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+      required:
+      - verse
+    TranslationUnitRequest:
+      type: object
+      properties:
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
     TranslationUnitStatusEnum:
       enum:
       - todo
@@ -6149,7 +6359,7 @@ components:
       - user
       - verse_number
       - vote_count
-    UnitAssign:
+    UnitAssignRequest:
       type: object
       description: 担当者の割り当て。null を渡すと担当を外す。
       properties:

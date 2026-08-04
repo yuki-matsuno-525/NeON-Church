@@ -24,8 +24,9 @@ class CommentBriefSerializer(serializers.Serializer):
     # 表示用ラベルと、リンク組み立て用の slug/章/節/訳を返す（プロフィールのコメント一覧と同じ形）。
     location_label = serializers.SerializerMethodField()
     book_slug = serializers.SerializerMethodField()
-    chapter_number = serializers.IntegerField(read_only=True)
-    verse_number = serializers.IntegerField(read_only=True)
+    # 粒度によって null（書へのコメントなら章も節も、章へのコメントなら節が null）。
+    chapter_number = serializers.IntegerField(read_only=True, allow_null=True)
+    verse_number = serializers.IntegerField(read_only=True, allow_null=True)
     source_translation = serializers.CharField(read_only=True)
     is_deleted = serializers.BooleanField(read_only=True)
 
@@ -69,8 +70,12 @@ class BookmarkSerializer(serializers.ModelSerializer):
     book = serializers.PrimaryKeyRelatedField(
         queryset=Book.objects.all(), write_only=True, required=False
     )
-    comment_detail = CommentBriefSerializer(source="comment", read_only=True)
-    project_detail = ProjectBriefSerializer(source="translation_project", read_only=True)
+    # 対象でない種類のお気に入りでは null になる。allow_null を書かないと
+    # スキーマが「必ず入っている」と宣言し、フロントの型が嘘になる。
+    comment_detail = CommentBriefSerializer(source="comment", read_only=True, allow_null=True)
+    project_detail = ProjectBriefSerializer(
+        source="translation_project", read_only=True, allow_null=True
+    )
     target_type = serializers.SerializerMethodField()
     # 訳非依存の箇所。フロントは Verse id ではなくこの箇所でお気に入り判定・表示する。
     reference = serializers.SerializerMethodField()
@@ -99,6 +104,11 @@ class BookmarkSerializer(serializers.ModelSerializer):
             "translation_project": {"write_only": True},
         }
 
+    @extend_schema_field(
+        serializers.ChoiceField(
+            choices=["verse", "chapter", "book", "comment", "project"], allow_null=True
+        )
+    )
     def get_target_type(self, obj) -> str | None:
         if obj.comment_id:
             return "comment"

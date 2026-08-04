@@ -1,63 +1,54 @@
-export type Book = { id: string; name: string; translation: string; order: number };
-export type Chapter = { id: string; book: string; number: number };
-export type Verse = { id: string; chapter: string; number: number; text: string };
-export type CommentUser = { id: string; username: string };
-export type Comment = {
-  id: string;
-  user: CommentUser;
-  translation_project: string | null;
-  // どのバージョンのコメントか（聖書なら訳名・翻訳ならプロジェクト名）。全バージョン表示のバッジ用。
-  version_label: string;
-  parent: string | null;
-  body: string;
-  is_deleted: boolean;
-  created_at: string;
-  vote_count: number;
-  // このコメントへの返信の数（削除済みは含まない）。返信を開く前に件数だけ出すのに使う。
-  reply_count: number;
-  tags: Tag[];
-};
+import type { components } from "@/types/api";
 
-export type BookmarkVerseDetail = {
-  id: string;
-  number: number;
-  text: string;
-  chapter_number: number;
-  book_name: string;
-};
-export type BookmarkCommentDetail = {
-  id: string;
-  body: string;
-  username: string;
-  created_at: string;
-  // コメントのお気に入りから「どの箇所へのコメントか」を表示・リンクするための素材。
-  location_label: string;
-  book_slug: string;
-  chapter_number: number | null;
-  verse_number: number | null;
-  source_translation: string;
-  is_deleted?: boolean;
-};
-export type BookmarkReference = {
-  book: string; // canonical_book.slug
-  chapter: number | null; // 章のお気に入り・書のお気に入りでは粒度に応じて null
-  verse: number | null; // 章のお気に入り・書のお気に入りでは null
-};
-export type BookmarkProjectDetail = {
-  id: string;
-  name: string;
-};
-export type Bookmark = {
-  id: string;
-  verse_detail: BookmarkVerseDetail | null;
-  comment_detail: BookmarkCommentDetail | null;
-  project_detail: BookmarkProjectDetail | null;
-  // verse=節 / chapter=章 / book=書 / comment=コメント / project=翻訳プロジェクト
-  target_type: "verse" | "chapter" | "book" | "comment" | "project" | null;
-  reference: BookmarkReference | null; // 訳非依存の箇所（箇所のお気に入りのみ。comment/project では null）
-  verse_text: string | null; // 節のお気に入りの表示用本文（口語訳優先。それ以外のお気に入りでは null）
-  created_at: string;
-};
+/**
+ * バックエンドの OpenAPI スキーマから生成した型（`src/types/api.ts`）を、
+ * 画面から使いやすい名前で公開する。
+ *
+ * ## なぜ手書きしないか
+ *
+ * 以前ここは全部手書きで、バックエンドと静かにずれていた。実際に見つかった例:
+ *   - `Bookmark.verse_detail` … API に存在しないフィールドが宣言されていた
+ *   - `Tag.id` … 実体は数値なのに string と宣言されていた
+ *   - `is_member` / `unit_count` … bool・数値なのに string になっていた
+ *
+ * 型を直接書くのは `Schemas[...]` で表せないものだけにする。
+ * スキーマを変えたら `npm run gen:types` を実行する（CI が食い違いを検出する）。
+ */
+type Schemas = components["schemas"];
+
+/**
+ * レスポンスの型。
+ *
+ * 生成型の `?`（optional）は「**入力で**省略できる」という意味で、
+ * 受け取る側には関係ない。DRF は write_only 以外の項目を必ず出力するので、
+ * レスポンスとして扱うときは optional を外す。これを外さないと、
+ * 実際には必ず入っている値に対して画面側が毎回 undefined を考慮させられる。
+ */
+type Res<T> = { [K in keyof T]-?: T[K] };
+
+// ---------------------------------------------------------------------------
+// 生成型からそのまま公開するもの
+// ---------------------------------------------------------------------------
+
+export type Book = Res<Schemas["Book"]>;
+export type Chapter = Res<Schemas["Chapter"]>;
+export type Verse = Res<Schemas["Verse"]>;
+export type CommentUser = Res<Schemas["CommentAuthor"]>;
+export type Comment = Res<Schemas["Comment"]>;
+export type Tag = Res<Schemas["Tag"]>;
+
+/** コメントのお気に入りから、その箇所へリンクするための素材。 */
+export type BookmarkCommentDetail = Res<Schemas["CommentBrief"]>;
+/** プロジェクトのお気に入りから、その企画ページへリンクするための素材。 */
+export type BookmarkProjectDetail = Res<Schemas["ProjectBrief"]>;
+/** 訳非依存の箇所（書 slug ＋章／節）。粒度に応じて章・節は null。 */
+export type BookmarkReference = Res<Schemas["BookmarkReference"]>;
+export type Bookmark = Res<Schemas["Bookmark"]>;
+/** verse=節 / chapter=章 / book=書 / comment=コメント / project=翻訳プロジェクト */
+export type BookmarkTargetType = Schemas["TargetTypeEnum"];
+
+export type TranslationProject = Res<Schemas["TranslationProject"]>;
+
 export type NotificationTargetKind =
   | "verse_comment"
   | "chapter_comment"
@@ -110,11 +101,6 @@ export type JwtSession = {
   expires_at: string;
   current: boolean;
 };
-export type Tag = {
-  id: string;
-  name: string;
-};
-
 export type VerseOfDay = {
   id: string;
   number: number;
@@ -203,24 +189,6 @@ export type TranslationLanguage = {
   tag: string;
   label: string;
   order: number;
-};
-
-export type TranslationProject = {
-  id: string;
-  name: string;
-  description: string;
-  owner_username: string;
-  source_book: string;
-  source_book_name: string;
-  target_language: string;
-  status: "draft" | "active" | "published";
-  unit_count: number;
-  done_count: number;
-  is_member: boolean;
-  membership_status: "pending" | "approved" | "rejected" | null;
-  is_in_library: boolean;
-  created_at: string;
-  updated_at: string;
 };
 
 export type TranslationMembership = {

@@ -109,7 +109,12 @@ function QAContent() {
   // 件数バッジが「読み込めた分」の数になり、片方の列だけ増えるといった破綻が起きる。
   // 検索欄は手が止まってから投げる（1文字ごとに2列ぶんのリクエストが飛ぶのを防ぐ）。
   const debouncedSearch = useDebouncedValue(questionSearch);
-  const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: debouncedSearch };
+  // タグ id は URL では文字列だが、API 上は数値（Tag は連番の主キー）。
+  const filters = {
+    book_id: bookIdParam || undefined,
+    tag_id: selectedTagId ? Number(selectedTagId) : undefined,
+    q: debouncedSearch,
+  };
   const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
 
   const fetchAnswered = useCallback(

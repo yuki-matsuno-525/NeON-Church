@@ -217,8 +217,9 @@ class MyCommentSerializer(serializers.ModelSerializer):
     location_label = serializers.SerializerMethodField()
     # フロントで箇所リンク（/{slug}/{章}?translation={訳}#verse-{節}）を組み立てるための素材。
     book_slug = serializers.SerializerMethodField()
-    chapter_number = serializers.IntegerField(read_only=True)
-    verse_number = serializers.IntegerField(read_only=True)
+    # 粒度によって null（書へのコメントなら章も節も、章へのコメントなら節が null）。
+    chapter_number = serializers.IntegerField(read_only=True, allow_null=True)
+    verse_number = serializers.IntegerField(read_only=True, allow_null=True)
     source_translation = serializers.CharField(read_only=True)
 
     class Meta:

@@ -31,8 +31,6 @@ vi.mock("@/contexts/AuthContext", () => ({
 
 const makeBookmark = (overrides: Partial<Bookmark> = {}): Bookmark => ({
   id: "bm1",
-  // 一覧は verse_detail に依存せず reference（訳非依存の箇所）だけで表示する。
-  verse_detail: null,
   project_detail: null,
   comment_detail: null,
   target_type: "verse",
@@ -153,6 +151,7 @@ describe("BookmarksPage", () => {
             chapter_number: 1,
             verse_number: 3,
             source_translation: "口語訳",
+            is_deleted: false,
           },
         }),
       ])

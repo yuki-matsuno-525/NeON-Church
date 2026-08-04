@@ -50,7 +50,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
   const [verseId, setVerseId] = useState("");
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [verses, setVerses] = useState<Verse[]>([]);
-  const [tagIds, setTagIds] = useState<string[]>([]);
+  const [tagIds, setTagIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -101,7 +101,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
     }
   };
 
-  const toggleTag = (id: string) =>
+  const toggleTag = (id: number) =>
     setTagIds((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]));
 
   const handleSubmit = async (e: React.FormEvent) => {

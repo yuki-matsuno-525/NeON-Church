@@ -9,7 +9,7 @@ type Params = {
   chapter_id?: string;
   book_id?: string;
   ordering?: "new" | "votes";
-  tag_id?: string | null;
+  tag_id?: number | null;
   translation_project?: string;
 };
 

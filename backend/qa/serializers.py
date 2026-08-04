@@ -104,7 +104,9 @@ class QuestionSerializer(serializers.ModelSerializer):
         queryset=Book.objects.all(), write_only=True, required=False
     )
 
-    best_answer = BestAnswerSerializer(read_only=True)
+    # 未解決の質問では null。allow_null を書かないとスキーマが
+    # 「必ず入っている」と宣言し、フロントの型が嘘になる。
+    best_answer = BestAnswerSerializer(read_only=True, allow_null=True)
     answer_count = serializers.SerializerMethodField()
     book_slug = serializers.SerializerMethodField()
     book_name = serializers.SerializerMethodField()

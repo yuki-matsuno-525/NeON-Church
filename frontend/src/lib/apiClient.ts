@@ -300,7 +300,7 @@ export function fetchCommentPage(params: {
   chapter_id?: string;
   book_id?: string;
   ordering?: "new" | "votes";
-  tag_id?: string;
+  tag_id?: number;
   translation_project?: string;
   page?: number;
 }): Promise<ListPage<Comment>> {
@@ -309,7 +309,7 @@ export function fetchCommentPage(params: {
   if (params.chapter_id) q.set("chapter_id", params.chapter_id);
   if (params.book_id) q.set("book_id", params.book_id);
   if (params.ordering) q.set("ordering", params.ordering);
-  if (params.tag_id) q.set("tag_id", params.tag_id);
+  if (params.tag_id) q.set("tag_id", String(params.tag_id));
   if (params.translation_project) q.set("translation_project", params.translation_project);
   if (params.page && params.page > 1) q.set("page", String(params.page));
   return apiFetchPage(`/comments/?${q}`);
@@ -326,7 +326,7 @@ export function createComment(data: {
   title?: string;
   body: string;
   parent?: string;
-  tag_ids?: string[];
+  tag_ids?: number[];
   translation_project?: string;
 }): Promise<Comment> {
   return apiFetch("/comments/", {
@@ -618,7 +618,7 @@ export function fetchQuestionPage(params?: {
   book_slug?: string;
   chapter_number?: number;
   verse_number?: number;
-  tag_id?: string;
+  tag_id?: number;
   answered?: boolean;
   q?: string;
   page?: number;
@@ -628,7 +628,7 @@ export function fetchQuestionPage(params?: {
   if (params?.book_slug) qs.set("book_slug", params.book_slug);
   if (params?.chapter_number) qs.set("chapter_number", String(params.chapter_number));
   if (params?.verse_number) qs.set("verse_number", String(params.verse_number));
-  if (params?.tag_id) qs.set("tag_id", params.tag_id);
+  if (params?.tag_id) qs.set("tag_id", String(params.tag_id));
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page && params.page > 1) qs.set("page", String(params.page));
@@ -646,7 +646,7 @@ export function createQuestion(data: {
   book?: string;
   title: string;
   body: string;
-  tag_ids?: string[];
+  tag_ids?: number[];
 }): Promise<QAQuestion> {
   return apiFetch("/qa/questions/", { method: "POST", body: JSON.stringify(data) });
 }

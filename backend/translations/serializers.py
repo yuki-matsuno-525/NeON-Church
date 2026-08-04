@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import (
@@ -84,6 +85,9 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
             status=TranslationMembership.STATUS_APPROVED,
         ).exists()
 
+    @extend_schema_field(
+        serializers.ChoiceField(choices=TranslationMembership.STATUS_CHOICES, allow_null=True)
+    )
     def get_membership_status(self, obj) -> str | None:
         if hasattr(obj, "annotated_membership_status"):
             return obj.annotated_membership_status
