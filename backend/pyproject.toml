@@ -104,7 +104,7 @@ module = ["bible.importers.*", "bible.management.commands.*"]
 ignore_errors = true
 
 # request.user が User | AnonymousUser 固定で、IsAuthenticated を通した後でも
-# 絞り込めない（django-stubs の既知の制約）。simplejwt の stub 差異も混ざる。
+# 絞り込めない（django-stubs の既知の制約）。
 [[tool.mypy.overrides]]
 module = ["users.views", "users.authentication"]
 ignore_errors = true

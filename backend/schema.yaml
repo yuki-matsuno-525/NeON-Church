@@ -3065,11 +3065,6 @@ paths:
 
         GET .../read/            目次用。章番号の一覧だけを返す（units は空）
         GET .../read/?chapter=3  3章の本文を返す
-
-        以前は常に全章の完了ユニットを返し、章のページが画面側で1章分だけ抜き出して
-        残りを捨てていた。1章開くたびに書全体が飛ぶので、章で絞れるようにした。
-
-        返り値: {"chapters": [1, 2, 3], "units": [...]}
       parameters:
       - in: path
         name: project_id
@@ -3482,10 +3477,6 @@ paths:
         GET /api/translations/{id}/units/summary/  章の一覧と状態ごとの件数
 
         画面の章ボタンと「レビュー(N)」のバッジを出すためだけの軽い問い合わせ。
-        以前は全ユニットを取ってから画面側で数えていたので、章ボタンを見るだけで
-        企画の全節（詩篇なら2400件超）が飛んでいた。
-
-        返り値: {"chapters": [1, 2, 3], "status_counts": {"todo": 10, ...}, "total": 30}
       parameters:
       - in: path
         name: project_id

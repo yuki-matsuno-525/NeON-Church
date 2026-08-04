@@ -1,9 +1,9 @@
-import re
+"""翻訳企画の HTTP 入口。
 
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import Count, Exists, OuterRef, Q
-from django.shortcuts import get_object_or_404
+ここは「URL とパラメータを解く」「権限を確かめる」「シリアライズして返す」だけ。
+何が見えるかの判断は selectors.py、状態を変える処理は services.py にある。
+"""
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -11,21 +11,13 @@ from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
 from common.schema import DetailSerializer
-from notifications.models import Notification
-from notifications.services import send_user_notification
 
+from . import selectors, services
 from .access import (
     can_view_project_work,
     get_visible_project_or_404 as resolve_visible_project_or_404,
 )
-from .models import (
-    Language,
-    TranslationComment,
-    TranslationLibraryEntry,
-    TranslationMembership,
-    TranslationProject,
-    TranslationUnit,
-)
+from .models import Language, TranslationProject, TranslationUnit
 from .serializers import (
     BookAddedSerializer,
     BookRemovedSerializer,
@@ -42,55 +34,9 @@ from .serializers import (
     UnitAssignSerializer,
 )
 
-User = get_user_model()
-
-
-def annotate_project_summary(queryset, user):
-    """一覧に出す「ユニット数・完了数・参加中か・本棚にあるか」を本体クエリで求める。
-
-    シリアライザ側で数えると1件につき4回（count/count/exists/exists）問い合わせるので、
-    20件のページで80回の往復になっていた。ここで1回にまとめる。
-
-    ユニット数と完了数は同じ units への JOIN を共有するので、件数は二重に数えられない。
-    参加中・本棚は Exists のサブクエリなので行を増やさない。
-    """
-    queryset = queryset.annotate(
-        annotated_unit_count=Count("units"),
-        annotated_done_count=Count("units", filter=Q(units__status=TranslationUnit.STATUS_DONE)),
-    )
-    if user and user.is_authenticated:
-        queryset = queryset.annotate(
-            annotated_is_member=Exists(
-                TranslationMembership.objects.filter(
-                    project=OuterRef("pk"),
-                    user=user,
-                    # is_member は作業権限を表す。申請中は membership_status で
-                    # 区別し、承認されるまではメンバー扱いにしない。
-                    status=TranslationMembership.STATUS_APPROVED,
-                )
-            ),
-            annotated_is_in_library=Exists(
-                TranslationLibraryEntry.objects.filter(project=OuterRef("pk"), user=user)
-            ),
-        )
-    # 集計を足すと Django は Meta.ordering を「無い」ものとして扱い、ページングが
-    # 不安定になったと警告する。並び順は変えずに明示しておく。
-    return queryset.order_by("-created_at")
-
-
-def _create_mention_notifications(comment: TranslationComment) -> None:
-    """コメント本文の @username を解析して通知を作成する。自己メンションは無視。"""
-    usernames = set(re.findall(r"@([\w]+)", comment.body))
-    if not usernames:
-        return
-    users = User.objects.filter(username__in=usernames).exclude(pk=comment.user_id)
-    for user in users:
-        send_user_notification(
-            recipient=user,
-            actor=comment.user,
-            notification_type=Notification.MENTION,
-            translation_comment=comment,
-        )
+# 既存の import 経路を保つための別名。他アプリやテストが
+# translations.views.annotate_project_summary を参照している。
+annotate_project_summary = selectors.annotate_project_summary
 
 
 class IsProjectOwner(permissions.BasePermission):
@@ -107,12 +53,9 @@ class IsApprovedMember(permissions.BasePermission):
         project_id = view.kwargs.get("project_id")
         if not project_id:
             return False
+        # 見えない企画の存在を、権限エラーの違いから当てられないようにする。
         _get_visible_project_or_404(request, project_id)
-        return TranslationMembership.objects.filter(
-            project_id=project_id,
-            user=request.user,
-            status=TranslationMembership.STATUS_APPROVED,
-        ).exists()
+        return selectors.is_approved_member(request.user, project_id)
 
 
 def _can_view_project_work(request, project):
@@ -146,47 +89,15 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         return [permissions.AllowAny()]
 
     def get_queryset(self):
-        qs = TranslationProject.objects.select_related("owner", "source_book")
-        user = self.request.user
-        if user.is_authenticated:
-            qs = qs.filter(
-                Q(owner=user)
-                | Q(
-                    memberships__user=user,
-                    memberships__status=TranslationMembership.STATUS_APPROVED,
-                )
-                | ~Q(status=TranslationProject.STATUS_DRAFT)
-            ).distinct()
-        else:
-            qs = qs.exclude(status=TranslationProject.STATUS_DRAFT)
-
-        # ボードの1カラム分だけ欲しいときは status で絞る（未知の値は無視して全件）。
-        status_param = self.request.query_params.get("status")
-        valid_statuses = {
-            TranslationProject.STATUS_PUBLISHED,
-            TranslationProject.STATUS_ACTIVE,
-            TranslationProject.STATUS_DRAFT,
-        }
-        if status_param in valid_statuses:
-            qs = qs.filter(status=status_param)
-        q = (self.request.query_params.get("q") or "").strip()
-        if q:
-            qs = qs.filter(
-                Q(name__icontains=q)
-                | Q(description__icontains=q)
-                | Q(source_book__name__icontains=q)
-                | Q(owner__username__icontains=q)
-            )
-        return annotate_project_summary(qs, user)
+        return selectors.list_projects(
+            self.request.user,
+            status=self.request.query_params.get("status"),
+            query=self.request.query_params.get("q"),
+        )
 
     def perform_create(self, serializer):
         project = serializer.save(owner=self.request.user, status=TranslationProject.STATUS_DRAFT)
-        TranslationMembership.objects.create(
-            project=project,
-            user=self.request.user,
-            role=TranslationMembership.ROLE_OWNER,
-            status=TranslationMembership.STATUS_APPROVED,
-        )
+        services.register_owner_membership(project)
 
 
 class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -205,27 +116,22 @@ class TranslationProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         visible_project = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
-        obj = get_object_or_404(
-            annotate_project_summary(
-                TranslationProject.objects.select_related("owner", "source_book"),
-                self.request.user,
-            ),
-            pk=visible_project.pk,
+        obj = generics.get_object_or_404(
+            selectors.projects_with_summary(self.request.user), pk=visible_project.pk
         )
         self.check_object_permissions(self.request, obj)
         return obj
 
 
 def _set_project_status(view, request, project_id, new_status):
-    """プロジェクトのステータスを更新して返す共通ヘルパー。
+    """ステータス遷移3つ（公開・取り消し・募集開始）で共通の入口。
 
-    オーナーチェック（check_object_permissions）込み。
-    TranslationActivateView / TranslationPublishView / TranslationUnpublishView が共用する。
+    オーナー確認（check_object_permissions）はここで行う。IsProjectOwner は
+    オブジェクト単位の判定なので、URL から企画を引いたあとに通す必要がある。
     """
     project = _get_visible_project_or_404(request, project_id)
     view.check_object_permissions(request, project)
-    project.status = new_status
-    project.save(update_fields=["status", "updated_at"])
+    services.set_project_status(project, new_status)
     return Response(TranslationProjectSerializer(project, context={"request": request}).data)
 
 
@@ -275,25 +181,7 @@ class TranslationJoinView(APIView):
     )
     def post(self, request, project_id):
         project = _get_visible_project_or_404(request, project_id)
-        if project.status != TranslationProject.STATUS_ACTIVE:
-            return Response(
-                {"detail": "This project is not accepting applications."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        membership, created = TranslationMembership.objects.get_or_create(
-            project=project,
-            user=request.user,
-            defaults={
-                "role": TranslationMembership.ROLE_MEMBER,
-                "status": TranslationMembership.STATUS_PENDING,
-            },
-        )
-        if not created:
-            if membership.status == TranslationMembership.STATUS_REJECTED:
-                membership.status = TranslationMembership.STATUS_PENDING
-                membership.save(update_fields=["status", "updated_at"])
-            else:
-                return Response({"detail": "Already applied."}, status=status.HTTP_400_BAD_REQUEST)
+        membership = services.apply_to_project(project, request.user)
         return Response(
             TranslationMembershipSerializer(membership).data, status=status.HTTP_201_CREATED
         )
@@ -310,12 +198,7 @@ class TranslationMemberListView(generics.ListAPIView):
     pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
-        # ページングするので並び順を決めておく（既定の並びを持たないモデルのため）。
-        return (
-            TranslationMembership.objects.filter(project_id=self.kwargs["project_id"])
-            .select_related("user")
-            .order_by("created_at")
-        )
+        return selectors.project_members(self.kwargs["project_id"])
 
 
 class TranslationMemberDetailView(APIView):
@@ -338,32 +221,15 @@ class TranslationMemberDetailView(APIView):
     )
     def patch(self, request, project_id, membership_id):
         self._get_project(project_id, request)
-        membership = get_object_or_404(
-            TranslationMembership, pk=membership_id, project_id=project_id
+        membership = services.decide_membership(
+            project_id, membership_id, request.data.get("status")
         )
-        new_status = request.data.get("status")
-        if new_status not in [
-            TranslationMembership.STATUS_APPROVED,
-            TranslationMembership.STATUS_REJECTED,
-        ]:
-            return Response(
-                {"detail": 'status must be "approved" or "rejected".'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        membership.status = new_status
-        membership.save(update_fields=["status"])
         return Response(TranslationMembershipSerializer(membership).data)
 
     @extend_schema(responses={204: None})
     def delete(self, request, project_id, membership_id):
         self._get_project(project_id, request)
-        membership = get_object_or_404(
-            TranslationMembership,
-            pk=membership_id,
-            project_id=project_id,
-            role=TranslationMembership.ROLE_MEMBER,
-        )
-        membership.delete()
+        services.remove_member(project_id, membership_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -409,29 +275,14 @@ class TranslationUnitListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         _get_visible_project_or_404(self.request, self.kwargs["project_id"])
-        qs = TranslationUnit.objects.filter(project_id=self.kwargs["project_id"]).select_related(
-            "verse__chapter", "assigned_to"
+        params = self.request.query_params
+        return selectors.project_units(
+            self.kwargs["project_id"],
+            chapter=params.get("chapter"),
+            status=params.get("status"),
+            assigned_to=params.get("assigned_to"),
+            user=self.request.user,
         )
-        chapter = self.request.query_params.get("chapter")
-        if chapter:
-            # 数字以外が来たら絞らない（画面から来る値なので握りつぶしてよい）
-            try:
-                qs = qs.filter(verse__chapter__number=int(chapter))
-            except ValueError:
-                pass
-        status_param = self.request.query_params.get("status")
-        if status_param in dict(TranslationUnit.STATUS_CHOICES):
-            qs = qs.filter(status=status_param)
-        assigned_to = self.request.query_params.get("assigned_to")
-        if assigned_to == "me":
-            if not self.request.user.is_authenticated:
-                return qs.none()
-            qs = qs.filter(assigned_to=self.request.user)
-        elif assigned_to == "unassigned":
-            qs = qs.filter(assigned_to__isnull=True)
-        elif assigned_to:
-            qs = qs.filter(assigned_to_id=assigned_to)
-        return qs
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -455,10 +306,6 @@ class TranslationUnitSummaryView(APIView):
     """GET /api/translations/{id}/units/summary/  章の一覧と状態ごとの件数
 
     画面の章ボタンと「レビュー(N)」のバッジを出すためだけの軽い問い合わせ。
-    以前は全ユニットを取ってから画面側で数えていたので、章ボタンを見るだけで
-    企画の全節（詩篇なら2400件超）が飛んでいた。
-
-    返り値: {"chapters": [1, 2, 3], "status_counts": {"todo": 10, ...}, "total": 30}
     """
 
     permission_classes = [permissions.AllowAny]
@@ -466,53 +313,7 @@ class TranslationUnitSummaryView(APIView):
     @extend_schema(responses={200: TranslationUnitSummaryResponseSerializer})
     def get(self, request, project_id):
         _get_visible_project_or_404(request, project_id)
-        units = TranslationUnit.objects.filter(project_id=project_id)
-        # order_by() で既定の並び順を外してから distinct する。付けたままだと
-        # 並び替えに使う節番号が裏で SELECT に入り、章が節の数だけ重複する。
-        chapters = sorted(
-            units.order_by().values_list("verse__chapter__number", flat=True).distinct()
-        )
-        counts = units.aggregate(
-            total=Count("id"),
-            **{
-                name: Count("id", filter=Q(status=name))
-                for name, _label in TranslationUnit.STATUS_CHOICES
-            },
-        )
-        total = counts.pop("total")
-        chapter_counts = {}
-        for row in (
-            units.values("verse__chapter__number", "status")
-            .annotate(count=Count("id"))
-            .order_by("verse__chapter__number")
-        ):
-            number = row["verse__chapter__number"]
-            entry = chapter_counts.setdefault(
-                number,
-                {
-                    "number": number,
-                    "total": 0,
-                    "status_counts": {name: 0 for name, _label in TranslationUnit.STATUS_CHOICES},
-                },
-            )
-            entry["status_counts"][row["status"]] = row["count"]
-            entry["total"] += row["count"]
-        mine = 0
-        if request.user.is_authenticated:
-            mine = (
-                units.filter(assigned_to=request.user)
-                .exclude(status=TranslationUnit.STATUS_DONE)
-                .count()
-            )
-        return Response(
-            {
-                "chapters": chapters,
-                "chapter_summaries": list(chapter_counts.values()),
-                "status_counts": counts,
-                "assigned_to_me": mine,
-                "total": total,
-            }
-        )
+        return Response(selectors.unit_summary(project_id, request.user))
 
 
 class TranslationUnitDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -529,29 +330,15 @@ class TranslationUnitDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.IsAuthenticated()]
 
     def get_object(self):
-        project = _get_visible_project_or_404(
-            self.request,
-            self.kwargs["project_id"],
-        )
-        unit = get_object_or_404(
+        project = _get_visible_project_or_404(self.request, self.kwargs["project_id"])
+        return generics.get_object_or_404(
             TranslationUnit.objects.select_related("project", "verse__chapter", "assigned_to"),
             pk=self.kwargs["unit_id"],
             project=project,
         )
-        return unit
 
     def update(self, request, *args, **kwargs):
-        unit = self.get_object()
-        project = unit.project
-        member_can_update = (
-            unit.assigned_to == request.user
-            and TranslationMembership.objects.filter(
-                project=project,
-                user=request.user,
-                status=TranslationMembership.STATUS_APPROVED,
-            ).exists()
-        )
-        if project.owner != request.user and not member_can_update:
+        if not services.can_update_unit(self.get_object(), request.user):
             return Response(
                 {"detail": "Only the assignee or owner can update."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -578,26 +365,10 @@ class TranslationUnitAssignView(APIView):
         responses={200: TranslationUnitSerializer, 403: DetailSerializer},
     )
     def post(self, request, project_id, unit_id):
-        project = _get_visible_project_or_404(request, project_id)
-        if project.owner != request.user:
-            return Response(
-                {"detail": "Only the owner can perform this action."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project)
-        user_id = request.data.get("user_id")
-        if user_id is None:
-            unit.assigned_to = None
-        else:
-            if not TranslationMembership.objects.filter(
-                project=project, user_id=user_id, status=TranslationMembership.STATUS_APPROVED
-            ).exists():
-                return Response(
-                    {"detail": "Only approved members can be assigned."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            unit.assigned_to_id = user_id
-        unit.save(update_fields=["assigned_to", "updated_at"])
+        project = services.require_owner(
+            _get_visible_project_or_404(request, project_id), request.user
+        )
+        unit = services.assign_unit(project, unit_id, request.data.get("user_id"))
         return Response(TranslationUnitSerializer(unit).data)
 
 
@@ -625,20 +396,14 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         project_id = self.kwargs["project_id"]
         _get_visible_project_or_404(self.request, project_id)
-        unit_id = self.kwargs.get("unit_id")
-        qs = TranslationComment.objects.filter(project_id=project_id).select_related("user")
-        if unit_id:
-            qs = qs.filter(unit_id=unit_id)
-        else:
-            qs = qs.filter(unit__isnull=True)
-        return qs
+        return selectors.project_comments(project_id, self.kwargs.get("unit_id"))
 
     def perform_create(self, serializer):
-        project = get_object_or_404(TranslationProject, pk=self.kwargs["project_id"])
-        unit_id = self.kwargs.get("unit_id")
-        unit = get_object_or_404(TranslationUnit, pk=unit_id, project=project) if unit_id else None
+        project, unit = services.comment_target(
+            self.kwargs["project_id"], self.kwargs.get("unit_id")
+        )
         comment = serializer.save(project=project, unit=unit, user=self.request.user)
-        _create_mention_notifications(comment)
+        services.create_mention_notifications(comment)
 
 
 class TranslationCommentDeleteView(APIView):
@@ -649,15 +414,7 @@ class TranslationCommentDeleteView(APIView):
     @extend_schema(responses={204: None, 403: DetailSerializer})
     def delete(self, request, project_id, comment_id):
         _get_visible_project_or_404(request, project_id)
-        comment = get_object_or_404(TranslationComment, pk=comment_id, project_id=project_id)
-        project = comment.project
-        if comment.user != request.user and project.owner != request.user:
-            return Response(
-                {"detail": "Only the author or owner can delete."}, status=status.HTTP_403_FORBIDDEN
-            )
-        comment.is_deleted = True
-        comment.body = ""
-        comment.save(update_fields=["is_deleted", "body", "updated_at"])
+        services.soft_delete_comment(project_id, comment_id, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -675,40 +432,13 @@ class TranslationAddBookView(APIView):
         responses={201: BookAddedSerializer, 400: DetailSerializer, 403: DetailSerializer},
     )
     def post(self, request, project_id):
-        from bible.models import Book, Verse
-
-        project = _get_visible_project_or_404(request, project_id)
-        if project.owner != request.user:
-            return Response(
-                {"detail": "Only the owner can perform this action."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        book_id = request.data.get("book_id")
-        if not book_id:
-            return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
-        book = get_object_or_404(Book, pk=book_id)
-
-        # 節ごとに get_or_create を回すと、詩篇（約2461節）で1リクエスト約5000クエリになる。
-        # しかも TranslationUnit の既定の並び順が verse__chapter__number なので、
-        # 1件ごとに2段の JOIN が付いていた。
-        # 「既にあるぶん」を1回で引き、足りないぶんだけまとめて作る（3クエリで済む）。
-        # values_list("id") で節そのものは読み込まない。
-        verse_ids = set(Verse.objects.filter(chapter__book=book).values_list("id", flat=True))
-        existing_ids = set(
-            TranslationUnit.objects.filter(project=project, verse_id__in=verse_ids).values_list(
-                "verse_id", flat=True
-            )
+        project = services.require_owner(
+            _get_visible_project_or_404(request, project_id), request.user
         )
-        missing_ids = verse_ids - existing_ids
-
-        # 途中で落ちたときに中途半端なユニットが残らないよう、まとめて1つの処理にする。
-        with transaction.atomic():
-            TranslationUnit.objects.bulk_create(
-                [TranslationUnit(project=project, verse_id=vid) for vid in missing_ids],
-                ignore_conflicts=True,
-            )
+        book = services.resolve_book(request.data.get("book_id"))
+        created = services.add_book_units(project, book)
         return Response(
-            {"created": len(missing_ids), "book_name": book.name},
+            {"created": created, "book_name": book.name},
             status=status.HTTP_201_CREATED,
         )
 
@@ -726,21 +456,11 @@ class TranslationRemoveBookView(APIView):
         responses={200: BookRemovedSerializer, 400: DetailSerializer, 403: DetailSerializer},
     )
     def delete(self, request, project_id):
-        from bible.models import Book
-
-        project = _get_visible_project_or_404(request, project_id)
-        if project.owner != request.user:
-            return Response(
-                {"detail": "Only the owner can perform this action."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        book_id = request.data.get("book_id")
-        if not book_id:
-            return Response({"detail": "book_id is required."}, status=status.HTTP_400_BAD_REQUEST)
-        book = get_object_or_404(Book, pk=book_id)
-        deleted, _ = TranslationUnit.objects.filter(
-            project=project, verse__chapter__book=book
-        ).delete()
+        project = services.require_owner(
+            _get_visible_project_or_404(request, project_id), request.user
+        )
+        book = services.resolve_book(request.data.get("book_id"))
+        deleted = services.remove_book_units(project, book)
         return Response({"deleted": deleted, "book_name": book.name}, status=status.HTTP_200_OK)
 
 
@@ -763,11 +483,7 @@ class TranslationLibraryListView(generics.ListAPIView):
     pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
-        qs = TranslationProject.objects.filter(
-            library_entries__user=self.request.user,
-            status=TranslationProject.STATUS_PUBLISHED,
-        ).select_related("owner", "source_book")
-        return annotate_project_summary(qs, self.request.user)
+        return selectors.library_projects(self.request.user)
 
 
 class TranslationLibraryView(APIView):
@@ -780,12 +496,7 @@ class TranslationLibraryView(APIView):
 
     @extend_schema(request=None, responses={201: TranslationProjectSerializer})
     def post(self, request, project_id):
-        project = get_object_or_404(
-            TranslationProject,
-            pk=project_id,
-            status=TranslationProject.STATUS_PUBLISHED,
-        )
-        TranslationLibraryEntry.objects.get_or_create(user=request.user, project=project)
+        project = services.add_to_library(request.user, project_id)
         return Response(
             TranslationProjectSerializer(project, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -793,7 +504,7 @@ class TranslationLibraryView(APIView):
 
     @extend_schema(responses={204: None})
     def delete(self, request, project_id):
-        TranslationLibraryEntry.objects.filter(user=request.user, project_id=project_id).delete()
+        services.remove_from_library(request.user, project_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -802,42 +513,18 @@ class TranslationReadView(APIView):
 
     GET .../read/            目次用。章番号の一覧だけを返す（units は空）
     GET .../read/?chapter=3  3章の本文を返す
-
-    以前は常に全章の完了ユニットを返し、章のページが画面側で1章分だけ抜き出して
-    残りを捨てていた。1章開くたびに書全体が飛ぶので、章で絞れるようにした。
-
-    返り値: {"chapters": [1, 2, 3], "units": [...]}
     """
 
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(responses={200: TranslationReadResponseSerializer})
     def get(self, request, project_id):
-        project = get_object_or_404(
+        project = generics.get_object_or_404(
             TranslationProject,
             pk=project_id,
             status=TranslationProject.STATUS_PUBLISHED,
         )
-        done = TranslationUnit.objects.filter(project=project, status=TranslationUnit.STATUS_DONE)
-        # order_by() で既定の並び順を外してから distinct する（節番号が裏で
-        # SELECT に入って章が重複するのを防ぐ）。
-        chapters = sorted(
-            done.order_by().values_list("verse__chapter__number", flat=True).distinct()
-        )
-
-        chapter = request.query_params.get("chapter")
-        units = []
-        if chapter:
-            try:
-                chapter_number = int(chapter)
-            except ValueError:
-                chapter_number = None
-            if chapter_number is not None:
-                units = (
-                    done.filter(verse__chapter__number=chapter_number)
-                    .select_related("verse__chapter")
-                    .order_by("verse__number")
-                )
+        chapters, units = selectors.published_reading(project, request.query_params.get("chapter"))
         return Response(
             {
                 "chapters": chapters,

@@ -236,7 +236,7 @@ class TestPasswordReset:
         def fail_delivery(*args, **kwargs):
             raise RuntimeError("SMTP unavailable")
 
-        monkeypatch.setattr("users.views.send_mail", fail_delivery)
+        monkeypatch.setattr("users.services.send_mail", fail_delivery)
         known = api_client.post(RESET_REQUEST_URL, {"email": user_payload["email"]}, format="json")
         unknown = api_client.post(
             RESET_REQUEST_URL, {"email": "missing@example.com"}, format="json"
