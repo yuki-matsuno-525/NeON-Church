@@ -53,35 +53,15 @@ docker compose exec backend python manage.py spectacular --file schema.yaml --va
 ```
 
 **バックエンドを触ったら `ruff check` → `ruff format` → `mypy` → `pytest` の順で回す。**
-lint と型チェックは数秒で終わり、pytest は 4 分近くかかる。先に速いものを通す。
-
-`ruff check --fix` で直せる違反は自動修正される。設定は `backend/pyproject.toml`。
-mypy は段階導入で、型注釈の無い関数の中身は見ない。既存の型負債は
-`pyproject.toml` の overrides に理由付きで列挙してあり、触ったファイルから
-1 つずつ外していく方針。
-
-### エンドポイントを足すとき
-
-OpenAPI スキーマはフロントの型の元になる契約なので、**警告ゼロを CI で必須にしている**
-（`--fail-on-warn`）。新しいエンドポイントを足したら次を守る。
-
-- `APIView` を使うなら `@extend_schema(request=..., responses={...})` を必ず付ける。
-  スキーマ生成側はメソッドの中身を読めないので、付けないと CI が落ちる。
-- `generics.*` を使うなら `serializer_class` を置く。`DestroyAPIView` のように
-  実行時には本文を返さないビューでも、型を決めるために必要。
-- 本文を返さない応答は `responses={204: None}`、入力を取らない POST は `request=None`。
-- 複数のモデルをまとめて返すエンドポイントは、その形を宣言するためだけの
-  `serializers.Serializer` を書く（例: `bible/serializers.py` の
-  `ReferenceReadResponseSerializer`）。dict を直に返すと型が生えない。
-- `SerializerMethodField` の `get_*` には戻り値の型注釈を付ける。
-  無いと黙って string 扱いになり、フロントに嘘の型が渡る。
-
-`backend/schema.yaml` はコミットしてある。API の形を変えたら生成し直して一緒に
-コミットする（CI が食い違いを検出する）。差分が PR に出るので、API の変更が
-レビューで読めるようになっている。
+lint と型チェックは数秒、テストは 30 秒ほど。先に速いものを通す。
+`ruff check --fix` で直せる違反は自動修正される。
 
 `DJANGO_SETTINGS_MODULE` は `backend/pytest.ini` で `config.settings.test` に固定済み。
 環境変数を明示的に渡す必要はない。Docker を使わない場合は `backend/` で同じコマンドを直接実行する。
+
+**backend/ の中をどう書くかは `backend/AGENTS.md` に書いてある。**
+アプリの層分け（views / selectors / services）、エンドポイントの足し方、
+スキーマの埋め方、一覧を書くときの決まり。バックエンドを触る前に読む。
 
 ### フロントエンド
 

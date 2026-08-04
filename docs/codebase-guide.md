@@ -121,9 +121,15 @@ Django アプリは機能ごとに分かれています。基本形はどのア�
 | --- | --- |
 | `models.py` | DB テーブルとリレーション |
 | `serializers.py` | model と JSON の変換、入力バリデーション |
-| `views.py` | API の処理本体 |
+| `views.py` | URL とパラメータを解き、権限を通し、シリアライズして返す |
+| `selectors.py` | 何が誰に見えるか・どう数えるか（読み出し） |
+| `services.py` | 状態を変える操作と、そのときのルール（書き込み） |
 | `urls.py` | URL と view の対応 |
 | `tests/` | 期待動作の確認 |
+
+**業務ルールを探すときは `views.py` ではなく `selectors.py` / `services.py` を見ます。**
+views は入口だけで、判断は入っていません。読み取り専用の `bible` には services.py がありません。
+書き方の決まりは `backend/AGENTS.md` にあります。
 
 全 API の入口は `backend/config/urls.py` です。ここで `api/auth/`、`api/users/`、`api/` 配下に各アプリの URL が include されています。
 
@@ -273,7 +279,7 @@ model:
 | `POST /api/comments/{id}/report/` | `ReportView` | 通報 |
 | `GET /api/comments/trending/` | `TrendingCommentView` | upvote 順の注目コメント |
 
-返信投稿時と upvote 時には `backend/comments/views.py` の `_notify` が `Notification` を作成します。自分自身への通知は作らない設計です。
+返信投稿時と upvote 時には `backend/comments/services.py` の `notify` が `Notification` を作成します。自分自身への通知は作らない設計です。
 
 ### お気に入り
 
@@ -509,7 +515,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | 章ページのレイアウトを変える | `frontend/src/app/[book]/[chapter]/page.tsx` |
 | 節ごとの表示やお気に入り UI を変える | `frontend/src/components/reader/VerseList.tsx` |
 | 節コメントパネルを変える | `frontend/src/components/reader/CommentPanel.tsx` |
-| コメント取得条件を変える | `backend/comments/views.py` の `CommentListCreateView.get_queryset` |
+| コメント取得条件を変える | `backend/comments/selectors.py` の `thread_comments` |
 | 進捗保存の仕様を変える | `frontend/src/lib/readingProgress.ts`, `backend/reading_progress/views.py` |
 
 ### 3. コメントを投稿する
@@ -541,8 +547,8 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | やりたいこと | 見る場所 |
 | --- | --- |
 | コメントの最大文字数を変える | `backend/comments/models.py`, serializer, frontend validation |
-| コメントの並び順を変える | `backend/comments/views.py` の `ordering` |
-| 返信通知を変える | `backend/comments/views.py` の `_notify`, `perform_create` |
+| コメントの並び順を変える | `backend/comments/selectors.py` の `thread_comments`（末尾の order_by） |
+| 返信通知を変える | `backend/comments/services.py` の `notify_reply` |
 | 削除時の表示を変える | `backend/comments/serializers.py`, `DELETED_COMMENT_BODY` |
 
 ### 4. Q&A を投稿し、ベストアンサーを設定する
@@ -582,7 +588,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | --- | --- |
 | 画面 | `frontend/src/app/search/page.tsx` |
 | API 呼び出し | `frontend/src/lib/apiClient.ts` の `searchBible` |
-| バックエンド | `backend/bible/views.py` の `SearchView` |
+| バックエンド | `backend/bible/views.py` の `SearchView`（絞り込みは `bible/selectors.py`） |
 | serializer | `backend/bible/serializers.py`, `backend/comments/serializers.py` |
 
 流れ:
@@ -598,7 +604,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 
 | やりたいこと | 見る場所 |
 | --- | --- |
-| 検索対象を増やす | `backend/bible/views.py` の `SearchView` |
+| 検索対象を増やす | `backend/bible/views.py` の `SearchView`（絞り込みは `bible/selectors.py`） |
 | 最小文字数を変える | frontend と backend の両方 |
 | ハイライトを変える | `frontend/src/app/search/page.tsx` の `highlight` |
 
