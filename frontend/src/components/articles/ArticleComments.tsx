@@ -120,30 +120,14 @@ export function ArticleComments({ articleId }: { articleId: string }) {
                   <button
                     type="button"
                     onClick={() => setDeleting(comment.id)}
-                    style={{
-                      marginLeft: "auto",
-                      border: "none",
-                      background: "none",
-                      color: "var(--text-faint)",
-                      fontSize: 12,
-                      minHeight: 44,
-                      padding: "8px 10px",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
+                    className="back-button ml-auto"
                   >
                     {t.delete}
                   </button>
                 )}
               </div>
               <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  lineHeight: 1.7,
-                  whiteSpace: "pre-wrap",
-                  color: comment.is_deleted ? "var(--text-faint)" : "var(--text)",
-                }}
+                className={`comment-body${comment.is_deleted ? " comment-body-deleted" : ""}`}
               >
                 {comment.is_deleted ? t.deletedComment : comment.body}
               </p>
@@ -163,18 +147,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
             onChange={(event) => setBody(event.target.value)}
             rows={3}
             placeholder={t.articleCommentPlaceholder}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              padding: 10,
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              fontFamily: "inherit",
-              fontSize: 16,
-              resize: "vertical",
-            }}
+            className="form-control resize-y"
           />
           {error && <p role="alert" className="m-0 text-xs text-danger">{error}</p>}
           <button

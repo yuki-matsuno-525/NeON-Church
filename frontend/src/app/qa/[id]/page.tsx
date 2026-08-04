@@ -194,14 +194,7 @@ export default function QuestionDetailPage() {
       <article className="card-glow p-4 mt-3" >
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <span
-            className="badge"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 3,
-              background: answered ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)",
-              color: answered ? "var(--state-success)" : "var(--state-warning)",
-            }}
+            className={`badge ${answered ? "badge-answered" : "badge-unanswered"}`}
           >
             <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
             {answered ? t.filterAnswered : t.filterUnanswered}

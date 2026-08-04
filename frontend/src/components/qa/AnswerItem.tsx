@@ -63,12 +63,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
 
   return (
     <div
-      style={{
-        padding: "12px 14px",
-        borderRadius: 10,
-        border: `1px solid ${answer.is_best ? "var(--accent)" : "var(--border)"}`,
-        background: answer.is_best ? "var(--accent-tint)" : "var(--bg-alt)",
-      }}
+      className={`answer-card${answer.is_best ? " answer-card-best" : ""}`}
     >
       <div className="flex items-center gap-2 mb-2 flex-wrap">
         {answer.is_best && (
@@ -110,12 +105,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
             <button
               type="button"
               onClick={() => onPickBest(answer.is_best ? null : answer.id)}
-              className="action-chip"
-              style={{
-                border: `1px solid ${answer.is_best ? "var(--accent)" : "var(--border)"}`,
-                background: answer.is_best ? "var(--accent)" : "transparent",
-                color: answer.is_best ? "var(--accent-text)" : "var(--text-muted)",
-              }}
+              className={`action-chip${answer.is_best ? " pill-toggle-on" : ""}`}
             >
               {answer.is_best ? t.unsetBestAnswer : t.setBestAnswer}
             </button>

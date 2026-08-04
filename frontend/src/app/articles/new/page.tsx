@@ -102,18 +102,7 @@ export default function NewArticlePage() {
           maxLength={MAX_TITLE_LENGTH}
           aria-invalid={!!error}
           aria-describedby="new-article-title-help new-article-error"
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "10px 12px",
-            minHeight: 44,
-            borderRadius: 8,
-            border: `1px solid ${error ? "var(--state-danger)" : "var(--border)"}`,
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            fontSize: 16,
-          }}
+          className={`form-control${error ? " form-control-invalid" : ""}`}
         />
         <div id="new-article-title-help" className="flex justify-between gap-3 mt-2 text-xs text-muted">
           <span>{t.articleDraftNext}</span>
@@ -133,7 +122,7 @@ export default function NewArticlePage() {
         <button
           type="button"
           onClick={() => isDirty ? setConfirmCancel(true) : router.push("/articles")}
-          style={{ alignSelf: "center", minHeight: 44, padding: "8px 12px", border: 0, background: "transparent", fontSize: 13, color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit" }}
+          className="back-button self-center"
         >
           {t.articleCancel}
         </button>

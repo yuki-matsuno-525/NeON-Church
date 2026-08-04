@@ -100,18 +100,7 @@ export default function NewPlanPage() {
           maxLength={200}
           aria-invalid={!!error}
           aria-describedby={error ? "new-plan-error" : undefined}
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "10px 12px",
-            minHeight: 44,
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            fontSize: 15,
-          }}
+          className="form-control"
         />
 
         {error && <p id="new-plan-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}

@@ -2079,3 +2079,92 @@ textarea::placeholder {
 .fab-raised {
   bottom: calc(70vh + 12px);
 }
+
+/* コメント本文。改行をそのまま残す。 */
+.comment-body {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  white-space: pre-wrap;
+}
+.comment-body-deleted {
+  color: var(--text-faint);
+}
+
+/* 記事の中の引用。左に線を引いて本文と区別する。 */
+.article-quote {
+  margin: 0 0 16px;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+/* 記事の中の短いコード。 */
+.article-code {
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.9em;
+}
+
+/* 見つからなかったページの大きな「404」。 */
+.notfound-code {
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--font-serif);
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+/* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */
+.tab-bar {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+/* 一覧の中に並べる、素っ気ない箱。プロフィールの記事とコメントで使う。 */
+.plain-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 入力に不備があるとき、枠を赤くする。 */
+.form-control-invalid {
+  border-color: var(--state-danger);
+}
+
+/* 回答 1 件。ベストアンサーに選ばれたものだけ枠と背景を変える。 */
+.answer-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-alt);
+}
+.answer-card-best {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* 解決済み / 未解決 を示すバッジ。 */
+.badge-answered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--state-success);
+}
+.badge-unanswered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--state-warning);
+}

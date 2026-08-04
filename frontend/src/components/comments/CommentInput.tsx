@@ -126,18 +126,7 @@ export function CommentInput({
         rows={3}
         aria-invalid={!body.trim() && !!error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        style={{
-          width: "100%",
-          padding: "8px 10px",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontSize: 16,
-          resize: "vertical",
-          fontFamily: "inherit",
-          outline: "none",
-        }}
+        className="form-control resize-y"
       />
       {showTagOption && tags.length > 0 && (
         <fieldset className="border-0 p-0 mt-2 mx-0 mb-0">
@@ -151,17 +140,7 @@ export function CommentInput({
                 type="button"
                 onClick={() => toggleTag(tag.id)}
                 aria-pressed={active}
-                style={{
-                  fontSize: 12,
-                  minHeight: 44,
-                  padding: "3px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--border)",
-                  cursor: "pointer",
-                  background: active ? "var(--accent)" : "transparent",
-                  color: active ? "var(--accent-text)" : "var(--text-muted)",
-                  fontFamily: "inherit",
-                }}
+                className={`pill-toggle${active ? " pill-toggle-on" : ""}`}
               >
                 {t.tagNames[tag.name] ?? tag.name}
               </button>
