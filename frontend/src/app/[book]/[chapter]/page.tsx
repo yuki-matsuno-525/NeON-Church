@@ -313,7 +313,7 @@ export default function ChapterPage() {
 
   if (loading) {
     return (
-      <div role="status" aria-label={t.loading} style={{ padding: 32 }}>
+      <div role="status" aria-label={t.loading} className="p-8">
         <SkeletonList count={5} />
       </div>
     );
@@ -321,7 +321,7 @@ export default function ChapterPage() {
 
   if (error) {
     return (
-      <div style={{ padding: 32 }}>
+      <div className="p-8">
         <ErrorState
           title={t.loadErrorTitle}
           message={error}
@@ -346,32 +346,21 @@ export default function ChapterPage() {
   }
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
-          <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-            <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+    <div className="min-h-page">
+      <div className="reader-sticky-header">
+          <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
+            <Link href="/read" className="text-muted no-underline">
               {t.bookList}
             </Link>
             {" › "}
-            <Link href={`/${slug}?list=1`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+            <Link href={`/${slug}?list=1`} className="text-muted no-underline">
               {label?.short ?? meta.short}
             </Link>
             {" › "}
             <span>{t.chapterFmt(chapterNum)}</span>
           </p>
-          <div className="reader-header-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--text-muted)" }}>
+          <div className="reader-header-actions flex items-center gap-2">
+            <label className="inline-flex items-center gap-2 text-xs text-muted">
               <span>{t.translationLabel}</span>
               <select
                 value={activeTranslationId}
@@ -379,16 +368,7 @@ export default function ChapterPage() {
                   localStorage.setItem("bible-translation", e.target.value);
                   setTranslation(e.target.value);
                 }}
-                style={{
-                  fontSize: 12,
-                  color: "var(--text)",
-                  background: "var(--bg)",
-                  cursor: "pointer",
-                  padding: "4px 10px",
-                  minHeight: 44,
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
+                className="select-sm bg-bg text-body"
               >
                 {translationOptions.map((trans) => (
                   <option key={trans.id} value={trans.id}>{trans.label}</option>
@@ -398,18 +378,7 @@ export default function ChapterPage() {
             {chapter && (
               <a
                 href="#chapter-comments"
-                style={{
-                  fontSize: 12,
-                  color: "var(--text-faint)",
-                  textDecoration: "none",
-                  padding: "3px 10px",
-                  minHeight: 44,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                  whiteSpace: "nowrap",
-                }}
+                className="text-xs text-faint no-underline py-1 px-3 tap-target inline-flex items-center border border-border rounded-lg whitespace-nowrap"
               >
                 {t.toComments}
               </a>
@@ -418,8 +387,8 @@ export default function ChapterPage() {
       </div>
 
       {(progressError || bookmarkLoadError || versionResolutionError) && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, flexWrap: "wrap", padding: "8px 16px", borderBottom: "1px solid var(--border)" }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.actionFailed}</span>
+        <div role="alert" className="flex items-center justify-center gap-3 flex-wrap py-2 px-4 border-b border-border">
+          <span className="text-sm text-danger">{t.actionFailed}</span>
           <button
             type="button"
             className="btn btn-ghost"
@@ -449,23 +418,17 @@ export default function ChapterPage() {
 
       <div
         className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
-        style={{ display: "flex" }}
       >
         <div
           className="reader-main"
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: "32px 32px",
-            overflowY: "auto",
-          }}
+          
         >
 
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
-          <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, margin: 0 }}>
+        <div className="flex items-center gap-1 mb-6">
+          <h1 className="text-xl font-bold m-0">
             {label?.short ?? meta.short} {t.chapterFmt(chapterNum)}
             {chapterName && (
-              <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
+              <span className="text-muted font-bold">
                 {" — "}{chapterName}
               </span>
             )}
@@ -482,25 +445,14 @@ export default function ChapterPage() {
             <button
               type="button"
               onClick={bulk.start}
-              style={{
-                marginLeft: "auto",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                background: "transparent",
-                color: "var(--text-muted)",
-                fontSize: 12,
-                padding: "6px 12px",
-                minHeight: 36,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
+              className="day-toggle"
             >
               {t.bulkBookmarkStart}
             </button>
           )}
         </div>
 
-        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+        <hr className="section-divider" />
 
         <VerseList
           verses={displayVerses}
@@ -564,24 +516,7 @@ export default function ChapterPage() {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t.backToTop}
-          style={{
-            position: "fixed",
-            bottom: selectedVerseId ? "calc(70vh + 12px)" : 24,
-            right: 24,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            border: "none",
-            borderRadius: "50%",
-            width: 44,
-            height: 44,
-            cursor: "pointer",
-            fontSize: 18,
-            zIndex: 30,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-          }}
+          className={`fab${selectedVerseId ? " fab-raised" : ""}`}
         >
           ↑
         </button>
@@ -594,30 +529,7 @@ export default function ChapterPage() {
               href={`/${slug}/${nav.prev}`}
               title={t.chapterFmt(nav.prev)}
               aria-label={`${t.prevChapter} (${nav.prev})`}
-              className="chapter-nav-prev"
-              style={{
-                position: "fixed",
-                left: "var(--sidebar-width)",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderLeft: "none",
-                borderRadius: "0 8px 8px 0",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+              className="chapter-nav chapter-nav-prev"
             >
               ‹
             </Link>
@@ -628,30 +540,7 @@ export default function ChapterPage() {
               href={`/${slug}/${nav.next}`}
               title={t.chapterFmt(nav.next)}
               aria-label={`${t.nextChapter} (${nav.next})`}
-              className="chapter-nav-next"
-              style={{
-                position: "fixed",
-                right: 0,
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderRight: "none",
-                borderRadius: "8px 0 0 8px",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+              className="chapter-nav chapter-nav-next"
             >
               ›
             </Link>

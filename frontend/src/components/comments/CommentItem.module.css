@@ -1,0 +1,19 @@
+/* コメント 1 件の固有の寸法。
+   本文や操作ボタンをアイコンの右端にそろえるための字下げなので、
+   サイト共通の余白の表とは別に、この部品の中で持つ。 */
+
+/* 折りたたみボタン(20px) + すき間(8px) + 丸いアイコン(28px) = 52px */
+.indent {
+  margin-left: 52px;
+}
+
+/* 折りたたみボタンが無いときに、その分だけ空ける */
+.togglePlaceholder {
+  width: 20px;
+  flex-shrink: 0;
+}
+
+/* お気に入り済みの星をうっすら光らせる */
+.bookmarked {
+  filter: drop-shadow(0 0 4px var(--accent));
+}

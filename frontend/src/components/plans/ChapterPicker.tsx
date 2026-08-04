@@ -48,9 +48,9 @@ export function ChapterPicker({
 
   if (!slug) {
     return (
-      <div role="group" aria-label={t.citationBookSearchPlaceholder} style={boxStyle}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <label style={{ flex: 1 }}>
+      <div role="group" aria-label={t.citationBookSearchPlaceholder} className="note-box mt-2 mb-0 p-3">
+        <div className="flex gap-2 mb-2">
+          <label className="flex-1">
             <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
             <input
               type="search"
@@ -58,14 +58,14 @@ export function ChapterPicker({
               onChange={(event) => setKeyword(event.target.value)}
               placeholder={t.citationBookSearchPlaceholder}
               autoFocus
-              style={{ ...inputStyle, width: "100%" }}
+              className="form-control w-full"
             />
           </label>
-          <button type="button" onClick={onCancel} style={plainButtonStyle}>
+          <button type="button" onClick={onCancel} className="back-button">
             {t.articleCancel}
           </button>
         </div>
-        <div style={{ maxHeight: 220, overflowY: "auto" }}>
+        <div className="scroll-list">
           {matched.map((book) => (
             <button
               key={book.slug}
@@ -74,29 +74,29 @@ export function ChapterPicker({
                 setTranslation("");
                 setSlug(book.slug);
               }}
-              style={rowButtonStyle}
+              className="row-button"
             >
               {localizedBookName(book)}
             </button>
           ))}
-          {matched.length === 0 && <p role="status" style={messageStyle}>{t.listSearchEmpty}</p>}
+          {matched.length === 0 && <p role="status" className="px-3 text-xs text-muted leading-reading">{t.listSearchEmpty}</p>}
         </div>
       </div>
     );
   }
 
   return (
-    <div role="group" aria-label={`${t.planAddChapter}: ${localizedShortName}`} style={boxStyle}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={() => { setSlug(null); setTranslation(""); }} style={plainButtonStyle}>
+    <div role="group" aria-label={`${t.planAddChapter}: ${localizedShortName}`} className="note-box mt-2 mb-0 p-3">
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <button type="button" onClick={() => { setSlug(null); setTranslation(""); }} className="back-button">
           {t.planBackToBooks}
         </button>
-        <strong style={{ fontSize: 13 }}>{localizedShortName}</strong>
+        <strong className="text-sm">{localizedShortName}</strong>
         <select
           value={translation}
           onChange={(event) => setTranslation(event.target.value)}
           aria-label={t.planTranslationLabel}
-          style={{ ...inputStyle, width: "auto" }}
+          className="form-control w-auto"
         >
           <option value="">{t.planReaderTranslation}</option>
           {(meta?.translations ?? []).map((tr) => (
@@ -105,20 +105,20 @@ export function ChapterPicker({
             </option>
           ))}
         </select>
-        <button type="button" onClick={onCancel} style={{ ...plainButtonStyle, marginLeft: "auto" }}>
+        <button type="button" onClick={onCancel} className="back-button ml-auto">
           {t.articleCancel}
         </button>
       </div>
 
-      {loading && <p role="status" style={messageStyle}>{t.loading}</p>}
+      {loading && <p role="status" className="px-3 text-xs text-muted leading-reading">{t.loading}</p>}
       {error && (
-        <div role="alert" style={{ ...messageStyle, color: "var(--state-danger)" }}>
+        <div role="alert" className="px-3 text-xs text-danger leading-reading">
           <span>{error}</span>{" "}
-          <button type="button" onClick={retry} style={inlineRetryStyle}>{t.retry}</button>
+          <button type="button" onClick={retry} className="link-button">{t.retry}</button>
         </div>
       )}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 220, overflowY: "auto" }}>
+      <div className="scroll-list flex flex-wrap gap-2">
         {numbers.map((number) => (
           <button
             key={number}
@@ -130,87 +130,15 @@ export function ChapterPicker({
               chapter_number: number,
               translation,
             })}
-            style={chapterButtonStyle}
+            className="chapter-button"
           >
             {number}
           </button>
         ))}
-        {!loading && !error && numbers.length === 0 && <p role="status" style={messageStyle}>{t.planNoReadings}</p>}
+        {!loading && !error && numbers.length === 0 && <p role="status" className="px-3 text-xs text-muted leading-reading">{t.planNoReadings}</p>}
       </div>
     </div>
   );
 }
 
-const boxStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 10,
-  padding: 12,
-  marginTop: 8,
-  background: "rgba(255,255,255,0.02)",
-};
 
-const inputStyle: React.CSSProperties = {
-  boxSizing: "border-box",
-  padding: "7px 8px",
-  borderRadius: 6,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 13,
-  minHeight: 44,
-};
-
-const rowButtonStyle: React.CSSProperties = {
-  display: "block",
-  width: "100%",
-  textAlign: "left",
-  padding: "8px 6px",
-  minHeight: 44,
-  border: "none",
-  background: "none",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  borderBottom: "1px solid var(--border)",
-};
-
-const plainButtonStyle: React.CSSProperties = {
-  border: "none",
-  background: "none",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  padding: "4px 6px",
-  minHeight: 44,
-};
-
-const messageStyle: React.CSSProperties = {
-  width: "100%",
-  margin: "6px 0",
-  color: "var(--text-muted)",
-  fontSize: 12,
-};
-
-const inlineRetryStyle: React.CSSProperties = {
-  border: 0,
-  background: "transparent",
-  color: "var(--accent)",
-  textDecoration: "underline",
-  cursor: "pointer",
-  minHeight: 44,
-};
-
-const chapterButtonStyle: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

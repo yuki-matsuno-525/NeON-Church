@@ -14,6 +14,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // "server-only" は Next.js が用意する目印で、npm の package としては存在しない。
+      // 「ブラウザから読んだら失敗させる」という意味しか持たないので、テストでは空にする。
+      "server-only": path.resolve(__dirname, "./src/test/serverOnlyStub.ts"),
     },
   },
 });

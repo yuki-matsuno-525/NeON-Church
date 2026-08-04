@@ -1,0 +1,55 @@
+/* スイッチの「絵」そのもの。
+   レールとつまみの大きさ・位置は、この部品の中だけで完結する固有の寸法なので、
+   サイト全体の余白の表（--spacing-*）とは別に、ここで持つ。
+   触れる範囲は 44px 四方を確保したうえで、見える部分だけを小さく描いている。 */
+
+.button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* レール（左右に伸びた枠） */
+.rail {
+  position: absolute;
+  top: 11px;
+  left: 2px;
+  width: 40px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.railOn {
+  background: var(--accent);
+}
+
+/* つまみ（丸い部分） */
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left var(--duration-fast) var(--ease-out);
+}
+
+.knobOn {
+  left: 20px;
+}

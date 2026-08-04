@@ -24,30 +24,19 @@ export function ReadingLinks({ readings }: { readings: PlanReading[] }) {
   const t = useT();
 
   if (readings.length === 0) {
-    return <p role="status" style={{ fontSize: 13, color: "var(--text-faint)", margin: 0 }}>{t.planNoReadings}</p>;
+    return <p role="status" className="text-sm text-faint m-0">{t.planNoReadings}</p>;
   }
   return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+    <div className="flex flex-wrap gap-2">
       {readings.map((reading) => (
         <Link
           key={reading.id}
           href={readingHref(reading)}
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            padding: "6px 12px",
-            minHeight: 44,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 13,
-            color: "var(--text)",
-            textDecoration: "none",
-          }}
+          className="border border-border rounded-md py-2 px-3 tap-target inline-flex items-center gap-2 text-sm text-body no-underline"
         >
           {readingLabel(reading, t)}
           {reading.translation && (
-            <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
+            <span className="text-xs text-faint">{reading.translation}</span>
           )}
         </Link>
       ))}

@@ -32,7 +32,7 @@ function matchesSearch(query: string, values: Array<string | null | undefined>) 
 export default function ReadPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
       <ReadContent />
     </Suspense>
   );
@@ -135,50 +135,41 @@ function ReadContent() {
   }, [loading, user, router, resumeRetryToken]);
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.readTitle}</h1>
+    <div className="page page-wide">
+      <h1 className="text-xl font-bold mb-6">{t.readTitle}</h1>
 
       {resume && (
-        <div style={{ marginBottom: "var(--space-5)" }}>
+        <div className="mb-6">
           <Link
             href={`/${resume.slug}/${resume.chapter}`}
-            className="badge"
-            style={{
-              background: "var(--accent-tint)",
-              color: "var(--accent)",
-              fontSize: "var(--font-size-sm)",
-              padding: "3px 10px",
-              minHeight: 44,
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
-            }}
+            className="badge bg-accent-tint text-accent text-sm py-1 px-3 tap-target inline-flex items-center no-underline"
+            
           >
             {t.resumeReading(bookLabel(resume.slug, lang)?.name ?? resume.bookName, resume.chapter)}
           </Link>
         </div>
       )}
 
-      <label style={{ display: "block", marginBottom: "var(--space-5)" }}>
+      <label className="block mb-6">
         <span className="sr-only">{t.bookSearchLabel}</span>
         <ClearableSearchInput
           value={bookSearch}
           onChange={setBookSearch}
           placeholder={t.bookSearchPlaceholder}
           ariaLabel={t.bookSearchLabel}
-          inputStyle={readSearchInputStyle}
+          inputClassName="form-control"
           wrapperStyle={{ width: "100%" }}
         />
       </label>
 
       {libraryLoading && user && (
-        <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13 }}>
+        <p role="status" aria-live="polite" className="text-sm text-muted">
           {t.loading}
         </p>
       )}
       {resumeError && user && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"
             className="btn btn-ghost"
@@ -192,8 +183,8 @@ function ReadContent() {
         </div>
       )}
       {libraryError && user && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button type="button" className="btn btn-ghost" onClick={() => setLibraryRetryToken((value) => value + 1)}>
             {t.retry}
           </button>
@@ -249,18 +240,14 @@ function ReadContent() {
         if (normalizedQuery) {
           const totalMatches = matchingBooks.length + matchingProjects.length;
           return (
-            <div style={{ marginBottom: "var(--space-6)" }}>
+            <div className="mb-8">
               {totalMatches === 0 ? (
-                <p style={{ fontSize: "var(--font-size-sm)", color: "var(--text-muted)" }}>
+                <p className="text-sm text-muted">
                   {t.listSearchEmpty}
                 </p>
               ) : (
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {matchingBooks.map((book) => {
                     const lb = bookLabel(book.slug, lang);
@@ -268,19 +255,13 @@ function ReadContent() {
                       <Link
                         key={book.slug}
                         href={`/${book.slug}?list=1`}
-                        className="card-glow card-glow-interactive"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "20px 18px",
-                          textDecoration: "none",
-                          color: "var(--text)",
-                        }}
+                        className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                        
                       >
-                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
+                        <span className="book-tile-title">
                           {lb?.name ?? book.name}
                         </span>
-                        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                        <span className="text-xs text-faint mt-2">
                           {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
                       </Link>
@@ -290,17 +271,11 @@ function ReadContent() {
                     <Link
                       key={proj.id}
                       href={`/translations/${proj.id}/read`}
-                      className="card-glow card-glow-interactive"
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "20px 18px",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                      }}
+                      className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                      
                     >
-                      <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
-                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                      <span className="font-bold text-md">{proj.name}</span>
+                      <span className="text-xs text-muted mt-2">
                         {proj.source_book_name} → {languageLabel(proj.target_language)}
                       </span>
                     </Link>
@@ -313,7 +288,7 @@ function ReadContent() {
         return (
           <>
             {/* カテゴリ選択（チップ）。ジャンルに加えて翻訳本棚も1カテゴリとして並べる。 */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: "var(--space-5)" }}>
+            <div className="flex flex-wrap gap-2 mb-6">
               {groups.map(({ genre, books }) => {
                 const isActive = !isLibraryTab && active?.genre === genre;
                 return (
@@ -324,7 +299,7 @@ function ReadContent() {
                     style={chipStyle(isActive)}
                   >
                     {t.genreNames[genre] ?? genre}{" "}
-                    <span style={{ opacity: 0.7 }}>({books.length})</span>
+                    <span className="opacity-70">({books.length})</span>
                   </button>
                 );
               })}
@@ -336,20 +311,16 @@ function ReadContent() {
                   style={chipStyle(isLibraryTab)}
                 >
                   {t.myTranslationsHeading}{" "}
-                  <span style={{ opacity: 0.7 }}>({library.length})</span>
+                  <span className="opacity-70">({library.length})</span>
                 </button>
               )}
             </div>
 
             {/* 選択カテゴリの書 */}
             {active && (
-              <div style={{ marginBottom: "var(--space-6)" }}>
+              <div className="mb-8">
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {active.books.map((book) => {
                     const lb = bookLabel(book.slug, lang);
@@ -357,19 +328,13 @@ function ReadContent() {
                       <Link
                         key={book.slug}
                         href={`/${book.slug}?list=1`}
-                        className="card-glow card-glow-interactive"
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          padding: "20px 18px",
-                          textDecoration: "none",
-                          color: "var(--text)",
-                        }}
+                        className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                        
                       >
-                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
+                        <span className="book-tile-title">
                           {lb?.name ?? book.name}
                         </span>
-                        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-faint)", marginTop: "var(--space-2)" }}>
+                        <span className="text-xs text-faint mt-2">
                           {t.totalChapters(chapterNumbersOf(book.slug).length)}
                         </span>
                       </Link>
@@ -381,29 +346,19 @@ function ReadContent() {
 
             {/* 翻訳本棚カテゴリ：本棚に追加した公開翻訳を書と同じグリッドで並べる。 */}
             {isLibraryTab && (
-              <div style={{ marginBottom: "var(--space-6)" }}>
+              <div className="mb-8">
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {library.map((proj) => (
                     <Link
                       key={proj.id}
                       href={`/translations/${proj.id}/read`}
-                      className="card-glow card-glow-interactive"
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        padding: "20px 18px",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                      }}
+                      className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
+                      
                     >
-                      <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)" }}>{proj.name}</span>
-                      <span style={{ fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginTop: "var(--space-2)" }}>
+                      <span className="font-bold text-md">{proj.name}</span>
+                      <span className="text-xs text-muted mt-2">
                         {proj.source_book_name} → {languageLabel(proj.target_language)}
                       </span>
                     </Link>
@@ -418,16 +373,3 @@ function ReadContent() {
   );
 }
 
-const readSearchInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "8px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};

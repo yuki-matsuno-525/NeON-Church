@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT, formatBookLocation, useRelativeTime } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
-import { SkeletonList, EmptyState, ErrorState, Button, Toggle, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncPagedList, SkeletonList, EmptyState, Button, Toggle, FilterChips, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
@@ -84,7 +84,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-narrow">
         <SkeletonList count={3} />
       </div>
     );
@@ -127,93 +127,49 @@ export default function ProfilePage() {
     { year: "numeric", month: "long", day: "numeric" }
   );
 
-  const tabStyle = (tab: Tab): React.CSSProperties => ({
-    padding: "8px 16px",
-    fontSize: 14,
-    fontWeight: activeTab === tab ? 700 : 400,
-    color: activeTab === tab ? "var(--accent)" : "var(--text-muted)",
-    background: "transparent",
-    border: "none",
-    borderBottom: activeTab === tab ? "2px solid var(--accent)" : "2px solid transparent",
-    cursor: "pointer",
-    fontFamily: "inherit",
-  });
+  const tabClass = (tab: Tab) =>
+    `tab-underline${activeTab === tab ? " tab-underline-active" : ""}`;
 
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: "32px 24px" }}>
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>
-        {t.profileTitle}
-      </h1>
+    <div className="page page-narrow">
+      <h1 className="mb-8">{t.profileTitle}</h1>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-        <span
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: "50%",
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 800,
-            fontSize: 28,
-            flexShrink: 0,
-            border: "2px solid var(--border)",
-          }}
-        >
+      <div className="mb-6 flex items-center gap-4">
+        <span className="avatar-circle avatar-circle-lg">
           {user.username[0]?.toUpperCase() ?? "?"}
         </span>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, overflowWrap: "anywhere" }}>{user.username}</div>
-          <Link href={`/profile/${user.username}`} style={{ color: "var(--accent)", fontSize: 13 }}>
+        <div className="min-w-0">
+          <div className="text-lg font-bold break-words">{user.username}</div>
+          <Link href={`/profile/${user.username}`} className="text-sm text-accent">
             {t.profile}
           </Link>
-          <span aria-hidden="true" style={{ color: "var(--text-faint)", margin: "0 8px" }}>·</span>
-          <Link href="/settings" style={{ color: "var(--accent)", fontSize: 13 }}>
+          <span aria-hidden="true" className="mx-2 text-faint">·</span>
+          <Link href="/settings" className="text-sm text-accent">
             {lang === "ja" ? "アカウント設定" : "Account settings"}
           </Link>
         </div>
       </div>
 
-      <div
-        style={{
-          background: "var(--bg-alt)",
-          border: "1px solid var(--border)",
-          borderLeft: "3px solid var(--accent)",
-          borderRadius: 10,
-          padding: "24px",
-          marginBottom: 24,
-        }}
-      >
-        <dl style={{ margin: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className="panel-accent mb-6">
+        <dl className="m-0 flex flex-col gap-4">
           <div>
-            <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              {t.username}
-            </dt>
-            <dd style={{ margin: 0, fontWeight: 600 }}>{user.username}</dd>
+            <dt className="mb-1 text-xs text-muted">{t.username}</dt>
+            <dd className="m-0 font-bold">{user.username}</dd>
           </div>
           <div>
-            <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              {t.email}
-            </dt>
-            <dd style={{ margin: 0 }}>{user.email}</dd>
+            <dt className="mb-1 text-xs text-muted">{t.email}</dt>
+            <dd className="m-0">{user.email}</dd>
           </div>
           <div>
-            <dt style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
-              {t.joinedDate}
-            </dt>
-            <dd style={{ margin: 0 }}>{joinedDate}</dd>
+            <dt className="mb-1 text-xs text-muted">{t.joinedDate}</dt>
+            <dd className="m-0">{joinedDate}</dd>
           </div>
         </dl>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: 40 }}>
-        <div style={{ marginBottom: 16 }}>
-          <label
-            htmlFor="bio"
-            style={{ display: "block", fontSize: 14, fontWeight: 600, marginBottom: 8 }}
-          >
+      <form onSubmit={handleSubmit} className="mb-8">
+        <div className="mb-4">
+          <label htmlFor="bio" className="mb-2 block text-sm font-bold">
             {t.bio}
           </label>
           <textarea
@@ -225,19 +181,9 @@ export default function ProfilePage() {
             placeholder={t.bioPlaceholder}
             autoComplete="off"
             aria-describedby={bioMessage ? messageId : undefined}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 6,
-              border: "1px solid var(--border)",
-              background: "var(--bg)",
-              color: "var(--text)",
-              fontSize: 14,
-              resize: "vertical",
-              boxSizing: "border-box",
-            }}
+            className="form-control resize-y"
           />
-          <p style={{ textAlign: "right", margin: "4px 0 0", fontSize: "var(--font-size-xs)", color: bio.length >= 450 ? "var(--state-warning)" : "var(--text-faint)" }}>
+          <p className={`mt-1 mb-0 text-right text-xs ${bio.length >= 450 ? "text-warning" : "text-faint"}`}>
             {bio.length}/500
           </p>
         </div>
@@ -247,11 +193,7 @@ export default function ProfilePage() {
             id={messageId}
             role={bioMessage.type === "error" ? "alert" : "status"}
             aria-live="polite"
-            style={{
-              fontSize: "var(--font-size-sm)",
-              color: bioMessage.type === "success" ? "var(--accent)" : "var(--state-danger)",
-              marginBottom: "var(--space-3)",
-            }}
+            className={`mb-3 text-sm ${bioMessage.type === "success" ? "text-accent" : "text-danger"}`}
           >
             {bioMessage.text}
           </p>
@@ -267,21 +209,8 @@ export default function ProfilePage() {
       </form>
 
       {/* プライバシー設定 */}
-      <section
-        aria-labelledby="privacy-heading"
-        style={{
-          background: "var(--bg-alt)",
-          border: "1px solid var(--border)",
-          borderLeft: "3px solid var(--accent)",
-          borderRadius: 10,
-          padding: "20px 22px",
-          marginBottom: 40,
-        }}
-      >
-        <h2
-          id="privacy-heading"
-          style={{ fontSize: 14, fontWeight: 700, margin: "0 0 14px", color: "var(--text)" }}
-        >
+      <section aria-labelledby="privacy-heading" className="panel-accent mb-8">
+        <h2 id="privacy-heading" className="mt-0 mb-3 text-md text-body">
           {t.privacyHeading}
         </h2>
         <Toggle
@@ -292,19 +221,19 @@ export default function ProfilePage() {
           description={t.bookmarksVisibilityHint}
         />
         {privacyMessage && (
-          <p role={privacyMessage.type === "error" ? "alert" : "status"} aria-live="polite" style={{ margin: "10px 0 0", fontSize: 12, color: privacyMessage.type === "error" ? "var(--state-danger)" : "var(--accent)" }}>
+          <p role={privacyMessage.type === "error" ? "alert" : "status"} aria-live="polite" className={`mt-3 mb-0 text-xs ${privacyMessage.type === "error" ? "text-danger" : "text-accent"}`}>
             {privacyMessage.text}
           </p>
         )}
       </section>
 
-      <div role="tablist" aria-label={t.profileTitle} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex" }}>
+      <div role="tablist" aria-label={t.profileTitle} onKeyDown={handleHorizontalTabListKeyDown} className="mb-4 flex border-b border-border">
         <button
           id="profile-tab-bookmarks"
           role="tab"
           aria-controls="profile-panel-bookmarks"
           tabIndex={activeTab === "bookmarks" ? 0 : -1}
-          style={tabStyle("bookmarks")}
+          className={tabClass("bookmarks")}
           onClick={() => setActiveTab("bookmarks")}
           aria-selected={activeTab === "bookmarks"}
         >
@@ -315,7 +244,7 @@ export default function ProfilePage() {
           role="tab"
           aria-controls="profile-panel-comments"
           tabIndex={activeTab === "comments" ? 0 : -1}
-          style={tabStyle("comments")}
+          className={tabClass("comments")}
           onClick={() => setActiveTab("comments")}
           aria-selected={activeTab === "comments"}
         >
@@ -325,36 +254,24 @@ export default function ProfilePage() {
 
       <div id={`profile-panel-${activeTab}`} role="tabpanel" aria-labelledby={`profile-tab-${activeTab}`}>
       {activeTab === "bookmarks" ? (
-        bookmarkList.loading ? (
-          <SkeletonList count={3} />
-        ) : (
-          <BookmarkList
-            bookmarks={bookmarkList.items}
-            counts={bookmarkList.counts}
-            kind={kind}
-            onKindChange={setKind}
-            hasMore={bookmarkList.hasMore}
-            loadingMore={bookmarkList.loadingMore}
-            error={bookmarkList.error}
-            loadMoreError={bookmarkList.loadMoreError}
-            onRetry={bookmarkList.retry}
-            onLoadMore={bookmarkList.loadMore}
-          />
-        )
-      ) : commentList.loading ? (
-        <SkeletonList count={3} />
-      ) : commentList.error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
+        <BookmarkList list={bookmarkList} kind={kind} onKindChange={setKind} />
       ) : (
-        <>
+        <AsyncPagedList
+          list={commentList}
+          empty={
+            <EmptyState
+              title={t.noMyComments}
+              description={t.emptyMyCommentsDesc}
+              action={
+                <Link href="/read" className="no-underline">
+                  <Button variant="primary">{t.emptyBookmarksCta}</Button>
+                </Link>
+              }
+            />
+          }
+        >
           <CommentList comments={commentList.items} />
-          <LoadMoreButton
-            hasMore={commentList.hasMore}
-            loading={commentList.loadingMore}
-            error={!!commentList.loadMoreError}
-            onClick={commentList.loadMore}
-          />
-        </>
+        </AsyncPagedList>
       )}
       </div>
     </div>
@@ -362,29 +279,17 @@ export default function ProfilePage() {
 }
 
 function BookmarkList({
-  bookmarks,
-  counts,
+  list,
   kind,
   onKindChange,
-  hasMore,
-  loadingMore,
-  error,
-  loadMoreError,
-  onRetry,
-  onLoadMore,
 }: {
-  bookmarks: Bookmark[];
-  counts: Record<BookmarkType | "all", number> | undefined;
+  /** useLoadMore() の戻り値。読み込み中・失敗・読み足しはまとめて AsyncPagedList に任せる */
+  list: ReturnType<typeof useLoadMore<Bookmark, Record<BookmarkType | "all", number>>>;
   kind: BookmarkType | null;
   onKindChange: (kind: BookmarkType | null) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  error: Error | null;
-  loadMoreError: Error | null;
-  onRetry: () => void;
-  onLoadMore: () => void;
 }) {
   const t = useT();
+  const counts = list.counts;
 
   // 種類チップ。件数はサーバーが返す全体の数（表示中の件数ではない）。
   const chips: FilterChip<BookmarkType>[] = counts
@@ -405,69 +310,53 @@ function BookmarkList({
         <FilterChips chips={chips} value={kind} onChange={onKindChange} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={onRetry} retryLabel={t.retry} />
-      ) : bookmarks.length === 0 ? (
-        <EmptyState
-          title={t.noMyBookmarks}
-          description={t.emptyMyBookmarksDesc}
-          action={
-            <Link href="/read" style={{ textDecoration: "none" }}>
-              <Button variant="primary">{t.emptyBookmarksCta}</Button>
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {bookmarks.map((bm) => (
-              <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
-            ))}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={onLoadMore} />
-        </>
-      )}
+      <AsyncPagedList
+        list={list}
+        empty={
+          <EmptyState
+            title={t.noMyBookmarks}
+            description={t.emptyMyBookmarksDesc}
+            action={
+              <Link href="/read" className="no-underline">
+                <Button variant="primary">{t.emptyBookmarksCta}</Button>
+              </Link>
+            }
+          />
+        }
+      >
+        <div className="flex flex-col gap-3">
+          {list.items.map((bm) => (
+            <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+          ))}
+        </div>
+      </AsyncPagedList>
     </>
   );
 }
 
 function CommentList({ comments }: { comments: MyComment[] }) {
-  const t = useT();
   const { lang } = useLang();
   const formatRelativeTime = useRelativeTime();
-  if (comments.length === 0) {
-    return (
-      <EmptyState
-        title={t.noMyComments}
-        description={t.emptyMyCommentsDesc}
-        action={
-          <Link href="/read" style={{ textDecoration: "none" }}>
-            <Button variant="primary">{t.emptyBookmarksCta}</Button>
-          </Link>
-        }
-      />
-    );
-  }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="flex flex-col gap-3">
       {comments.map((c) => {
         const href = passageHref(c);
         const inner = (
           <>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", margin: "0 0 4px" }}>
+            <p className="mt-0 mb-1 text-xs font-bold text-accent">
               {formatBookLocation(c.book_slug, c.chapter_number, c.verse_number, lang)}
             </p>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
+            <p className="m-0 text-sm leading-base text-body">
               {c.body}
             </p>
-            <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+            <p className="mt-2 mb-0 text-xs text-faint">
               {formatRelativeTime(c.created_at)} · ▲ {c.vote_count}
             </p>
           </>
         );
         // 箇所が分かるコメントは該当節へのリンクにする（クリックで読書画面のその節へ飛ぶ）。
         return href ? (
-          <Link key={c.id} href={href} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+          <Link key={c.id} href={href} className="panel-accent panel-accent-sm block no-underline">
             {inner}
           </Link>
         ) : (

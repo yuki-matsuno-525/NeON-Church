@@ -66,10 +66,10 @@ export function CommentInput({
 
   if (!user) {
     return (
-      <p style={{ color: "var(--text-muted)", fontSize: 13 }}>
+      <p className="text-sm text-muted">
         <Link
           href={`/login?from=${encodeURIComponent(pathname)}`}
-          style={{ color: "var(--accent)", textDecoration: "underline" }}
+          className="text-accent underline"
         >
           {t.login}
         </Link>
@@ -126,23 +126,12 @@ export function CommentInput({
         rows={3}
         aria-invalid={!body.trim() && !!error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        style={{
-          width: "100%",
-          padding: "8px 10px",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontSize: 16,
-          resize: "vertical",
-          fontFamily: "inherit",
-          outline: "none",
-        }}
+        className="form-control resize-y"
       />
       {showTagOption && tags.length > 0 && (
-        <fieldset style={{ border: 0, padding: 0, margin: "8px 0 0" }}>
+        <fieldset className="border-0 p-0 mt-2 mx-0 mb-0">
           <legend style={inputLabelStyle}>{t.allTags}</legend>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = selectedTags.includes(tag.id);
             return (
@@ -151,17 +140,7 @@ export function CommentInput({
                 type="button"
                 onClick={() => toggleTag(tag.id)}
                 aria-pressed={active}
-                style={{
-                  fontSize: 12,
-                  minHeight: 44,
-                  padding: "3px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--border)",
-                  cursor: "pointer",
-                  background: active ? "var(--accent)" : "transparent",
-                  color: active ? "var(--accent-text)" : "var(--text-muted)",
-                  fontFamily: "inherit",
-                }}
+                className={`pill-toggle${active ? " pill-toggle-on" : ""}`}
               >
                 {t.tagNames[tag.name] ?? tag.name}
               </button>
@@ -171,32 +150,22 @@ export function CommentInput({
         </fieldset>
       )}
       {showTagOption && tagsError && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, color: "var(--state-danger)", fontSize: 12 }}>
+        <div role="alert" className="flex items-center gap-2 mt-2 text-danger text-xs">
           <span>{t.tagsLoadFailed}</span>
-          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
       {error && (
-        <p id={errorId} role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 12, margin: "4px 0 0" }}>
+        <p id={errorId} role="alert" aria-live="polite" className="text-danger text-xs mt-1 mx-0 mb-0">
           {error}
         </p>
       )}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, marginTop: 8 }}>
+      <div className="flex items-center justify-end gap-3 mt-2">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            style={{
-              background: "transparent",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "6px 14px",
-              minHeight: 44,
-              color: "var(--text-muted)",
-              cursor: "pointer",
-              fontSize: 13,
-              fontFamily: "inherit",
-            }}
+            className="bg-transparent border border-border rounded-md py-2 px-3 tap-target text-muted cursor-pointer text-sm"
           >
             {t.cancel}
           </button>
@@ -204,19 +173,7 @@ export function CommentInput({
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          style={{
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            border: "none",
-            borderRadius: 8,
-            padding: "7px 16px",
-            minHeight: 44,
-            cursor: isSubmitDisabled ? "not-allowed" : "pointer",
-            opacity: isSubmitDisabled ? 0.6 : 1,
-            fontWeight: 700,
-            fontSize: 13,
-            fontFamily: "inherit",
-          }}
+          className="btn btn-secondary"
         >
           {submitting ? t.posting : effectiveLabel}
         </button>

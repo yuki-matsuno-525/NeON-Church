@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useRelativeTime, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
-import { SkeletonList, EmptyState, ErrorState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
+import { AsyncList, SkeletonList, EmptyState, FilterChips, LoadMoreButton, type FilterChip } from "@/components/ui";
 import {
   notificationTargetUrl,
   notificationContextLabel,
@@ -72,10 +72,10 @@ export default function NotificationsPage() {
     loading: fetching,
     loadingMore,
     hasMore,
-    error,
     loadMoreError,
     loadMore,
     retry,
+    failed,
   } = useLoadMore(fetchPage);
 
   // 既読にできなかったときに画面だけ既読の見た目になると、未読の数字とも食い違う。
@@ -127,8 +127,8 @@ export default function NotificationsPage() {
 
   if (loading || fetching) {
     return (
-      <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-6)" }}>{t.notificationsTitle}</h1>
+      <div className="page page-narrow">
+        <h1 className="text-xl font-bold mb-8">{t.notificationsTitle}</h1>
         <SkeletonList count={4} />
       </div>
     );
@@ -137,39 +137,23 @@ export default function NotificationsPage() {
   if (!user) return null;
 
   return (
-    <div style={{ maxWidth: 700, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-narrow">
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 24,
-        }}
+        className="flex items-center justify-between mb-6"
       >
-        <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700 }}>{t.notificationsTitle}</h1>
+        <h1 className="text-xl font-bold">{t.notificationsTitle}</h1>
         <button
           onClick={handleMarkAll}
           disabled={unreadCount === 0 || actionBusy}
           aria-busy={actionBusy}
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-md)",
-            padding: "6px 14px",
-            minHeight: 44,
-            background: "transparent",
-            color: unreadCount === 0 ? "var(--text-faint)" : "var(--text-muted)",
-            cursor: unreadCount === 0 || actionBusy ? "default" : "pointer",
-            opacity: unreadCount === 0 ? 0.6 : 1,
-            fontSize: "var(--font-size-sm)",
-            fontFamily: "inherit",
-          }}
+          className="outline-button outline-button-muted disabled:opacity-60 disabled:cursor-default"
         >
           {t.markAllRead}
         </button>
       </div>
 
       {actionError && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 13, margin: "-12px 0 16px" }}>
+        <p role="alert" aria-live="polite" className="-mt-3 mx-0 mb-4 text-danger text-sm">
           {actionError}
         </p>
       )}
@@ -179,16 +163,14 @@ export default function NotificationsPage() {
         <FilterChips chips={chips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
       )}
 
-      {error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
-      ) : notifications.length === 0 ? (
-        <EmptyState
-          title={t.noNotifications}
-          description={t.emptyNotificationsDesc}
-        />
-      ) : (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <AsyncList
+        loading={false}
+        error={failed}
+        onRetry={retry}
+        isEmpty={notifications.length === 0}
+        empty={<EmptyState title={t.noNotifications} description={t.emptyNotificationsDesc} />}
+      >
+        <div className="flex flex-col gap-1">
             {notifications.map((n) => {
               const url = notificationTargetUrl(n);
               const contextLabel = notificationContextLabel(n, t, lang);
@@ -205,10 +187,9 @@ export default function NotificationsPage() {
                 />
               );
             })}
-          </div>
-          <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
-        </>
-      )}
+        </div>
+        <LoadMoreButton hasMore={hasMore} loading={loadingMore} error={!!loadMoreError} onClick={loadMore} />
+      </AsyncList>
     </div>
   );
 }
@@ -232,63 +213,38 @@ function NotificationItem({
 }) {
   const t = useT();
   const formatRelativeTime = useRelativeTime();
-  const cardStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "14px 16px",
-    borderRadius: "var(--radius-md)",
-    background: n.is_read ? "var(--bg-alt)" : "var(--bg-hover)",
-    border: "none",
-    borderLeft: n.is_read ? "3px solid transparent" : "3px solid var(--accent)",
-    transition: `background var(--duration-fast) var(--ease-out)`,
-    display: "block",
-    textDecoration: "none",
-    color: "inherit",
-    position: "relative",
-    textAlign: "left",
-    fontFamily: "inherit",
-    fontSize: "inherit",
-  };
+  const rowClass = [
+    "notification-row",
+    n.is_read ? "" : "notification-row-unread",
+    busy ? "notification-row-busy" : "",
+  ].filter(Boolean).join(" ");
 
   const body = (
     <>
       {!n.is_read && (
         <span
           aria-label={unreadLabel}
-          style={{
-            position: "absolute",
-            top: 18,
-            right: 16,
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: "var(--accent)",
-          }}
+          className="unread-dot"
         />
       )}
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          marginBottom: 4,
-          flexWrap: "wrap",
-        }}
+        className="flex items-center gap-2 mb-1 flex-wrap"
       >
         <span
-          className="badge"
-          style={{ background: "var(--accent-tint)", color: "var(--accent)" }}
+          className="badge bg-accent-tint text-accent"
+          
         >
           {typeLabel}
         </span>
-        <span style={{ fontWeight: 700, fontSize: 13 }}>{n.actor_username}</span>
+        <span className="font-bold text-sm">{n.actor_username}</span>
         {contextLabel && (
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>· {contextLabel}</span>
+          <span className="text-muted text-xs">· {contextLabel}</span>
         )}
-        <span style={{ color: "var(--text-faint)", fontSize: 12 }}>
+        <span className="text-xs text-faint">
           {formatRelativeTime(n.created_at)}
         </span>
       </div>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", overflowWrap: "anywhere" }}>
+      <p className="m-0 text-sm text-muted break-words">
         {n.body_is_deleted ? t.deletedComment : n.body_snippet}
       </p>
     </>
@@ -303,7 +259,7 @@ function NotificationItem({
           if (busy) event.preventDefault();
           else void onActivate();
         }}
-        style={{ ...cardStyle, opacity: busy ? 0.7 : 1 }}
+        className={rowClass}
       >
         {body}
       </Link>
@@ -315,7 +271,7 @@ function NotificationItem({
       onClick={() => { void onActivate(); }}
       disabled={n.is_read || busy}
       aria-busy={busy}
-      style={{ ...cardStyle, cursor: n.is_read || busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}
+      className={rowClass}
     >
       {body}
     </button>

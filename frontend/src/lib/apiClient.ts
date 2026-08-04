@@ -57,9 +57,11 @@ function extractErrorCode(body: unknown): string | undefined {
 // 常に相対パスで Next.js rewrites を経由する（クロスドメイン Cookie 問題を回避）
 const API_BASE = "";
 
+// 表示言語は Cookie（neon_lang）だけを見る。サーバー側（lib/i18nServer.ts）も
+// 同じ Cookie を読むため、サーバーとブラウザで表示言語が食い違わない。
 function getUiLanguage(): "ja" | "en" {
-  if (typeof window === "undefined") return "ja";
-  return localStorage.getItem("lang") === "en" ? "en" : "ja";
+  if (typeof document === "undefined") return "ja";
+  return /(?:^|; )neon_lang=en\b/.test(document.cookie) ? "en" : "ja";
 }
 
 function localizedErrorMessage(status: number): string {

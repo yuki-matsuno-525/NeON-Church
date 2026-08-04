@@ -28,11 +28,11 @@ export function ArticleBody({
   const blocks = parseBlocks(body);
 
   if (blocks.length === 0) {
-    return <p style={{ color: "var(--text-faint)", fontSize: 14 }}>{t.articleEmptyBody}</p>;
+    return <p className="text-faint text-sm">{t.articleEmptyBody}</p>;
   }
 
   return (
-    <div style={{ fontSize: 16, lineHeight: 1.9, color: "var(--text)" }}>
+    <div className="text-md leading-reading text-body">
       {blocks.map((block, index) => (
         <Fragment key={index}>{renderBlock(block, byRaw)}</Fragment>
       ))}
@@ -141,17 +141,12 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
       );
 
     case "paragraph":
-      return <p style={{ margin: "0 0 16px" }}>{renderInline(block.text, byRaw)}</p>;
+      return <p className="mt-0 mx-0 mb-4">{renderInline(block.text, byRaw)}</p>;
 
     case "quote":
       return (
         <blockquote
-          style={{
-            margin: "0 0 16px",
-            padding: "8px 0 8px 16px",
-            borderLeft: "3px solid var(--border)",
-            color: "var(--text-muted)",
-          }}
+          className="article-quote"
         >
           {renderInline(block.text, byRaw)}
         </blockquote>
@@ -159,7 +154,7 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
 
     case "list": {
       const items = block.items.map((item, index) => (
-        <li key={index} style={{ marginBottom: 6 }}>
+        <li key={index} className="mb-2">
           {renderInline(item, byRaw)}
         </li>
       ));
@@ -168,7 +163,7 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
     }
 
     case "rule":
-      return <hr style={{ border: "none", borderTop: "1px solid var(--border)", margin: "24px 0" }} />;
+      return <hr className="border-0 border-t border-border my-6 mx-0" />;
 
     case "citation":
       return <CitationBlock raw={block.raw} citation={byRaw.get(block.raw)} />;
@@ -193,12 +188,12 @@ function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitat
   }
   return (
     <blockquote
-      className="card-glow"
-      style={{ margin: "0 0 20px", padding: "16px 18px", borderRadius: 10 }}
+      className="card-glow mt-0 mx-0 mb-4 py-4 px-4 rounded-md"
+      
     >
       {citation.verses.map((verse) => (
-        <p key={verse.number} style={{ margin: "0 0 8px", lineHeight: 1.9 }}>
-          <span style={{ color: "var(--text-faint)", fontSize: 12, marginRight: 6 }}>
+        <p key={verse.number} className="mt-0 mx-0 mb-2 leading-reading">
+          <span className="text-faint text-xs mr-2">
             {verse.number}
           </span>
           {verse.text}
@@ -206,13 +201,7 @@ function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitat
       ))}
       <Link
         href={verseHref(citation)}
-        style={{
-          display: "inline-block",
-          marginTop: 4,
-          fontSize: 12,
-          color: "var(--text-muted)",
-          textDecoration: "none",
-        }}
+        className="inline-block mt-1 text-xs text-muted no-underline"
       >
         {citationDisplayLabel(citation, lang, t)}（{translationLabel(citation.translation, lang)}）
       </Link>
@@ -228,7 +217,7 @@ function CitationLink({ raw, citation }: { raw: string; citation?: ArticleCitati
     return <NotFound raw={raw} />;
   }
   return (
-    <Link href={verseHref(citation)} style={{ color: "var(--accent)", textDecoration: "none" }}>
+    <Link href={verseHref(citation)} className="text-accent no-underline">
       （{citationDisplayLabel(citation, lang, t)}）
     </Link>
   );
@@ -309,7 +298,7 @@ function renderMarkdownToken(token: string, key: string): ReactNode {
   }
   if (token.startsWith("`")) {
     return (
-      <code key={key} style={{ fontSize: "0.9em", background: "rgba(255,255,255,0.08)", padding: "1px 4px", borderRadius: 4 }}>
+      <code key={key} className="article-code">
         {token.slice(1, -1)}
       </code>
     );
@@ -325,7 +314,7 @@ function renderMarkdownToken(token: string, key: string): ReactNode {
       <a
         key={key}
         href={href}
-        style={{ color: "var(--accent)" }}
+        className="text-accent"
         target={external ? "_blank" : undefined}
         rel={external ? "noreferrer" : undefined}
         aria-label={external ? `${label}（新しいタブで開く）` : undefined}

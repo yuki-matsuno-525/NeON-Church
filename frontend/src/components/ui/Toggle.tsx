@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import styles from "./Toggle.module.css";
 
 type Props = {
   checked: boolean;
@@ -13,12 +14,14 @@ type Props = {
 /**
  * スイッチ型 (ON/OFF) のトグル。aria-pressed 付きボタンとして実装。
  * ラベルと説明文を含む 1 ブロックで使うことを想定。
+ *
+ * 並べ方と文字は Tailwind、スイッチの絵は Toggle.module.css が受け持つ。
  */
 export function Toggle({ checked, onChange, label, description, disabled }: Props) {
   const labelId = useId();
   const descId = useId();
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+    <div className="flex items-start gap-3">
       <button
         type="button"
         role="switch"
@@ -27,53 +30,21 @@ export function Toggle({ checked, onChange, label, description, disabled }: Prop
         aria-describedby={description ? descId : undefined}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        style={{
-          flexShrink: 0,
-          width: 44,
-          height: 44,
-          borderRadius: 8,
-          border: "none",
-          background: "transparent",
-          position: "relative",
-          cursor: disabled ? "not-allowed" : "pointer",
-          opacity: disabled ? 0.6 : 1,
-          transition: "background 0.15s",
-          padding: 0,
-        }}
+        className={styles.button}
       >
         <span
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            top: 11,
-            left: 2,
-            width: 40,
-            height: 22,
-            borderRadius: 999,
-            border: "1px solid var(--border)",
-            background: checked ? "var(--accent)" : "rgba(255,255,255,0.08)",
-            boxSizing: "border-box",
-            transition: "background 0.15s",
-          }}
+          className={[styles.rail, checked ? styles.railOn : null].filter(Boolean).join(" ")}
         >
-          <span
-            style={{
-              position: "absolute",
-              top: 2,
-              left: checked ? 20 : 2,
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              background: "#fff",
-              transition: "left 0.15s",
-            }}
-          />
+          <span className={[styles.knob, checked ? styles.knobOn : null].filter(Boolean).join(" ")} />
         </span>
       </button>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div id={labelId} style={{ fontSize: 14, color: "var(--text)", fontWeight: 600 }}>{label}</div>
+      <div className="min-w-0 flex-1">
+        <div id={labelId} className="text-sm font-bold text-body">
+          {label}
+        </div>
         {description && (
-          <p id={descId} style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
+          <p id={descId} className="mt-1 mb-0 text-xs text-muted leading-base">
             {description}
           </p>
         )}

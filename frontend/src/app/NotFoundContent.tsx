@@ -21,27 +21,18 @@ export function NotFoundContent() {
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "calc(100vh - var(--navbar-height))",
-        padding: "40px 24px",
-        textAlign: "center",
-        gap: 16,
-      }}
+      className="flex flex-col items-center justify-center min-h-page py-8 px-6 text-center gap-4"
     >
-      <p aria-hidden="true" style={{ fontSize: 64, fontWeight: 700, color: "var(--text-faint)", opacity: 0.55, margin: 0, lineHeight: 1, fontFamily: '"Noto Serif JP", serif' }}>
+      <p aria-hidden="true" className="notfound-code">
         404
       </p>
-      <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)", margin: 0 }}>
+      <h1 className="text-lg font-bold text-body m-0">
         {copy.title}
       </h1>
-      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0, maxWidth: 360 }}>
+      <p className="m-0 max-w-90 text-sm text-muted">
         {copy.description}
       </p>
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 8 }}>
+      <div className="flex gap-3 flex-wrap justify-center mt-2">
         <Link href="/" className="btn btn-primary">{copy.home}</Link>
         <Link href="/read" className="btn btn-ghost">{copy.read}</Link>
       </div>

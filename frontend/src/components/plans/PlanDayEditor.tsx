@@ -85,28 +85,28 @@ export function PlanDayEditor({
   };
 
   return (
-    <section className="card-glow" style={{ padding: "16px 18px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)" }}>{dayLabel}</span>
-        <span role="status" aria-live="polite" style={{ fontSize: 11, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)" }}>
+    <section className="card-glow py-4 px-4" >
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className="text-sm font-bold text-accent">{dayLabel}</span>
+        <span role="status" aria-live="polite" className={autosave.status === "error" ? "text-xs text-danger" : "text-xs text-faint"}>
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} style={retryButtonStyle}>{t.retry}</button>
+          <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>
         )}
-        <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+        <div className="ml-auto flex gap-2">
           {canMoveUp && (
-            <button type="button" onClick={() => onMove(-1)} aria-label={lang === "ja" ? `${dayLabel}を上へ移動` : `Move ${dayLabel} up`} style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(-1)} aria-label={lang === "ja" ? `${dayLabel}を上へ移動` : `Move ${dayLabel} up`} className="icon-button">
               ↑
             </button>
           )}
           {canMoveDown && (
-            <button type="button" onClick={() => onMove(1)} aria-label={lang === "ja" ? `${dayLabel}を下へ移動` : `Move ${dayLabel} down`} style={iconButtonStyle}>
+            <button type="button" onClick={() => onMove(1)} aria-label={lang === "ja" ? `${dayLabel}を下へ移動` : `Move ${dayLabel} down`} className="icon-button">
               ↓
             </button>
           )}
           {canDelete && (
-            <button type="button" onClick={onDelete} aria-label={lang === "ja" ? `${dayLabel}を削除` : `Delete ${dayLabel}`} style={iconButtonStyle}>
+            <button type="button" onClick={onDelete} aria-label={lang === "ja" ? `${dayLabel}を削除` : `Delete ${dayLabel}`} className="icon-button">
               {t.delete}
             </button>
           )}
@@ -120,31 +120,23 @@ export function PlanDayEditor({
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t.planDayTitlePlaceholder}
           maxLength={200}
-          style={{ ...inputStyle, marginBottom: 10, fontWeight: 700 }}
+          className="form-control mb-3 font-bold"
         />
       </label>
 
       {/* 読む章 */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+      <div className="flex flex-wrap gap-2 mb-2">
         {readings.map((reading, index) => (
           <span
             key={`${reading.book}-${reading.chapter_number}-${index}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "4px 8px 4px 12px",
-              fontSize: 13,
-            }}
+            className="reading-tag"
           >
             {readingLabel(
               { book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number },
               t,
             )}
             {reading.translation && (
-              <span style={{ fontSize: 11, color: "var(--text-faint)" }}>{reading.translation}</span>
+              <span className="text-xs text-faint">{reading.translation}</span>
             )}
             <button
               type="button"
@@ -152,29 +144,19 @@ export function PlanDayEditor({
                 ? `${readingLabel({ book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number }, t)}を外す`
                 : `Remove ${readingLabel({ book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number }, t)}`}
               onClick={() => setReadings((current) => current.filter((_, i) => i !== index))}
-              style={{
-                border: "none",
-                background: "none",
-                color: "var(--text-faint)",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: 14,
-                padding: "4px 6px",
-                minHeight: 44,
-                minWidth: 44,
-              }}
+              className="icon-button"
             >
               ×
             </button>
           </span>
         ))}
         {readings.length < MAX_READINGS_PER_DAY && !picking && (
-          <button type="button" onClick={() => setPicking(true)} style={addChapterStyle}>
+          <button type="button" onClick={() => setPicking(true)} className="dashed-button">
             {t.planAddChapter}
           </button>
         )}
         {readings.length >= MAX_READINGS_PER_DAY && (
-          <span style={{ fontSize: 11, color: "var(--text-faint)", alignSelf: "center" }}>
+          <span className="self-center text-xs text-faint">
             {t.planChapterLimit(MAX_READINGS_PER_DAY)}
           </span>
         )}
@@ -189,56 +171,11 @@ export function PlanDayEditor({
           onChange={(event) => setDevotional(event.target.value)}
           rows={4}
           placeholder={t.planDevotionalPlaceholder}
-          style={{ ...inputStyle, marginTop: 10, resize: "vertical", lineHeight: 1.8 }}
+          className="form-control mt-3 resize-y leading-reading"
         />
       </label>
     </section>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "8px 10px",
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 14,
-  minHeight: 44,
-};
 
-const iconButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  padding: "6px 10px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const addChapterStyle: React.CSSProperties = {
-  border: "1px dashed var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  padding: "6px 12px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const retryButtonStyle: React.CSSProperties = {
-  border: 0,
-  background: "transparent",
-  color: "var(--accent)",
-  textDecoration: "underline",
-  fontSize: 12,
-  minHeight: 44,
-  cursor: "pointer",
-};

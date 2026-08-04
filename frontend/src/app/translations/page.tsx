@@ -9,9 +9,10 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
-import { Button, SkeletonList } from "@/components/ui";
+import { AsyncList } from "@/components/ui";
+import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
 import { Pagination } from "@/components/ui/Pagination";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { type IconName } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "./translationUiText";
@@ -71,100 +72,59 @@ export default function TranslationsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 16px" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>{t.translationsTitle}</h1>
-          <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "4px 0 0" }}>
-            {t.translationsDesc}
-          </p>
-        </div>
-        {user && (
-          <Link
-            href="/translations/new"
-            style={{
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              borderRadius: 8,
-              padding: "8px 18px",
-              textDecoration: "none",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
-          >
-            {t.newProject}
-          </Link>
-        )}
-      </div>
+    <div className="page page-full">
+      <ListPageHeader
+        title={t.translationsTitle}
+        description={t.translationsDesc}
+        action={
+          user ? (
+            <Link href="/translations/new" className="cta-button">
+              {t.newProject}
+            </Link>
+          ) : undefined
+        }
+      />
 
-      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
-      <label style={{ display: "block", marginBottom: 16 }}>
+      <label className="block mb-4">
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
           value={projectSearch}
           onChange={handleProjectSearchChange}
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
-          inputStyle={projectSearchInputStyle}
+          inputClassName="form-control text-sm"
           wrapperStyle={{ width: "100%" }}
         />
       </label>
 
+      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
       {isMobile && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-          {visibleColumns.map((col) => {
-            const active = col.key === activeTab;
-            return (
-              <button
-                key={col.key}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setActiveTab(col.key)}
-                style={{
-                  flex: 1,
-                  minHeight: 44,
-                  padding: "8px 6px",
-                  border: `1px solid ${active ? col.color : "var(--border)"}`,
-                  borderRadius: 8,
-                  background: active ? col.tint : "var(--bg-alt)",
-                  color: active ? col.color : "var(--text-muted)",
-                  fontWeight: active ? 700 : 600,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                {columnLabel(col.key)}
-              </button>
-            );
-          })}
-        </div>
+        <ColumnTabs
+          tabs={visibleColumns.map((col) => ({ ...col, label: columnLabel(col.key) }))}
+          active={activeTab}
+          onChange={setActiveTab}
+          label={t.translationsTitle}
+          idPrefix="translations"
+        />
       )}
 
-      <div
-        style={
-          isMobile
-            ? { display: "block" }
-            : { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16, alignItems: "start" }
-        }
-      >
+      <div className="list-board">
         {visibleColumns.map((col) => (
-          <div
+          <TranslationColumn
             key={col.key}
-            style={{ display: isMobile && col.key !== activeTab ? "none" : "block" }}
-          >
-            <TranslationColumn
-              statusKey={col.key}
-              icon={col.icon}
-              color={col.color}
-              tint={col.tint}
-              label={columnLabel(col.key)}
-              desc={columnDesc(col.key)}
-              search={debouncedSearch}
-              retryLabel={ui.retry}
-              errorMessage={ui.loadError}
-            />
-          </div>
+            statusKey={col.key}
+            icon={col.icon}
+            color={col.color}
+            tint={col.tint}
+            label={columnLabel(col.key)}
+            desc={columnDesc(col.key)}
+            search={debouncedSearch}
+            retryLabel={ui.retry}
+            errorMessage={ui.loadError}
+            hidden={isMobile && col.key !== activeTab}
+            tabId={isMobile ? `translations-tab-${col.key}` : undefined}
+            panelId={`translations-panel-${col.key}`}
+          />
         ))}
       </div>
     </div>
@@ -181,6 +141,9 @@ function TranslationColumn({
   search,
   retryLabel,
   errorMessage,
+  hidden,
+  tabId,
+  panelId,
 }: {
   statusKey: StatusKey;
   icon: IconName;
@@ -191,6 +154,9 @@ function TranslationColumn({
   search: string;
   retryLabel: string;
   errorMessage: string;
+  hidden: boolean;
+  tabId?: string;
+  panelId: string;
 }) {
   const t = useT();
   const [items, setItems] = useState<TranslationProject[]>([]);
@@ -231,38 +197,33 @@ function TranslationColumn({
   const totalPages = Math.ceil(count / PAGE_SIZE);
 
   return (
-    <section style={columnStyle}>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color, display: "inline-flex" }}>
-            <Icon name={icon} size={18} />
-          </span>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{label}</h2>
-          <span style={{ ...countBadgeStyle, background: tint, color }}>{count}</span>
+    <ListColumn
+      icon={icon}
+      color={color}
+      tint={tint}
+      title={label}
+      count={count}
+      description={desc}
+      hidden={hidden}
+      id={panelId}
+      labelledBy={tabId}
+    >
+      <AsyncList
+        loading={loading}
+        error={error ? errorMessage : null}
+        isEmpty={items.length === 0}
+        emptyText={t.emptyColumn}
+        onRetry={() => setReloadKey((key) => key + 1)}
+        retryLabel={retryLabel}
+      >
+        <div className="flex flex-col gap-3">
+          {items.map((p) => (
+            <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
+          ))}
         </div>
-        <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--text-muted)" }}>{desc}</p>
-      </div>
-
-      {loading ? (
-        <SkeletonList count={2} />
-      ) : error ? (
-        <div role="alert" style={{ padding: "10px 2px" }}>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 10px" }}>{errorMessage}</p>
-          <Button variant="ghost" size="sm" onClick={() => setReloadKey((key) => key + 1)}>{retryLabel}</Button>
-        </div>
-      ) : items.length === 0 ? (
-        <p style={{ fontSize: 13, color: "var(--text-faint)", padding: "8px 2px" }}>{t.emptyColumn}</p>
-      ) : (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {items.map((p) => (
-              <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
-            ))}
-          </div>
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-        </>
-      )}
-    </section>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </AsyncList>
+    </ListColumn>
   );
 }
 
@@ -284,30 +245,30 @@ function ProjectCard({
     : `${p.done_count}/${p.unit_count}`;
 
   return (
-    <Link href={`/translations/${p.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-      <div className="card-glow card-glow-interactive" style={{ padding: "16px 16px", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "flex-end", gap: 10, marginBottom: 12 }}>
+    <Link href={`/translations/${p.id}`} className="no-underline text-inherit">
+      <div className="card-glow card-glow-interactive py-4 px-4 flex flex-col" >
+        <div className="flex items-start justify-end gap-3 mb-3">
           <span className="badge" style={{ background: tint, color: accent, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
             {label}
           </span>
         </div>
 
-        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>{p.name}</h3>
+        <h3 className="card-title">{p.name}</h3>
 
         {p.description && (
-          <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.5 }}>
+          <p className="card-summary">
             {p.description}
           </p>
         )}
 
-        <div style={{ display: "flex", gap: 6, fontSize: "var(--font-size-xs)", color: "var(--text-faint)", flexWrap: "wrap", marginBottom: 12 }}>
-          <span style={metaPillStyle}>{p.source_book_name}</span>
-          <span style={metaPillStyle}>{languageLabel(p.target_language)}</span>
-          <span style={metaPillStyle}>{t.createdBy} {p.owner_username}</span>
+        <div className="flex gap-2 text-xs text-faint flex-wrap mb-3">
+          <span className="meta-pill">{p.source_book_name}</span>
+          <span className="meta-pill">{languageLabel(p.target_language)}</span>
+          <span className="meta-pill">{t.createdBy} {p.owner_username}</span>
         </div>
 
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: "var(--font-size-xs)", color: "var(--text-muted)", marginBottom: 5 }}>
+        <div className="mt-auto">
+          <div className="flex justify-between gap-3 text-xs text-muted mb-1">
             <span>{t.progress}</span>
             <span>{progressText}</span>
           </div>
@@ -317,9 +278,9 @@ function ProjectCard({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progressPct}
-            style={progressTrackStyle}
+            className="progress-track mt-0"
           >
-            <div style={{ width: `${progressPct}%`, height: "100%", background: accent, borderRadius: 999 }} />
+            <div className="progress-fill" style={{ width: `${progressPct}%`, background: accent }} />
           </div>
         </div>
       </div>
@@ -327,54 +288,7 @@ function ProjectCard({
   );
 }
 
-const columnStyle: React.CSSProperties = {
-  padding: "18px 16px",
-  border: "1px solid var(--border)",
-  borderRadius: 14,
-  background: "rgba(255,255,255,0.02)",
-};
 
-const countBadgeStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: 22,
-  height: 22,
-  padding: "0 7px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 700,
-};
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-};
 
-const projectSearchInputStyle: React.CSSProperties = {
-  width: "100%",
-  minHeight: 44,
-  padding: "8px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};
 
-const progressTrackStyle: React.CSSProperties = {
-  height: 7,
-  width: "100%",
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "rgba(255,255,255,0.12)",
-};

@@ -17,7 +17,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useRelativeTime } from "@/lib/i18n";
-import { EmptyState, ErrorState, FilterChips, LoadMoreButton, SkeletonList, type FilterChip } from "@/components/ui";
+import { AsyncPagedList, EmptyState, ErrorState, FilterChips, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
@@ -95,9 +95,9 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
   );
   const bookmarkList = useLoadMore(fetchBookmarks);
 
-  if (loading) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  if (loading) return <div className="p-8 text-muted">{t.loading}</div>;
   if (profileError) return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       <ErrorState
         title={t.profileLoadFailed}
         message={t.loadErrorDesc}
@@ -106,13 +106,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       />
     </div>
   );
-  if (notFound || !profile) return <div style={{ padding: 32, color: "var(--text-muted)" }}>{t.userNotFound}</div>;
+  if (notFound || !profile) return <div className="p-8 text-muted">{t.userNotFound}</div>;
 
   if (me?.username === username) {
     return (
-      <div style={{ padding: 32 }}>
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
-          {t.selfProfileBefore} <Link href="/profile" style={{ color: "var(--accent)" }}>{t.selfProfileLink}</Link>{t.selfProfileAfter}
+      <div className="p-8">
+        <p className="text-sm text-muted">
+          {t.selfProfileBefore} <Link href="/profile" className="text-accent">{t.selfProfileLink}</Link>{t.selfProfileAfter}
         </p>
       </div>
     );
@@ -131,92 +131,54 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       ]
     : [];
 
-  const tabStyle = (tab: Tab): React.CSSProperties => ({
-    padding: "8px 16px",
-    background: "transparent",
-    border: "none",
-    borderBottom: activeTab === tab ? "2px solid var(--accent)" : "2px solid transparent",
-    color: activeTab === tab ? "var(--accent)" : "var(--text-muted)",
-    fontWeight: activeTab === tab ? 700 : 400,
-    cursor: "pointer",
-    fontSize: 14,
-    fontFamily: "inherit",
-  });
-
-  const cardStyle: React.CSSProperties = {
-    background: "var(--bg-alt)",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)",
-    padding: "12px 14px",
-  };
-
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       {/* プロフィールヘッダー */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: "50%",
-          background: "var(--bg-alt)", border: "2px solid var(--border)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 24, color: "var(--text-muted)",
-        }}>
+      <div className="flex items-center gap-4 mb-6">
+        <span className="avatar-circle avatar-circle-lg">
           {profile.username[0].toUpperCase()}
-        </div>
+        </span>
         <div>
-          <h1 style={{ fontSize: "var(--font-size-xl)", fontWeight: 700, margin: "0 0 4px" }}>{profile.username}</h1>
-          <p style={{ fontSize: 12, color: "var(--text-faint)", margin: 0 }}>
+          <h1 className="text-lg font-bold mt-0 mx-0 mb-1">{profile.username}</h1>
+          <p className="text-xs text-faint m-0">
             {t.joinedOn(profile.created_at)}
           </p>
         </div>
       </div>
 
       {profile.bio && (
-        <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 24, whiteSpace: "pre-wrap" }}>
+        <p className="text-sm text-muted leading-base mb-6 whitespace-pre-wrap">
           {profile.bio}
         </p>
       )}
 
       {/* タブ。お気に入りタブは visibility=public のときのみ表示 */}
-      <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex", overflowX: "auto" }}>
+      <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} className="tab-bar">
         {profile.bookmarks_visibility === "public" && (
-          <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
+          <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} className={`tab-underline${activeTab === "favorites" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
             {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
           </button>
         )}
-        <button id="public-profile-tab-comments" role="tab" aria-controls="public-profile-panel-comments" tabIndex={activeTab === "comments" ? 0 : -1} style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-selected={activeTab === "comments"}>
+        <button id="public-profile-tab-comments" role="tab" aria-controls="public-profile-panel-comments" tabIndex={activeTab === "comments" ? 0 : -1} className={`tab-underline${activeTab === "comments" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("comments")} aria-selected={activeTab === "comments"}>
           {t.tabComments} ({commentList.total})
         </button>
-        <button id="public-profile-tab-articles" role="tab" aria-controls="public-profile-panel-articles" tabIndex={activeTab === "articles" ? 0 : -1} style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-selected={activeTab === "articles"}>
+        <button id="public-profile-tab-articles" role="tab" aria-controls="public-profile-panel-articles" tabIndex={activeTab === "articles" ? 0 : -1} className={`tab-underline${activeTab === "articles" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("articles")} aria-selected={activeTab === "articles"}>
           {t.articles} ({articleList.total})
         </button>
       </div>
 
       {activeTab === "articles" && (
-        <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-          {articleList.loading ? (
-            <SkeletonList count={3} />
-          ) : articleList.error ? (
-            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={articleList.retry} retryLabel={t.retry} />
-          ) : articleList.items.length === 0 ? (
-            <EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />
-          ) : (
-            <>
-              {articleList.items.map((article) => (
-                <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 4px" }}>{article.title}</p>
-                  <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-                    {article.summary}
-                  </p>
-                </Link>
-              ))}
-              <LoadMoreButton
-                hasMore={articleList.hasMore}
-                loading={articleList.loadingMore}
-                error={!!articleList.loadMoreError}
-                onClick={articleList.loadMore}
-              />
-            </>
-          )}
+        <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" className="flex flex-col gap-3">
+          <AsyncPagedList list={articleList} empty={<EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />}>
+            {articleList.items.map((article) => (
+              <Link key={article.id} href={`/articles/${article.id}`} className="plain-card block no-underline">
+                <p className="text-sm font-bold mt-0 mx-0 mb-1">{article.title}</p>
+                <p className="m-0 text-sm text-muted leading-base">
+                  {article.summary}
+                </p>
+              </Link>
+            ))}
+          </AsyncPagedList>
         </div>
       )}
 
@@ -228,55 +190,29 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
           {bookmarkList.counts && bookmarkList.counts.all > 0 && (
             <FilterChips chips={bookmarkChips} value={kind} onChange={setKind} ariaLabel={t.filterByKind} />
           )}
-          {bookmarkList.loading ? (
-            <SkeletonList count={3} />
-          ) : bookmarkList.error ? (
-            <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={bookmarkList.retry} retryLabel={t.retry} />
-          ) : bookmarkList.items.length === 0 ? (
-            <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyBookmarks}</p>
-          ) : (
-            <>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-                {bookmarkList.items.map((bm) => (
-                  <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
-                ))}
-              </div>
-              <LoadMoreButton
-                hasMore={bookmarkList.hasMore}
-                loading={bookmarkList.loadingMore}
-                error={!!bookmarkList.loadMoreError}
-                onClick={bookmarkList.loadMore}
-              />
-            </>
-          )}
+          <AsyncPagedList list={bookmarkList} emptyText={t.noMyBookmarks}>
+            <div className="flex flex-col gap-3">
+              {bookmarkList.items.map((bm) => (
+                <BookmarkCard key={bm.id} bookmark={bm} showKind={kind === null} />
+              ))}
+            </div>
+          </AsyncPagedList>
         </>
-      ) : commentList.loading ? (
-        <SkeletonList count={3} />
-      ) : commentList.error ? (
-        <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={commentList.retry} retryLabel={t.retry} />
-      ) : commentList.items.length === 0 ? (
-        <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noMyComments}</p>
       ) : (
-        <>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+        <AsyncPagedList list={commentList} emptyText={t.noMyComments}>
+          <div className="flex flex-col gap-3">
             {commentList.items.map((c) => (
-              <div key={c.id} style={cardStyle}>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>
-                  <span style={{ whiteSpace: "pre-wrap" }}>{c.body}</span>
+              <div key={c.id} className="plain-card">
+                <p className="m-0 text-sm text-body leading-base">
+                  <span className="whitespace-pre-wrap">{c.body}</span>
                 </p>
-                <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-faint)" }}>
+                <p className="mt-2 mx-0 mb-0 text-xs text-faint">
                   {relTime(c.created_at)} · ▲ {(c as Comment & { vote_count?: number }).vote_count ?? 0}
                 </p>
               </div>
             ))}
           </div>
-          <LoadMoreButton
-            hasMore={commentList.hasMore}
-            loading={commentList.loadingMore}
-            error={!!commentList.loadMoreError}
-            onClick={commentList.loadMore}
-          />
-        </>
+        </AsyncPagedList>
       )}
       </div>
       )}

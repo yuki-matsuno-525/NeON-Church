@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useLang } from "@/contexts/LanguageContext";
+import { getRequestLanguage } from "@/lib/i18nServer";
 import { ContentPageMeta } from "@/components/ContentPageMeta";
 
 type Section = { heading: string; body: string };
@@ -71,13 +69,14 @@ const content: Record<string, Content> = {
   },
 };
 
-export function LicensesContent() {
-  const { lang } = useLang();
+// 文字を並べるだけの画面なので、サーバー側で描いてブラウザに JavaScript を送らない。
+export async function LicensesContent() {
+  const lang = await getRequestLanguage();
   const c = content[lang] ?? content.en;
   return (
-    <div className="content-page" style={{ maxWidth: "min(72ch, 100%)", margin: "0 auto", padding: "48px 24px" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 16, fontFamily: "var(--font-serif)" }}>{c.title}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, lineHeight: 1.8, marginBottom: 32 }}>
+    <div className="content-page">
+      <h1 className="mb-4">{c.title}</h1>
+      <p className="mb-8 text-sm leading-reading text-muted">
         {c.intro}
       </p>
       <ContentPageMeta
@@ -93,34 +92,34 @@ export function LicensesContent() {
           : { updated: "Last updated", contents: "Contents", related: "Related pages" }}
       />
       {c.sections.map((s, index) => (
-        <section id={`section-${index + 1}`} key={s.heading} style={{ marginBottom: 28, scrollMarginTop: 96 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--accent)", marginBottom: 10 }}>
+        <section id={`section-${index + 1}`} key={s.heading} className="mb-8">
+          <h2 className="mb-3 text-accent">
             {s.heading}
           </h2>
-          <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>{s.body}</p>
+          <p className="m-0 text-md leading-reading text-body">{s.body}</p>
         </section>
       ))}
-      <section id={`section-${c.sections.length + 1}`} style={{ marginBottom: 28, scrollMarginTop: 96 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--accent)", marginBottom: 10 }}>
+      <section id={`section-${c.sections.length + 1}`} className="mb-8">
+        <h2 className="mb-3 text-accent">
           {c.sourceCodeLabel}
         </h2>
-        <p style={{ fontSize: 14, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>
+        <p className="m-0 text-md leading-reading text-body">
           {c.sourceCodeBody}{" "}
           <a
             href="https://github.com/yuki-matsuno-525/NeON-Church"
             target="_blank"
             rel="noopener noreferrer"
             aria-label={lang === "ja" ? "GitHubリポジトリを新しいタブで開く" : "Open the GitHub repository in a new tab"}
-            style={{ color: "var(--accent)" }}
+            className="text-accent"
           >
             GitHub ↗
           </a>
         </p>
       </section>
-      <div style={{ marginTop: 40 }}>
+      <div className="mt-8">
         <Link
           href="/"
-          style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 700, fontSize: 14 }}
+          className="text-sm font-bold text-accent no-underline"
         >
           {c.back}
         </Link>

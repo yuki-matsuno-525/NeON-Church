@@ -3,6 +3,7 @@ import { Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
+import { Footer } from "@/components/layout/Footer";
 import { siteCopy } from "@/lib/siteCopy";
 import { getRequestLanguage } from "@/lib/serverLanguage";
 
@@ -57,7 +58,7 @@ export default async function RootLayout({
     <html lang={lang} className={notoSerifJp.variable} suppressHydrationWarning>
       <body>
         <Providers initialLang={lang}>
-          <ClientLayout>{children}</ClientLayout>
+          <ClientLayout footer={<Footer />}>{children}</ClientLayout>
         </Providers>
       </body>
     </html>

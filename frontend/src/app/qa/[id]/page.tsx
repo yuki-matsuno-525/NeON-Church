@@ -191,17 +191,10 @@ export default function QuestionDetailPage() {
         {t.qaBackToList}
       </Link>
 
-      <article className="card-glow" style={{ padding: 20, marginTop: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+      <article className="card-glow p-4 mt-3" >
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <span
-            className="badge"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 3,
-              background: answered ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)",
-              color: answered ? "var(--state-success)" : "var(--state-warning)",
-            }}
+            className={`badge ${answered ? "badge-answered" : "badge-unanswered"}`}
           >
             <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
             {answered ? t.filterAnswered : t.filterUnanswered}
@@ -215,22 +208,22 @@ export default function QuestionDetailPage() {
         </div>
 
         {editing ? (
-          <div style={{ marginTop: 12 }}>
+          <div className="mt-3">
             <input
               value={draftTitle}
               onChange={(e) => setDraftTitle(e.target.value)}
               aria-label={t.qaTitleInputPlaceholder}
               placeholder={t.qaTitleInputPlaceholder}
-              style={{ ...inputStyle, fontWeight: 700, marginBottom: 8 }}
+              className="form-control mb-2 font-bold"
             />
             <textarea
               value={draftBody}
               onChange={(e) => setDraftBody(e.target.value)}
               rows={6}
               aria-label={t.commentPlaceholder}
-              style={inputStyle}
+              className="form-control resize-y"
             />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
+            <div className="flex gap-2 justify-end mt-2">
               <Button variant="secondary" onClick={() => setEditing(false)}>{t.cancel}</Button>
               <Button
                 variant="primary"
@@ -244,22 +237,22 @@ export default function QuestionDetailPage() {
         ) : (
           <>
             <h1 style={titleStyle}>{question.title}</h1>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+            <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
               {question.is_deleted ? t.qaDeletedQuestion : question.body}
             </p>
           </>
         )}
 
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
-          <span style={metaPillStyle}>{question.user.username}</span>
-          <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>
+        <div className="flex gap-2 flex-wrap items-center mt-4">
+          <span className="meta-pill">{question.user.username}</span>
+          <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
           {question.tags.map((tag) => (
-            <span key={tag.id} style={metaPillStyle}>
+            <span key={tag.id} className="meta-pill">
               {t.tagNames[tag.name] ?? tag.name}
             </span>
           ))}
           {!editing && isOwner && (
-            <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+            <span className="ml-auto inline-flex gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -267,11 +260,11 @@ export default function QuestionDetailPage() {
                   setDraftBody(question.body);
                   setEditing(true);
                 }}
-                style={actionButtonStyle}
+                className="action-chip"
               >
                 {t.edit}
               </button>
-              <button type="button" onClick={() => setConfirmDelete(true)} style={actionButtonStyle}>
+              <button type="button" onClick={() => setConfirmDelete(true)} className="action-chip">
                 {t.delete}
               </button>
             </span>
@@ -280,7 +273,7 @@ export default function QuestionDetailPage() {
             <button
               type="button"
               onClick={handleReport}
-              style={{ ...actionButtonStyle, marginLeft: "auto" }}
+              className="action-chip ml-auto"
             >
               <Icon name="alert-triangle" size={11} />
               {t.report}
@@ -291,7 +284,7 @@ export default function QuestionDetailPage() {
 
       <h2 style={sectionHeadingStyle}>
         {t.qaAnswersHeading}
-        <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14, marginLeft: 8 }}>
+        <span className="text-faint font-normal text-sm ml-2">
           {answers.total}
         </span>
       </h2>
@@ -301,10 +294,10 @@ export default function QuestionDetailPage() {
       ) : answers.failed ? (
         <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={answers.reload} />
       ) : answers.items.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 14, padding: "8px 2px" }}>{t.qaNoAnswers}</p>
+        <p className="text-faint text-sm py-2 px-1">{t.qaNoAnswers}</p>
       ) : (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="flex flex-col gap-3">
             {answers.items.map((a) => (
               <AnswerItem
                 key={a.id}
@@ -325,24 +318,24 @@ export default function QuestionDetailPage() {
       )}
 
       {user ? (
-        <form onSubmit={handlePostAnswer} style={{ marginTop: 24 }}>
+        <form onSubmit={handlePostAnswer} className="mt-6">
           <textarea
             value={answerBody}
             onChange={(e) => setAnswerBody(e.target.value)}
             placeholder={t.qaAnswerPlaceholder}
             aria-label={t.qaAnswerPlaceholder}
             rows={4}
-            style={inputStyle}
+            className="form-control resize-y"
           />
           {postError && <p style={{ color: "var(--state-error)", fontSize: 12, margin: "4px 0" }}>{postError}</p>}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <div className="flex justify-end mt-2">
             <Button variant="primary" type="submit" disabled={posting || !answerBody.trim()}>
               {posting ? t.posting : t.qaSubmitAnswer}
             </Button>
           </div>
         </form>
       ) : (
-        <div style={{ marginTop: 24 }}>
+        <div className="mt-6">
           <Button variant="primary" onClick={() => setShowLoginModal(true)}>
             {t.qaLoginToAnswer}
           </Button>
@@ -401,44 +394,4 @@ const sectionHeadingStyle: React.CSSProperties = {
   alignItems: "center",
 };
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: 14,
-  lineHeight: 1.7,
-  resize: "vertical",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};
 
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-  fontSize: "var(--font-size-xs)",
-};
-
-const actionButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  minHeight: 28,
-  padding: "3px 10px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

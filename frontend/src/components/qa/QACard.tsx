@@ -40,45 +40,37 @@ export function QACard({ question, showLocation = true }: Props) {
       // 一覧内の特定の質問へアンカーで戻ってこられるようにする。
       id={`question-${question.id}`}
       href={`/qa/${question.id}`}
-      className="card-glow card-glow-interactive"
-      style={{ display: "block", padding: 16, textDecoration: "none", color: "inherit" }}
+      className="card-glow card-glow-interactive block p-4 no-underline text-inherit"
+      
     >
-      <div style={headerStyle}>
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <span
-          className="badge"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 3,
-            flexShrink: 0,
-            background: answered ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)",
-            color: answered ? "var(--state-success)" : "var(--state-warning)",
-          }}
+          className={`badge ${answered ? "badge-answered" : "badge-unanswered"}`}
         >
           <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
           {answered ? t.filterAnswered : t.filterUnanswered}
         </span>
         {showLocation && location && (
-          <span style={locationStyle}>{location}</span>
+          <span className="text-xs text-accent whitespace-nowrap">{location}</span>
         )}
       </div>
 
-      <h3 style={titleStyle}>{question.title}</h3>
-      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)", whiteSpace: "pre-wrap" }}>
+      <h3 className="card-title">{question.title}</h3>
+      <p className="m-0 text-sm leading-base text-muted whitespace-pre-wrap">
         {body}
       </p>
 
       {/* カード全体がリンクなので、ここでは投稿者名もリンクにしない（リンクの入れ子は押せない）。
           投稿者のページへは詳細ページから辿る。 */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-        <span style={metaPillStyle}>{question.user.username}</span>
-        <span style={metaPillStyle}>{formatRelativeTime(question.created_at)}</span>
+      <div className="flex gap-2 flex-wrap items-center mt-3">
+        <span className="meta-pill">{question.user.username}</span>
+        <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
         {question.tags.map((tag) => (
-          <span key={tag.id} style={metaPillStyle}>
+          <span key={tag.id} className="meta-pill">
             {t.tagNames[tag.name] ?? tag.name}
           </span>
         ))}
-        <span style={countPillStyle}>
+        <span className="meta-pill ml-auto gap-1">
           <Icon name="message-square" size={12} />
           {t.qaAnswerCount(question.answer_count)}
         </span>
@@ -87,51 +79,4 @@ export function QACard({ question, showLocation = true }: Props) {
   );
 }
 
-const headerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 6,
-  marginBottom: 12,
-  flexWrap: "wrap",
-};
 
-const locationStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--accent)",
-  whiteSpace: "nowrap",
-};
-
-const titleStyle: React.CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontSize: "var(--font-size-md)",
-  fontWeight: 700,
-  lineHeight: 1.45,
-  margin: "0 0 var(--space-2)",
-};
-
-const metaPillStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.10)",
-  color: "var(--text-muted)",
-  fontSize: "var(--font-size-xs)",
-};
-
-const countPillStyle: React.CSSProperties = {
-  marginLeft: "auto",
-  minHeight: 24,
-  padding: "2px 8px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  fontSize: 12,
-  color: "var(--text-muted)",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-};

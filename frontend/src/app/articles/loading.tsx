@@ -6,7 +6,7 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
  */
 export default function Loading() {
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 16px" }}>
+    <main className="page page-wide">
       <SkeletonList count={5} />
     </main>
   );

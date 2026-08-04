@@ -14,7 +14,7 @@ export function Spinner({ size = 18, label }: Props) {
     <span
       role="status"
       aria-live="polite"
-      style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+      className="inline-flex items-center gap-2"
     >
       <svg
         width={size}

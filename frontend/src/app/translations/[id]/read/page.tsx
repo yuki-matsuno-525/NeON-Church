@@ -81,97 +81,53 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     return () => { active = false; };
   }, [project]);
 
-  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={5} /></div>;
+  if (loading) return <div className="page page-wide"><SkeletonList count={5} /></div>;
   if (error) return (
-    <div style={{ padding: 32, textAlign: "center" }} role="alert">
-      <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+    <div className="p-8 text-center" role="alert">
+      <p className="text-muted">{error}</p>
+      <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
-        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+        <Link href="/translations" className="text-accent self-center">{t.backToProjectList}</Link>
       </div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
-        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+    <div className="min-h-page">
+      <div className="reader-sticky-header">
+        <p className="m-0 text-sm font-normal text-muted">
+          <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
           </Link>
           {" › "}
           <span>{t.selectChapterHeading}</span>
         </p>
       </div>
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-wide">
 
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>{project?.name}</h1>
-      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+      <h1 className="text-xl font-bold mb-1">{project?.name}</h1>
+      <p className="text-sm text-muted mt-0 mx-0 mb-6">
         {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
       </p>
 
       {chapterNums.length === 0 ? (
-        <div style={{ padding: "24px 20px", border: "1px solid var(--border)", borderRadius: 12, textAlign: "center", background: "var(--bg-alt)" }}>
-          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVerses}</p>
-          <Link href={`/translations/${id}`} style={{ color: "var(--accent)", fontSize: 13 }}>{ui.noPublishedCta}</Link>
+        <div className="py-6 px-4 border border-border rounded-lg text-center bg-bg-alt">
+          <p className="text-sm text-muted">{t.noPublishedVerses}</p>
+          <Link href={`/translations/${id}`} className="text-sm text-accent">{ui.noPublishedCta}</Link>
         </div>
       ) : (
         <>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
+          <h2 className="text-sm font-bold text-muted mb-3">
             {t.selectChapterHeading}
           </h2>
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-              gap: "var(--space-2)",
-              marginBottom: 40,
-            }}
+            className="chapter-board"
           >
             {chapterNums.map((chNum) => (
               <Link
                 key={chNum}
                 href={`/translations/${id}/read/${chNum}`}
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: 44,
-                  minWidth: 44,
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  textDecoration: "none",
-                  color: "var(--text-muted)",
-                  fontWeight: 700,
-                  fontSize: "var(--font-size-sm)",
-                  background: "var(--bg-alt)",
-                  transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = "var(--accent-tint)";
-                  el.style.color = "var(--accent)";
-                  el.style.borderColor = "var(--accent)";
-                  el.style.boxShadow = "var(--shadow-glow)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = "var(--bg-alt)";
-                  el.style.color = "var(--text-muted)";
-                  el.style.borderColor = "var(--border)";
-                  el.style.boxShadow = "none";
-                }}
+                className="chapter-cell"
               >
                 {chNum}
               </Link>
@@ -183,8 +139,8 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       {project?.source_book && (
         <>
           {versionCommentsError && (
-            <div role="alert" style={{ padding: 12, marginBottom: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-              <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+            <div role="alert" className="alert-box mb-3">
+              <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
               <Button variant="secondary" size="sm" onClick={() => void loadVersionComments()}>
                 {ui.retryRelatedComments}
               </Button>

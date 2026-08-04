@@ -127,7 +127,7 @@ function BookContent() {
 
   if (loading) {
     return (
-      <div role="status" aria-label={t.loading} style={{ padding: 32 }}><SkeletonList count={5} /></div>
+      <div role="status" aria-label={t.loading} className="p-8"><SkeletonList count={5} /></div>
     );
   }
 
@@ -138,30 +138,20 @@ function BookContent() {
   }
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
-        <p className="reader-breadcrumb" style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href="/read" style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+    <div className="min-h-page">
+      <div className="reader-sticky-header">
+        <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
+          <Link href="/read" className="text-muted no-underline">
             {t.bookList}
           </Link>
           {" › "}
           <span>{label?.short ?? meta.short}</span>
         </p>
       </div>
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+    <div className="page page-wide">
 
-      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
+      <div className="flex items-center gap-1 mb-6">
+        <h1 className="text-xl font-bold m-0">
           {label?.name ?? meta.name}
         </h1>
         {user && bookId && (
@@ -175,8 +165,8 @@ function BookContent() {
       </div>
 
       {(bookmarkLoadError || versionError) && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
-          <span style={{ color: "var(--state-danger)", fontSize: 13 }}>{t.loadErrorDesc}</span>
+        <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="text-sm text-danger">{t.loadErrorDesc}</span>
           <button
             type="button"
             className="btn btn-ghost"
@@ -190,17 +180,12 @@ function BookContent() {
         </div>
       )}
 
-      <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-muted)", marginBottom: 12 }}>
+      <h2 className="text-sm font-bold text-muted mb-3">
         {t.selectChapterHeading}
       </h2>
 
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-          gap: "var(--space-2)",
-          marginBottom: 40,
-        }}
+        className="chapter-board"
       >
         {chapters.map((ch) => {
           const isCurrent = ch.number === currentChapter;
@@ -209,62 +194,13 @@ function BookContent() {
               key={ch.id}
               href={`/${slug}/${ch.number}`}
               title={chapterTitle(slug, ch.number) ?? undefined}
-              style={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: 44,
-                minWidth: 44,
-                border: isCurrent ? "1px solid var(--accent)" : "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                textDecoration: "none",
-                color: isCurrent ? "var(--accent)" : "var(--text-muted)",
-                fontWeight: 700,
-                fontSize: "var(--font-size-sm)",
-                background: isCurrent ? "var(--accent-tint)" : "var(--bg-alt)",
-                transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = "var(--accent-tint)";
-                el.style.color = "var(--accent)";
-                el.style.borderColor = "var(--accent)";
-                el.style.boxShadow = "var(--shadow-glow)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = isCurrent ? "var(--accent-tint)" : "var(--bg-alt)";
-                el.style.color = isCurrent ? "var(--accent)" : "var(--text-muted)";
-                el.style.borderColor = isCurrent ? "var(--accent)" : "var(--border)";
-                el.style.boxShadow = "none";
-              }}
-              onFocus={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = "var(--accent-tint)";
-                el.style.color = "var(--accent)";
-                el.style.borderColor = "var(--accent)";
-              }}
-              onBlur={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.background = isCurrent ? "var(--accent-tint)" : "var(--bg-alt)";
-                el.style.color = isCurrent ? "var(--accent)" : "var(--text-muted)";
-                el.style.borderColor = isCurrent ? "var(--accent)" : "var(--border)";
-              }}
+              className={`chapter-cell${isCurrent ? " chapter-cell-current" : ""}`}
             >
               {ch.number}
               {isCurrent && (
                 <span
                   aria-label={t.currentReadingLabel}
-                  style={{
-                    position: "absolute",
-                    bottom: 3,
-                    left: 3,
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                  }}
+                  className="chapter-cell-dot"
                 />
               )}
             </Link>
@@ -286,7 +222,7 @@ function BookContent() {
 
 function LoadingFallback() {
   const t = useT();
-  return <div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>;
+  return <div role="status" aria-live="polite" className="p-8 text-muted">{t.loading}</div>;
 }
 
 export default function BookPage() {

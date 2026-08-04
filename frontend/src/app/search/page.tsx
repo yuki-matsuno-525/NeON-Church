@@ -136,12 +136,12 @@ function SearchContent() {
   const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px" }}>
-      <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: "var(--space-5)" }}>{t.searchTitle}</h1>
+    <div className="page page-narrow">
+      <h1 className="text-xl font-bold mb-6">{t.searchTitle}</h1>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, marginBottom: 28 }}>
+      <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
         <label htmlFor={inputId} className="sr-only">{t.searchKeyword}</label>
-        <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+        <div className="flex-1 relative flex items-center">
           <input
             id={inputId}
             name="q"
@@ -150,43 +150,15 @@ function SearchContent() {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={t.searchKeyword}
             autoComplete="off"
-            style={{
-              width: "100%",
-              padding: "9px 12px",
-              paddingRight: inputValue ? 48 : 12,
-              minHeight: 44,
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-alt)",
-              color: "var(--text)",
-              fontSize: "var(--font-size-sm)",
-              fontFamily: "inherit",
-            }}
+            className="form-control bg-bg-alt text-sm"
+            style={{ paddingRight: inputValue ? 48 : 12 }}
           />
           {inputValue && (
             <button
               type="button"
               onClick={() => setInputValue("")}
               aria-label={t.clearInput}
-              style={{
-                position: "absolute",
-                right: 2,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 44,
-                height: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 16,
-                lineHeight: 1,
-                borderRadius: 4,
-                fontFamily: "inherit",
-              }}
+              className="clear-input-btn"
             >
               ×
             </button>
@@ -197,8 +169,8 @@ function SearchContent() {
         </button>
       </form>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
-        <div style={{ display: "inline-flex", gap: 4, flexWrap: "wrap" }}>
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        <div className="inline-flex gap-1 flex-wrap">
           {SEARCH_KIND_OPTIONS.map((option) => {
             const active = option.value === kind;
             return (
@@ -207,18 +179,7 @@ function SearchContent() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => updateFilters({ kind: option.value })}
-                style={{
-                  padding: "6px 11px",
-                  minHeight: 44,
-                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                  borderRadius: 999,
-                  background: active ? "var(--accent-tint)" : "var(--bg-alt)",
-                  color: active ? "var(--accent)" : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: active ? 700 : 600,
-                  fontFamily: "inherit",
-                }}
+                className={`chip chip-sm chip-bold bg-bg-alt${active ? " chip-active" : ""}`}
               >
                 {t[option.labelKey]}
               </button>
@@ -230,17 +191,7 @@ function SearchContent() {
           id={bookFilterId}
           value={bookSlug}
           onChange={(e) => updateFilters({ book: e.target.value })}
-          style={{
-            minHeight: 44,
-            maxWidth: "100%",
-            padding: "5px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg-alt)",
-            color: "var(--text)",
-            fontSize: 12,
-            fontFamily: "inherit",
-          }}
+          className="select-sm max-w-full"
         >
           <option value="">{t.allBooks}</option>
           {BOOKS.map((book) => (
@@ -272,32 +223,23 @@ function SearchContent() {
 
       {result && !loading && !error && (
         <>
-          <p role="status" aria-live="polite" style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 20 }}>
+          <p role="status" aria-live="polite" className="text-muted text-sm mb-4">
             {t.searchResults(q, totalHits)}
           </p>
 
           {page === 1 && result.books.length > 0 && (
-            <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+            <section className="mb-6">
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionBooks}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.books.map((b) => {
                   const slug = getSlugByName(b.name);
                   return (
                     <Link
                       key={b.id}
                       href={slug ? `/${slug}?list=1` : "/read"}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
+                      className="result-card no-underline text-body text-sm font-bold"
                     >
                       <span style={KIND_BADGE_STYLE}>{t.searchKindBook}</span>
                       {b.name}
@@ -310,10 +252,10 @@ function SearchContent() {
 
           {result.verses.length > 0 && (
             <section>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionVerses}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.verses.map((v) => {
                   const slug = v.book_slug || getSlugByName(v.book_name);
                   const url = slug ? `/${slug}/${v.chapter_number}#verse-${v.number}` : null;
@@ -321,33 +263,28 @@ function SearchContent() {
                   return (
                     <div
                       key={v.id}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                      }}
+                      className="result-card"
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs text-muted">
                           <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
                           {/* 検索は全訳を横断するので、どの訳の本文に当たったかを添える。 */}
-                          <span style={{ color: "var(--text-faint)" }}> · {translationLabel(v.translation, lang)}</span>
+                          <span className="text-faint"> · {translationLabel(v.translation, lang)}</span>
                         </span>
                         {url && (
                           <Link
                             href={url}
-                            style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none" }}
+                            className="text-xs text-accent no-underline"
                           >
                             {t.readLink}
                           </Link>
                         )}
                       </div>
-                      <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6 }}>
+                      <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
-                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
+                            ? <mark key={i} className="search-mark">{part}</mark>
                             : <span key={i}>{part}</span>
                         )}
                       </p>
@@ -364,32 +301,27 @@ function SearchContent() {
           )}
 
           {page === 1 && result.comments.length > 0 && (
-            <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: "var(--text)" }}>
+            <section className="mb-6">
+              <h2 className="mb-3 text-md font-bold text-body">
                 {t.sectionComments}
               </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+              <div className="flex flex-col gap-3">
                 {result.comments.map((c) => {
                   const parts = highlight(c.body, q).split("**");
                   return (
                     <div
                       key={c.id}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                      }}
+                      className="result-card"
                     >
-                      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "var(--text-muted)", marginBottom: 6, alignItems: "center" }}>
+                      <div className="flex gap-2 text-xs text-muted mb-2 items-center">
                         <span style={KIND_BADGE_STYLE}>{t.searchKindComment}</span>
-                        <span style={{ fontWeight: 600 }}>{c.username}</span>
+                        <span className="font-bold">{c.username}</span>
                         {c.location && <span>· {c.location}</span>}
                       </div>
-                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>
+                      <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
-                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 2, padding: "0 2px" }}>{part}</mark>
+                            ? <mark key={i} className="search-mark">{part}</mark>
                             : part
                         )}
                       </p>
@@ -405,7 +337,7 @@ function SearchContent() {
               title={t.searchEmpty(q)}
               description={t.searchEmptyDesc}
               action={
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                <div className="flex gap-3 flex-wrap justify-center">
                   <Link href="/qa" className="btn btn-ghost">{t.searchEmptyGoQa}</Link>
                   <Link href="/read" className="btn btn-primary">{t.searchEmptyGoRead}</Link>
                 </div>
@@ -421,7 +353,7 @@ function SearchContent() {
 export default function SearchPage() {
   const t = useT();
   return (
-    <Suspense fallback={<div role="status" aria-live="polite" style={{ padding: 32, color: "var(--text-muted)" }}>{t.loading}</div>}>
+    <Suspense fallback={<div role="status" aria-live="polite" className="p-8 text-muted">{t.loading}</div>}>
       <SearchContent />
     </Suspense>
   );

@@ -82,35 +82,25 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
     : comments;
 
   return (
-    <section id="chapter-comments" style={{ marginTop: 40 }}>
-      <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+    <section id="chapter-comments" className="mt-8">
+      <hr className="section-divider" />
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="m-0 text-md font-bold">
           {heading}{" "}
-          <span style={{ color: "var(--text-faint)", fontWeight: 400, fontSize: 14 }}>
+          <span className="text-faint font-normal text-sm">
             ({total})
           </span>
         </h2>
 
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2">
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
               type="button"
               onClick={() => setOrdering(ord)}
               aria-pressed={ordering === ord}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                minHeight: 44,
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: ordering === ord ? "var(--accent)" : "transparent",
-                color: ordering === ord ? "var(--accent-text)" : "var(--text-faint)",
-                fontFamily: "inherit",
-              }}
+              className={`pill-toggle${ordering === ord ? " pill-toggle-on" : ""}`}
             >
               {ord === "new" ? t.orderNew : t.orderVotes}
             </button>
@@ -120,22 +110,12 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
       {/* タグフィルタ */}
       {tags.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
             type="button"
             onClick={() => setActiveTagId(null)}
             aria-pressed={activeTagId === null}
-            style={{
-              fontSize: 12,
-              padding: "3px 10px",
-              minHeight: 44,
-              borderRadius: 999,
-              border: "1px solid var(--border)",
-              cursor: "pointer",
-              background: activeTagId === null ? "var(--accent)" : "transparent",
-              color: activeTagId === null ? "var(--accent-text)" : "var(--text-muted)",
-              fontFamily: "inherit",
-            }}
+            className={`pill-toggle${activeTagId === null ? " pill-toggle-on" : ""}`}
           >
             {t.all}
           </button>
@@ -145,17 +125,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
               type="button"
               onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
               aria-pressed={activeTagId === tag.id}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                minHeight: 44,
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: activeTagId === tag.id ? "var(--accent)" : "transparent",
-                color: activeTagId === tag.id ? "var(--accent-text)" : "var(--text-muted)",
-                fontFamily: "inherit",
-              }}
+              className={`pill-toggle${activeTagId === tag.id ? " pill-toggle-on" : ""}`}
             >
               {t.tagNames[tag.name] ?? tag.name}
             </button>
@@ -163,44 +133,33 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
         </div>
       )}
       {tagsError && (
-        <div role="alert" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--state-danger)", fontSize: 12 }}>
+        <div role="alert" className="flex items-center gap-2 mb-3 text-danger text-xs">
           <span>{t.tagsLoadFailed}</span>
-          <button type="button" onClick={loadTags} style={{ minHeight: 44 }}>{t.retry}</button>
+          <button type="button" onClick={loadTags} className="tap-target">{t.retry}</button>
         </div>
       )}
 
-      <div style={{ marginBottom: 12 }}>
+      <div className="mb-3">
         <input
           type="search"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchLoadedComments}
           aria-label={t.searchLoadedComments}
-          style={{
-            width: "100%",
-            padding: "6px 12px",
-            fontSize: 13,
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          className="form-control text-sm"
         />
       </div>
 
-      <div style={{ marginBottom: 24 }}>
+      <div className="mb-6">
         <CommentInput onSubmit={handleSubmit} showTagOption />
       </div>
 
       {loading ? (
-        <p role="status" aria-live="polite" style={{ color: "var(--text-faint)", fontSize: 13 }}>{t.loading}</p>
+        <p role="status" aria-live="polite" className="text-faint text-sm">{t.loading}</p>
       ) : error ? (
         <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
       ) : visibleComments.length === 0 ? (
-        <p style={{ color: "var(--text-faint)", fontSize: 13 }}>
+        <p className="text-faint text-sm">
           {q ? t.filterCommentsNoMatch : t.noCommentsYet}
         </p>
       ) : (

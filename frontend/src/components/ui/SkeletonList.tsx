@@ -1,5 +1,6 @@
-"use client";
-
+// この部品は受け取ったものを描くだけで、押した・入力したといった出来事を
+// 扱わない。そのためサーバー側で組み立てる画面からもそのまま使える
+// （"use client" を付けると、使う側がサーバーでもブラウザ側に回ってしまう）。
 import { Skeleton } from "./Skeleton";
 
 type Props = {
@@ -24,15 +25,7 @@ export function SkeletonList({ count = 3, gap = 12 }: Props) {
       {Array.from({ length: count }, (_, i) => (
         <div
           key={i}
-          style={{
-            padding: "16px 18px",
-            border: "1px solid var(--border)",
-            borderRadius: 10,
-            background: "var(--bg-alt)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-          }}
+          className="py-4 px-4 border border-border rounded-md bg-bg-alt flex flex-col gap-3"
         >
           <Skeleton width="40%" height={14} />
           <Skeleton width="100%" height={12} />

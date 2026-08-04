@@ -29,6 +29,7 @@ import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 import { LoadMoreButton, useToast } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import styles from "./CommentPanel.module.css";
 
 type Props = {
   verse: Verse;
@@ -292,28 +293,16 @@ export function CommentPanel({
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
       <div
-        className="comment-panel"
+        className={`comment-panel ${styles.panel}`}
         role={isMobile ? "dialog" : "complementary"}
         aria-modal={isMobile ? true : undefined}
         aria-labelledby={headingId}
-        style={{
-          width: panelWidth,
-          minWidth: MIN_WIDTH,
-          background: "var(--glass-bg)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          borderLeft: "1px solid var(--glass-border)",
-          height: "calc(100vh - var(--navbar-height))",
-          position: "sticky",
-          top: "var(--navbar-height)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
+        // 幅は利用者がドラッグで変えられる値なので、ここだけ style で渡す
+        style={{ width: panelWidth, minWidth: MIN_WIDTH }}
       >
         {/* ドラッグリサイズハンドル (マウス + タッチ対応) */}
         <div
-          className="resize-handle"
+          className={`resize-handle ${styles.resizeHandle}`}
           role="separator"
           aria-orientation="vertical"
           aria-label={t.resizeCommentPanel}
@@ -324,48 +313,17 @@ export function CommentPanel({
           onKeyDown={handleResizeKeyDown}
           onMouseDown={handleResizeStart}
           onTouchStart={handleResizeTouchStart}
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 6,
-            cursor: "ew-resize",
-            touchAction: "none",
-            zIndex: 10,
-          }}
         />
 
         {/* Header */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderBottom: "1px solid var(--glass-border)",
-          }}
-        >
+        <div className={styles.section}>
           {/* ラベルと操作ボタンを同じ行（同じ高さ）に置く。
               本文はその下に全幅で広げ、展開時のスクロールバーをパネル右端に出す。 */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-            }}
-          >
-            <h2
-              id={headingId}
-              className="badge"
-              style={{
-                background: "var(--accent-tint)",
-                color: "var(--accent)",
-                fontSize: 12,
-                margin: 0,
-              }}
-            >
+          <div className="flex items-center justify-between gap-2">
+            <h2 id={headingId} className="badge m-0 bg-accent-tint text-accent">
               {t.chapterVerseHeader(chapterNumber, verse.number)}
             </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <div className="flex shrink-0 items-center gap-1">
               {user && onVerseBookmarksChange && (
                 <button
                   type="button"
@@ -375,20 +333,7 @@ export function CommentPanel({
                   aria-pressed={isBookmarked}
                   aria-label={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
                   title={isBookmarked ? t.bookmarkRemove : t.bookmarkAdd}
-                  style={{
-                    border: "none",
-                    width: 44,
-                    height: 44,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "transparent",
-                    color: isBookmarked ? "var(--accent)" : "var(--text-muted)",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    padding: 0,
-                    filter: isBookmarked ? "drop-shadow(0 0 4px var(--accent))" : undefined,
-                  }}
+                  className={`${styles.iconButton} ${isBookmarked ? styles.iconButtonOn : ""}`}
                 >
                   <Icon name="bookmark" size={16} fill={isBookmarked ? "currentColor" : "none"} />
                 </button>
@@ -398,38 +343,14 @@ export function CommentPanel({
                 type="button"
                 onClick={onClose}
                 aria-label={t.closeCommentPanel}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-faint)",
-                  fontSize: 22,
-                  lineHeight: 1,
-                  width: 44,
-                  height: 44,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  borderRadius: 6,
-                }}
+                className={`${styles.iconButton} ${styles.closeButton}`}
               >
                 ×
               </button>
             </div>
           </div>
 
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontSize: 13,
-              color: "var(--text-muted)",
-              lineHeight: 1.6,
-              maxHeight: verseExpanded ? "40vh" : undefined,
-              overflowY: verseExpanded ? "auto" : undefined,
-              whiteSpace: "pre-wrap",
-            }}
-          >
+          <p className={`${styles.verseText} ${verseExpanded ? styles.verseTextExpanded : ""}`}>
             「{verseShown}」
           </p>
           {verseIsLong && (
@@ -437,23 +358,13 @@ export function CommentPanel({
               type="button"
               onClick={() => setVerseExpanded((v) => !v)}
               aria-expanded={verseExpanded}
-              style={{
-                marginTop: 4,
-                padding: 0,
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "var(--accent)",
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: "inherit",
-              }}
+              className="btn-text btn-text-on mt-1 p-0 text-xs font-bold"
             >
               {verseExpanded ? t.readLessVerse : t.readMoreVerse}
             </button>
           )}
           {panelError && (
-            <p role="alert" style={{ margin: "8px 0 0", color: "var(--state-danger)", fontSize: 12 }}>
+            <p role="alert" className="mt-2 mb-0 text-xs text-danger">
               {panelError}
             </p>
           )}
@@ -461,7 +372,7 @@ export function CommentPanel({
 
         {/* コメント / Q&A / 引用した記事。Q&A は別のデータなので常にタブを出す。
             記事は1件も無いときに空タブを押させても仕方がないので、あるときだけ出す。 */}
-        <div role="tablist" aria-label={t.panelContentTabs} onKeyDown={handleHorizontalTabListKeyDown} style={{ display: "flex", borderBottom: "1px solid var(--glass-border)" }}>
+        <div role="tablist" aria-label={t.panelContentTabs} onKeyDown={handleHorizontalTabListKeyDown} className={styles.tabList}>
           <PanelTab id={commentsTabId} controls={commentsPanelId} active={tab === "comments"} onClick={() => setTab("comments")}>
             {t.tabComments}
           </PanelTab>
@@ -476,7 +387,7 @@ export function CommentPanel({
         </div>
 
         {tab === "qa" ? (
-          <div id={qaPanelId} role="tabpanel" aria-labelledby={qaTabId} style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div id={qaPanelId} role="tabpanel" aria-labelledby={qaTabId} className={styles.tabPanel}>
             {askOpen ? (
               <QAPostForm
                 catalog={catalog}
@@ -498,28 +409,14 @@ export function CommentPanel({
                   if (!user) { setShowLoginModal(true); return; }
                   setAskOpen(true);
                 }}
-                className="card-glow card-glow-interactive"
-                style={{
-                  width: "100%",
-                  padding: "11px 14px",
-                  minHeight: 44,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  color: "var(--text)",
-                  cursor: "pointer",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  fontFamily: "inherit",
-                }}
+                className={`card-glow card-glow-interactive ${styles.ctaButton}`}
               >
                 <Icon name="help-circle" size={16} />
                 {t.qaAskAboutThis}
               </button>
             )}
             {questions.length === 0 ? (
-              <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "8px 0" }}>
+              <p className={styles.noticeTight}>
                 {t.qaNoQuestionsHere}
               </p>
             ) : (
@@ -528,30 +425,29 @@ export function CommentPanel({
             )}
           </div>
         ) : tab === "articles" ? (
-          <div id={articlesPanelId} role="tabpanel" aria-labelledby={articlesTabId} style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div id={articlesPanelId} role="tabpanel" aria-labelledby={articlesTabId} className={styles.tabPanel}>
             {articlesError ? (
               <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} />
             ) : citingArticles.map((article) => (
               <Link
                 key={article.id}
                 href={`/articles/${article.id}`}
-                className="card-glow card-glow-interactive"
-                style={{ padding: "12px 14px", textDecoration: "none", color: "inherit" }}
+                className="card-glow card-glow-interactive p-3 text-body no-underline"
               >
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{article.title}</div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
+                <div className="mb-1 text-sm font-bold">{article.title}</div>
+                <div className="text-xs leading-base text-muted">
                   {article.summary}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--text-faint)", marginTop: 6 }}>
+                <div className="mt-2 text-xs text-faint">
                   {article.owner_username}
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-        <div id={commentsPanelId} role="tabpanel" aria-labelledby={commentsTabId} style={{ display: "contents" }}>
+        <div id={commentsPanelId} role="tabpanel" aria-labelledby={commentsTabId} className="contents">
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
-        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--glass-border)" }}>
+        <div className={styles.section}>
           {composeOpen ? (
             <CommentInput
               onSubmit={handleSubmit}
@@ -565,21 +461,7 @@ export function CommentPanel({
             <button
               type="button"
               onClick={handleOpenCompose}
-              className="card-glow card-glow-interactive"
-              style={{
-                width: "100%",
-                padding: "11px 14px",
-                minHeight: 44,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                color: "var(--text)",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 700,
-                fontFamily: "inherit",
-              }}
+              className={`card-glow card-glow-interactive ${styles.ctaButton}`}
             >
               <Icon name="message-square" size={16} />
               {t.writeCommentCta}
@@ -588,24 +470,14 @@ export function CommentPanel({
         </div>
 
         {/* Ordering toggle */}
-        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)", display: "flex", gap: 8 }}>
+        <div className={`${styles.sectionTight} flex gap-2`}>
           {(["new", "votes"] as const).map((ord) => (
             <button
               key={ord}
               type="button"
               onClick={() => setOrdering(ord)}
               aria-pressed={ordering === ord}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                minHeight: 44,
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: ordering === ord ? "var(--accent)" : "transparent",
-                color: ordering === ord ? "var(--accent-text)" : "var(--text-faint)",
-                fontFamily: "inherit",
-              }}
+              className={`${styles.orderButton} ${ordering === ord ? styles.orderButtonOn : ""}`}
             >
               {ord === "new" ? t.orderNew : t.orderVotes}
             </button>
@@ -613,38 +485,27 @@ export function CommentPanel({
         </div>
 
         {/* Search */}
-        <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--glass-border)" }}>
+        <div className={styles.sectionTight}>
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t.searchLoadedComments}
             aria-label={t.searchLoadedComments}
-            style={{
-              width: "100%",
-              padding: "5px 10px",
-              fontSize: 12,
-              border: "1px solid var(--border)",
-              borderRadius: 6,
-              background: "var(--bg)",
-              color: "var(--text)",
-              fontFamily: "inherit",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
+            className={styles.search}
           />
         </div>
 
         {/* Comment list */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 16px" }}>
+        <div className={styles.commentList}>
           {loading ? (
-            <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
+            <p className={styles.notice}>
               {t.loading}
             </p>
           ) : error ? (
             <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={retry} retryLabel={t.retry} />
           ) : visibleComments.length === 0 ? (
-            <p style={{ color: "var(--text-faint)", fontSize: 13, padding: "16px 0" }}>
+            <p className={styles.notice}>
               {q ? t.filterCommentsNoMatch : t.noCommentsYet}
             </p>
           ) : (
@@ -692,19 +553,7 @@ function PanelTab({
       aria-controls={controls}
       tabIndex={active ? 0 : -1}
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "10px 8px",
-        minHeight: 44,
-        border: "none",
-        background: "none",
-        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
-        fontWeight: active ? 700 : 400,
-        fontSize: 12,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
+      className={`${styles.tab} ${active ? styles.tabActive : ""}`}
     >
       {children}
     </button>

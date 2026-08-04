@@ -26,21 +26,21 @@ export function Pagination({
   return (
     <nav
       aria-label={t.paginationLabel}
-      style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 4, flexWrap: "wrap", marginTop: 16 }}
+      className="mt-4 flex flex-wrap items-center justify-center gap-1"
     >
       <button
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
         aria-label={t.paginationPrev}
-        style={arrowStyle(page <= 1)}
+        className={arrowClass(page <= 1)}
       >
         ‹
       </button>
 
       {pages.map((p, i) =>
         p === ELLIPSIS ? (
-          <span key={`gap-${i}`} style={{ padding: "0 4px", color: "var(--text-faint)" }}>
+          <span key={`gap-${i}`} className="px-1 text-faint">
             …
           </span>
         ) : (
@@ -49,7 +49,7 @@ export function Pagination({
             type="button"
             onClick={() => onChange(p)}
             aria-current={p === page ? "page" : undefined}
-            style={numberStyle(p === page)}
+            className={numberClass(p === page)}
           >
             {p}
           </button>
@@ -61,7 +61,7 @@ export function Pagination({
         onClick={() => onChange(page + 1)}
         disabled={page >= totalPages}
         aria-label={t.paginationNext}
-        style={arrowStyle(page >= totalPages)}
+        className={arrowClass(page >= totalPages)}
       >
         ›
       </button>
@@ -87,34 +87,22 @@ function pageWindow(page: number, totalPages: number): (number | typeof ELLIPSIS
   return out;
 }
 
-const baseButton: React.CSSProperties = {
-  minWidth: 44,
-  height: 44,
-  padding: "0 8px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  color: "var(--text-muted)",
-  fontFamily: "inherit",
-  fontSize: 13,
-  cursor: "pointer",
-};
+/* ページ送りのボタンは数字だけなので、指で押せるよう 44px 四方を確保する。 */
+const baseButton = "tap-target-square cursor-pointer rounded-md border px-2 text-sm";
 
-function numberStyle(active: boolean): React.CSSProperties {
-  return {
-    ...baseButton,
-    fontWeight: active ? 700 : 500,
-    borderColor: active ? "var(--accent)" : "var(--border)",
-    background: active ? "var(--accent-tint)" : "var(--bg-alt)",
-    color: active ? "var(--accent)" : "var(--text-muted)",
-  };
+function numberClass(active: boolean): string {
+  return [
+    baseButton,
+    active
+      ? "border-accent bg-accent-tint text-accent font-bold"
+      : "border-border bg-bg-alt text-muted font-normal",
+  ].join(" ");
 }
 
-function arrowStyle(disabled: boolean): React.CSSProperties {
-  return {
-    ...baseButton,
-    cursor: disabled ? "default" : "pointer",
-    opacity: disabled ? 0.4 : 1,
-    fontSize: 16,
-  };
+function arrowClass(disabled: boolean): string {
+  return [
+    baseButton,
+    "border-border bg-bg-alt text-muted text-md",
+    disabled ? "cursor-default opacity-40" : "cursor-pointer",
+  ].join(" ");
 }

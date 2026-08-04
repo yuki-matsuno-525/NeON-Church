@@ -49,13 +49,13 @@ export default function NewPlanPage() {
   };
 
   if (authLoading) {
-    return <div style={containerStyle}><SkeletonList count={2} /></div>;
+    return <div className="page page-form"><SkeletonList count={2} /></div>;
   }
 
   if (!user) {
     return (
-      <div style={containerStyle}>
-        <p role="status" style={{ color: "var(--text-muted)" }}>{t.planLoginRequired}</p>
+      <div className="page page-form">
+        <p role="status" className="text-muted">{t.planLoginRequired}</p>
         <Link href="/login?from=%2Fplans%2Fnew" style={loginLinkStyle}>
           {t.loginBtn}
         </Link>
@@ -64,7 +64,7 @@ export default function NewPlanPage() {
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-form">
       <ConfirmDialog
         open={confirmCancel}
         title={supplementalText.discardNewTitle}
@@ -74,13 +74,13 @@ export default function NewPlanPage() {
         onConfirm={() => router.push("/plans")}
         onCancel={() => setConfirmCancel(false)}
       />
-      <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>{t.planNewTitle}</h1>
-      <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 0 24px" }}>
+      <h1 className="mt-0 mb-2 text-lg font-bold">{t.planNewTitle}</h1>
+      <p className="mt-0 mb-6 text-sm text-muted">
         {t.planNewDesc}
       </p>
 
       <form onSubmit={(event) => { event.preventDefault(); void handleCreate(); }}>
-        <label htmlFor="new-plan-title" style={{ display: "block", fontSize: 13, color: "var(--text-muted)", marginBottom: 6 }}>
+        <label htmlFor="new-plan-title" className="mb-2 block text-sm text-muted">
           {t.planTitleLabel}
         </label>
         <input
@@ -100,39 +100,16 @@ export default function NewPlanPage() {
           maxLength={200}
           aria-invalid={!!error}
           aria-describedby={error ? "new-plan-error" : undefined}
-          style={{
-            width: "100%",
-            boxSizing: "border-box",
-            padding: "10px 12px",
-            minHeight: 44,
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            fontSize: 15,
-          }}
+          className="form-control"
         />
 
-        {error && <p id="new-plan-error" role="alert" style={{ fontSize: 13, color: "var(--state-danger)", marginTop: 8 }}>{error}</p>}
+        {error && <p id="new-plan-error" role="alert" className="mt-2 text-sm text-danger">{error}</p>}
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
+        <div className="flex gap-3 mt-4 flex-wrap">
           <button
             type="submit"
             disabled={!title.trim() || busy}
-            style={{
-              border: "none",
-              borderRadius: 8,
-              background: "var(--accent)",
-              color: "var(--accent-text)",
-              fontWeight: 700,
-              fontSize: 14,
-              padding: "10px 22px",
-              minHeight: 44,
-              cursor: !title.trim() || busy ? "default" : "pointer",
-              opacity: !title.trim() || busy ? 0.6 : 1,
-              fontFamily: "inherit",
-            }}
+            className="btn btn-secondary"
           >
             {busy ? t.articleCreating : t.planStartCreating}
           </button>
@@ -151,11 +128,6 @@ export default function NewPlanPage() {
   );
 }
 
-const containerStyle: React.CSSProperties = {
-  maxWidth: 560,
-  margin: "0 auto",
-  padding: "48px 16px",
-};
 
 const loginLinkStyle: React.CSSProperties = {
   color: "var(--accent)",

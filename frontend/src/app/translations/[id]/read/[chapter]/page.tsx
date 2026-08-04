@@ -130,13 +130,13 @@ export default function TranslationReadChapterPage({
     return () => { active = false; };
   }, [project, chapterNum, selectedUnit]);
 
-  if (loading) return <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}><SkeletonList count={6} /></div>;
+  if (loading) return <div className="page page-wide"><SkeletonList count={6} /></div>;
   if (error) return (
-    <div style={{ padding: 32, textAlign: "center" }} role="alert">
-      <p style={{ color: "var(--text-muted)" }}>{error}</p>
-      <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
+    <div className="p-8 text-center" role="alert">
+      <p className="text-muted">{error}</p>
+      <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
-        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+        <Link href="/translations" className="text-accent self-center">{t.backToProjectList}</Link>
       </div>
     </div>
   );
@@ -146,24 +146,14 @@ export default function TranslationReadChapterPage({
   const nextChapter = currentIndex < chapterNums.length - 1 ? chapterNums[currentIndex + 1] : null;
 
   return (
-    <div style={{ minHeight: "calc(100vh - var(--navbar-height))" }}>
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
-        <p style={{ fontSize: 14, color: "var(--text-muted)", margin: 0, fontWeight: 500 }}>
-          <Link href={`/translations/${id}`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+    <div className="min-h-page">
+      <div className="reader-sticky-header">
+        <p className="m-0 text-sm font-normal text-muted">
+          <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
           </Link>
           {" › "}
-          <Link href={`/translations/${id}/read`} style={{ color: "var(--text-muted)", textDecoration: "none" }}>
+          <Link href={`/translations/${id}/read`} className="text-muted no-underline">
             {t.chapterList}
           </Link>
           {" › "}
@@ -173,28 +163,27 @@ export default function TranslationReadChapterPage({
 
       <div
         className={`reader-wrapper${selectedUnit ? " has-verse" : ""}`}
-        style={{ display: "flex" }}
       >
-        <div className="reader-main" style={{ flex: 1, minWidth: 0, padding: "32px 32px", overflowY: "auto" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: 700, marginBottom: 4 }}>
+        <div className="reader-main" >
+          <div className="mx-auto max-w-180">
+            <h1 className="text-xl font-bold mb-1">
               {project?.name} {t.chapterFmt(chapterNum)}
             </h1>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 24px" }}>
+            <p className="text-sm text-muted mt-0 mx-0 mb-6">
               {project?.source_book_name} → {project ? languageLabel(project.target_language) : ""}
             </p>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-              <span style={{ color: "var(--text-faint)", fontSize: 12 }}>{ui.sourceComparisonHelp}</span>
+            <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <span className="text-xs text-faint">{ui.sourceComparisonHelp}</span>
               <Button variant="secondary" size="sm" aria-pressed={showSourceText} onClick={() => setShowSourceText((shown) => !shown)}>
                 {showSourceText ? ui.hideSource : ui.compareSource}
               </Button>
             </div>
 
-            <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+            <hr className="section-divider" />
 
             {units.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t.noPublishedVersesForChapter}</p>
+              <p className="text-sm text-muted">{t.noPublishedVersesForChapter}</p>
             ) : (
               <div>
                 {units.map((unit) => {
@@ -215,40 +204,20 @@ export default function TranslationReadChapterPage({
                           setSelectedUnit(isSelected ? null : unit);
                         }
                       }}
-                      className="verse-row"
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: 5,
-                        color: "var(--text)",
-                        marginBottom: 2,
-                        cursor: "pointer",
-                        background: isSelected ? "var(--accent-tint)" : "transparent",
-                        scrollMarginTop: "calc(var(--navbar-height) + 56px)",
-                      }}
+                      className={`verse-row${isSelected ? " verse-row-selected" : ""}`}
                     >
                       <span
-                        style={{
-                          lineHeight: 1.9,
-                          fontSize: 17,
-                          fontFamily: "var(--font-serif)",
-                          whiteSpace: "pre-line",
-                        }}
+                        className="verse-text"
                       >
                         <sup
-                          style={{
-                            fontSize: 11,
-                            color: "var(--text-faint)",
-                            marginRight: 4,
-                            verticalAlign: "super",
-                            fontWeight: 700,
-                          }}
+                          className="verse-number"
                         >
                           {unit.verse_number}
                         </sup>
                         {unit.body}
                       </span>
                       {showSourceText && (
-                        <p style={{ margin: "4px 0 0 18px", fontSize: 12, color: "var(--text-faint)", fontStyle: "italic" }}>
+                        <p className="mt-1 mb-0 ml-5 text-xs text-faint italic">
                           {t.originalText} {unit.verse_text}
                         </p>
                       )}
@@ -261,8 +230,8 @@ export default function TranslationReadChapterPage({
             {units.length > 0 && units[0]?.chapter && (
               <>
                 {chapterVersionCommentsError && (
-                  <div role="alert" style={{ padding: 12, margin: "16px 0 12px", border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                    <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+                  <div role="alert" className="alert-box mt-4 mx-0 mb-3">
+                    <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                     <Button variant="secondary" size="sm" onClick={() => void loadChapterVersionComments()}>
                       {ui.retryRelatedComments}
                     </Button>
@@ -283,8 +252,8 @@ export default function TranslationReadChapterPage({
         {selectedUnit && (
           <div id="translation-comment-panel" className="reader-panel">
             {verseVersionCommentsError && (
-              <div role="alert" style={{ padding: 12, margin: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
-                <p style={{ margin: "0 0 8px", color: "var(--text-muted)", fontSize: 13 }}>{ui.relatedCommentsLoadError}</p>
+              <div role="alert" className="alert-box m-3">
+                <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
                 <Button variant="secondary" size="sm" onClick={() => void loadVerseVersionComments()}>
                   {ui.retryRelatedComments}
                 </Button>
@@ -311,30 +280,7 @@ export default function TranslationReadChapterPage({
           href={`/translations/${id}/read/${prevChapter}`}
           title={t.chapterFmt(prevChapter)}
           aria-label={`${t.prevChapter} (${prevChapter})`}
-          className="chapter-nav-prev"
-          style={{
-            position: "fixed",
-            left: "var(--sidebar-width)",
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "18px 10px",
-            background: "var(--bg-alt)",
-            border: "1px solid var(--border)",
-            borderLeft: "none",
-            borderRadius: "0 8px 8px 0",
-            color: "var(--text)",
-            textDecoration: "none",
-            fontSize: 20,
-            opacity: 0.75,
-            zIndex: 20,
-            transition: "opacity 0.15s",
-            lineHeight: 1,
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+          className="chapter-nav chapter-nav-prev"
         >
           ‹
         </Link>
@@ -345,30 +291,7 @@ export default function TranslationReadChapterPage({
           href={`/translations/${id}/read/${nextChapter}`}
           title={t.chapterFmt(nextChapter)}
           aria-label={`${t.nextChapter} (${nextChapter})`}
-          className="chapter-nav-next"
-          style={{
-            position: "fixed",
-            right: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "18px 10px",
-            background: "var(--bg-alt)",
-            border: "1px solid var(--border)",
-            borderRight: "none",
-            borderRadius: "8px 0 0 8px",
-            color: "var(--text)",
-            textDecoration: "none",
-            fontSize: 20,
-            opacity: 0.75,
-            zIndex: 20,
-            transition: "opacity 0.15s",
-            lineHeight: 1,
-          }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+          className="chapter-nav chapter-nav-next"
         >
           ›
         </Link>
