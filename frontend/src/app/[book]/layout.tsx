@@ -14,7 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `Chapter list and comments for ${meta.englishName}. Read, discuss, and share.`
     : `${meta.name}の章一覧とコメント。本文を読み、議論し、共有できます。`;
   return {
-    title,
+    // 題は「マタイによる福音書」。この下の章のページにもサイト名が付くよう、
+    // template を書き直しておく（文字列だけにすると章の題からサイト名が消える）。
+    title: { default: title, template: "%s | NeON Church" },
     description,
     openGraph: {
       title,
