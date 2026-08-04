@@ -2168,3 +2168,36 @@ textarea::placeholder {
   background: rgba(245, 158, 11, 0.15);
   color: var(--state-warning);
 }
+
+/* ----- 画面の一番下の帯 ----- */
+.site-footer {
+  position: relative;
+  z-index: 2;
+  padding: 24px 16px 32px;
+  border-top: 1px solid var(--border);
+  background: rgba(8, 4, 24, 0.55);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.site-footer-note {
+  max-width: 960px;
+  margin: 16px auto 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+/* 上のバーの下、サイドバーと本文を横に並べるところ。 */
+.app-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+}
