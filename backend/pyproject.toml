@@ -117,3 +117,41 @@ ignore_errors = true
 [tool.django-stubs]
 # 型解決用に読む設定モジュール。DB に触らないので test 設定でよい。
 django_settings_module = "config.settings.test"
+
+# ==============================================================
+# カバレッジ
+#
+# 目的は数字を上げることではなく、「テストが通っているのにその行は
+# 一度も動いていない」を見えるようにすること。下限は現状（92%）から
+# 少し下に置き、下がったら CI で気づけるようにする。
+# ==============================================================
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "tests/*",
+    "*/tests.py",
+    "manage.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+    "config/settings/*",
+    # 取り込みスクリプトは固定の原データを相手にする使い捨て。
+    # 実行にデータファイルが要るので、テストからは通らない。
+    "bible/importers/*",
+    "bible/management/commands/*",
+    # 開発用のデモデータ生成。専用のテストで通ることだけ確かめている。
+    "common/seed_data/*",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    # 型チェック専用の分岐は実行されない。
+    "if TYPE_CHECKING:",
+    # 到達しないことを表明している場所。
+    "raise NotImplementedError",
+]

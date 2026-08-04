@@ -6,7 +6,7 @@
 書き込みは services.py。可視性の素の判定は access.py。
 """
 
-from django.db.models import Count, Exists, OuterRef, Q, QuerySet
+from django.db.models import Count, Exists, OuterRef, Q, QuerySet, Subquery
 
 from .models import (
     TranslationComment,
@@ -47,6 +47,13 @@ def annotate_project_summary(queryset: QuerySet, user) -> QuerySet:
             ),
             annotated_is_in_library=Exists(
                 TranslationLibraryEntry.objects.filter(project=OuterRef("pk"), user=user)
+            ),
+            # 申請中か・断られたかを出すための状態。is_member（承認済みか）とは別物なので
+            # Exists では表せず、値そのものを引く必要がある。
+            annotated_membership_status=Subquery(
+                TranslationMembership.objects.filter(project=OuterRef("pk"), user=user).values(
+                    "status"
+                )[:1]
             ),
         )
     return queryset.order_by(_PROJECT_ORDERING)

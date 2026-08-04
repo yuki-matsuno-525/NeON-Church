@@ -55,8 +55,10 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      # カバレッジの下限は pyproject.toml の fail_under。数字を上げること自体が
+      # 目的ではなく、「テストが通っているのに一度も動いていない行」を見えるようにする。
       - name: Run tests
-        run: pytest
+        run: pytest --cov
 
       # --validate だけでは形式の妥当性しか見ず、「シリアライザを推測できない」
       # 等のエラーがあっても終了コード 0 で通ってしまう。--fail-on-warn を付けて

@@ -56,9 +56,10 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    # 以下4つは、一覧では views.annotate_project_summary が本体クエリでまとめて求める。
+    # 以下5つは、一覧では selectors.annotate_project_summary が本体クエリでまとめて求める。
     # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。
-    # 一覧で annotate が無いと1件あたり4クエリ増えるので、一覧の queryset には必ず付けること。
+    # 一覧で annotate が無いと1件あたり5クエリ増えるので、一覧の queryset には必ず付けること
+    # （tests/test_query_counts.py が件数に比例しないことを見張っている）。
 
     def get_unit_count(self, obj) -> int:
         annotated = getattr(obj, "annotated_unit_count", None)
@@ -84,6 +85,8 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_membership_status(self, obj) -> str | None:
+        if hasattr(obj, "annotated_membership_status"):
+            return obj.annotated_membership_status
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return None
