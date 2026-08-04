@@ -368,16 +368,7 @@ export default function ChapterPage() {
                   localStorage.setItem("bible-translation", e.target.value);
                   setTranslation(e.target.value);
                 }}
-                style={{
-                  fontSize: 12,
-                  color: "var(--text)",
-                  background: "var(--bg)",
-                  cursor: "pointer",
-                  padding: "4px 10px",
-                  minHeight: 44,
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
+                className="select-sm bg-bg text-body"
               >
                 {translationOptions.map((trans) => (
                   <option key={trans.id} value={trans.id}>{trans.label}</option>
@@ -454,18 +445,7 @@ export default function ChapterPage() {
             <button
               type="button"
               onClick={bulk.start}
-              style={{
-                marginLeft: "auto",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                background: "transparent",
-                color: "var(--text-muted)",
-                fontSize: 12,
-                padding: "6px 12px",
-                minHeight: 36,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
+              className="day-toggle"
             >
               {t.bulkBookmarkStart}
             </button>
@@ -536,24 +516,7 @@ export default function ChapterPage() {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t.backToTop}
-          style={{
-            position: "fixed",
-            bottom: selectedVerseId ? "calc(70vh + 12px)" : 24,
-            right: 24,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            border: "none",
-            borderRadius: "50%",
-            width: 44,
-            height: 44,
-            cursor: "pointer",
-            fontSize: 18,
-            zIndex: 30,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-          }}
+          className={`fab${selectedVerseId ? " fab-raised" : ""}`}
         >
           ↑
         </button>
