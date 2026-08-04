@@ -46,7 +46,7 @@ export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }
         role="tabpanel"
         id={`${tabsId}-${tab}-panel`}
         aria-labelledby={`${tabsId}-${tab}`}
-        style={{ overflowY: "auto", flex: 1, minHeight: 0, padding: "12px 0" }}
+        className="flex-1 min-h-0 overflow-y-auto py-3"
       >
         {tab === "search" ? <SearchTab onInsert={onInsert} /> : <BookmarkTab onInsert={onInsert} />}
       </div>
@@ -176,7 +176,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   if (!slug) {
     return (
       <div className="px-3">
-        <label htmlFor="citation-book-search" style={fieldLabelStyle}>引用する書をさがす</label>
+        <label htmlFor="citation-book-search" className="form-label">引用する書をさがす</label>
         <input
           id="citation-book-search"
           value={keyword}
@@ -190,12 +190,12 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               key={book.slug}
               type="button"
               onClick={() => setSlug(book.slug)}
-              style={rowButtonStyle}
+              className="row-button"
             >
               {bookLabel(book.slug, lang)?.name ?? book.name}
             </button>
           ))}
-          {matched.length === 0 && <p style={mutedTextStyle}>一致する書はありません。</p>}
+          {matched.length === 0 && <p className="text-xs text-muted leading-reading">一致する書はありません。</p>}
         </div>
       </div>
     );
@@ -203,7 +203,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
   return (
     <div className="px-3">
-      <button type="button" onClick={() => resetTo(null)} style={backButtonStyle}>
+      <button type="button" onClick={() => resetTo(null)} className="back-button">
         {t.citationChooseBookAgain}
       </button>
 
@@ -231,12 +231,12 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
       {error && (
         <div role="alert" className="flex gap-2 items-center flex-wrap mb-2">
           <p className="m-0 text-xs text-danger">{error}</p>
-          <button type="button" onClick={() => setReloadToken((value) => value + 1)} style={smallButtonStyle}>再試行</button>
+          <button type="button" onClick={() => setReloadToken((value) => value + 1)} className="small-button">再試行</button>
         </div>
       )}
 
       {chapter === null ? (
-        loadingChapters ? <p role="status" style={mutedTextStyle}>章を読み込んでいます…</p> : <div className="flex flex-wrap gap-2">
+        loadingChapters ? <p role="status" className="text-xs text-muted leading-reading">章を読み込んでいます…</p> : <div className="flex flex-wrap gap-2">
           {chapterNumbers.map((number) => (
             <button
               key={number}
@@ -247,7 +247,7 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               <span aria-hidden="true">{number}</span><span className="sr-only">第{number}章</span>
             </button>
           ))}
-          {!error && chapterNumbers.length === 0 && <p style={mutedTextStyle}>この翻訳には章がありません。</p>}
+          {!error && chapterNumbers.length === 0 && <p className="text-xs text-muted leading-reading">この翻訳には章がありません。</p>}
         </div>
       ) : (
         <VerseList
@@ -333,19 +333,14 @@ function VerseList({
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <button type="button" onClick={onBack} style={backButtonStyle}>
+        <button type="button" onClick={onBack} className="back-button">
           {t.citationBackToChapters}
         </button>
         <span className="text-sm font-bold">{t.chapterFmt(chapter)}</span>
         <button
           type="button"
           onClick={() => (rangeMode ? clearRange() : setRangeMode(true))}
-          style={{
-            ...smallButtonStyle,
-            marginLeft: "auto",
-            borderColor: rangeMode ? "var(--accent)" : "var(--border)",
-            color: rangeMode ? "var(--accent)" : "var(--text-muted)",
-          }}
+          className={`small-button ml-auto${rangeMode ? " small-button-on" : ""}`}
         >
           {rangeMode ? t.citationStopRange : t.citationStartRange}
         </button>
@@ -369,7 +364,7 @@ function VerseList({
               insert("inline", rangeStart, rangeEnd);
               clearRange();
             }}
-            style={insertButtonStyle}
+            className="small-button small-button-strong"
           >
             {t.citationInsertInline}
           </button>
@@ -379,7 +374,7 @@ function VerseList({
               insert("block", rangeStart, rangeEnd);
               clearRange();
             }}
-            style={{ ...insertButtonStyle, background: "var(--accent)", color: "var(--accent-text)", border: "none" }}
+            className="small-button small-button-strong small-button-primary"
           >
             {t.citationInsertBlock}
           </button>
@@ -400,12 +395,7 @@ function VerseList({
             return (
               <div
                 key={verse.id}
-                style={{
-                  border: `1px solid ${inRange || isStart ? "var(--accent)" : "var(--border)"}`,
-                  borderRadius: 8,
-                  padding: 10,
-                  background: inRange || isStart ? "var(--accent-tint)" : "transparent",
-                }}
+                className={`citation-verse${inRange || isStart ? " citation-verse-picked" : ""}`}
               >
                 <div className="flex gap-2 text-sm leading-reading">
                   <span className="text-faint shrink-0">{verse.number}</span>
@@ -416,7 +406,7 @@ function VerseList({
                     <button
                       type="button"
                       onClick={() => handleRangePick(verse.number)}
-                      style={smallButtonStyle}
+                      className="small-button"
                     >
                       {rangeStart === null ? t.citationSelectStart : t.citationSelectEnd}
                     </button>
@@ -425,14 +415,14 @@ function VerseList({
                       <button
                         type="button"
                         onClick={() => insert("inline", verse.number)}
-                        style={smallButtonStyle}
+                        className="small-button"
                       >
                         {t.citationInsertInline}
                       </button>
                       <button
                         type="button"
                         onClick={() => insert("block", verse.number)}
-                        style={smallButtonStyle}
+                        className="small-button"
                       >
                         {t.citationInsertBlock}
                       </button>
@@ -477,21 +467,21 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   }, [loadBookmarks]);
 
   if (loading) {
-    return <p role="status" style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)" }}>{t.loading}</p>;
+    return <p role="status" className="px-3 text-xs text-muted">{t.loading}</p>;
   }
 
   if (error) {
     return (
       <div role="alert" className="px-3">
-        <p style={{ ...mutedTextStyle, color: "var(--state-danger)" }}>{error}</p>
-        <button type="button" onClick={() => void loadBookmarks()} style={smallButtonStyle}>{t.retry}</button>
+        <p className="text-xs text-danger leading-reading">{error}</p>
+        <button type="button" onClick={() => void loadBookmarks()} className="small-button">{t.retry}</button>
       </div>
     );
   }
 
   if (bookmarks.length === 0) {
     return (
-      <div style={{ padding: "0 12px", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7 }}>
+      <div className="px-3 text-xs text-muted leading-reading">
         <p>{t.citationNoVerseBookmarks}</p>
         <Link href="/read" className="text-accent inline-flex tap-target items-center">{t.read}</Link>
       </div>
@@ -499,7 +489,7 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
   }
 
   return (
-    <div style={{ padding: "0 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="flex flex-col gap-2 px-3">
       {bookmarks.map((bookmark) => {
         return <BookmarkCitationCard key={bookmark.id} bookmark={bookmark} onInsert={onInsert} />;
       })}
@@ -533,13 +523,13 @@ function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onIn
         {displayMeta?.short ?? reference.book} {reference.chapter}:{reference.verse}
       </div>
       {bookmark.verse_text && <p className="mt-0 mx-0 mb-2 text-sm text-muted leading-base">{bookmark.verse_text}</p>}
-      <label htmlFor={selectId} style={fieldLabelStyle}>{t.translationLabel}</label>
+      <label htmlFor={selectId} className="form-label">{t.translationLabel}</label>
       <select id={selectId} value={translation} onChange={(event) => setTranslation(event.target.value)} className="form-control mb-2">
         {translations.map((item) => <option key={item.id} value={item.id}>{translationLabel(item.id, lang)}</option>)}
       </select>
       <div className="flex gap-2 flex-wrap">
-        <button type="button" onClick={() => insert("inline")} style={smallButtonStyle}>{t.citationInsertInline}</button>
-        <button type="button" onClick={() => insert("block")} style={smallButtonStyle}>{t.citationInsertBlock}</button>
+        <button type="button" onClick={() => insert("inline")} className="small-button">{t.citationInsertInline}</button>
+        <button type="button" onClick={() => insert("block")} className="small-button">{t.citationInsertBlock}</button>
       </div>
     </div>
   );
@@ -569,19 +559,7 @@ function TabButton({
       aria-controls={panelId}
       tabIndex={active ? 0 : -1}
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "10px 8px",
-        minHeight: 44,
-        border: "none",
-        background: "none",
-        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
-        fontWeight: active ? 700 : 400,
-        fontSize: 13,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
+      className={`tab-underline flex-1${active ? " tab-underline-active" : ""}`}
     >
       {children}
     </button>
@@ -589,68 +567,6 @@ function TabButton({
 }
 
 
-const rowButtonStyle: React.CSSProperties = {
-  textAlign: "left",
-  padding: "8px 6px",
-  minHeight: 44,
-  border: "none",
-  background: "none",
-  color: "var(--text)",
-  fontSize: 13,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  borderBottom: "1px solid var(--border)",
-};
-
-const backButtonStyle: React.CSSProperties = {
-  border: "none",
-  background: "none",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  cursor: "pointer",
-  padding: "8px 4px",
-  minHeight: 44,
-  fontFamily: "inherit",
-};
-
-
-const smallButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  padding: "5px 10px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const insertButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 13,
-  padding: "6px 12px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  display: "block",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  fontWeight: 700,
-  marginBottom: 6,
-};
-
-const mutedTextStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--text-muted)",
-  lineHeight: 1.7,
-};
 
 
 function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {

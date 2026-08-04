@@ -146,25 +146,14 @@ export default function NotificationsPage() {
           onClick={handleMarkAll}
           disabled={unreadCount === 0 || actionBusy}
           aria-busy={actionBusy}
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-md)",
-            padding: "6px 14px",
-            minHeight: 44,
-            background: "transparent",
-            color: unreadCount === 0 ? "var(--text-faint)" : "var(--text-muted)",
-            cursor: unreadCount === 0 || actionBusy ? "default" : "pointer",
-            opacity: unreadCount === 0 ? 0.6 : 1,
-            fontSize: "var(--font-size-sm)",
-            fontFamily: "inherit",
-          }}
+          className="outline-button outline-button-muted disabled:opacity-60 disabled:cursor-default"
         >
           {t.markAllRead}
         </button>
       </div>
 
       {actionError && (
-        <p role="alert" aria-live="polite" style={{ color: "var(--state-danger)", fontSize: 13, margin: "-12px 0 16px" }}>
+        <p role="alert" aria-live="polite" className="-mt-3 mx-0 mb-4 text-danger text-sm">
           {actionError}
         </p>
       )}
@@ -224,37 +213,18 @@ function NotificationItem({
 }) {
   const t = useT();
   const formatRelativeTime = useRelativeTime();
-  const cardStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "14px 16px",
-    borderRadius: "var(--radius-md)",
-    background: n.is_read ? "var(--bg-alt)" : "var(--bg-hover)",
-    border: "none",
-    borderLeft: n.is_read ? "3px solid transparent" : "3px solid var(--accent)",
-    transition: `background var(--duration-fast) var(--ease-out)`,
-    display: "block",
-    textDecoration: "none",
-    color: "inherit",
-    position: "relative",
-    textAlign: "left",
-    fontFamily: "inherit",
-    fontSize: "inherit",
-  };
+  const rowClass = [
+    "notification-row",
+    n.is_read ? "" : "notification-row-unread",
+    busy ? "notification-row-busy" : "",
+  ].filter(Boolean).join(" ");
 
   const body = (
     <>
       {!n.is_read && (
         <span
           aria-label={unreadLabel}
-          style={{
-            position: "absolute",
-            top: 18,
-            right: 16,
-            width: 7,
-            height: 7,
-            borderRadius: "50%",
-            background: "var(--accent)",
-          }}
+          className="unread-dot"
         />
       )}
       <div
@@ -289,7 +259,7 @@ function NotificationItem({
           if (busy) event.preventDefault();
           else void onActivate();
         }}
-        style={{ ...cardStyle, opacity: busy ? 0.7 : 1 }}
+        className={rowClass}
       >
         {body}
       </Link>
@@ -301,7 +271,7 @@ function NotificationItem({
       onClick={() => { void onActivate(); }}
       disabled={n.is_read || busy}
       aria-busy={busy}
-      style={{ ...cardStyle, cursor: n.is_read || busy ? "default" : "pointer", opacity: busy ? 0.7 : 1 }}
+      className={rowClass}
     >
       {body}
     </button>
