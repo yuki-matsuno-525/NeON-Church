@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useState, useRef, use } from "react";
+import { useEffect, useEffectEvent, useMemo, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -43,7 +43,7 @@ import {
   type TranslationLanguage,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRelativeTime, useT } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import { SkeletonList, EmptyState, ConfirmDialog, Button, useToast } from "@/components/ui";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { languageLabel } from "@/lib/languages";
@@ -51,136 +51,16 @@ import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "../translationUiText";
 import { ReviewTab } from "@/components/translations/ReviewTab";
 import { MembersTab } from "@/components/translations/MembersTab";
+import { UnitDiscussion } from "@/components/translations/UnitDiscussion";
 import { STATUS_BADGE_STYLE, unitStatusLabel } from "@/components/translations/unitStatus";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
-function MentionInput({
-  value,
-  onChange,
-  onSubmit,
-  members,
-  placeholder,
-  sendLabel,
-  requiredMessage,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  members: string[];
-  placeholder: string;
-  sendLabel: string;
-  requiredMessage: string;
-}) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // カーソルより前の部分の末尾にある @xxx を探して候補を更新する
-  const refreshSuggestions = (text: string, caret: number) => {
-    const match = text.slice(0, caret).match(/@([\w]*)$/);
-    if (match) {
-      const q = match[1].toLowerCase();
-      setSuggestions(members.filter((m) => m.toLowerCase().startsWith(q) && m !== "").slice(0, 5));
-    } else {
-      setSuggestions([]);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value);
-    refreshSuggestions(e.target.value, e.target.selectionStart);
-  };
-
-  const handleSelect = (username: string) => {
-    const el = textareaRef.current;
-    const caret = el ? el.selectionStart : value.length;
-    // カーソル位置の @xxx だけを置換し、後ろの文章はそのまま残す
-    const before = value.slice(0, caret).replace(/@[\w]*$/, `@${username} `);
-    const after = value.slice(caret);
-    onChange(before + after);
-    setSuggestions([]);
-    // 置換後、カーソルを挿入した直後に戻す
-    requestAnimationFrame(() => {
-      if (el) {
-        el.focus();
-        el.selectionStart = el.selectionEnd = before.length;
-      }
-    });
-  };
-
-  const handleSubmit = () => {
-    // 空のまま押せたときは理由を出す。押せなくして黙って止めると理由が伝わらない。
-    if (!value.trim()) {
-      setError(requiredMessage);
-      return;
-    }
-    setError(null);
-    setSuggestions([]);
-    onSubmit();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter は改行。Ctrl/Cmd+Enter で送信。
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  return (
-    <div className="relative mt-2">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onClick={(e) => refreshSuggestions(e.currentTarget.value, e.currentTarget.selectionStart)}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        aria-autocomplete="list"
-        rows={2}
-        style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg)", color: "var(--text)", fontSize: 13, boxSizing: "border-box", resize: "vertical", fontFamily: "inherit", lineHeight: 1.6 }}
-      />
-      {suggestions.length > 0 && (
-        <ul role="listbox" style={{ position: "absolute", bottom: "100%", left: 0, margin: 0, padding: 0, listStyle: "none", background: "var(--bg-alt)", border: "1px solid var(--border)", borderRadius: 8, width: "100%", zIndex: 10 }}>
-          {suggestions.map((s) => (
-            <li key={s} role="option" aria-selected="false">
-              <button
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => handleSelect(s)}
-                style={{ width: "100%", minHeight: 44, padding: "6px 12px", cursor: "pointer", fontSize: 13, textAlign: "left", background: "transparent", color: "var(--text)", border: 0 }}
-              >
-                @{s}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {error && (
-        <p role="alert" aria-live="polite" className="text-danger text-xs mt-1 mx-0 mb-0">
-          {error}
-        </p>
-      )}
-      <div className="flex justify-end mt-2">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="tap-target py-2 px-4 border-0 rounded-md bg-accent text-bg font-bold text-sm cursor-pointer"
-        >
-          {sendLabel}
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default function TranslationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
   const t = useT();
-  const formatRelativeTime = useRelativeTime();
   const { lang } = useLang();
   const ui = translationUiText(lang);
   const [project, setProject] = useState<TranslationProject | null>(null);
@@ -762,13 +642,6 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
     }
   };
 
-  const renderCommentBody = (body: string) => {
-    const parts = body.split(/(@[\w]+)/g);
-    return parts.map((p, i) =>
-      p.startsWith("@") ? <strong key={i} className="text-accent">{p}</strong> : p
-    );
-  };
-
   const handleLoadUnitComments = async (unitId: string) => {
     if (expandedUnit === unitId) {
       setExpandedUnit(null);
@@ -803,14 +676,14 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="page page-wide">
         <SkeletonList count={4} />
       </div>
     );
   }
   if (loadError) {
     return (
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "48px 24px", textAlign: "center" }} role="alert">
+      <div className="page page-narrow text-center" role="alert">
         <p className="text-muted">{ui.loadError}</p>
         <Button variant="secondary" onClick={() => void loadProject()}>{ui.retry}</Button>
       </div>
@@ -836,7 +709,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   };
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-wide">
       <div className="mb-2">
         <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
           {t.backToTranslations}
@@ -916,7 +789,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
       </div>
 
       {project.membership_status === "pending" && !isOwner && (
-        <p role="status" style={{ padding: "10px 12px", border: "1px solid var(--state-warning)", borderRadius: 8, color: "var(--text-muted)", background: "rgba(245,158,11,0.10)" }}>
+        <p role="status" className="notice-warning">
           {ui.applicationPending}
         </p>
       )}
@@ -1001,7 +874,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-valuenow={progressPct}
             className="progress-track"
           >
-            <div style={{ width: `${progressPct}%`, height: "100%", background: "var(--accent)", borderRadius: 999, transition: "width 0.3s" }} />
+            <div className="progress-fill" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
         <div className="stat-item">
@@ -1026,17 +899,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             aria-controls={`translation-panel-${tabKey}`}
             tabIndex={tab === tabKey ? 0 : -1}
             onClick={() => changeTab(tabKey)}
-            style={{
-              minHeight: 44,
-              padding: "8px 18px",
-              background: "transparent",
-              border: "none",
-              borderBottom: tab === tabKey ? "2px solid var(--accent)" : "2px solid transparent",
-              color: tab === tabKey ? "var(--accent)" : "var(--text-muted)",
-              fontWeight: tab === tabKey ? 700 : 400,
-              cursor: "pointer",
-              fontSize: 14,
-            }}
+            className={`tab-underline${tab === tabKey ? " tab-underline-active" : ""}`}
           >
             {tabLabel(tabKey)}
           </button>
@@ -1092,7 +955,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                       <select
                         value={unitVerseId}
                         onChange={(e) => setUnitVerseId(e.target.value)}
-                        style={{ padding: "8px 10px", minHeight: 44, border: "1px solid var(--border)", borderRadius: 8, background: "var(--bg-alt)", color: "var(--text)", fontSize: 14 }}
+                        className="select-md"
                       >
                         <option value="">{t.addAllVerses}</option>
                         {unitVerses.map((v) => (
@@ -1131,11 +994,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
               />
             ) : (
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-                  gap: 8,
-                }}
+                className="chapter-grid"
               >
                 {(summary?.chapters ?? []).map((chNum) => (
                   (() => {
@@ -1147,17 +1006,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     key={chNum}
                     onClick={() => changeChapter(chNum)}
                     aria-label={`${t.chapterFmt(chNum)} ${ui.chapterProgress(done, total)}`}
-                    className="card-glow card-glow-interactive"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: 48,
-                      color: "var(--text)",
-                      fontWeight: 700,
-                      fontSize: 14,
-                    }}
+                    className="card-glow card-glow-interactive chapter-tile"
                   >
                     <span>{chNum}</span>
                     {total > 0 && <span className="text-xs text-muted font-bold">{ui.chapterProgress(done, total)}</span>}
@@ -1173,7 +1022,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
             <div>
               <button
                 onClick={() => changeChapter(null)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 13, padding: "0 0 12px", display: "block" }}
+                className="text-button block pb-3 text-sm"
               >
                 {t.backToChapters}
               </button>
@@ -1223,12 +1072,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                 <div
                   key={unit.id}
                   id={`unit-${unit.id}`}
-                  className="card-glow"
-                  style={{
-                    overflow: "hidden",
-                    boxShadow: scrollTargetUnit === unit.id ? "0 0 0 2px var(--accent)" : undefined,
-                    transition: "box-shadow 0.3s",
-                  }}
+                  className={`card-glow overflow-hidden${scrollTargetUnit === unit.id ? " is-scroll-target" : ""}`}
                 >
                   <div className="py-3 px-4">
                     <div className="flex items-center gap-3 flex-wrap mb-2">
@@ -1260,7 +1104,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <div className="compare-grid">
                       <div className="sub-card">
                         <div className="col-label">{t.sourceText}</div>
-                        <p style={{ margin: "6px 0 0", fontSize: 15, color: "var(--text)", fontStyle: "italic", lineHeight: 1.7, fontFamily: '"Noto Serif JP", serif' }}>
+                        <p className="source-text">
                           {unit.verse_text}
                         </p>
                       </div>
@@ -1274,7 +1118,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                             onChange={(e) => setUnitDrafts((prev) => ({ ...prev, [unit.id]: e.target.value }))}
                             rows={5}
                             placeholder={t.translationPlaceholder}
-                            style={{ flex: 1, width: "100%", minHeight: 96, marginTop: 6, padding: 0, border: "none", background: "transparent", color: "var(--text)", fontSize: 14, resize: "vertical", boxSizing: "border-box", fontFamily: "inherit", lineHeight: 1.6, outline: "none" }}
+                            className="input-bare flex-1 mt-2 min-h-24"
                           />
                         ) : unit.body ? (
                           <p className="mt-2 mx-0 mb-0 text-sm leading-base">{unit.body}</p>
@@ -1289,7 +1133,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
 
                     {canEdit && (
                       // 元テキスト側の下に担当者/ステータス、訳文側の下に保存ボタン（画像の構成に合わせる）。
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginTop: 12 }}>
+                      <div className="compare-grid mt-3">
                         <div className="flex gap-3 flex-wrap items-end">
                           {isOwner && (
                             <label className="flex flex-col min-w-0">
@@ -1298,7 +1142,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                                 value={unit.assigned_to ?? ""}
                                 onChange={(e) => handleAssignUnit(unit.id, e.target.value)}
                                 disabled={actionBusy === `assign-${unit.id}`}
-                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                                className="select-sm"
                               >
                                 <option value="">{t.noAssignee}</option>
                                 {members.filter((m) => m.status === "approved").map((m) => (
@@ -1314,7 +1158,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                                 value={unit.status}
                                 onChange={(e) => handleUnitStatusChange(unit.id, e.target.value as TranslationUnit["status"])}
                                 disabled={actionBusy === `status-${unit.id}`}
-                                style={{ padding: "4px 8px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg-alt)", color: "var(--text)", fontSize: 12 }}
+                                className="select-sm"
                               >
                                 <option value="todo">{t.statusPending}</option>
                                 <option value="in_progress">{t.statusInProgress}</option>
@@ -1355,46 +1199,19 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     })()}
                   </div>
 
-                  <div className="border-t border-border py-2 px-4">
-                    <button
-                      onClick={() => handleLoadUnitComments(unit.id)}
-                      aria-expanded={expandedUnit === unit.id}
-                      aria-controls={`unit-discussion-${unit.id}`}
-                      style={{ minHeight: 44, background: "transparent", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 12, padding: "4px 0" }}
-                    >
-                      {expandedUnit === unit.id ? t.closeDiscussion : t.openDiscussion}
-                      {unitComments[unit.id]?.length ? ` (${unitComments[unit.id].length})` : ""}
-                    </button>
-                    {expandedUnit === unit.id && (
-                      <div id={`unit-discussion-${unit.id}`} className="mt-2">
-                        {unitCommentsLoading === unit.id && <p className="text-muted text-xs">{t.loading}</p>}
-                        {unitCommentErrors[unit.id] && <p role="alert" className="text-xs text-danger">{unitCommentErrors[unit.id]}</p>}
-                        {unitCommentsLoading !== unit.id && !unitCommentErrors[unit.id] && (unitComments[unit.id] ?? []).length === 0 && (
-                          <p className="text-xs text-faint">{ui.noDiscussion}</p>
-                        )}
-                        {(unitComments[unit.id] ?? []).map((c) => (
-                          <div key={c.id} style={{ padding: "6px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                            <span className="font-bold">{c.username}</span>
-                            <span className="text-faint text-xs ml-2">{formatRelativeTime(c.created_at)}</span>
-                            <p style={{ margin: "2px 0 0", color: c.is_deleted ? "var(--text-faint)" : "inherit" }}>
-                              {c.is_deleted ? c.display_body : renderCommentBody(c.display_body)}
-                            </p>
-                          </div>
-                        ))}
-                        {isApprovedMember && (
-                          <MentionInput
-                            value={unitCommentBody[unit.id] ?? ""}
-                            onChange={(v) => setUnitCommentBody((prev) => ({ ...prev, [unit.id]: v }))}
-                            onSubmit={() => handlePostUnitComment(unit.id)}
-                            members={members.filter((m) => m.status === "approved").map((m) => m.username)}
-                            placeholder={ui.mentionPlaceholder}
-                            sendLabel={t.sendComment}
-                            requiredMessage={t.missingFields([t.fieldBody])}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  <UnitDiscussion
+                    unitId={unit.id}
+                    open={expandedUnit === unit.id}
+                    onToggle={() => void handleLoadUnitComments(unit.id)}
+                    comments={unitComments[unit.id]}
+                    loading={unitCommentsLoading === unit.id}
+                    error={unitCommentErrors[unit.id] || undefined}
+                    canPost={isApprovedMember}
+                    mentionable={members.filter((m) => m.status === "approved").map((m) => m.username)}
+                    draft={unitCommentBody[unit.id] ?? ""}
+                    onDraftChange={(value) => setUnitCommentBody((prev) => ({ ...prev, [unit.id]: value }))}
+                    onPost={() => void handlePostUnitComment(unit.id)}
+                  />
                 </div>
               ))}
             </div>

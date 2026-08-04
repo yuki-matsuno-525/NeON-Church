@@ -138,7 +138,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
       onSubmit={handleSubmit}
       className="border border-border rounded-md py-4 px-4 mb-6 bg-bg-alt"
     >
-      <label htmlFor={titleId} style={fieldLabelStyle}>{t.fieldTitle}</label>
+      <label htmlFor={titleId} className="form-label">{t.fieldTitle}</label>
       <input
         id={titleId}
         type="text"
@@ -148,20 +148,9 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         placeholder={t.qaInputTitlePlaceholder}
         aria-invalid={!title.trim() && !!error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        style={{
-          width: "100%",
-          padding: "8px 10px",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontSize: 14,
-          fontFamily: "inherit",
-          boxSizing: "border-box",
-          marginBottom: 8,
-        }}
+        className="form-control mb-2 text-sm"
       />
-      <label htmlFor={bodyId} style={fieldLabelStyle}>{t.fieldBody}</label>
+      <label htmlFor={bodyId} className="form-label">{t.fieldBody}</label>
       <textarea
         id={bodyId}
         value={body}
@@ -171,18 +160,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
         maxLength={5000}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        style={{
-          width: "100%",
-          padding: "8px 10px",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontSize: 14,
-          resize: "vertical",
-          fontFamily: "inherit",
-          boxSizing: "border-box",
-        }}
+        className="form-control resize-y text-sm"
       />
 
       {/* 場所選択。読書ページから開いたときは、その箇所で固定なので選ばせない。 */}
@@ -261,7 +239,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
       {/* タグ選択 */}
       {tags.length > 0 && (
         <fieldset className="border-0 p-0 mt-3 mx-0 mb-0">
-          <legend style={fieldLabelStyle}>{t.allTags}</legend>
+          <legend className="form-label">{t.allTags}</legend>
           <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = tagIds.includes(tag.id);
@@ -271,17 +249,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
                 type="button"
                 aria-pressed={active}
                 onClick={() => toggleTag(tag.id)}
-                style={{
-                  fontSize: 12,
-                  minHeight: 44,
-                  padding: "3px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--border)",
-                  cursor: "pointer",
-                  background: active ? "var(--accent)" : "transparent",
-                  color: active ? "var(--accent-text)" : "var(--text-muted)",
-                  fontFamily: "inherit",
-                }}
+                className={`pill-toggle${active ? " pill-toggle-on" : ""}`}
               >
                 {t.tagNames[tag.name] ?? tag.name}
               </button>
@@ -296,7 +264,7 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
           id={errorId}
           role="alert"
           aria-live="polite"
-          style={{ color: "#ef4444", fontSize: 12, margin: "6px 0 0" }}
+          className="mt-2 mb-0 text-xs text-danger"
         >
           {error}
         </p>
@@ -323,10 +291,3 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
   );
 }
 
-const fieldLabelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "var(--text-muted)",
-  margin: "0 0 5px",
-};

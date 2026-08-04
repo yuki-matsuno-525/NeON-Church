@@ -1,12 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { useT } from "@/lib/i18n";
+import { getT } from "@/lib/i18nServer";
 
-export function Footer() {
-  const t = useT();
+/**
+ * 画面の一番下に出す案内。
+ *
+ * 押したり入力したりするところが無いので、サーバー側で組み立てて返す。
+ * ここに置く 7 つの文言は、ブラウザへ送られなくなる。
+ */
+export async function Footer() {
+  const t = await getT();
 
-  const links: { label: string; href: string; external?: boolean }[] = [
+  const links = [
     { label: t.footerAbout, href: "/about" },
     { label: t.footerGuidelines, href: "/guidelines" },
     { label: t.footerLicenses, href: "/licenses" },
@@ -16,62 +20,19 @@ export function Footer() {
   ];
 
   return (
-    <footer
-      role="contentinfo"
-      style={{
-        position: "relative",
-        zIndex: 2,
-        padding: "24px 16px 32px",
-        borderTop: "1px solid var(--border)",
-        background: "rgba(8, 4, 24, 0.55)",
-        color: "var(--text-muted)",
-        fontSize: 13,
-      }}
-    >
-      <nav
-        aria-label={t.footerNavLabel}
-        style={{
-          maxWidth: 960,
-          margin: "0 auto",
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "8px 18px",
-          justifyContent: "center",
-        }}
-      >
-        {links.map((link) =>
-          link.external ? (
-            <a
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted no-underline tap-target inline-flex items-center"
-            >
-              {link.label}
-            </a>
-          ) : (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-muted no-underline tap-target inline-flex items-center"
-            >
-              {link.label}
-            </Link>
-          )
-        )}
+    <footer role="contentinfo" className="site-footer">
+      <nav aria-label={t.footerNavLabel} className="site-footer-nav">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="text-muted no-underline tap-target inline-flex items-center"
+          >
+            {link.label}
+          </Link>
+        ))}
       </nav>
-      <p
-        style={{
-          maxWidth: 960,
-          margin: "16px auto 0",
-          textAlign: "center",
-          fontSize: 12,
-          color: "var(--text-faint)",
-        }}
-      >
-        {t.footerBetaNote}
-      </p>
+      <p className="site-footer-note">{t.footerBetaNote}</p>
     </footer>
   );
 }

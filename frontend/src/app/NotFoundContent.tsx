@@ -23,13 +23,13 @@ export function NotFoundContent() {
     <div
       className="flex flex-col items-center justify-center min-h-page py-8 px-6 text-center gap-4"
     >
-      <p aria-hidden="true" style={{ fontSize: 64, fontWeight: 700, color: "var(--text-faint)", opacity: 0.55, margin: 0, lineHeight: 1, fontFamily: '"Noto Serif JP", serif' }}>
+      <p aria-hidden="true" className="notfound-code">
         404
       </p>
       <h1 className="text-lg font-bold text-body m-0">
         {copy.title}
       </h1>
-      <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0, maxWidth: 360 }}>
+      <p className="m-0 max-w-90 text-sm text-muted">
         {copy.description}
       </p>
       <div className="flex gap-3 flex-wrap justify-center mt-2">

@@ -347,18 +347,7 @@ export default function ChapterPage() {
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
+      <div className="reader-sticky-header">
           <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
             <Link href="/read" className="text-muted no-underline">
               {t.bookList}
@@ -379,16 +368,7 @@ export default function ChapterPage() {
                   localStorage.setItem("bible-translation", e.target.value);
                   setTranslation(e.target.value);
                 }}
-                style={{
-                  fontSize: 12,
-                  color: "var(--text)",
-                  background: "var(--bg)",
-                  cursor: "pointer",
-                  padding: "4px 10px",
-                  minHeight: 44,
-                  border: "1px solid var(--border)",
-                  borderRadius: 12,
-                }}
+                className="select-sm bg-bg text-body"
               >
                 {translationOptions.map((trans) => (
                   <option key={trans.id} value={trans.id}>{trans.label}</option>
@@ -438,10 +418,9 @@ export default function ChapterPage() {
 
       <div
         className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}
-        style={{ display: "flex" }}
       >
         <div
-          className="reader-main flex-1 min-w-0 py-8 px-8 overflow-y-auto"
+          className="reader-main"
           
         >
 
@@ -466,25 +445,14 @@ export default function ChapterPage() {
             <button
               type="button"
               onClick={bulk.start}
-              style={{
-                marginLeft: "auto",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
-                background: "transparent",
-                color: "var(--text-muted)",
-                fontSize: 12,
-                padding: "6px 12px",
-                minHeight: 36,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
+              className="day-toggle"
             >
               {t.bulkBookmarkStart}
             </button>
           )}
         </div>
 
-        <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+        <hr className="section-divider" />
 
         <VerseList
           verses={displayVerses}
@@ -548,24 +516,7 @@ export default function ChapterPage() {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t.backToTop}
-          style={{
-            position: "fixed",
-            bottom: selectedVerseId ? "calc(70vh + 12px)" : 24,
-            right: 24,
-            background: "var(--accent)",
-            color: "var(--accent-text)",
-            border: "none",
-            borderRadius: "50%",
-            width: 44,
-            height: 44,
-            cursor: "pointer",
-            fontSize: 18,
-            zIndex: 30,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-          }}
+          className={`fab${selectedVerseId ? " fab-raised" : ""}`}
         >
           ↑
         </button>
@@ -578,30 +529,7 @@ export default function ChapterPage() {
               href={`/${slug}/${nav.prev}`}
               title={t.chapterFmt(nav.prev)}
               aria-label={`${t.prevChapter} (${nav.prev})`}
-              className="chapter-nav-prev"
-              style={{
-                position: "fixed",
-                left: "var(--sidebar-width)",
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderLeft: "none",
-                borderRadius: "0 8px 8px 0",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+              className="chapter-nav chapter-nav-prev"
             >
               ‹
             </Link>
@@ -612,30 +540,7 @@ export default function ChapterPage() {
               href={`/${slug}/${nav.next}`}
               title={t.chapterFmt(nav.next)}
               aria-label={`${t.nextChapter} (${nav.next})`}
-              className="chapter-nav-next"
-              style={{
-                position: "fixed",
-                right: 0,
-                top: "50%",
-                transform: "translateY(-50%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "18px 10px",
-                background: "var(--bg-alt)",
-                border: "1px solid var(--border)",
-                borderRight: "none",
-                borderRadius: "8px 0 0 8px",
-                color: "var(--text)",
-                textDecoration: "none",
-                fontSize: 20,
-                opacity: 0.75,
-                zIndex: 20,
-                transition: "opacity 0.15s",
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0.75")}
+              className="chapter-nav chapter-nav-next"
             >
               ›
             </Link>

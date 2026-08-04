@@ -87,24 +87,14 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       <p className="text-muted">{error}</p>
       <div className="flex justify-center gap-3 flex-wrap">
         <Button variant="secondary" onClick={() => void load()}>{ui.retry}</Button>
-        <Link href="/translations" style={{ color: "var(--accent)", alignSelf: "center" }}>{t.backToProjectList}</Link>
+        <Link href="/translations" className="text-accent self-center">{t.backToProjectList}</Link>
       </div>
     </div>
   );
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header" style={{
-        position: "sticky",
-        top: "var(--navbar-height)",
-        zIndex: 10,
-        display: "flex",
-        alignItems: "center",
-        padding: "8px 32px",
-        background: "var(--glass-nav)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid var(--border)",
-      }}>
+      <div className="reader-sticky-header">
         <p className="m-0 text-sm font-normal text-muted">
           <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}
@@ -131,47 +121,13 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
             {t.selectChapterHeading}
           </h2>
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
-              gap: "var(--space-2)",
-              marginBottom: 40,
-            }}
+            className="chapter-board"
           >
             {chapterNums.map((chNum) => (
               <Link
                 key={chNum}
                 href={`/translations/${id}/read/${chNum}`}
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: 44,
-                  minWidth: 44,
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-md)",
-                  textDecoration: "none",
-                  color: "var(--text-muted)",
-                  fontWeight: 700,
-                  fontSize: "var(--font-size-sm)",
-                  background: "var(--bg-alt)",
-                  transition: "border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out)",
-                }}
-                onMouseEnter={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = "var(--accent-tint)";
-                  el.style.color = "var(--accent)";
-                  el.style.borderColor = "var(--accent)";
-                  el.style.boxShadow = "var(--shadow-glow)";
-                }}
-                onMouseLeave={(e) => {
-                  const el = e.currentTarget as HTMLElement;
-                  el.style.background = "var(--bg-alt)";
-                  el.style.color = "var(--text-muted)";
-                  el.style.borderColor = "var(--border)";
-                  el.style.boxShadow = "none";
-                }}
+                className="chapter-cell"
               >
                 {chNum}
               </Link>
@@ -183,7 +139,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
       {project?.source_book && (
         <>
           {versionCommentsError && (
-            <div role="alert" style={{ padding: 12, marginBottom: 12, border: "1px solid var(--state-warning)", borderRadius: 8 }}>
+            <div role="alert" className="alert-box mb-3">
               <p className="mt-0 mb-2 text-sm text-muted">{ui.relatedCommentsLoadError}</p>
               <Button variant="secondary" size="sm" onClick={() => void loadVersionComments()}>
                 {ui.retryRelatedComments}

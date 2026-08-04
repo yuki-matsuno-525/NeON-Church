@@ -917,10 +917,81 @@ select:focus-visible {
   background: var(--bg-hover);
 }
 
-/* ハンバーガーボタン: デスクトップでは非表示
-   （Navbar 側のインライン style に勝たせるため !important が必要） */
+/* ハンバーガーボタン: 画面が広いときは出さない。
+   出す・出さないをこのクラスだけが決めるようにしたので、!important は要らない
+   （以前は要素側にも display の指定があり、それに勝つ必要があった）。 */
 .hamburger-btn {
-  display: none !important;
+  display: none;
+}
+
+/* ----- 章を送る左右のつまみ -----
+   画面の左右の端に貼り付く「‹ ›」。以前は 2 つの読書画面がそれぞれ
+   同じ指定を要素側に書き、さらに色の変化を JavaScript のマウス操作で
+   付け外ししていた。ここにまとめ、ホバーは CSS に任せる。 */
+.chapter-nav {
+  position: fixed;
+  top: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.75;
+  transform: translateY(-50%);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.chapter-nav:hover,
+.chapter-nav:focus-visible {
+  opacity: 1;
+}
+/* 前の章。サイドバーの右隣に置く（スマホではサイドバーが画面外なので 0 に戻す）。 */
+.chapter-nav-prev {
+  left: var(--sidebar-width);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+/* 次の章。画面の右端。 */
+.chapter-nav-next {
+  right: 0;
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* ----- 読書画面の上に貼り付く帯 -----
+   書名と章の送り、訳の切り替えが乗る。以前は見た目を要素側に書いていたため、
+   スマホ用の指定が勝てず !important が必要だった。 */
+.reader-sticky-header {
+  position: sticky;
+  top: var(--navbar-height);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass-nav);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ----- 読書画面の骨格 -----
+   本文（reader-main）と、節を選んだときに出るコメント欄（reader-panel）を横に並べる。
+   以前この 3 つの見た目は要素側の Tailwind だけが持っていた。そのためスマホ用の
+   指定（下のメディアクエリ）が勝てず、すべてに !important が必要だった。
+   ここに集約したので、スマホ側は普通に上書きできる。 */
+.reader-wrapper {
+  display: flex;
+}
+.reader-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  padding: var(--spacing-8);
+  overflow-y: auto;
 }
 
 /* ナビバー認証アイテム: モバイルでは非表示 */
@@ -985,7 +1056,7 @@ select:focus-visible {
   }
 
   .hamburger-btn {
-    display: flex !important;
+    display: flex;
   }
 
   .nav-desktop-only {
@@ -993,7 +1064,7 @@ select:focus-visible {
   }
 
   .sidebar-mobile-auth {
-    display: block !important;
+    display: block;
   }
 
   .sidebar {
@@ -1020,20 +1091,20 @@ select:focus-visible {
   /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
      本文の文脈 (前後の節) を失わずにコメントを書ける。 */
   .reader-wrapper.has-verse .reader-main {
-    display: block !important;
+    display: block;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
-    padding-bottom: 70dvh !important;
+    padding-bottom: 70dvh;
   }
   .reader-wrapper.has-verse .reader-panel {
-    position: fixed !important;
-    top: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    height: 70dvh !important;
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 70dvh;
     z-index: 50;
-    display: flex !important;
-    flex-direction: column !important;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
@@ -1049,11 +1120,11 @@ select:focus-visible {
     border-top: 1px solid var(--border) !important;
   }
   .reader-wrapper.has-verse .resize-handle {
-    display: none !important;
+    display: none;
   }
 
   .reader-main {
-    padding: 16px !important;
+    padding: var(--spacing-4);
   }
 
   /* 検索バーを2段目に折り返すぶん、ナビバーを2段の高さにする
@@ -1088,10 +1159,10 @@ select:focus-visible {
   }
 
   .reader-sticky-header {
-    position: static !important;
-    padding: 8px 16px !important;
+    position: static;
+    padding: 8px 16px;
     flex-direction: column;
-    align-items: stretch !important;
+    align-items: stretch;
     gap: 8px;
   }
 
@@ -1120,7 +1191,7 @@ select:focus-visible {
 
   /* モバイルではサイドバーが画面外のため、前章ナビを画面左端に戻す */
   .chapter-nav-prev {
-    left: 0 !important;
+    left: 0;
   }
 
 }
@@ -1194,14 +1265,6 @@ textarea::placeholder {
   background: var(--text-faint);
 }
 
-/* iOS Safari prevents focus zoom only when form controls use at least 16px. */
-@media (max-width: 768px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
-}
 
 /* ----- 翻訳プロジェクトの詳細で使う部品 -----
    以前は page.tsx の末尾に React の style オブジェクトとして置かれていた。
@@ -1330,4 +1393,811 @@ textarea::placeholder {
   color: var(--text);
   font: inherit;
   font-size: 13px;
+}
+
+/* 進捗バーの中身。幅だけを画面側から渡す。 */
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+/* 「確認中です」のような、注意を促す一言。 */
+.notice-warning {
+  padding: 10px 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.10);
+  color: var(--text-muted);
+}
+
+/* 行の中に置く小さなプルダウン。form-control より詰めてある。 */
+.select-sm {
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+}
+/* 一回り大きい版。行に単独で置くとき用。 */
+.select-md {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+/* 原文の一節。読み比べるときに本文と区別が付くよう、明朝の斜体にする。 */
+.source-text {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-base);
+  font-style: italic;
+  line-height: var(--leading-reading);
+}
+
+/* 枠も背景も持たない入力欄。カードの中に直接書き込む形にしたいとき用。 */
+.input-bare {
+  width: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  resize: vertical;
+}
+
+/* 見た目を持たない、文字だけのボタン（「コメントを開く」など）。 */
+.text-button {
+  min-height: 44px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* @メンションの候補一覧。入力欄の上に浮かせる。 */
+.mention-list {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+.mention-option {
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.mention-option:hover,
+.mention-option:focus-visible {
+  background: var(--bg-hover);
+}
+
+/* 作業メモの 1 件。下線で区切る。 */
+.discussion-row {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+/* 探している場所へ飛んだとき、その項目を一時的に光らせる。 */
+.is-scroll-target {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* 章を選ぶタイルを敷き詰める。入る幅だけ横に並べ、あふれたら折り返す。 */
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--spacing-2);
+}
+/* その 1 枚。章番号の下に「3/8 完了」を重ねるので 2 段にする。
+   .chapter-button（44px 四方の素っ気ない版）とは別物。 */
+.chapter-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* ----- 押して選ぶ丸いラベル（主題・絞り込み） -----
+   選ばれているときだけ色が変わる。以前は 3 か所が同じ条件分岐を
+   React の style で書いていた。付け外しはクラス名で行う。 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.chip-sm {
+  padding: 4px 12px;
+  font-size: var(--text-xs);
+}
+.chip-active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 一覧の絞り込みでは、選んだものを太字にして目立たせる。 */
+.chip-bold.chip-active {
+  font-weight: 700;
+}
+
+/* 入力欄の上に置く見出し。太めで、入力欄との間を少し空ける。 */
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* 文字だけのリンク風ボタン（「もう一度試す」など）。 */
+.link-button {
+  min-height: 44px;
+  padding: 8px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 枠線だけの控えめなボタン。btn-ghost より詰めてある。 */
+.outline-button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+/* 消す操作など、目立たせたくないもの。 */
+.outline-button-muted {
+  color: var(--text-muted);
+}
+
+/* 記事を書く画面の、本文と下書き表示を並べる枠。 */
+.editor-pane {
+  min-height: 480px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-reading);
+  resize: vertical;
+}
+.editor-preview {
+  flex: 1;
+  min-height: 480px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+@media (max-width: 768px) {
+  .editor-pane,
+  .editor-preview {
+    min-height: 360px;
+  }
+}
+
+/* 記事を書く画面の外枠。左に本文、右に引用パネルを置くので広く取る。 */
+.page-editor {
+  max-width: 1400px;
+  padding: 24px 16px 48px;
+}
+/* 本文と引用パネルの 2 列。引用パネルは幅を固定寄りにする。 */
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  gap: 20px;
+  align-items: start;
+}
+/* 引用パネルは、本文を長くスクロールしても付いてくる。 */
+.editor-aside {
+  position: sticky;
+  top: calc(var(--navbar-height) + 16px);
+  height: min(720px, calc(100vh - var(--navbar-height) - 32px));
+}
+
+/* ----- 一覧の右上に出す「新規作成」 -----
+   articles / plans が同じ形をそれぞれ書いていた。塗り版と枠だけの版がある。 */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.cta-button-outline {
+  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
+}
+
+/* ----- 一覧に並ぶカードの中身 -----
+   題と要約。articles / plans / translations が同じ指定を書き写していた。 */
+.card-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+.card-summary {
+  margin: 0 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-base);
+}
+
+/* 検索でひっかかった言葉。本文の中で目立たせる。 */
+.search-mark {
+  padding: 0 2px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* 検索結果の 1 件を包む枠。 */
+.result-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 本文と次の区画のあいだに引く太めの線。読書画面とコメント欄で使う。 */
+.section-divider {
+  margin-bottom: 24px;
+  border: none;
+  border-top: 2px solid var(--border);
+}
+
+/* 記事やプランの題。一覧のカードより大きく、明朝で見せる。 */
+.page-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 補足の覚え書きを囲む枠。 */
+.note-box {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* 読み終わった日に付ける印。押すたびに入り切りする。 */
+.day-toggle {
+  min-height: 44px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.day-toggle-done {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.day-toggle:disabled {
+  cursor: default;
+}
+
+/* 下書きなど、公開されていないことを示すバッジ。 */
+.badge-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+/* ----- 読書画面の 1 節 -----
+   聖書本文と翻訳プロジェクトの読書画面が、同じ見た目を別々に書いていた。
+   選んでいるときだけ色が変わるので、その分だけクラスの付け外しで表す。 */
+.verse-row {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 2px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-margin-top: calc(var(--navbar-height) + 56px);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+/* マウスを乗せたときと、キーボードで移動してきたときに同じ手応えを返す。
+   以前は JavaScript で背景色を付け外ししていた。 */
+.verse-row:hover,
+.verse-row:focus-visible {
+  background: var(--bg-hover);
+}
+.verse-row-selected,
+.verse-row-selected:hover,
+.verse-row-selected:focus-visible {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 本文そのもの。詩文（エノク書など）の節内改行を残す。 */
+.verse-text {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+/* 節番号。本文より小さく、控えめな色で上付きにする。 */
+.verse-number {
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: super;
+}
+.verse-row-selected .verse-number {
+  color: var(--accent);
+}
+/* まとめて選ぶときに、番号の前へ出す印。 */
+.verse-pick-mark {
+  display: inline-block;
+  width: 16px;
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+.verse-pick-mark-on {
+  color: var(--accent);
+}
+
+/* うまくいかなかったことを、その場で伝える小さな枠。 */
+.alert-box {
+  padding: 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+}
+
+/* 書を並べる敷き詰め。/read で使う。 */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+}
+/* その 1 枚の題。 */
+.book-tile-title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+/* 未読を示す小さな点。 */
+.unread-dot {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 通知 1 件。左端の縦線で未読かどうかを示す。 */
+.notification-row {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.notification-row-unread {
+  border-left-color: var(--accent);
+  background: var(--bg-hover);
+  cursor: pointer;
+}
+.notification-row-busy {
+  opacity: 0.7;
+}
+
+/* 引用パネルで、選んでいる範囲に入っている節。 */
+.citation-verse {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+.citation-verse-picked {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* 引用パネルなど、狭いところに置く小さめのボタン。 */
+.small-button {
+  min-height: 44px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+/* 一回り大きい版。文字色も本文と同じにする。 */
+.small-button-strong {
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+/* 押すと決まる版（挿入など）。 */
+.small-button-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.small-button-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 一覧から 1 つ選ぶための行。下線で区切る。 */
+.row-button {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 6px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.row-button:hover,
+.row-button:focus-visible {
+  background: var(--bg-hover);
+}
+
+/* 「戻る」など、控えめな文字だけのボタン。 */
+.back-button {
+  min-height: 44px;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* ----- 押して切り替える小さな丸ボタン -----
+   並び順や絞り込みのタグに使う。選ばれているものだけ塗りつぶす。
+   chip（枠の色が変わるだけ）より強い見せ方。 */
+.pill-toggle {
+  min-height: 44px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.pill-toggle-on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* 選んだ章を並べる小さな札。右端に外すボタンが付く。 */
+.reading-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+/* その「×」。押せる大きさは確保しつつ、見た目は文字だけ。 */
+.icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* 縦に長くなりすぎない一覧。あふれたら中でスクロールする。 */
+.scroll-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* 「章を足す」など、まだ中身が無いことを示す破線のボタン。 */
+.dashed-button {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* ----- 章番号を敷き詰めるボード -----
+   書のページで「何章を読むか」を選ぶところ。1 マス 44px 角。 */
+.chapter-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: 40px;
+}
+.chapter-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+/* マウスを乗せたときと、キーボードで移動してきたときに光らせる。
+   以前は JavaScript で 4 種類の値を付け外ししていた。 */
+.chapter-cell:hover,
+.chapter-cell:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.chapter-cell:hover {
+  box-shadow: var(--shadow-glow);
+}
+/* いま開いている章。 */
+.chapter-cell-current {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 読んだ章に付ける小さな点。 */
+.chapter-cell-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 画面の右下に浮かせる丸いボタン。 */
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 18px;
+  cursor: pointer;
+}
+/* コメント欄が下から出ているときは、その上へ避ける。 */
+.fab-raised {
+  bottom: calc(70vh + 12px);
+}
+
+/* コメント本文。改行をそのまま残す。 */
+.comment-body {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  white-space: pre-wrap;
+}
+.comment-body-deleted {
+  color: var(--text-faint);
+}
+
+/* 記事の中の引用。左に線を引いて本文と区別する。 */
+.article-quote {
+  margin: 0 0 16px;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+/* 記事の中の短いコード。 */
+.article-code {
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.9em;
+}
+
+/* 見つからなかったページの大きな「404」。 */
+.notfound-code {
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--font-serif);
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+/* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */
+.tab-bar {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+/* 一覧の中に並べる、素っ気ない箱。プロフィールの記事とコメントで使う。 */
+.plain-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 入力に不備があるとき、枠を赤くする。 */
+.form-control-invalid {
+  border-color: var(--state-danger);
+}
+
+/* 回答 1 件。ベストアンサーに選ばれたものだけ枠と背景を変える。 */
+.answer-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-alt);
+}
+.answer-card-best {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* 解決済み / 未解決 を示すバッジ。 */
+.badge-answered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--state-success);
+}
+.badge-unanswered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--state-warning);
+}
+
+/* ----- 画面の一番下の帯 ----- */
+.site-footer {
+  position: relative;
+  z-index: 2;
+  padding: 24px 16px 32px;
+  border-top: 1px solid var(--border);
+  background: rgba(8, 4, 24, 0.55);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.site-footer-note {
+  max-width: 960px;
+  margin: 16px auto 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+/* 上のバーの下、サイドバーと本文を横に並べるところ。 */
+.app-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
 }

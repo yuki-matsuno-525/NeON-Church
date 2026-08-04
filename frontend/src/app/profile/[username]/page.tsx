@@ -131,37 +131,13 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       ]
     : [];
 
-  const tabStyle = (tab: Tab): React.CSSProperties => ({
-    padding: "8px 16px",
-    background: "transparent",
-    border: "none",
-    borderBottom: activeTab === tab ? "2px solid var(--accent)" : "2px solid transparent",
-    color: activeTab === tab ? "var(--accent)" : "var(--text-muted)",
-    fontWeight: activeTab === tab ? 700 : 400,
-    cursor: "pointer",
-    fontSize: 14,
-    fontFamily: "inherit",
-  });
-
-  const cardStyle: React.CSSProperties = {
-    background: "var(--bg-alt)",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)",
-    padding: "12px 14px",
-  };
-
   return (
     <div className="page page-narrow">
       {/* プロフィールヘッダー */}
       <div className="flex items-center gap-4 mb-6">
-        <div style={{
-          width: 64, height: 64, borderRadius: "50%",
-          background: "var(--bg-alt)", border: "2px solid var(--border)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 24, color: "var(--text-muted)",
-        }}>
+        <span className="avatar-circle avatar-circle-lg">
           {profile.username[0].toUpperCase()}
-        </div>
+        </span>
         <div>
           <h1 className="text-lg font-bold mt-0 mx-0 mb-1">{profile.username}</h1>
           <p className="text-xs text-faint m-0">
@@ -177,16 +153,16 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
       )}
 
       {/* タブ。お気に入りタブは visibility=public のときのみ表示 */}
-      <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} style={{ borderBottom: "1px solid var(--border)", marginBottom: 20, display: "flex", overflowX: "auto" }}>
+      <div role="tablist" aria-label={profile.username} onKeyDown={handleHorizontalTabListKeyDown} className="tab-bar">
         {profile.bookmarks_visibility === "public" && (
-          <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} style={tabStyle("favorites")} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
+          <button id="public-profile-tab-favorites" role="tab" aria-controls="public-profile-panel-favorites" tabIndex={activeTab === "favorites" ? 0 : -1} className={`tab-underline${activeTab === "favorites" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("favorites")} aria-selected={activeTab === "favorites"}>
             {t.tabBookmarks} ({bookmarkList.counts?.all ?? 0})
           </button>
         )}
-        <button id="public-profile-tab-comments" role="tab" aria-controls="public-profile-panel-comments" tabIndex={activeTab === "comments" ? 0 : -1} style={tabStyle("comments")} onClick={() => setActiveTab("comments")} aria-selected={activeTab === "comments"}>
+        <button id="public-profile-tab-comments" role="tab" aria-controls="public-profile-panel-comments" tabIndex={activeTab === "comments" ? 0 : -1} className={`tab-underline${activeTab === "comments" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("comments")} aria-selected={activeTab === "comments"}>
           {t.tabComments} ({commentList.total})
         </button>
-        <button id="public-profile-tab-articles" role="tab" aria-controls="public-profile-panel-articles" tabIndex={activeTab === "articles" ? 0 : -1} style={tabStyle("articles")} onClick={() => setActiveTab("articles")} aria-selected={activeTab === "articles"}>
+        <button id="public-profile-tab-articles" role="tab" aria-controls="public-profile-panel-articles" tabIndex={activeTab === "articles" ? 0 : -1} className={`tab-underline${activeTab === "articles" ? " tab-underline-active" : ""}`} onClick={() => setActiveTab("articles")} aria-selected={activeTab === "articles"}>
           {t.articles} ({articleList.total})
         </button>
       </div>
@@ -195,7 +171,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         <div id="public-profile-panel-articles" role="tabpanel" aria-labelledby="public-profile-tab-articles" className="flex flex-col gap-3">
           <AsyncPagedList list={articleList} empty={<EmptyState title={t.noArticles} description={t.emptyArticlesDesc} />}>
             {articleList.items.map((article) => (
-              <Link key={article.id} href={`/articles/${article.id}`} style={{ ...cardStyle, display: "block", textDecoration: "none" }}>
+              <Link key={article.id} href={`/articles/${article.id}`} className="plain-card block no-underline">
                 <p className="text-sm font-bold mt-0 mx-0 mb-1">{article.title}</p>
                 <p className="m-0 text-sm text-muted leading-base">
                   {article.summary}
@@ -226,7 +202,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ username
         <AsyncPagedList list={commentList} emptyText={t.noMyComments}>
           <div className="flex flex-col gap-3">
             {commentList.items.map((c) => (
-              <div key={c.id} style={cardStyle}>
+              <div key={c.id} className="plain-card">
                 <p className="m-0 text-sm text-body leading-base">
                   <span className="whitespace-pre-wrap">{c.body}</span>
                 </p>

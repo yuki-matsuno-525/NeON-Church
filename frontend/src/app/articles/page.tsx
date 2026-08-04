@@ -104,9 +104,9 @@ export default function ArticlesPage() {
         description={t.articlesDesc}
         action={
           user ? (
-            <Link href="/articles/new" style={newButtonStyle}>{t.articleNew}</Link>
+            <Link href="/articles/new" className="cta-button">{t.articleNew}</Link>
           ) : (
-            <Link href="/login?from=%2Farticles%2Fnew" style={secondaryLinkStyle}>{t.articleLoginToWrite}</Link>
+            <Link href="/login?from=%2Farticles%2Fnew" className="cta-button cta-button-outline">{t.articleLoginToWrite}</Link>
           )
         }
       />
@@ -119,7 +119,7 @@ export default function ArticlesPage() {
         {tagError && (
           <span role="alert" className="inline-flex items-center gap-2 text-xs text-danger">
             {t.articleTopicsLoadFailed}
-            <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
+            <button type="button" onClick={() => void loadTags()} className="outline-button">{t.retry}</button>
           </span>
         )}
       </div>
@@ -157,18 +157,7 @@ export default function ArticlesPage() {
 
 function TagChip({ label, count, active, onClick }: { label: string; count?: number; active: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={active} style={{
-      border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-      background: active ? "var(--accent-tint)" : "transparent",
-      color: active ? "var(--accent)" : "var(--text-muted)",
-      borderRadius: 999,
-      padding: "8px 14px",
-      minHeight: 44,
-      fontSize: 13,
-      fontWeight: active ? 700 : 400,
-      cursor: "pointer",
-      fontFamily: "inherit",
-    }}>
+    <button type="button" onClick={onClick} aria-pressed={active} className={`chip chip-bold${active ? " chip-active" : ""}`}>
       {label}{count !== undefined && <span className="ml-1 text-xs">({count})</span>}
     </button>
   );
@@ -227,12 +216,12 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
         <span className="badge" style={{ background: isPublic ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)", color: isPublic ? "var(--state-success)" : "var(--text-muted)" }}>
           {visibilityLabel(article.visibility, t)}
         </span>
-        {editable && <Link href={`/articles/${article.id}/edit`} style={{ color: "var(--accent)", minHeight: 44, display: "inline-flex", alignItems: "center", padding: "0 6px" }}>{t.articleEditShort}</Link>}
+        {editable && <Link href={`/articles/${article.id}/edit`} className="tap-target inline-flex items-center px-1 text-accent">{t.articleEditShort}</Link>}
       </div>
-      <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
+      <h3 className="card-title">
         <Link href={`/articles/${article.id}`} className="text-inherit no-underline">{article.title}</Link>
       </h3>
-      {article.summary && <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>{article.summary}</p>}
+      {article.summary && <p className="card-summary">{article.summary}</p>}
       <div className="flex gap-2 text-xs text-muted flex-wrap">
         <Link href={`/profile/${article.owner_username}`} className="meta-pill meta-pill-link">{article.owner_username}</Link>
         {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} className="meta-pill meta-pill-link">{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
@@ -241,6 +230,3 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
   );
 }
 
-const newButtonStyle: React.CSSProperties = { background: "var(--accent)", color: "var(--accent-text)", borderRadius: 8, padding: "10px 18px", minHeight: 44, display: "inline-flex", alignItems: "center", textDecoration: "none", fontWeight: 700, fontSize: 14 };
-const secondaryLinkStyle: React.CSSProperties = { ...newButtonStyle, background: "transparent", color: "var(--accent)", border: "1px solid var(--accent)" };
-const inlineRetryStyle: React.CSSProperties = { minHeight: 44, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", cursor: "pointer", fontFamily: "inherit" };

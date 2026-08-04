@@ -69,7 +69,7 @@ export default function NewTranslationPage() {
   }, []);
 
   if (authLoading) {
-    return <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}><SkeletonList count={5} /></div>;
+    return <div className="page page-narrow"><SkeletonList count={5} /></div>;
   }
 
   if (!authLoading && !user) {
@@ -110,7 +110,7 @@ export default function NewTranslationPage() {
   };
 
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="page page-narrow">
       <div className="mb-6">
         <Link href="/translations" className="text-sm text-muted no-underline">
           {t.backToTranslations}

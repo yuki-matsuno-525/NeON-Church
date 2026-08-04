@@ -247,11 +247,7 @@ function ReadContent() {
                 </p>
               ) : (
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {matchingBooks.map((book) => {
                     const lb = bookLabel(book.slug, lang);
@@ -262,7 +258,7 @@ function ReadContent() {
                         className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
                         
                       >
-                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
+                        <span className="book-tile-title">
                           {lb?.name ?? book.name}
                         </span>
                         <span className="text-xs text-faint mt-2">
@@ -324,11 +320,7 @@ function ReadContent() {
             {active && (
               <div className="mb-8">
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {active.books.map((book) => {
                     const lb = bookLabel(book.slug, lang);
@@ -339,7 +331,7 @@ function ReadContent() {
                         className="card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body"
                         
                       >
-                        <span style={{ fontWeight: 700, fontSize: "var(--font-size-md)", lineHeight: "var(--leading-tight)" }}>
+                        <span className="book-tile-title">
                           {lb?.name ?? book.name}
                         </span>
                         <span className="text-xs text-faint mt-2">
@@ -356,11 +348,7 @@ function ReadContent() {
             {isLibraryTab && (
               <div className="mb-8">
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                    gap: 14,
-                  }}
+                  className="book-grid"
                 >
                   {library.map((proj) => (
                     <Link

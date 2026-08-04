@@ -68,7 +68,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
         aria-label={menuOpen ? t.menuClose : t.menuOpen}
         aria-expanded={menuOpen}
         aria-controls="app-sidebar"
-        className="hamburger-btn tap-target-square inline-flex shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-lg text-muted"
+        className="hamburger-btn tap-target-square shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-lg text-muted"
       >
         ☰
       </button>

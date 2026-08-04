@@ -66,7 +66,7 @@ export default function PlansPage() {
         description={t.plansDesc}
         action={
           user ? (
-            <Link href="/plans/new" style={newButtonStyle}>
+            <Link href="/plans/new" className="cta-button">
               {t.planNew}
             </Link>
           ) : undefined
@@ -181,11 +181,11 @@ function PlanColumn({
                     {visibilityLabel(plan.visibility, t)}
                   </span>
                 </div>
-                <h3 style={{ fontFamily: '"Noto Serif JP", serif', fontSize: "var(--font-size-md)", fontWeight: 700, margin: "0 0 var(--space-2)" }}>
+                <h3 className="card-title">
                   {plan.title}
                 </h3>
                 {plan.description && (
-                  <p style={{ margin: "0 0 var(--space-2)", fontSize: "var(--font-size-sm)", color: "var(--text-muted)", lineHeight: 1.6 }}>
+                  <p className="card-summary">
                     {plan.description}
                   </p>
                 )}
@@ -206,15 +206,3 @@ function PlanColumn({
 
 
 
-const newButtonStyle: React.CSSProperties = {
-  background: "var(--accent)",
-  color: "var(--accent-text)",
-  borderRadius: 8,
-  padding: "8px 18px",
-  textDecoration: "none",
-  fontWeight: 700,
-  fontSize: 14,
-  minHeight: 44,
-  display: "inline-flex",
-  alignItems: "center",
-};

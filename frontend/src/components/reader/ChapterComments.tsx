@@ -83,7 +83,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
 
   return (
     <section id="chapter-comments" className="mt-8">
-      <hr style={{ border: "none", borderTop: "2px solid var(--border)", marginBottom: 24 }} />
+      <hr className="section-divider" />
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="m-0 text-md font-bold">
@@ -100,17 +100,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
               type="button"
               onClick={() => setOrdering(ord)}
               aria-pressed={ordering === ord}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                minHeight: 44,
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: ordering === ord ? "var(--accent)" : "transparent",
-                color: ordering === ord ? "var(--accent-text)" : "var(--text-faint)",
-                fontFamily: "inherit",
-              }}
+              className={`pill-toggle${ordering === ord ? " pill-toggle-on" : ""}`}
             >
               {ord === "new" ? t.orderNew : t.orderVotes}
             </button>
@@ -125,17 +115,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
             type="button"
             onClick={() => setActiveTagId(null)}
             aria-pressed={activeTagId === null}
-            style={{
-              fontSize: 12,
-              padding: "3px 10px",
-              minHeight: 44,
-              borderRadius: 999,
-              border: "1px solid var(--border)",
-              cursor: "pointer",
-              background: activeTagId === null ? "var(--accent)" : "transparent",
-              color: activeTagId === null ? "var(--accent-text)" : "var(--text-muted)",
-              fontFamily: "inherit",
-            }}
+            className={`pill-toggle${activeTagId === null ? " pill-toggle-on" : ""}`}
           >
             {t.all}
           </button>
@@ -145,17 +125,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
               type="button"
               onClick={() => setActiveTagId(activeTagId === tag.id ? null : tag.id)}
               aria-pressed={activeTagId === tag.id}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                minHeight: 44,
-                borderRadius: 999,
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                background: activeTagId === tag.id ? "var(--accent)" : "transparent",
-                color: activeTagId === tag.id ? "var(--accent-text)" : "var(--text-muted)",
-                fontFamily: "inherit",
-              }}
+              className={`pill-toggle${activeTagId === tag.id ? " pill-toggle-on" : ""}`}
             >
               {t.tagNames[tag.name] ?? tag.name}
             </button>
@@ -176,18 +146,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchLoadedComments}
           aria-label={t.searchLoadedComments}
-          style={{
-            width: "100%",
-            padding: "6px 12px",
-            fontSize: 13,
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
+          className="form-control text-sm"
         />
       </div>
 

@@ -60,75 +60,25 @@ export function VerseList({
                 activate(verse.id);
               }
             }}
+            className={`verse-row${isSelected ? " verse-row-selected" : ""}`}
             style={{
-              padding: "12px 16px",
-              minHeight: 44,
-              width: "100%",
-              border: "none",
-              textAlign: "left",
-              fontFamily: "inherit",
-              cursor: "pointer",
-              borderRadius: 5,
-              background: isSelected ? "var(--accent-tint)" : isHighlighted ? undefined : "transparent",
-              color: isSelected ? "var(--accent)" : "var(--text)",
-              marginBottom: 2,
-              transition: isHighlighted ? undefined : "background 0.1s",
               animation: isHighlighted ? "verse-flash 5s ease-out forwards" : undefined,
-            }}
-            // マウスを乗せたときと同じ手応えを、キーボードで移動したときにも返す。
-            onMouseEnter={(e) => {
-              if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-              }
-            }}
-            onFocus={(e) => {
-              if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.background = "var(--bg-hover)";
-              }
-            }}
-            onBlur={(e) => {
-              if (!isSelected) {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-              }
             }}
           >
             <span
-              style={{
-                lineHeight: 1.9,
-                fontSize: 17,
-                fontFamily: "var(--font-serif)",
-                // 詩文（エノク書など）の節内改行を保持する。改行の無い訳には影響しない。
-                whiteSpace: "pre-line",
-              }}
+              className="verse-text"
             >
               {pickMode && (
                 // 選んだ節が一目で分かるように、番号の前に印を出す。
                 <span
                   aria-hidden="true"
-                  style={{
-                    display: "inline-block",
-                    width: 16,
-                    marginRight: 4,
-                    color: isPicked ? "var(--accent)" : "var(--text-faint)",
-                    fontWeight: 700,
-                  }}
+                  className={`verse-pick-mark${isPicked ? " verse-pick-mark-on" : ""}`}
                 >
                   {isPicked ? "✓" : "○"}
                 </span>
               )}
               <sup
-                style={{
-                  fontSize: 11,
-                  color: isSelected ? "var(--accent)" : "var(--text-faint)",
-                  marginRight: 4,
-                  verticalAlign: "super",
-                  fontWeight: 700,
-                }}
+                className="verse-number"
               >
                 {numberLabel ? numberLabel(verse) : verse.number}
               </sup>

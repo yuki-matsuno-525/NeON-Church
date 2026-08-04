@@ -202,7 +202,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const canPublish = summary.trim().length > 0;
   const bodyPane = (
     <div className="flex flex-col min-h-0">
-      <label htmlFor="article-body" style={fieldLabelStyle}>{t.articleTabBody}</label>
+      <label htmlFor="article-body" className="form-label">{t.articleTabBody}</label>
       <textarea
         id="article-body"
         ref={bodyRef}
@@ -210,20 +210,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         onChange={(event) => setBody(event.target.value)}
         placeholder={t.articleBodyPlaceholder}
         aria-describedby="article-markdown-help"
-        style={{
-          width: "100%",
-          minHeight: isMobile ? 360 : 480,
-          boxSizing: "border-box",
-          padding: 14,
-          borderRadius: 10,
-          border: "1px solid var(--border)",
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontFamily: "inherit",
-          fontSize: 16,
-          lineHeight: 1.8,
-          resize: "vertical",
-        }}
+        className="editor-pane w-full"
       />
       <details id="article-markdown-help" className="mt-2 text-muted text-xs">
         <summary className="cursor-pointer tap-target flex items-center">{t.articleFormatHelp}</summary>
@@ -235,34 +222,22 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   );
   const previewPane = (
     <div
-      style={{
-        flex: 1,
-        minHeight: isMobile ? 360 : 480,
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        padding: 14,
-        background: "rgba(255,255,255,0.02)",
-      }}
+      className="editor-preview"
     >
       <ArticleBody body={body} citations={citations} />
     </div>
   );
   const citationPane = (
     <div
-      style={{
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        height: isMobile ? 480 : "100%",
-        minHeight: 0,
-        overflow: "hidden",
-      }}
+      className="border border-border rounded-lg overflow-hidden min-h-0"
+      style={{ height: isMobile ? 480 : "100%" }}
     >
       <CitationPanel onInsert={insertMark} />
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 16px 48px" }}>
+    <div className="page page-editor">
       <ConfirmDialog
         open={confirmDelete}
         title={t.articleDeleteConfirmTitle}
@@ -298,17 +273,8 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           required
           aria-invalid={!title.trim()}
           aria-describedby={!title.trim() ? "article-title-error" : undefined}
-          style={{
-            flex: "1 1 280px",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid var(--border)",
-            background: "var(--bg)",
-            color: "var(--text)",
-            fontFamily: "inherit",
-            fontSize: 18,
-            fontWeight: 700,
-          }}
+          className="form-control text-lg font-bold"
+          style={{ flex: "1 1 280px" }}
         />
         <label htmlFor="article-visibility" className="sr-only">{t.articleVisibilityLabel}</label>
         <select
@@ -319,7 +285,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             if (next === "private") setVisibility(next);
             else setPendingVisibility(next);
           }}
-          style={selectStyle}
+          className="select-md"
         >
           {visibilityOptions(t).map((option) => (
             <option key={option.value} value={option.value} disabled={option.value !== "private" && !canPublish}>
@@ -330,51 +296,40 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         <span
           role="status"
           aria-live="polite"
-          style={{ fontSize: 12, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-muted)", minWidth: 120 }}
+          className={`text-xs min-w-30 ${autosave.status === "error" ? "text-danger" : "text-muted"}`}
         >
           {saveStatusLabel(autosave.status, t)}
         </span>
         {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} style={secondaryButtonStyle}>{t.retry}</button>
+          <button type="button" onClick={() => void autosave.retry()} className="outline-button">{t.retry}</button>
         )}
         <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} style={deleteButtonStyle}>
+        <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} className="outline-button outline-button-muted">
           {deleteBusy ? t.articleDeleting : t.delete}
         </button>
       </div>
-      {actionError && <p role="alert" style={{ margin: "-4px 0 12px", color: "var(--state-danger)", fontSize: 13 }}>{actionError}</p>}
+      {actionError && <p role="alert" className="-mt-1 mx-0 mb-3 text-danger text-sm">{actionError}</p>}
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, margin: "-4px 0 10px", fontSize: 12, color: "var(--text-muted)" }}>
-        <span id={!title.trim() ? "article-title-error" : undefined} style={{ color: !title.trim() ? "var(--state-danger)" : undefined }}>
+      <div className="flex justify-between gap-3 -mt-1 mx-0 mb-3 text-xs text-muted">
+        <span id={!title.trim() ? "article-title-error" : undefined} className={!title.trim() ? "text-danger" : undefined}>
           {!title.trim() ? t.articleTitleRequired : t.articleAutosaveHelp}
         </span>
         <span>{title.length}/{MAX_TITLE_LENGTH}</span>
       </div>
 
       {/* 要約 */}
-      <label htmlFor="article-summary" style={fieldLabelStyle}>{t.articleSummaryLabel}</label>
+      <label htmlFor="article-summary" className="form-label">{t.articleSummaryLabel}</label>
       <input
         id="article-summary"
         value={summary}
         onChange={(event) => setSummary(event.target.value)}
         placeholder={t.articleSummaryPlaceholder}
         maxLength={MAX_SUMMARY_LENGTH}
-        style={{
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "8px 12px",
-          borderRadius: 8,
-          border: "1px solid var(--border)",
-          background: "var(--bg)",
-          color: "var(--text)",
-          fontFamily: "inherit",
-          fontSize: 14,
-          marginBottom: 10,
-        }}
+        className="form-control text-sm mb-3"
       />
-      <div style={{ textAlign: "right", margin: "-6px 0 8px", fontSize: 12, color: "var(--text-muted)" }}>
+      <div className="text-right -mt-1 mx-0 mb-2 text-xs text-muted">
         {summary.length}/{MAX_SUMMARY_LENGTH}
       </div>
       {!canPublish && (
@@ -385,7 +340,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
       {/* タグ */}
       <fieldset className="border-0 p-0 mt-0 mx-0 mb-4">
-        <legend style={fieldLabelStyle}>{t.articleTopicsLimit(MAX_TAGS)}</legend>
+        <legend className="form-label">{t.articleTopicsLimit(MAX_TAGS)}</legend>
         <div className="flex flex-wrap gap-2">
         {tags.map((tag) => {
           const active = tagIds.includes(tag.id);
@@ -395,17 +350,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
               type="button"
               onClick={() => toggleTag(tag.id)}
               aria-pressed={active}
-              style={{
-                border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                background: active ? "var(--accent-tint)" : "transparent",
-                color: active ? "var(--accent)" : "var(--text-muted)",
-                borderRadius: 999,
-                padding: "4px 12px",
-                minHeight: 44,
-                fontSize: 12,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
+              className={`chip chip-sm${active ? " chip-active" : ""}`}
             >
               {articleTagLabel(tag.slug, tag.name, t)}
             </button>
@@ -414,7 +359,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         </div>
         {tagLoadError && (
           <p role="alert" className="mt-2 mx-0 mb-0 text-danger text-xs">
-            {t.articleTopicsLoadFailed} <button type="button" onClick={() => void loadTags()} style={inlineRetryStyle}>{t.retry}</button>
+            {t.articleTopicsLoadFailed} <button type="button" onClick={() => void loadTags()} className="link-button">{t.retry}</button>
           </p>
         )}
         {tagNotice && <p role="status" className="mt-2 mx-0 mb-0 text-danger text-xs">{tagNotice}</p>}
@@ -440,15 +385,15 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 380px)", gap: 20, alignItems: "start" }}>
+        <div className="editor-layout">
           <div className="flex flex-col gap-4 min-h-0">
             {bodyPane}
             <div className="flex flex-col min-h-0">
-              <div style={fieldLabelStyle}>{t.articleTabPreview}</div>
+              <div className="form-label">{t.articleTabPreview}</div>
               {previewPane}
             </div>
           </div>
-          <div style={{ position: "sticky", top: "calc(var(--navbar-height) + 16px)", height: "min(720px, calc(100vh - var(--navbar-height) - 32px))" }}>
+          <div className="editor-aside">
             {citationPane}
           </div>
         </div>
@@ -477,77 +422,12 @@ function MobileTab({
       aria-controls={`article-${id}-panel`}
       tabIndex={active ? 0 : -1}
       onClick={onClick}
-      style={{
-        flex: 1,
-        padding: "10px 8px",
-        minHeight: 44,
-        border: "none",
-        background: "none",
-        borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
-        fontWeight: active ? 700 : 400,
-        fontSize: 13,
-        cursor: "pointer",
-        fontFamily: "inherit",
-      }}
+      className={`tab-underline flex-1${active ? " tab-underline-active" : ""}`}
     >
       {children}
     </button>
   );
 }
-
-const selectStyle: React.CSSProperties = {
-  padding: "8px 10px",
-  minHeight: 44,
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontFamily: "inherit",
-  fontSize: 13,
-};
-
-const deleteButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  padding: "8px 14px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text)",
-  minHeight: 44,
-  padding: "8px 14px",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const inlineRetryStyle: React.CSSProperties = {
-  border: 0,
-  background: "transparent",
-  color: "var(--accent)",
-  minHeight: 44,
-  padding: "8px 6px",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textDecoration: "underline",
-};
-
-const fieldLabelStyle: React.CSSProperties = {
-  display: "block",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  fontWeight: 700,
-  marginBottom: 6,
-};
 
 
 function handleTabArrowKey(event: React.KeyboardEvent<HTMLElement>) {

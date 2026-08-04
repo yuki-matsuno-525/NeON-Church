@@ -150,43 +150,15 @@ function SearchContent() {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={t.searchKeyword}
             autoComplete="off"
-            style={{
-              width: "100%",
-              padding: "9px 12px",
-              paddingRight: inputValue ? 48 : 12,
-              minHeight: 44,
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius-md)",
-              background: "var(--bg-alt)",
-              color: "var(--text)",
-              fontSize: "var(--font-size-sm)",
-              fontFamily: "inherit",
-            }}
+            className="form-control bg-bg-alt text-sm"
+            style={{ paddingRight: inputValue ? 48 : 12 }}
           />
           {inputValue && (
             <button
               type="button"
               onClick={() => setInputValue("")}
               aria-label={t.clearInput}
-              style={{
-                position: "absolute",
-                right: 2,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 44,
-                height: 44,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                fontSize: 16,
-                lineHeight: 1,
-                borderRadius: 4,
-                fontFamily: "inherit",
-              }}
+              className="clear-input-btn"
             >
               ×
             </button>
@@ -207,18 +179,7 @@ function SearchContent() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => updateFilters({ kind: option.value })}
-                style={{
-                  padding: "6px 11px",
-                  minHeight: 44,
-                  border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                  borderRadius: 999,
-                  background: active ? "var(--accent-tint)" : "var(--bg-alt)",
-                  color: active ? "var(--accent)" : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: active ? 700 : 600,
-                  fontFamily: "inherit",
-                }}
+                className={`chip chip-sm chip-bold bg-bg-alt${active ? " chip-active" : ""}`}
               >
                 {t[option.labelKey]}
               </button>
@@ -230,17 +191,7 @@ function SearchContent() {
           id={bookFilterId}
           value={bookSlug}
           onChange={(e) => updateFilters({ book: e.target.value })}
-          style={{
-            minHeight: 44,
-            maxWidth: "100%",
-            padding: "5px 10px",
-            border: "1px solid var(--border)",
-            borderRadius: 8,
-            background: "var(--bg-alt)",
-            color: "var(--text)",
-            fontSize: 12,
-            fontFamily: "inherit",
-          }}
+          className="select-sm max-w-full"
         >
           <option value="">{t.allBooks}</option>
           {BOOKS.map((book) => (
@@ -288,16 +239,7 @@ function SearchContent() {
                     <Link
                       key={b.id}
                       href={slug ? `/${slug}?list=1` : "/read"}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                        textDecoration: "none",
-                        color: "var(--text)",
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
+                      className="result-card no-underline text-body text-sm font-bold"
                     >
                       <span style={KIND_BADGE_STYLE}>{t.searchKindBook}</span>
                       {b.name}
@@ -321,12 +263,7 @@ function SearchContent() {
                   return (
                     <div
                       key={v.id}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                      }}
+                      className="result-card"
                     >
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-muted">
@@ -347,7 +284,7 @@ function SearchContent() {
                       <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
-                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 3, padding: "0 2px" }}>{part}</mark>
+                            ? <mark key={i} className="search-mark">{part}</mark>
                             : <span key={i}>{part}</span>
                         )}
                       </p>
@@ -374,12 +311,7 @@ function SearchContent() {
                   return (
                     <div
                       key={c.id}
-                      style={{
-                        padding: "var(--space-3)",
-                        border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        background: "var(--bg-alt)",
-                      }}
+                      className="result-card"
                     >
                       <div className="flex gap-2 text-xs text-muted mb-2 items-center">
                         <span style={KIND_BADGE_STYLE}>{t.searchKindComment}</span>
@@ -389,7 +321,7 @@ function SearchContent() {
                       <p className="m-0 text-sm leading-base">
                         {parts.map((part, i) =>
                           i % 2 === 1
-                            ? <mark key={i} style={{ background: "var(--accent-tint)", color: "var(--accent)", borderRadius: 2, padding: "0 2px" }}>{part}</mark>
+                            ? <mark key={i} className="search-mark">{part}</mark>
                             : part
                         )}
                       </p>

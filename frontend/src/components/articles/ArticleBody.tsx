@@ -146,12 +146,7 @@ function renderBlock(block: Block, byRaw: Map<string, ArticleCitation>): ReactNo
     case "quote":
       return (
         <blockquote
-          style={{
-            margin: "0 0 16px",
-            padding: "8px 0 8px 16px",
-            borderLeft: "3px solid var(--border)",
-            color: "var(--text-muted)",
-          }}
+          className="article-quote"
         >
           {renderInline(block.text, byRaw)}
         </blockquote>
@@ -303,7 +298,7 @@ function renderMarkdownToken(token: string, key: string): ReactNode {
   }
   if (token.startsWith("`")) {
     return (
-      <code key={key} style={{ fontSize: "0.9em", background: "rgba(255,255,255,0.08)", padding: "1px 4px", borderRadius: 4 }}>
+      <code key={key} className="article-code">
         {token.slice(1, -1)}
       </code>
     );
