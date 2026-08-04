@@ -1,0 +1,30 @@
+/* ============================================================
+   いま選ばれている（フォーカスされている）ものの見せ方。
+
+   入力欄の枠の色を上書きするので、部品（form.css の .form-control など）と
+   同じ層に置き、かつ最後に読み込む。
+   `input:focus` は `.form-control` より細かい指定なので、同じ層なら普通に勝つ。
+   以前は base 側に置いていたため勝てず、!important が必要だった。
+   ============================================================ */
+
+/* マウスで押したときは、控えめに枠を光らせるだけ */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(192, 64, 240, 0.65);
+  box-shadow: 0 0 0 2px rgba(192, 64, 240, 0.14);
+}
+
+/* キーボードで移動してきたときは、どこにいるかがはっきり分かる線を出す（a11y） */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: none;
+}

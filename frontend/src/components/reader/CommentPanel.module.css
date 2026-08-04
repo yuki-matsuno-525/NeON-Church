@@ -180,3 +180,21 @@
   font-size: var(--text-sm);
   color: var(--text-faint);
 }
+
+/* 画面が狭いときは、右の列ではなく下から出るシートになる。
+   外側の枠（位置・高さ・角丸）は reader.css の .reader-panel が持ち、
+   中身であるこのパネルは、その枠いっぱいに広がるだけにする。
+
+   以前はこの打ち消しを reader.css 側に書いていたが、この部品の指定に
+   勝てず 7 か所すべてに !important が必要だった。持ち主の側へ移したので要らない。 */
+@media (max-width: 768px) {
+  .panel {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}

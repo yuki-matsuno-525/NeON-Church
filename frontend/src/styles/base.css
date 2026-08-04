@@ -1,0 +1,103 @@
+/* ============================================================
+   素の HTML の見た目。クラスを付けていない文字・入力欄・見出しに効く。
+   layer(base) に入れてあるので、Tailwind のクラスでも部品のクラスでも
+   上から普通に書き換えられる。
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  scroll-padding-top: var(--navbar-height);
+  /* 1要素のはみ出しでページ全体に横スクロールが出るのを防ぐ。
+     overflow-x:hidden と違い clip は position:sticky を壊さない。 */
+  overflow-x: clip;
+}
+
+/* サイト全体の基準。ここで決めた大きさが、個別に指定していない文字すべてに効く。
+   長らく 14px だったため「どの画面も文字が小さい」状態になっていた。
+   読み物が中心のサイトなので、決定表の本文サイズ（16px）を基準に据える。 */
+body {
+  background: #090516;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  line-height: var(--leading-base);
+}
+
+/* 見出しの既定サイズ。Tailwind のリセットは見出しの大きさを本文と同じに戻すため、
+   ここで決めておかないと、個別指定を外した見出しが本文と同じ大きさになってしまう。
+   各画面のインライン指定を剥がしていく作業の受け皿になる。 */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif), "Noto Serif JP", serif;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+h1 {
+  font-size: var(--text-xl);
+}
+h2 {
+  font-size: var(--text-lg);
+}
+h3 {
+  font-size: var(--text-md);
+}
+
+/* プレースホルダー */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* select の option はブラウザ依存 → 暗い背景を強制 */
+option {
+  background: #160e2e;
+  color: rgba(236, 228, 252, 0.92);
+}
+
+/* 選ばれているものの見せ方（フォーカス）は focus.css にある。
+   入力欄の枠の色を上書きする必要があり、base より強い層に置きたいため。 */
+
+/* スクロールバー */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+
+@media (max-width: 768px) {
+  /* iPhone の Safari は、文字が 16px 未満の入力欄をタップすると画面を勝手に拡大する。
+     元の倍率には自動で戻らないので、以降ずっと横にはみ出したまま操作することになる。
+     入力欄はほとんどが 12〜14px 指定なので、スマホでは一律 16px に底上げする。
+     画面ごとの指定（インラインの style）に勝つ必要があるため !important を付けている。 */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* 指で押す領域は 44px 角が目安。返信・投票・お気に入り・削除といった、よく押すボタンほど
+     小さく（15〜32px）作られていて押し間違えやすかった。高さだけ底上げする
+     （余白や文字サイズは触らないので、見た目の印象は大きく変えない）。 */
+  button,
+  [role="button"] {
+    min-height: 44px;
+  }
+}

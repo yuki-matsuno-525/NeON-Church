@@ -1,0 +1,231 @@
+/* ============================================================
+   並べるもの。一覧の盤面・バッジ・札・タブ・進捗バー・数字の区画。
+   qa / articles / plans / translations の 4 画面が共通で使う。
+   ============================================================ */
+
+/* ----- 一覧の 4 画面（qa / articles / plans / translations）で共通の部品 -----
+   この 4 画面は「見出し＋2 カラムのカード一覧」という同じ骨格を持つ。
+   以前は同じ見た目を各 page.tsx が別々に書いていた（同名の定数が最大 4 個）。
+   ここにまとめ、画面側はクラス名を付けるだけにする。
+
+   px の直書きが混じっているのは、この作業が「重複を消す」ことだけを目的にしていて、
+   見た目を 1px も変えないため。値を段（--radius-* など）に揃えるのは別の作業。 */
+
+/* カラムを横に並べる盤面。入る幅があるだけ列を作り、狭ければ縦に積む。
+   min(100%, 300px) にしているのは、画面が 300px より狭いときに
+   はみ出さないようにするため。スマホで 1 列だけ表示するときは、
+   選ばれていない列を display:none にすれば自然に 1 列幅になる。 */
+.list-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* 一覧の 1 カラム分の入れ物。中にカードを縦に並べる。
+   .card より背景が薄いので、中のカードが浮いて見える。 */
+.list-column {
+  padding: 18px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* バッジ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+/* 見出しの横に出す件数の丸バッジ。`class="badge badge-count"` のように重ねて使う。
+   数字が 1 桁でも 3 桁でも同じ高さで、丸が潰れないように最小幅を持たせている。
+   色は分類ごとに違うので、背景と文字色だけは画面側から渡す。 */
+.badge-count {
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+}
+
+/* 投稿者名・日付・タグなど、カードに添える小さな囲み。押せないもの用。 */
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+/* 押せる版（タグや投稿者へのリンク）。指で押せる高さを確保するぶん大きい。 */
+.meta-pill-link {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: inherit;
+  text-decoration: none;
+}
+
+/* 下線で「いま選んでいる」を示すタブ */
+.tab-underline {
+  min-height: 44px;
+  padding: var(--spacing-2) var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.tab-underline-active {
+  border-bottom-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 原文と訳文を横に並べる。狭いときは縦に積む。 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+/* 件数や進捗などの数字を並べる区画。 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.stat-item {
+  box-sizing: border-box;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-alt);
+}
+.stat-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.stat-value {
+  display: block;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 進捗バーの下地。中に幅だけを変えた帯を入れる。 */
+.progress-track {
+  width: 100%;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--border);
+}
+
+/* 進捗バーの中身。幅だけを画面側から渡す。 */
+.progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+/* 作業メモの 1 件。下線で区切る。 */
+.discussion-row {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+/* ----- 押して選ぶ丸いラベル（主題・絞り込み） -----
+   選ばれているときだけ色が変わる。以前は 3 か所が同じ条件分岐を
+   React の style で書いていた。付け外しはクラス名で行う。 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+.chip-sm {
+  padding: 4px 12px;
+  font-size: var(--text-xs);
+}
+.chip-active {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 一覧の絞り込みでは、選んだものを太字にして目立たせる。 */
+.chip-bold.chip-active {
+  font-weight: 700;
+}
+
+/* 下書きなど、公開されていないことを示すバッジ。 */
+.badge-muted {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+/* 選んだ章を並べる小さな札。右端に外すボタンが付く。 */
+.reading-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* 縦に長くなりすぎない一覧。あふれたら中でスクロールする。 */
+.scroll-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */
+.tab-bar {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+/* 解決済み / 未解決 を示すバッジ。 */
+.badge-answered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--state-success);
+}
+.badge-unanswered {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--state-warning);
+}

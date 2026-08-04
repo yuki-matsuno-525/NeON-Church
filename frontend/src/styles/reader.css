@@ -1,0 +1,357 @@
+/* ============================================================
+   読書画面。聖書本文と翻訳プロジェクトの読書画面が同じものを使う。
+   本文（reader-main）と、節を選んだときに出るコメント欄（reader-panel）を
+   横に並べ、画面が狭いときは下から出るシートに切り替える。
+   ============================================================ */
+
+/* ----- 読書画面の骨格 -----
+   本文（reader-main）と、節を選んだときに出るコメント欄（reader-panel）を横に並べる。
+   以前この 3 つの見た目は要素側の Tailwind だけが持っていた。そのためスマホ用の
+   指定（下のメディアクエリ）が勝てず、すべてに !important が必要だった。
+   ここに集約したので、スマホ側は普通に上書きできる。 */
+.reader-wrapper {
+  display: flex;
+}
+.reader-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  padding: var(--spacing-8);
+  overflow-y: auto;
+}
+
+/* ----- 読書画面の上に貼り付く帯 -----
+   書名と章の送り、訳の切り替えが乗る。以前は見た目を要素側に書いていたため、
+   スマホ用の指定が勝てず !important が必要だった。 */
+.reader-sticky-header {
+  position: sticky;
+  top: var(--navbar-height);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--glass-nav);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ----- 章を送る左右のつまみ -----
+   画面の左右の端に貼り付く「‹ ›」。以前は 2 つの読書画面がそれぞれ
+   同じ指定を要素側に書き、さらに色の変化を JavaScript のマウス操作で
+   付け外ししていた。ここにまとめ、ホバーは CSS に任せる。 */
+.chapter-nav {
+  position: fixed;
+  top: 50%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.75;
+  transform: translateY(-50%);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+.chapter-nav:hover,
+.chapter-nav:focus-visible {
+  opacity: 1;
+}
+/* 前の章。サイドバーの右隣に置く（スマホではサイドバーが画面外なので 0 に戻す）。 */
+.chapter-nav-prev {
+  left: var(--sidebar-width);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+/* 次の章。画面の右端。 */
+.chapter-nav-next {
+  right: 0;
+  border-right: none;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+/* 章を選ぶ 44px の四角ボタン。引用の挿入とプラン作成の 2 か所で並べて使う。 */
+.chapter-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* リサイズハンドル */
+.resize-handle {
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.resize-handle:hover,
+.resize-handle:active {
+  background: var(--bg-hover);
+}
+
+/* ----- 読書画面の 1 節 -----
+   聖書本文と翻訳プロジェクトの読書画面が、同じ見た目を別々に書いていた。
+   選んでいるときだけ色が変わるので、その分だけクラスの付け外しで表す。 */
+.verse-row {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 2px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  scroll-margin-top: calc(var(--navbar-height) + 56px);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+/* マウスを乗せたときと、キーボードで移動してきたときに同じ手応えを返す。
+   以前は JavaScript で背景色を付け外ししていた。 */
+.verse-row:hover,
+.verse-row:focus-visible {
+  background: var(--bg-hover);
+}
+.verse-row-selected,
+.verse-row-selected:hover,
+.verse-row-selected:focus-visible {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 本文そのもの。詩文（エノク書など）の節内改行を残す。 */
+.verse-text {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+/* 節番号。本文より小さく、控えめな色で上付きにする。 */
+.verse-number {
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: super;
+}
+.verse-row-selected .verse-number {
+  color: var(--accent);
+}
+/* まとめて選ぶときに、番号の前へ出す印。 */
+.verse-pick-mark {
+  display: inline-block;
+  width: 16px;
+  margin-right: 4px;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+.verse-pick-mark-on {
+  color: var(--accent);
+}
+
+/* 原文の一節。読み比べるときに本文と区別が付くよう、明朝の斜体にする。 */
+.source-text {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  font-style: italic;
+  line-height: var(--leading-reading);
+}
+
+/* 章を選ぶタイルを敷き詰める。入る幅だけ横に並べ、あふれたら折り返す。 */
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--spacing-2);
+}
+/* その 1 枚。章番号の下に「3/8 完了」を重ねるので 2 段にする。
+   .chapter-button（44px 四方の素っ気ない版）とは別物。 */
+.chapter-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* ----- 章番号を敷き詰めるボード -----
+   書のページで「何章を読むか」を選ぶところ。1 マス 44px 角。 */
+.chapter-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: var(--spacing-2);
+  margin-bottom: 40px;
+}
+.chapter-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+/* マウスを乗せたときと、キーボードで移動してきたときに光らせる。
+   以前は JavaScript で 4 種類の値を付け外ししていた。 */
+.chapter-cell:hover,
+.chapter-cell:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.chapter-cell:hover {
+  box-shadow: var(--shadow-glow);
+}
+/* いま開いている章。 */
+.chapter-cell-current {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 読んだ章に付ける小さな点。 */
+.chapter-cell-dot {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 書を並べる敷き詰め。/read で使う。 */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+}
+/* その 1 枚の題。 */
+.book-tile-title {
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+}
+
+/* 引用パネルで、選んでいる範囲に入っている節。 */
+.citation-verse {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+.citation-verse-picked {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+/* 画面の右下に浮かせる丸いボタン。 */
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 18px;
+  cursor: pointer;
+}
+/* コメント欄が下から出ているときは、その上へ避ける。 */
+.fab-raised {
+  bottom: calc(70vh + 12px);
+}
+
+@media (max-width: 768px) {
+  /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
+     本文の文脈 (前後の節) を失わずにコメントを書ける。 */
+  .reader-wrapper.has-verse .reader-main {
+    display: block;
+    /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
+    padding-bottom: 70dvh;
+  }
+  .reader-wrapper.has-verse .reader-panel {
+    position: fixed;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 70dvh;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    overflow: hidden;
+  }
+
+  .reader-wrapper.has-verse .resize-handle {
+    display: none;
+  }
+
+  .reader-main {
+    padding: var(--spacing-4);
+  }
+
+  .reader-sticky-header {
+    position: static;
+    padding: 8px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .reader-breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reader-header-actions {
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .reader-header-actions label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .reader-header-actions select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* モバイルではサイドバーが画面外のため、前章ナビを画面左端に戻す */
+  .chapter-nav-prev {
+    left: 0;
+  }
+}

@@ -1,0 +1,361 @@
+/* ============================================================
+   押せるもの。<button> でも <Link> でも同じ見た目になるようクラスで持つ。
+   使い分けの目安:
+   - btn 系        … 主役のボタン（送信・作成）
+   - chip-btn 系   … 一覧の行に並べる小粒な操作
+   - btn-text 系   … 枠も背景も無い、文字だけの操作（賛成・返信）
+   ============================================================ */
+
+/* ボタン
+   `<button>` にも `<Link>` にも同じ見た目を付けられるようにクラスで持つ。
+   使い方: class="btn btn-primary"、小さいものは class="btn btn-sm btn-ghost" */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  border: 1px solid transparent;
+  text-decoration: none;
+  /* 指で確実に押せる最小の高さ。小さくしないこと。 */
+  min-height: 44px;
+}
+/* 一回り小さいボタン。高さ 44px は触りやすさのため変えない。 */
+.btn-sm {
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--accent-primary-grad);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(198, 44, 170, 0.40);
+}
+.btn-secondary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.btn-ghost:hover {
+  background: var(--bg-hover);
+}
+/* 削除など取り返しのつかない操作。--state-danger(#ef4444) より暗いのは、
+   白文字を載せたときの読みやすさ（コントラスト比 4.5 以上）を満たすため。 */
+.btn-destructive {
+  background: #b91c1c;
+  color: #fff;
+}
+
+/* 一覧の中に並ぶ、文字だけの小さな操作ボタン（賛成・返信・編集・削除・報告など）。
+   枠も背景も持たないが、指で押せる高さは確保する。
+   このサイトで一番数の多いボタンの形なので、1 か所にまとめておく。 */
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-faint);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn-text:disabled {
+  cursor: default;
+}
+/* 押した状態（賛成済み・お気に入り済み）を色で示す */
+.btn-text-on {
+  color: var(--accent);
+}
+
+/* 一覧や詳細に並ぶ、枠だけの小さな操作ボタン（編集・削除・報告など）。
+   .btn-text（枠なし）より控えめに主張したいときに使う。 */
+.action-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* 文字だけのリンクだが、指で押せる高さを確保するもの（「一覧へ戻る」など）。 */
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+}
+
+/* スクリーンリーダー専用テキスト */
+/* 指で確実に押せる最小の大きさ。押せるものが小さいと操作を取りこぼすため、
+   ボタン以外のクリックできる要素（チップなど）にも付ける。 */
+.tap-target {
+  min-height: 44px;
+}
+/* 数字やアイコンだけの正方形のボタン（ページ送りなど）用 */
+.tap-target-square {
+  min-width: 44px;
+  height: 44px;
+}
+
+/* ----- 翻訳プロジェクトの詳細で使う部品 -----
+   以前は page.tsx の末尾に React の style オブジェクトとして置かれていた。
+   同じ見た目を切り出した部品からも使うので、CSS 側に移している。 */
+
+/* 丸い小さな操作ボタン（承認・差し戻し・削除など）。
+   色は用途ごとに 4 種。btn とは別物で、こちらは一覧の行に並べる小粒な操作用。 */
+.chip-btn {
+  display: inline-block;
+  min-height: 44px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+.chip-btn-sm {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.chip-btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--state-danger);
+}
+.chip-btn-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--state-warning);
+}
+.chip-btn-neutral {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+}
+.chip-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* 見た目を持たない、文字だけのボタン（「コメントを開く」など）。 */
+.text-button {
+  min-height: 44px;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* 文字だけのリンク風ボタン（「もう一度試す」など）。 */
+.link-button {
+  min-height: 44px;
+  padding: 8px 6px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* 枠線だけの控えめなボタン。btn-ghost より詰めてある。 */
+.outline-button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+/* 消す操作など、目立たせたくないもの。 */
+.outline-button-muted {
+  color: var(--text-muted);
+}
+
+/* ----- 一覧の右上に出す「新規作成」 -----
+   articles / plans が同じ形をそれぞれ書いていた。塗り版と枠だけの版がある。 */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.cta-button-outline {
+  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
+}
+
+/* 読み終わった日に付ける印。押すたびに入り切りする。 */
+.day-toggle {
+  min-height: 44px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.day-toggle-done {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.day-toggle:disabled {
+  cursor: default;
+}
+
+/* 引用パネルなど、狭いところに置く小さめのボタン。 */
+.small-button {
+  min-height: 44px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+/* 一回り大きい版。文字色も本文と同じにする。 */
+.small-button-strong {
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+/* 押すと決まる版（挿入など）。 */
+.small-button-primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.small-button-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 一覧から 1 つ選ぶための行。下線で区切る。 */
+.row-button {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 6px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.row-button:hover,
+.row-button:focus-visible {
+  background: var(--bg-hover);
+}
+
+/* 「戻る」など、控えめな文字だけのボタン。 */
+.back-button {
+  min-height: 44px;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* ----- 押して切り替える小さな丸ボタン -----
+   並び順や絞り込みのタグに使う。選ばれているものだけ塗りつぶす。
+   chip（枠の色が変わるだけ）より強い見せ方。 */
+.pill-toggle {
+  min-height: 44px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+.pill-toggle-on {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* 「章を足す」など、まだ中身が無いことを示す破線のボタン。 */
+.dashed-button {
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
