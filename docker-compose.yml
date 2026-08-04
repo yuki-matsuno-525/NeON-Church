@@ -42,6 +42,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      # 開発用ステージ。ruff / mypy / pytest-cov が入る。
+      # 指定しないと本番用（production）になり、コンテナから lint を叩けない。
+      target: dev
     volumes:
       # ホットリロードのためにソースをマウント
       - ./backend:/app

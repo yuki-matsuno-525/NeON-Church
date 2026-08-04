@@ -13,6 +13,11 @@
 | `backend` | 8000 | Django 5.2 + DRF（`./backend` を `/app` にマウント） |
 | `db` | 5432 | PostgreSQL 16 |
 
+`backend` のイメージは `backend/Dockerfile` の **dev ステージ**を使う
+（`docker-compose.yml` の `target: dev`）。ruff / mypy / pytest-cov はここにだけ入る。
+本番（Render）は最後のステージ production になり、`requirements.txt` のものしか入らない。
+`target` を外すと本番用が建ち、コンテナから lint を叩けなくなる。
+
 ### 絶対にやらないこと
 
 - **ホスト側で `npm run dev` / `next dev` / `npm run dev:clean` を実行しない。**
