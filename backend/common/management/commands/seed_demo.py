@@ -37,7 +37,7 @@ from articles.models import (
 )
 from bible.models import Book, Chapter, Verse
 from bookmarks.models import Bookmark
-from comments.models import PREDEFINED_TAGS, Comment, Report, Tag, Vote
+from comments.models import Comment, Report, Vote
 from common.seed_data import LOCALES
 from notifications.models import Notification
 from plans.models import (
@@ -50,6 +50,7 @@ from plans.models import (
 )
 from qa.models import Answer, Question
 from reading_progress.models import ReadingProgress
+from tags.models import PREDEFINED_TAGS, Tag
 from translations.models import (
     Language,
     TranslationComment,

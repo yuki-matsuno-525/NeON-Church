@@ -92,7 +92,8 @@ npm run e2e
 NeON-Church/
   backend/
     bible/              聖書の書・章・節、検索、今日の聖句
-    comments/           コメント、返信、Q&A、タグ、upvote、通報
+    comments/           コメント、返信、upvote、通報
+    tags/               コメントと Q&A が共有するタグ
     bookmarks/          節またはコメントのお気に入り
     notifications/      返信・upvote 通知
     reading_progress/   ユーザーごとの読書進捗
@@ -255,9 +256,11 @@ model:
 | model | 意味 |
 | --- | --- |
 | `Comment` | 節・章・書へのコメント。`parent` で返信、`is_qa` で Q&A 化 |
-| `Tag` | コメント・Q&A のタグ |
 | `Vote` | コメントへの upvote。ユーザーとコメントの組み合わせは一意 |
 | `Report` | コメント通報。ユーザーとコメントの組み合わせは一意 |
+
+タグは `tags` アプリの `Tag`（テーブルは歴史的経緯で `comment_tags`）。
+コメントと Q&A の両方から参照するため、どちらにも属さないアプリに置いています。
 
 `Comment` は `verse`、`chapter`、`book` のいずれかに紐づきます。返信の場合は `parent` に親コメントが入ります。Q&A の質問は `is_qa=True` かつ `parent=None` のコメントとして扱われ、ベストアンサーは `best_answer` に返信コメントを参照します。
 

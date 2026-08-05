@@ -4,8 +4,10 @@ from rest_framework import serializers
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
 from common.text import clean_body as _clean_body
+from tags.models import Tag
+from tags.serializers import TagSerializer
 
-from .models import DELETED_COMMENT_BODY, Comment, Report, Tag
+from .models import DELETED_COMMENT_BODY, Comment, Report
 
 User = get_user_model()
 
@@ -52,12 +54,6 @@ def _get_version_label(obj: Comment) -> str:
 
 
 _format_location_label = format_location_label
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ["id", "name"]
 
 
 class CommentAuthorSerializer(serializers.ModelSerializer):

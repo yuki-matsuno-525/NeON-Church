@@ -3,9 +3,9 @@ from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
-from comments.models import Tag
-from comments.serializers import TagSerializer
 from common.text import clean_body
+from tags.models import Tag
+from tags.serializers import TagSerializer
 
 from .models import DELETED_BODY, Answer, Question
 

@@ -15,8 +15,8 @@ from common.permissions import IsOwner
 from common.schema import DetailSerializer
 
 from . import selectors, services
-from .models import Comment, Tag
-from .serializers import CommentSerializer, ReportSerializer, TagSerializer
+from .models import Comment
+from .serializers import CommentSerializer, ReportSerializer
 
 
 class CommentListCreateView(generics.ListCreateAPIView):
@@ -112,14 +112,6 @@ class CommentUpdateDestroyView(generics.UpdateAPIView, generics.DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         services.soft_delete(self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class TagListView(generics.ListAPIView):
-    """GET /api/tags/  タグ一覧（認証不要）"""
-
-    permission_classes = [permissions.AllowAny]
-    queryset = Tag.objects.all().order_by("name")
-    serializer_class = TagSerializer
 
 
 class MyCommentListView(generics.ListAPIView):

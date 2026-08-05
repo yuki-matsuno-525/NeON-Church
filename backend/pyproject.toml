@@ -46,6 +46,7 @@ known-first-party = [
     "plans",
     "qa",
     "reading_progress",
+    "tags",
     "translations",
     "users",
 ]

@@ -84,14 +84,26 @@ raise Conflict("Already reported.")  # 409
 
 一覧を新しく足したら `test_query_counts.py` にも1本足す。
 
-## 5. 触る前に読むもの
+## 5. アプリ間の依存
+
+依存は**一方向**にする。共有されるものは下位のアプリへ出す。
+
+- `tags` … コメントと Q&A が共有するタグ。もとは `comments` が持っていて
+  `qa → comments` の依存ができていたので、専用アプリに出した。
+  タグを使う側は `from tags.models import Tag` と書く
+- `common` … アプリに属さない土台（`BaseModel` / 例外 / 権限 / ページング）
+
+新しく共有したくなったら、片方のアプリに置いて他方から import するのではなく、
+どちらにも属さない場所へ出せないか先に考える。
+
+## 6. 触る前に読むもの
 
 - `common/exceptions.py` — サービス層から投げる例外
 - `common/permissions.py` — 「持ち主だけ」の判定。アプリごとに書き起こさない
 - `common/schema.py` — スキーマ用の共通宣言（`DetailSerializer` など）
 - `translations/` — 3層に分けた形の見本。いちばん規模が大きい
 
-## 6. 型チェックの負債
+## 7. 型チェックの負債
 
 mypy は段階導入で、型注釈の無い関数の中身は見ない。既存の負債は
 `pyproject.toml` の `[[tool.mypy.overrides]]` に**理由付きで**列挙してある。

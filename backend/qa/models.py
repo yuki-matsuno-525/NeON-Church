@@ -47,7 +47,7 @@ class Question(BaseModel):
         on_delete=models.SET_NULL,
         related_name="best_answer_for",
     )
-    tags = models.ManyToManyField("comments.Tag", blank=True, related_name="questions")
+    tags = models.ManyToManyField("tags.Tag", blank=True, related_name="questions")
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     class Meta:

@@ -47,6 +47,7 @@ LOCAL_APPS: list[str] = [
     "common",
     "users",
     "bible",
+    "tags",
     "comments",
     "qa",
     "bookmarks",
