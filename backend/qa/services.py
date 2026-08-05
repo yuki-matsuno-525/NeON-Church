@@ -14,6 +14,16 @@ def soft_delete(instance) -> None:
     instance.save(update_fields=["is_deleted", "updated_at"])
 
 
+def soft_delete_answer(answer: Answer) -> None:
+    """回答を消す。ベストアンサーだったなら質問側の参照も外す。
+
+    外さないと、中身の消えた回答が「解決済み」の見た目だけ残してしまう。
+    """
+    soft_delete(answer)
+    if answer.best_answer_for.exists():
+        Question.objects.filter(best_answer=answer).update(best_answer=None)
+
+
 def ensure_editable(answer: Answer) -> None:
     """削除済みの回答は編集させない。"""
     if answer.is_deleted:

@@ -136,3 +136,53 @@ def test_notification_list_does_not_scale_with_rows(auth_client, other_auth_clie
         lambda: auth_client.get("/api/notifications/"),
         add_notification,
     )
+
+
+@pytest.mark.django_db
+def test_question_list_does_not_scale_with_rows(auth_client, verse):
+    """Q&A の一覧。回答件数は本体クエリで数える。"""
+    counter = iter(range(1, 100))
+
+    def add_question():
+        auth_client.post(
+            "/api/qa/questions/",
+            {"verse": str(verse.id), "title": f"質問{next(counter)}", "body": "本文"},
+            format="json",
+        )
+
+    assert_flat(lambda: auth_client.get("/api/qa/questions/"), add_question)
+
+
+@pytest.mark.django_db
+def test_article_list_does_not_scale_with_rows(auth_client):
+    """記事の一覧。書き手とタグを先読みする。"""
+    counter = iter(range(1, 100))
+
+    def add_article():
+        auth_client.post(
+            "/api/articles/",
+            {
+                "title": f"記事{next(counter)}",
+                "summary": "要約",
+                "body": "本文",
+                "visibility": "public",
+            },
+            format="json",
+        )
+
+    assert_flat(lambda: auth_client.get("/api/articles/"), add_article)
+
+
+@pytest.mark.django_db
+def test_plan_list_does_not_scale_with_rows(auth_client):
+    """読書計画の一覧。読んでいる人の数を本体クエリで数える。"""
+    counter = iter(range(1, 100))
+
+    def add_plan():
+        auth_client.post(
+            "/api/plans/",
+            {"title": f"計画{next(counter)}", "description": "説明", "visibility": "public"},
+            format="json",
+        )
+
+    assert_flat(lambda: auth_client.get("/api/plans/"), add_plan)

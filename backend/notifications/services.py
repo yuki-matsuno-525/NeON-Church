@@ -1,5 +1,12 @@
+"""通知の書き込み。
+
+通知を作る（＋必要ならメールを送る）処理と、既読にする処理。
+読み出しは selectors.py。
+"""
+
 from django.conf import settings
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 
 from translations.access import can_view_project_work
 
@@ -98,3 +105,25 @@ def send_user_notification(
         )
 
     return notification
+
+
+# ---------------------------------------------------------------------------
+# 既読
+# ---------------------------------------------------------------------------
+
+
+def mark_read(user, notification_id) -> None:
+    """通知を1件既読にする。見えない企画の通知は 404（存在を伏せる）。"""
+    from . import selectors
+
+    notification = get_object_or_404(selectors.visible_notifications(user), pk=notification_id)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save(update_fields=["is_read", "updated_at"])
+
+
+def mark_all_read(user) -> None:
+    """未読をまとめて既読にする。"""
+    from . import selectors
+
+    selectors.base_notifications(user, unread_only=True).update(is_read=True)

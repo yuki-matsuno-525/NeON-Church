@@ -1234,8 +1234,6 @@ paths:
         GET /api/notifications/?unread=1    未読のみ
         GET /api/notifications/?type=reply  種類で絞り込み（reply/upvote/mention）
 
-        返信・高評価・メンションが1本に混ざると、数の多い高評価に返信が埋もれる。
-        画面はタブで切り替えるので、その絞り込みと件数をここで用意する。
         counts は type での絞り込み前の件数（unread の指定は反映する）。
       parameters:
       - name: page

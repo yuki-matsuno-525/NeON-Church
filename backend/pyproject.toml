@@ -104,12 +104,6 @@ warn_redundant_casts = true
 module = ["bible.importers.*", "bible.management.commands.*"]
 ignore_errors = true
 
-# request.user が User | AnonymousUser 固定で、IsAuthenticated を通した後でも
-# 絞り込めない（django-stubs の既知の制約）。
-[[tool.mypy.overrides]]
-module = ["users.views", "users.authentication"]
-ignore_errors = true
-
 # base.py からの star import で設定値の型が object に落ちるため。
 [[tool.mypy.overrides]]
 module = ["config.settings.*"]

@@ -140,11 +140,7 @@ class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         return Response(AnswerSerializer(answer, context=self.get_serializer_context()).data)
 
     def perform_destroy(self, instance: Answer) -> None:
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted", "updated_at"])
-        # 削除された回答がベストアンサーのままだと「解決済み」の見た目だけ残る。
-        if instance.best_answer_for.exists():
-            Question.objects.filter(best_answer=instance).update(best_answer=None)
+        services.soft_delete_answer(instance)
 
 
 class BestAnswerRequestSerializer(serializers.Serializer):

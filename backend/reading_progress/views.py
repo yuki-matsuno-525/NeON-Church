@@ -1,3 +1,5 @@
+"""読書進捗の HTTP 入口。"""
+
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
@@ -5,7 +7,7 @@ from rest_framework.views import APIView
 
 from common.schema import DetailSerializer
 
-from .models import ReadingProgress
+from . import selectors, services
 from .serializers import ReadingProgressSerializer
 
 
@@ -25,9 +27,7 @@ class ReadingProgressListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return ReadingProgress.objects.filter(user=self.request.user).select_related(
-            "book", "chapter"
-        )
+        return selectors.own_progress(self.request.user)
 
 
 class ReadingProgressSaveView(APIView):
@@ -46,22 +46,10 @@ class ReadingProgressSaveView(APIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        book_id = request.data.get("book")
-        chapter_id = request.data.get("chapter")
-
-        if not all([book_id, chapter_id]):
-            return Response(
-                {"detail": "book, chapter は必須です。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        progress, created = ReadingProgress.objects.update_or_create(
-            user=request.user,
-            book_id=book_id,
-            defaults={"chapter_id": chapter_id},
+        progress, created = services.save_progress(
+            request.user, request.data.get("book"), request.data.get("chapter")
         )
-        serializer = ReadingProgressSerializer(progress)
         return Response(
-            serializer.data,
+            ReadingProgressSerializer(progress).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
