@@ -140,12 +140,12 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   };
 
   if (loading || authLoading) {
-    return <div style={containerStyle}><SkeletonList count={4} /></div>;
+    return <div className="page page-detail"><SkeletonList count={4} /></div>;
   }
 
   if (!user) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <ErrorState
           title={t.planCannotEdit}
           message={t.planLoginRequired}
@@ -157,7 +157,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
   if (!plan) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <ErrorState
           title={t.planCannotEdit}
           message={loadError ?? editUnavailableDescription}
@@ -174,7 +174,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
   if (user.username !== plan.owner_username) {
     return (
-      <div style={containerStyle}>
+      <div className="page page-detail">
         <ErrorState title={t.planCannotEdit} message={t.planNotOwner} extraAction={<Link href="/plans" className="action-link">{t.planBackToList}</Link>} />
       </div>
     );
@@ -185,7 +185,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   const canPublish = days.length > 0;
 
   return (
-    <div style={containerStyle}>
+    <div className="page page-detail">
       <ConfirmDialog
         open={confirmDelete}
         title={t.planDeleteConfirmTitle}
@@ -206,7 +206,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
       />
 
       <div className="flex gap-3 items-center flex-wrap mb-3">
-        <label style={{ flex: "1 1 280px" }}>
+        <label className="field-grow">
           <span className="sr-only">{t.planTitleLabel}</span>
           <input
             value={title}
@@ -228,16 +228,16 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             ))}
           </select>
         </label>
-        <span role="status" aria-live="polite" style={{ fontSize: 12, color: autosave.status === "error" ? "var(--state-danger)" : "var(--text-faint)", minWidth: 80 }}>
+        <span role="status" aria-live="polite" className={`save-status${autosave.status === "error" ? " save-status-error" : ""}`}>
           {saveStatusLabel(autosave.status, t)}
         </span>
-        {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} style={inlineRetryStyle}>{t.retry}</button>}
-        <Link href={`/plans/${id}`} className="action-link" style={viewLinkStyle}>{t.planView}</Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} style={plainButtonStyle}>{t.delete}</button>
+        {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>}
+        <Link href={`/plans/${id}`} className="action-link text-sm text-muted no-underline">{t.planView}</Link>
+        <button type="button" onClick={() => setConfirmDelete(true)} className="outline-button outline-button-muted">{t.delete}</button>
       </div>
 
-      {!title.trim() && <p id="plan-title-error" role="alert" style={errorTextStyle}>{supplementalText.titleRequired}</p>}
-      {actionError && <p role="alert" style={errorTextStyle}>{actionError}</p>}
+      {!title.trim() && <p id="plan-title-error" role="alert" className="error-text">{supplementalText.titleRequired}</p>}
+      {actionError && <p role="alert" className="error-text">{actionError}</p>}
 
       <label>
         <span className="sr-only">{t.description}</span>
@@ -283,44 +283,10 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
       {days.length === 0 && <EmptyState title={supplementalText.noDays} description={t.planDayRequired} />}
 
-      <button type="button" onClick={handleAddDay} disabled={!!busyAction} style={{ ...addDayStyle, opacity: busyAction ? 0.6 : 1 }}>
+      <button type="button" onClick={handleAddDay} disabled={!!busyAction} className="dashed-button w-full mt-4">
         {busyAction === "add-day" ? supplementalText.addingDay : t.planAddDay}
       </button>
       {days.length > 0 && !canReorder && <p className="text-xs text-faint mt-2">{t.planAddDayAlways}</p>}
     </div>
   );
 }
-
-const containerStyle: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "24px 16px 64px" };
-
-
-const plainButtonStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  padding: "8px 14px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-// .action-link に重ねて、色と字の大きさだけ控えめにする
-const viewLinkStyle: React.CSSProperties = { fontSize: 13, color: "var(--text-muted)", textDecoration: "none" };
-const inlineRetryStyle: React.CSSProperties = { border: 0, background: "transparent", color: "var(--accent)", textDecoration: "underline", minHeight: 44, cursor: "pointer" };
-const errorTextStyle: React.CSSProperties = { color: "var(--state-danger)", fontSize: 13, margin: "4px 0 10px" };
-
-const addDayStyle: React.CSSProperties = {
-  width: "100%",
-  marginTop: 16,
-  border: "1px dashed var(--border)",
-  borderRadius: 10,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 14,
-  padding: "14px 16px",
-  minHeight: 48,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

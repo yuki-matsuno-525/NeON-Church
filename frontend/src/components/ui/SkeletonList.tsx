@@ -20,7 +20,8 @@ export function SkeletonList({ count = 3, gap = 12 }: Props) {
       data-testid="skeleton-list"
       aria-live="polite"
       aria-busy="true"
-      style={{ display: "flex", flexDirection: "column", gap }}
+      className="flex flex-col"
+      style={{ gap }}
     >
       {Array.from({ length: count }, (_, i) => (
         <div

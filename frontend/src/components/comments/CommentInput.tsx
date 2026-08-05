@@ -130,7 +130,7 @@ export function CommentInput({
       />
       {showTagOption && tags.length > 0 && (
         <fieldset className="border-0 p-0 mt-2 mx-0 mb-0">
-          <legend style={inputLabelStyle}>{t.allTags}</legend>
+          <legend className="form-label mb-1 text-xs">{t.allTags}</legend>
           <div className="flex flex-wrap gap-2">
           {tags.map((tag) => {
             const active = selectedTags.includes(tag.id);
@@ -181,11 +181,3 @@ export function CommentInput({
     </form>
   );
 }
-
-const inputLabelStyle: React.CSSProperties = {
-  display: "block",
-  margin: "0 0 4px",
-  color: "var(--text-muted)",
-  fontSize: 12,
-  fontWeight: 700,
-};

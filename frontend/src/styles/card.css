@@ -1,0 +1,333 @@
+/* ============================================================
+   中身を囲むもの。カード・囲み・注意書き・コメント本文。
+   このサイトの顔である紫のグローカード（card-glow）もここ。
+   ============================================================ */
+
+/* ----- 共通 UI クラス -----
+   ボタン・カード・バッジの「見た目そのもの」はここが唯一の置き場所。
+   components/ui/Button.tsx などの React 部品も、独自に色や大きさを持たず
+   ここのクラスを使う。定義が 2 か所にあると、片方だけ直したときに
+   画面によって見た目がずれるため。
+   大きさや余白の値は @theme の表（--text-* / --spacing-* / --radius-*）から取る。 */
+
+/* カード */
+.card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+}
+/* 一覧の中に並ぶカードより一回り大きい、ページの区画用 */
+.card-lg {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+}
+
+/* 補足のお知らせ。設定画面やパスワード再設定で使う。 */
+.notice-box {
+  margin: 0;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  background: var(--accent-tint);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+}
+
+/* ----- 紫グロー基調のカード -----
+   このサイトの見た目の中心。read / translations / qa / articles / plans と
+   トップページで共通に使う。
+   背景のグラデーションとホバー時の枠色は 1 か所（ここ）だけに書く。
+
+   強さは 2 段階:
+   - .card-glow        … 一覧に並べる普通のカード（枠 1px・光 2 層）
+   - .card-glow-strong … トップページの主役（枠 3px・光 3 層・上半分に光沢）
+   以前はトップページ側が別ファイルに同じ内容を書き写していた。 */
+.card-glow {
+  border: 1px solid rgba(190, 95, 255, 0.70);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(160deg, rgba(110, 40, 200, 0.38) 0%, rgba(70, 15, 150, 0.50) 100%);
+  box-shadow: 0 0 6px rgba(210, 110, 255, 0.40), 0 0 16px rgba(185, 80, 255, 0.20);
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+/* クリックできるカード/ボタンに付けるとホバーで明るく光る */
+.card-glow-interactive {
+  cursor: pointer;
+}
+.card-glow-interactive:hover,
+.card-glow-interactive:focus-visible {
+  border-color: rgba(225, 135, 255, 1.0);
+  box-shadow: 0 0 8px rgba(230, 130, 255, 0.80), 0 0 22px rgba(185, 80, 255, 0.45);
+}
+
+/* 強い版。枠を太くし、光を 1 層足す。 */
+.card-glow-strong {
+  position: relative;
+  overflow: hidden;
+  border-width: 3px;
+  border-color: rgba(190, 95, 255, 0.95);
+  box-shadow:
+    0 0 6px rgba(210, 110, 255, 0.90),
+    0 0 18px rgba(185, 80, 255, 0.65),
+    0 0 38px rgba(155, 55, 230, 0.40);
+}
+
+/* 上半分のうっすらした光沢（ガラスの映り込み）。中身を増やさずに描く。 */
+.card-glow-strong::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+/* 光沢より中身を前に出す */
+.card-glow-strong > * {
+  position: relative;
+}
+
+.card-glow-strong.card-glow-interactive:hover,
+.card-glow-strong.card-glow-interactive:focus-visible {
+  border-color: rgba(225, 135, 255, 1.0);
+  box-shadow:
+    0 0 8px rgba(230, 130, 255, 1.00),
+    0 0 22px rgba(205, 100, 255, 0.82),
+    0 0 46px rgba(170, 68, 240, 0.55);
+}
+
+/* 一番読んでほしいカードだけ、枠と背景をもう一段明るくする */
+.card-glow-featured {
+  border-color: rgba(210, 130, 255, 1.0);
+  background: linear-gradient(160deg, rgba(125, 45, 215, 0.44) 0%, rgba(80, 20, 168, 0.56) 100%);
+}
+
+/* 左端にアクセント色の線を入れた囲み。
+   プロフィールや設定の「情報のかたまり」を示すのに使う。 */
+.panel-accent {
+  padding: var(--spacing-6);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+/* 一覧の中に並べる小さい版 */
+.panel-accent-sm {
+  padding: var(--spacing-3);
+  border-left-color: rgba(192, 64, 240, 0.50);
+}
+
+/* 利用者の頭文字を出す丸いアイコン。上部バーとコメント欄で同じものを使う。 */
+.avatar-circle {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-xs);
+}
+
+/* 大きい版の丸い頭文字アイコン（プロフィール画面） */
+.avatar-circle-lg {
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--border);
+  font-size: var(--text-xl);
+}
+
+/* カードの中にもう一段置く枠。原文と訳文を並べるときに使う。 */
+.sub-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-alt);
+}
+
+/* 「確認中です」のような、注意を促す一言。 */
+.notice-warning {
+  padding: 10px 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.10);
+  color: var(--text-muted);
+}
+
+/* 探している場所へ飛んだとき、その項目を一時的に光らせる。 */
+.is-scroll-target {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ----- 一覧に並ぶカードの中身 -----
+   題と要約。articles / plans / translations が同じ指定を書き写していた。 */
+.card-title {
+  margin: 0 0 var(--spacing-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+.card-summary {
+  margin: 0 0 var(--spacing-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+}
+
+/* カードの中に出す本文の抜粋。3 行で切り、長い語も折り返す。
+   （お気に入り一覧で使う） */
+.excerpt {
+  margin: var(--spacing-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 検索でひっかかった言葉。本文の中で目立たせる。 */
+.search-mark {
+  padding: 0 2px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* 検索結果の 1 件を包む枠。 */
+.result-card {
+  padding: var(--spacing-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 本文と次の区画のあいだに引く太めの線。読書画面とコメント欄で使う。 */
+.section-divider {
+  margin-bottom: 24px;
+  border: none;
+  border-top: 2px solid var(--border);
+}
+
+/* 記事やプランの題。一覧のカードより大きく、明朝で見せる。 */
+.page-title {
+  margin: 0 0 var(--spacing-2);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 補足の覚え書きを囲む枠。 */
+.note-box {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* うまくいかなかったことを、その場で伝える小さな枠。 */
+.alert-box {
+  padding: 12px;
+  border: 1px solid var(--state-warning);
+  border-radius: var(--radius-md);
+}
+
+/* 未読を示す小さな点。 */
+.unread-dot {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 通知 1 件。左端の縦線で未読かどうかを示す。 */
+.notification-row {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.notification-row-unread {
+  border-left-color: var(--accent);
+  background: var(--bg-hover);
+  cursor: pointer;
+}
+.notification-row-busy {
+  opacity: 0.7;
+}
+
+/* コメント本文。改行をそのまま残す。 */
+.comment-body {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  white-space: pre-wrap;
+}
+.comment-body-deleted {
+  color: var(--text-faint);
+}
+
+/* 記事の中の引用。左に線を引いて本文と区別する。 */
+.article-quote {
+  margin: 0 0 16px;
+  padding: 8px 0 8px 16px;
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+/* 記事の中の短いコード。 */
+.article-code {
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.9em;
+}
+
+/* 一覧の中に並べる、素っ気ない箱。プロフィールの記事とコメントで使う。 */
+.plain-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+}
+
+/* 回答 1 件。ベストアンサーに選ばれたものだけ枠と背景を変える。 */
+.answer-card {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-alt);
+}
+.answer-card-best {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}

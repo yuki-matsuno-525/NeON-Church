@@ -45,40 +45,21 @@ export function BulkBookmarkBar({
       aria-label={t.bulkBookmarkStart}
       aria-busy={busy}
       tabIndex={-1}
-      style={{
-        position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 40,
-        padding: "12px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        flexWrap: "wrap",
-        background: "var(--glass-bg)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderTop: "1px solid var(--glass-border)",
-      }}
+      className="bottom-bar"
     >
       <span className="text-sm font-bold">
         {pickedCount > 0 ? t.bulkPickedCount(pickedCount) : t.bulkPickPrompt}
       </span>
       {message && <span role="status" aria-live="polite" className="text-xs text-muted">{message}</span>}
       <div className="ml-auto flex gap-2">
-        <button type="button" onClick={onCancel} style={cancelStyle}>
+        <button type="button" onClick={onCancel} className="outline-button outline-button-muted">
           {t.articleCancel}
         </button>
         <button
           type="button"
           onClick={onSave}
           disabled={pickedCount === 0 || busy}
-          style={{
-            ...saveStyle,
-            cursor: pickedCount === 0 || busy ? "default" : "pointer",
-            opacity: pickedCount === 0 || busy ? 0.6 : 1,
-          }}
+          className="btn btn-secondary"
         >
           {busy ? t.bulkSaving : t.bulkSave}
         </button>
@@ -86,30 +67,6 @@ export function BulkBookmarkBar({
     </div>
   );
 }
-
-const cancelStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "transparent",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  padding: "8px 16px",
-  minHeight: 44,
-  cursor: "pointer",
-  fontFamily: "inherit",
-};
-
-const saveStyle: React.CSSProperties = {
-  border: "none",
-  borderRadius: 8,
-  background: "var(--accent)",
-  color: "var(--accent-text)",
-  fontWeight: 700,
-  fontSize: 13,
-  padding: "8px 18px",
-  minHeight: 44,
-  fontFamily: "inherit",
-};
 
 /**
  * 「まとめてお気に入り」の状態をまとめて持つ。ページ側は使うだけにする。

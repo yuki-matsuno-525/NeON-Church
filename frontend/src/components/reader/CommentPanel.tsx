@@ -297,8 +297,10 @@ export function CommentPanel({
         role={isMobile ? "dialog" : "complementary"}
         aria-modal={isMobile ? true : undefined}
         aria-labelledby={headingId}
-        // 幅は利用者がドラッグで変えられる値なので、ここだけ style で渡す
-        style={{ width: panelWidth, minWidth: MIN_WIDTH }}
+        // 幅は利用者がドラッグで変えられる値なので、ここだけ style で渡す。
+        // 画面が狭いときは下から出るシートになり幅を変えられないので、渡さない。
+        // （渡すと CSS 側の「横いっぱい」に勝ってしまい、打ち消しに !important が要る）
+        style={isMobile ? undefined : { width: panelWidth, minWidth: MIN_WIDTH }}
       >
         {/* ドラッグリサイズハンドル (マウス + タッチ対応) */}
         <div

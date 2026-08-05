@@ -56,7 +56,7 @@ export default function NewPlanPage() {
     return (
       <div className="page page-form">
         <p role="status" className="text-muted">{t.planLoginRequired}</p>
-        <Link href="/login?from=%2Fplans%2Fnew" style={loginLinkStyle}>
+        <Link href="/login?from=%2Fplans%2Fnew" className="action-link">
           {t.loginBtn}
         </Link>
       </div>
@@ -114,11 +114,11 @@ export default function NewPlanPage() {
             {busy ? t.articleCreating : t.planStartCreating}
           </button>
           {isDirty ? (
-            <button type="button" onClick={() => setConfirmCancel(true)} style={cancelButtonStyle}>
+            <button type="button" onClick={() => setConfirmCancel(true)} className="action-link self-center cursor-pointer border-0 bg-transparent px-1 text-sm text-muted no-underline">
               {t.articleCancel}
             </button>
           ) : (
-            <Link href="/plans" style={cancelLinkStyle}>
+            <Link href="/plans" className="action-link self-center text-sm text-muted no-underline">
               {t.articleCancel}
             </Link>
           )}
@@ -127,30 +127,3 @@ export default function NewPlanPage() {
     </div>
   );
 }
-
-
-const loginLinkStyle: React.CSSProperties = {
-  color: "var(--accent)",
-  minHeight: 44,
-  display: "inline-flex",
-  alignItems: "center",
-};
-
-const cancelLinkStyle: React.CSSProperties = {
-  alignSelf: "center",
-  fontSize: 13,
-  color: "var(--text-muted)",
-  textDecoration: "none",
-  minHeight: 44,
-  display: "inline-flex",
-  alignItems: "center",
-};
-
-const cancelButtonStyle: React.CSSProperties = {
-  ...cancelLinkStyle,
-  border: 0,
-  background: "transparent",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  padding: "0 4px",
-};

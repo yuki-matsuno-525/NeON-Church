@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { AsyncList } from "@/components/ui";
 import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
+import type { Tone } from "@/components/list/tone";
 import { Pagination } from "@/components/ui/Pagination";
 import { type IconName } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
@@ -22,10 +23,10 @@ type StatusKey = TranslationStatus;
 const PAGE_SIZE = 20;
 
 // ステータスごとのカラム。色はステータスの意味に合わせる（公開=緑 / 進行中=アクセント / 下書き=琥珀）。
-const COLUMNS: { key: StatusKey; icon: IconName; color: string; tint: string }[] = [
-  { key: "published", icon: "check-circle", color: "var(--state-success)", tint: "rgba(34,197,94,0.15)" },
-  { key: "active",    icon: "circle-dot",   color: "var(--accent)",        tint: "var(--accent-tint)" },
-  { key: "draft",     icon: "lock",         color: "var(--state-warning)", tint: "rgba(245,158,11,0.15)" },
+const COLUMNS: { key: StatusKey; icon: IconName; tone: Tone }[] = [
+  { key: "published", icon: "check-circle", tone: "ok" },
+  { key: "active",    icon: "circle-dot",   tone: "active" },
+  { key: "draft",     icon: "lock",         tone: "wait" },
 ];
 
 export default function TranslationsPage() {
@@ -93,7 +94,7 @@ export default function TranslationsPage() {
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
           inputClassName="form-control text-sm"
-          wrapperStyle={{ width: "100%" }}
+          wrapperClassName="w-full"
         />
       </label>
 
@@ -114,8 +115,7 @@ export default function TranslationsPage() {
             key={col.key}
             statusKey={col.key}
             icon={col.icon}
-            color={col.color}
-            tint={col.tint}
+            tone={col.tone}
             label={columnLabel(col.key)}
             desc={columnDesc(col.key)}
             search={debouncedSearch}
@@ -134,8 +134,7 @@ export default function TranslationsPage() {
 function TranslationColumn({
   statusKey,
   icon,
-  color,
-  tint,
+  tone,
   label,
   desc,
   search,
@@ -147,8 +146,7 @@ function TranslationColumn({
 }: {
   statusKey: StatusKey;
   icon: IconName;
-  color: string;
-  tint: string;
+  tone: Tone;
   label: string;
   desc: string;
   search: string;
@@ -199,8 +197,7 @@ function TranslationColumn({
   return (
     <ListColumn
       icon={icon}
-      color={color}
-      tint={tint}
+      tone={tone}
       title={label}
       count={count}
       description={desc}
@@ -218,7 +215,7 @@ function TranslationColumn({
       >
         <div className="flex flex-col gap-3">
           {items.map((p) => (
-            <ProjectCard key={p.id} project={p} accent={color} tint={tint} label={label} />
+            <ProjectCard key={p.id} project={p} label={label} />
           ))}
         </div>
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
@@ -229,13 +226,9 @@ function TranslationColumn({
 
 function ProjectCard({
   project: p,
-  accent,
-  tint,
   label,
 }: {
   project: TranslationProject;
-  accent: string;
-  tint: string;
   label: string;
 }) {
   const t = useT();
@@ -248,7 +241,7 @@ function ProjectCard({
     <Link href={`/translations/${p.id}`} className="no-underline text-inherit">
       <div className="card-glow card-glow-interactive py-4 px-4 flex flex-col" >
         <div className="flex items-start justify-end gap-3 mb-3">
-          <span className="badge" style={{ background: tint, color: accent, display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+          <span className="badge badge-icon badge-tone">
             {label}
           </span>
         </div>
@@ -280,7 +273,7 @@ function ProjectCard({
             aria-valuenow={progressPct}
             className="progress-track mt-0"
           >
-            <div className="progress-fill" style={{ width: `${progressPct}%`, background: accent }} />
+            <div className="progress-fill progress-fill-tone" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
       </div>

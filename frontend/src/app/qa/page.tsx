@@ -10,6 +10,7 @@ import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { AsyncList, SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
 import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
+import type { Tone } from "@/components/list/tone";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Icon } from "@/components/ui/Icon";
@@ -23,9 +24,9 @@ import type { IconName } from "@/components/ui/Icon";
 
 // 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
 type QAColumnKey = "answered" | "unanswered";
-const QA_COLUMNS: { key: QAColumnKey; icon: IconName; color: string; tint: string }[] = [
-  { key: "answered",   icon: "check-circle", color: "var(--state-success)", tint: "rgba(34,197,94,0.15)" },
-  { key: "unanswered", icon: "help-circle",  color: "var(--state-warning)", tint: "rgba(245,158,11,0.15)" },
+const QA_COLUMNS: { key: QAColumnKey; icon: IconName; tone: Tone }[] = [
+  { key: "answered",   icon: "check-circle", tone: "ok" },
+  { key: "unanswered", icon: "help-circle",  tone: "wait" },
 ];
 
 export default function QAPage() {
@@ -188,19 +189,19 @@ function QAContent() {
         </div>
       )}
 
-      <fieldset style={filterPanelStyle}>
+      <fieldset className="plain-card mb-6">
         {/* フィルタの見出しは各ボタンのラベルと重複するため画面には出さない（スクリーンリーダー用に残す）。 */}
         <legend className="sr-only">
           {t.filterAll} / {t.filterUnanswered} / {t.filterAnswered}
         </legend>
-        <div style={filterPanelHeaderStyle}>
+        <div className="flex items-center justify-between gap-3 mb-3">
           <span className="text-muted text-xs font-bold">{t.qaFilters}</span>
           {/* 表示中の件数ではなく、絞り込み後の総数（2列の合計） */}
           {!loading && (
             <span className="text-xs text-faint">{t.qaQuestionCount(totalCount)}</span>
           )}
         </div>
-        <div style={filterRowStyle}>
+        <div className="flex flex-wrap items-center gap-2">
           <ClearableSearchInput
             value={questionSearch}
             onChange={(value) => {
@@ -210,7 +211,7 @@ function QAContent() {
             placeholder={t.qaSearchPlaceholder}
             ariaLabel={t.qaSearchLabel}
             inputClassName="form-control"
-            wrapperStyle={{ minWidth: 220, flex: "1 1 240px" }}
+            wrapperClassName="field-grow"
           />
           {(() => {
             const groups = groupCatalogByGenre(catalog);
@@ -224,7 +225,7 @@ function QAContent() {
                     disabled={catalogLoading || catalogError}
                     value={genreFilter}
                     onChange={(e) => { setGenreFilter(e.target.value); setSelectedSlug(""); }}
-                    style={qaSelectStyle}
+                    className="select-md bg-bg"
                   >
                     <option value="">{t.all}</option>
                     {groups.map(({ genre }) => (
@@ -238,7 +239,7 @@ function QAContent() {
                     disabled={catalogLoading || catalogError}
                     value={selectedSlug}
                     onChange={(e) => setSelectedSlug(e.target.value)}
-                    style={qaSelectStyle}
+                    className="select-md bg-bg"
                   >
                     <option value="">{t.allBooks}</option>
                     {bookEntries.map((e) => (
@@ -256,7 +257,7 @@ function QAContent() {
                 aria-label={t.allVersions}
                 value={selectedVersion}
                 onChange={(e) => setSelectedVersion(e.target.value)}
-                style={qaSelectStyle}
+                className="select-md bg-bg"
               >
                 <option value="">{t.allVersions}</option>
                 {(getBookBySlug(selectedSlug)?.translations ?? []).map((tr) => (
@@ -270,7 +271,7 @@ function QAContent() {
               aria-label={t.allTags}
               value={selectedTagId}
               onChange={(e) => setSelectedTagId(e.target.value)}
-              style={qaSelectStyle}
+              className="select-md bg-bg"
             >
               <option value="">{t.allTags}</option>
               {tags.map((tag) => (
@@ -333,8 +334,7 @@ function QAContent() {
               <ListColumn
                 key={col.key}
                 icon={col.icon}
-                color={col.color}
-                tint={col.tint}
+                tone={col.tone}
                 title={columnLabel(col.key)}
                 // 表示中の件数ではなく、サーバーが数えたその列の総数
                 count={list.total}
@@ -366,40 +366,3 @@ function QAContent() {
     </div>
   );
 }
-
-
-
-const filterPanelStyle: React.CSSProperties = {
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  padding: 12,
-  margin: "0 0 24px",
-  background: "var(--bg-alt)",
-};
-
-const filterPanelHeaderStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 12,
-  marginBottom: 10,
-};
-
-const filterRowStyle: React.CSSProperties = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-  alignItems: "center",
-};
-
-const qaSelectStyle: React.CSSProperties = {
-  minHeight: 44,
-  padding: "6px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: "var(--font-size-sm)",
-  fontFamily: "inherit",
-};
-

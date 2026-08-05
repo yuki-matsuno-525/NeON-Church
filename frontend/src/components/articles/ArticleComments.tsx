@@ -103,7 +103,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
       ) : error && comments.length === 0 ? (
         <div role="alert" className="flex items-center flex-wrap gap-3">
           <p className="m-0 text-sm text-danger">{error}</p>
-          <button type="button" onClick={() => void loadComments()} style={secondaryButtonStyle}>{t.retry}</button>
+          <button type="button" onClick={() => void loadComments()} className="outline-button">{t.retry}</button>
         </div>
       ) : comments.length === 0 ? (
         <p className="text-sm text-faint">{t.articleCommentsEmpty}</p>
@@ -168,14 +168,3 @@ export function ArticleComments({ articleId }: { articleId: string }) {
     </section>
   );
 }
-
-const secondaryButtonStyle: React.CSSProperties = {
-  minHeight: 44,
-  padding: "8px 14px",
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text)",
-  cursor: "pointer",
-  fontFamily: "inherit",
-};

@@ -89,14 +89,6 @@ function RegisterForm() {
   }
 
 
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 700,
-    marginBottom: 6,
-    color: "var(--text-muted)",
-  };
-
   return (
     <div
       className="flex justify-center items-center min-h-page p-6"
@@ -109,7 +101,7 @@ function RegisterForm() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor={usernameId} style={labelStyle}>{t.username}</label>
+            <label htmlFor={usernameId} className="form-label">{t.username}</label>
             <input
               id={usernameId}
               type="text"
@@ -128,7 +120,7 @@ function RegisterForm() {
           </div>
 
           <div className="mb-4">
-            <label htmlFor={emailId} style={labelStyle}>{t.email}</label>
+            <label htmlFor={emailId} className="form-label">{t.email}</label>
             <input
               id={emailId}
               type="email"
@@ -142,7 +134,7 @@ function RegisterForm() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor={passwordId} style={labelStyle}>{t.passwordHint}</label>
+            <label htmlFor={passwordId} className="form-label">{t.passwordHint}</label>
             <PasswordField
               id={passwordId}
               value={password}
@@ -157,7 +149,7 @@ function RegisterForm() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor={confirmPasswordId} style={labelStyle}>{t.confirmPassword}</label>
+            <label htmlFor={confirmPasswordId} className="form-label">{t.confirmPassword}</label>
             <PasswordField
               id={confirmPasswordId}
               value={confirmPassword}

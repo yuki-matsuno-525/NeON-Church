@@ -1,0 +1,196 @@
+/* ============================================================
+   色・大きさ・余白の「表」。このサイトで使ってよい値はここが全部。
+   ここに無い値を各画面で書かないこと。増やしたくなったら
+   plan/design-refactoring.md を更新してから足す。
+
+   表は 2 種類ある。
+   - @theme … Tailwind のクラス（text-sm / p-4 / rounded-md など）を作る表
+   - :root  … CSS から var(--bg) のように直接読む値の表
+   どちらも層（@layer）に入れない。層に入れると上書きの順番が変わってしまう。
+   ============================================================ */
+
+/* ============================================================
+   Tailwind に「このサイトで使ってよい値」を教える場所。
+   決定版は plan/design-refactoring.md。
+
+   各項目の先頭にある `--xxx-*: initial;` は「Tailwind が最初から持っている
+   値を全部消す」という指定。そのうえで、下に並べた値だけを登録する。
+   ここに無い値はクラス自体が作られないので、書いても効かない。
+   つまり 13px や 10px のような場当たりの値が入り込めなくなる。
+
+   値を増やしたくなったときは、まず plan/design-refactoring.md を更新して
+   「本当に新しい段が要るのか」を確かめてから、ここに足すこと。
+   ============================================================ */
+@theme inline {
+  /* ----- フォント ----- */
+  /* 本文はシステム日本語フォント（Web フォントを読まず高速化）。見出しのみ Web フォントの明朝体。 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "YuGothic", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
+  --font-serif: "Noto Serif JP", serif;
+}
+
+/* こちらは `inline` を付けない @theme。
+   `inline` を付けると Tailwind はクラスの中に値を直接埋め込むだけで、
+   `--text-md` のような CSS 変数そのものは出力しない。
+   下の値は globals.css の中からも var() で参照したいので、
+   変数として出力される通常の @theme に置く。 */
+@theme {
+  /* ----- 文字サイズ 6 段 -----
+     使い方: text-xs / text-sm / text-md / text-lg / text-xl / text-hero */
+  --text-*: initial;
+  --text-xs: 12px;    /* ラベル・バッジ・日時 */
+  --text-sm: 14px;    /* 補足・メタ情報・ボタン */
+  --text-md: 16px;    /* 本文（基準） */
+  --text-lg: 20px;    /* 小見出し */
+  --text-xl: 28px;    /* ページ見出し */
+  --text-hero: 40px;  /* トップのヒーローだけ */
+
+  /* ----- 文字の太さ 2 段 -----
+     使い方: font-normal / font-bold */
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  /* ----- 余白 7 段 -----
+     使い方: p-1 / m-2 / gap-4 など。数字 × 4px と覚える。
+     1=4px 2=8px 3=12px 4=16px 6=24px 8=32px 12=48px
+     間の数字（p-5 や p-7）は登録していないので効かない。 */
+  --spacing: initial;
+  /* 0 は「余白の大きさ」ではなく「余白なし」。
+     見出しや段落に最初から付いている余白を打ち消すのに要るので必ず残す。 */
+  --spacing-0: 0px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+
+  /* ----- 角丸 4 段 -----
+     使い方: rounded-sm / rounded-md / rounded-lg / rounded-full */
+  --radius-*: initial;
+  --radius-sm: 4px;    /* 小さなタグ */
+  --radius-md: 8px;    /* 標準 */
+  --radius-lg: 12px;   /* カード */
+  --radius-full: 999px;
+
+  /* ----- 行間 -----
+     使い方: leading-tight / leading-base / leading-reading */
+  --leading-*: initial;
+  --leading-none: 1;        /* アイコンやロゴなど、行の高さを詰めたいとき */
+  --leading-tight: 1.25;    /* 見出し */
+  --leading-base: 1.6;      /* 本文 */
+  --leading-reading: 1.85;  /* Reader の長文 */
+
+  /* ----- 色 -----
+     Tailwind が最初から持っている色（red-500 など）は全部消し、
+     :root にあるこのサイトのテーマ色だけを登録する。
+     使い方: text-muted / bg-alt / border-border / bg-accent など */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #fff;
+  /* 親の文字色をそのまま引き継ぐ（リンクを本文と同じ色にしたいときなど） */
+  --color-inherit: inherit;
+
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-bg-hover: var(--bg-hover);
+  --color-border: var(--border);
+
+  --color-body: var(--text);         /* 本文の文字色 */
+  --color-muted: var(--text-muted);  /* 控えめな文字 */
+  --color-faint: var(--text-faint);  /* さらに控えめ（日時など） */
+
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-active: var(--accent-active);
+  --color-neon-pink: var(--neon-pink);
+  --color-neon-purple: var(--neon-purple);
+
+  /* 入力欄の中の色。背景にうっすら白を重ねて「書き込める場所」を示す */
+  --color-field: rgba(255, 255, 255, 0.05);
+
+  --color-success: var(--state-success);
+  --color-warning: var(--state-warning);
+  --color-danger: var(--state-danger);
+  --color-info: var(--state-info);
+
+  /* ----- 影 -----
+     使い方: shadow-card / shadow-card-hover / shadow-glow */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.40);
+  --shadow-glow: 0 0 14px var(--glow-purple);
+}
+
+:root {
+  /* Neon Dark — デフォルトテーマ */
+  --bg: #090516;
+  --bg-alt: #160e2e;
+  --bg-hover: #201440;
+  --border: rgba(140, 75, 235, 0.30);
+  --text: rgba(236, 228, 252, 0.92);
+  --text-muted: #a898d8;
+  /* 日時・メタ情報など控えめな文字。以前の #7a6aaa は背景に対して 4.28:1 で、
+     本文として読める明るさ（4.5:1）に届いていなかった。4.95:1 まで上げつつ、
+     --text-muted（7.8:1）との差は残して「控えめさ」は保つ。 */
+  --text-faint: #8574b6;
+  --accent: #c040f0;
+  --accent-text: #fff;
+  --accent-tint: rgba(145, 60, 240, 0.18);
+  --navbar-height: 60px;
+  --sidebar-width: 200px;
+  --panel-width: 320px;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(14, 8, 42, 0.62);
+  --glass-border: rgba(160, 82, 248, 0.26);
+  --glass-nav: rgba(8, 4, 24, 0.74);
+  --neon-pink: #ff2888;
+  --neon-purple: #cc44ff;
+  --glow-purple: rgba(192, 52, 240, 0.55);
+  --glow-pink: rgba(255, 38, 120, 0.55);
+
+  /* 大きさ・余白・角丸・影・行間・文字サイズは上の @theme が持つ。
+     ここに同じものを書かないこと。以前は --space-* と --spacing-*、
+     --font-size-* と --text-* のように同じ意味の表が 2 つあり、
+     しかも --font-size-lg(18px) と --text-lg(20px) のように値が食い違っていた。 */
+
+  /* Accent roles (Release 4) — アクセントの 3 階層
+     - primary: 主要 CTA（btn-primary の gradient）
+     - secondary: --accent と同値、リンク/フォーカス/二次強調
+     - spot: --neon-pink と同値、限定的なハイライト */
+  --accent-primary-grad: linear-gradient(135deg, #7618c5, #d81e80);
+  --accent-secondary: var(--accent);
+  --accent-spot: var(--neon-pink);
+  --accent-active: #a020d0;
+
+  /* State colors (Release 4) — 状態色の集約 */
+  --state-success: #22c55e;
+  --state-warning: #f59e0b;
+  --state-danger: #ef4444;
+  --state-info: #3b82f6;
+
+  /* 画面の折り返し幅は 768px の 1 か所だけ。メディアクエリの中では
+     CSS 変数を使えないので、変数にはせず数字を直接書く。
+     （--bp-sm/md/lg/xl という「対応表」があったが、どこからも読まれていなかった） */
+
+  /* Motion tokens (Release 4) — 既存の transition: 0.15s 中心の体感を保ちつつ命名 */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* 画面が狭いときは、検索バーが 2 段目に折り返すぶん上のバーを高くする。
+   --navbar-height を上書きすると、これを見ている sticky な位置も自動で付いてくる。 */
+@media (max-width: 768px) {
+  /* 検索バーを2段目に折り返すぶん、ナビバーを2段の高さにする
+     （--navbar-height を上書きすると sticky な top 参照箇所も自動追従する） */
+  :root {
+    --navbar-height: 104px;
+  }
+}

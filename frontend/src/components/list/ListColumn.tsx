@@ -3,13 +3,12 @@
 // （"use client" を付けると、使う側がサーバーでもブラウザ側に回ってしまう）。
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { toneClass, type Tone } from "./tone";
 
 type Props = {
   icon: IconName;
-  /** アイコンと件数バッジの文字色 */
-  color: string;
-  /** 件数バッジの背景色 */
-  tint: string;
+  /** この列の分類の色。list.css の tone-* から選ぶ（色の値は書かない） */
+  tone: Tone;
   title: string;
   /** 見出しの横に出す件数。表示中の件数ではなく、サーバーが数えた総数を渡す */
   count: number;
@@ -33,8 +32,7 @@ type Props = {
  */
 export function ListColumn({
   icon,
-  color,
-  tint,
+  tone,
   title,
   count,
   description,
@@ -51,16 +49,15 @@ export function ListColumn({
       role={labelledBy ? "tabpanel" : undefined}
       aria-labelledby={labelledBy}
       aria-busy={busy}
-      className="list-column"
-      style={hidden ? { display: "none" } : undefined}
+      className={`list-column ${toneClass(tone)}${hidden ? " hidden" : ""}`}
     >
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <span aria-hidden="true" style={{ color, display: "inline-flex" }}>
+          <span aria-hidden="true" className="icon-tone">
             <Icon name={icon} size={18} />
           </span>
           <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span className="badge badge-count" style={{ background: tint, color }}>
+          <span className="badge badge-count badge-tone">
             {count}
           </span>
         </div>

@@ -14,7 +14,6 @@ type Props = {
   ariaDescribedby?: string;
   /** 入力欄に付けるクラス。見た目は基本 .form-control に任せる。 */
   inputClassName?: string;
-  inputStyle?: React.CSSProperties;
 };
 
 export function PasswordField({
@@ -27,7 +26,6 @@ export function PasswordField({
   ariaInvalid,
   ariaDescribedby,
   inputClassName,
-  inputStyle,
 }: Props) {
   const t = useT();
   const [visible, setVisible] = useState(false);
@@ -44,9 +42,8 @@ export function PasswordField({
         autoComplete={autoComplete}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
-        className={inputClassName}
         // 目のアイコンと文字が重ならないよう右に余白を空ける
-        style={{ width: "100%", paddingRight: 40, ...inputStyle }}
+        className={`${inputClassName ?? ""} w-full has-clear-btn`}
       />
       <button
         type="button"

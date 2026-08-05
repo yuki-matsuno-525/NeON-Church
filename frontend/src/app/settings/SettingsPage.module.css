@@ -1,46 +1,49 @@
+/* 設定画面だけの並び。色・大きさ・余白は tokens.css の表から取る。
+   以前はここだけ 13px / 18px / 9px のような表に無い値を直接書いていた。 */
+
 .page {
   width: min(100%, 840px);
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: var(--spacing-8) var(--spacing-6) var(--spacing-12);
 }
 
 .header {
-  margin-bottom: 28px;
+  margin-bottom: var(--spacing-8);
 }
 
 .title {
   margin: 0;
-  font-size: var(--font-size-2xl);
-  line-height: 1.3;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
 }
 
 .lead {
-  margin: 8px 0 0;
+  margin: var(--spacing-2) 0 0;
   color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
 }
 
 .nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 24px;
+  gap: var(--spacing-2);
+  margin: 0 0 var(--spacing-6);
 }
 
 .nav a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  padding: 6px 12px;
+  padding: var(--spacing-1) var(--spacing-3);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 
-/* 見た目は globals.css の .card-lg（背景・枠・角丸・余白）に任せ、
+/* 見た目は card.css の .card-lg（背景・枠・角丸・余白）に任せ、
    ここでは並びに関する指定だけを足す。 */
 .section {
   composes: card-lg from global;
@@ -52,48 +55,40 @@
   border-color: color-mix(in srgb, var(--state-danger) 45%, var(--border));
 }
 
+/* 見出しの大きさは base.css の h2 に任せる（以前はここで 18px に上書きしていた） */
 .section h2 {
   margin: 0;
-  font-size: 18px;
 }
 
 .description {
-  margin: 6px 0 20px;
+  margin: var(--spacing-1) 0 var(--spacing-6);
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
 }
 
 .form,
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-2);
 }
 
 .field label {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
+/* 入力欄の見た目は form.css の .form-control と同じものを使う */
 .input {
-  width: 100%;
-  min-height: 44px;
-  box-sizing: border-box;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 16px;
+  composes: form-control from global;
 }
 
 .input:disabled {
@@ -104,14 +99,14 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--spacing-3);
   align-items: center;
 }
 
 .message {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
 }
 
 .error {
@@ -119,10 +114,10 @@
 }
 
 .success {
-  color: var(--state-success, #16a34a);
+  color: var(--state-success);
 }
 
-/* 見た目は globals.css の .notice-box と共通（パスワード再設定画面と同じもの） */
+/* 見た目は card.css の .notice-box と共通（パスワード再設定画面と同じもの） */
 .notice {
   composes: notice-box from global;
 }
@@ -130,7 +125,7 @@
 .sessionList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -138,10 +133,10 @@
 
 .session {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-4);
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: var(--spacing-3) 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -151,24 +146,24 @@
 
 .sessionTitle {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
 .sessionMeta {
-  margin: 4px 0 0;
+  margin: var(--spacing-1) 0 0;
   color: var(--text-faint);
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--text-xs);
+  line-height: var(--leading-base);
 }
 
 @media (max-width: 640px) {
   .page {
-    padding: 24px 16px 48px;
+    padding: var(--spacing-6) var(--spacing-4) var(--spacing-12);
   }
 
   .section {
-    padding: 20px 16px;
+    padding: var(--spacing-6) var(--spacing-4);
   }
 
   .session {

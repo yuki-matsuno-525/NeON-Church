@@ -229,8 +229,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   );
   const citationPane = (
     <div
-      className="border border-border rounded-lg overflow-hidden min-h-0"
-      style={{ height: isMobile ? 480 : "100%" }}
+      className="citation-pane border border-border rounded-lg overflow-hidden min-h-0"
     >
       <CitationPanel onInsert={insertMark} />
     </div>
@@ -273,8 +272,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           required
           aria-invalid={!title.trim()}
           aria-describedby={!title.trim() ? "article-title-error" : undefined}
-          className="form-control text-lg font-bold"
-          style={{ flex: "1 1 280px" }}
+          className="form-control field-grow text-lg font-bold"
         />
         <label htmlFor="article-visibility" className="sr-only">{t.articleVisibilityLabel}</label>
         <select

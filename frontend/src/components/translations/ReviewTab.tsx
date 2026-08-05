@@ -3,7 +3,7 @@
 import type { TranslationUnit } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { AsyncList, EmptyState } from "@/components/ui";
-import { STATUS_BADGE_STYLE, unitStatusLabel } from "./unitStatus";
+import { unitStatusBadgeClass, unitStatusLabel } from "./unitStatus";
 
 type Props = {
   units: TranslationUnit[];
@@ -44,13 +44,7 @@ export function ReviewTab({ units, loading, isOwner, actionBusy, onOpenTarget, o
                       <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
                     )}
                   </div>
-                  <span
-                    className="badge"
-                    style={{
-                      background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
-                      color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
-                    }}
-                  >
+                  <span className={unitStatusBadgeClass(unit.status)}>
                     {unitStatusLabel(unit.status, t)}
                   </span>
                 </div>

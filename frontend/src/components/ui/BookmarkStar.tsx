@@ -33,21 +33,7 @@ export function BookmarkStar({
       aria-pressed={active}
       aria-label={title}
       title={title}
-      style={{
-        border: "none",
-        width: 44,
-        height: 44,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
-        cursor: busy ? "default" : "pointer",
-        fontFamily: "inherit",
-        padding: 0,
-        flexShrink: 0,
-        filter: active ? "drop-shadow(0 0 4px var(--accent))" : undefined,
-      }}
+      className={`star-button${active ? " star-button-on" : ""}`}
     >
       <Icon name="bookmark" size={size} fill={active ? "currentColor" : "none"} />
     </button>

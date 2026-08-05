@@ -82,7 +82,7 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
             onChange={(e) => setDraft(e.target.value)}
             rows={4}
             aria-label={t.qaAnswerPlaceholder}
-            style={textareaStyle}
+            className="form-control text-sm leading-reading"
           />
           <div className="flex gap-2 justify-end mt-2">
             <Button variant="secondary" onClick={() => { setEditing(false); setDraft(answer.body); }}>
@@ -145,19 +145,3 @@ export function AnswerItem({ answer, currentUserId, canPickBest, onPickBest, onC
     </div>
   );
 }
-
-const textareaStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg)",
-  color: "var(--text)",
-  fontSize: 14,
-  lineHeight: 1.7,
-  resize: "vertical",
-  fontFamily: "inherit",
-  outline: "none",
-  boxSizing: "border-box",
-};
-

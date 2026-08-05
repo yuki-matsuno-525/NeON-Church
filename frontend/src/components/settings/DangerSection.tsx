@@ -41,7 +41,7 @@ export function DangerSection({ settings, text, onDeleted }: { settings: Account
           {settings.has_usable_password && (
             <div className={styles.field}>
               <label htmlFor={passwordId}>{text.currentPassword}</label>
-              <PasswordField id={passwordId} value={password} onChange={setPassword} autoComplete="current-password" required inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
+              <PasswordField id={passwordId} value={password} onChange={setPassword} autoComplete="current-password" required inputClassName="form-control" />
             </div>
           )}
           <div className={styles.actions}><Button type="submit" variant="destructive" loading={busy}>{text.deleteAccount}</Button></div>

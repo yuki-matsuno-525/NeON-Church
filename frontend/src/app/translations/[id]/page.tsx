@@ -52,7 +52,7 @@ import { translationUiText } from "../translationUiText";
 import { ReviewTab } from "@/components/translations/ReviewTab";
 import { MembersTab } from "@/components/translations/MembersTab";
 import { UnitDiscussion } from "@/components/translations/UnitDiscussion";
-import { STATUS_BADGE_STYLE, unitStatusLabel } from "@/components/translations/unitStatus";
+import { unitStatusBadgeClass, unitStatusLabel } from "@/components/translations/unitStatus";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 
@@ -1082,13 +1082,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                           <span className="ml-2">{t.assignee} {unit.assigned_to_username}</span>
                         )}
                       </div>
-                      <span
-                        className="badge"
-                        style={{
-                          background: STATUS_BADGE_STYLE[unit.status]?.bg ?? "var(--bg-hover)",
-                          color: STATUS_BADGE_STYLE[unit.status]?.color ?? "var(--text-muted)",
-                        }}
-                      >
+                      <span className={unitStatusBadgeClass(unit.status)}>
                         {unitStatusLabel(unit.status, t)}
                       </span>
                     </div>
