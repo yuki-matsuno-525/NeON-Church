@@ -60,10 +60,7 @@ export function VerseList({
                 activate(verse.id);
               }
             }}
-            className={`verse-row${isSelected ? " verse-row-selected" : ""}`}
-            style={{
-              animation: isHighlighted ? "verse-flash 5s ease-out forwards" : undefined,
-            }}
+            className={`verse-row${isSelected ? " verse-row-selected" : ""}${isHighlighted ? " verse-row-flash" : ""}`}
           >
             <span
               className="verse-text"

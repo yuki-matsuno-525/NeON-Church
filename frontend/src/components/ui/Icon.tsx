@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement, SVGProps } from "react";
+import type { ReactElement, SVGProps } from "react";
 
 export type IconName =
   | "chevron-down"
@@ -22,7 +22,6 @@ type IconProps = Omit<SVGProps<SVGSVGElement>, "name"> & {
   size?: number;
   color?: string;
   title?: string;
-  style?: CSSProperties;
 };
 
 // Stroke-based 24×24 アイコン。lucide-react のパスを採用。
@@ -108,7 +107,7 @@ export function Icon({
   size = 16,
   color = "currentColor",
   title,
-  style,
+  className,
   ...rest
 }: IconProps) {
   return (
@@ -125,7 +124,8 @@ export function Icon({
       role={title ? "img" : "presentation"}
       aria-hidden={title ? undefined : true}
       aria-label={title}
-      style={{ flexShrink: 0, ...style }}
+      // 横に並べたときアイコンが潰れないようにする
+      className={`shrink-0${className ? ` ${className}` : ""}`}
       {...rest}
     >
       {title && <title>{title}</title>}

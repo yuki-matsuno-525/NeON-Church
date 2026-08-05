@@ -157,7 +157,7 @@ export default function QuestionDetailPage() {
 
   if (loading) {
     return (
-      <div style={pageStyle}>
+      <div className="page page-narrow">
         <SkeletonList count={3} />
       </div>
     );
@@ -165,7 +165,7 @@ export default function QuestionDetailPage() {
 
   if (notFound || !question) {
     return (
-      <div style={pageStyle}>
+      <div className="page page-narrow">
         <ErrorState title={t.qaQuestionNotFound} onRetry={loadQuestion} onBack={() => router.push("/qa")} backLabel={t.qaBackToList} />
       </div>
     );
@@ -183,10 +183,10 @@ export default function QuestionDetailPage() {
     : null;
 
   return (
-    <div style={pageStyle}>
+    <div className="page page-narrow">
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
 
-      <Link href="/qa" style={backLinkStyle}>
+      <Link href="/qa" className="action-link gap-1 text-sm text-muted no-underline">
         <Icon name="arrow-left" size={14} />
         {t.qaBackToList}
       </Link>
@@ -194,13 +194,13 @@ export default function QuestionDetailPage() {
       <article className="card-glow p-4 mt-3" >
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <span
-            className={`badge ${answered ? "badge-answered" : "badge-unanswered"}`}
+            className={`badge badge-icon badge-tone ${answered ? "tone-ok" : "tone-wait"}`}
           >
             <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
             {answered ? t.filterAnswered : t.filterUnanswered}
           </span>
           {passageUrl && (
-            <Link href={passageUrl} style={passageLinkStyle}>
+            <Link href={passageUrl} className="action-link gap-1 text-sm no-underline">
               {location}
               <Icon name="chevron-right" size={12} />
             </Link>
@@ -236,7 +236,7 @@ export default function QuestionDetailPage() {
           </div>
         ) : (
           <>
-            <h1 style={titleStyle}>{question.title}</h1>
+            <h1 className="page-title mt-3">{question.title}</h1>
             <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
               {question.is_deleted ? t.qaDeletedQuestion : question.body}
             </p>
@@ -282,7 +282,7 @@ export default function QuestionDetailPage() {
         </div>
       </article>
 
-      <h2 style={sectionHeadingStyle}>
+      <h2 className="flex items-center mt-8 mb-3 text-md font-bold">
         {t.qaAnswersHeading}
         <span className="text-faint font-normal text-sm ml-2">
           {answers.total}
@@ -355,45 +355,3 @@ export default function QuestionDetailPage() {
     </div>
   );
 }
-
-const pageStyle: React.CSSProperties = {
-  maxWidth: 760,
-  margin: "0 auto",
-  padding: "32px 16px",
-};
-
-const backLinkStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  fontSize: 13,
-  color: "var(--text-muted)",
-  textDecoration: "none",
-};
-
-const passageLinkStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 2,
-  fontSize: 13,
-  color: "var(--accent)",
-  textDecoration: "none",
-};
-
-const titleStyle: React.CSSProperties = {
-  fontFamily: "var(--font-serif)",
-  fontSize: 22,
-  fontWeight: 700,
-  lineHeight: 1.4,
-  margin: "12px 0 10px",
-};
-
-const sectionHeadingStyle: React.CSSProperties = {
-  fontSize: 16,
-  fontWeight: 700,
-  margin: "28px 0 12px",
-  display: "flex",
-  alignItems: "center",
-};
-
-

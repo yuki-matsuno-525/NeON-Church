@@ -93,12 +93,12 @@ function ResetPasswordForm() {
         <h1 id="password-reset-confirm-title">{text.title}</h1>
         {complete ? (
           <>
-            <p role="status" aria-live="polite" className={styles.message} style={{ marginTop: 20 }}>{text.success}</p>
+            <p role="status" aria-live="polite" className={`${styles.message} mt-6`}>{text.success}</p>
             <Link className={styles.back} href="/login">{text.login}</Link>
           </>
         ) : !uid || !token ? (
           <>
-            <p role="alert" className={`${styles.message} ${styles.error}`} style={{ marginTop: 20 }}>{text.invalid}</p>
+            <p role="alert" className={`${styles.message} ${styles.error} mt-6`}>{text.invalid}</p>
             <Link className={styles.back} href="/forgot-password">{text.request}</Link>
           </>
         ) : (
@@ -107,12 +107,12 @@ function ResetPasswordForm() {
             <form className={styles.form} onSubmit={submit} aria-busy={busy}>
               <div className={styles.field}>
                 <label htmlFor={passwordId}>{text.password}</label>
-                <PasswordField id={passwordId} value={password} onChange={setPassword} autoComplete="new-password" minLength={8} required inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
+                <PasswordField id={passwordId} value={password} onChange={setPassword} autoComplete="new-password" minLength={8} required inputClassName="form-control" />
                 <span className="text-xs text-faint">{text.hint}</span>
               </div>
               <div className={styles.field}>
                 <label htmlFor={confirmId}>{text.confirm}</label>
-                <PasswordField id={confirmId} value={confirmation} onChange={setConfirmation} autoComplete="new-password" minLength={8} required inputStyle={{ minHeight: 44, border: "1px solid var(--border)", borderRadius: "var(--radius-md)", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, padding: "9px 12px" }} />
+                <PasswordField id={confirmId} value={confirmation} onChange={setConfirmation} autoComplete="new-password" minLength={8} required inputClassName="form-control" />
               </div>
               <Button type="submit" loading={busy} className="w-full">{busy ? text.saving : text.submit}</Button>
               {error && <p role="alert" aria-live="polite" className={`${styles.message} ${styles.error}`}>{error}</p>}

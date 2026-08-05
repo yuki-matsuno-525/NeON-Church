@@ -15,19 +15,6 @@ import { Pagination } from "@/components/ui/Pagination";
 // 検索結果（節）は50件ずつページ送りする。backend の VERSE_PAGE_SIZE と揃える。
 const VERSE_PAGE_SIZE = 50;
 
-const KIND_BADGE_STYLE: React.CSSProperties = {
-  display: "inline-block",
-  fontSize: 10,
-  fontWeight: 700,
-  padding: "2px 8px",
-  borderRadius: 999,
-  border: "1px solid var(--border)",
-  color: "var(--text-muted)",
-  background: "var(--bg)",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-  marginRight: 8,
-};
 
 const SEARCH_KIND_OPTIONS: { value: SearchKind; labelKey: "all" | "searchKindVerse" | "searchKindBook" | "searchKindComment" }[] = [
   { value: "all", labelKey: "all" },
@@ -150,8 +137,7 @@ function SearchContent() {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={t.searchKeyword}
             autoComplete="off"
-            className="form-control bg-bg-alt text-sm"
-            style={{ paddingRight: inputValue ? 48 : 12 }}
+            className={`form-control bg-bg-alt text-sm${inputValue ? " has-clear-btn" : ""}`}
           />
           {inputValue && (
             <button
@@ -241,7 +227,7 @@ function SearchContent() {
                       href={slug ? `/${slug}?list=1` : "/read"}
                       className="result-card no-underline text-body text-sm font-bold"
                     >
-                      <span style={KIND_BADGE_STYLE}>{t.searchKindBook}</span>
+                      <span className="badge mr-2 border border-border bg-bg uppercase tracking-wide text-muted">{t.searchKindBook}</span>
                       {b.name}
                     </Link>
                   );
@@ -267,7 +253,7 @@ function SearchContent() {
                     >
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs text-muted">
-                          <span style={KIND_BADGE_STYLE}>{t.searchKindVerse}</span>
+                          <span className="badge mr-2 border border-border bg-bg uppercase tracking-wide text-muted">{t.searchKindVerse}</span>
                           {v.book_name} {t.verseFmt(v.chapter_number, v.number)}
                           {/* 検索は全訳を横断するので、どの訳の本文に当たったかを添える。 */}
                           <span className="text-faint"> · {translationLabel(v.translation, lang)}</span>
@@ -314,7 +300,7 @@ function SearchContent() {
                       className="result-card"
                     >
                       <div className="flex gap-2 text-xs text-muted mb-2 items-center">
-                        <span style={KIND_BADGE_STYLE}>{t.searchKindComment}</span>
+                        <span className="badge mr-2 border border-border bg-bg uppercase tracking-wide text-muted">{t.searchKindComment}</span>
                         <span className="font-bold">{c.username}</span>
                         {c.location && <span>· {c.location}</span>}
                       </div>

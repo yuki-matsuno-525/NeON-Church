@@ -15,6 +15,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { type IconName } from "@/components/ui/Icon";
 import { AsyncList, ErrorState } from "@/components/ui";
 import { ListColumn, ListPageHeader } from "@/components/list";
+import type { Tone } from "@/components/list/tone";
 import { planUiText } from "@/components/plans/planUiText";
 
 export default function PlansPage() {
@@ -106,8 +107,7 @@ export default function PlansPage() {
               title={t.planMineTitle}
               desc={t.planMineDesc}
               icon="book-open"
-              color="var(--accent)"
-              tint="var(--accent-tint)"
+              tone="active"
               plans={myPlans}
               loading={pageLoading}
               empty={t.planMineEmpty}
@@ -118,8 +118,7 @@ export default function PlansPage() {
             title={t.planPublicTitle}
             desc={t.planPublicDesc}
             icon="globe"
-            color="var(--state-success)"
-            tint="rgba(34,197,94,0.15)"
+            tone="ok"
             plans={publicPlans}
             loading={pageLoading}
             empty={t.planPublicEmpty}
@@ -134,8 +133,7 @@ function PlanColumn({
   title,
   desc,
   icon,
-  color,
-  tint,
+  tone,
   plans,
   loading,
   empty,
@@ -144,8 +142,7 @@ function PlanColumn({
   title: string;
   desc: string;
   icon: IconName;
-  color: string;
-  tint: string;
+  tone: Tone;
   plans: Plan[];
   loading: boolean;
   empty: string;
@@ -155,8 +152,7 @@ function PlanColumn({
   return (
     <ListColumn
       icon={icon}
-      color={color}
-      tint={tint}
+      tone={tone}
       title={title}
       count={plans.length}
       description={desc}
@@ -171,13 +167,7 @@ function PlanColumn({
             >
               <div className="card-glow card-glow-interactive p-4" >
                 <div className="flex justify-end mb-3">
-                  <span
-                    className="badge"
-                    style={{
-                      background: plan.visibility === "public" ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)",
-                      color: plan.visibility === "public" ? "var(--state-success)" : "var(--text-muted)",
-                    }}
-                  >
+                  <span className={`badge ${plan.visibility === "public" ? "badge-tone tone-ok" : "badge-muted"}`}>
                     {visibilityLabel(plan.visibility, t)}
                   </span>
                 </div>

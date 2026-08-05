@@ -22,6 +22,44 @@
   align-items: start;
 }
 
+/* ----- 分類の色（トーン） -----
+   「解決済みは緑」「作業中は紫」のような色の使い分けは、一覧・タブ・バッジ・
+   進捗バーで同じものを使う。以前は画面ごとに色の値を持ち、React の style で
+   配っていたため、同じ緑が 6 か所に書かれていた。
+
+   使い方: 外側に tone-* を付けると、中の badge-tone / icon-tone /
+   progress-fill-tone がその色になる。色そのものは書かない。
+     tone-ok     … 済み・公開（緑）
+     tone-active … 進行中（紫）
+     tone-wait   … 待ち・下書き（黄）
+     tone-ng     … 断られた・失敗（赤） */
+.tone-ok {
+  --tone: var(--state-success);
+  --tone-tint: rgba(34, 197, 94, 0.15);
+}
+.tone-active {
+  --tone: var(--accent);
+  --tone-tint: var(--accent-tint);
+}
+.tone-wait {
+  --tone: var(--state-warning);
+  --tone-tint: rgba(245, 158, 11, 0.15);
+}
+.tone-ng {
+  --tone: var(--state-danger);
+  --tone-tint: rgba(239, 68, 68, 0.15);
+}
+
+/* 分類の色を使う側 */
+.badge-tone {
+  background: var(--tone-tint);
+  color: var(--tone);
+}
+.icon-tone {
+  display: inline-flex;
+  color: var(--tone);
+}
+
 /* 一覧の 1 カラム分の入れ物。中にカードを縦に並べる。
    .card より背景が薄いので、中のカードが浮いて見える。 */
 .list-column {
@@ -136,12 +174,36 @@
   background: var(--border);
 }
 
-/* 進捗バーの中身。幅だけを画面側から渡す。 */
+/* 進捗バーの中身。伸びる長さは中身によって変わるので、幅だけ画面側から style で渡す。 */
 .progress-fill {
   height: 100%;
   border-radius: var(--radius-full);
   background: var(--accent);
   transition: width var(--duration-slow) var(--ease-out);
+}
+/* 外側の分類の色に合わせる版 */
+.progress-fill-tone {
+  background: var(--tone);
+}
+
+/* スマホで 1 カラムずつ切り替えるタブ。選ばれているものは分類の色になる。 */
+.column-tab {
+  flex: 1;
+  min-height: 44px;
+  padding: var(--spacing-2) var(--spacing-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-alt);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+.column-tab[aria-selected="true"] {
+  border-color: var(--tone);
+  background: var(--tone-tint);
+  color: var(--tone);
 }
 
 /* 作業メモの 1 件。下線で区切る。 */
@@ -180,6 +242,13 @@
 .chip-bold.chip-active {
   font-weight: 700;
 }
+/* 塗りつぶす強い版。選んだものを一目で分かるようにしたいとき（/read の絞り込み）。
+   .chip-active（枠と薄い色）とはどちらか一方だけを使う。 */
+.chip-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
 
 /* 下書きなど、公開されていないことを示すバッジ。 */
 .badge-muted {
@@ -212,20 +281,10 @@
   overflow-x: auto;
 }
 
-/* 解決済み / 未解決 を示すバッジ。 */
-.badge-answered {
-  display: inline-flex;
-  align-items: center;
+/* アイコンを前に付けるバッジ（Q&A の「解決済み / 未解決」など）。
+   色は分類の色に任せるので、ここでは間隔だけを持つ。
+   使い方: class="badge badge-icon badge-tone tone-ok" */
+.badge-icon {
   gap: 3px;
   flex-shrink: 0;
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--state-success);
-}
-.badge-unanswered {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--state-warning);
 }

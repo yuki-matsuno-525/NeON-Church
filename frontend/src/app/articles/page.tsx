@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { type IconName } from "@/components/ui/Icon";
 import { AsyncList, LoadMoreButton } from "@/components/ui";
 import { ListColumn, ListPageHeader } from "@/components/list";
+import type { Tone } from "@/components/list/tone";
 
 type ArticleFeed = {
   articles: Article[];
@@ -130,8 +131,7 @@ export default function ArticlesPage() {
             title={t.articleMineTitle}
             desc={t.articleMineDesc}
             icon="book-open"
-            color="var(--accent)"
-            tint="var(--accent-tint)"
+            tone="active"
             feed={myFeed}
             empty={t.articleMineEmpty}
             editable
@@ -143,8 +143,7 @@ export default function ArticlesPage() {
           title={t.articlePublicTitle}
           desc={t.articlePublicDesc}
           icon="globe"
-          color="var(--state-success)"
-          tint="rgba(34,197,94,0.15)"
+          tone="ok"
           feed={publicFeed}
           empty={t.articlePublicEmpty}
           onRetry={() => void loadFeed("public", 1, false)}
@@ -164,13 +163,12 @@ function TagChip({ label, count, active, onClick }: { label: string; count?: num
 }
 
 function ArticleColumn({
-  title, desc, icon, color, tint, feed, empty, editable = false, onRetry, onLoadMore,
+  title, desc, icon, tone, feed, empty, editable = false, onRetry, onLoadMore,
 }: {
   title: string;
   desc: string;
   icon: IconName;
-  color: string;
-  tint: string;
+  tone: Tone;
   feed: ArticleFeed;
   empty: string;
   editable?: boolean;
@@ -180,8 +178,7 @@ function ArticleColumn({
   return (
     <ListColumn
       icon={icon}
-      color={color}
-      tint={tint}
+      tone={tone}
       title={title}
       count={feed.total}
       description={desc}
@@ -213,7 +210,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
   return (
     <article className="card-glow p-4 flex flex-col" >
       <div className="flex justify-between items-center gap-2 mb-3">
-        <span className="badge" style={{ background: isPublic ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.08)", color: isPublic ? "var(--state-success)" : "var(--text-muted)" }}>
+        <span className={`badge ${isPublic ? "badge-tone tone-ok" : "badge-muted"}`}>
           {visibilityLabel(article.visibility, t)}
         </span>
         {editable && <Link href={`/articles/${article.id}/edit`} className="tap-target inline-flex items-center px-1 text-accent">{t.articleEditShort}</Link>}

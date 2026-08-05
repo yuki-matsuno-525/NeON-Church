@@ -187,6 +187,20 @@
   line-height: var(--leading-base);
 }
 
+/* カードの中に出す本文の抜粋。3 行で切り、長い語も折り返す。
+   （お気に入り一覧で使う） */
+.excerpt {
+  margin: var(--spacing-2) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* 検索でひっかかった言葉。本文の中で目立たせる。 */
 .search-mark {
   padding: 0 2px;

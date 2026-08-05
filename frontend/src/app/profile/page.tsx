@@ -360,18 +360,9 @@ function CommentList({ comments }: { comments: MyComment[] }) {
             {inner}
           </Link>
         ) : (
-          <div key={c.id} style={cardStyle}>{inner}</div>
+          <div key={c.id} className="panel-accent panel-accent-sm">{inner}</div>
         );
       })}
     </div>
   );
 }
-
-
-const cardStyle: React.CSSProperties = {
-  background: "var(--bg-alt)",
-  border: "1px solid var(--border)",
-  borderLeft: "3px solid rgba(192, 64, 240, 0.50)",
-  borderRadius: 10,
-  padding: "12px 14px",
-};

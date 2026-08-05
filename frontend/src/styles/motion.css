@@ -16,6 +16,12 @@
   to { transform: rotate(360deg); }
 }
 
+/* 読み込み中にくるくる回すもの */
+.spinning {
+  animation: spinner-rotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

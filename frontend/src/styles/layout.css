@@ -137,6 +137,61 @@
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* 画面の一番下に貼り付く操作の帯。
+   「まとめてお気に入り」のように、選んでいる最中だけ出るもの用。 */
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ----- 画面の右下に一時的に出るお知らせ（トースト） -----
+   重ねて出るので、外側で縦に積み、1 枚ずつが左端の線で種類を示す。
+   外側はクリックを通す（pointer-events: none）。中の 1 枚だけが押せる。 */
+.toast-stack {
+  position: fixed;
+  right: var(--spacing-4);
+  bottom: var(--spacing-4);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  pointer-events: none;
+}
+.toast-item {
+  min-width: 220px;
+  /* 狭い画面でも左右 16px の余白を保ち、画面外へはみ出さない */
+  max-width: min(360px, calc(100vw - 32px));
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius-md);
+  background: rgba(20, 12, 50, 0.95);
+  color: var(--text);
+  font-size: var(--text-sm);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  pointer-events: auto;
+}
+/* 左端の線の色で「うまくいった / 失敗した」を示す */
+.toast-item-success {
+  border-left-color: var(--accent);
+}
+.toast-item-error {
+  border-left-color: var(--state-danger);
+}
+
 /* 開いているとき、後ろの画面を暗くする層 */
 .sidebar-overlay {
   position: fixed;
@@ -280,6 +335,12 @@
   gap: 20px;
   align-items: start;
 }
+/* 引用パネルの中身。PC では枠いっぱい、スマホでは決まった高さにする。
+   以前は JavaScript で画面幅を見て高さを付け替えていた。 */
+.citation-pane {
+  height: 100%;
+}
+
 /* 引用パネルは、本文を長くスクロールしても付いてくる。 */
 .editor-aside {
   position: sticky;
@@ -398,5 +459,9 @@
 
   .navbar-search-input {
     max-width: none;
+  }
+
+  .citation-pane {
+    height: 480px;
   }
 }

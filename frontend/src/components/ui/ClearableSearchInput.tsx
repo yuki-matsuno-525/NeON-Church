@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useT } from "@/lib/i18n";
 
 type ClearableSearchInputProps = {
@@ -11,9 +10,7 @@ type ClearableSearchInputProps = {
   /** 入力欄に付けるクラス。見た目は基本 .form-control に任せる。 */
   inputClassName?: string;
   /** 幅など、その画面だけの調整が要るときに使う */
-  inputStyle?: CSSProperties;
   wrapperClassName?: string;
-  wrapperStyle?: CSSProperties;
 };
 
 export function ClearableSearchInput({
@@ -22,16 +19,13 @@ export function ClearableSearchInput({
   placeholder,
   ariaLabel,
   inputClassName,
-  inputStyle,
   wrapperClassName,
-  wrapperStyle,
 }: ClearableSearchInputProps) {
   const t = useT();
 
   return (
     <div
       className={`relative flex items-center ${wrapperClassName ?? ""}`}
-      style={wrapperStyle}
     >
       <input
         type="search"
@@ -40,9 +34,8 @@ export function ClearableSearchInput({
         placeholder={placeholder}
         aria-label={ariaLabel}
         autoComplete="off"
-        className={inputClassName}
         // 消すボタンと文字が重ならないよう、入力があるときだけ右に余白を足す
-        style={{ ...inputStyle, paddingRight: value ? 48 : inputStyle?.paddingRight }}
+        className={`${inputClassName ?? ""}${value ? " has-clear-btn" : ""}`}
       />
       {value && (
         <button

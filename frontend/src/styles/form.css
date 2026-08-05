@@ -17,6 +17,36 @@
   font-family: inherit;
 }
 
+/* 入力欄を横一列に並べたとき、これだけ余った幅を取る。
+   280px より狭くなるなら折り返す。記事とプランの題の入力欄で使う。 */
+.field-grow {
+  flex: 1 1 280px;
+}
+
+/* 入力の不備や操作の失敗を、その場に赤い一文で出す。
+   以前は画面ごとに React の style で同じものを書いていた。 */
+.error-text {
+  margin: var(--spacing-1) 0 var(--spacing-3);
+  color: var(--state-danger);
+  font-size: var(--text-sm);
+}
+
+/* 「保存しました」「保存できません」の表示。文字数で幅が動くと
+   隣のボタンが左右にずれるので、最小の幅を決めておく。 */
+.save-status {
+  min-width: 80px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+.save-status-error {
+  color: var(--state-danger);
+}
+
+/* 「消す」ボタンが出ているあいだ、文字がボタンに重ならないよう右を空ける */
+.has-clear-btn {
+  padding-right: 48px;
+}
+
 /* 検索欄の右端に出る「消す」ボタン */
 .clear-input-btn {
   position: absolute;

@@ -347,6 +347,30 @@
   cursor: pointer;
 }
 
+/* お気に入りの星。押している状態を色とほのかな光で示す。
+   見た目は無いに等しいが、指で押せる 44px 角は確保する。 */
+.star-button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  cursor: pointer;
+}
+.star-button-on {
+  color: var(--accent);
+  filter: drop-shadow(0 0 4px var(--accent));
+}
+.star-button:disabled {
+  cursor: default;
+}
+
 /* 「章を足す」など、まだ中身が無いことを示す破線のボタン。 */
 .dashed-button {
   min-height: 44px;
@@ -358,4 +382,9 @@
   font-family: inherit;
   font-size: var(--text-sm);
   cursor: pointer;
+}
+/* 処理の最中は薄くして、押しても効かないことを示す */
+.dashed-button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

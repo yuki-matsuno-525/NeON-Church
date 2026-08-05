@@ -21,7 +21,7 @@ export function Spinner({ size = 18, label }: Props) {
         height={size}
         viewBox="0 0 24 24"
         aria-hidden="true"
-        style={{ animation: "spinner-rotate 0.8s linear infinite", flexShrink: 0 }}
+        className="spinning"
       >
         <circle
           cx="12"

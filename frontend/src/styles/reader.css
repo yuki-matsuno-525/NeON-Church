@@ -120,6 +120,10 @@
 .verse-row:focus-visible {
   background: var(--bg-hover);
 }
+/* 目次や通知から飛んできた節を、しばらく光らせて場所を知らせる。 */
+.verse-row-flash {
+  animation: verse-flash 5s ease-out forwards;
+}
 .verse-row-selected,
 .verse-row-selected:hover,
 .verse-row-selected:focus-visible {

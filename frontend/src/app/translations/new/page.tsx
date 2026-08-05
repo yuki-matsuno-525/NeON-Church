@@ -101,14 +101,6 @@ export default function NewTranslationPage() {
   };
 
 
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    marginBottom: 6,
-    color: "var(--text-muted)",
-  };
-
   return (
     <div className="page page-narrow">
       <div className="mb-6">
@@ -119,13 +111,13 @@ export default function NewTranslationPage() {
       <h1 className="text-lg font-bold mb-6">{t.newTranslationTitle}</h1>
 
       <div className="grid gap-2 mb-6">
-        <p style={noticeStyle}>{ui.lifecycleHelp}</p>
-        <p style={noticeStyle}>{ui.licenseNotice}</p>
+        <p className="plain-card m-0 text-sm text-muted leading-base">{ui.lifecycleHelp}</p>
+        <p className="plain-card m-0 text-sm text-muted leading-base">{ui.licenseNotice}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
-          <label htmlFor={nameId} style={labelStyle}>{t.projectName}</label>
+          <label htmlFor={nameId} className="form-label">{t.projectName}</label>
           <input
             id={nameId}
             value={name}
@@ -138,7 +130,7 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label htmlFor={descriptionId} style={labelStyle}>{t.description}</label>
+          <label htmlFor={descriptionId} className="form-label">{t.description}</label>
           <textarea
             id={descriptionId}
             value={description}
@@ -152,7 +144,7 @@ export default function NewTranslationPage() {
 
         <div>
           {/* カテゴリを先に選ぶと、元書プルダウンがそのカテゴリの書に絞られる。 */}
-          <label htmlFor={genreFieldId} style={labelStyle}>{t.searchKindBook}</label>
+          <label htmlFor={genreFieldId} className="form-label">{t.searchKindBook}</label>
           <select
             id={genreFieldId}
             disabled={catalogLoading || catalogError}
@@ -168,7 +160,7 @@ export default function NewTranslationPage() {
         </div>
 
         <div>
-          <label htmlFor={bookFieldId} style={labelStyle}>{t.sourceBook}</label>
+          <label htmlFor={bookFieldId} className="form-label">{t.sourceBook}</label>
           <select
             id={bookFieldId}
             disabled={catalogLoading || catalogError}
@@ -189,7 +181,7 @@ export default function NewTranslationPage() {
 
         {sourceSlug && (
           <div>
-            <label htmlFor={versionId} style={labelStyle}>{t.bibleVersion}</label>
+            <label htmlFor={versionId} className="form-label">{t.bibleVersion}</label>
             <select
               id={versionId}
               value={sourceVersion}
@@ -205,7 +197,7 @@ export default function NewTranslationPage() {
         )}
 
         <div>
-          <label htmlFor={languageId} style={labelStyle}>{t.targetLanguage}</label>
+          <label htmlFor={languageId} className="form-label">{t.targetLanguage}</label>
           <select
             id={languageId}
             value={targetLanguage}
@@ -264,14 +256,3 @@ export default function NewTranslationPage() {
     </div>
   );
 }
-
-const noticeStyle: React.CSSProperties = {
-  margin: 0,
-  padding: "10px 12px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--bg-alt)",
-  color: "var(--text-muted)",
-  fontSize: 13,
-  lineHeight: 1.6,
-};

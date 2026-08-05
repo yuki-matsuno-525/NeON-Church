@@ -92,15 +92,6 @@ export function BookmarkCard({
   const target = useBookmarkTarget(bookmark);
   if (!target) return null;
 
-  const cardStyle: React.CSSProperties = {
-    background: "var(--bg-alt)",
-    border: "1px solid var(--border)",
-    borderLeft: "3px solid var(--accent)",
-    borderRadius: 10,
-    padding: 16,
-    ...(removed ? { opacity: 0.45 } : {}),
-  };
-
   const inner = (
     <>
       {showKind && (
@@ -112,7 +103,7 @@ export function BookmarkCard({
         {target.title}
       </p>
       {target.body && (
-        <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.6, color: "var(--text-muted)", overflowWrap: "anywhere", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <p className="excerpt">
           {target.body}
         </p>
       )}
@@ -123,7 +114,7 @@ export function BookmarkCard({
   const inactive = removed || !target.href;
 
   return (
-    <div style={cardStyle}>
+    <div className={`panel-accent p-4${removed ? " opacity-45" : ""}`}>
       {inactive ? (
         <div className="text-body">{inner}</div>
       ) : (
@@ -134,11 +125,11 @@ export function BookmarkCard({
       {onRemove && (
         <div className="mt-2 flex gap-3">
           {removed ? (
-            <button type="button" onClick={onUndo} style={undoButtonStyle}>
+            <button type="button" onClick={onUndo} className="btn-text btn-text-on text-xs font-bold">
               {t.undo}
             </button>
           ) : (
-            <button type="button" onClick={onRemove} style={removeButtonStyle}>
+            <button type="button" onClick={onRemove} className="btn-text text-xs">
               {t.remove}
             </button>
           )}
@@ -165,26 +156,3 @@ export function bookmarkKindLabel(type: BookmarkType, t: ReturnType<typeof useT>
       return t.bookmarkKindProject;
   }
 }
-
-const removeButtonStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--text-faint)",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: 44,
-  fontFamily: "inherit",
-};
-
-const undoButtonStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "var(--accent)",
-  background: "transparent",
-  border: "none",
-  cursor: "pointer",
-  padding: "6px 8px",
-  minHeight: 44,
-  fontFamily: "inherit",
-  fontWeight: 700,
-};

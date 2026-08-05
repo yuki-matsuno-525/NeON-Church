@@ -45,7 +45,7 @@ export function QACard({ question, showLocation = true }: Props) {
     >
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <span
-          className={`badge ${answered ? "badge-answered" : "badge-unanswered"}`}
+          className={`badge badge-icon badge-tone ${answered ? "tone-ok" : "tone-wait"}`}
         >
           <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
           {answered ? t.filterAnswered : t.filterUnanswered}

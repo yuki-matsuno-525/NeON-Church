@@ -158,7 +158,7 @@ function ReadContent() {
           placeholder={t.bookSearchPlaceholder}
           ariaLabel={t.bookSearchLabel}
           inputClassName="form-control"
-          wrapperStyle={{ width: "100%" }}
+          wrapperClassName="w-full"
         />
       </label>
 
@@ -226,17 +226,8 @@ function ReadContent() {
               ])
             )
           : [];
-        const chipStyle = (isActive: boolean): React.CSSProperties => ({
-          fontSize: "var(--text-sm)",
-          padding: "6px 14px",
-          minHeight: 44,
-          borderRadius: 999,
-          border: "1px solid var(--border)",
-          cursor: "pointer",
-          fontFamily: "inherit",
-          background: isActive ? "var(--accent)" : "transparent",
-          color: isActive ? "var(--accent-text)" : "var(--text-muted)",
-        });
+        // 絞り込みの丸いラベル。選ばれているものは塗りつぶす。
+        const chipClass = (isActive: boolean) => `chip${isActive ? " chip-on" : ""}`;
         if (normalizedQuery) {
           const totalMatches = matchingBooks.length + matchingProjects.length;
           return (
@@ -296,7 +287,7 @@ function ReadContent() {
                     key={genre}
                     onClick={() => setActiveGenre(genre)}
                     aria-pressed={isActive}
-                    style={chipStyle(isActive)}
+                    className={chipClass(isActive)}
                   >
                     {t.genreNames[genre] ?? genre}{" "}
                     <span className="opacity-70">({books.length})</span>
@@ -308,7 +299,7 @@ function ReadContent() {
                   key={TRANSLATION_TAB}
                   onClick={() => setActiveGenre(TRANSLATION_TAB)}
                   aria-pressed={isLibraryTab}
-                  style={chipStyle(isLibraryTab)}
+                  className={chipClass(isLibraryTab)}
                 >
                   {t.myTranslationsHeading}{" "}
                   <span className="opacity-70">({library.length})</span>

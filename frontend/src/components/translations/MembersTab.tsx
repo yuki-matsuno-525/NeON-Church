@@ -5,7 +5,7 @@ import { useT, useRelativeTime } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { SkeletonList } from "@/components/ui";
 import { translationUiText } from "@/app/translations/translationUiText";
-import { memberStatusLabel } from "./unitStatus";
+import { memberStatusBadgeClass, memberStatusLabel } from "./unitStatus";
 
 type Props = {
   members: TranslationMembership[];
@@ -50,13 +50,7 @@ export function MembersTab({
               <span className="text-xs text-muted">
                 {m.role === "owner" ? t.roleOwner : t.roleMember}
               </span>
-              <span
-                className="badge"
-                style={{
-                  background: m.status === "approved" ? "rgba(34,197,94,0.15)" : m.status === "pending" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
-                  color: m.status === "approved" ? "var(--state-success)" : m.status === "pending" ? "var(--state-warning)" : "var(--state-danger)",
-                }}
-              >
+              <span className={memberStatusBadgeClass(m.status)}>
                 {memberStatusLabel(m.status, t)}
               </span>
               {m.status === "pending" && (

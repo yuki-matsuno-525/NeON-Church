@@ -64,16 +64,7 @@ function ToastStack({ toasts, onClose }: { toasts: Toast[]; onClose: (id: number
     <div
       aria-live="polite"
       aria-atomic="false"
-      style={{
-        position: "fixed",
-        bottom: 16,
-        right: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        zIndex: 1000,
-        pointerEvents: "none",
-      }}
+      className="toast-stack"
     >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onClose={() => onClose(t.id)} />
@@ -83,31 +74,11 @@ function ToastStack({ toasts, onClose }: { toasts: Toast[]; onClose: (id: number
 }
 
 function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
-  const accent =
-    toast.type === "success"
-      ? "var(--accent)"
-      : toast.type === "error"
-      ? "#ef4444"
-      : "var(--text-muted)";
   return (
     <div
       role={toast.type === "error" ? "alert" : "status"}
       onClick={onClose}
-      style={{
-        minWidth: 220,
-        // 狭幅画面でも左右 16px の余白を保ち、画面外へはみ出さない
-        maxWidth: "min(360px, calc(100vw - 32px))",
-        background: "rgba(20, 12, 50, 0.95)",
-        border: `1px solid var(--border)`,
-        borderLeft: `3px solid ${accent}`,
-        color: "var(--text)",
-        padding: "10px 14px",
-        borderRadius: 8,
-        fontSize: 13,
-        boxShadow: "0 6px 24px rgba(0, 0, 0, 0.45)",
-        cursor: "pointer",
-        pointerEvents: "auto",
-      }}
+      className={`toast-item${toast.type === "success" || toast.type === "error" ? ` toast-item-${toast.type}` : ""}`}
     >
       {toast.message}
     </div>

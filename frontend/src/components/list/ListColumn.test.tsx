@@ -8,7 +8,7 @@ import { ListPageHeader } from "./ListPageHeader";
 describe("ListColumn", () => {
   it("見出し・件数・説明と中身を並べる", () => {
     render(
-      <ListColumn icon="globe" color="var(--accent)" tint="var(--accent-tint)" title="公開" count={3} description="誰でも読めます。">
+      <ListColumn icon="globe" tone="active" title="公開" count={3} description="誰でも読めます。">
         <p>カード</p>
       </ListColumn>
     );
@@ -21,14 +21,14 @@ describe("ListColumn", () => {
 
   it("labelledBy を渡したときだけタブの中身として扱う", () => {
     const { rerender } = render(
-      <ListColumn icon="globe" color="c" tint="t" title="公開" count={0} description="説明">
+      <ListColumn icon="globe" tone="ok" title="公開" count={0} description="説明">
         <p>カード</p>
       </ListColumn>
     );
     expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
 
     rerender(
-      <ListColumn icon="globe" color="c" tint="t" title="公開" count={0} description="説明" id="p" labelledBy="tab-p">
+      <ListColumn icon="globe" tone="ok" title="公開" count={0} description="説明" id="p" labelledBy="tab-p">
         <p>カード</p>
       </ListColumn>
     );
@@ -38,8 +38,8 @@ describe("ListColumn", () => {
 
 describe("ColumnTabs", () => {
   const tabs = [
-    { key: "a" as const, label: "解決済み", color: "c1", tint: "t1", count: 2 },
-    { key: "b" as const, label: "未解決", color: "c2", tint: "t2", count: 5 },
+    { key: "a" as const, label: "解決済み", tone: "ok" as const, count: 2 },
+    { key: "b" as const, label: "未解決", tone: "wait" as const, count: 5 },
   ];
 
   it("選ばれているタブだけを選択状態にし、件数を添える", () => {
