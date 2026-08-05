@@ -22,7 +22,7 @@ const makeQuestion = (overrides: Partial<QAQuestion> = {}): QAQuestion => ({
   verse_number: 3,
   location_label: "マタイによる福音書 5章 3節",
   version_label: "口語訳",
-  tags: [{ id: "tag1", name: "解説" }],
+  tags: [{ id: 1, name: "解説" }],
   best_answer: null,
   answer_count: 2,
   ...overrides,

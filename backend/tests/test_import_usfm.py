@@ -47,7 +47,7 @@ def test_paragraph_markers_do_not_leak_into_the_text():
 
 
 def test_sub_verses_are_merged_into_their_parent_verse():
-    """"\\v 7a" は 7 の続き。整数の節番号に潰すと重複して本文が消えるのを防ぐ。"""
+    """ "\\v 7a" は 7 の続き。整数の節番号に潰すと重複して本文が消えるのを防ぐ。"""
     data, warnings = _parse(
         "\\c 4\n\\p\n"
         "\\v 7 Give alms of thy substance.\n"

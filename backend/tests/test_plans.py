@@ -35,6 +35,7 @@ def other_client(api_client, other_user_payload, db):
 # 作る・日を足す
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_プランを作れる(auth_client):
     response = _create_plan(auth_client)
@@ -108,7 +109,12 @@ def test_章の並びは書き換えるたびに入れ替わる(auth_client, pla
     url = f"{PLANS_URL}{plan_id}/days/{day_id}/"
     auth_client.patch(
         url,
-        {"readings": [{"book": "matthew", "chapter_number": 1}, {"book": "matthew", "chapter_number": 2}]},
+        {
+            "readings": [
+                {"book": "matthew", "chapter_number": 1},
+                {"book": "matthew", "chapter_number": 2},
+            ]
+        },
         format="json",
     )
 
@@ -123,11 +129,10 @@ def test_章の並びは書き換えるたびに入れ替わる(auth_client, pla
 # 公開範囲
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_中身が空のままでは公開できない(auth_client, plan_id):
-    response = auth_client.patch(
-        f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json"
-    )
+    response = auth_client.patch(f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json")
 
     assert response.status_code == 400
 
@@ -145,9 +150,7 @@ def test_作成時も中身が空のまま公開できない(auth_client, visibi
 def test_日があれば公開できる(auth_client, plan_id):
     _add_day(auth_client, plan_id)
 
-    response = auth_client.patch(
-        f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json"
-    )
+    response = auth_client.patch(f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json")
 
     assert response.status_code == 200
 
@@ -169,6 +172,7 @@ def test_一覧に出るのは公開プランだけ(auth_client, plan_id, api_cl
 # ---------------------------------------------------------------------------
 # 編集を凍結する条件
 # ---------------------------------------------------------------------------
+
 
 def _published_plan_with_reader(auth_client, other_client):
     """公開して、別の人が1人読み始めている状態を作る。"""
@@ -264,6 +268,7 @@ def test_著者の注記はいつでも書き換えられる(auth_client, other_
 # ---------------------------------------------------------------------------
 # 読む側
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_読み始めて進捗をつけられる(auth_client, other_client):

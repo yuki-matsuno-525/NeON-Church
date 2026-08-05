@@ -46,7 +46,7 @@ class Command(BaseCommand):
             try:
                 book, created, total_verses = load_book(data)
             except ValueError as e:
-                raise CommandError(f"{path.name}: {e}")
+                raise CommandError(f"{path.name}: {e}") from e
             grand_total += total_verses
             self.stdout.write(
                 f"  {'作成' if created else '既存'}: {book.name}（{book.translation}）"

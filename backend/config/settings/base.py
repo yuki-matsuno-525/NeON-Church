@@ -47,6 +47,7 @@ LOCAL_APPS: list[str] = [
     "common",
     "users",
     "bible",
+    "tags",
     "comments",
     "qa",
     "bookmarks",
@@ -193,9 +194,9 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # ビューごとに ScopedRateThrottle を設定する（グローバルは未設定）
     "DEFAULT_THROTTLE_RATES": {
-        "auth": "5/min",           # login / register
-        "comment_create": "10/min", # コメント投稿
-        "report": "5/min",         # 通報
+        "auth": "5/min",  # login / register
+        "comment_create": "10/min",  # コメント投稿
+        "report": "5/min",  # 通報
         "feedback": "5/hour",
     },
 }
@@ -219,6 +220,21 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "NeON-Church API",
     "DESCRIPTION": "聖書読書・コメントプラットフォーム NeON-Church の REST API",
     "VERSION": "0.1.0",
+    # スキーマ本体には /api/schema/ 自身を載せない（フロントの型生成に不要）。
+    "SERVE_INCLUDE_SCHEMA": False,
+    # 読み出しと書き込みでコンポーネントを分ける。
+    # 分けないと1つの型に両方の都合が混ざり、「入力では省略できる」だけの項目が
+    # レスポンスの型でも optional になる。フロントは受け取った値に対して
+    # 毎回 undefined を考慮させられ、生成型を使う意味が薄れる。
+    "COMPONENT_SPLIT_REQUEST": True,
+    # 「status」という名前の選択肢が3つのモデルにあり、放っておくと
+    # Status299Enum のような不安定な自動名になる。生成のたびに名前が変わると
+    # フロントの型の差分が読めなくなるので、ここで固定する。
+    "ENUM_NAME_OVERRIDES": {
+        "TranslationProjectStatusEnum": "translations.models.TranslationProject.STATUS_CHOICES",
+        "TranslationMembershipStatusEnum": "translations.models.TranslationMembership.STATUS_CHOICES",
+        "TranslationUnitStatusEnum": "translations.models.TranslationUnit.STATUS_CHOICES",
+    },
 }
 
 # ------------------------------------------------------------------

@@ -46,11 +46,14 @@ def test_import_creates_book_chapters_verses(tmp_path):
     call_command("import_ibibles", "--txt", _write(tmp_path, SAMPLE), "--translation", "KJV")
 
     from bible.models import Book, Chapter, Verse
+
     book = Book.objects.get(translation="KJV", name="Matthew")
     assert book.canonical_book.slug == "matthew"
     assert Chapter.objects.filter(book=book).count() == 2
     assert Verse.objects.filter(chapter__book=book).count() == 3
-    assert Verse.objects.get(chapter__book=book, chapter__number=1, number=1).text.startswith("The book")
+    assert Verse.objects.get(chapter__book=book, chapter__number=1, number=1).text.startswith(
+        "The book"
+    )
 
 
 @pytest.mark.django_db
@@ -58,6 +61,7 @@ def test_import_is_idempotent(tmp_path):
     path = _write(tmp_path, SAMPLE)
     call_command("import_ibibles", "--txt", path, "--translation", "KJV")
     from bible.models import Verse
+
     before = Verse.objects.count()
     call_command("import_ibibles", "--txt", path, "--translation", "KJV")
     assert Verse.objects.count() == before
@@ -66,6 +70,9 @@ def test_import_is_idempotent(tmp_path):
 @pytest.mark.django_db
 def test_import_unregistered_translation_skips(tmp_path):
     # canonical_books.json にこの訳の登録が無ければ、その書はスキップ（エラーにしない）。
-    call_command("import_ibibles", "--txt", _write(tmp_path, SAMPLE), "--translation", "NONEXISTENT (GRC)")
+    call_command(
+        "import_ibibles", "--txt", _write(tmp_path, SAMPLE), "--translation", "NONEXISTENT (GRC)"
+    )
     from bible.models import Book
+
     assert not Book.objects.filter(translation="NONEXISTENT (GRC)").exists()

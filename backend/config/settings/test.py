@@ -31,6 +31,13 @@ DATABASES = {
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# パスワードのハッシュを軽いものに差し替える。
+# 既定の PBKDF2 は 100 万回近く繰り返す設計で、登録・ログインを含むテストが
+# 多いこの suite ではこれが実行時間の大半を占める。テストが確認したいのは
+# 「正しい合言葉なら通る」ことであって、ハッシュの強度そのものではない。
+# 本番設定（prod.py）はこれを継承しないので、強度はそのまま。
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 # スロットリングを緩める
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "auth": "1000/min",

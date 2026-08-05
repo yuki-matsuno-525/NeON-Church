@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'frontend/**'
+      - 'backend/schema.yaml'
       - '.github/workflows/frontend.yml'
   pull_request:
     branches: [main]
     paths:
       - 'frontend/**'
+      - 'backend/schema.yaml'
       - '.github/workflows/frontend.yml'
 
 jobs:
@@ -35,6 +37,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # 型は backend/schema.yaml から生成する。生成し直して差分が出るなら、
+      # API の形が変わったのに型を更新していない。ここで止めないと、
+      # 画面側が古い形のまま通ってしまう。
+      - name: Check generated API types are up to date
+        run: |
+          npm run gen:types
+          git diff --exit-code -- src/types/api.ts
 
       - name: Lint
         run: npm run lint

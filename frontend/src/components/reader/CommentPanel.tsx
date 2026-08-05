@@ -185,7 +185,7 @@ export function CommentPanel({
     }
   };
 
-  const handleSubmit = async (body: string, tagIds?: string[]) => {
+  const handleSubmit = async (body: string, tagIds?: number[]) => {
     const comment = await createComment({ verse: verse.id, body, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);

@@ -28,7 +28,5 @@ def clean_body(value: str | None, *, max_length: int = BODY_MAX_LENGTH) -> str:
     if not cleaned:
         raise serializers.ValidationError("Body is required.")
     if len(cleaned) > max_length:
-        raise serializers.ValidationError(
-            f"Body must be {max_length} characters or fewer."
-        )
+        raise serializers.ValidationError(f"Body must be {max_length} characters or fewer.")
     return cleaned

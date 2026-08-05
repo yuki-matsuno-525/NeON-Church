@@ -51,8 +51,12 @@ class CookieJWTAuthentication(JWTAuthentication):
         return user, validated_token
 
     def _enforce_csrf(self, request) -> None:
-        check = _CSRFCheck(lambda req: None)
+        # CsrfViewMiddleware は本来「次の処理」を受け取るが、ここで欲しいのは
+        # 検証の副作用だけなので、何もしないダミーを渡す（DRF の
+        # SessionAuthentication と同じ手口）。stub は本物の呼び出し可能物を
+        # 要求するため、この 2 行だけ型検査から外す。
+        check = _CSRFCheck(lambda req: None)  # type: ignore[arg-type]
         check.process_request(request)
-        reason = check.process_view(request, None, (), {})
+        reason = check.process_view(request, None, (), {})  # type: ignore[arg-type]
         if reason:
             raise exceptions.PermissionDenied(f"CSRF check failed: {reason}")

@@ -11,7 +11,9 @@ def bookmark_url(bookmark_id):
 @pytest.fixture
 def other_auth_client(db, other_user_payload):
     from rest_framework.test import APIClient
+
     from tests.conftest import REGISTER_URL
+
     client = APIClient()
     client.post(REGISTER_URL, other_user_payload, format="json")
     return client
@@ -26,7 +28,9 @@ def bookmark(db, auth_client, verse):
 @pytest.fixture
 def comment(db, auth_client, verse):
     from django.contrib.auth import get_user_model
+
     from tests.factories import make_comment
+
     User = get_user_model()
     user = User.objects.get(username="testuser")
     return make_comment(user=user, verse=verse, body="テストコメント")
@@ -56,6 +60,7 @@ class TestBookmarkCreate:
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
         from bookmarks.models import Bookmark
+
         bm = Bookmark.objects.get()
         assert bm.canonical_book.slug == "matthew"
         assert bm.chapter_number == verse.chapter.number
@@ -65,6 +70,7 @@ class TestBookmarkCreate:
         res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
         from bookmarks.models import Bookmark
+
         bm = Bookmark.objects.get(comment=comment)
         assert bm.canonical_book_id is None
         assert bm.chapter_number is None
@@ -76,11 +82,16 @@ class TestBookmarkCreate:
         from bookmarks.models import Bookmark
         from tests.factories import make_book
 
-        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+        assert (
+            auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code
+            == 201
+        )
 
         kjv = make_book("Matthew", "KJV", 1, slug="matthew")
         kjv_ch = Chapter.objects.create(book=kjv, number=verse.chapter.number)
-        kjv_verse = Verse.objects.create(chapter=kjv_ch, number=verse.number, text="For God so loved")
+        kjv_verse = Verse.objects.create(
+            chapter=kjv_ch, number=verse.number, text="For God so loved"
+        )
 
         res = auth_client.post(BOOKMARKS_URL, {"verse": str(kjv_verse.id)}, format="json")
         assert res.status_code == status.HTTP_409_CONFLICT
@@ -91,7 +102,10 @@ class TestBookmarkCreate:
         # 同じ書の別の節（2:1）は別箇所なので登録できる
         from bible.models import Chapter, Verse
 
-        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+        assert (
+            auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code
+            == 201
+        )
         ch2 = Chapter.objects.create(book=verse.chapter.book, number=2)
         v2 = Verse.objects.create(chapter=ch2, number=1, text="x")
 
@@ -172,6 +186,7 @@ class TestBookmarkDelete:
 
     def test_delete_removes_record(self, auth_client, bookmark):
         from bookmarks.models import Bookmark
+
         auth_client.delete(bookmark_url(bookmark["id"]))
         assert not Bookmark.objects.filter(id=bookmark["id"]).exists()
 
@@ -201,7 +216,11 @@ class TestCommentBookmark:
 
     def test_empty_body_is_rejected(self, auth_client):
         res = auth_client.post(BOOKMARKS_URL, {}, format="json")
-        assert res.status_code in (status.HTTP_400_BAD_REQUEST, status.HTTP_409_CONFLICT, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        assert res.status_code in (
+            status.HTTP_400_BAD_REQUEST,
+            status.HTTP_409_CONFLICT,
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     def test_can_delete_comment_bookmark(self, auth_client, comment):
         res = auth_client.post(BOOKMARKS_URL, {"comment": str(comment.id)}, format="json")
@@ -220,7 +239,9 @@ class TestLocationGranularityBookmark:
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["target_type"] == "chapter"
         assert res.data["reference"] == {
-            "book": "matthew", "chapter": chapter.number, "verse": None,
+            "book": "matthew",
+            "chapter": chapter.number,
+            "verse": None,
         }
 
     def test_can_bookmark_book(self, auth_client, book):
@@ -228,12 +249,15 @@ class TestLocationGranularityBookmark:
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["target_type"] == "book"
         assert res.data["reference"] == {
-            "book": "matthew", "chapter": None, "verse": None,
+            "book": "matthew",
+            "chapter": None,
+            "verse": None,
         }
 
     def test_chapter_stores_null_verse(self, auth_client, chapter):
         auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
         from bookmarks.models import Bookmark
+
         bm = Bookmark.objects.get()
         assert bm.canonical_book.slug == "matthew"
         assert bm.chapter_number == chapter.number
@@ -246,7 +270,10 @@ class TestLocationGranularityBookmark:
 
     def test_chapter_and_verse_coexist(self, auth_client, verse, chapter):
         # 節のお気に入りと章のお気に入りは別粒度なので両方付けられる
-        assert auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code == 201
+        assert (
+            auth_client.post(BOOKMARKS_URL, {"verse": str(verse.id)}, format="json").status_code
+            == 201
+        )
         res = auth_client.post(BOOKMARKS_URL, {"chapter": str(chapter.id)}, format="json")
         assert res.status_code == status.HTTP_201_CREATED
 
@@ -264,7 +291,9 @@ class TestLocationGranularityBookmark:
 @pytest.fixture
 def project(db, book):
     from django.contrib.auth import get_user_model
+
     from translations.models import TranslationProject
+
     User = get_user_model()
     owner = User.objects.create_user(username="proj_owner", password="pass12345")
     return TranslationProject.objects.create(
@@ -279,19 +308,25 @@ def project(db, book):
 @pytest.mark.django_db
 class TestProjectBookmark:
     def test_can_bookmark_project(self, auth_client, project):
-        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.post(
+            BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_201_CREATED
         assert res.data["target_type"] == "project"
         assert res.data["project_detail"]["id"] == str(project.id)
         assert res.data["project_detail"]["name"] == "エノク書 私訳"
 
     def test_project_reference_is_null(self, auth_client, project):
-        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.post(
+            BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json"
+        )
         assert res.data["reference"] is None
 
     def test_duplicate_project_is_409(self, auth_client, project):
         auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
-        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.post(
+            BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json"
+        )
         assert res.status_code == status.HTTP_409_CONFLICT
 
     def test_project_bookmark_appears_in_list(self, auth_client, project):
@@ -301,7 +336,9 @@ class TestProjectBookmark:
         assert res.data["results"][0]["target_type"] == "project"
 
     def test_can_delete_project_bookmark(self, auth_client, project):
-        res = auth_client.post(BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json")
+        res = auth_client.post(
+            BOOKMARKS_URL, {"translation_project": str(project.id)}, format="json"
+        )
         del_res = auth_client.delete(bookmark_url(res.data["id"]))
         assert del_res.status_code == status.HTTP_204_NO_CONTENT
 
@@ -328,7 +365,12 @@ class TestBookmarkTypeFilter:
         res = auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
         assert res.data["counts"] == {
-            "all": 5, "verse": 1, "chapter": 1, "book": 1, "comment": 1, "project": 1,
+            "all": 5,
+            "verse": 1,
+            "chapter": 1,
+            "book": 1,
+            "comment": 1,
+            "project": 1,
         }
 
     @pytest.mark.parametrize("target_type", ["verse", "chapter", "book", "comment", "project"])

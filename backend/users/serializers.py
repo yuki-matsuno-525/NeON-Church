@@ -79,10 +79,10 @@ class AccountSettingsSerializer(UserSerializer):
             "social_providers",
         ]
 
-    def get_has_usable_password(self, obj):
+    def get_has_usable_password(self, obj) -> bool:
         return obj.has_usable_password()
 
-    def get_social_providers(self, obj):
+    def get_social_providers(self, obj) -> list[str]:
         return list(obj.social_accounts.order_by("provider").values_list("provider", flat=True))
 
 
@@ -98,7 +98,9 @@ class IdentityUpdateSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
         if not user.has_usable_password() or not user.check_password(attrs["current_password"]):
-            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect."}
+            )
         if "username" not in attrs and "email" not in attrs:
             raise serializers.ValidationError("Provide a username or email address.")
 
@@ -115,7 +117,9 @@ class IdentityUpdateSerializer(serializers.Serializer):
         if email is not None:
             email = User.objects.normalize_email(email).lower()
             if User.objects.exclude(pk=user.pk).filter(email__iexact=email).exists():
-                raise serializers.ValidationError({"email": "This email address is already in use."})
+                raise serializers.ValidationError(
+                    {"email": "This email address is already in use."}
+                )
             attrs["email"] = email
         return attrs
 
@@ -124,10 +128,12 @@ class IdentityUpdateSerializer(serializers.Serializer):
         for field in ("username", "email"):
             if field in self.validated_data:
                 setattr(user, field, self.validated_data[field])
-        user.save(update_fields=[
-            *(field for field in ("username", "email") if field in self.validated_data),
-            "updated_at",
-        ])
+        user.save(
+            update_fields=[
+                *(field for field in ("username", "email") if field in self.validated_data),
+                "updated_at",
+            ]
+        )
         return user
 
 
@@ -144,13 +150,15 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context["request"].user
         if not user.has_usable_password() or not user.check_password(attrs["current_password"]):
-            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect."}
+            )
         if attrs["current_password"] == attrs["new_password"]:
             raise serializers.ValidationError({"new_password": "Choose a different password."})
         try:
             validate_password(attrs["new_password"], user=user)
         except DjangoValidationError as exc:
-            raise serializers.ValidationError({"new_password": exc.messages})
+            raise serializers.ValidationError({"new_password": exc.messages}) from None
         return attrs
 
 
@@ -175,3 +183,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, min_length=8)
+
+
+class SessionSerializer(serializers.Serializer):
+    """ログイン中の端末（有効な refresh token）1件。current は今使っているもの。"""
+
+    id = serializers.CharField(help_text="トークンの jti")
+    created_at = serializers.DateTimeField()
+    expires_at = serializers.DateTimeField()
+    current = serializers.BooleanField()

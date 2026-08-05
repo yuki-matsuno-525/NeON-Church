@@ -3,6 +3,7 @@
 聖書本体のコメントと翻訳プロジェクトのコメントは、同じ節を指していても
 互いに混ざらないことを確認する。
 """
+
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework import status
@@ -14,6 +15,7 @@ COMMENTS_URL = "/api/comments/"
 def project(db, book):
     """book を元にした公開翻訳プロジェクト。"""
     from translations.models import TranslationProject
+
     owner = get_user_model().objects.create_user(username="owner", password="x")
     return TranslationProject.objects.create(
         name="マタイ（やさしい日本語）",
@@ -30,7 +32,11 @@ class TestTranslationCommentScope:
         # 翻訳プロジェクト向けのコメントを同じ節に投稿する
         res = auth_client.post(
             COMMENTS_URL,
-            {"verse": str(verse.id), "body": "訳文へのコメント", "translation_project": str(project.id)},
+            {
+                "verse": str(verse.id),
+                "body": "訳文へのコメント",
+                "translation_project": str(project.id),
+            },
             format="json",
         )
         assert res.status_code == status.HTTP_201_CREATED

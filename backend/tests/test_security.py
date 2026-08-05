@@ -21,6 +21,7 @@ LOGIN_URL = "/api/auth/login/"
 # _mask() ユニットテスト
 # ===================================================================
 
+
 class TestMask:
     def test_masks_password_field(self):
         result = _mask('{"username": "alice", "password": "supersecret"}')
@@ -74,6 +75,7 @@ class TestMask:
 # Cookie 属性テスト
 # ===================================================================
 
+
 @pytest.mark.django_db
 class TestCookieAttributes:
     def test_register_sets_httponly_cookies(self, api_client, user_payload):
@@ -95,10 +97,14 @@ class TestCookieAttributes:
         """ログインレスポンスの Cookie が HttpOnly。"""
         api_client.post(REGISTER_URL, user_payload, format="json")
         fresh = APIClient()
-        res = fresh.post(LOGIN_URL, {
-            "username": user_payload["username"],
-            "password": user_payload["password"],
-        }, format="json")
+        res = fresh.post(
+            LOGIN_URL,
+            {
+                "username": user_payload["username"],
+                "password": user_payload["password"],
+            },
+            format="json",
+        )
 
         assert res.status_code == status.HTTP_200_OK
         assert res.cookies["access_token"]["httponly"]
@@ -117,17 +123,23 @@ class TestCookieAttributes:
 # 非アクティブユーザーの認証ブロック
 # ===================================================================
 
+
 @pytest.mark.django_db
 class TestInactiveUserBlocked:
     def test_inactive_user_cannot_login(self, api_client, user_payload):
         """is_active=False のユーザーはログインできない。"""
         from django.contrib.auth import get_user_model
+
         get_user_model().objects.create_user(**user_payload, is_active=False)
 
-        res = api_client.post(LOGIN_URL, {
-            "username": user_payload["username"],
-            "password": user_payload["password"],
-        }, format="json")
+        res = api_client.post(
+            LOGIN_URL,
+            {
+                "username": user_payload["username"],
+                "password": user_payload["password"],
+            },
+            format="json",
+        )
 
         assert res.status_code in (
             status.HTTP_401_UNAUTHORIZED,

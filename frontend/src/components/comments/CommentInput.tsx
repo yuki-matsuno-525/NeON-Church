@@ -8,7 +8,7 @@ import { fetchTags, type Tag } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 
 type Props = {
-  onSubmit: (body: string, tagIds?: string[]) => Promise<void>;
+  onSubmit: (body: string, tagIds?: number[]) => Promise<void>;
   onCancel?: () => void;
   placeholder?: string;
   submitLabel?: string;
@@ -38,7 +38,7 @@ export function CommentInput({
   const errorId = useId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagsError, setTagsError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +78,7 @@ export function CommentInput({
     );
   }
 
-  const toggleTag = (id: string) => {
+  const toggleTag = (id: number) => {
     setSelectedTags((prev) =>
       prev.includes(id) ? prev.filter((tag) => tag !== id) : [...prev, id]
     );

@@ -1,0 +1,152 @@
+# ==============================================================
+# バックエンドのツール設定
+#
+# ここは lint / format / 型チェックの設定だけを置く。
+# 依存パッケージは requirements.txt / requirements-dev.txt を正本とする。
+#
+# ローカル実行:
+#   docker compose exec backend ruff check .
+#   docker compose exec backend ruff format .
+#   docker compose exec backend mypy .
+# ==============================================================
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+# マイグレーションは Django の自動生成物なので整形も lint もしない。
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# E   pycodestyle    構文まわりの明らかな誤り（E402: import の位置ずれ など）
+# F   pyflakes       未使用 import・未定義名
+# I   isort          import の並び順
+# B   bugbear        壊れやすい書き方（可変デフォルト引数・ループ内クロージャ など）
+select = ["E", "F", "I", "B"]
+
+# E501（行長オーバー）はフォーマッタの担当。日本語コメントや長い URL は
+# フォーマッタでも折れないので、lint で落とすと noqa だらけになる。
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# 設定ファイルは base.py からの star import で組み立てる方式。
+"config/settings/*.py" = ["F403", "F405"]
+
+[tool.ruff.lint.isort]
+# `from x import a, b as c` を a と b で別々の文に割らせない。
+combine-as-imports = true
+known-first-party = [
+    "articles",
+    "bible",
+    "bookmarks",
+    "comments",
+    "common",
+    "config",
+    "notifications",
+    "plans",
+    "qa",
+    "reading_progress",
+    "tags",
+    "translations",
+    "users",
+]
+
+[tool.ruff.format]
+# 既存コードは docstring を含めてダブルクォート。
+quote-style = "double"
+
+# ==============================================================
+# mypy
+#
+# 方針は「段階導入」。今は型注釈が付いている関数だけを検査し、
+# 注釈の無い関数の中身は見ない（check_untyped_defs = false）。
+# 型を書いた場所から順に守られていく形にして、CI を常時グリーンに保つ。
+#
+# 締めていく順番（余裕ができたら上から）:
+#   1. disallow_untyped_defs をアプリ単位で true にする
+#   2. check_untyped_defs を全体で true にする
+#   3. ignore_missing_imports を外して足りない stub を入れる
+# ==============================================================
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+# 検査しない場所:
+#   migrations       自動生成物
+#   bible/importers  BeautifulSoup の戻り値が Tag | NavigableString | PageElement | None で、
+#   bible/.../commands  型を通すには isinstance 判定を全行に足すことになる。
+#                    取り込みは固定の HTML を相手にする使い捨てスクリプトなので割に合わない。
+exclude = [
+    "/migrations/",
+    "^bible/importers/",
+    "^bible/management/commands/",
+]
+
+# 型注釈の無い関数の中身には立ち入らない（段階導入のため）。
+check_untyped_defs = false
+# stub の無いサードパーティは Any 扱いにして落とさない。
+ignore_missing_imports = true
+# 不要になった type: ignore を溜めない。
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+# --------------------------------------------------------------
+# 型負債のベースライン
+#
+# 下のモジュールは今は検査を止めている。触ったついでに 1 つずつ
+# ここから外していく。新しく足すモジュールは既定で検査対象になる。
+# --------------------------------------------------------------
+
+# BeautifulSoup の戻り値型が緩く（Tag | NavigableString | PageElement | None）、
+# 実害の無い union-attr で埋まるため。exclude だけでは import 経由で拾われる。
+[[tool.mypy.overrides]]
+module = ["bible.importers.*", "bible.management.commands.*"]
+ignore_errors = true
+
+# base.py からの star import で設定値の型が object に落ちるため。
+[[tool.mypy.overrides]]
+module = ["config.settings.*"]
+ignore_errors = true
+
+[tool.django-stubs]
+# 型解決用に読む設定モジュール。DB に触らないので test 設定でよい。
+django_settings_module = "config.settings.test"
+
+# ==============================================================
+# カバレッジ
+#
+# 目的は数字を上げることではなく、「テストが通っているのにその行は
+# 一度も動いていない」を見えるようにすること。下限は現状（92%）から
+# 少し下に置き、下がったら CI で気づけるようにする。
+# ==============================================================
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "tests/*",
+    "*/tests.py",
+    "manage.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+    "config/settings/*",
+    # 取り込みスクリプトは固定の原データを相手にする使い捨て。
+    # 実行にデータファイルが要るので、テストからは通らない。
+    "bible/importers/*",
+    "bible/management/commands/*",
+    # 開発用のデモデータ生成。専用のテストで通ることだけ確かめている。
+    "common/seed_data/*",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    # 型チェック専用の分岐は実行されない。
+    "if TYPE_CHECKING:",
+    # 到達しないことを表明している場所。
+    "raise NotImplementedError",
+]

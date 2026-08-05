@@ -26,7 +26,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagsError, setTagsError] = useState(false);
-  const [activeTagId, setActiveTagId] = useState<string | null>(null);
+  const [activeTagId, setActiveTagId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // コメントの紐付け先（章 or 書）。createComment / useComments で共用する。
@@ -64,7 +64,7 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
     };
   }, []);
 
-  const handleSubmit = async (body: string, tagIds?: string[]) => {
+  const handleSubmit = async (body: string, tagIds?: number[]) => {
     const comment = await createComment({ ...target, body, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
   };

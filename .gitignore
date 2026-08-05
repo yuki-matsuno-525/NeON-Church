@@ -44,6 +44,9 @@ coverage.xml
 # mypy
 .mypy_cache/
 
+# ruff
+.ruff_cache/
+
 # ---------------------------------------------------------------
 # Node.js / Next.js
 # ---------------------------------------------------------------
@@ -96,3 +99,6 @@ artifacts/
 
 # Claude Code の作業用ワークツリー
 .claude/worktrees/
+
+# Claude Code の個人設定（共有する設定は .claude/settings.json に置く）
+.claude/settings.local.json

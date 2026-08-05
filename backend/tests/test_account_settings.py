@@ -7,7 +7,6 @@ from rest_framework import status
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 
-
 SETTINGS_URL = "/api/auth/settings/"
 IDENTITY_URL = "/api/auth/settings/identity/"
 PREFERENCES_URL = "/api/auth/settings/preferences/"
@@ -71,7 +70,9 @@ class TestAccountSettings:
         assert response.data["email"] == "renamed@example.com"
 
     def test_identity_update_enforces_case_insensitive_uniqueness(self, auth_client, user_payload):
-        User.objects.create_user(username="TakenName", email="taken@example.com", password="pass12345")
+        User.objects.create_user(
+            username="TakenName", email="taken@example.com", password="pass12345"
+        )
 
         username_response = auth_client.patch(
             IDENTITY_URL,
@@ -103,7 +104,9 @@ class TestAccountSettings:
 
 @pytest.mark.django_db
 class TestPasswordAndSessions:
-    def test_password_change_invalidates_old_refresh_and_issues_new_pair(self, auth_client, user_payload):
+    def test_password_change_invalidates_old_refresh_and_issues_new_pair(
+        self, auth_client, user_payload
+    ):
         old_refresh = auth_client.cookies["refresh_token"].value
 
         response = auth_client.post(
@@ -117,9 +120,13 @@ class TestPasswordAndSessions:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.cookies["refresh_token"].value != old_refresh
-        assert User.objects.get(username=user_payload["username"]).check_password("NewStrongPass123!")
+        assert User.objects.get(username=user_payload["username"]).check_password(
+            "NewStrongPass123!"
+        )
         auth_client.cookies["refresh_token"] = old_refresh
-        assert auth_client.post("/api/auth/token/refresh/").status_code == status.HTTP_401_UNAUTHORIZED
+        assert (
+            auth_client.post("/api/auth/token/refresh/").status_code == status.HTTP_401_UNAUTHORIZED
+        )
 
     def test_password_change_rejects_wrong_current_password(self, auth_client):
         response = auth_client.post(
@@ -205,11 +212,15 @@ class TestAccountDeletion:
 
 @pytest.mark.django_db
 class TestPasswordReset:
-    def test_request_does_not_disclose_account_existence(self, api_client, user_payload, password_reset_settings):
+    def test_request_does_not_disclose_account_existence(
+        self, api_client, user_payload, password_reset_settings
+    ):
         User.objects.create_user(**user_payload)
 
         known = api_client.post(RESET_REQUEST_URL, {"email": user_payload["email"]}, format="json")
-        unknown = api_client.post(RESET_REQUEST_URL, {"email": "missing@example.com"}, format="json")
+        unknown = api_client.post(
+            RESET_REQUEST_URL, {"email": "missing@example.com"}, format="json"
+        )
 
         assert known.status_code == status.HTTP_200_OK
         assert unknown.status_code == status.HTTP_200_OK
@@ -225,19 +236,25 @@ class TestPasswordReset:
         def fail_delivery(*args, **kwargs):
             raise RuntimeError("SMTP unavailable")
 
-        monkeypatch.setattr("users.views.send_mail", fail_delivery)
+        monkeypatch.setattr("users.services.send_mail", fail_delivery)
         known = api_client.post(RESET_REQUEST_URL, {"email": user_payload["email"]}, format="json")
-        unknown = api_client.post(RESET_REQUEST_URL, {"email": "missing@example.com"}, format="json")
+        unknown = api_client.post(
+            RESET_REQUEST_URL, {"email": "missing@example.com"}, format="json"
+        )
 
         assert known.status_code == status.HTTP_200_OK
         assert unknown.status_code == status.HTTP_200_OK
         assert known.data == unknown.data
 
-    def test_confirm_resets_password_and_token_cannot_be_reused(self, api_client, user_payload, password_reset_settings):
+    def test_confirm_resets_password_and_token_cannot_be_reused(
+        self, api_client, user_payload, password_reset_settings
+    ):
         user = User.objects.create_user(**user_payload)
         old_refresh = RefreshToken.for_user(user)
         api_client.post(RESET_REQUEST_URL, {"email": user_payload["email"]}, format="json")
-        reset_url = next(line for line in mail.outbox[0].body.splitlines() if line.startswith("https://"))
+        reset_url = next(
+            line for line in mail.outbox[0].body.splitlines() if line.startswith("https://")
+        )
         query = parse_qs(urlparse(reset_url).query)
         payload = {
             "uid": query["uid"][0],
@@ -250,7 +267,9 @@ class TestPasswordReset:
 
         assert response.status_code == status.HTTP_200_OK
         assert reused.status_code == status.HTTP_400_BAD_REQUEST
-        assert User.objects.get(username=user_payload["username"]).check_password("ResetStrongPass123!")
+        assert User.objects.get(username=user_payload["username"]).check_password(
+            "ResetStrongPass123!"
+        )
         outstanding = OutstandingToken.objects.get(jti=str(old_refresh["jti"]))
         assert BlacklistedToken.objects.filter(token=outstanding).exists()
 

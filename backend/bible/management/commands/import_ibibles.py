@@ -35,23 +35,72 @@ from bible.models import Chapter, Verse
 # ibibles の書索引 → 訳非依存の slug（プロテスタント66冊）。
 # 第二正典（トビト書等）は LXX 取り込み時に追記する。
 INDEX_TO_SLUG = {
-    "001": "genesis", "002": "exodus", "003": "leviticus", "004": "numbers",
-    "005": "deuteronomy", "006": "joshua", "007": "judges", "008": "ruth",
-    "009": "1-samuel", "010": "2-samuel", "011": "1-kings", "012": "2-kings",
-    "013": "1-chronicles", "014": "2-chronicles", "015": "ezra", "016": "nehemiah",
-    "017": "esther", "018": "job", "019": "psalms", "020": "proverbs",
-    "021": "ecclesiastes", "022": "song-of-songs", "023": "isaiah", "024": "jeremiah",
-    "025": "lamentations", "026": "ezekiel", "027": "daniel", "028": "hosea",
-    "029": "joel", "030": "amos", "031": "obadiah", "032": "jonah", "033": "micah",
-    "034": "nahum", "035": "habakkuk", "036": "zephaniah", "037": "haggai",
-    "038": "zechariah", "039": "malachi",
-    "101": "matthew", "102": "mark", "103": "luke", "104": "john", "105": "acts",
-    "106": "romans", "107": "1-corinthians", "108": "2-corinthians", "109": "galatians",
-    "110": "ephesians", "111": "philippians", "112": "colossians",
-    "113": "1-thessalonians", "114": "2-thessalonians", "115": "1-timothy",
-    "116": "2-timothy", "117": "titus", "118": "philemon", "119": "hebrews",
-    "120": "james", "121": "1-peter", "122": "2-peter", "123": "1-john",
-    "124": "2-john", "125": "3-john", "126": "jude", "127": "revelation",
+    "001": "genesis",
+    "002": "exodus",
+    "003": "leviticus",
+    "004": "numbers",
+    "005": "deuteronomy",
+    "006": "joshua",
+    "007": "judges",
+    "008": "ruth",
+    "009": "1-samuel",
+    "010": "2-samuel",
+    "011": "1-kings",
+    "012": "2-kings",
+    "013": "1-chronicles",
+    "014": "2-chronicles",
+    "015": "ezra",
+    "016": "nehemiah",
+    "017": "esther",
+    "018": "job",
+    "019": "psalms",
+    "020": "proverbs",
+    "021": "ecclesiastes",
+    "022": "song-of-songs",
+    "023": "isaiah",
+    "024": "jeremiah",
+    "025": "lamentations",
+    "026": "ezekiel",
+    "027": "daniel",
+    "028": "hosea",
+    "029": "joel",
+    "030": "amos",
+    "031": "obadiah",
+    "032": "jonah",
+    "033": "micah",
+    "034": "nahum",
+    "035": "habakkuk",
+    "036": "zephaniah",
+    "037": "haggai",
+    "038": "zechariah",
+    "039": "malachi",
+    "101": "matthew",
+    "102": "mark",
+    "103": "luke",
+    "104": "john",
+    "105": "acts",
+    "106": "romans",
+    "107": "1-corinthians",
+    "108": "2-corinthians",
+    "109": "galatians",
+    "110": "ephesians",
+    "111": "philippians",
+    "112": "colossians",
+    "113": "1-thessalonians",
+    "114": "2-thessalonians",
+    "115": "1-timothy",
+    "116": "2-timothy",
+    "117": "titus",
+    "118": "philemon",
+    "119": "hebrews",
+    "120": "james",
+    "121": "1-peter",
+    "122": "2-peter",
+    "123": "1-john",
+    "124": "2-john",
+    "125": "3-john",
+    "126": "jude",
+    "127": "revelation",
 }
 
 _HEADER_RE = re.compile(r"^=(\d+)\s+(.+?)\s*$")
@@ -98,7 +147,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--txt", required=True, help="ibibles の比較用テキストファイルのパス")
-        parser.add_argument("--translation", required=True, help="訳名（Book.translation・例: KJV）")
+        parser.add_argument(
+            "--translation", required=True, help="訳名（Book.translation・例: KJV）"
+        )
 
     def handle(self, *args, **options):
         path = Path(options["txt"])
@@ -115,11 +166,11 @@ class Command(BaseCommand):
         try:
             index_map = load_canonical_index()
         except CanonicalDataError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
         slug_to_name = {slug: name for (t, name), slug in index_map.items() if t == translation}
 
         imported = skipped_books = 0
-        for index, header_name, verses in books:
+        for index, _header_name, verses in books:
             slug = INDEX_TO_SLUG.get(index)
             name = slug_to_name.get(slug) if slug else None
             if name is None:
@@ -141,7 +192,7 @@ class Command(BaseCommand):
                 name=name, translation=translation, order=int(index)
             )
         except CanonicalDataError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
         added = 0
         for (ch_num, v_num), text in verses.items():

@@ -182,22 +182,31 @@ class TestQuestionList:
         slug = verse.chapter.book.canonical_book.slug
         res = api_client.get(
             QUESTIONS_URL,
-            {"book_slug": slug, "chapter_number": verse.chapter.number, "verse_number": verse.number},
+            {
+                "book_slug": slug,
+                "chapter_number": verse.chapter.number,
+                "verse_number": verse.number,
+            },
         )
         assert res.json()["count"] == 1
         # 別の節には出ない
         res = api_client.get(
-            QUESTIONS_URL, {"book_slug": slug, "chapter_number": verse.chapter.number, "verse_number": 99}
+            QUESTIONS_URL,
+            {"book_slug": slug, "chapter_number": verse.chapter.number, "verse_number": 99},
         )
         assert res.json()["count"] == 0
 
     def test_location_filter_does_not_mix_grains(self, api_client, auth_client, chapter, verse):
         """章の質問を引くとき、節の質問まで混ざらない。"""
         auth_client.post(
-            QUESTIONS_URL, {"title": "章の質問", "body": "本文", "chapter": str(chapter.id)}, format="json"
+            QUESTIONS_URL,
+            {"title": "章の質問", "body": "本文", "chapter": str(chapter.id)},
+            format="json",
         )
         auth_client.post(
-            QUESTIONS_URL, {"title": "節の質問", "body": "本文", "verse": str(verse.id)}, format="json"
+            QUESTIONS_URL,
+            {"title": "節の質問", "body": "本文", "verse": str(verse.id)},
+            format="json",
         )
         slug = chapter.book.canonical_book.slug
         res = api_client.get(QUESTIONS_URL, {"book_slug": slug, "chapter_number": chapter.number})
@@ -240,7 +249,9 @@ class TestQuestionEditDelete:
         assert res.json()["title"] == "新しい題"
 
     def test_other_user_cannot_edit(self, other_auth_client, question):
-        res = other_auth_client.patch(question_url(question["id"]), {"body": "改ざん"}, format="json")
+        res = other_auth_client.patch(
+            question_url(question["id"]), {"body": "改ざん"}, format="json"
+        )
         assert res.status_code == status.HTTP_403_FORBIDDEN
 
     def test_owner_can_delete(self, auth_client, question):
@@ -298,7 +309,9 @@ class TestAnswer:
         assert item["body"] == ""
 
     def test_owner_can_edit_answer(self, other_auth_client, question, answer):
-        res = other_auth_client.patch(answer_url(answer["id"]), {"body": "直しました"}, format="json")
+        res = other_auth_client.patch(
+            answer_url(answer["id"]), {"body": "直しました"}, format="json"
+        )
         assert res.status_code == status.HTTP_200_OK
         assert res.json()["body"] == "直しました"
 
@@ -324,7 +337,9 @@ class TestBestAnswer:
         assert res.status_code == status.HTTP_200_OK
 
     def test_owner_can_unset(self, auth_client, question, answer):
-        auth_client.patch(best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json")
+        auth_client.patch(
+            best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json"
+        )
         res = auth_client.patch(best_answer_url(question["id"]), {"answer_id": None}, format="json")
         assert res.status_code == status.HTTP_200_OK
 
@@ -346,18 +361,26 @@ class TestBestAnswer:
 
     def test_cannot_pick_answer_of_another_question(self, auth_client, verse, answer):
         other = auth_client.post(
-            QUESTIONS_URL, {"title": "別の質問", "body": "本文", "verse": str(verse.id)}, format="json"
+            QUESTIONS_URL,
+            {"title": "別の質問", "body": "本文", "verse": str(verse.id)},
+            format="json",
         ).json()
-        res = auth_client.patch(best_answer_url(other["id"]), {"answer_id": answer["id"]}, format="json")
+        res = auth_client.patch(
+            best_answer_url(other["id"]), {"answer_id": answer["id"]}, format="json"
+        )
         assert res.status_code == status.HTTP_404_NOT_FOUND
 
     def test_appears_in_list(self, auth_client, api_client, question, answer):
-        auth_client.patch(best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json")
+        auth_client.patch(
+            best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json"
+        )
         item = api_client.get(QUESTIONS_URL).json()["results"][0]
         assert item["best_answer"]["id"] == answer["id"]
 
     def test_is_best_flag_in_answer_list(self, auth_client, api_client, question, answer):
-        auth_client.patch(best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json")
+        auth_client.patch(
+            best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json"
+        )
         item = api_client.get(answers_url(question["id"])).json()["results"][0]
         assert item["is_best"] is True
 
@@ -365,7 +388,9 @@ class TestBestAnswer:
         """ベストアンサーが消されたら「解決済み」表示も外す。"""
         from qa.models import Question
 
-        auth_client.patch(best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json")
+        auth_client.patch(
+            best_answer_url(question["id"]), {"answer_id": answer["id"]}, format="json"
+        )
         other_auth_client.delete(answer_url(answer["id"]))
         assert Question.objects.get(id=question["id"]).best_answer is None
 
@@ -405,7 +430,9 @@ class TestQAReport:
         )
         assert res.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_reporting_question_and_answer_are_independent(self, auth_client, other_auth_client, question, answer):
+    def test_reporting_question_and_answer_are_independent(
+        self, auth_client, other_auth_client, question, answer
+    ):
         """同じ人が質問と回答をそれぞれ通報できる（重複扱いにならない）。"""
         other_auth_client.post(
             f"{question_url(question['id'])}report/", {"reason": "spam"}, format="json"

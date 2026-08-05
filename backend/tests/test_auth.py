@@ -30,9 +30,7 @@ class TestRegister:
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_missing_password(self, api_client):
-        res = api_client.post(
-            REGISTER_URL, {"username": "user", "email": "a@b.com"}, format="json"
-        )
+        res = api_client.post(REGISTER_URL, {"username": "user", "email": "a@b.com"}, format="json")
         assert res.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_short_password(self, api_client):
@@ -57,6 +55,7 @@ class TestRegister:
 class TestLogin:
     def test_success(self, api_client, user_payload):
         from django.contrib.auth import get_user_model
+
         get_user_model().objects.create_user(**user_payload)
         res = api_client.post(
             LOGIN_URL,
@@ -70,6 +69,7 @@ class TestLogin:
 
     def test_wrong_password(self, api_client, user_payload):
         from django.contrib.auth import get_user_model
+
         get_user_model().objects.create_user(**user_payload)
         res = api_client.post(
             LOGIN_URL,

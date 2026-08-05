@@ -19,7 +19,7 @@ def test_sections_become_chapters_with_continuous_verses():
         "<p>(2) And Herod commanded.</p>"
         "<p>Joseph Requests Jesus' Body</p>"
         "<p>(3) And Joseph stood there.</p>"
-        "<p>(5) And Herod said, \"Brother Pilate.\"</p>"
+        '<p>(5) And Herod said, "Brother Pilate."</p>'
     )
     data, warnings = parse_peter(html)
     chapters = data["chapters"]
@@ -52,10 +52,7 @@ def test_leading_unnumbered_text_prepended():
 
 def test_curly_apostrophe_heading_matches():
     # 見出しの引用符が丸 (’) でも半角 (') の SECTION_HEADINGS と一致する
-    html = _page(
-        "<p>Joseph Requests Jesus’ Body</p>"
-        "<p>(3) And Joseph stood there.</p>"
-    )
+    html = _page("<p>Joseph Requests Jesus’ Body</p><p>(3) And Joseph stood there.</p>")
     data, _ = parse_peter(html)
     assert data["chapters"][0]["number"] == 1
     assert data["chapters"][0]["verses"][0]["number"] == 3

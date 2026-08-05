@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from bible.models import Book, CanonicalBook
+
 from .models import (
     MAX_DAYS_PER_PLAN,
     MAX_READINGS_PER_DAY,
@@ -175,6 +176,4 @@ class PlanSubscriptionSerializer(serializers.ModelSerializer):
 
 def check_day_limit(plan: Plan) -> None:
     if plan.days.count() >= MAX_DAYS_PER_PLAN:
-        raise serializers.ValidationError(
-            {"detail": f"プランは{MAX_DAYS_PER_PLAN}日までです。"}
-        )
+        raise serializers.ValidationError({"detail": f"プランは{MAX_DAYS_PER_PLAN}日までです。"})

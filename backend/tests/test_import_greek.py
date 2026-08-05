@@ -57,8 +57,9 @@ def test_import_is_idempotent(tmp_path):
 
 
 def test_missing_title_raises(tmp_path):
-    bad = '<?xml version="1.0"?><osisText>'  \
-        '<milestone unit="verse" id="Matt.1.1"/><w>Ἐν</w></osisText>'
+    bad = (
+        '<?xml version="1.0"?><osisText><milestone unit="verse" id="Matt.1.1"/><w>Ἐν</w></osisText>'
+    )
     path = _write_xml(tmp_path, bad)
     with pytest.raises(CommandError):
         call_command("import_greek", "--path", path)

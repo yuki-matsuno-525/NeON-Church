@@ -26,9 +26,19 @@ _CHAP_ABBR = re.compile(r"^[IVXLCDM]+\.$")
 _VERSE = re.compile(r"(?:^|(?<=\s))(\d{1,3})\s?[a-e]?\.\s")
 
 _ROMAN_VALUES = [
-    ("M", 1000), ("CM", 900), ("D", 500), ("CD", 400),
-    ("C", 100), ("XC", 90), ("L", 50), ("XL", 40),
-    ("X", 10), ("IX", 9), ("V", 5), ("IV", 4), ("I", 1),
+    ("M", 1000),
+    ("CM", 900),
+    ("D", 500),
+    ("CD", 400),
+    ("C", 100),
+    ("XC", 90),
+    ("L", 50),
+    ("XL", 40),
+    ("X", 10),
+    ("IX", 9),
+    ("V", 5),
+    ("IV", 4),
+    ("I", 1),
 ]
 
 
@@ -40,7 +50,7 @@ def roman_to_int(s: str) -> int | None:
     i = 0
     total = 0
     for sym, val in _ROMAN_VALUES:
-        while s[i:i + len(sym)] == sym:
+        while s[i : i + len(sym)] == sym:
             total += val
             i += len(sym)
     return total if i == len(s) else None
@@ -185,7 +195,7 @@ def parse_enoch(html: str) -> tuple[dict, list[str]]:
                     chapter_pieces[num] = []
                     chapter_order.append(num)
                 if not is_heading:  # 章マーカー文字列を本文から取り除く
-                    block = _normalize(block[len(abbr_txt):])
+                    block = _normalize(block[len(abbr_txt) :])
 
         if is_heading or current is None:
             continue

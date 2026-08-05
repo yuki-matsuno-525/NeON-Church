@@ -45,7 +45,7 @@ class SocialAccount(models.Model):
         on_delete=models.CASCADE,
         related_name="social_accounts",
     )
-    provider = models.CharField(max_length=50)   # "google" | "github"
+    provider = models.CharField(max_length=50)  # "google" | "github"
     provider_uid = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 

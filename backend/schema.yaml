@@ -1,0 +1,6541 @@
+openapi: 3.0.3
+info:
+  title: NeON-Church API
+  version: 0.1.0
+  description: 聖書読書・コメントプラットフォーム NeON-Church の REST API
+paths:
+  /api/article-comments/{id}/:
+    delete:
+      operationId: api_article_comments_destroy
+      description: DELETE /api/article-comments/{id}/   自分のコメントを消す（論理削除。返信の親を保つため）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/article-tags/:
+    get:
+      operationId: api_article_tags_list
+      description: GET /api/article-tags/   主題タグの一覧。記事が1件も無いタグは出さない。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ArticleTag'
+          description: ''
+  /api/articles/:
+    get:
+      operationId: api_articles_list
+      description: |-
+        GET  /api/articles/        記事一覧。既定は公開記事のみ。
+                                   ?mine=true で自分の記事（下書き含む）、?tag=<slug> で主題、
+                                   ?author=<ユーザー名> で書いた人で絞る。
+                                   ?exclude_mine=true で自分の記事を公開一覧から除く。
+        POST /api/articles/        記事を作る（要認証）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListList'
+          description: ''
+    post:
+      operationId: api_articles_create
+      description: |-
+        GET  /api/articles/        記事一覧。既定は公開記事のみ。
+                                   ?mine=true で自分の記事（下書き含む）、?tag=<slug> で主題、
+                                   ?author=<ユーザー名> で書いた人で絞る。
+                                   ?exclude_mine=true で自分の記事を公開一覧から除く。
+        POST /api/articles/        記事を作る（要認証）
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleWrite'
+          description: ''
+  /api/articles/{id}/:
+    get:
+      operationId: api_articles_retrieve
+      description: |-
+        GET    /api/articles/{id}/   記事1件。下書き・限定公開は書いた人だけ。
+        PATCH  /api/articles/{id}/   書き換え（書いた人だけ）
+        DELETE /api/articles/{id}/   削除。コメントも一緒に消える（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDetail'
+          description: ''
+    put:
+      operationId: api_articles_update
+      description: |-
+        GET    /api/articles/{id}/   記事1件。下書き・限定公開は書いた人だけ。
+        PATCH  /api/articles/{id}/   書き換え（書いた人だけ）
+        DELETE /api/articles/{id}/   削除。コメントも一緒に消える（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleWrite'
+          description: ''
+    patch:
+      operationId: api_articles_partial_update
+      description: |-
+        GET    /api/articles/{id}/   記事1件。下書き・限定公開は書いた人だけ。
+        PATCH  /api/articles/{id}/   書き換え（書いた人だけ）
+        DELETE /api/articles/{id}/   削除。コメントも一緒に消える（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedArticleWriteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleWrite'
+          description: ''
+    delete:
+      operationId: api_articles_destroy
+      description: |-
+        GET    /api/articles/{id}/   記事1件。下書き・限定公開は書いた人だけ。
+        PATCH  /api/articles/{id}/   書き換え（書いた人だけ）
+        DELETE /api/articles/{id}/   削除。コメントも一緒に消える（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/articles/{id}/comments/:
+    get:
+      operationId: api_articles_comments_list
+      description: |-
+        GET  /api/articles/{id}/comments/   記事へのコメント（記事全体に対してのみ付く）
+        POST /api/articles/{id}/comments/   コメントする（要認証）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleCommentList'
+          description: ''
+    post:
+      operationId: api_articles_comments_create
+      description: |-
+        GET  /api/articles/{id}/comments/   記事へのコメント（記事全体に対してのみ付く）
+        POST /api/articles/{id}/comments/   コメントする（要認証）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArticleCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArticleCommentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleComment'
+          description: ''
+  /api/articles/citing/:
+    get:
+      operationId: api_articles_citing_list
+      description: |-
+        GET /api/articles/citing/?book=<書のslug>&chapter=<章>&verse=<節>
+
+        その節を引用している公開記事。節のページの「引用した記事」タブで使う。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedArticleListList'
+          description: ''
+  /api/auth/login/:
+    post:
+      operationId: api_auth_login_create
+      description: ログイン。username + password を検証し、成功したらトークンを Cookie にセットする。
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: api_auth_logout_create
+      description: |-
+        ログアウト。Cookie の refresh_token をブラックリストに追加し、両方の Cookie を削除する。
+
+        アクセストークン期限切れ時にもログアウトを成立させたいため AllowAny にしている。
+        refresh_token が無ければ blacklist をスキップして Cookie 削除のみ行う。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: api_auth_me_retrieve
+      description: GET /api/auth/me/  現在のログインユーザー情報を返す。PATCH でプロフィール更新。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: api_auth_me_partial_update
+      description: GET /api/auth/me/  現在のログインユーザー情報を返す。PATCH でプロフィール更新。
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfileUpdateRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/oauth/github/:
+    get:
+      operationId: api_auth_oauth_github_retrieve
+      description: GET /api/auth/oauth/github/ → GitHub 認証ページへリダイレクト
+      parameters:
+      - in: query
+        name: next
+        schema:
+          type: string
+        description: 認証後に戻る相対パス。/ で始まらないものは無視する。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '302':
+          description: No response body
+  /api/auth/oauth/github/callback/:
+    get:
+      operationId: api_auth_oauth_github_callback_retrieve
+      description: GET /api/auth/oauth/github/callback/ → JWT Cookie 設定 → フロントへリダイレクト
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '302':
+          description: No response body
+  /api/auth/oauth/google/:
+    get:
+      operationId: api_auth_oauth_google_retrieve
+      description: GET /api/auth/oauth/google/ → Google 認証ページへリダイレクト
+      parameters:
+      - in: query
+        name: next
+        schema:
+          type: string
+        description: 認証後に戻る相対パス。/ で始まらないものは無視する。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '302':
+          description: No response body
+  /api/auth/oauth/google/callback/:
+    get:
+      operationId: api_auth_oauth_google_callback_retrieve
+      description: GET /api/auth/oauth/google/callback/ → JWT Cookie 設定 → フロントへリダイレクト
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: state
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '302':
+          description: No response body
+  /api/auth/password-reset/:
+    post:
+      operationId: api_auth_password_reset_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/password-reset/confirm/:
+    post:
+      operationId: api_auth_password_reset_confirm_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: api_auth_register_create
+      description: |-
+        ユーザー登録。
+        成功するとトークンを HTTP-only Cookie にセットしてログイン状態で返す。
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/auth/settings/:
+    get:
+      operationId: api_auth_settings_retrieve
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSettings'
+          description: ''
+  /api/auth/settings/account/:
+    delete:
+      operationId: api_auth_settings_account_destroy
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/settings/identity/:
+    patch:
+      operationId: api_auth_settings_identity_partial_update
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedIdentityUpdateRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSettings'
+          description: ''
+  /api/auth/settings/password/:
+    post:
+      operationId: api_auth_settings_password_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/settings/preferences/:
+    patch:
+      operationId: api_auth_settings_preferences_partial_update
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotificationPreferencesRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+          description: ''
+  /api/auth/settings/sessions/:
+    get:
+      operationId: api_auth_settings_sessions_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+          description: ''
+  /api/auth/settings/sessions/{jti}/:
+    delete:
+      operationId: api_auth_settings_sessions_destroy
+      parameters:
+      - in: path
+        name: jti
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/auth/settings/sessions/revoke-others/:
+    post:
+      operationId: api_auth_settings_sessions_revoke_others_create
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/token/refresh/:
+    post:
+      operationId: api_auth_token_refresh_create
+      description: |-
+        アクセストークンのリフレッシュ。
+        Cookie の refresh_token を使い、新しいトークンペアを発行する（rotation あり）。
+        古い refresh_token はブラックリストに追加される。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/bookmarks/:
+    get:
+      operationId: api_bookmarks_list
+      description: |-
+        GET  /api/bookmarks/         自分のお気に入り一覧（要認証）
+        GET  /api/bookmarks/?type=verse  種類で絞り込み（verse/chapter/book/comment/project）
+        POST /api/bookmarks/         お気に入り追加（重複は 409）
+
+        一覧レスポンスには通常の count/next/results に加えて counts を付ける。
+        counts は絞り込み前の全種類の件数で、画面のタブに出す数字に使う。
+
+        読書画面向けに箇所での絞り込みも受ける（`filters.filter_by_location` を参照）。
+        GET /api/bookmarks/?book=<書のslug>              その書に付いたお気に入り
+        GET /api/bookmarks/?book=<書のslug>&chapter=<章> その章と、その章の節に付いたお気に入り・コメントのお気に入り
+        GET /api/bookmarks/?translation_project=<id>     その翻訳企画のお気に入り
+        箇所で絞ったときは counts を付けない（画面のタブに使わないため、集計の往復を省く）。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookmarkList'
+          description: ''
+    post:
+      operationId: api_bookmarks_create
+      description: |-
+        GET  /api/bookmarks/         自分のお気に入り一覧（要認証）
+        GET  /api/bookmarks/?type=verse  種類で絞り込み（verse/chapter/book/comment/project）
+        POST /api/bookmarks/         お気に入り追加（重複は 409）
+
+        一覧レスポンスには通常の count/next/results に加えて counts を付ける。
+        counts は絞り込み前の全種類の件数で、画面のタブに出す数字に使う。
+
+        読書画面向けに箇所での絞り込みも受ける（`filters.filter_by_location` を参照）。
+        GET /api/bookmarks/?book=<書のslug>              その書に付いたお気に入り
+        GET /api/bookmarks/?book=<書のslug>&chapter=<章> その章と、その章の節に付いたお気に入り・コメントのお気に入り
+        GET /api/bookmarks/?translation_project=<id>     その翻訳企画のお気に入り
+        箇所で絞ったときは counts を付けない（画面のタブに使わないため、集計の往復を省く）。
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookmarkRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookmarkRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+          description: ''
+  /api/bookmarks/{id}/:
+    delete:
+      operationId: api_bookmarks_destroy
+      description: DELETE /api/bookmarks/{pk}/  お気に入り削除（自分のもののみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/books/:
+    get:
+      operationId: api_books_list
+      description: 書一覧。認証不要。?translation=和訳 でフィルタ可能。
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+          description: ''
+  /api/books/{book_id}/chapters/:
+    get:
+      operationId: api_books_chapters_list
+      description: 指定した書の章一覧。書が存在しない場合は 404。
+      parameters:
+      - in: path
+        name: book_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Chapter'
+          description: ''
+  /api/chapters/{chapter_id}/verses/:
+    get:
+      operationId: api_chapters_verses_list
+      description: 指定した章の節一覧。章が存在しない場合は 404。
+      parameters:
+      - in: path
+        name: chapter_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Verse'
+          description: ''
+  /api/comments/:
+    get:
+      operationId: api_comments_list
+      description: |-
+        GET  /api/comments/?verse_id=&ordering=new|votes  コメント一覧（親コメントのみ）
+        GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
+        POST /api/comments/                                コメント投稿（要認証）
+
+        verse_id / chapter_id / book_id / book_slug / parent_id のいずれかが必須。
+        指定なしの場合は空リストを返す。絞り込みの詳しい規則は selectors.thread_comments。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+    post:
+      operationId: api_comments_create
+      description: |-
+        GET  /api/comments/?verse_id=&ordering=new|votes  コメント一覧（親コメントのみ）
+        GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
+        POST /api/comments/                                コメント投稿（要認証）
+
+        verse_id / chapter_id / book_id / book_slug / parent_id のいずれかが必須。
+        指定なしの場合は空リストを返す。絞り込みの詳しい規則は selectors.thread_comments。
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+  /api/comments/{id}/:
+    patch:
+      operationId: api_comments_partial_update
+      description: |-
+        PATCH  /api/comments/{pk}/  body の編集（自分のコメントのみ、削除済みは不可）
+        DELETE /api/comments/{pk}/  論理削除（自分のコメントのみ）
+
+        物理削除は行わず is_deleted=True をセットする。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentEditRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentEdit'
+          description: ''
+    delete:
+      operationId: api_comments_destroy
+      description: |-
+        PATCH  /api/comments/{pk}/  body の編集（自分のコメントのみ、削除済みは不可）
+        DELETE /api/comments/{pk}/  論理削除（自分のコメントのみ）
+
+        物理削除は行わず is_deleted=True をセットする。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/comments/{id}/moderate/:
+    delete:
+      operationId: api_comments_moderate_destroy
+      description: |-
+        DELETE /api/comments/{pk}/moderate/  管理者による強制論理削除
+        管理者（is_staff=True）のみ利用可能。所有者チェックなし。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/comments/{id}/report/:
+    post:
+      operationId: api_comments_report_create
+      description: POST /api/comments/{pk}/report/  通報（要認証、同一コメントへの重複通報は 409）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/comments/{id}/upvote/:
+    post:
+      operationId: api_comments_upvote_create
+      description: |-
+        POST   /api/comments/{pk}/upvote/  upvote 追加（要認証、二重投票は 409）
+        DELETE /api/comments/{pk}/upvote/  upvote 取り消し（未投票の場合は 404）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          description: No response body
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+    delete:
+      operationId: api_comments_upvote_destroy
+      description: |-
+        POST   /api/comments/{pk}/upvote/  upvote 追加（要認証、二重投票は 409）
+        DELETE /api/comments/{pk}/upvote/  upvote 取り消し（未投票の場合は 404）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/comments/mine/:
+    get:
+      operationId: api_comments_mine_list
+      description: GET /api/comments/mine/  ログインユーザー自身のコメント一覧（削除済み除く、新着順）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMyCommentList'
+          description: ''
+  /api/comments/trending/:
+    get:
+      operationId: api_comments_trending_list
+      description: GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要）
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrendingComment'
+          description: ''
+  /api/feedback/:
+    post:
+      operationId: api_feedback_create
+      description: Accept feedback without requiring a GitHub account or signed-in
+        session.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/notifications/:
+    get:
+      operationId: api_notifications_list
+      description: |-
+        GET /api/notifications/             全通知一覧（新しい順）
+        GET /api/notifications/?unread=1    未読のみ
+        GET /api/notifications/?type=reply  種類で絞り込み（reply/upvote/mention）
+
+        counts は type での絞り込み前の件数（unread の指定は反映する）。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/notifications/{id}/read/:
+    post:
+      operationId: api_notifications_read_create
+      description: POST /api/notifications/{pk}/read/  個別既読
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/read-all/:
+    post:
+      operationId: api_notifications_read_all_create
+      description: POST /api/notifications/read-all/  全既読
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/notifications/unread-count/:
+    get:
+      operationId: api_notifications_unread_count_retrieve
+      description: GET /api/notifications/unread-count/  未読件数だけを軽量に返す。
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCount'
+          description: ''
+  /api/plan-subscriptions/:
+    get:
+      operationId: api_plan_subscriptions_list
+      description: GET /api/plan-subscriptions/   自分が読んでいるプラン
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanSubscription'
+          description: ''
+  /api/plans/:
+    get:
+      operationId: api_plans_list
+      description: |-
+        GET  /api/plans/   プラン一覧。既定は公開のみ。?mine=true で自分の（下書き含む）
+        POST /api/plans/   プランを作る（要認証）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPlanListList'
+          description: ''
+    post:
+      operationId: api_plans_create
+      description: |-
+        GET  /api/plans/   プラン一覧。既定は公開のみ。?mine=true で自分の（下書き含む）
+        POST /api/plans/   プランを作る（要認証）
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanWrite'
+          description: ''
+  /api/plans/{id}/:
+    get:
+      operationId: api_plans_retrieve
+      description: |-
+        GET    /api/plans/{id}/   プラン1件（日と章の中身つき）
+        PATCH  /api/plans/{id}/   書き換え（書いた人だけ）
+        DELETE /api/plans/{id}/   削除（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDetail'
+          description: ''
+    put:
+      operationId: api_plans_update
+      description: |-
+        GET    /api/plans/{id}/   プラン1件（日と章の中身つき）
+        PATCH  /api/plans/{id}/   書き換え（書いた人だけ）
+        DELETE /api/plans/{id}/   削除（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlanWriteRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanWrite'
+          description: ''
+    patch:
+      operationId: api_plans_partial_update
+      description: |-
+        GET    /api/plans/{id}/   プラン1件（日と章の中身つき）
+        PATCH  /api/plans/{id}/   書き換え（書いた人だけ）
+        DELETE /api/plans/{id}/   削除（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanWriteRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanWrite'
+          description: ''
+    delete:
+      operationId: api_plans_destroy
+      description: |-
+        GET    /api/plans/{id}/   プラン1件（日と章の中身つき）
+        PATCH  /api/plans/{id}/   書き換え（書いた人だけ）
+        DELETE /api/plans/{id}/   削除（書いた人だけ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/plans/{id}/days/:
+    post:
+      operationId: api_plans_days_create
+      description: |-
+        POST /api/plans/{id}/days/   日を末尾に足す（書いた人だけ）
+
+        足すのはいつでもできる。読んでいる人の進捗は「第N日」に紐づいているので、
+        後ろに足すぶんには何もずれないため。
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlanDayCreateRequestRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDay'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/plans/{id}/days/{day_id}/:
+    get:
+      operationId: api_plans_days_retrieve
+      description: |-
+        PATCH  /api/plans/{id}/days/{day_id}/   その日の題・文章・読む章を書き換える
+        DELETE /api/plans/{id}/days/{day_id}/   その日を消す（誰かが読み始めていたら消せない）
+
+        中身の書き換えは、読み始めた人がいてもできる。読んだ記録は「第N日」に紐づくので、
+        中身が変わっても記録は壊れないため。誤りを直せないほうが困る。
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDay'
+          description: ''
+    put:
+      operationId: api_plans_days_update
+      description: |-
+        PATCH  /api/plans/{id}/days/{day_id}/   その日の題・文章・読む章を書き換える
+        DELETE /api/plans/{id}/days/{day_id}/   その日を消す（誰かが読み始めていたら消せない）
+
+        中身の書き換えは、読み始めた人がいてもできる。読んだ記録は「第N日」に紐づくので、
+        中身が変わっても記録は壊れないため。誤りを直せないほうが困る。
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanDayRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlanDayRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlanDayRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDay'
+          description: ''
+    patch:
+      operationId: api_plans_days_partial_update
+      description: |-
+        PATCH  /api/plans/{id}/days/{day_id}/   その日の題・文章・読む章を書き換える
+        DELETE /api/plans/{id}/days/{day_id}/   その日を消す（誰かが読み始めていたら消せない）
+
+        中身の書き換えは、読み始めた人がいてもできる。読んだ記録は「第N日」に紐づくので、
+        中身が変わっても記録は壊れないため。誤りを直せないほうが困る。
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanDayRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanDay'
+          description: ''
+    delete:
+      operationId: api_plans_days_destroy
+      description: |-
+        PATCH  /api/plans/{id}/days/{day_id}/   その日の題・文章・読む章を書き換える
+        DELETE /api/plans/{id}/days/{day_id}/   その日を消す（誰かが読み始めていたら消せない）
+
+        中身の書き換えは、読み始めた人がいてもできる。読んだ記録は「第N日」に紐づくので、
+        中身が変わっても記録は壊れないため。誤りを直せないほうが困る。
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/plans/{id}/days/{day_id}/complete/:
+    post:
+      operationId: api_plans_days_complete_create
+      description: |-
+        POST   /api/plans/{id}/days/{day_id}/complete/   その日を読み終えた印をつける
+        DELETE /api/plans/{id}/days/{day_id}/complete/   印を外す
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          description: No response body
+    delete:
+      operationId: api_plans_days_complete_destroy
+      description: |-
+        POST   /api/plans/{id}/days/{day_id}/complete/   その日を読み終えた印をつける
+        DELETE /api/plans/{id}/days/{day_id}/complete/   印を外す
+      parameters:
+      - in: path
+        name: day_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/plans/{id}/days/reorder/:
+    post:
+      operationId: api_plans_days_reorder_create
+      description: |-
+        POST /api/plans/{id}/days/reorder/   日の並べ替え（読み始めた人がいたらできない）
+
+        body: {"day_ids": ["...", "..."]} 並べたい順に全部の日のid
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlanDayReorderRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/plans/{id}/restart/:
+    post:
+      operationId: api_plans_restart_create
+      description: POST /api/plans/{id}/restart/   最初からやり直す（読んだ記録を消して、今日から数え直す）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanSubscription'
+          description: ''
+  /api/plans/{id}/subscribe/:
+    post:
+      operationId: api_plans_subscribe_create
+      description: |-
+        POST   /api/plans/{id}/subscribe/   読み始める（やめていたら読み直す）
+        DELETE /api/plans/{id}/subscribe/   やめる（読んだ記録は残す）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanSubscription'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanSubscription'
+          description: ''
+    delete:
+      operationId: api_plans_subscribe_destroy
+      description: |-
+        POST   /api/plans/{id}/subscribe/   読み始める（やめていたら読み直す）
+        DELETE /api/plans/{id}/subscribe/   やめる（読んだ記録は残す）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/qa/answers/:
+    post:
+      operationId: api_qa_answers_create
+      description: POST /api/qa/answers/  回答を投稿（要認証）
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+          description: ''
+  /api/qa/answers/{id}/:
+    patch:
+      operationId: api_qa_answers_partial_update
+      description: |-
+        PATCH  /api/qa/answers/{pk}/  本文の編集（本人のみ、削除済みは不可）
+        DELETE /api/qa/answers/{pk}/  論理削除（本人のみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswerEditRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerEdit'
+          description: ''
+    delete:
+      operationId: api_qa_answers_destroy
+      description: |-
+        PATCH  /api/qa/answers/{pk}/  本文の編集（本人のみ、削除済みは不可）
+        DELETE /api/qa/answers/{pk}/  論理削除（本人のみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/qa/answers/{id}/report/:
+    post:
+      operationId: api_qa_answers_report_create
+      description: POST /api/qa/answers/{pk}/report/  回答を通報（要認証）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/qa/questions/:
+    get:
+      operationId: api_qa_questions_list
+      description: |-
+        GET  /api/qa/questions/  質問一覧（認証不要）
+        POST /api/qa/questions/  質問を投稿（要認証）
+
+        絞り込み:
+          ?book_id=      書で絞る。カンマ区切りで複数可（同一書の複数訳をまとめて絞る用）
+          ?book_slug=    訳非依存の書 slug で絞る。?chapter_number= ?verse_number= と併せて
+                         箇所を指定できる（読書ページの Q&A タブが使う）
+          ?tag_id=       タグで絞る
+          ?q=            題・本文・投稿者・タグ・書 slug を横断して探す
+          ?answered=     true=解決済み / false=未解決
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedQuestionList'
+          description: ''
+    post:
+      operationId: api_qa_questions_create
+      description: |-
+        GET  /api/qa/questions/  質問一覧（認証不要）
+        POST /api/qa/questions/  質問を投稿（要認証）
+
+        絞り込み:
+          ?book_id=      書で絞る。カンマ区切りで複数可（同一書の複数訳をまとめて絞る用）
+          ?book_slug=    訳非依存の書 slug で絞る。?chapter_number= ?verse_number= と併せて
+                         箇所を指定できる（読書ページの Q&A タブが使う）
+          ?tag_id=       タグで絞る
+          ?q=            題・本文・投稿者・タグ・書 slug を横断して探す
+          ?answered=     true=解決済み / false=未解決
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuestionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuestionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+  /api/qa/questions/{id}/:
+    get:
+      operationId: api_qa_questions_retrieve
+      description: |-
+        GET    /api/qa/questions/{pk}/  質問1件（認証不要）
+        PATCH  /api/qa/questions/{pk}/  題・本文の編集（本人のみ）
+        DELETE /api/qa/questions/{pk}/  論理削除（本人のみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+    patch:
+      operationId: api_qa_questions_partial_update
+      description: |-
+        GET    /api/qa/questions/{pk}/  質問1件（認証不要）
+        PATCH  /api/qa/questions/{pk}/  題・本文の編集（本人のみ）
+        DELETE /api/qa/questions/{pk}/  論理削除（本人のみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestionEditRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEdit'
+          description: ''
+    delete:
+      operationId: api_qa_questions_destroy
+      description: |-
+        GET    /api/qa/questions/{pk}/  質問1件（認証不要）
+        PATCH  /api/qa/questions/{pk}/  題・本文の編集（本人のみ）
+        DELETE /api/qa/questions/{pk}/  論理削除（本人のみ）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/qa/questions/{id}/best-answer/:
+    patch:
+      operationId: api_qa_questions_best_answer_partial_update
+      description: |-
+        PATCH /api/qa/questions/{pk}/best-answer/  ベストアンサーの設定・解除（質問者のみ）
+
+        body: { "answer_id": "<uuid>" }  設定
+        body: { "answer_id": null }      解除
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBestAnswerRequestRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/qa/questions/{id}/report/:
+    post:
+      operationId: api_qa_questions_report_create
+      description: POST /api/qa/questions/{pk}/report/  質問を通報（要認証）
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/qa/questions/{question_pk}/answers/:
+    get:
+      operationId: api_qa_questions_answers_list
+      description: GET /api/qa/questions/{question_pk}/answers/  回答一覧（認証不要、古い順）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: question_pk
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAnswerList'
+          description: ''
+  /api/reading-progress/:
+    get:
+      operationId: api_reading_progress_list
+      description: GET /api/reading-progress/  自分の読書進捗一覧（要認証）
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReadingProgress'
+          description: ''
+  /api/reading-progress/save/:
+    post:
+      operationId: api_reading_progress_save_create
+      description: 'POST /api/reading-progress/save/  進捗を保存（upsert: user+book 単位で更新or作成）'
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReadingProgressSaveRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingProgress'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadingProgress'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/references/{slug}/book/:
+    get:
+      operationId: api_references_book_retrieve
+      description: |-
+        GET /api/references/<slug>/book/?translation=口語訳
+
+        書のページ（章番号のグリッド）が必要な「書と、その全章」を1回で返す。
+        こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceBookReadResponse'
+          description: ''
+  /api/references/{slug}/books/:
+    get:
+      operationId: api_references_books_retrieve
+      description: GET /api/references/<slug>/books/  その書の全版の書 id。
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceBooksResponse'
+          description: ''
+  /api/references/{slug}/chapters/{chapter}/:
+    get:
+      operationId: api_references_chapters_retrieve
+      description: GET /api/references/<slug>/chapters/<chapter>/  その章の全版の章 id。
+      parameters:
+      - in: path
+        name: chapter
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceChaptersResponse'
+          description: ''
+  /api/references/{slug}/read/{chapter}/:
+    get:
+      operationId: api_references_read_retrieve
+      description: |-
+        GET /api/references/<slug>/read/<chapter>/?translation=口語訳
+
+        読書画面が1章を表示するのに必要な「書・章・節」をまとめて1回で返す。
+
+        以前フロントは books → chapters → verses と3回、しかも順番待ちで叩いていた。
+        最初の1回は書の全一覧を落として目当ての1冊を探すだけだったので、章を開くたびに
+        無駄な往復と転送が発生していた。ここで1回にまとめる。
+
+        見つからないときは 404 に `code` を付けて、画面が「その訳にこの書が無い」のか
+        「その章が無い」のかを言い分けられるようにする。
+      parameters:
+      - in: path
+        name: chapter
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceReadResponse'
+          description: ''
+  /api/references/{slug}/verses/{chapter}/{verse}/:
+    get:
+      operationId: api_references_verses_retrieve
+      description: GET /api/references/<slug>/verses/<chapter>/<verse>/  その節の全版の節
+        id。
+      parameters:
+      - in: path
+        name: chapter
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: verse
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferenceVersesResponse'
+          description: ''
+  /api/search/:
+    get:
+      operationId: api_search_retrieve
+      description: |-
+        GET /api/search/?q=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
+
+        - 検索対象は SEARCH_TRANSLATIONS の全訳。UI 言語では絞らない（検索語が言語を選ぶ）。
+        - kind（all/verses/books/comments）で返すセクションを絞る。
+        - book（canonical_book.slug）で書を絞る。
+        - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
+          books / comments は1ページ目のプレビュー用（ページングしない）。
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+          description: ''
+  /api/tags/:
+    get:
+      operationId: api_tags_list
+      description: GET /api/tags/  タグ一覧（認証不要）
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+          description: ''
+  /api/translations/:
+    get:
+      operationId: api_translations_list
+      description: |-
+        GET  /api/translations/  プロジェクト一覧（認証不要・20件ページング）
+            ?status=published|active|draft でステータス列ごとに、?page=N でページ送りできる。
+            一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
+        POST /api/translations/  プロジェクト作成（要認証）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationProjectList'
+          description: ''
+    post:
+      operationId: api_translations_create
+      description: |-
+        GET  /api/translations/  プロジェクト一覧（認証不要・20件ページング）
+            ?status=published|active|draft でステータス列ごとに、?page=N でページ送りできる。
+            一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
+        POST /api/translations/  プロジェクト作成（要認証）
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+  /api/translations/{project_id}/:
+    get:
+      operationId: api_translations_retrieve
+      description: |-
+        GET    /api/translations/{id}/  プロジェクト詳細
+        PATCH  /api/translations/{id}/  編集（オーナーのみ）
+        DELETE /api/translations/{id}/  削除（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+    put:
+      operationId: api_translations_update
+      description: |-
+        GET    /api/translations/{id}/  プロジェクト詳細
+        PATCH  /api/translations/{id}/  編集（オーナーのみ）
+        DELETE /api/translations/{id}/  削除（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationProjectRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+    patch:
+      operationId: api_translations_partial_update
+      description: |-
+        GET    /api/translations/{id}/  プロジェクト詳細
+        PATCH  /api/translations/{id}/  編集（オーナーのみ）
+        DELETE /api/translations/{id}/  削除（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationProjectRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+    delete:
+      operationId: api_translations_destroy
+      description: |-
+        GET    /api/translations/{id}/  プロジェクト詳細
+        PATCH  /api/translations/{id}/  編集（オーナーのみ）
+        DELETE /api/translations/{id}/  削除（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/translations/{project_id}/activate/:
+    post:
+      operationId: api_translations_activate_create
+      description: POST /api/translations/{id}/activate/  募集開始 draft → active（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+  /api/translations/{project_id}/add-book/:
+    post:
+      operationId: api_translations_add_book_create
+      description: |-
+        POST /api/translations/{id}/add-book/
+        指定した書のすべての節を翻訳ユニットとして一括追加（オーナーのみ）。
+        すでに存在するユニットはスキップ（冪等）。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookSelectionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BookSelectionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BookSelectionRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookAdded'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/translations/{project_id}/comments/:
+    get:
+      operationId: api_translations_comments_list
+      description: |-
+        プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+        フロントは「もっと見る」で読み足す。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationCommentList'
+          description: ''
+    post:
+      operationId: api_translations_comments_create
+      description: |-
+        プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+        フロントは「もっと見る」で読み足す。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationComment'
+          description: ''
+  /api/translations/{project_id}/comments/{comment_id}/:
+    delete:
+      operationId: api_translations_comments_destroy
+      description: DELETE /api/translations/{id}/comments/{cid}/  コメント論理削除（投稿者またはオーナー）
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/translations/{project_id}/join/:
+    post:
+      operationId: api_translations_join_create
+      description: POST /api/translations/{id}/join/  参加申請（要認証）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationMembership'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/translations/{project_id}/library/:
+    post:
+      operationId: api_translations_library_create
+      description: |-
+        POST   /api/translations/{id}/library/  自分の /read に追加（公開済みのみ・冪等）
+        DELETE /api/translations/{id}/library/  自分の /read から削除（冪等）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+    delete:
+      operationId: api_translations_library_destroy
+      description: |-
+        POST   /api/translations/{id}/library/  自分の /read に追加（公開済みのみ・冪等）
+        DELETE /api/translations/{id}/library/  自分の /read から削除（冪等）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/translations/{project_id}/members/:
+    get:
+      operationId: api_translations_members_list
+      description: |-
+        GET /api/translations/{id}/members/  メンバー一覧（承認済みメンバーのみ閲覧可）
+
+        参加者は増え続けうるので、1回のリクエストで全件返さないようページングする。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationMembershipList'
+          description: ''
+  /api/translations/{project_id}/members/{membership_id}/:
+    patch:
+      operationId: api_translations_members_partial_update
+      description: |-
+        PATCH  /api/translations/{id}/members/{mid}/  承認/拒否（オーナーのみ）
+        DELETE /api/translations/{id}/members/{mid}/  除名（オーナーのみ）
+      parameters:
+      - in: path
+        name: membership_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMembershipDecisionRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationMembership'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+    delete:
+      operationId: api_translations_members_destroy
+      description: |-
+        PATCH  /api/translations/{id}/members/{mid}/  承認/拒否（オーナーのみ）
+        DELETE /api/translations/{id}/members/{mid}/  除名（オーナーのみ）
+      parameters:
+      - in: path
+        name: membership_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/translations/{project_id}/publish/:
+    post:
+      operationId: api_translations_publish_create
+      description: POST /api/translations/{id}/publish/  公開（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+  /api/translations/{project_id}/read/:
+    get:
+      operationId: api_translations_read_retrieve
+      description: |-
+        GET /api/translations/{id}/read/  公開済み翻訳の完了ユニット（誰でも閲覧可）
+
+        GET .../read/            目次用。章番号の一覧だけを返す（units は空）
+        GET .../read/?chapter=3  3章の本文を返す
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationReadResponse'
+          description: ''
+  /api/translations/{project_id}/remove-book/:
+    delete:
+      operationId: api_translations_remove_book_destroy
+      description: |-
+        DELETE /api/translations/{id}/remove-book/
+        指定した書のすべての翻訳ユニットを削除（オーナーのみ）。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookRemoved'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/translations/{project_id}/units/:
+    get:
+      operationId: api_translations_units_list
+      description: |-
+        GET  /api/translations/{id}/units/            ユニット一覧
+        GET  /api/translations/{id}/units/?chapter=3  3章のユニットだけ
+        POST /api/translations/{id}/units/            ユニット追加（オーナーのみ）
+
+        書を丸ごと追加できる（add-book）ので、企画全体では数千件になりうる。
+        画面は章を選んで作業するため、章で絞って取れるようにしてある。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationUnitList'
+          description: ''
+    post:
+      operationId: api_translations_units_create
+      description: |-
+        GET  /api/translations/{id}/units/            ユニット一覧
+        GET  /api/translations/{id}/units/?chapter=3  3章のユニットだけ
+        POST /api/translations/{id}/units/            ユニット追加（オーナーのみ）
+
+        書を丸ごと追加できる（add-book）ので、企画全体では数千件になりうる。
+        画面は章を選んで作業するため、章で絞って取れるようにしてある。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitCreateRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnitCreate'
+          description: ''
+  /api/translations/{project_id}/units/{unit_id}/:
+    get:
+      operationId: api_translations_units_retrieve
+      description: |-
+        GET   /api/translations/{id}/units/{uid}/  ユニット詳細
+        PATCH /api/translations/{id}/units/{uid}/  訳文・ステータス更新（担当者またはオーナー）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnit'
+          description: ''
+    put:
+      operationId: api_translations_units_update
+      description: |-
+        GET   /api/translations/{id}/units/{uid}/  ユニット詳細
+        PATCH /api/translations/{id}/units/{uid}/  訳文・ステータス更新（担当者またはオーナー）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationUnitRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnit'
+          description: ''
+    patch:
+      operationId: api_translations_units_partial_update
+      description: |-
+        GET   /api/translations/{id}/units/{uid}/  ユニット詳細
+        PATCH /api/translations/{id}/units/{uid}/  訳文・ステータス更新（担当者またはオーナー）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTranslationUnitRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnit'
+          description: ''
+    delete:
+      operationId: api_translations_units_destroy
+      description: |-
+        GET   /api/translations/{id}/units/{uid}/  ユニット詳細
+        PATCH /api/translations/{id}/units/{uid}/  訳文・ステータス更新（担当者またはオーナー）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/translations/{project_id}/units/{unit_id}/assign/:
+    post:
+      operationId: api_translations_units_assign_create
+      description: POST /api/translations/{id}/units/{uid}/assign/  担当者割り当て（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitAssignRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UnitAssignRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UnitAssignRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnit'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/translations/{project_id}/units/{unit_id}/comments/:
+    get:
+      operationId: api_translations_units_comments_list
+      description: |-
+        プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+        フロントは「もっと見る」で読み足す。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationCommentList'
+          description: ''
+    post:
+      operationId: api_translations_units_comments_create
+      description: |-
+        プロジェクト全体コメント or ユニットコメント（GET: 誰でも, POST: 承認済みメンバー）
+
+        コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
+        フロントは「もっと見る」で読み足す。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TranslationCommentRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationComment'
+          description: ''
+  /api/translations/{project_id}/units/summary/:
+    get:
+      operationId: api_translations_units_summary_retrieve
+      description: |-
+        GET /api/translations/{id}/units/summary/  章の一覧と状態ごとの件数
+
+        画面の章ボタンと「レビュー(N)」のバッジを出すためだけの軽い問い合わせ。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationUnitSummaryResponse'
+          description: ''
+  /api/translations/{project_id}/unpublish/:
+    post:
+      operationId: api_translations_unpublish_create
+      description: POST /api/translations/{id}/unpublish/  公開取り消し → active（オーナーのみ）
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationProject'
+          description: ''
+  /api/translations/languages/:
+    get:
+      operationId: api_translations_languages_list
+      description: GET /api/translations/languages/  翻訳先言語一覧（誰でも閲覧可）
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Language'
+          description: ''
+  /api/translations/library/:
+    get:
+      operationId: api_translations_library_list
+      description: |-
+        GET /api/translations/library/  自分が /read に追加した公開翻訳一覧（要認証）
+
+        本棚は増え続けうるので、1回のリクエストで全件返さないようページングする。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTranslationProjectList'
+          description: ''
+  /api/users/{username}/:
+    get:
+      operationId: api_users_retrieve
+      description: GET /api/users/<username>/  公開プロフィール（認証不要）
+      parameters:
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /api/users/{username}/bookmarks/:
+    get:
+      operationId: api_users_bookmarks_list
+      description: |-
+        GET /api/users/<username>/bookmarks/  ユーザーのお気に入り一覧（認証不要）
+
+        対象ユーザーの bookmarks_visibility が "public" のときのみ実データを返す。
+        "private"（既定）のときは空配列を返す。フロントエンドは公開プロフィールの
+        visibility を見てタブ表示自体を出し分ける。
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBookmarkList'
+          description: ''
+  /api/users/{username}/comments/:
+    get:
+      operationId: api_users_comments_list
+      description: GET /api/users/<username>/comments/  ユーザーのコメント一覧（認証不要）
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: username
+        schema:
+          type: string
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+  /api/verse-of-the-day/:
+    get:
+      operationId: api_verse_of_the_day_retrieve
+      description: |-
+        GET /api/verse-of-the-day/  今日の聖句（日付ベースの決定論的選択）
+
+        ?translation=KJV を渡すと、同じ日付インデックスの節を KJV テキストで返す。
+        口語訳の節順序を基準に日付で節を選び、canonical_book / chapter.number / verse.number で対応節を引く。
+      tags:
+      - api
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerseOfDay'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Detail'
+          description: ''
+  /healthz/:
+    get:
+      operationId: healthz_retrieve
+      description: |-
+        ヘルスチェックエンドポイント。
+        DB に接続できる場合は 200、できない場合は 503 を返す。
+        Better Stack などのアップタイム監視ツールがこのエンドポイントを定期的に叩く。
+      tags:
+      - healthz
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: ''
+components:
+  schemas:
+    AccountSettings:
+      type: object
+      description: レスポンス用（認証済みユーザー自身）。機密フィールドを含まない。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: メールアドレス
+          maxLength: 254
+        bio:
+          type: string
+          maxLength: 500
+        bookmarks_visibility:
+          $ref: '#/components/schemas/BookmarksVisibilityEnum'
+        email_notifications_enabled:
+          type: boolean
+        in_app_notifications_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        has_usable_password:
+          type: boolean
+          readOnly: true
+        social_providers:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - created_at
+      - has_usable_password
+      - id
+      - social_providers
+      - username
+    Answer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/QAAuthor'
+          readOnly: true
+        body:
+          type: string
+          maxLength: 5000
+        is_deleted:
+          type: boolean
+          readOnly: true
+        is_best:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - is_best
+      - is_deleted
+      - user
+    AnswerEdit:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 5000
+      required:
+      - body
+    AnswerRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          format: uuid
+          writeOnly: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+      required:
+      - body
+      - question
+    ArticleComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        body:
+          type: string
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        is_deleted:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - is_deleted
+      - username
+    ArticleCommentRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - body
+    ArticleDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        owner_username:
+          type: string
+          readOnly: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleTag'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        body:
+          type: string
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - citations
+      - created_at
+      - id
+      - owner_username
+      - tags
+      - title
+      - updated_at
+    ArticleList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        owner_username:
+          type: string
+          readOnly: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleTag'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - owner_username
+      - tags
+      - title
+      - updated_at
+    ArticleTag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 40
+        slug:
+          type: string
+          maxLength: 80
+          pattern: ^[-a-zA-Z0-9_]+$
+        article_count:
+          type: integer
+          readOnly: true
+          default: 0
+      required:
+      - article_count
+      - id
+      - name
+      - slug
+    ArticleWrite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        body:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        citations:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - citations
+      - id
+      - title
+    ArticleWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        body:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - title
+    BestAnswer:
+      type: object
+      description: 質問カード・詳細の先頭に出すベストアンサーの要約。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/QAAuthor'
+          readOnly: true
+        body:
+          type: string
+          maxLength: 5000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - user
+    BestAnswerRequest:
+      type: object
+      description: 質問カード・詳細の先頭に出すベストアンサーの要約。
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+      required:
+      - body
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        translation:
+          type: string
+          maxLength: 50
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - id
+      - name
+      - order
+      - translation
+    BookAdded:
+      type: object
+      description: 一括追加の結果。created は実際に作られた数（既存はスキップ）。
+      properties:
+        created:
+          type: integer
+        book_name:
+          type: string
+      required:
+      - book_name
+      - created
+    BookRemoved:
+      type: object
+      description: 一括削除の結果。
+      properties:
+        deleted:
+          type: integer
+        book_name:
+          type: string
+      required:
+      - book_name
+      - deleted
+    BookSelectionRequest:
+      type: object
+      description: 書の一括追加・削除の対象。表示中の訳の書 id。
+      properties:
+        book_id:
+          type: string
+          format: uuid
+      required:
+      - book_id
+    Bookmark:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        comment_detail:
+          allOf:
+          - $ref: '#/components/schemas/CommentBrief'
+          readOnly: true
+          nullable: true
+        project_detail:
+          allOf:
+          - $ref: '#/components/schemas/ProjectBrief'
+          readOnly: true
+          nullable: true
+        target_type:
+          nullable: true
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/TargetTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        reference:
+          allOf:
+          - $ref: '#/components/schemas/BookmarkReference'
+          nullable: true
+          readOnly: true
+        verse_text:
+          type: string
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment_detail
+      - created_at
+      - id
+      - project_detail
+      - reference
+      - target_type
+      - verse_text
+    BookmarkReference:
+      type: object
+      description: 箇所のお気に入り（書/章/節）が指す位置。スキーマに形を出すためだけの宣言。
+      properties:
+        book:
+          type: string
+          description: 正典書の slug
+        chapter:
+          type: integer
+          nullable: true
+        verse:
+          type: integer
+          nullable: true
+      required:
+      - book
+      - chapter
+      - verse
+    BookmarkRequest:
+      type: object
+      properties:
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        comment:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+        translation_project:
+          type: string
+          format: uuid
+          writeOnly: true
+          nullable: true
+    BookmarksVisibilityEnum:
+      enum:
+      - private
+      - public
+      type: string
+      description: |-
+        * `private` - Private
+        * `public` - Public
+    CategoryEnum:
+      enum:
+      - feedback
+      - bug
+      - feature
+      - privacy
+      - other
+      type: string
+      description: |-
+        * `feedback` - feedback
+        * `bug` - bug
+        * `feature` - feature
+        * `privacy` - privacy
+        * `other` - other
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        book:
+          type: string
+          format: uuid
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - book
+      - id
+      - number
+    ChapterSummary:
+      type: object
+      description: 章ボタンに出す1章ぶんの内訳。
+      properties:
+        number:
+          type: integer
+        total:
+          type: integer
+        status_counts:
+          $ref: '#/components/schemas/UnitStatusCounts'
+      required:
+      - number
+      - status_counts
+      - total
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/CommentAuthor'
+          readOnly: true
+        translation_project:
+          type: string
+          format: uuid
+          nullable: true
+        version_label:
+          type: string
+          readOnly: true
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+          maxLength: 5000
+        is_deleted:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        vote_count:
+          type: integer
+          readOnly: true
+        reply_count:
+          type: integer
+          readOnly: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - is_deleted
+      - reply_count
+      - tags
+      - user
+      - version_label
+      - vote_count
+    CommentAuthor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - id
+      - username
+    CommentAuthorRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - username
+    CommentBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+          readOnly: true
+        username:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        location_label:
+          type: string
+          readOnly: true
+        book_slug:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        verse_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        source_translation:
+          type: string
+          readOnly: true
+        is_deleted:
+          type: boolean
+          readOnly: true
+      required:
+      - body
+      - book_slug
+      - chapter_number
+      - created_at
+      - id
+      - is_deleted
+      - location_label
+      - source_translation
+      - username
+      - verse_number
+    CommentBriefRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 1
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - id
+      - username
+    CommentEdit:
+      type: object
+      properties:
+        body:
+          type: string
+          maxLength: 5000
+      required:
+      - body
+    CommentRequest:
+      type: object
+      properties:
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        translation_project:
+          type: string
+          format: uuid
+          nullable: true
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+      required:
+      - body
+    CommentSearch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        body:
+          type: string
+          maxLength: 5000
+        username:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        location:
+          type: string
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - id
+      - location
+      - username
+    Detail:
+      type: object
+      description: |-
+        `{"detail": "..."}` だけを返すレスポンス。
+
+        DRF の慣用形なので、書き込み系の成功・失敗メッセージの多くがこの形になる。
+        スキーマ上で使い回すためにここに 1 つだけ置く。
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    FeedbackRequest:
+      type: object
+      properties:
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        message:
+          type: string
+          minLength: 10
+          maxLength: 4000
+        page_url:
+          type: string
+          format: uri
+          maxLength: 500
+        website:
+          type: string
+          writeOnly: true
+      required:
+      - category
+      - message
+    Health:
+      type: object
+      description: ヘルスチェックの応答。
+      properties:
+        status:
+          $ref: '#/components/schemas/HealthStatusEnum'
+        db:
+          type: boolean
+      required:
+      - db
+      - status
+    HealthStatusEnum:
+      enum:
+      - ok
+      - degraded
+      type: string
+      description: |-
+        * `ok` - ok
+        * `degraded` - degraded
+    Language:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        tag:
+          type: string
+          maxLength: 20
+        label:
+          type: string
+          maxLength: 100
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+      required:
+      - id
+      - label
+      - tag
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    MembershipDecisionStatusEnum:
+      enum:
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `approved` - approved
+        * `rejected` - rejected
+    MyComment:
+      type: object
+      description: |-
+        自分のコメント一覧用。投稿先の書名・章番号に加え、
+        プロフィールからその箇所へリンクするための slug/章/節/訳も返す。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/CommentAuthor'
+          readOnly: true
+        body:
+          type: string
+          maxLength: 5000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        vote_count:
+          type: integer
+          readOnly: true
+        location_label:
+          type: string
+          readOnly: true
+        book_slug:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        verse_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        source_translation:
+          type: string
+          readOnly: true
+      required:
+      - body
+      - book_slug
+      - chapter_number
+      - created_at
+      - id
+      - location_label
+      - source_translation
+      - user
+      - verse_number
+      - vote_count
+    Notification:
+      type: object
+      description: |-
+        通知1件。
+
+        通知の対象は3種類ある（コメント / 翻訳コメント / Q&A の回答）。どれであっても
+        「誰が」「何と書いたか」「どこへ飛ぶか」を同じ形で返し、フロントは target_kind で
+        URL の組み立てだけを分岐する。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        notification_type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        actor_username:
+          type: string
+          readOnly: true
+        body_snippet:
+          type: string
+          readOnly: true
+        body_is_deleted:
+          type: boolean
+          readOnly: true
+        comment_id:
+          type: string
+          nullable: true
+          readOnly: true
+        question_id:
+          type: string
+          nullable: true
+          description: Q&A 通知の飛び先。フロントは /qa/{question_id} を組み立てる。
+          readOnly: true
+        translation_project_id:
+          type: string
+          nullable: true
+          readOnly: true
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        target_kind:
+          type: string
+          nullable: true
+          description: ジャンプ先の種別。フロントの URL 組み立て分岐に使う。
+          readOnly: true
+        book_name:
+          type: string
+          nullable: true
+          readOnly: true
+        chapter_number:
+          type: integer
+          nullable: true
+          readOnly: true
+        verse_number:
+          type: integer
+          nullable: true
+          readOnly: true
+        translation_unit_id:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - actor_username
+      - body_is_deleted
+      - body_snippet
+      - book_name
+      - chapter_number
+      - comment_id
+      - created_at
+      - id
+      - notification_type
+      - question_id
+      - target_kind
+      - translation_project_id
+      - translation_unit_id
+      - verse_number
+    NotificationPreferences:
+      type: object
+      properties:
+        email_notifications_enabled:
+          type: boolean
+        in_app_notifications_enabled:
+          type: boolean
+    NotificationTypeEnum:
+      enum:
+      - reply
+      - upvote
+      - mention
+      type: string
+      description: |-
+        * `reply` - Reply
+        * `upvote` - Upvote
+        * `mention` - Mention
+    NullEnum:
+      enum:
+      - null
+    PaginatedAnswerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
+    PaginatedArticleCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleComment'
+    PaginatedArticleListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleList'
+    PaginatedBookmarkList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bookmark'
+    PaginatedCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+    PaginatedMyCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MyComment'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedPlanListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanList'
+    PaginatedQuestionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    PaginatedTranslationCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationComment'
+    PaginatedTranslationMembershipList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationMembership'
+    PaginatedTranslationProjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationProject'
+    PaginatedTranslationUnitList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationUnit'
+    PasswordChangeRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - current_password
+      - new_password
+    PasswordResetConfirmRequest:
+      type: object
+      properties:
+        uid:
+          type: string
+          minLength: 1
+        token:
+          type: string
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - new_password
+      - token
+      - uid
+    PasswordResetRequestRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+      required:
+      - email
+    PatchedAnswerEditRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+    PatchedArticleWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 300
+        body:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        tag_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    PatchedBestAnswerRequestRequest:
+      type: object
+      description: ベストアンサーの設定・解除。null を渡すと解除。
+      properties:
+        answer_id:
+          type: string
+          format: uuid
+          nullable: true
+    PatchedCommentEditRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+    PatchedIdentityUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedMembershipDecisionRequest:
+      type: object
+      description: 参加申請の承認・拒否。
+      properties:
+        status:
+          $ref: '#/components/schemas/MembershipDecisionStatusEnum'
+    PatchedNotificationPreferencesRequest:
+      type: object
+      properties:
+        email_notifications_enabled:
+          type: boolean
+        in_app_notifications_enabled:
+          type: boolean
+    PatchedPlanDayRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        devotional:
+          type: string
+        readings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanReadingRequest'
+    PatchedPlanWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        note:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+    PatchedProfileUpdateRequest:
+      type: object
+      description: プロフィール更新用。bio / bookmarks_visibility を変更可能。
+      properties:
+        bio:
+          type: string
+          maxLength: 500
+        bookmarks_visibility:
+          $ref: '#/components/schemas/BookmarksVisibilityEnum'
+    PatchedQuestionEditRequest:
+      type: object
+      description: 質問の編集。箇所は変えられない（変えたいなら立て直す）。
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+    PatchedTranslationProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        source_book:
+          type: string
+          format: uuid
+        target_language:
+          type: string
+          minLength: 1
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/TranslationProjectStatusEnum'
+    PatchedTranslationUnitRequest:
+      type: object
+      properties:
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+    PlanDay:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        devotional:
+          type: string
+        readings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanReading'
+        completed:
+          type: boolean
+          readOnly: true
+      required:
+      - completed
+      - id
+      - number
+    PlanDayCreateRequestRequest:
+      type: object
+      description: 日を末尾に足すときの入力。どちらも省略できる（空で作って後から書ける）。
+      properties:
+        title:
+          type: string
+        devotional:
+          type: string
+    PlanDayReorderRequestRequest:
+      type: object
+      description: 並べ替えの入力。並べたい順に、その計画の全部の日の id を渡す。
+      properties:
+        day_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - day_ids
+    PlanDayRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        devotional:
+          type: string
+        readings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanReadingRequest'
+    PlanDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        owner_username:
+          type: string
+          readOnly: true
+        day_count:
+          type: integer
+          readOnly: true
+        reader_count:
+          type: integer
+          description: 「読書中」は、停止済みの購読を除いた現在の人数だけを返す。
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        note:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanDay'
+          readOnly: true
+        can_reorder_days:
+          type: boolean
+          readOnly: true
+        subscription:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+      required:
+      - can_reorder_days
+      - created_at
+      - day_count
+      - days
+      - id
+      - owner_username
+      - reader_count
+      - subscription
+      - title
+      - updated_at
+    PlanList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+        owner_username:
+          type: string
+          readOnly: true
+        day_count:
+          type: integer
+          readOnly: true
+        reader_count:
+          type: integer
+          description: 「読書中」は、停止済みの購読を除いた現在の人数だけを返す。
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - day_count
+      - id
+      - owner_username
+      - reader_count
+      - title
+      - updated_at
+    PlanReading:
+      type: object
+      description: 'その日に読む章1つ。入出力とも訳非依存の書 slug（例: "matthew"）でやりとりする。'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        book:
+          type: string
+        book_name:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        translation:
+          type: string
+          maxLength: 50
+        order:
+          type: integer
+          readOnly: true
+      required:
+      - book
+      - book_name
+      - chapter_number
+      - id
+      - order
+    PlanReadingRequest:
+      type: object
+      description: 'その日に読む章1つ。入出力とも訳非依存の書 slug（例: "matthew"）でやりとりする。'
+      properties:
+        book:
+          type: string
+          minLength: 1
+        chapter_number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        translation:
+          type: string
+          maxLength: 50
+      required:
+      - book
+      - chapter_number
+    PlanSubscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        plan:
+          type: string
+          format: uuid
+          readOnly: true
+        plan_title:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - is_active
+      - plan
+      - plan_title
+      - started_at
+    PlanWrite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        note:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+      required:
+      - id
+      - title
+    PlanWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 300
+        note:
+          type: string
+        visibility:
+          $ref: '#/components/schemas/VisibilityEnum'
+      required:
+      - title
+    ProjectBrief:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - id
+      - name
+    ProjectBriefRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+      required:
+      - id
+      - name
+    PublicUser:
+      type: object
+      description: 公開プロフィール用（他ユーザーから見える情報）。メールアドレスを含まない。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        bio:
+          type: string
+          maxLength: 500
+        bookmarks_visibility:
+          $ref: '#/components/schemas/BookmarksVisibilityEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - username
+    QAAuthor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - id
+      - username
+    QAAuthorRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - username
+    Question:
+      type: object
+      description: |-
+        質問の読み書き。一覧・詳細・投稿で共用する。
+
+        箇所の入力は verse / chapter / book のいずれか1つ（表示中の訳の id）。
+        保存されるのは訳非依存の箇所なので、これらは write-only。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/QAAuthor'
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 5000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        is_deleted:
+          type: boolean
+          readOnly: true
+        book_slug:
+          type: string
+          readOnly: true
+        book_name:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        verse_number:
+          type: integer
+          readOnly: true
+          nullable: true
+        location_label:
+          type: string
+          readOnly: true
+        version_label:
+          type: string
+          description: どの訳を見ながら質問したか。表示の文脈であって、公開範囲ではない。
+          readOnly: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          readOnly: true
+        best_answer:
+          allOf:
+          - $ref: '#/components/schemas/BestAnswer'
+          readOnly: true
+          nullable: true
+        answer_count:
+          type: integer
+          readOnly: true
+      required:
+      - answer_count
+      - best_answer
+      - body
+      - book_name
+      - book_slug
+      - chapter_number
+      - created_at
+      - id
+      - is_deleted
+      - location_label
+      - tags
+      - title
+      - user
+      - verse_number
+      - version_label
+    QuestionEdit:
+      type: object
+      description: 質問の編集。箇所は変えられない（変えたいなら立て直す）。
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 5000
+      required:
+      - body
+      - title
+    QuestionRequest:
+      type: object
+      description: |-
+        質問の読み書き。一覧・詳細・投稿で共用する。
+
+        箇所の入力は verse / chapter / book のいずれか1つ（表示中の訳の id）。
+        保存されるのは訳非依存の箇所なので、これらは write-only。
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        verse:
+          type: string
+          format: uuid
+          writeOnly: true
+        chapter:
+          type: string
+          format: uuid
+          writeOnly: true
+        book:
+          type: string
+          format: uuid
+          writeOnly: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+      required:
+      - body
+      - title
+    ReadingProgress:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        book:
+          type: string
+          format: uuid
+        book_name:
+          type: string
+          readOnly: true
+        chapter:
+          type: string
+          format: uuid
+        chapter_number:
+          type: integer
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - book
+      - book_name
+      - chapter
+      - chapter_number
+      - id
+      - updated_at
+    ReadingProgressSaveRequestRequest:
+      type: object
+      description: 進捗保存の入力。book と chapter は表示中の訳の id。
+      properties:
+        book:
+          type: string
+          format: uuid
+        chapter:
+          type: string
+          format: uuid
+      required:
+      - book
+      - chapter
+    ReasonEnum:
+      enum:
+      - spam
+      - offensive
+      - misinformation
+      - other
+      type: string
+      description: |-
+        * `spam` - Spam
+        * `offensive` - Offensive content
+        * `misinformation` - Misinformation
+        * `other` - Other
+    Reference:
+      type: object
+      description: どの箇所についての応答かを表す。粒度に応じて章・節は省かれる。
+      properties:
+        book:
+          type: string
+          description: 正典書の slug
+        chapter:
+          type: integer
+        verse:
+          type: integer
+      required:
+      - book
+    ReferenceBookReadResponse:
+      type: object
+      description: 書のページ（章番号のグリッド）に必要なものを1回で返す。
+      properties:
+        reference:
+          $ref: '#/components/schemas/Reference'
+        book:
+          $ref: '#/components/schemas/Book'
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Chapter'
+      required:
+      - book
+      - chapters
+      - reference
+    ReferenceBooksResponse:
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/Reference'
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationId'
+      required:
+      - books
+      - reference
+    ReferenceChaptersResponse:
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/Reference'
+        chapters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationId'
+      required:
+      - chapters
+      - reference
+    ReferenceReadResponse:
+      type: object
+      description: 読書画面が1章を表示するのに必要なものを1回で返す。
+      properties:
+        reference:
+          $ref: '#/components/schemas/Reference'
+        book:
+          $ref: '#/components/schemas/Book'
+        chapter:
+          $ref: '#/components/schemas/Chapter'
+        verses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Verse'
+      required:
+      - book
+      - chapter
+      - reference
+      - verses
+    ReferenceVersesResponse:
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/Reference'
+        verses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationId'
+      required:
+      - reference
+      - verses
+    RegisterRequest:
+      type: object
+      description: ユーザー登録用。password は write_only で最低8文字。
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: メールアドレス
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+      required:
+      - email
+      - password
+      - username
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - reason
+    ReportRequest:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/ReasonEnum'
+      required:
+      - reason
+    RoleEnum:
+      enum:
+      - owner
+      - member
+      type: string
+      description: |-
+        * `owner` - オーナー
+        * `member` - メンバー
+    SearchResponse:
+      type: object
+      description: 検索結果。verses だけページングし、books / comments は先頭のプレビュー。
+      properties:
+        verses:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerseSearch'
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/Book'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentSearch'
+        verse_total:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - books
+      - comments
+      - has_more
+      - verse_total
+      - verses
+    Session:
+      type: object
+      description: ログイン中の端末（有効な refresh token）1件。current は今使っているもの。
+      properties:
+        id:
+          type: string
+          description: トークンの jti
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        current:
+          type: boolean
+      required:
+      - created_at
+      - current
+      - expires_at
+      - id
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 20
+      required:
+      - id
+      - name
+    TagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+      required:
+      - name
+    TargetTypeEnum:
+      enum:
+      - verse
+      - chapter
+      - book
+      - comment
+      - project
+      type: string
+      description: |-
+        * `verse` - verse
+        * `chapter` - chapter
+        * `book` - book
+        * `comment` - comment
+        * `project` - project
+    TranslationComment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        unit:
+          type: string
+          format: uuid
+          nullable: true
+        username:
+          type: string
+          readOnly: true
+        body:
+          type: string
+        display_body:
+          type: string
+          readOnly: true
+        is_deleted:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - body
+      - created_at
+      - display_body
+      - id
+      - is_deleted
+      - username
+    TranslationCommentRequest:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+          nullable: true
+        body:
+          type: string
+          minLength: 1
+      required:
+      - body
+    TranslationId:
+      type: object
+      description: 「この訳ではこの id」の対応。訳の切り替えで使う。
+      properties:
+        id:
+          type: string
+          format: uuid
+        translation:
+          type: string
+      required:
+      - id
+      - translation
+    TranslationMembership:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        status:
+          $ref: '#/components/schemas/TranslationMembershipStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - user
+      - username
+    TranslationMembershipStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `pending` - 承認待ち
+        * `approved` - 承認済み
+        * `rejected` - 拒否
+    TranslationProject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        owner_username:
+          type: string
+          readOnly: true
+        source_book:
+          type: string
+          format: uuid
+        source_book_name:
+          type: string
+          readOnly: true
+        target_language:
+          type: string
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/TranslationProjectStatusEnum'
+        unit_count:
+          type: integer
+          readOnly: true
+        done_count:
+          type: integer
+          readOnly: true
+        is_member:
+          type: boolean
+          readOnly: true
+        membership_status:
+          nullable: true
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/TranslationMembershipStatusEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        is_in_library:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - done_count
+      - id
+      - is_in_library
+      - is_member
+      - membership_status
+      - name
+      - owner_username
+      - source_book
+      - source_book_name
+      - target_language
+      - unit_count
+      - updated_at
+    TranslationProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        source_book:
+          type: string
+          format: uuid
+        target_language:
+          type: string
+          minLength: 1
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/TranslationProjectStatusEnum'
+      required:
+      - name
+      - source_book
+      - target_language
+    TranslationProjectStatusEnum:
+      enum:
+      - draft
+      - active
+      - published
+      type: string
+      description: |-
+        * `draft` - 下書き
+        * `active` - 進行中
+        * `published` - 公開済み
+    TranslationReadResponse:
+      type: object
+      description: 公開済み翻訳の閲覧。chapter 未指定なら units は空（目次用）。
+      properties:
+        chapters:
+          type: array
+          items:
+            type: integer
+        units:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranslationUnit'
+      required:
+      - chapters
+      - units
+    TranslationUnit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        verse:
+          type: string
+          format: uuid
+          readOnly: true
+        verse_number:
+          type: integer
+          readOnly: true
+        verse_text:
+          type: string
+          readOnly: true
+        chapter:
+          type: string
+          format: uuid
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        assigned_to_username:
+          type: string
+          readOnly: true
+          nullable: true
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - assigned_to_username
+      - chapter
+      - chapter_number
+      - created_at
+      - id
+      - updated_at
+      - verse
+      - verse_number
+      - verse_text
+    TranslationUnitCreate:
+      type: object
+      description: Owner-only unit creation input; assignment stays on the dedicated
+        endpoint.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        verse:
+          type: string
+          format: uuid
+        verse_number:
+          type: integer
+          readOnly: true
+        verse_text:
+          type: string
+          readOnly: true
+        chapter:
+          type: string
+          format: uuid
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        assigned_to_username:
+          type: string
+          readOnly: true
+          nullable: true
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - assigned_to_username
+      - chapter
+      - chapter_number
+      - created_at
+      - id
+      - updated_at
+      - verse
+      - verse_number
+      - verse_text
+    TranslationUnitCreateRequest:
+      type: object
+      description: Owner-only unit creation input; assignment stays on the dedicated
+        endpoint.
+      properties:
+        verse:
+          type: string
+          format: uuid
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+      required:
+      - verse
+    TranslationUnitRequest:
+      type: object
+      properties:
+        body:
+          type: string
+        status:
+          $ref: '#/components/schemas/TranslationUnitStatusEnum'
+    TranslationUnitStatusEnum:
+      enum:
+      - todo
+      - in_progress
+      - review
+      - done
+      type: string
+      description: |-
+        * `todo` - 未着手
+        * `in_progress` - 進行中
+        * `review` - レビュー中
+        * `done` - 完了
+    TranslationUnitSummaryResponse:
+      type: object
+      description: 章ボタンと「レビュー(N)」バッジのための軽い集計。
+      properties:
+        chapters:
+          type: array
+          items:
+            type: integer
+        chapter_summaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChapterSummary'
+        status_counts:
+          $ref: '#/components/schemas/UnitStatusCounts'
+        assigned_to_me:
+          type: integer
+        total:
+          type: integer
+      required:
+      - assigned_to_me
+      - chapter_summaries
+      - chapters
+      - status_counts
+      - total
+    TrendingComment:
+      type: object
+      description: 表紙の「盛り上がっているコメント」用。箇所へ飛べるだけの情報を添える。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/CommentAuthor'
+          readOnly: true
+        body:
+          type: string
+          maxLength: 5000
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        vote_count:
+          type: integer
+          readOnly: true
+        location_label:
+          type: string
+          readOnly: true
+        book_name:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          nullable: true
+          readOnly: true
+        verse_number:
+          type: integer
+          nullable: true
+          readOnly: true
+        reply_count:
+          type: integer
+          readOnly: true
+      required:
+      - body
+      - book_name
+      - chapter_number
+      - created_at
+      - id
+      - location_label
+      - reply_count
+      - user
+      - verse_number
+      - vote_count
+    UnitAssignRequest:
+      type: object
+      description: 担当者の割り当て。null を渡すと担当を外す。
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - user_id
+    UnitStatusCounts:
+      type: object
+      description: ユニットの状態ごとの件数。キーは TranslationUnit.STATUS_CHOICES と同じ。
+      properties:
+        todo:
+          type: integer
+        in_progress:
+          type: integer
+        review:
+          type: integer
+        done:
+          type: integer
+      required:
+      - done
+      - in_progress
+      - review
+      - todo
+    UnreadCount:
+      type: object
+      description: 未読件数だけを返す軽量レスポンス。
+      properties:
+        count:
+          type: integer
+      required:
+      - count
+    User:
+      type: object
+      description: レスポンス用（認証済みユーザー自身）。機密フィールドを含まない。
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          title: ユーザー名
+          description: この項目は必須です。半角アルファベット、半角数字、@/./+/-/_ で150文字以下にしてください。
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: メールアドレス
+          maxLength: 254
+        bio:
+          type: string
+          maxLength: 500
+        bookmarks_visibility:
+          $ref: '#/components/schemas/BookmarksVisibilityEnum'
+        email_notifications_enabled:
+          type: boolean
+        in_app_notifications_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - username
+    Verse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        chapter:
+          type: string
+          format: uuid
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        text:
+          type: string
+      required:
+      - chapter
+      - id
+      - number
+      - text
+    VerseOfDay:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        text:
+          type: string
+        book_name:
+          type: string
+          readOnly: true
+        chapter_number:
+          type: integer
+          readOnly: true
+        translation:
+          type: string
+          readOnly: true
+      required:
+      - book_name
+      - chapter_number
+      - id
+      - number
+      - text
+      - translation
+    VerseSearch:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        text:
+          type: string
+        chapter_number:
+          type: integer
+          readOnly: true
+        chapter_id:
+          type: string
+          format: uuid
+          readOnly: true
+        book_name:
+          type: string
+          readOnly: true
+        book_id:
+          type: string
+          format: uuid
+          readOnly: true
+        book_slug:
+          type: string
+          readOnly: true
+        translation:
+          type: string
+          readOnly: true
+      required:
+      - book_id
+      - book_name
+      - book_slug
+      - chapter_id
+      - chapter_number
+      - id
+      - number
+      - text
+      - translation
+    VisibilityEnum:
+      enum:
+      - private
+      - unlisted
+      - public
+      type: string
+      description: |-
+        * `private` - Private
+        * `unlisted` - Unlisted
+        * `public` - Public
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token

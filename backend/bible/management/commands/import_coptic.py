@@ -35,8 +35,8 @@ from .coptic_corpus_names import (
 )
 
 # ファイル名パターン
-_MULTI_BOOK_STEM = re.compile(r"^(\d+)_([A-Za-z0-9]+)_(\d+)$")   # "41_Mark_01"
-_SINGLE_BOOK_STEM = re.compile(r"^([A-Za-z0-9]+)_(\d+)$")          # "Mark_01"
+_MULTI_BOOK_STEM = re.compile(r"^(\d+)_([A-Za-z0-9]+)_(\d+)$")  # "41_Mark_01"
+_SINGLE_BOOK_STEM = re.compile(r"^([A-Za-z0-9]+)_(\d+)$")  # "Mark_01"
 
 # Book.order のベース値（言語系統別）
 _ORDER_SAHIDIC = 100
@@ -232,7 +232,7 @@ class Command(BaseCommand):
         verses_added = 0
 
         # 非正典は全ファイルが同じ Book → 先に Book を確定しない（language が必要なため最初のファイルで決定）
-        nc_book_cache: dict[str, Book] = {}   # translation → Book
+        nc_book_cache: dict[str, Book] = {}  # translation → Book
         nc_en_book_cache: dict[str, Book] = {}
 
         skipped_license = 0
@@ -263,7 +263,9 @@ class Command(BaseCommand):
                 order = _order_base(language) + book_prefix
                 book = self._get_or_create_book(book_name, language, order)
                 en_book = (
-                    self._get_or_create_book(book_name, language + " (EN)", order + _ORDER_EN_OFFSET)
+                    self._get_or_create_book(
+                        book_name, language + " (EN)", order + _ORDER_EN_OFFSET
+                    )
                     if include_en
                     else None
                 )
@@ -275,7 +277,9 @@ class Command(BaseCommand):
                 order = _order_base(language) + canonical_num
                 book = self._get_or_create_book(book_display, language, order)
                 en_book = (
-                    self._get_or_create_book(book_display, language + " (EN)", order + _ORDER_EN_OFFSET)
+                    self._get_or_create_book(
+                        book_display, language + " (EN)", order + _ORDER_EN_OFFSET
+                    )
                     if include_en
                     else None
                 )
@@ -306,13 +310,9 @@ class Command(BaseCommand):
             coptic_verses = []
             en_verses = []
             for verse_num, (coptic_text, en_text) in enumerate(sentences, start=1):
-                coptic_verses.append(
-                    Verse(chapter=chapter, number=verse_num, text=coptic_text)
-                )
+                coptic_verses.append(Verse(chapter=chapter, number=verse_num, text=coptic_text))
                 if en_chapter and en_text:
-                    en_verses.append(
-                        Verse(chapter=en_chapter, number=verse_num, text=en_text)
-                    )
+                    en_verses.append(Verse(chapter=en_chapter, number=verse_num, text=en_text))
 
             created = Verse.objects.bulk_create(
                 coptic_verses, batch_size=1000, ignore_conflicts=True

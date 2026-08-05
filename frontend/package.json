@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "gen:types": "openapi-typescript http://localhost:8000/api/schema/ -o src/types/api.ts",
+    "gen:types": "openapi-typescript ../backend/schema.yaml -o src/types/api.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",

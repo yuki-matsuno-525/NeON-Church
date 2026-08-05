@@ -1,15 +1,21 @@
+"""Q&A の HTTP 入口。
+
+絞り込みは selectors.py、通報・ベストアンサーの規則は services.py。
+"""
+
 from django.db import models
-from django.db.models import Count
-from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from bible.passage import location_filter
+from comments.serializers import ReportSerializer
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
+from common.schema import DetailSerializer
 
+from . import selectors, services
 from .models import Answer, Question
 from .serializers import (
     AnswerEditSerializer,
@@ -17,24 +23,6 @@ from .serializers import (
     QuestionEditSerializer,
     QuestionSerializer,
 )
-
-
-def _question_queryset():
-    """一覧・詳細で共通の下ごしらえ。
-
-    回答件数は「削除されていない回答」だけ数える（削除済みが件数に残ると、
-    開いたときの見た目と数が合わない）。
-    """
-    return (
-        Question.objects.filter(is_deleted=False)
-        .select_related("user", "canonical_book", "best_answer__user")
-        .prefetch_related("tags")
-        .annotate(
-            answer_count=Count(
-                "answers", distinct=True, filter=models.Q(answers__is_deleted=False)
-            )
-        )
-    )
 
 
 class QuestionListCreateView(generics.ListCreateAPIView):
@@ -66,51 +54,7 @@ class QuestionListCreateView(generics.ListCreateAPIView):
         return [permissions.AllowAny()]
 
     def get_queryset(self):
-        qs = _question_queryset()
-        params = self.request.query_params
-
-        book_slug = params.get("book_slug")
-        if book_slug:
-            qs = qs.filter(
-                **location_filter(
-                    book_slug=book_slug,
-                    chapter_number=params.get("chapter_number"),
-                    verse_number=params.get("verse_number"),
-                )
-            )
-
-        book_id = params.get("book_id")
-        if book_id:
-            # 訳ごとの Book id で届くので、訳非依存の書へ解決してから絞る。
-            from bible.models import Book
-
-            book_ids = [b for b in book_id.split(",") if b]
-            canonical_ids = list(
-                Book.objects.filter(id__in=book_ids).values_list("canonical_book_id", flat=True)
-            )
-            qs = qs.filter(canonical_book_id__in=canonical_ids)
-
-        tag_id = params.get("tag_id")
-        if tag_id:
-            qs = qs.filter(tags__id=tag_id).distinct()
-
-        q = (params.get("q") or "").strip()
-        if q:
-            qs = qs.filter(
-                models.Q(title__icontains=q)
-                | models.Q(body__icontains=q)
-                | models.Q(user__username__icontains=q)
-                | models.Q(tags__name__icontains=q)
-                | models.Q(canonical_book__slug__icontains=q)
-            ).distinct()
-
-        answered = params.get("answered")
-        if answered == "true":
-            qs = qs.filter(best_answer__isnull=False)
-        elif answered == "false":
-            qs = qs.filter(best_answer__isnull=True)
-
-        return qs.order_by("-created_at")
+        return selectors.list_questions(self.request.query_params)
 
 
 class QuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -128,7 +72,7 @@ class QuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [permissions.IsAuthenticated(), IsOwner()]
 
     def get_queryset(self):
-        return _question_queryset()
+        return selectors.questions()
 
     def get_serializer_class(self):
         if self.request.method == "PATCH":
@@ -144,8 +88,7 @@ class QuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(QuestionSerializer(self.get_object()).data)
 
     def perform_destroy(self, instance: Question) -> None:
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted", "updated_at"])
+        services.soft_delete(instance)
 
 
 class AnswerListView(generics.ListAPIView):
@@ -158,19 +101,11 @@ class AnswerListView(generics.ListAPIView):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         # ベストアンサー判定を回答ごとに質問へ聞きに行かないよう、1回だけ引いて渡す。
-        context["best_answer_id"] = (
-            Question.objects.filter(pk=self.kwargs["question_pk"])
-            .values_list("best_answer_id", flat=True)
-            .first()
-        )
+        context["best_answer_id"] = selectors.best_answer_id(self.kwargs["question_pk"])
         return context
 
     def get_queryset(self):
-        return (
-            Answer.objects.filter(question_id=self.kwargs["question_pk"])
-            .select_related("user")
-            .order_by("created_at")
-        )
+        return selectors.question_answers(self.kwargs["question_pk"])
 
 
 class AnswerCreateView(generics.CreateAPIView):
@@ -182,17 +117,7 @@ class AnswerCreateView(generics.CreateAPIView):
     throttle_scope = "comment_create"
 
     def perform_create(self, serializer):
-        answer = serializer.save()
-        # 質問した人に「回答が付いた」と知らせる。自分で自分の質問に答えたときは出さない。
-        # 送り方（画面内・メール）は受け取る人の設定に従うので、共通の仕組みに任せる。
-        from notifications.services import send_user_notification
-
-        send_user_notification(
-            recipient=answer.question.user,
-            actor=answer.user,
-            notification_type="reply",
-            answer=answer,
-        )
+        services.notify_question_author(serializer.save())
 
 
 class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
@@ -208,21 +133,20 @@ class AnswerDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
 
     def partial_update(self, request, *args, **kwargs):
         answer = self.get_object()
-        if answer.is_deleted:
-            return Response(
-                {"detail": "Cannot edit a deleted answer."}, status=status.HTTP_400_BAD_REQUEST
-            )
+        services.ensure_editable(answer)
         serializer = self.get_serializer(answer, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(AnswerSerializer(answer, context=self.get_serializer_context()).data)
 
     def perform_destroy(self, instance: Answer) -> None:
-        instance.is_deleted = True
-        instance.save(update_fields=["is_deleted", "updated_at"])
-        # 削除された回答がベストアンサーのままだと「解決済み」の見た目だけ残る。
-        if instance.best_answer_for.exists():
-            Question.objects.filter(best_answer=instance).update(best_answer=None)
+        services.soft_delete_answer(instance)
+
+
+class BestAnswerRequestSerializer(serializers.Serializer):
+    """ベストアンサーの設定・解除。null を渡すと解除。"""
+
+    answer_id = serializers.UUIDField(allow_null=True)
 
 
 class _QAReportView(APIView):
@@ -236,27 +160,23 @@ class _QAReportView(APIView):
     throttle_scope = "report"
 
     # 継承先で「対象のモデル」と「Report のどの列に入れるか」を決める。
-    model = None
+    model: type[models.Model] | None = None
     report_field = ""
 
+    @extend_schema(
+        request=ReportSerializer,
+        responses={201: ReportSerializer, 400: DetailSerializer, 409: DetailSerializer},
+    )
     def post(self, request, pk):
-        from comments.models import Report
-        from comments.serializers import ReportSerializer
-
-        target = get_object_or_404(self.model, pk=pk)
-        if target.user == request.user:
-            return Response(
-                {"detail": "Cannot report your own post."}, status=status.HTTP_400_BAD_REQUEST
-            )
         serializer = ReportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        _, created = Report.objects.get_or_create(
-            reporter=request.user,
-            **{self.report_field: target},
-            defaults={"reason": serializer.validated_data["reason"]},
+        services.report(
+            request.user,
+            self.model,
+            pk,
+            self.report_field,
+            serializer.validated_data["reason"],
         )
-        if not created:
-            return Response({"detail": "Already reported."}, status=status.HTTP_409_CONFLICT)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -283,19 +203,10 @@ class SetBestAnswerView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=BestAnswerRequestSerializer,
+        responses={200: None, 403: DetailSerializer},
+    )
     def patch(self, request, pk):
-        question = get_object_or_404(Question, pk=pk, is_deleted=False)
-        if question.user != request.user:
-            return Response(
-                {"detail": "Only the question author can set the best answer."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        answer_id = request.data.get("answer_id")
-        if answer_id is None:
-            question.best_answer = None
-        else:
-            question.best_answer = get_object_or_404(
-                Answer, pk=answer_id, question=question, is_deleted=False
-            )
-        question.save(update_fields=["best_answer", "updated_at"])
+        services.set_best_answer(request.user, pk, request.data.get("answer_id"))
         return Response(status=status.HTTP_200_OK)

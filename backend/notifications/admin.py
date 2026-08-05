@@ -8,4 +8,12 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ["id", "recipient", "actor", "notification_type", "is_read", "created_at"]
     list_filter = ["notification_type", "is_read"]
     ordering = ["-created_at"]
-    readonly_fields = ["id", "recipient", "actor", "notification_type", "comment", "created_at", "updated_at"]
+    readonly_fields = [
+        "id",
+        "recipient",
+        "actor",
+        "notification_type",
+        "comment",
+        "created_at",
+        "updated_at",
+    ]

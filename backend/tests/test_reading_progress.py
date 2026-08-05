@@ -69,6 +69,7 @@ class TestReadingProgressSave:
 
     def test_upsert_updates_existing(self, auth_client, book):
         from bible.models import Chapter
+
         ch1 = Chapter.objects.create(book=book, number=1)
         ch2 = Chapter.objects.create(book=book, number=2)
 

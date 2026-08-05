@@ -53,6 +53,4 @@ def parse_brenton(usfm_text: str, usfm_id: str) -> tuple[dict, list[str]]:
         raise ValueError(f"Brenton の第二正典に無い書です: {usfm_id}")
 
     _slug, name, order = BOOKS[usfm_id]
-    return parse_usfm(
-        usfm_text, book=name, translation=TRANSLATION, order=order, source=SOURCE
-    )
+    return parse_usfm(usfm_text, book=name, translation=TRANSLATION, order=order, source=SOURCE)

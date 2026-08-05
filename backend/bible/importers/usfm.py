@@ -71,8 +71,13 @@ def parse_usfm(
     chapter_marks = list(_CHAPTER.finditer(usfm_text))
     if not chapter_marks:
         return (
-            {"book": book, "translation": translation, "order": order,
-             "source": source, "chapters": []},
+            {
+                "book": book,
+                "translation": translation,
+                "order": order,
+                "source": source,
+                "chapters": [],
+            },
             [r"\c（章）が1つも見つかりませんでした"],
         )
 
@@ -103,9 +108,7 @@ def parse_usfm(
             by_number[num] = verse
 
         if merged:
-            warnings.append(
-                f"第{number}章: 枝番の節を親の節に連結しました（{', '.join(merged)}）"
-            )
+            warnings.append(f"第{number}章: 枝番の節を親の節に連結しました（{', '.join(merged)}）")
 
         if not verses:
             warnings.append(f"第{number}章: 節が1つもありませんでした")

@@ -54,18 +54,21 @@ def auth_client(db, user_payload) -> APIClient:
 @pytest.fixture
 def book(db):
     from tests.factories import make_book
+
     return make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
 
 @pytest.fixture
 def chapter(book):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book, number=1)
 
 
 @pytest.fixture
 def verse(chapter):
     from bible.models import Verse
+
     return Verse.objects.create(
         chapter=chapter,
         number=1,

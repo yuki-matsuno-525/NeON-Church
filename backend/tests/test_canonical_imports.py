@@ -21,6 +21,7 @@ pytestmark = pytest.mark.django_db
 
 # --- 共通解決関数 ---
 
+
 def test_resolver_resolves_known_pair():
     canon = get_or_create_canonical_book_for("口語訳", "マタイによる福音書")
     assert canon.slug == "matthew"
@@ -62,6 +63,7 @@ def test_book_helper_errors_on_wrong_existing_link():
 
 
 # --- 空 DB からの実インポート（loader.py 経路） ---
+
 
 def _enoch_json(tmp_path) -> str:
     data = {

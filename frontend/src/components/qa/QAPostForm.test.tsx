@@ -50,7 +50,7 @@ describe("QAPostForm", () => {
     render(
       <QAPostForm
         catalog={[]}
-        tags={[{ id: "tag1", name: "解説" }]}
+        tags={[{ id: 1, name: "解説" }]}
         onSubmitted={onSubmitted}
         onCancel={vi.fn()}
       />
@@ -70,7 +70,7 @@ describe("QAPostForm", () => {
       expect(createQuestion).toHaveBeenCalledWith({
         title: "質問タイトル",
         body: "質問本文",
-        tag_ids: ["tag1"],
+        tag_ids: [1],
       });
     });
     expect(onSubmitted).toHaveBeenCalled();

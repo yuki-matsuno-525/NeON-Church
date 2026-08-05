@@ -18,18 +18,18 @@ import json
 import sys
 from pathlib import Path
 
+from .egerton import parse_egerton
 from .enoch import parse_enoch
+from .infancy_james import parse_infancy_james
 from .infancy_thomas import parse_infancy_thomas
 from .judas import parse_judas
 from .life_of_adam_and_eve import parse_life_of_adam_and_eve
 from .mary import parse_mary
-from .egerton import parse_egerton
-from .infancy_james import parse_infancy_james
 from .peter import parse_peter
-from .poxy5575 import parse_poxy5575
-from .quelle import parse_quelle
 from .philip import parse_philip
+from .poxy5575 import parse_poxy5575
 from .preview import render_preview
+from .quelle import parse_quelle
 from .secret_james import parse_secret_james
 from .secret_mark import parse_secret_mark
 from .stranger import parse_stranger
@@ -141,7 +141,9 @@ def cmd_all(args) -> int:
 
     print(f"JSON     : {json_path}")
     print(f"プレビュー: {preview_path}")
-    print(f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}\n")
+    print(
+        f"章数 {len(data['chapters'])} / 節数 {sum(len(c['verses']) for c in data['chapters'])}\n"
+    )
     if warnings:
         print("[ パース時の気づき ]")
         for w in warnings:
@@ -167,7 +169,9 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--output", default="mary.json")
     p.set_defaults(func=cmd_parse_mary)
 
-    p = sub.add_parser("parse-infancy-thomas", help="トマスによる幼児福音書 HTML を正規化 JSON に変換")
+    p = sub.add_parser(
+        "parse-infancy-thomas", help="トマスによる幼児福音書 HTML を正規化 JSON に変換"
+    )
     p.add_argument("html")
     p.add_argument("-o", "--output", default="infancy-thomas.json")
     p.set_defaults(func=cmd_parse_infancy_thomas)

@@ -14,6 +14,7 @@ CITING_URL = "/api/articles/citing/"
 # 引用の印の読み取り（DBを使わない）
 # ---------------------------------------------------------------------------
 
+
 def test_文中の参照とブロック引用を読み分ける():
     parsed = parse_body("前置き [[matthew 6:16-18]] のあと {{matthew 6:17}} まで")
 
@@ -53,6 +54,7 @@ def test_読めない印は黙って無視する():
 # ---------------------------------------------------------------------------
 # 記事の作成・取得
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def verses(chapter):
@@ -130,6 +132,7 @@ def test_存在しない書の印は索引に入らない(auth_client, verses):
 # 公開範囲
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_下書きは他人から見えない(auth_client, api_client, verses):
     created = _create_article(auth_client, visibility="private", summary="")
@@ -195,6 +198,7 @@ def test_他人の記事は書き換えられない(auth_client, api_client, oth
 # タグ
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_タグは最初の15個が入っている():
     assert ArticleTag.objects.count() == 15
@@ -258,6 +262,7 @@ def test_タグで絞り込める(auth_client, verses):
 # 節から記事を引く
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_節を引用した公開記事を引ける(auth_client, api_client, verses):
     _create_article(auth_client)
@@ -298,6 +303,7 @@ def test_下書きは節から引いても出てこない(auth_client, api_clien
 # ---------------------------------------------------------------------------
 # コメント
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_記事にコメントできる(auth_client, verses):

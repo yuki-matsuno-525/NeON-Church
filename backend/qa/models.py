@@ -47,7 +47,7 @@ class Question(BaseModel):
         on_delete=models.SET_NULL,
         related_name="best_answer_for",
     )
-    tags = models.ManyToManyField("comments.Tag", blank=True, related_name="questions")
+    tags = models.ManyToManyField("tags.Tag", blank=True, related_name="questions")
     is_deleted = models.BooleanField(default=False, db_index=True)
 
     class Meta:
@@ -67,8 +67,7 @@ class Question(BaseModel):
             # 章NULLで節だけある、という中途半端な状態を禁止する。
             models.CheckConstraint(
                 condition=~(
-                    models.Q(chapter_number__isnull=True)
-                    & models.Q(verse_number__isnull=False)
+                    models.Q(chapter_number__isnull=True) & models.Q(verse_number__isnull=False)
                 ),
                 name="qa_question_location_grain_valid",
             ),

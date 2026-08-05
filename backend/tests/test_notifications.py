@@ -23,6 +23,7 @@ UNREAD_COUNT_URL = "/api/notifications/unread-count/"
 def other_auth_client(db, other_user_payload):
     """別ユーザーの独立したクライアント。"""
     from rest_framework.test import APIClient
+
     client = APIClient()
     client.post(REGISTER_URL, other_user_payload, format="json")
     return client
@@ -104,7 +105,9 @@ class TestNotificationTrigger:
         recipient = get_user_model().objects.get(username="testuser")
         recipient.in_app_notifications_enabled = False
         recipient.email_notifications_enabled = True
-        recipient.save(update_fields=["in_app_notifications_enabled", "email_notifications_enabled"])
+        recipient.save(
+            update_fields=["in_app_notifications_enabled", "email_notifications_enabled"]
+        )
 
         other_auth_client.post(upvote_url(comment["id"]))
 
@@ -191,7 +194,9 @@ class TestNotificationRead:
 # ------------------------------------------------------------------
 @pytest.mark.django_db
 class TestNotificationTarget:
-    def test_verse_comment_reply_target_fields(self, auth_client, other_auth_client, comment, verse):
+    def test_verse_comment_reply_target_fields(
+        self, auth_client, other_auth_client, comment, verse
+    ):
         """節コメントへの返信通知に target_kind=verse_comment と書名/章番号/節番号が含まれる。"""
         other_auth_client.post(
             COMMENTS_URL,
@@ -204,7 +209,9 @@ class TestNotificationTarget:
         assert n["chapter_number"] == verse.chapter.number
         assert n["verse_number"] == verse.number
 
-    def test_upvote_on_verse_comment_target_fields(self, auth_client, other_auth_client, comment, verse):
+    def test_upvote_on_verse_comment_target_fields(
+        self, auth_client, other_auth_client, comment, verse
+    ):
         """upvote 通知でも root の verse 情報が target になる。"""
         other_auth_client.post(upvote_url(comment["id"]))
         n = auth_client.get(NOTIFICATIONS_URL).data["results"][0]
@@ -285,7 +292,9 @@ class TestNotificationUnreadCount:
 def mixed_notifications(db, auth_client, comment):
     """受信者(testuser)宛に 返信2件 / 高評価1件 / メンション1件 を作る。"""
     from django.contrib.auth import get_user_model
+
     from notifications.models import Notification
+
     User = get_user_model()
     recipient = User.objects.get(username="testuser")
     actor = User.objects.create_user(username="notif_actor", password="pass12345")
@@ -309,7 +318,9 @@ class TestNotificationTypeFilter:
         assert res.data["counts"] == {"all": 4, "reply": 2, "upvote": 1, "mention": 1}
 
     @pytest.mark.parametrize("target_type,expected", [("reply", 2), ("upvote", 1), ("mention", 1)])
-    def test_filter_returns_only_that_type(self, auth_client, mixed_notifications, target_type, expected):
+    def test_filter_returns_only_that_type(
+        self, auth_client, mixed_notifications, target_type, expected
+    ):
         res = auth_client.get(NOTIFICATIONS_URL, {"type": target_type})
         assert res.data["count"] == expected
         assert {n["notification_type"] for n in res.data["results"]} == {target_type}
@@ -352,6 +363,7 @@ class TestNotificationTypeFilter:
 def nested_reply_notifications(db, auth_client, comment, verse):
     """深さ2の返信スレッドを作り、その返信への通知を10件ぶら下げる。"""
     from django.contrib.auth import get_user_model
+
     from notifications.models import Notification
     from tests.factories import make_comment
 

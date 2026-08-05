@@ -13,8 +13,8 @@ from django.db import IntegrityError, transaction
 from bible.models import Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import Comment
-from translations.models import TranslationProject
 from tests.factories import make_book
+from translations.models import TranslationProject
 
 pytestmark = pytest.mark.django_db
 User = get_user_model()
@@ -39,11 +39,13 @@ def _create(**kwargs) -> Bookmark:
 
 def _comment(data) -> Comment:
     from tests.factories import make_comment
+
     author = User.objects.create_user(username="author", password="pass12345")
     return make_comment(user=author, verse=data["verse"], body="hi")
 
 
 # --- 成功ケース ---
+
 
 def test_verse_bookmark_ok(data):
     bm = _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
@@ -93,6 +95,7 @@ def test_same_location_different_users_ok(data):
 
 # --- 重複（部分ユニーク）失敗ケース ---
 
+
 def test_duplicate_verse_same_user_fails(data):
     _create(user=data["user"], canonical_book=data["canon"], chapter_number=3, verse_number=16)
     with pytest.raises(IntegrityError):
@@ -119,6 +122,7 @@ def test_duplicate_project_same_user_fails(data):
 
 # --- CHECK（排他・入れ子）失敗ケース ---
 
+
 def test_verse_without_chapter_fails(data):
     # 節があるのに章が NULL は不正（書→章→節の入れ子違反）
     with pytest.raises(IntegrityError):
@@ -127,14 +131,24 @@ def test_verse_without_chapter_fails(data):
 
 def test_comment_and_location_both_fails(data):
     with pytest.raises(IntegrityError):
-        _create(user=data["user"], comment=_comment(data),
-                canonical_book=data["canon"], chapter_number=3, verse_number=16)
+        _create(
+            user=data["user"],
+            comment=_comment(data),
+            canonical_book=data["canon"],
+            chapter_number=3,
+            verse_number=16,
+        )
 
 
 def test_project_and_location_both_fails(data):
     with pytest.raises(IntegrityError):
-        _create(user=data["user"], translation_project=data["project"],
-                canonical_book=data["canon"], chapter_number=3, verse_number=16)
+        _create(
+            user=data["user"],
+            translation_project=data["project"],
+            canonical_book=data["canon"],
+            chapter_number=3,
+            verse_number=16,
+        )
 
 
 def test_comment_and_project_both_fails(data):
@@ -148,6 +162,7 @@ def test_no_target_fails(data):
 
 
 # --- 既存制約が壊れていない ---
+
 
 def test_user_comment_unique_still_enforced(data):
     comment = _comment(data)

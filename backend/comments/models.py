@@ -6,24 +6,6 @@ from common.models import BaseModel
 # 削除状態は is_deleted で返し、表示文言はクライアントの言語で決める。
 DELETED_COMMENT_BODY = ""
 
-PREDEFINED_TAGS = [
-    ("感想", "感想"),
-    ("解説", "解説"),
-    ("証し", "証し"),
-    ("祈り", "祈り"),
-    ("考察", "考察"),
-]
-
-
-class Tag(models.Model):
-    name = models.CharField(max_length=20, unique=True)
-
-    class Meta:
-        db_table = "comment_tags"
-
-    def __str__(self) -> str:
-        return self.name
-
 
 class Comment(BaseModel):
     """
@@ -77,7 +59,7 @@ class Comment(BaseModel):
     )
     body = models.TextField(max_length=5000)
     is_deleted = models.BooleanField(default=False, db_index=True)
-    tags = models.ManyToManyField(Tag, blank=True, related_name="comments")
+    tags = models.ManyToManyField("tags.Tag", blank=True, related_name="comments")
 
     class Meta:
         db_table = "comments"
@@ -101,8 +83,7 @@ class Comment(BaseModel):
                 condition=(
                     models.Q(canonical_book__isnull=False)
                     & ~(
-                        models.Q(chapter_number__isnull=True)
-                        & models.Q(verse_number__isnull=False)
+                        models.Q(chapter_number__isnull=True) & models.Q(verse_number__isnull=False)
                     )
                 ),
                 name="comment_location_grain_valid",

@@ -8,10 +8,11 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import URLPattern, URLResolver, include, path
+
 from common.urls import csrf_urlpatterns
 
-urlpatterns = [
+urlpatterns: list[URLPattern | URLResolver] = [
     # Django 管理画面
     path("admin/", admin.site.urls),
 ]
@@ -19,9 +20,12 @@ urlpatterns = [
 # OpenAPI スキーマ・Swagger UI は開発環境のみ公開
 if settings.DEBUG:
     from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
     urlpatterns += [
         path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-        path("api/schema/ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+        path(
+            "api/schema/ui/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"
+        ),
     ]
 
 urlpatterns += [
@@ -30,7 +34,6 @@ urlpatterns += [
     # Better Stack の uptime monitoring が /healthz/ を定期的に叩く。
     # ------------------------------------------------------------------
     path("healthz/", include("common.urls")),
-
     # ------------------------------------------------------------------
     # 各アプリの API エンドポイント（Phase 以降で順次追加）
     # ------------------------------------------------------------------
@@ -39,6 +42,7 @@ urlpatterns += [
     path("api/users/", include("users.public_urls")),
     path("api/", include("bible.urls")),
     path("api/", include("comments.urls")),
+    path("api/", include("tags.urls")),
     path("api/qa/", include("qa.urls")),
     path("api/", include("bookmarks.urls")),
     path("api/", include("notifications.urls")),
@@ -46,4 +50,6 @@ urlpatterns += [
     path("api/", include("translations.urls")),
     path("api/", include("articles.urls")),
     path("api/", include("plans.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

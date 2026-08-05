@@ -1,12 +1,20 @@
-from django.db import transaction
-from django.db.models import Count, Max, Q
+"""読書計画の HTTP 入口。
+
+何が見えるかは selectors.py、日の増減・購読・進捗の規則は services.py。
+"""
+
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
-from .models import Plan, PlanDay, PlanDayProgress, PlanSubscription
+from common.permissions import IsOwnerOf
+from common.schema import DetailSerializer
+
+from . import selectors, services
+from .models import Plan
 from .serializers import (
     PlanDaySerializer,
     PlanDetailSerializer,
@@ -17,21 +25,10 @@ from .serializers import (
 )
 
 
-class IsPlanOwner(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        plan = obj if isinstance(obj, Plan) else obj.plan
-        return plan.owner_id == request.user.id
+class IsPlanOwner(IsOwnerOf):
+    """計画を書いた人だけに許す。日（PlanDay）が渡ったら計画をたどる。"""
 
-
-def _get_owned_plan(request, plan_id: str) -> Plan:
-    """書いた人だけが触れるプランを取り出す。他人なら 404（存在自体を伏せる）。"""
-    return get_object_or_404(Plan, pk=plan_id, owner=request.user)
-
-
-def _subscription_for(request, plan: Plan) -> PlanSubscription | None:
-    if not request.user.is_authenticated:
-        return None
-    return PlanSubscription.objects.filter(user=request.user, plan=plan).first()
+    parent_attr = "plan"
 
 
 class PlanListCreateView(generics.ListCreateAPIView):
@@ -47,21 +44,9 @@ class PlanListCreateView(generics.ListCreateAPIView):
         return PlanWriteSerializer if self.request.method == "POST" else PlanListSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if self.request.query_params.get("mine") == "true" and user.is_authenticated:
-            queryset = Plan.objects.filter(owner=user)
-        else:
-            queryset = Plan.objects.filter(visibility=Plan.VISIBILITY_PUBLIC)
-        return (
-            queryset.select_related("owner")
-            .annotate(
-                active_reader_count=Count(
-                    "subscriptions",
-                    filter=Q(subscriptions__is_active=True),
-                )
-            )
-            .order_by("-created_at")
-            .prefetch_related("days")
+        return selectors.list_plans(
+            self.request.user,
+            mine=self.request.query_params.get("mine") == "true",
         )
 
     def perform_create(self, serializer):
@@ -81,16 +66,7 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
         return PlanDetailSerializer if self.request.method == "GET" else PlanWriteSerializer
 
     def get_queryset(self):
-        return (
-            Plan.objects.select_related("owner")
-            .annotate(
-                active_reader_count=Count(
-                    "subscriptions",
-                    filter=Q(subscriptions__is_active=True),
-                )
-            )
-            .prefetch_related("days__readings__canonical_book")
-        )
+        return selectors.plans_with_days()
 
     def get_object(self):
         plan = super().get_object()
@@ -107,19 +83,23 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         if self.request.method == "GET":
-            plan = self.get_object()
-            subscription = _subscription_for(self.request, plan)
+            subscription = selectors.subscription_for(self.request.user, self.get_object())
             context["subscription"] = subscription
-            context["completed_day_ids"] = (
-                set(
-                    PlanDayProgress.objects.filter(subscription=subscription).values_list(
-                        "day_id", flat=True
-                    )
-                )
-                if subscription
-                else None
-            )
+            context["completed_day_ids"] = selectors.completed_day_ids(subscription)
         return context
+
+
+class PlanDayCreateRequestSerializer(serializers.Serializer):
+    """日を末尾に足すときの入力。どちらも省略できる（空で作って後から書ける）。"""
+
+    title = serializers.CharField(required=False, allow_blank=True)
+    devotional = serializers.CharField(required=False, allow_blank=True)
+
+
+class PlanDayReorderRequestSerializer(serializers.Serializer):
+    """並べ替えの入力。並べたい順に、その計画の全部の日の id を渡す。"""
+
+    day_ids = serializers.ListField(child=serializers.UUIDField())
 
 
 class PlanDayCreateView(APIView):
@@ -132,17 +112,18 @@ class PlanDayCreateView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=PlanDayCreateRequestSerializer,
+        responses={201: PlanDaySerializer, 400: DetailSerializer},
+    )
     def post(self, request, pk):
-        plan = _get_owned_plan(request, pk)
+        plan = services.get_owned_plan(request.user, pk)
         check_day_limit(plan)
-        with transaction.atomic():
-            last = plan.days.aggregate(Max("number"))["number__max"] or 0
-            day = PlanDay.objects.create(
-                plan=plan,
-                number=last + 1,
-                title=request.data.get("title", ""),
-                devotional=request.data.get("devotional", ""),
-            )
+        day = services.append_day(
+            plan,
+            title=request.data.get("title", ""),
+            devotional=request.data.get("devotional", ""),
+        )
         return Response(PlanDaySerializer(day).data, status=status.HTTP_201_CREATED)
 
 
@@ -159,28 +140,15 @@ class PlanDayDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return PlanDay.objects.filter(plan__owner=self.request.user).prefetch_related(
-            "readings__canonical_book"
-        )
+        return selectors.owned_days(self.request.user)
 
     def get_object(self):
-        return get_object_or_404(self.get_queryset(), pk=self.kwargs["day_id"], plan_id=self.kwargs["pk"])
+        return get_object_or_404(
+            self.get_queryset(), pk=self.kwargs["day_id"], plan_id=self.kwargs["pk"]
+        )
 
     def destroy(self, request, *args, **kwargs):
-        day = self.get_object()
-        if day.plan.has_readers:
-            return Response(
-                {"detail": "読み始めた人がいるので、日は消せません。中身は直せます。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        with transaction.atomic():
-            plan = day.plan
-            day.delete()
-            # 残った日の番号を詰める（1,2,3… の連番を保つ）。
-            for index, remaining in enumerate(plan.days.order_by("number"), start=1):
-                if remaining.number != index:
-                    remaining.number = index
-                    remaining.save(update_fields=["number", "updated_at"])
+        services.delete_day(self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -193,42 +161,14 @@ class PlanDayReorderView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=PlanDayReorderRequestSerializer,
+        responses={204: None, 400: DetailSerializer},
+    )
     def post(self, request, pk):
-        plan = _get_owned_plan(request, pk)
-        if plan.has_readers:
-            return Response(
-                {"detail": "読み始めた人がいるので、日の並びは変えられません。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        day_ids = request.data.get("day_ids") or []
-        days = {str(day.id): day for day in plan.days.all()}
-        if set(day_ids) != set(days.keys()):
-            return Response(
-                {"detail": "すべての日を並べ替えの指定に入れてください。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        with transaction.atomic():
-            # 一意制約に引っかからないよう、いったん重ならない番号へ逃がしてから振り直す。
-            for offset, day_id in enumerate(day_ids, start=1):
-                day = days[day_id]
-                day.number = offset + len(day_ids)
-                day.save(update_fields=["number", "updated_at"])
-            for index, day_id in enumerate(day_ids, start=1):
-                day = days[day_id]
-                day.number = index
-                day.save(update_fields=["number", "updated_at"])
-
+        plan = services.get_owned_plan(request.user, pk)
+        services.reorder_days(plan, request.data.get("day_ids") or [])
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-def _readable_plan(request, plan_id: str) -> Plan:
-    """読んでよいプランを取り出す。下書きは書いた人だけ。"""
-    visible = Q(visibility__in=[Plan.VISIBILITY_PUBLIC, Plan.VISIBILITY_UNLISTED])
-    if request.user.is_authenticated:
-        visible |= Q(owner=request.user)
-    return get_object_or_404(Plan.objects.filter(visible), pk=plan_id)
 
 
 class PlanSubscribeView(APIView):
@@ -239,23 +179,21 @@ class PlanSubscribeView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        request=None,
+        responses={200: PlanSubscriptionSerializer, 201: PlanSubscriptionSerializer},
+    )
     def post(self, request, pk):
-        plan = _readable_plan(request, pk)
-        subscription, created = PlanSubscription.objects.get_or_create(
-            user=request.user, plan=plan
-        )
-        if not created and not subscription.is_active:
-            subscription.is_active = True
-            subscription.save(update_fields=["is_active", "updated_at"])
+        plan = services.readable_plan(request.user, pk)
+        subscription, created = services.subscribe(request.user, plan)
         return Response(
             PlanSubscriptionSerializer(subscription).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk):
-        subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
-        subscription.is_active = False
-        subscription.save(update_fields=["is_active", "updated_at"])
+        services.unsubscribe(request.user, pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -266,16 +204,9 @@ class PlanRestartView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={200: PlanSubscriptionSerializer})
     def post(self, request, pk):
-        subscription = get_object_or_404(PlanSubscription, user=request.user, plan_id=pk)
-        with transaction.atomic():
-            subscription.progress.all().delete()
-            subscription.is_active = True
-            # started_at は auto_now_add なので、数え直すために作り直す。
-            subscription.delete()
-            subscription = PlanSubscription.objects.create(
-                user=request.user, plan_id=pk, is_active=True
-            )
+        subscription = services.restart(request.user, pk)
         return Response(PlanSubscriptionSerializer(subscription).data)
 
 
@@ -287,25 +218,14 @@ class PlanDayCompleteView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(request=None, responses={201: None})
     def post(self, request, pk, day_id):
-        subscription = get_object_or_404(
-            PlanSubscription,
-            user=request.user,
-            plan_id=pk,
-            is_active=True,
-        )
-        day = get_object_or_404(PlanDay, pk=day_id, plan_id=pk)
-        PlanDayProgress.objects.get_or_create(subscription=subscription, day=day)
+        services.mark_day_complete(request.user, pk, day_id)
         return Response(status=status.HTTP_201_CREATED)
 
+    @extend_schema(responses={204: None})
     def delete(self, request, pk, day_id):
-        subscription = get_object_or_404(
-            PlanSubscription,
-            user=request.user,
-            plan_id=pk,
-            is_active=True,
-        )
-        PlanDayProgress.objects.filter(subscription=subscription, day_id=day_id).delete()
+        services.unmark_day_complete(request.user, pk, day_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -317,6 +237,4 @@ class MyPlanSubscriptionListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return PlanSubscription.objects.filter(
-            user=self.request.user, is_active=True
-        ).select_related("plan")
+        return selectors.active_subscriptions(self.request.user)

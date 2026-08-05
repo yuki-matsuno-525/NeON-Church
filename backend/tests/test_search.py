@@ -7,42 +7,49 @@ SEARCH_URL = "/api/search/"
 @pytest.fixture
 def book(db):
     from tests.factories import make_book
+
     return make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
 
 
 @pytest.fixture
 def book_kjv(db):
     from tests.factories import make_book
+
     return make_book("Matthew", "KJV", 1, slug="matthew")
 
 
 @pytest.fixture
 def book_mark(db):
     from tests.factories import make_book
+
     return make_book("マルコによる福音書", "口語訳", 2, slug="mark")
 
 
 @pytest.fixture
 def chapter(book):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book, number=1)
 
 
 @pytest.fixture
 def chapter_mark(book_mark):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book_mark, number=1)
 
 
 @pytest.fixture
 def chapter_kjv(book_kjv):
     from bible.models import Chapter
+
     return Chapter.objects.create(book=book_kjv, number=1)
 
 
 @pytest.fixture
 def verse(chapter):
     from bible.models import Verse
+
     return Verse.objects.create(
         chapter=chapter,
         number=1,
@@ -53,6 +60,7 @@ def verse(chapter):
 @pytest.fixture
 def verse_kjv(chapter_kjv):
     from bible.models import Verse
+
     return Verse.objects.create(
         chapter=chapter_kjv,
         number=1,
@@ -63,6 +71,7 @@ def verse_kjv(chapter_kjv):
 @pytest.fixture
 def verse_mark(chapter_mark):
     from bible.models import Verse
+
     return Verse.objects.create(
         chapter=chapter_mark,
         number=1,
@@ -75,6 +84,7 @@ def verse_bungo(db):
     # 口語訳と同じ箇所（matthew 1:1）を文語訳で作る（同一 canonical・章・節）。
     from bible.models import Chapter, Verse
     from tests.factories import make_book
+
     b = make_book("マタイ傳福音書", "文語訳", 1, slug="matthew")
     ch = Chapter.objects.create(book=b, number=1)
     return Verse.objects.create(chapter=ch, number=1, text="アブラハムの子イエス・キリストの系圖。")
@@ -88,12 +98,14 @@ def search_user(db, django_user_model):
 @pytest.fixture
 def search_comment(search_user, verse):
     from tests.factories import make_comment
+
     return make_comment(user=search_user, verse=verse, body="イエスについてのコメント")
 
 
 @pytest.fixture
 def search_comment_mark(search_user, verse_mark):
     from tests.factories import make_comment
+
     return make_comment(user=search_user, verse=verse_mark, body="イエスに関するマルコのコメント")
 
 
@@ -190,6 +202,7 @@ class TestSearchView:
     def test_page_size_and_pagination(self, db, api_client, chapter):
         # 1ページ50件。超えたら has_more=True で次ページに残りが出る。
         from bible.models import Verse
+
         for i in range(1, 121):
             Verse.objects.create(chapter=chapter, number=i, text=f"イエス・キリスト {i}")
         res1 = api_client.get(SEARCH_URL, {"q": "イエス", "page": 1})

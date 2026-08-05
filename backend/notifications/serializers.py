@@ -1,5 +1,6 @@
-from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
+
+from comments.models import DELETED_COMMENT_BODY
 
 from .models import Notification
 
@@ -84,9 +85,11 @@ class NotificationSerializer(serializers.ModelSerializer):
     # 対象の文章
     # ------------------------------------------------------------------
     def get_body_snippet(self, obj) -> str:
-        for target in (obj.comment if obj.comment_id else None,
-                       obj.translation_comment if obj.translation_comment_id else None,
-                       obj.answer if obj.answer_id else None):
+        for target in (
+            obj.comment if obj.comment_id else None,
+            obj.translation_comment if obj.translation_comment_id else None,
+            obj.answer if obj.answer_id else None,
+        ):
             if target is None:
                 continue
             if target.is_deleted:
@@ -155,7 +158,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         from bible.passage import book_name_for
 
         # 書名の引き当ては一覧のあいだ結果を使い回す（訳ごとに呼び名が違うため DB を引く）。
-        cache = self.context.setdefault("_book_name_cache", {})
+        # context は実体が dict。DRF の stub が Mapping で宣言しているだけ。
+        cache = self.context.setdefault("_book_name_cache", {})  # type: ignore[attr-defined]
         name = book_name_for(target.canonical_book_id, target.source_translation, cache)
         return name or None
 

@@ -33,10 +33,21 @@ jobs:
         with:
           python-version: '3.13'
           cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: backend/requirements*.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
+
+      # lint と format は他より速いので先に置く。壊れている入力を
+      # テストやスキーマ生成に流しても時間の無駄になるため。
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Type check
+        run: mypy .
 
       - name: Django system check
         run: python manage.py check
@@ -44,11 +55,21 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      # カバレッジの下限は pyproject.toml の fail_under。数字を上げること自体が
+      # 目的ではなく、「テストが通っているのに一度も動いていない行」を見えるようにする。
       - name: Run tests
-        run: pytest
+        run: pytest --cov
 
+      # --validate だけでは形式の妥当性しか見ず、「シリアライザを推測できない」
+      # 等のエラーがあっても終了コード 0 で通ってしまう。--fail-on-warn を付けて
+      # 初めて、スキーマの欠落がフロントの型に漏れる前に止められる。
       - name: Validate OpenAPI schema
-        run: python manage.py spectacular --file schema.yaml --validate
+        run: python manage.py spectacular --file schema.yaml --validate --fail-on-warn
+
+      # schema.yaml はコミット済み。API の形が変わった PR では差分が本文に出るので、
+      # レビューで「何が変わったか」を読める。生成し直したものと食い違ったら落とす。
+      - name: Check committed schema is up to date
+        run: git diff --exit-code -- schema.yaml
 
       - name: Django deploy security check (prod settings)
         env:

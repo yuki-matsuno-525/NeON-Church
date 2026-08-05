@@ -6,6 +6,7 @@
 """
 
 import re
+from typing import Any
 
 from bible.importers.sectioned import (
     PAGE_NUMBER,
@@ -20,7 +21,8 @@ def _page(inner: str) -> str:
 
 
 def _spec(**kw) -> BookSpec:
-    base = dict(
+    # BookSpec のフィールドは型がまちまちなので、**展開できるよう Any で受ける。
+    base: dict[str, Any] = dict(
         book="Test Book",
         translation="Tester (EN)",
         order=1,
@@ -153,12 +155,10 @@ def test_paragraphs_are_counted_when_the_text_has_no_verse_numbers():
 
 
 def test_keep_notes_digits_are_not_read_as_page_numbers():
-    """"Pages 11 through 14 are missing." の数字で節を切らない（マリア）。"""
+    """ "Pages 11 through 14 are missing." の数字で節を切らない（マリア）。"""
     note = re.compile(r"Pages?\s+\d+(?:\s+through\s+\d+)?\s+(?:are|is)\s+missing\.?", re.I)
     html = _page(
-        "<p>First Section</p>"
-        "<p>7 The soul answered.</p>"
-        "<p>Pages 11 through 14 are missing.</p>"
+        "<p>First Section</p><p>7 The soul answered.</p><p>Pages 11 through 14 are missing.</p>"
     )
     data, _ = parse_sectioned(html, _spec(keep_notes=(note,), verse_marker=PAGE_NUMBER))
     verses = data["chapters"][0]["verses"]
@@ -178,7 +178,7 @@ def test_missing_section_heading_is_warned():
 
 
 def _numbered_spec(**kw) -> BookSpec:
-    base = dict(
+    base: dict[str, Any] = dict(
         book="Test Book",
         translation="Tester (EN)",
         order=1,

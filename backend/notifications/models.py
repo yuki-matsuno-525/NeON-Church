@@ -63,5 +63,7 @@ class Notification(BaseModel):
             # 通知一覧は「自分あて」を新しい順に並べ、未読タブではさらに未読で絞る。
             # created_at に索引が無かったため、件数が増えるほど並べ替えが重くなっていた。
             models.Index(fields=["recipient", "-created_at"], name="notif_recipient_recent_idx"),
-            models.Index(fields=["recipient", "is_read", "-created_at"], name="notif_unread_recent_idx"),
+            models.Index(
+                fields=["recipient", "is_read", "-created_at"], name="notif_unread_recent_idx"
+            ),
         ]

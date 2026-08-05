@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import pytest
 from rest_framework.test import APIClient
 
-from users import views as user_views
+from users import oauth as user_oauth
 
 pytestmark = pytest.mark.django_db
 
@@ -40,10 +40,10 @@ def test_entry_sets_signed_state_and_nonce_cookie(api):
     assert res.cookies[NONCE_COOKIE].value
 
 
-@patch("users.views.http_requests.get")
-@patch("users.views.http_requests.post")
+@patch("users.oauth.http_requests.get")
+@patch("users.oauth.http_requests.post")
 def test_callback_success_creates_user_and_sets_jwt(mock_post, mock_get, api):
-    state, nonce = user_views._make_oauth_state("/bookmarks")
+    state, nonce = user_oauth.make_state("/bookmarks")
     api.cookies[NONCE_COOKIE] = nonce
     mock_post.return_value = _resp_ok({"access_token": "tok"})
     mock_get.return_value = _resp_ok({"sub": "g-1", "email": "a@example.com", "name": "Alice"})
@@ -58,12 +58,13 @@ def test_callback_success_creates_user_and_sets_jwt(mock_post, mock_get, api):
     # 使用後 nonce Cookie は削除される
     assert res.cookies[NONCE_COOKIE].value == ""
     from users.models import SocialAccount
+
     assert SocialAccount.objects.filter(provider="google", provider_uid="g-1").exists()
 
 
-@patch("users.views.http_requests.post")
+@patch("users.oauth.http_requests.post")
 def test_callback_nonce_mismatch_errors_before_external_call(mock_post, api):
-    state, _nonce = user_views._make_oauth_state("")
+    state, _nonce = user_oauth.make_state("")
     api.cookies[NONCE_COOKIE] = "WRONG"
 
     res = api.get(GOOGLE_CB, {"code": "abc", "state": state})
@@ -74,7 +75,7 @@ def test_callback_nonce_mismatch_errors_before_external_call(mock_post, api):
 
 
 def test_callback_missing_nonce_cookie_errors(api):
-    state, _nonce = user_views._make_oauth_state("")
+    state, _nonce = user_oauth.make_state("")
     # Cookie を付けない
     res = api.get(GOOGLE_CB, {"code": "abc", "state": state})
     assert "oauth=error" in res["Location"]
@@ -87,7 +88,7 @@ def test_callback_tampered_state_errors(api):
 
 
 def test_callback_without_code_errors(api):
-    state, nonce = user_views._make_oauth_state("")
+    state, nonce = user_oauth.make_state("")
     api.cookies[NONCE_COOKIE] = nonce
     res = api.get(GOOGLE_CB, {"state": state})  # code なし
     assert "oauth=error" in res["Location"]

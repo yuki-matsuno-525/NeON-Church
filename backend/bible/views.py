@@ -2,43 +2,30 @@ import datetime
 
 from django.core.cache import cache
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from rest_framework.exceptions import NotFound
-
-from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
-from .models import Book, CanonicalBook, Chapter, Verse
-from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
+from common.schema import DetailSerializer
 
-# 検索対象の訳。UI 言語では絞らない。
-#
-# 以前は UI 言語ごとに訳を絞っていたため、日本語 UI で「神」を検索してから英語 UI に
-# 切り替えると、検索対象が KJV だけになって 0 件になっていた。UI のボタンが何語かという
-# 話と、どの言語の本文を探したいかは別の希望なので、両者を切り離す。
-#
-# 代わりに検索語そのものが言語を選ぶ。「神」は日本語の本文にしか、"god" は英語の本文にしか
-# 当たらないので、全訳を対象にしても結果は混ざらない。副次的に、英訳しか無いエノク書などが
-# 日本語 UI からも探せるようになる。
-#
-# ただし同じ言語で同じ書を持つ訳を並べると同一箇所が重複するため、その組は代表1訳に絞る:
-#   - 日本語: 口語訳（現代語）を代表とし、文語訳は外す
-#   - ギリシャ語新約: TR を代表とし、Nestle 1904 は外す
-SEARCH_TRANSLATIONS = [
-    "口語訳",
-    "KJV",
-    "Mark M. Mattison (EN)",
-    "R. H. Charles (EN)",
-    "L. S. A. Wells (EN)",
-    "Samuel Zinner (EN)",
-    "L. C. L. Brenton (EN)",
-    "TR (GRC)",
-    "LXX (GRC)",
-    "WLC (HEB)",
-]
+from . import selectors
+from .models import Book, Chapter
+from .serializers import (
+    BookSerializer,
+    ChapterSerializer,
+    ReferenceBookReadResponseSerializer,
+    ReferenceBooksResponseSerializer,
+    ReferenceChaptersResponseSerializer,
+    ReferenceReadResponseSerializer,
+    ReferenceVersesResponseSerializer,
+    SearchResponseSerializer,
+    VerseOfDaySerializer,
+    VerseSearchSerializer,
+    VerseSerializer,
+)
 
 SEARCH_KINDS = {"all", "verses", "books", "comments"}
 
@@ -96,7 +83,7 @@ class ChapterListView(_CacheableScriptureView, generics.ListAPIView):
     def get_queryset(self):
         # book_id が存在しない場合は 404 を返す
         book = generics.get_object_or_404(Book, pk=self.kwargs["book_id"])
-        return Chapter.objects.filter(book=book)
+        return selectors.chapters_of(book)
 
 
 class VerseListView(_CacheableScriptureView, generics.ListAPIView):
@@ -108,7 +95,7 @@ class VerseListView(_CacheableScriptureView, generics.ListAPIView):
 
     def get_queryset(self):
         chapter = generics.get_object_or_404(Chapter, pk=self.kwargs["chapter_id"])
-        return Verse.objects.filter(chapter=chapter)
+        return selectors.verses_of(chapter)
 
 
 class _ReferenceView(_CacheableScriptureView, APIView):
@@ -123,47 +110,39 @@ class _ReferenceView(_CacheableScriptureView, APIView):
     authentication_classes: list = []
 
     def _require_slug(self, slug: str) -> None:
-        if not CanonicalBook.objects.filter(slug=slug).exists():
-            raise NotFound("Unknown book.")
-
-
-def _book_for_translation(slug: str, translation: str | None):
-    """箇所 slug と訳から Book を1冊決める。無ければ 404（訳の指定ミスと言い分けられる code 付き）。"""
-    books = Book.objects.filter(canonical_book__slug=slug)
-    if translation:
-        books = books.filter(translation=translation)
-    book = books.order_by("order", "translation").first()
-    if book is None:
-        raise NotFound({"detail": "Book not found for this translation.", "code": "book_not_found"})
-    return book
+        selectors.require_canonical_slug(slug)
 
 
 class ReferenceBooksView(_ReferenceView):
     """GET /api/references/<slug>/books/  その書の全版の書 id。"""
 
+    @extend_schema(responses={200: ReferenceBooksResponseSerializer})
     def get(self, request, slug):
         self._require_slug(slug)
-        books = Book.objects.filter(canonical_book__slug=slug).order_by("order", "translation")
-        return Response({
-            "reference": {"book": slug},
-            "books": [{"id": str(b.id), "translation": b.translation} for b in books],
-        })
+        books = selectors.books_for_slug(slug)
+        return Response(
+            {
+                "reference": {"book": slug},
+                "books": [{"id": str(b.id), "translation": b.translation} for b in books],
+            }
+        )
 
 
 class ReferenceChaptersView(_ReferenceView):
     """GET /api/references/<slug>/chapters/<chapter>/  その章の全版の章 id。"""
 
+    @extend_schema(responses={200: ReferenceChaptersResponseSerializer})
     def get(self, request, slug, chapter):
         self._require_slug(slug)
-        chapters = (
-            Chapter.objects.filter(book__canonical_book__slug=slug, number=chapter)
-            .select_related("book")
-            .order_by("book__order", "book__translation")
+        chapters = selectors.chapters_for_slug(slug, chapter)
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter},
+                "chapters": [
+                    {"id": str(c.id), "translation": c.book.translation} for c in chapters
+                ],
+            }
         )
-        return Response({
-            "reference": {"book": slug, "chapter": chapter},
-            "chapters": [{"id": str(c.id), "translation": c.book.translation} for c in chapters],
-        })
 
 
 class ReferenceBookReadView(_ReferenceView):
@@ -173,15 +152,18 @@ class ReferenceBookReadView(_ReferenceView):
     こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
     """
 
+    @extend_schema(responses={200: ReferenceBookReadResponseSerializer})
     def get(self, request, slug):
         self._require_slug(slug)
-        book = _book_for_translation(slug, request.query_params.get("translation"))
-        chapters = Chapter.objects.filter(book=book)
-        return Response({
-            "reference": {"book": slug},
-            "book": BookSerializer(book).data,
-            "chapters": ChapterSerializer(chapters, many=True).data,
-        })
+        book = selectors.book_for_translation(slug, request.query_params.get("translation"))
+        chapters = selectors.chapters_of(book)
+        return Response(
+            {
+                "reference": {"book": slug},
+                "book": BookSerializer(book).data,
+                "chapters": ChapterSerializer(chapters, many=True).data,
+            }
+        )
 
 
 class ReferenceReadView(_ReferenceView):
@@ -197,40 +179,37 @@ class ReferenceReadView(_ReferenceView):
     「その章が無い」のかを言い分けられるようにする。
     """
 
+    @extend_schema(responses={200: ReferenceReadResponseSerializer})
     def get(self, request, slug, chapter):
         self._require_slug(slug)
-        book = _book_for_translation(slug, request.query_params.get("translation"))
-        chapter_obj = Chapter.objects.filter(book=book, number=chapter).first()
-        if chapter_obj is None:
-            raise NotFound({"detail": "Chapter not found.", "code": "chapter_not_found"})
-
-        verses = Verse.objects.filter(chapter=chapter_obj)
-        return Response({
-            "reference": {"book": slug, "chapter": chapter},
-            "book": BookSerializer(book).data,
-            "chapter": ChapterSerializer(chapter_obj).data,
-            "verses": VerseSerializer(verses, many=True).data,
-        })
+        book = selectors.book_for_translation(slug, request.query_params.get("translation"))
+        chapter_obj = selectors.chapter_of(book, chapter)
+        verses = selectors.verses_of(chapter_obj)
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter},
+                "book": BookSerializer(book).data,
+                "chapter": ChapterSerializer(chapter_obj).data,
+                "verses": VerseSerializer(verses, many=True).data,
+            }
+        )
 
 
 class ReferenceVersesView(_ReferenceView):
     """GET /api/references/<slug>/verses/<chapter>/<verse>/  その節の全版の節 id。"""
 
+    @extend_schema(responses={200: ReferenceVersesResponseSerializer})
     def get(self, request, slug, chapter, verse):
         self._require_slug(slug)
-        verses = (
-            Verse.objects.filter(
-                chapter__book__canonical_book__slug=slug,
-                chapter__number=chapter,
-                number=verse,
-            )
-            .select_related("chapter__book")
-            .order_by("chapter__book__order", "chapter__book__translation")
+        verses = selectors.verses_for_slug(slug, chapter, verse)
+        return Response(
+            {
+                "reference": {"book": slug, "chapter": chapter, "verse": verse},
+                "verses": [
+                    {"id": str(v.id), "translation": v.chapter.book.translation} for v in verses
+                ],
+            }
         )
-        return Response({
-            "reference": {"book": slug, "chapter": chapter, "verse": verse},
-            "verses": [{"id": str(v.id), "translation": v.chapter.book.translation} for v in verses],
-        })
 
 
 class SearchView(APIView):
@@ -247,6 +226,7 @@ class SearchView(APIView):
     authentication_classes: list = []
     VERSE_PAGE_SIZE = 50
 
+    @extend_schema(responses={200: SearchResponseSerializer})
     def get(self, request):
         q = request.query_params.get("q", "").strip()
         kind = request.query_params.get("kind", "all")
@@ -258,17 +238,11 @@ class SearchView(APIView):
         except ValueError:
             page = 1
         if len(q) < _min_query_len(q):
-            return Response({"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False})
+            return Response(
+                {"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False}
+            )
 
-        # 代表訳に絞って書順で並べる（同じ書を重複して持つ訳は除いてあるので重複しない）。
-        verses_qs = (
-            Verse.objects.filter(text__icontains=q, chapter__book__translation__in=SEARCH_TRANSLATIONS)
-            .select_related("chapter__book", "chapter__book__canonical_book")
-            .order_by("chapter__book__order", "chapter__number", "number")
-        )
-        if book_slug:
-            verses_qs = verses_qs.filter(chapter__book__canonical_book__slug=book_slug)
-
+        verses_qs = selectors.search_verses(q, book_slug)
         if kind in ("all", "verses"):
             verse_total = verses_qs.count()
             start = (page - 1) * self.VERSE_PAGE_SIZE
@@ -280,25 +254,20 @@ class SearchView(APIView):
             has_more = False
 
         # 書名・コメントは1ページ目のプレビュー（ページングしない）。
-        books_qs = Book.objects.filter(name__icontains=q, translation__in=SEARCH_TRANSLATIONS).order_by("order")
-        comments_qs = (
-            Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
-            .select_related("user", "canonical_book")
-            .order_by("-created_at")
+        books = selectors.search_books(q, book_slug)[:20] if kind in ("all", "books") else []
+        comments = (
+            selectors.search_comments(q, book_slug)[:20] if kind in ("all", "comments") else []
         )
-        if book_slug:
-            books_qs = books_qs.filter(canonical_book__slug=book_slug)
-            comments_qs = comments_qs.filter(canonical_book__slug=book_slug)
-        books = books_qs[:20] if kind in ("all", "books") else []
-        comments = comments_qs[:20] if kind in ("all", "comments") else []
 
-        return Response({
-            "verses": VerseSearchSerializer(verses, many=True).data,
-            "books": BookSerializer(books, many=True).data,
-            "comments": CommentSearchSerializer(comments, many=True).data,
-            "verse_total": verse_total,
-            "has_more": has_more,
-        })
+        return Response(
+            {
+                "verses": VerseSearchSerializer(verses, many=True).data,
+                "books": BookSerializer(books, many=True).data,
+                "comments": CommentSearchSerializer(comments, many=True).data,
+                "verse_total": verse_total,
+                "has_more": has_more,
+            }
+        )
 
 
 class VerseOfDayView(APIView):
@@ -313,6 +282,7 @@ class VerseOfDayView(APIView):
     # トークンを完全に無視する（iOS Safari の ITP でクッキーが部分的に破損する症状対策）。
     authentication_classes: list = []
 
+    @extend_schema(responses={200: VerseOfDaySerializer, 503: DetailSerializer})
     def get(self, request):
         translation = request.query_params.get("translation", "口語訳")
         today = timezone.localdate()
@@ -321,35 +291,16 @@ class VerseOfDayView(APIView):
         if data is None:
             day_of_year = today.timetuple().tm_yday
             # 常に口語訳を基準に「今日の節」の位置を決める
-            base_qs = Verse.objects.filter(chapter__book__translation="口語訳")
-            count = base_qs.count()
+            count = selectors.base_verse_count()
             if count == 0:
                 return Response({"detail": "Bible data not found."}, status=503)
-            index = (day_of_year - 1) % count
-            base_verse = (
-                base_qs.select_related("chapter__book")
-                .order_by("chapter__book__order", "chapter__number", "number")[index]
-            )
+            base_verse = selectors.verse_of_day_source((day_of_year - 1) % count)
 
             if translation == "口語訳":
                 verse = base_verse
             else:
-                # 同じ「箇所」を指定翻訳で探す。書の同一性は訳非依存の canonical_book で判定する
-                # （book.order はインポート方法により訳ごとにズレうるため基準に使わない）。
-                canonical_book = base_verse.chapter.book.canonical_book
-                chapter_num = base_verse.chapter.number
-                verse_num = base_verse.number
-                verse = (
-                    Verse.objects.filter(
-                        chapter__book__translation=translation,
-                        chapter__book__canonical_book=canonical_book,
-                        chapter__number=chapter_num,
-                        number=verse_num,
-                    )
-                    .select_related("chapter__book")
-                    .first()
-                ) if canonical_book else None
-                verse = verse or base_verse  # 指定訳に対応節が無ければ口語訳にフォールバック
+                # 指定訳に対応する節が無ければ口語訳にそのまま倒す。
+                verse = selectors.same_verse_in(translation, base_verse) or base_verse
 
             data = VerseOfDaySerializer(verse).data
             tomorrow = today + datetime.timedelta(days=1)

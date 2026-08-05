@@ -138,9 +138,7 @@ def _number_paragraphs(pieces: list[str], spec: BookSpec) -> list[dict]:
     return verses
 
 
-def _split_verses(
-    stream: str, spec: BookSpec, store: list[str], hi: int
-) -> tuple[list[dict], int]:
+def _split_verses(stream: str, spec: BookSpec, store: list[str], hi: int) -> tuple[list[dict], int]:
     """章のテキストを節番号で分割する。
 
     節番号（写本のページ番号など）は見出しをまたいで連続するので、直前の章までに
@@ -151,9 +149,7 @@ def _split_verses(
     - 番号は増加する性質を使い、戻る数字は本文として残す（誤検出対策）。
     - 章の中に番号が1つも無いときは、前の章の続きのページなので hi をそのまま使う。
     """
-    matches = [
-        (m.start(), m.end(), int(m.group(1))) for m in spec.verse_marker.finditer(stream)
-    ]
+    matches = [(m.start(), m.end(), int(m.group(1))) for m in spec.verse_marker.finditer(stream)]
 
     accepted: list[tuple[int, int, int]] = []
     for start, end, num in matches:
@@ -207,7 +203,6 @@ def parse_sectioned(html: str, spec: BookSpec) -> tuple[dict, list[str]]:
     paragraphs = _find_body_paragraphs(soup, spec)
     warnings: list[str] = []
 
-    headings = set(spec.headings)
     chapter_pieces: list[list[str]] = []
     chapter_names: list[str] = []
     chapter_numbers: list[int] = []  # heading_pattern を使う書の章番号
@@ -266,7 +261,7 @@ def parse_sectioned(html: str, spec: BookSpec) -> tuple[dict, list[str]]:
 
     # 章名一覧（フロントの books.ts の chapterTitles に転記する用）
     if spec.heading_pattern is not None and chapter_names:
-        ordered = [n for _, n in sorted(zip(chapter_numbers, chapter_names))]
+        ordered = [n for _, n in sorted(zip(chapter_numbers, chapter_names, strict=True))]
         warnings.append("章タイトル（books.ts 用）: " + " / ".join(ordered))
 
     data = {

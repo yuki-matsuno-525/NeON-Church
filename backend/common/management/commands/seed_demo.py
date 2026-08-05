@@ -37,7 +37,7 @@ from articles.models import (
 )
 from bible.models import Book, Chapter, Verse
 from bookmarks.models import Bookmark
-from comments.models import PREDEFINED_TAGS, Comment, Report, Tag, Vote
+from comments.models import Comment, Report, Vote
 from common.seed_data import LOCALES
 from notifications.models import Notification
 from plans.models import (
@@ -50,6 +50,7 @@ from plans.models import (
 )
 from qa.models import Answer, Question
 from reading_progress.models import ReadingProgress
+from tags.models import PREDEFINED_TAGS, Tag
 from translations.models import (
     Language,
     TranslationComment,
@@ -141,9 +142,26 @@ PLAN_DAY_COUNTS = [3, 5, 7, 7, 14, 14, 21, 30, 30, 40, 60, 90]
 # 外典・偽書らしい書を必ずプランに混ぜるための手がかり。
 # 本番にどの書が入っているか分からないので、slug の一部が一致したものを使う。
 APOCRYPHA_HINTS = [
-    "enoch", "thomas", "judas", "mary", "peter", "adam", "jubilee", "tobit",
-    "judith", "wisdom", "sirach", "maccabee", "baruch", "esdras", "quelle",
-    "infancy", "didache", "barnabas", "hermas", "clement",
+    "enoch",
+    "thomas",
+    "judas",
+    "mary",
+    "peter",
+    "adam",
+    "jubilee",
+    "tobit",
+    "judith",
+    "wisdom",
+    "sirach",
+    "maccabee",
+    "baruch",
+    "esdras",
+    "quelle",
+    "infancy",
+    "didache",
+    "barnabas",
+    "hermas",
+    "clement",
 ]
 
 
@@ -207,8 +225,7 @@ class Command(BaseCommand):
             )
         self.catalog = catalog
         self.apocrypha = [
-            entry for entry in catalog
-            if any(hint in entry["slug"] for hint in APOCRYPHA_HINTS)
+            entry for entry in catalog if any(hint in entry["slug"] for hint in APOCRYPHA_HINTS)
         ]
 
         admin, admin_password = self._ensure_admin(
@@ -308,14 +325,16 @@ class Command(BaseCommand):
             book_chapters = sorted(chapters.get(cid, []))
             if not book_chapters:
                 continue
-            catalog.append({
-                "id": cid,
-                "slug": editions[0].canonical_book.slug,
-                "chapters": book_chapters,
-                "translations": sorted({b.translation for b in editions}),
-                "editions": [b.id for b in editions],
-                "rep_book_id": reps[cid].id,
-            })
+            catalog.append(
+                {
+                    "id": cid,
+                    "slug": editions[0].canonical_book.slug,
+                    "chapters": book_chapters,
+                    "translations": sorted({b.translation for b in editions}),
+                    "editions": [b.id for b in editions],
+                    "rep_book_id": reps[cid].id,
+                }
+            )
         catalog.sort(key=lambda entry: entry["slug"])
         self.stdout.write(f"  聖書データ: {len(catalog)} 書（訳の異なる版は {len(books)} 冊）")
         return catalog
@@ -348,9 +367,7 @@ class Command(BaseCommand):
 
     def _after(self, moment, max_days=30):
         """ある日時より後の日時を返す（返信を親より後にするため）。"""
-        later = moment + timedelta(
-            seconds=self.rng.randrange(60, max_days * 86400)
-        )
+        later = moment + timedelta(seconds=self.rng.randrange(60, max_days * 86400))
         return min(later, self.now - timedelta(seconds=60))
 
     def _save(self, model, objects, times, label=None):
@@ -363,12 +380,10 @@ class Command(BaseCommand):
         if not objects:
             return objects
         model.objects.bulk_create(objects, batch_size=1000)
-        for obj, moment in zip(objects, times):
+        for obj, moment in zip(objects, times, strict=True):
             obj.created_at = moment
             obj.updated_at = moment
-        model.objects.bulk_update(
-            objects, ["created_at", "updated_at"], batch_size=500
-        )
+        model.objects.bulk_update(objects, ["created_at", "updated_at"], batch_size=500)
         if label:
             self.counts[label] = self.counts.get(label, 0) + len(objects)
         return objects
@@ -400,10 +415,7 @@ class Command(BaseCommand):
     def _link_tags(self, through, owner_field, tag_field, rows):
         """タグの結び付けをまとめて入れる（同じ組み合わせが重なっても無視する）。"""
         through.objects.bulk_create(
-            [
-                through(**{owner_field: obj_id, tag_field: tag_id})
-                for obj_id, tag_id in rows
-            ],
+            [through(**{owner_field: obj_id, tag_field: tag_id}) for obj_id, tag_id in rows],
             batch_size=1000,
             ignore_conflicts=True,
         )
@@ -413,9 +425,7 @@ class Command(BaseCommand):
     def _seed_users(self, password):
         """日本語圏と英語圏の利用者を半々で作る。"""
         target = self.scale["users"]
-        users, times, taken = [], [], set(
-            User.objects.values_list("username", flat=True)
-        )
+        users, times, taken = [], [], set(User.objects.values_list("username", flat=True))
         # パスワードの計算は重いので 1 回だけ行い、全員で使い回す。
         template = User(username="__template__")
         template.set_password(password)
@@ -423,10 +433,7 @@ class Command(BaseCommand):
 
         for index in range(target):
             locale = LOCALES[index % len(LOCALES)]
-            base = (
-                f"{self.rng.choice(locale.FAMILY_NAMES)}_"
-                f"{self.rng.choice(locale.GIVEN_NAMES)}"
-            )
+            base = f"{self.rng.choice(locale.FAMILY_NAMES)}_{self.rng.choice(locale.GIVEN_NAMES)}"
             username = base
             suffix = 2
             while username in taken:
@@ -446,22 +453,25 @@ class Command(BaseCommand):
                 if closer:
                     bio += ("" if locale.LANG == "ja" else " ") + closer
 
-            users.append(User(
-                username=username,
-                email=f"{username}@example.com",
-                bio=bio,
-                password=password_hash,
-                bookmarks_visibility=(
-                    User.BOOKMARKS_PUBLIC if self.rng.random() < 0.35
-                    else User.BOOKMARKS_PRIVATE
-                ),
-                in_app_notifications_enabled=True,
-                email_notifications_enabled=self.rng.random() < 0.25,
-            ))
+            users.append(
+                User(
+                    username=username,
+                    email=f"{username}@example.com",
+                    bio=bio,
+                    password=password_hash,
+                    bookmarks_visibility=(
+                        User.BOOKMARKS_PUBLIC
+                        if self.rng.random() < 0.35
+                        else User.BOOKMARKS_PRIVATE
+                    ),
+                    in_app_notifications_enabled=True,
+                    email_notifications_enabled=self.rng.random() < 0.25,
+                )
+            )
             times.append(self._past(bias=1.2))
 
         User.objects.bulk_create(users, batch_size=500)
-        for user, moment in zip(users, times):
+        for user, moment in zip(users, times, strict=True):
             user.created_at = moment
             user.updated_at = moment
         User.objects.bulk_update(users, ["created_at", "updated_at"], batch_size=500)
@@ -494,11 +504,13 @@ class Command(BaseCommand):
             location = self._location(entry, chapter_number, verse_number)
             for _ in range(self.rng.choice([3, 3, 4, 5, 6, 8, 12, 18, 25])):
                 locale = self._locale()
-                verse_comments.append(add(
-                    self.rng.choice(people),
-                    dict(location),
-                    self._sentences(locale, locale.COMMENT_SENTENCES),
-                ))
+                verse_comments.append(
+                    add(
+                        self.rng.choice(people),
+                        dict(location),
+                        self._sentences(locale, locale.COMMENT_SENTENCES),
+                    )
+                )
 
         # 章コメント。1 章に 30〜80 件つけて、章タブのページ送りを試せるようにする。
         for _ in range(self.scale["comment_chapters"]):
@@ -533,7 +545,7 @@ class Command(BaseCommand):
         parents = self.rng.sample(
             verse_comments, min(self.scale["reply_parents"], len(verse_comments))
         )
-        parent_times = dict(zip(objects, times))
+        parent_times = dict(zip(objects, times, strict=True))
         for depth in range(5):
             objects, times = [], []
             next_parents = []
@@ -554,7 +566,7 @@ class Command(BaseCommand):
             if not objects:
                 break
             self._save(Comment, objects, times, "コメント")
-            parent_times.update(zip(objects, times))
+            parent_times.update(zip(objects, times, strict=True))
             created.extend(objects)
             parents = next_parents
 
@@ -592,9 +604,7 @@ class Command(BaseCommand):
     def _seed_votes(self, people, comments):
         """票を入れる。伸びるコメントと伸びないコメントの差を作る。"""
         alive = [c for c in comments if not c.is_deleted]
-        targets = self.rng.sample(
-            alive, min(self.scale["vote_comments"], len(alive))
-        )
+        targets = self.rng.sample(alive, min(self.scale["vote_comments"], len(alive)))
         # 票は一番数が多いので、貯めきらずに小分けで保存する。
         # 本番のコンテナはメモリが限られており、全部を持ったまま走ると落ちるおそれがある。
         votes, times, total = [], [], 0
@@ -647,7 +657,7 @@ class Command(BaseCommand):
         self._save(Question, questions, times, "質問")
         self._link_tags(Question.tags.through, "question_id", "tag_id", tag_rows)
 
-        question_times = dict(zip(questions, times))
+        question_times = dict(zip(questions, times, strict=True))
         answers, answer_times = [], []
         best_by_question = {}
         for question in questions:
@@ -755,7 +765,7 @@ class Command(BaseCommand):
             article = Article(
                 owner=admin,
                 title=f"{self.rng.choice(locale.ARTICLE_TITLE_HEADS)}"
-                      f"{self.rng.choice(locale.ARTICLE_TITLE_TAILS)}",
+                f"{self.rng.choice(locale.ARTICLE_TITLE_TAILS)}",
                 summary=self.rng.choice(locale.ARTICLE_SUMMARIES),
                 body=self._article_body(locale, long_form=False, broken=False),
                 visibility=visibility,
@@ -773,9 +783,7 @@ class Command(BaseCommand):
     def _ensure_article_tags(self):
         tags = []
         for name, slug in INITIAL_TAGS:
-            tag, _created = ArticleTag.objects.get_or_create(
-                name=name, defaults={"slug": slug}
-            )
+            tag, _created = ArticleTag.objects.get_or_create(name=name, defaults={"slug": slug})
             tags.append(tag)
         return tags
 
@@ -829,25 +837,25 @@ class Command(BaseCommand):
         """本文の印から引用の索引をまとめて作る（記事ごとに問い合わせない）。"""
         parsed = [(article, parse_body(article.body)) for article in articles]
         slugs = {item["book_slug"] for _article, items in parsed for item in items}
-        book_ids = {
-            entry["slug"]: entry["id"] for entry in self.catalog if entry["slug"] in slugs
-        }
+        book_ids = {entry["slug"]: entry["id"] for entry in self.catalog if entry["slug"] in slugs}
         citations = []
         for article, items in parsed:
             for item in items:
                 if item["book_slug"] not in book_ids:
                     continue
-                citations.append(ArticleCitation(
-                    article=article,
-                    raw=item["raw"],
-                    kind=item["kind"],
-                    canonical_book_id=book_ids[item["book_slug"]],
-                    chapter_number=item["chapter_number"],
-                    verse_number_start=item["verse_number_start"],
-                    verse_number_end=item["verse_number_end"],
-                    translation=item["translation"],
-                    order=item["order"],
-                ))
+                citations.append(
+                    ArticleCitation(
+                        article=article,
+                        raw=item["raw"],
+                        kind=item["kind"],
+                        canonical_book_id=book_ids[item["book_slug"]],
+                        chapter_number=item["chapter_number"],
+                        verse_number_start=item["verse_number_start"],
+                        verse_number_end=item["verse_number_end"],
+                        translation=item["translation"],
+                        order=item["order"],
+                    )
+                )
         ArticleCitation.objects.bulk_create(citations, batch_size=1000)
         self.counts["記事の引用"] = len(citations)
 
@@ -858,21 +866,25 @@ class Command(BaseCommand):
         for _ in range(self.scale["article_comments"]):
             article = self.rng.choice(readable)
             locale = self._locale()
-            objects.append(ArticleComment(
-                article=article,
-                user=self.rng.choice(people),
-                body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
-            ))
+            objects.append(
+                ArticleComment(
+                    article=article,
+                    user=self.rng.choice(people),
+                    body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
+                )
+            )
             times.append(self._after(article.created_at, max_days=120))
 
         crowded = readable[0]
         for _ in range(self.scale["big_article_comments"]):
             locale = self._locale()
-            objects.append(ArticleComment(
-                article=crowded,
-                user=self.rng.choice(people),
-                body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
-            ))
+            objects.append(
+                ArticleComment(
+                    article=crowded,
+                    user=self.rng.choice(people),
+                    body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
+                )
+            )
             times.append(self._after(crowded.created_at, max_days=200))
         self._save(ArticleComment, objects, times, "記事のコメント")
 
@@ -880,12 +892,14 @@ class Command(BaseCommand):
         replies, reply_times = [], []
         for parent in self.rng.sample(objects, max(1, len(objects) // 4)):
             locale = self._locale()
-            replies.append(ArticleComment(
-                article_id=parent.article_id,
-                user=self.rng.choice(people),
-                parent=parent,
-                body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
-            ))
+            replies.append(
+                ArticleComment(
+                    article_id=parent.article_id,
+                    user=self.rng.choice(people),
+                    parent=parent,
+                    body=self._sentences(locale, locale.ARTICLE_COMMENT_SENTENCES, 1, 2),
+                )
+            )
             reply_times.append(self._after(parent.created_at, max_days=30))
         self._save(ArticleComment, replies, reply_times, "記事のコメント")
 
@@ -907,9 +921,9 @@ class Command(BaseCommand):
             + [TranslationProject.STATUS_DRAFT] * 2
         )
         source_books = list(
-            Book.objects.filter(
-                id__in=[entry["rep_book_id"] for entry in self.catalog]
-            ).order_by("order")
+            Book.objects.filter(id__in=[entry["rep_book_id"] for entry in self.catalog]).order_by(
+                "order"
+            )
         )
 
         projects, times = [], []
@@ -920,28 +934,32 @@ class Command(BaseCommand):
             name = f"{head}{'' if locale.LANG == 'ja' else ' '}{book.name}"
             # 管理者にも 2 本持たせて、オーナー側の画面を試せるようにする。
             owner = admin if index < 2 else self.rng.choice(people)
-            projects.append(TranslationProject(
-                name=name,
-                description=self.rng.choice(locale.PROJECT_DESCRIPTIONS),
-                owner=owner,
-                source_book=book,
-                target_language=(
-                    locale.LANG if self.rng.random() < 0.6 else self.rng.choice(languages)
-                ),
-                status=self.rng.choice(statuses),
-            ))
+            projects.append(
+                TranslationProject(
+                    name=name,
+                    description=self.rng.choice(locale.PROJECT_DESCRIPTIONS),
+                    owner=owner,
+                    source_book=book,
+                    target_language=(
+                        locale.LANG if self.rng.random() < 0.6 else self.rng.choice(languages)
+                    ),
+                    status=self.rng.choice(statuses),
+                )
+            )
             times.append(self._past(bias=1.5))
         self._save(TranslationProject, projects, times, "翻訳プロジェクト")
 
         memberships, membership_times = [], []
         members_by_project = {}
-        for project, moment in zip(projects, times):
-            memberships.append(TranslationMembership(
-                project=project,
-                user_id=project.owner_id,
-                role=TranslationMembership.ROLE_OWNER,
-                status=TranslationMembership.STATUS_APPROVED,
-            ))
+        for project, moment in zip(projects, times, strict=True):
+            memberships.append(
+                TranslationMembership(
+                    project=project,
+                    user_id=project.owner_id,
+                    role=TranslationMembership.ROLE_OWNER,
+                    status=TranslationMembership.STATUS_APPROVED,
+                )
+            )
             membership_times.append(moment)
             others = [u for u in people if u.id != project.owner_id]
             approved = self.rng.sample(others, min(self.rng.randint(3, 15), len(others)))
@@ -955,12 +973,14 @@ class Command(BaseCommand):
                 (rejected, TranslationMembership.STATUS_REJECTED),
             ):
                 for user in group:
-                    memberships.append(TranslationMembership(
-                        project=project,
-                        user=user,
-                        role=TranslationMembership.ROLE_MEMBER,
-                        status=status,
-                    ))
+                    memberships.append(
+                        TranslationMembership(
+                            project=project,
+                            user=user,
+                            role=TranslationMembership.ROLE_MEMBER,
+                            status=status,
+                        )
+                    )
                     membership_times.append(self._after(moment, max_days=90))
             members_by_project[project.id] = [project.owner, *approved]
         self._save(TranslationMembership, memberships, membership_times, "翻訳の参加者")
@@ -969,24 +989,23 @@ class Command(BaseCommand):
         extra = [p for p in projects if p.owner_id != admin.id][:4]
         admin_memberships, admin_times = [], []
         for index, project in enumerate(extra):
-            admin_memberships.append(TranslationMembership(
-                project=project,
-                user=admin,
-                role=TranslationMembership.ROLE_MEMBER,
-                status=(
-                    TranslationMembership.STATUS_PENDING if index == 3
-                    else TranslationMembership.STATUS_APPROVED
-                ),
-            ))
+            admin_memberships.append(
+                TranslationMembership(
+                    project=project,
+                    user=admin,
+                    role=TranslationMembership.ROLE_MEMBER,
+                    status=(
+                        TranslationMembership.STATUS_PENDING
+                        if index == 3
+                        else TranslationMembership.STATUS_APPROVED
+                    ),
+                )
+            )
             admin_times.append(self._past(bias=3.0))
             if index < 3:
                 members_by_project[project.id].append(admin)
-        TranslationMembership.objects.filter(
-            project__in=extra, user=admin
-        ).delete()
-        self._save(
-            TranslationMembership, admin_memberships, admin_times, "翻訳の参加者"
-        )
+        TranslationMembership.objects.filter(project__in=extra, user=admin).delete()
+        self._save(TranslationMembership, admin_memberships, admin_times, "翻訳の参加者")
 
         units, unit_times = [], []
         unit_statuses = [
@@ -996,28 +1015,30 @@ class Command(BaseCommand):
             TranslationUnit.STATUS_REVIEW,
             TranslationUnit.STATUS_DONE,
         ]
-        for project, moment in zip(projects, times):
+        for project, moment in zip(projects, times, strict=True):
             verses = list(
-                Verse.objects.filter(chapter__book_id=project.source_book_id)
-                .order_by("chapter__number", "number")[: self.scale["project_units"]]
+                Verse.objects.filter(chapter__book_id=project.source_book_id).order_by(
+                    "chapter__number", "number"
+                )[: self.scale["project_units"]]
             )
             members = members_by_project[project.id]
             locale = LOCALES[0] if project.target_language == "ja" else LOCALES[1]
             for index, verse in enumerate(verses):
                 status = unit_statuses[index % len(unit_statuses)]
-                done = status in (
-                    TranslationUnit.STATUS_REVIEW, TranslationUnit.STATUS_DONE
+                done = status in (TranslationUnit.STATUS_REVIEW, TranslationUnit.STATUS_DONE)
+                units.append(
+                    TranslationUnit(
+                        project=project,
+                        verse=verse,
+                        assigned_to=(
+                            None
+                            if status == TranslationUnit.STATUS_TODO
+                            else self.rng.choice(members)
+                        ),
+                        body=self.rng.choice(locale.UNIT_BODIES) if done else "",
+                        status=status,
+                    )
                 )
-                units.append(TranslationUnit(
-                    project=project,
-                    verse=verse,
-                    assigned_to=(
-                        None if status == TranslationUnit.STATUS_TODO
-                        else self.rng.choice(members)
-                    ),
-                    body=self.rng.choice(locale.UNIT_BODIES) if done else "",
-                    status=status,
-                ))
                 unit_times.append(self._after(moment, max_days=200))
         self._save(TranslationUnit, units, unit_times, "翻訳のユニット")
 
@@ -1026,55 +1047,47 @@ class Command(BaseCommand):
             units_by_project.setdefault(unit.project_id, []).append(unit)
 
         discussions, discussion_times = [], []
-        for project, moment in zip(projects, times):
+        for project, moment in zip(projects, times, strict=True):
             members = members_by_project[project.id]
             locale = LOCALES[0] if project.target_language == "ja" else LOCALES[1]
             # プロジェクト全体への投稿を 25 件超にして、議論のページ送りを試せるようにする。
             for _ in range(self.rng.randint(22, 40)):
-                discussions.append(TranslationComment(
-                    project=project,
-                    user=self.rng.choice(members),
-                    body=self._sentences(locale, locale.PROJECT_COMMENT_SENTENCES, 1, 2),
-                ))
+                discussions.append(
+                    TranslationComment(
+                        project=project,
+                        user=self.rng.choice(members),
+                        body=self._sentences(locale, locale.PROJECT_COMMENT_SENTENCES, 1, 2),
+                    )
+                )
                 discussion_times.append(self._after(moment, max_days=200))
             for unit in units_by_project.get(project.id, [])[:20]:
                 if self.rng.random() < 0.6:
-                    discussions.append(TranslationComment(
-                        project=project,
-                        unit=unit,
-                        user=self.rng.choice(members),
-                        body=self._sentences(
-                            locale, locale.PROJECT_COMMENT_SENTENCES, 1, 2
-                        ),
-                    ))
+                    discussions.append(
+                        TranslationComment(
+                            project=project,
+                            unit=unit,
+                            user=self.rng.choice(members),
+                            body=self._sentences(locale, locale.PROJECT_COMMENT_SENTENCES, 1, 2),
+                        )
+                    )
                     discussion_times.append(self._after(moment, max_days=200))
         self._save(TranslationComment, discussions, discussion_times, "翻訳の議論")
 
         # 本棚（公開プロジェクトを自分の /read に並べた状態）。
-        published = [
-            p for p in projects if p.status == TranslationProject.STATUS_PUBLISHED
-        ]
+        published = [p for p in projects if p.status == TranslationProject.STATUS_PUBLISHED]
         entries, entry_times = [], []
         for project in published:
-            for user in self.rng.sample(
-                people, min(self.rng.randint(5, 60), len(people))
-            ):
+            for user in self.rng.sample(people, min(self.rng.randint(5, 60), len(people))):
                 entries.append(TranslationLibraryEntry(user=user, project=project))
                 entry_times.append(self._past())
         if published:
             for project in published[:5]:
-                if not any(
-                    e.user_id == admin.id and e.project_id == project.id for e in entries
-                ):
-                    entries.append(
-                        TranslationLibraryEntry(user=admin, project=project)
-                    )
+                if not any(e.user_id == admin.id and e.project_id == project.id for e in entries):
+                    entries.append(TranslationLibraryEntry(user=admin, project=project))
                     entry_times.append(self._past(bias=3.0))
         self._save(TranslationLibraryEntry, entries, entry_times, "翻訳の本棚")
 
-        self.stdout.write(
-            f"  翻訳プロジェクト {len(projects)} 件 / ユニット {len(units)} 件"
-        )
+        self.stdout.write(f"  翻訳プロジェクト {len(projects)} 件 / ユニット {len(units)} 件")
         return projects, discussions
 
     def _seed_project_bible_comments(self, people, projects):
@@ -1088,12 +1101,14 @@ class Command(BaseCommand):
             entry = by_book.get(project.source_book_id) or self.rng.choice(self.catalog)
             _entry, chapter_number, verse_number = self._passage(entry)
             locale = self._locale()
-            objects.append(Comment(
-                user=self.rng.choice(people),
-                translation_project=project,
-                body=self._sentences(locale, locale.COMMENT_SENTENCES, 1, 2),
-                **self._location(entry, chapter_number, verse_number),
-            ))
+            objects.append(
+                Comment(
+                    user=self.rng.choice(people),
+                    translation_project=project,
+                    body=self._sentences(locale, locale.COMMENT_SENTENCES, 1, 2),
+                    **self._location(entry, chapter_number, verse_number),
+                )
+            )
             times.append(self._past())
         self._save(Comment, objects, times, "コメント")
         return []
@@ -1159,15 +1174,15 @@ class Command(BaseCommand):
         book_ids = list(chapters)
         objects, times = [], []
         for user in people:
-            wanted = min(
-                self.rng.randint(3, self.scale["progress_per_user"] * 2), len(book_ids)
-            )
+            wanted = min(self.rng.randint(3, self.scale["progress_per_user"] * 2), len(book_ids))
             for book_id in self.rng.sample(book_ids, wanted):
-                objects.append(ReadingProgress(
-                    user=user,
-                    book_id=book_id,
-                    chapter_id=self.rng.choice(chapters[book_id]),
-                ))
+                objects.append(
+                    ReadingProgress(
+                        user=user,
+                        book_id=book_id,
+                        chapter_id=self.rng.choice(chapters[book_id]),
+                    )
+                )
                 times.append(self._past(bias=3.0))
         self._save(ReadingProgress, objects, times, "読みかけ")
         self.stdout.write(f"  読みかけ {len(objects)} 件")
@@ -1177,9 +1192,7 @@ class Command(BaseCommand):
     def _seed_plans(self, people, admin):
         """プラン。日数のばらつき・正典と外典をまたぐ並び・購読と進捗を作る。"""
         visibilities = (
-            [Plan.VISIBILITY_PUBLIC] * 8
-            + [Plan.VISIBILITY_UNLISTED]
-            + [Plan.VISIBILITY_PRIVATE]
+            [Plan.VISIBILITY_PUBLIC] * 8 + [Plan.VISIBILITY_UNLISTED] + [Plan.VISIBILITY_PRIVATE]
         )
         plans, times, day_counts = [], [], []
         for index in range(self.scale["plans"]):
@@ -1189,36 +1202,38 @@ class Command(BaseCommand):
                 f"{'' if locale.LANG == 'ja' else ' '}"
                 f"{self.rng.choice(locale.PLAN_TITLE_TAILS)}"
             )
-            plans.append(Plan(
-                owner=admin if index % 25 == 0 else self.rng.choice(people),
-                title=title,
-                description=self.rng.choice(locale.PLAN_DESCRIPTIONS),
-                note=self.rng.choice(locale.PLAN_NOTES),
-                visibility=self.rng.choice(visibilities),
-            ))
+            plans.append(
+                Plan(
+                    owner=admin if index % 25 == 0 else self.rng.choice(people),
+                    title=title,
+                    description=self.rng.choice(locale.PLAN_DESCRIPTIONS),
+                    note=self.rng.choice(locale.PLAN_NOTES),
+                    visibility=self.rng.choice(visibilities),
+                )
+            )
             times.append(self._past(bias=1.5))
             # 1 本だけ 1 年通読（上限 365 日）にする。
-            day_counts.append(
-                MAX_DAYS_PER_PLAN if index == 1 else self.rng.choice(PLAN_DAY_COUNTS)
-            )
+            day_counts.append(MAX_DAYS_PER_PLAN if index == 1 else self.rng.choice(PLAN_DAY_COUNTS))
 
         # 管理者のプランは、公開・下書き・読者ゼロを必ず 1 本ずつ用意する。
         for visibility in (Plan.VISIBILITY_PUBLIC, Plan.VISIBILITY_PRIVATE):
             locale = LOCALES[0]
-            plans.append(Plan(
-                owner=admin,
-                title=f"{self.rng.choice(locale.PLAN_TITLE_HEADS)}"
-                      f"{self.rng.choice(locale.PLAN_TITLE_TAILS)}",
-                description=self.rng.choice(locale.PLAN_DESCRIPTIONS),
-                visibility=visibility,
-            ))
+            plans.append(
+                Plan(
+                    owner=admin,
+                    title=f"{self.rng.choice(locale.PLAN_TITLE_HEADS)}"
+                    f"{self.rng.choice(locale.PLAN_TITLE_TAILS)}",
+                    description=self.rng.choice(locale.PLAN_DESCRIPTIONS),
+                    visibility=visibility,
+                )
+            )
             times.append(self._past(bias=3.0))
             day_counts.append(self.rng.choice(PLAN_DAY_COUNTS))
         self._save(Plan, plans, times, "プラン")
 
         days, day_times, readings, reading_times = [], [], [], []
         days_by_plan = {}
-        for plan, moment, count in zip(plans, times, day_counts):
+        for plan, moment, count in zip(plans, times, day_counts, strict=True):
             for number in range(1, count + 1):
                 locale = self._locale()
                 day = PlanDay(
@@ -1226,12 +1241,10 @@ class Command(BaseCommand):
                     number=number,
                     # 題も文章も無い日を混ぜる（書きかけのプランの見え方の確認）。
                     title=(
-                        "" if self.rng.random() < 0.2
-                        else self.rng.choice(locale.PLAN_DAY_TITLES)
+                        "" if self.rng.random() < 0.2 else self.rng.choice(locale.PLAN_DAY_TITLES)
                     ),
                     devotional=(
-                        "" if self.rng.random() < 0.15
-                        else self.rng.choice(locale.PLAN_DEVOTIONALS)
+                        "" if self.rng.random() < 0.15 else self.rng.choice(locale.PLAN_DEVOTIONALS)
                     ),
                 )
                 days.append(day)
@@ -1245,17 +1258,20 @@ class Command(BaseCommand):
                     entries[-1] = self.rng.choice(self.apocrypha)
                 for order, entry in enumerate(entries):
                     chapter_number = self.rng.choice(entry["chapters"])[0]
-                    readings.append(PlanDayReading(
-                        day=day,
-                        canonical_book_id=entry["id"],
-                        chapter_number=chapter_number,
-                        # あえて訳を指定する日を作る（原文で読ませる日など）。
-                        translation=(
-                            self.rng.choice(entry["translations"])
-                            if self.rng.random() < 0.2 else ""
-                        ),
-                        order=order,
-                    ))
+                    readings.append(
+                        PlanDayReading(
+                            day=day,
+                            canonical_book_id=entry["id"],
+                            chapter_number=chapter_number,
+                            # あえて訳を指定する日を作る（原文で読ませる日など）。
+                            translation=(
+                                self.rng.choice(entry["translations"])
+                                if self.rng.random() < 0.2
+                                else ""
+                            ),
+                            order=order,
+                        )
+                    )
                     reading_times.append(moment)
         self._save(PlanDay, days, day_times, "プランの日")
         self._save(PlanDayReading, readings, reading_times, "プランの読む章")
@@ -1268,24 +1284,22 @@ class Command(BaseCommand):
                 continue  # 読者ゼロのプラン（日の並べ替えができる状態）
             wanted = min(self.rng.choice([1, 2, 3, 5, 8, 13, 21, 40]), len(people))
             for user in self.rng.sample(people, wanted):
-                subscriptions.append(PlanSubscription(
-                    user=user,
-                    plan=plan,
-                    is_active=self.rng.random() > 0.15,
-                ))
+                subscriptions.append(
+                    PlanSubscription(
+                        user=user,
+                        plan=plan,
+                        is_active=self.rng.random() > 0.15,
+                    )
+                )
                 subscription_times.append(self._past(bias=3.0))
         # 管理者は 5 本読んでいる状態にする。
         for plan in [p for p in public_plans if p.owner_id != admin.id][:5]:
-            if not any(
-                s.user_id == admin.id and s.plan_id == plan.id for s in subscriptions
-            ):
-                subscriptions.append(
-                    PlanSubscription(user=admin, plan=plan, is_active=True)
-                )
+            if not any(s.user_id == admin.id and s.plan_id == plan.id for s in subscriptions):
+                subscriptions.append(PlanSubscription(user=admin, plan=plan, is_active=True))
                 subscription_times.append(self._past(bias=3.0))
         # 同じ人が同じプランを二重に読むことはないので、重複を落としてから入れる。
         unique, unique_times, seen = [], [], set()
-        for subscription, moment in zip(subscriptions, subscription_times):
+        for subscription, moment in zip(subscriptions, subscription_times, strict=True):
             key = (subscription.user_id, subscription.plan_id)
             if key in seen:
                 continue
@@ -1293,7 +1307,7 @@ class Command(BaseCommand):
             unique.append(subscription)
             unique_times.append(moment)
         PlanSubscription.objects.bulk_create(unique, batch_size=1000)
-        for subscription, moment in zip(unique, unique_times):
+        for subscription, moment in zip(unique, unique_times, strict=True):
             subscription.created_at = moment
             subscription.updated_at = moment
             subscription.started_at = moment
@@ -1304,7 +1318,7 @@ class Command(BaseCommand):
 
         # 進捗。未着手・途中・完走を混ぜる。
         progress, progress_times = [], []
-        for subscription, moment in zip(unique, unique_times):
+        for subscription, moment in zip(unique, unique_times, strict=True):
             plan_days = days_by_plan.get(subscription.plan_id, [])
             if not plan_days:
                 continue
@@ -1314,9 +1328,7 @@ class Command(BaseCommand):
                 progress.append(PlanDayProgress(subscription=subscription, day=day))
                 progress_times.append(self._after(moment, max_days=120))
         self._save(PlanDayProgress, progress, progress_times, "プランの進捗")
-        self.stdout.write(
-            f"  プラン {len(plans)} 件 / 日 {len(days)} 件 / 購読 {len(unique)} 件"
-        )
+        self.stdout.write(f"  プラン {len(plans)} 件 / 日 {len(days)} 件 / 購読 {len(unique)} 件")
 
     # ── 通知・通報 ──────────────────────────────────────────────────────────
 
@@ -1335,13 +1347,15 @@ class Command(BaseCommand):
         def add(recipient_id, actor_id, kind, moment, **target):
             if recipient_id == actor_id:
                 return
-            objects.append(Notification(
-                recipient_id=recipient_id,
-                actor_id=actor_id,
-                notification_type=kind,
-                is_read=self.rng.random() < 0.55,
-                **target,
-            ))
+            objects.append(
+                Notification(
+                    recipient_id=recipient_id,
+                    actor_id=actor_id,
+                    notification_type=kind,
+                    is_read=self.rng.random() < 0.55,
+                    **target,
+                )
+            )
             times.append(moment)
             if len(objects) >= FLUSH_EVERY:
                 flush()
@@ -1351,53 +1365,67 @@ class Command(BaseCommand):
             parent = by_id.get(reply.parent_id)
             if parent:
                 add(
-                    parent.user_id, reply.user_id, Notification.REPLY,
-                    reply.created_at, comment=reply,
+                    parent.user_id,
+                    reply.user_id,
+                    Notification.REPLY,
+                    reply.created_at,
+                    comment=reply,
                 )
 
-        voted = Vote.objects.values_list("comment__user_id", "user_id", "comment_id")[
-            :20000
-        ]
+        voted = Vote.objects.values_list("comment__user_id", "user_id", "comment_id")[:20000]
         for owner_id, voter_id, comment_id in voted:
             if self.rng.random() < 0.35:
                 add(
-                    owner_id, voter_id, Notification.UPVOTE,
-                    self._past(bias=3.0), comment_id=comment_id,
+                    owner_id,
+                    voter_id,
+                    Notification.UPVOTE,
+                    self._past(bias=3.0),
+                    comment_id=comment_id,
                 )
 
         alive = [c for c in comments if not c.is_deleted]
         for comment in self.rng.sample(alive, min(400, len(alive))):
             add(
-                self.rng.choice(people).id, comment.user_id, Notification.MENTION,
-                comment.created_at, comment=comment,
+                self.rng.choice(people).id,
+                comment.user_id,
+                Notification.MENTION,
+                comment.created_at,
+                comment=comment,
             )
 
         for answer in answers:
             if not answer.is_deleted and self.rng.random() < 0.8:
                 add(
-                    answer.question.user_id, answer.user_id, Notification.REPLY,
-                    answer.created_at, answer=answer,
+                    answer.question.user_id,
+                    answer.user_id,
+                    Notification.REPLY,
+                    answer.created_at,
+                    answer=answer,
                 )
 
         for discussion in project_comments:
             if self.rng.random() < 0.2:
                 add(
-                    discussion.project.owner_id, discussion.user_id,
-                    Notification.REPLY, discussion.created_at,
+                    discussion.project.owner_id,
+                    discussion.user_id,
+                    Notification.REPLY,
+                    discussion.created_at,
                     translation_comment=discussion,
                 )
 
         # 管理者宛の通知を厚めにする（未読タブが複数ページになるように）。
         for comment in self.rng.sample(alive, min(200, len(alive))):
-            objects.append(Notification(
-                recipient=admin,
-                actor_id=comment.user_id,
-                notification_type=self.rng.choice(
-                    [Notification.REPLY, Notification.UPVOTE, Notification.MENTION]
-                ),
-                comment=comment,
-                is_read=self.rng.random() < 0.3,
-            ))
+            objects.append(
+                Notification(
+                    recipient=admin,
+                    actor_id=comment.user_id,
+                    notification_type=self.rng.choice(
+                        [Notification.REPLY, Notification.UPVOTE, Notification.MENTION]
+                    ),
+                    comment=comment,
+                    is_read=self.rng.random() < 0.3,
+                )
+            )
             times.append(self._past(bias=3.0))
 
         flush()
@@ -1422,11 +1450,13 @@ class Command(BaseCommand):
             if key in seen:
                 continue
             seen.add(key)
-            objects.append(Report(
-                reporter=reporter,
-                reason=self.rng.choice(reasons),
-                **{f"{field}_id": target.id},
-            ))
+            objects.append(
+                Report(
+                    reporter=reporter,
+                    reason=self.rng.choice(reasons),
+                    **{f"{field}_id": target.id},
+                )
+            )
             times.append(self._past())
         self._save(Report, objects, times, "通報")
         self.stdout.write(f"  通報 {len(objects)} 件")
@@ -1446,6 +1476,4 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write("  管理者は既にあったので、パスワードは変えていません")
-        self.stdout.write(
-            self.style.WARNING(f"  シード利用者の共通パスワード: {user_password}")
-        )
+        self.stdout.write(self.style.WARNING(f"  シード利用者の共通パスワード: {user_password}"))
