@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
 import { ApiError, type Book, type Chapter, type Verse } from "@/lib/api";
 import { serverFetch } from "@/lib/apiServer";
-import { getT } from "@/lib/i18nServer";
+import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { getRequestTranslation } from "@/lib/serverLanguage";
 import { getBookBySlug, resolveTranslation } from "@/lib/books";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
-import { getRequestLanguage } from "@/lib/i18nServer";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { RetryButton } from "@/components/ui";
 import { ChapterReader } from "@/components/reader/ChapterReader";
