@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { ApiError, type ListPage } from "./apiClient";
+import { ApiError, extractErrorCode, type ListPage } from "./apiClient";
 import { getRequestLanguage } from "./serverLanguage";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -40,7 +40,14 @@ export async function serverFetch<T>(path: string, init?: RequestInit): Promise<
   });
 
   if (!res.ok) {
-    throw new ApiError(res.status, `Request failed: ${path}`);
+    // サーバーが理由を機械可読に添えていれば拾う（「その訳に書が無い」「章が無い」など）。
+    let code: string | undefined;
+    try {
+      code = extractErrorCode(await res.json());
+    } catch {
+      // 本文が JSON でないことはある。その場合は code 無しで扱う。
+    }
+    throw new ApiError(res.status, `Request failed: ${path}`, code);
   }
   return (await res.json()) as T;
 }

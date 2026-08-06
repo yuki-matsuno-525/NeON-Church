@@ -46,7 +46,7 @@ export class ApiError extends Error {
 // サーバーが理由を機械可読に添えているとき（{ detail: "...", code: "chapter_not_found" }）
 // その code を取り出す。表示する文言は言語に合わせて自前で決めるが、
 // 「その訳に書が無い」「章が無い」のような分岐は code で見分ける。
-function extractErrorCode(body: unknown): string | undefined {
+export function extractErrorCode(body: unknown): string | undefined {
   if (body && typeof body === "object" && !Array.isArray(body)) {
     const code = (body as Record<string, unknown>).code;
     if (typeof code === "string") return code;

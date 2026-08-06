@@ -1,127 +1,139 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import { useParams } from "next/navigation";
+import { render, screen } from "@testing-library/react";
 import ChapterPage from "./page";
 
 vi.mock("next/navigation", () => ({
-  useParams: vi.fn(),
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
   usePathname: () => "/matthew/4",
   useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
 }));
 
 vi.mock("next/link", () => ({
-  default: ({
-    href,
-    title,
-    children,
-    ...props
-  }: {
-    href: string;
-    title?: string;
-    children: React.ReactNode;
-  }) => (
-    <a href={href} title={title} {...props}>
-      {children}
-    </a>
+  default: ({ href, title, children, ...props }: { href: string; title?: string; children: React.ReactNode }) => (
+    <a href={href} title={title} {...props}>{children}</a>
   ),
 }));
 
+vi.mock("@/lib/i18nServer", async () => {
+  const { translations } = await import("@/lib/i18nDictionary");
+  return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
+});
+
+vi.mock("@/lib/serverLanguage", () => ({
+  getRequestTranslation: vi.fn().mockResolvedValue("口語訳"),
+}));
+
+vi.mock("@/lib/apiServer", () => ({ serverFetch: vi.fn() }));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return {
-    ...actual,
-    // 書・章・節は1回でまとめて取る（3往復の直列待ちを解消した）。
-    fetchChapterRead: vi.fn().mockResolvedValue({
-      book: { id: "book1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
-      chapter: { id: "ch4", book: "book1", number: 4 },
-      verses: [],
-    }),
-    fetchChapterBookmarks: vi.fn().mockResolvedValue([]),
-  };
+  return { ...actual, fetchChapterBookmarks: vi.fn().mockResolvedValue([]) };
 });
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "u1", username: "alice" } }),
 }));
 
-vi.mock("@/components/reader/VerseList", () => ({
-  VerseList: () => <div data-testid="verse-list" />,
-}));
+vi.mock("@/components/reader/VerseList", () => ({ VerseList: () => <div data-testid="verse-list" /> }));
+vi.mock("@/components/reader/CommentPanel", () => ({ CommentPanel: () => <div data-testid="comment-panel" /> }));
+vi.mock("@/components/reader/ChapterComments", () => ({ ChapterComments: () => <div data-testid="chapter-comments" /> }));
 
-vi.mock("@/components/reader/CommentPanel", () => ({
-  CommentPanel: () => <div data-testid="comment-panel" />,
-}));
-
-vi.mock("@/components/reader/ChapterComments", () => ({
-  ChapterComments: () => <div data-testid="chapter-comments" />,
-}));
-
-describe("ChapterPage - 章ナビゲーション", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // デフォルト: 4章
-    vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "4" });
+/** 「この書のこの章を開いた」状態を作る。書・章・節は1回でまとめて返ってくる。 */
+async function mockChapterRead(bookId: string, name: string, number: number) {
+  const apiServer = await import("@/lib/apiServer");
+  vi.mocked(apiServer.serverFetch).mockResolvedValue({
+    book: { id: bookId, name, translation: "口語訳", order: 1 },
+    chapter: { id: `ch${number}`, book: bookId, number },
+    verses: [],
   });
+  return apiServer;
+}
+
+const renderChapter = async (slug: string, chapter: string) =>
+  render(
+    await ChapterPage({
+      params: Promise.resolve({ book: slug, chapter }),
+      searchParams: Promise.resolve({}),
+    }),
+  );
+
+describe("本文ページ - 章ナビゲーション", () => {
+  beforeEach(() => vi.clearAllMocks());
 
   const prevLink = () => screen.queryByRole("link", { name: /前の章/ });
   const nextLink = () => screen.queryByRole("link", { name: /次の章/ });
 
-  it("中間の章のとき前後両方のリンクが表示される", async () => {
-    render(<ChapterPage />);
-    await waitFor(() => {
-      expect(prevLink()).toBeInTheDocument();
-      expect(nextLink()).toBeInTheDocument();
-    });
-    expect(prevLink()).toHaveAttribute("aria-label", expect.stringContaining("3"));
-    expect(nextLink()).toHaveAttribute("aria-label", expect.stringContaining("5"));
-  });
+  it("中間の章のとき前後両方のリンクが正しいURLで表示される", async () => {
+    await mockChapterRead("book1", "マタイによる福音書", 4);
 
-  it("前後のリンクが正しいURLを持つ", async () => {
-    render(<ChapterPage />);
-    await waitFor(() => {
-      expect(prevLink()).toHaveAttribute("href", "/matthew/3");
-      expect(nextLink()).toHaveAttribute("href", "/matthew/5");
-    });
-  });
+    await renderChapter("matthew", "4");
 
-  /** 「この書のこの章を開いた」状態を作る。書・章・節は1回でまとめて返ってくる。 */
-  const mockChapterRead = async (book: { id: string; name: string; order: number }, number: number) => {
-    const { fetchChapterRead } = await import("@/lib/api");
-    vi.mocked(fetchChapterRead).mockResolvedValue({
-      book: { ...book, translation: "口語訳" },
-      chapter: { id: `ch${number}`, book: book.id, number },
-      verses: [],
-    });
-  };
+    expect(prevLink()).toHaveAttribute("href", "/matthew/3");
+    expect(nextLink()).toHaveAttribute("href", "/matthew/5");
+  });
 
   it("1章のとき前の章リンクが表示されない", async () => {
-    vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "1" });
-    await mockChapterRead({ id: "book1", name: "マタイによる福音書", order: 1 }, 1);
+    await mockChapterRead("book1", "マタイによる福音書", 1);
 
-    render(<ChapterPage />);
+    await renderChapter("matthew", "1");
 
-    await waitFor(() => expect(nextLink()).toBeInTheDocument());
+    expect(nextLink()).toBeInTheDocument();
     expect(prevLink()).not.toBeInTheDocument();
   });
 
   it("最終章（マタイ28章）のとき次の章リンクが表示されない", async () => {
-    vi.mocked(useParams).mockReturnValue({ book: "matthew", chapter: "28" });
-    await mockChapterRead({ id: "book1", name: "マタイによる福音書", order: 1 }, 28);
+    await mockChapterRead("book1", "マタイによる福音書", 28);
 
-    render(<ChapterPage />);
+    await renderChapter("matthew", "28");
 
-    await waitFor(() => expect(prevLink()).toBeInTheDocument());
+    expect(prevLink()).toBeInTheDocument();
     expect(nextLink()).not.toBeInTheDocument();
   });
 
   it("書ごとの最終章が正しく制御される（マルコ16章）", async () => {
-    vi.mocked(useParams).mockReturnValue({ book: "mark", chapter: "16" });
-    await mockChapterRead({ id: "book2", name: "マルコによる福音書", order: 2 }, 16);
+    await mockChapterRead("book2", "マルコによる福音書", 16);
 
-    render(<ChapterPage />);
+    await renderChapter("mark", "16");
 
-    await waitFor(() => expect(prevLink()).toBeInTheDocument());
+    expect(prevLink()).toBeInTheDocument();
     expect(nextLink()).not.toBeInTheDocument();
+  });
+});
+
+describe("本文ページ - サーバー描画", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("見出しを開いた直後から出す（読み込み中の枠を挟まない）", async () => {
+    await mockChapterRead("book1", "マタイによる福音書", 4);
+
+    await renderChapter("matthew", "4");
+
+    expect(screen.getByRole("heading", { name: "マタイ 第4章" })).toBeInTheDocument();
+  });
+
+  it("覚えている訳でサーバーに問い合わせる", async () => {
+    const apiServer = await mockChapterRead("book1", "マタイによる福音書", 4);
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("文語訳");
+
+    await renderChapter("matthew", "4");
+
+    expect(vi.mocked(apiServer.serverFetch).mock.calls[0][0]).toContain(
+      `translation=${encodeURIComponent("文語訳")}`,
+    );
+  });
+
+  it("その訳にこの書が無いときは、別の訳へ切り替える導線を出す", async () => {
+    const apiServer = await import("@/lib/apiServer");
+    const { ApiError } = await import("@/lib/api");
+    vi.mocked(apiServer.serverFetch).mockRejectedValue(new ApiError(404, "not found", "book_not_found"));
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("文語訳");
+
+    await renderChapter("matthew", "4");
+
+    expect(screen.getByRole("alert")).toHaveTextContent("文語訳");
+    expect(screen.getAllByRole("button", { name: /に切り替え$/ }).length).toBeGreaterThan(0);
   });
 });
