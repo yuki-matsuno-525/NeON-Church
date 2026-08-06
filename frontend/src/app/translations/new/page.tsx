@@ -8,7 +8,8 @@ import Link from "next/link";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
-import { useBookCatalogState, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
+import { catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
+import { useBookCatalogState } from "@/hooks/useBookCatalog";
 import { Button, SkeletonList } from "@/components/ui";
 import { translationUiText } from "../translationUiText";
 

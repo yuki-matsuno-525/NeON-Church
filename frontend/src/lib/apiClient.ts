@@ -613,7 +613,7 @@ export function confirmPasswordReset(data: {
 // ---------------------------------------------------------------------------
 
 /** 質問一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
-export function fetchQuestionPage(params?: {
+export type QuestionListParams = {
   /** 訳ごとの Book id。カンマ区切りで複数渡すと、同じ書の全訳をまとめて絞れる。 */
   book_id?: string;
   /** 箇所で絞る（読書ページの Q&A タブ用）。訳非依存の書 slug。 */
@@ -624,7 +624,10 @@ export function fetchQuestionPage(params?: {
   answered?: boolean;
   q?: string;
   page?: number;
-}): Promise<ListPage<QAQuestion>> {
+};
+
+/** 質問一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使うため切り出してある。 */
+export function questionListPath(params?: QuestionListParams): string {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.book_slug) qs.set("book_slug", params.book_slug);
@@ -634,7 +637,11 @@ export function fetchQuestionPage(params?: {
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page && params.page > 1) qs.set("page", String(params.page));
-  return apiFetchPage(`/qa/questions/?${qs}`);
+  return `/qa/questions/?${qs}`;
+}
+
+export function fetchQuestionPage(params?: QuestionListParams): Promise<ListPage<QAQuestion>> {
+  return apiFetchPage(questionListPath(params));
 }
 
 export function fetchQuestion(id: string): Promise<QAQuestion> {

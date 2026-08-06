@@ -21,7 +21,7 @@ import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
 import { QACard } from "@/components/qa/QACard";
 import { QAPostForm } from "@/components/qa/QAPostForm";
-import { useBookCatalog } from "@/lib/bookCatalog";
+import { useBookCatalog } from "@/hooks/useBookCatalog";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
