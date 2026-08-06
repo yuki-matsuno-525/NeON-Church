@@ -3,11 +3,12 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import ReadPage from "./page";
 import type { TranslationProject } from "@/lib/api";
 
-const mockReplace = vi.fn();
-let mockSearchParams = new URLSearchParams();
+const replace = vi.fn();
+let currentSearch = "";
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: mockReplace }),
-  useSearchParams: () => mockSearchParams,
+  useRouter: () => ({ push: vi.fn(), replace }),
+  useSearchParams: () => new URLSearchParams(currentSearch),
 }));
 
 vi.mock("next/link", () => ({
@@ -16,19 +17,23 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("@/lib/i18nServer", async () => {
+  const { translations } = await import("@/lib/i18nDictionary");
+  return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
+});
+
+vi.mock("@/lib/apiServer", () => ({
+  serverFetchAll: vi.fn(),
+  serverIsSignedIn: vi.fn(),
+}));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return {
-    ...actual,
-    fetchReadingProgress: vi.fn().mockResolvedValue([]),
-    fetchTranslationLibrary: vi.fn(),
-  };
+  return { ...actual, fetchReadingProgress: vi.fn().mockResolvedValue([]) };
 });
 
 const mockUseAuth = vi.fn();
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => mockUseAuth(),
-}));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mockUseAuth() }));
 
 const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationProject => ({
   id: "tp1",
@@ -49,83 +54,85 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   ...overrides,
 });
 
-describe("ReadPage マイ翻訳セクション", () => {
+async function mockServer({ signedIn = false, library = [] as TranslationProject[] } = {}) {
+  const apiServer = await import("@/lib/apiServer");
+  vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
+  vi.mocked(apiServer.serverFetchAll).mockResolvedValue(library);
+  return apiServer;
+}
+
+const renderPage = async (params: Record<string, string> = {}) =>
+  render(await ReadPage({ searchParams: Promise.resolve(params) }));
+
+describe("読むところの入口", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    mockSearchParams = new URLSearchParams();
-  });
-
-  it("未ログインのときはマイ翻訳セクションを表示しない", async () => {
-    const { fetchTranslationLibrary } = await import("@/lib/api");
+    currentSearch = "";
     mockUseAuth.mockReturnValue({ user: null, loading: false });
-
-    render(<ReadPage />);
-
-    expect(screen.queryByText("本棚")).not.toBeInTheDocument();
-    expect(vi.mocked(fetchTranslationLibrary)).not.toHaveBeenCalled();
   });
 
-  it("登録が0件のときはセクションを表示しない", async () => {
-    const { fetchTranslationLibrary } = await import("@/lib/api");
-    vi.mocked(fetchTranslationLibrary).mockResolvedValue([]);
+  it("未ログインのときは本棚を取りに行かない", async () => {
+    const apiServer = await mockServer({ signedIn: false });
+
+    await renderPage();
+
+    expect(screen.queryByText("本棚")).not.toBeInTheDocument();
+    expect(vi.mocked(apiServer.serverFetchAll)).not.toHaveBeenCalled();
+  });
+
+  it("本棚が0件のときはカテゴリを出さない", async () => {
+    await mockServer({ signedIn: true, library: [] });
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
 
-    render(<ReadPage />);
+    await renderPage();
 
-    await waitFor(() => expect(vi.mocked(fetchTranslationLibrary)).toHaveBeenCalled());
     expect(screen.queryByText("本棚")).not.toBeInTheDocument();
   });
 
-  it("登録があると翻訳本棚カテゴリを選ぶとカードを表示し /translations/{id}/read にリンクする", async () => {
-    const { fetchTranslationLibrary } = await import("@/lib/api");
-    vi.mocked(fetchTranslationLibrary).mockResolvedValue([makeProject()]);
+  it("本棚に登録があると、カテゴリを選んだときに読むページへリンクする", async () => {
+    await mockServer({ signedIn: true, library: [makeProject()] });
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
 
-    render(<ReadPage />);
+    await renderPage();
 
     // 翻訳本棚はカテゴリチップとして現れる。既定では別ジャンルが選択されているのでカードはまだ出ない。
-    const libraryChip = await screen.findByRole("button", { name: /本棚/ });
+    const chip = screen.getByRole("button", { name: /本棚/ });
     expect(screen.queryByText("マタイ英訳プロジェクト")).not.toBeInTheDocument();
 
-    fireEvent.click(libraryChip);
+    fireEvent.click(chip);
 
-    const card = screen.getByText("マタイ英訳プロジェクト").closest("a");
-    expect(card).toHaveAttribute("href", "/translations/tp1/read");
+    expect(screen.getByText("マタイ英訳プロジェクト").closest("a")).toHaveAttribute(
+      "href",
+      "/translations/tp1/read",
+    );
   });
 
   it("書名検索でカテゴリーをまたいだ書を表示する", async () => {
-    const { fetchTranslationLibrary } = await import("@/lib/api");
-    vi.mocked(fetchTranslationLibrary).mockResolvedValue([]);
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    await mockServer();
 
-    render(<ReadPage />);
+    await renderPage();
 
     const searchBox = screen.getByRole("searchbox", { name: "書を検索" });
-    fireEvent.change(searchBox, {
-      target: { value: "Peter" },
-    });
+    fireEvent.change(searchBox, { target: { value: "Peter" } });
 
     expect(screen.getByText("ペテロの福音書")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
-
     expect(searchBox).toHaveValue("");
   });
 
-  it("hydrates book search from q and replaces the URL after edits", async () => {
-    mockSearchParams = new URLSearchParams("q=Peter");
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
+  it("URL の q で入力欄を初期化し、打ち直したら URL も書き換える", async () => {
+    await mockServer();
+    currentSearch = "q=Peter";
 
-    render(<ReadPage />);
+    await renderPage({ q: "Peter" });
 
     const searchBox = screen.getByRole("searchbox");
     expect(searchBox).toHaveValue("Peter");
 
     fireEvent.change(searchBox, { target: { value: "John" } });
 
-    await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith("/read?q=John", { scroll: false })
-    );
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/read?q=John", { scroll: false }));
   });
 });

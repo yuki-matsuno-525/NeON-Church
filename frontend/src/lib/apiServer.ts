@@ -69,6 +69,26 @@ export async function serverFetchList<T>(path: string): Promise<T[]> {
   return Array.isArray(data) ? data : data.results;
 }
 
+// ページを辿る回数の上限。壊れた next が返ってきても止まらなくならないようにする。
+const MAX_PAGES = 20;
+
+/**
+ * ページ分けされた一覧を、最後まで辿って取り切る。
+ * 本棚のように「全部そろっていないと絞り込めない」ものだけに使う。
+ */
+export async function serverFetchAll<T>(path: string): Promise<T[]> {
+  const separator = path.includes("?") ? "&" : "?";
+  const all: T[] = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const data = await serverFetch<Paginated<T> | T[]>(`${path}${separator}page=${page}&page_size=100`);
+    // ページ分けされていない一覧は配列がそのまま返る。
+    if (Array.isArray(data)) return data;
+    all.push(...data.results);
+    if (!data.next) break;
+  }
+  return all;
+}
+
 /** ログインしているかどうかだけを、サーバー側で確かめる。 */
 export async function serverIsSignedIn(): Promise<boolean> {
   return Boolean((await cookies()).get("access_token")?.value);
