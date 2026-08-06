@@ -133,20 +133,6 @@
   object-fit: contain;
 }
 
-/* 画像アイコンが無い項目は、四角い枠に線画アイコンを入れる */
-.sectionIconBox {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.20);
-  background: rgba(255, 255, 255, 0.10);
-  color: rgba(255, 255, 255, 0.90);
-}
-
 .sectionTitle {
   margin: 0;
   font-family: var(--font-serif);
