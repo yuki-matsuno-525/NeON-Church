@@ -749,16 +749,21 @@ export function fetchTranslationLanguages(): Promise<TranslationLanguage[]> {
 export type TranslationStatus = "published" | "active" | "draft";
 
 // 翻訳一覧はステータス列ごとに 20 件ページング（ボードの各カラム用）。count で総ページ数を出す。
+/** 翻訳プロジェクト一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使う。 */
+export function translationListPath(status?: TranslationStatus, page = 1, q = ""): string {
+  const qs = new URLSearchParams();
+  if (status) qs.set("status", status);
+  if (q.trim()) qs.set("q", q.trim());
+  qs.set("page", String(page));
+  return `/translations/?${qs.toString()}`;
+}
+
 export function fetchTranslations(
   status?: TranslationStatus,
   page = 1,
   q = "",
 ): Promise<PaginatedResponse<TranslationProject>> {
-  const qs = new URLSearchParams();
-  if (status) qs.set("status", status);
-  if (q.trim()) qs.set("q", q.trim());
-  qs.set("page", String(page));
-  return apiFetch(`/translations/?${qs.toString()}`);
+  return apiFetch(translationListPath(status, page, q));
 }
 
 export function fetchTranslation(id: string): Promise<TranslationProject> {
