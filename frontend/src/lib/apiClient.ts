@@ -978,13 +978,21 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
 // 記事
 // ---------------------------------------------------------------------------
 
-export function fetchArticles(params?: {
+export type ArticleListParams = {
   mine?: boolean;
   excludeMine?: boolean;
   tag?: string;
   author?: string;
   page?: number;
-}): Promise<PaginatedResponse<Article>> {
+};
+
+/**
+ * 記事一覧の問い合わせ先。
+ *
+ * 一覧画面はサーバー側で 1 ページ目を取り、続きをブラウザ側が読み足す。
+ * 絞り込みの付け方が二手に分かれないよう、道の組み立てはここだけに置く。
+ */
+export function articleListPath(params?: ArticleListParams): string {
   const qs = new URLSearchParams();
   if (params?.mine) qs.set("mine", "true");
   if (params?.excludeMine) qs.set("exclude_mine", "true");
@@ -992,7 +1000,16 @@ export function fetchArticles(params?: {
   if (params?.author) qs.set("author", params.author);
   if (params?.page) qs.set("page", String(params.page));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch(`/articles/${suffix}`);
+  return `/articles/${suffix}`;
+}
+
+export function fetchArticles(params?: ArticleListParams): Promise<PaginatedResponse<Article>> {
+  return apiFetch(articleListPath(params));
+}
+
+/** 「もっと見る」で読み足す一覧向け。1 ページ分を ListPage の形で返す。 */
+export function fetchArticlePage(params?: ArticleListParams): Promise<ListPage<Article>> {
+  return apiFetchPage(articleListPath(params));
 }
 
 export function fetchArticle(id: string): Promise<Article> {

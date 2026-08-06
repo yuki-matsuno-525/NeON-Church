@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { ApiError } from "./apiClient";
+import { ApiError, type ListPage } from "./apiClient";
 import { getRequestLanguage } from "./serverLanguage";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -47,10 +47,20 @@ export async function serverFetch<T>(path: string, init?: RequestInit): Promise<
 
 type Paginated<T> = { results: T[]; count: number; next: string | null };
 
-/** 一覧の 1 ページ目だけをサーバー側で取る。続きはブラウザ側が読み足す。 */
-export async function serverFetchPage<T>(path: string): Promise<{ results: T[]; count: number; hasMore: boolean }> {
-  const data = await serverFetch<Paginated<T>>(path);
-  return { results: data.results, count: data.count, hasMore: data.next !== null };
+/**
+ * 一覧の 1 ページ目だけをサーバー側で取る。続きはブラウザ側が読み足す。
+ *
+ * 戻りの形はブラウザ側の ListPage と同じにしてある。そのまま
+ * useLoadMore の initial に渡せるようにするため。
+ */
+export async function serverFetchPage<T, C = undefined>(path: string): Promise<ListPage<T, C>> {
+  const data = await serverFetch<Paginated<T> & { counts?: C }>(path);
+  return {
+    results: data.results,
+    count: data.count,
+    hasMore: data.next !== null,
+    counts: data.counts as C,
+  };
 }
 
 /** ページ分けされていない一覧（タグなど）をサーバー側で取る。 */
