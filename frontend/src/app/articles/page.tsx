@@ -1,102 +1,37 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchArticles, fetchArticleTags, type Article, type ArticleTag } from "@/lib/api";
-import { articleTagLabel, visibilityLabel } from "@/lib/articles";
-import { useT } from "@/lib/i18n";
-import { useAuth } from "@/contexts/AuthContext";
-import { type IconName } from "@/components/ui/Icon";
-import { AsyncList, LoadMoreButton } from "@/components/ui";
-import { ListColumn, ListPageHeader } from "@/components/list";
-import type { Tone } from "@/components/list/tone";
+import { articleListPath, type Article, type ArticleTag, type ListPage } from "@/lib/api";
+import { articleTagLabel } from "@/lib/articles";
+import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
+import { getT } from "@/lib/i18nServer";
+import { ListPageHeader } from "@/components/list";
+import { ArticleFeedColumn } from "@/components/articles/ArticleFeedColumn";
 
-type ArticleFeed = {
-  articles: Article[];
-  total: number;
-  nextPage: number;
-  hasMore: boolean;
-  loading: boolean;
-  error: string | null;
-};
+/**
+ * 記事の一覧。
+ *
+ * 1 ページ目はここ（サーバー側）で取る。以前は画面が出てから取りに行っていたので、
+ * 開いた直後は空の枠が並んでいた。
+ *
+ * ブラウザ側に残しているのは「もっと見る」で続きを読み足すところだけ。
+ * 主題での絞り込みは URL の tag で表すようにしたので、押すと別の URL へ移り、
+ * 移った先をまたサーバーが組み立てて返す。
+ */
+export default async function ArticlesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tag?: string }>;
+}) {
+  const { tag } = await searchParams;
+  const t = await getT();
+  const signedIn = await serverIsSignedIn();
 
-const emptyFeed: ArticleFeed = {
-  articles: [],
-  total: 0,
-  nextPage: 1,
-  hasMore: false,
-  loading: true,
-  error: null,
-};
-
-export default function ArticlesPage() {
-  const t = useT();
-  const { user } = useAuth();
-  const [publicFeed, setPublicFeed] = useState<ArticleFeed>(emptyFeed);
-  const [myFeed, setMyFeed] = useState<ArticleFeed>(emptyFeed);
-  const [tags, setTags] = useState<ArticleTag[]>([]);
-  const [tagError, setTagError] = useState(false);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
-
-  const loadTags = useCallback(async () => {
-    setTagError(false);
-    try {
-      setTags(await fetchArticleTags());
-    } catch {
-      setTagError(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadTags();
-  }, [loadTags]);
-
-  useEffect(() => {
-    const syncFromUrl = () => setActiveTag(new URLSearchParams(window.location.search).get("tag"));
-    syncFromUrl();
-    window.addEventListener("popstate", syncFromUrl);
-    return () => window.removeEventListener("popstate", syncFromUrl);
-  }, []);
-
-  const loadFeed = useCallback(async (kind: "public" | "mine", page: number, append: boolean) => {
-    const setter = kind === "public" ? setPublicFeed : setMyFeed;
-    setter((current) => ({ ...current, loading: true, error: null }));
-    try {
-      const response = await fetchArticles({
-        mine: kind === "mine" || undefined,
-        excludeMine: kind === "public" && !!user || undefined,
-        tag: activeTag ?? undefined,
-        page,
-      });
-      setter((current) => ({
-        articles: append ? [...current.articles, ...response.results.filter((item) => !current.articles.some((old) => old.id === item.id))] : response.results,
-        total: response.count,
-        nextPage: page + 1,
-        hasMore: response.next !== null,
-        loading: false,
-        error: null,
-      }));
-    } catch {
-      setter((current) => ({ ...current, loading: false, error: t.articleLoadFailed }));
-    }
-  }, [activeTag, t.articleLoadFailed, user]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadFeed("public", 1, false);
-    if (user) void loadFeed("mine", 1, false);
-    else setMyFeed({ ...emptyFeed, loading: false });
-  }, [loadFeed, user]);
-
-  const selectTag = (tag: string | null) => {
-    setActiveTag(tag);
-    const params = new URLSearchParams(window.location.search);
-    if (tag) params.set("tag", tag);
-    else params.delete("tag");
-    const query = params.toString();
-    window.history.pushState(null, "", query ? `/articles?${query}` : "/articles");
-  };
+  // 一覧が取れなくても他の部分は出したいので、それぞれ個別に受け止める。
+  // 取れなかった一覧は initial なしで渡し、ブラウザ側の取り直しに任せる。
+  const [tags, publicFeed, myFeed] = await Promise.all([
+    serverFetchList<ArticleTag>("/article-tags/").catch(() => null),
+    loadFeed({ excludeMine: signedIn || undefined, tag }),
+    signedIn ? loadFeed({ mine: true, tag }) : undefined,
+  ]);
 
   return (
     <div className="page page-full">
@@ -104,126 +39,77 @@ export default function ArticlesPage() {
         title={t.articlesTitle}
         description={t.articlesDesc}
         action={
-          user ? (
+          signedIn ? (
             <Link href="/articles/new" className="cta-button">{t.articleNew}</Link>
           ) : (
-            <Link href="/login?from=%2Farticles%2Fnew" className="cta-button cta-button-outline">{t.articleLoginToWrite}</Link>
+            <Link href="/login?from=%2Farticles%2Fnew" className="cta-button cta-button-outline">
+              {t.articleLoginToWrite}
+            </Link>
           )
         }
       />
 
       <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
-        <TagChip label={t.articleAllTopics} active={activeTag === null} onClick={() => selectTag(null)} />
-        {tags.map((tag) => (
-          <TagChip key={tag.id} label={articleTagLabel(tag.slug, tag.name, t)} count={tag.article_count} active={activeTag === tag.slug} onClick={() => selectTag(tag.slug)} />
+        <TagChip label={t.articleAllTopics} href="/articles" active={!tag} />
+        {(tags ?? []).map((articleTag) => (
+          <TagChip
+            key={articleTag.id}
+            label={articleTagLabel(articleTag.slug, articleTag.name, t)}
+            count={articleTag.article_count}
+            href={`/articles?tag=${encodeURIComponent(articleTag.slug)}`}
+            active={tag === articleTag.slug}
+          />
         ))}
-        {tagError && (
+        {tags === null && (
           <span role="alert" className="inline-flex items-center gap-2 text-xs text-danger">
             {t.articleTopicsLoadFailed}
-            <button type="button" onClick={() => void loadTags()} className="outline-button">{t.retry}</button>
           </span>
         )}
       </div>
 
       <div className="list-board">
-        {user && (
-          <ArticleColumn
+        {signedIn && (
+          <ArticleFeedColumn
             title={t.articleMineTitle}
-            desc={t.articleMineDesc}
+            description={t.articleMineDesc}
             icon="book-open"
             tone="active"
-            feed={myFeed}
             empty={t.articleMineEmpty}
             editable
-            onRetry={() => void loadFeed("mine", 1, false)}
-            onLoadMore={() => void loadFeed("mine", myFeed.nextPage, true)}
+            mine
+            tag={tag}
+            initial={myFeed}
           />
         )}
-        <ArticleColumn
+        <ArticleFeedColumn
           title={t.articlePublicTitle}
-          desc={t.articlePublicDesc}
+          description={t.articlePublicDesc}
           icon="globe"
           tone="ok"
-          feed={publicFeed}
           empty={t.articlePublicEmpty}
-          onRetry={() => void loadFeed("public", 1, false)}
-          onLoadMore={() => void loadFeed("public", publicFeed.nextPage, true)}
+          excludeMine={signedIn || undefined}
+          tag={tag}
+          initial={publicFeed}
         />
       </div>
     </div>
   );
 }
 
-function TagChip({ label, count, active, onClick }: { label: string; count?: number; active: boolean; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} aria-pressed={active} className={`chip chip-bold${active ? " chip-active" : ""}`}>
-      {label}{count !== undefined && <span className="ml-1 text-xs">({count})</span>}
-    </button>
-  );
+/** 一覧の 1 ページ目。取れなければ undefined を返し、ブラウザ側に任せる。 */
+function loadFeed(params: { mine?: boolean; excludeMine?: boolean; tag?: string }): Promise<ListPage<Article> | undefined> {
+  return serverFetchPage<Article>(articleListPath(params)).catch(() => undefined);
 }
 
-function ArticleColumn({
-  title, desc, icon, tone, feed, empty, editable = false, onRetry, onLoadMore,
-}: {
-  title: string;
-  desc: string;
-  icon: IconName;
-  tone: Tone;
-  feed: ArticleFeed;
-  empty: string;
-  editable?: boolean;
-  onRetry: () => void;
-  onLoadMore: () => void;
-}) {
+function TagChip({ label, count, href, active }: { label: string; count?: number; href: string; active: boolean }) {
   return (
-    <ListColumn
-      icon={icon}
-      tone={tone}
-      title={title}
-      count={feed.total}
-      description={desc}
-      busy={feed.loading}
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`chip chip-bold${active ? " chip-active" : ""}`}
     >
-      {/* 読み足しの途中（既に何件か出ている）ときは中身を消さない。
-          その間の読み込み中と失敗は下の LoadMoreButton が受け持つ。 */}
-      <AsyncList
-        loading={feed.loading && feed.articles.length === 0}
-        error={feed.articles.length === 0 ? feed.error : null}
-        isEmpty={feed.articles.length === 0}
-        emptyText={empty}
-        onRetry={onRetry}
-      >
-        <div className="flex flex-col gap-3">
-          {feed.articles.map((article) => <ArticleCard key={article.id} article={article} editable={editable} />)}
-        </div>
-      </AsyncList>
-
-      {feed.error && feed.articles.length > 0 && <p role="alert" className="text-xs text-danger">{feed.error}</p>}
-      <LoadMoreButton hasMore={feed.hasMore || !!feed.error} loading={feed.loading} error={!!feed.error} onClick={feed.error ? onRetry : onLoadMore} />
-    </ListColumn>
+      {label}
+      {count !== undefined && <span className="ml-1 text-xs">({count})</span>}
+    </Link>
   );
 }
-
-function ArticleCard({ article, editable }: { article: Article; editable: boolean }) {
-  const t = useT();
-  const isPublic = article.visibility === "public";
-  return (
-    <article className="card-glow p-4 flex flex-col" >
-      <div className="flex justify-between items-center gap-2 mb-3">
-        <span className={`badge ${isPublic ? "badge-tone tone-ok" : "badge-muted"}`}>
-          {visibilityLabel(article.visibility, t)}
-        </span>
-        {editable && <Link href={`/articles/${article.id}/edit`} className="tap-target inline-flex items-center px-1 text-accent">{t.articleEditShort}</Link>}
-      </div>
-      <h3 className="card-title">
-        <Link href={`/articles/${article.id}`} className="text-inherit no-underline">{article.title}</Link>
-      </h3>
-      {article.summary && <p className="card-summary">{article.summary}</p>}
-      <div className="flex gap-2 text-xs text-muted flex-wrap">
-        <Link href={`/profile/${article.owner_username}`} className="meta-pill meta-pill-link">{article.owner_username}</Link>
-        {article.tags.map((tag) => <Link key={tag.id} href={`/articles?tag=${tag.slug}`} className="meta-pill meta-pill-link">{articleTagLabel(tag.slug, tag.name, t)}</Link>)}
-      </div>
-    </article>
-  );
-}
-
