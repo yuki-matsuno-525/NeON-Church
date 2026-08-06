@@ -1,357 +1,69 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  createAnswer,
-  deleteQuestion,
-  fetchAnswerPage,
-  fetchQuestion,
-  reportQuestion,
-  setQuestionBestAnswer,
-  updateQuestion,
-  type QAQuestion,
-} from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLoadMore } from "@/hooks/useLoadMore";
-import { AnswerItem } from "@/components/qa/AnswerItem";
-import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
+import type { QAAnswer, QAQuestion } from "@/lib/api";
+import { serverFetch, serverFetchPage } from "@/lib/apiServer";
+import { getT } from "@/lib/i18nServer";
 import { Icon } from "@/components/ui/Icon";
-import {
-  Button,
-  ConfirmDialog,
-  ErrorState,
-  LoadMoreButton,
-  SkeletonList,
-  useToast,
-} from "@/components/ui";
-import { formatBookLocation, useRelativeTime, useT } from "@/lib/i18n";
-import { useLang } from "@/contexts/LanguageContext";
+import { ErrorState } from "@/components/ui";
+import { QAAnswerSection } from "@/components/qa/QAAnswerSection";
+import { QuestionArticle } from "@/components/qa/QuestionArticle";
+
+/** 共有したときやタブに出る題を、その質問のものにする。 */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  try {
+    const question = await serverFetch<QAQuestion>(`/qa/questions/${id}/`);
+    return {
+      title: question.title,
+      openGraph: { title: question.title, description: question.body.slice(0, 120) },
+      twitter: { title: question.title, description: question.body.slice(0, 120) },
+    };
+  } catch {
+    return {};
+  }
+}
 
 /**
  * Q&A の質問1件のページ。
  *
  * 一覧はここへの入り口に徹し、読むのも書くのもこのページで完結させる。
  * 読書ページの Q&A タブからも、通知からもここへ来る。
+ *
+ * 質問と回答の1ページ目はサーバー側で取ってから返す。以前は画面が出てから
+ * 取りに行っていたので、開いた直後は枠だけだった。ブラウザ側に残しているのは
+ * 書き込む操作（書き直す・消す・答える・ベストアンサーを選ぶ）だけ。
  */
-export default function QuestionDetailPage() {
-  const params = useParams<{ id: string }>();
-  const questionId = params.id;
-  const router = useRouter();
-  const t = useT();
-  const { lang } = useLang();
-  const { user } = useAuth();
-  const toast = useToast();
-  const formatRelativeTime = useRelativeTime();
+export default async function QuestionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const t = await getT();
 
-  const [question, setQuestion] = useState<QAQuestion | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  // 質問の編集
-  const [editing, setEditing] = useState(false);
-  const [draftTitle, setDraftTitle] = useState("");
-  const [draftBody, setDraftBody] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
-
-  // 回答の投稿
-  const [answerBody, setAnswerBody] = useState("");
-  const [posting, setPosting] = useState(false);
-  const [postError, setPostError] = useState<string | null>(null);
-
-  const loadQuestion = useCallback(() => {
-    setLoading(true);
-    fetchQuestion(questionId)
-      .then((q) => {
-        setQuestion(q);
-        setNotFound(false);
-      })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
-  }, [questionId]);
-
-  useEffect(() => {
-    // 開いた質問を最初に読む。読み込み中の表示に切り替えるので setState を伴う。
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadQuestion();
-  }, [loadQuestion]);
-
-  const fetchAnswers = useCallback(
-    (page: number) => fetchAnswerPage(questionId, page),
-    [questionId]
-  );
-  const answers = useLoadMore(fetchAnswers);
-  const reloadAnswers = answers.reload;
-
-  /** ベストアンサーの変更は質問側の状態も変わるので、両方取り直す。 */
-  const reloadAll = useCallback(() => {
-    loadQuestion();
-    reloadAnswers();
-  }, [loadQuestion, reloadAnswers]);
-
-  const isOwner = user != null && question != null && user.id === question.user.id;
-
-  const handlePostAnswer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!answerBody.trim()) return;
-    setPosting(true);
-    setPostError(null);
-    try {
-      await createAnswer(questionId, answerBody.trim());
-      setAnswerBody("");
-      reloadAll();
-    } catch (err) {
-      setPostError(err instanceof Error ? err.message : t.postFailed);
-    } finally {
-      setPosting(false);
-    }
-  };
-
-  const handlePickBest = async (answerId: string | null) => {
-    try {
-      await setQuestionBestAnswer(questionId, answerId);
-      reloadAll();
-    } catch {
-      toast.show(t.errorActionFailed, { type: "error" });
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!draftTitle.trim() || !draftBody.trim()) return;
-    setSavingEdit(true);
-    try {
-      const updated = await updateQuestion(questionId, {
-        title: draftTitle.trim(),
-        body: draftBody.trim(),
-      });
-      setQuestion(updated);
-      setEditing(false);
-    } catch {
-      toast.show(t.postFailed, { type: "error" });
-    } finally {
-      setSavingEdit(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setConfirmDelete(false);
-    try {
-      await deleteQuestion(questionId);
-      router.push("/qa");
-    } catch {
-      toast.show(t.errorActionFailed, { type: "error" });
-    }
-  };
-
-  const handleReport = async () => {
-    try {
-      await reportQuestion(questionId, "other");
-      toast.show(t.reported);
-    } catch {
-      toast.show(t.reportedDup);
-    }
-  };
-
-  if (loading) {
+  let question: QAQuestion;
+  try {
+    question = await serverFetch<QAQuestion>(`/qa/questions/${id}/`);
+  } catch {
     return (
       <div className="page page-narrow">
-        <SkeletonList count={3} />
+        <ErrorState
+          title={t.qaQuestionNotFound}
+          extraAction={<Link href="/qa" className="btn btn-ghost">{t.qaBackToList}</Link>}
+        />
       </div>
     );
   }
 
-  if (notFound || !question) {
-    return (
-      <div className="page page-narrow">
-        <ErrorState title={t.qaQuestionNotFound} onRetry={loadQuestion} onBack={() => router.push("/qa")} backLabel={t.qaBackToList} />
-      </div>
-    );
-  }
-
-  const answered = question.best_answer !== null;
-  const location = question.book_slug
-    ? formatBookLocation(question.book_slug, question.chapter_number, question.verse_number, lang)
-    : question.location_label;
-  // 箇所の読書ページへのリンク（節まであればその節へアンカーで飛ぶ）。
-  const passageUrl = question.book_slug
-    ? question.chapter_number
-      ? `/${question.book_slug}/${question.chapter_number}${question.verse_number ? `#verse-${question.verse_number}` : ""}`
-      : `/${question.book_slug}`
-    : null;
+  // 回答が取れなくても質問は読める。取れなかったときはブラウザ側の取り直しに任せる。
+  const answers = await serverFetchPage<QAAnswer>(`/qa/questions/${id}/answers/`).catch(() => undefined);
 
   return (
     <div className="page page-narrow">
-      {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
-
       <Link href="/qa" className="action-link gap-1 text-sm text-muted no-underline">
         <Icon name="arrow-left" size={14} />
         {t.qaBackToList}
       </Link>
 
-      <article className="card-glow p-4 mt-3" >
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <span
-            className={`badge badge-icon badge-tone ${answered ? "tone-ok" : "tone-wait"}`}
-          >
-            <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
-            {answered ? t.filterAnswered : t.filterUnanswered}
-          </span>
-          {passageUrl && (
-            <Link href={passageUrl} className="action-link gap-1 text-sm no-underline">
-              {location}
-              <Icon name="chevron-right" size={12} />
-            </Link>
-          )}
-        </div>
+      <QuestionArticle question={question} />
 
-        {editing ? (
-          <div className="mt-3">
-            <input
-              value={draftTitle}
-              onChange={(e) => setDraftTitle(e.target.value)}
-              aria-label={t.qaTitleInputPlaceholder}
-              placeholder={t.qaTitleInputPlaceholder}
-              className="form-control mb-2 font-bold"
-            />
-            <textarea
-              value={draftBody}
-              onChange={(e) => setDraftBody(e.target.value)}
-              rows={6}
-              aria-label={t.commentPlaceholder}
-              className="form-control resize-y"
-            />
-            <div className="flex gap-2 justify-end mt-2">
-              <Button variant="secondary" onClick={() => setEditing(false)}>{t.cancel}</Button>
-              <Button
-                variant="primary"
-                onClick={handleSaveEdit}
-                disabled={savingEdit || !draftTitle.trim() || !draftBody.trim()}
-              >
-                {savingEdit ? t.posting : t.submit}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <h1 className="page-title mt-3">{question.title}</h1>
-            <p className="m-0 text-sm leading-reading whitespace-pre-wrap">
-              {question.is_deleted ? t.qaDeletedQuestion : question.body}
-            </p>
-          </>
-        )}
-
-        <div className="flex gap-2 flex-wrap items-center mt-4">
-          <span className="meta-pill">{question.user.username}</span>
-          <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
-          {question.tags.map((tag) => (
-            <span key={tag.id} className="meta-pill">
-              {t.tagNames[tag.name] ?? tag.name}
-            </span>
-          ))}
-          {!editing && isOwner && (
-            <span className="ml-auto inline-flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDraftTitle(question.title);
-                  setDraftBody(question.body);
-                  setEditing(true);
-                }}
-                className="action-chip"
-              >
-                {t.edit}
-              </button>
-              <button type="button" onClick={() => setConfirmDelete(true)} className="action-chip">
-                {t.delete}
-              </button>
-            </span>
-          )}
-          {!editing && !isOwner && user && (
-            <button
-              type="button"
-              onClick={handleReport}
-              className="action-chip ml-auto"
-            >
-              <Icon name="alert-triangle" size={11} />
-              {t.report}
-            </button>
-          )}
-        </div>
-      </article>
-
-      <h2 className="flex items-center mt-8 mb-3 text-md font-bold">
-        {t.qaAnswersHeading}
-        <span className="text-faint font-normal text-sm ml-2">
-          {answers.total}
-        </span>
-      </h2>
-
-      {answers.loading ? (
-        <SkeletonList count={2} />
-      ) : answers.failed ? (
-        <ErrorState title={t.errorTitle} message={t.errorNetwork} onRetry={answers.reload} />
-      ) : answers.items.length === 0 ? (
-        <p className="text-faint text-sm py-2 px-1">{t.qaNoAnswers}</p>
-      ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            {answers.items.map((a) => (
-              <AnswerItem
-                key={a.id}
-                answer={a}
-                currentUserId={user?.id ?? null}
-                canPickBest={isOwner}
-                onPickBest={handlePickBest}
-                onChanged={reloadAll}
-              />
-            ))}
-          </div>
-          <LoadMoreButton
-            hasMore={answers.hasMore}
-            loading={answers.loadingMore}
-            onClick={answers.loadMore}
-          />
-        </>
-      )}
-
-      {user ? (
-        <form onSubmit={handlePostAnswer} className="mt-6">
-          <textarea
-            value={answerBody}
-            onChange={(e) => setAnswerBody(e.target.value)}
-            placeholder={t.qaAnswerPlaceholder}
-            aria-label={t.qaAnswerPlaceholder}
-            rows={4}
-            className="form-control resize-y"
-          />
-          {/* エラー色は --state-error という存在しない変数を見ていたため、これまで赤くならなかった。
-              意見フォームと同じく、決定表の危険色（text-danger）に直している。 */}
-          {postError && <p className="my-1 text-xs text-danger">{postError}</p>}
-          <div className="flex justify-end mt-2">
-            <Button variant="primary" type="submit" disabled={posting || !answerBody.trim()}>
-              {posting ? t.posting : t.qaSubmitAnswer}
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <div className="mt-6">
-          <Button variant="primary" onClick={() => setShowLoginModal(true)}>
-            {t.qaLoginToAnswer}
-          </Button>
-        </div>
-      )}
-
-      <ConfirmDialog
-        open={confirmDelete}
-        title={t.qaConfirmDeleteQuestionTitle}
-        description={t.qaConfirmDeleteQuestionDesc}
-        destructive
-        onConfirm={handleDelete}
-        onCancel={() => setConfirmDelete(false)}
-      />
+      <QAAnswerSection questionId={id} questionOwnerId={question.user.id} initial={answers} />
     </div>
   );
 }
