@@ -9,6 +9,24 @@ import { registerUser, loginWithUI } from "./helpers";
  * - 未認証: localStorage に保存される
  */
 
+/**
+ * ブラウザの控えに値が入るまで待って読む。
+ *
+ * 本文はサーバーが組み立てて返すので、見出しは JavaScript が動く前に出る。
+ * 控えを書くのは動いたあとなので、見出しが見えた時点ではまだ空のことがある。
+ */
+async function readWhenSaved(
+  page: import("@playwright/test").Page,
+  key: string
+): Promise<string> {
+  await expect
+    .poll(async () => page.evaluate((k) => localStorage.getItem(k), key), {
+      timeout: 10000,
+    })
+    .not.toBeNull();
+  return (await page.evaluate((k) => localStorage.getItem(k), key))!;
+}
+
 test("RP-1: 聖書ページを開くと読書進捗がバックエンドに保存される（認証済みユーザー）", async ({
   page,
   request,
@@ -51,21 +69,17 @@ test("RP-2: ログインしていない状態では進捗が localStorage に保
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
 
-  // localStorage に "neon_progress_matthew" が保存されている
-  const progressValue = await page.evaluate(() =>
-    localStorage.getItem("neon_progress_matthew")
-  );
-  expect(progressValue).not.toBeNull();
+  // localStorage に "neon_progress_matthew" が保存されている。
+  // 本文はサーバーが組み立てて返すので、見出しは JavaScript が動く前に出る。
+  // 控えを書くのは動いたあとなので、書かれるまで待つ。
+  const progressValue = await readWhenSaved(page, "neon_progress_matthew");
 
   // 保存された進捗の chapterNumber が 1 であることを確認
-  const progress = JSON.parse(progressValue!);
+  const progress = JSON.parse(progressValue);
   expect(progress.chapterNumber).toBe(1);
 
   // 最後に読んだ書のスラッグも保存されている
-  const lastBook = await page.evaluate(() =>
-    localStorage.getItem("neon_last_book")
-  );
-  expect(lastBook).toBe("matthew");
+  expect(await readWhenSaved(page, "neon_last_book")).toBe("matthew");
 });
 
 test("RP-3: 異なる章に移動すると進捗が更新される", async ({ page }) => {
@@ -76,11 +90,8 @@ test("RP-3: 異なる章に移動すると進捗が更新される", async ({ pa
   ).toBeVisible();
 
   // 1章の進捗が localStorage に保存される
-  const progress1 = await page.evaluate(() =>
-    localStorage.getItem("neon_progress_matthew")
-  );
-  expect(progress1).not.toBeNull();
-  expect(JSON.parse(progress1!).chapterNumber).toBe(1);
+  const progress1 = await readWhenSaved(page, "neon_progress_matthew");
+  expect(JSON.parse(progress1).chapterNumber).toBe(1);
 
   // マタイ5章に移動
   await page.goto("/matthew/5");
@@ -89,9 +100,11 @@ test("RP-3: 異なる章に移動すると進捗が更新される", async ({ pa
   ).toBeVisible();
 
   // 5章の進捗に更新される
-  const progress5 = await page.evaluate(() =>
-    localStorage.getItem("neon_progress_matthew")
-  );
-  expect(progress5).not.toBeNull();
-  expect(JSON.parse(progress5!).chapterNumber).toBe(5);
+  await expect
+    .poll(
+      async () =>
+        JSON.parse(await readWhenSaved(page, "neon_progress_matthew")).chapterNumber,
+      { timeout: 10000 }
+    )
+    .toBe(5);
 });
