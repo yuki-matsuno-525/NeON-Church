@@ -14,6 +14,7 @@ import { BOOKS, getBookBySlug } from "@/lib/books";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { bookLabel, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
+import { ClearableSearchInput } from "@/components/ui";
 
 /**
  * 引用パネル。記事を書きながら、引く節をここから選んで本文に入れる。
@@ -176,13 +177,16 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
   if (!slug) {
     return (
       <div className="px-3">
-        <label htmlFor="citation-book-search" className="form-label">引用する書をさがす</label>
-        <input
+        <label htmlFor="citation-book-search" className="form-label">
+          {t.citationBookSearchPlaceholder}
+        </label>
+        <ClearableSearchInput
           id="citation-book-search"
           value={keyword}
-          onChange={(event) => setKeyword(event.target.value)}
+          onChange={setKeyword}
           placeholder={t.citationBookSearchPlaceholder}
-          className="form-control"
+          ariaLabel={t.citationBookSearchPlaceholder}
+          inputClassName="form-control"
         />
         <div className="flex flex-col gap-1 mt-3">
           {matched.map((book) => (
@@ -195,7 +199,9 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
               {bookLabel(book.slug, lang)?.name ?? book.name}
             </button>
           ))}
-          {matched.length === 0 && <p className="text-xs text-muted leading-reading">一致する書はありません。</p>}
+          {matched.length === 0 && (
+            <p className="text-xs text-muted leading-reading">{t.listSearchEmpty}</p>
+          )}
         </div>
       </div>
     );

@@ -1,13 +1,13 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import type { TranslationProject } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { BOOKS, GENRE_ORDER, chapterNumbersOf } from "@/lib/books";
 import { bookLabel, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 
 // 翻訳本棚カテゴリ用の擬似ジャンルキー。実ジャンル名と衝突しない値にする。
@@ -18,43 +18,24 @@ type Props = {
   library: TranslationProject[];
   /** 本棚を取れなかった */
   libraryFailed: boolean;
-  /** URL に入っている検索語 */
-  q: string;
 };
 
 /**
  * 書を探すところ。カテゴリを選ぶか、名前で検索する。
  *
  * 書の一覧はアプリに同梱されている（通信しない）ので、絞り込みはこの場で行う。
- * 検索語だけは URL にも残して、同じ画面を人に渡せるようにしている。
+ * 検索語だけは URL にも残して、同じ画面を人に渡せるようにしている
+ * （入力欄が正で、URL は書き出し先。useQuerySearch 参照）。
  */
-export function BookBrowser({ library, libraryFailed, q }: Props) {
+export function BookBrowser({ library, libraryFailed }: Props) {
   const t = useT();
   const { lang } = useLang();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   // 書が多いのでカテゴリ（ジャンル）を選んでから、その書だけ表示するドリルダウン。
   const [activeGenre, setActiveGenre] = useState("");
-  const [text, setText] = useState(q);
-  const [lastQ, setLastQ] = useState(q);
-  if (q !== lastQ) {
-    setLastQ(q);
-    setText(q);
-  }
+  // 入力欄が正。URL へは手が止まってから書き出す（打った文字が巻き戻らないように）。
+  const { value: text, setValue: setText } = useQuerySearch("/read");
   const deferredText = useDeferredValue(text);
-
-  useEffect(() => {
-    if (text === q) return;
-    const timer = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (text.trim()) params.set("q", text);
-      else params.delete("q");
-      const query = params.toString();
-      router.replace(query ? `/read?${query}` : "/read", { scroll: false });
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [text, q, router, searchParams]);
 
   const groups = GENRE_ORDER
     .map((genre) => ({ genre, books: BOOKS.filter((b) => b.genre === genre) }))

@@ -137,7 +137,7 @@ describe("翻訳プロジェクト一覧", () => {
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("検索語は URL に移し、開いていたページ番号は捨てる", async () => {
+  it("検索語は、手が止まってから URL に書き出す", async () => {
     await mockServer({ projects: [makeProject()] });
     currentSearch = "published=3";
 
@@ -148,8 +148,27 @@ describe("翻訳プロジェクト一覧", () => {
     });
 
     await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/translations?q=Matthew", { scroll: false }),
+      expect(replace).toHaveBeenCalledWith("/translations?published=3&q=Matthew", { scroll: false }),
     );
+  });
+
+  it("開いていたページが無くなったら1ページ目に戻す", async () => {
+    const apiServer = await mockServer({ projects: [makeProject()] });
+    const { ApiError } = await import("@/lib/api");
+    const real = vi.mocked(apiServer.serverFetchPage).getMockImplementation()!;
+    // 3ページ目は無い（DRF は 404 を返す）。1ページ目なら取れる。
+    vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => {
+      if (path.includes("page=3")) throw new ApiError(404, "Invalid page.");
+      return real(path);
+    });
+
+    await renderPage({ published: "3" });
+
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths.some((path) => path.includes("status=published") && path.includes("page=1"))).toBe(true);
+    expect(
+      screen.queryByText("読み込みに失敗しました。通信状況を確認して再試行してください。"),
+    ).not.toBeInTheDocument();
   });
 
   it("URL の検索語で入力欄を初期化する", async () => {

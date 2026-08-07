@@ -11,8 +11,7 @@ import { ResumeLink } from "@/components/read/ResumeLink";
  * 本棚に追加した公開翻訳だけなので、それをサーバー側で取ってから返す。
  * 「続きから読む」だけは、このブラウザに残した控えを見るので画面側に残す。
  */
-export default async function ReadPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+export default async function ReadPage() {
   const t = await getT();
   const signedIn = await serverIsSignedIn();
 
@@ -27,7 +26,7 @@ export default async function ReadPage({ searchParams }: { searchParams: Promise
 
       <ResumeLink />
 
-      <BookBrowser library={library ?? []} libraryFailed={library === null} q={q ?? ""} />
+      <BookBrowser library={library ?? []} libraryFailed={library === null} />
     </div>
   );
 }

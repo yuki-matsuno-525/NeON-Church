@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Tag } from "@/lib/api";
 import { useT, bookLabel } from "@/lib/i18n";
@@ -8,7 +8,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
 import { translationLabel } from "@/lib/translations";
 import { groupCatalogByGenre, type BookCatalogEntry } from "@/lib/bookCatalog";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { RetryButton } from "@/components/ui/RetryButton";
 
@@ -23,7 +23,6 @@ type Props = {
   slug: string;
   version: string;
   tagId: string;
-  q: string;
   /** 絞り込み後の総数。取れなかったときは null */
   total: number | null;
 };
@@ -34,13 +33,18 @@ type Props = {
  * 選んだ内容は URL に書く。URL が変われば、サーバーがその条件で
  * 一覧を組み立て直して返してくれる。ここが持っている状態は
  * 「打っている途中の検索文字」と「カテゴリ」の 2 つだけ。
+ *
+ * 検索文字は useQuerySearch に任せる。URL を正にすると、打った文字が
+ * 反映待ちのあいだに巻き戻り、日本語の変換中に二重になる。
  */
-export function QAFilters({ catalog, catalogFailed, tags, tagsFailed, slug, version, tagId, q, total }: Props) {
+export function QAFilters({ catalog, catalogFailed, tags, tagsFailed, slug, version, tagId, total }: Props) {
   const t = useT();
   const { lang } = useLang();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [genreFilter, setGenreFilter] = useState("");
+  // 入力欄が正。URL へは手が止まってから書き出す（打った文字が巻き戻らないように）。
+  const { value: text, setValue: setText } = useQuerySearch("/qa");
 
   /** クエリパラメータを部分更新して URL に反映する。null/空文字は削除。 */
   const updateParams = useCallback(
@@ -56,20 +60,6 @@ export function QAFilters({ catalog, catalogFailed, tags, tagsFailed, slug, vers
     },
     [searchParams, router],
   );
-
-  // 検索欄は打っている間だけ手元で持ち、手が止まってから URL に移す。
-  // 1 文字ごとに URL を変えると、そのたびにサーバーが一覧を組み立て直してしまう。
-  const [text, setText] = useState(q);
-  const [lastQ, setLastQ] = useState(q);
-  if (q !== lastQ) {
-    // 戻る・他の絞り込みなどで URL 側が変わったときは、入力欄を合わせる。
-    setLastQ(q);
-    setText(q);
-  }
-  const debounced = useDebouncedValue(text);
-  useEffect(() => {
-    if (debounced !== q) updateParams({ q: debounced || null });
-  }, [debounced, q, updateParams]);
 
   // 書を切り替えたら訳はリセットする。
   const selectSlug = (next: string) => updateParams({ book: next || null, version: null });

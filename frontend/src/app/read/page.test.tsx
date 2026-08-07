@@ -61,8 +61,7 @@ async function mockServer({ signedIn = false, library = [] as TranslationProject
   return apiServer;
 }
 
-const renderPage = async (params: Record<string, string> = {}) =>
-  render(await ReadPage({ searchParams: Promise.resolve(params) }));
+const renderPage = async () => render(await ReadPage());
 
 describe("読むところの入口", () => {
   beforeEach(() => {
@@ -126,7 +125,7 @@ describe("読むところの入口", () => {
     await mockServer();
     currentSearch = "q=Peter";
 
-    await renderPage({ q: "Peter" });
+    await renderPage();
 
     const searchBox = screen.getByRole("searchbox");
     expect(searchBox).toHaveValue("Peter");

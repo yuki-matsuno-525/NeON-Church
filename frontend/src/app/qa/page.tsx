@@ -80,7 +80,6 @@ export default async function QAPage({ searchParams }: { searchParams: Promise<Q
         slug={slug}
         version={version}
         tagId={tagId}
-        q={q}
         total={total}
       />
 

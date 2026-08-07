@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { translationListPath, type ListPage, type TranslationProject, type TranslationStatus } from "@/lib/api";
+import { ApiError, translationListPath, type ListPage, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { ListPageHeader } from "@/components/list";
@@ -48,13 +48,9 @@ export default async function TranslationsPage({
   // 下書きは自分のものしか見られないので、ログインしていないときは列ごと出さない。
   const visible = signedIn ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
 
-  const pages = await Promise.all(
-    visible.map((column) =>
-      // 取れなかった列は null。他の列は読めるので、列ごとに受け止める。
-      serverFetchPage<TranslationProject>(
-        translationListPath(column.key, pageNumber(params[column.key]), q),
-      ).catch(() => null),
-    ),
+  // 取れなかった列は null。他の列は読めるので、列ごとに受け止める。
+  const loaded = await Promise.all(
+    visible.map((column) => loadColumn(column.key, pageNumber(params[column.key]), q)),
   );
 
   const columnLabel = (key: TranslationStatus) => {
@@ -74,11 +70,11 @@ export default async function TranslationsPage({
     tone: column.tone,
     title: columnLabel(column.key),
     description: columnDesc(column.key),
-    count: pages[index]?.count ?? 0,
+    count: loaded[index].page?.count ?? 0,
     body: (
       <ColumnBody
-        page={pages[index]}
-        current={pageNumber(params[column.key])}
+        page={loaded[index].page}
+        current={loaded[index].current}
         param={column.key}
         statusLabel={columnLabel(column.key)}
         emptyText={t.emptyColumn}
@@ -102,12 +98,7 @@ export default async function TranslationsPage({
         }
       />
 
-      <TranslationSearch
-        q={q}
-        label={t.projectSearchLabel}
-        placeholder={t.projectSearchPlaceholder}
-        pageParams={COLUMNS.map((column) => column.key)}
-      />
+      <TranslationSearch label={t.projectSearchLabel} placeholder={t.projectSearchPlaceholder} />
 
       <TranslationBoard columns={columns} label={t.translationsTitle} idPrefix="translations" />
     </div>
@@ -164,6 +155,28 @@ function ColumnBody({
       <QueryPagination page={current} totalPages={Math.ceil(page.count / PAGE_SIZE)} param={param} />
     </>
   );
+}
+
+/**
+ * 1 つの列を取る。
+ *
+ * 検索語を変えると件数が減り、開いていたページが無くなることがある。
+ * その場合（サーバーが「そんなページは無い」と返したとき）は 1 ページ目に戻す。
+ */
+async function loadColumn(
+  status: TranslationStatus,
+  requested: number,
+  q: string,
+): Promise<{ page: ListPage<TranslationProject> | null; current: number }> {
+  try {
+    return { page: await serverFetchPage<TranslationProject>(translationListPath(status, requested, q)), current: requested };
+  } catch (cause) {
+    if (requested > 1 && cause instanceof ApiError && cause.status === 404) {
+      const page = await serverFetchPage<TranslationProject>(translationListPath(status, 1, q)).catch(() => null);
+      return { page, current: 1 };
+    }
+    return { page: null, current: requested };
+  }
 }
 
 /** URL のページ番号。壊れた値や 1 未満は 1 ページ目として扱う。 */
