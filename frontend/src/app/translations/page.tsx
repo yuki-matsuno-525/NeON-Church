@@ -1,19 +1,16 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { AsyncList } from "@/components/ui";
-import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
-import type { Tone } from "@/components/list/tone";
+import { ColumnTabs, ListColumn, ListPageHeader, listStatus, type ListStatus } from "@/components/list";
 import { Pagination } from "@/components/ui/Pagination";
-import { type IconName } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationUiText } from "./translationUiText";
@@ -22,44 +19,38 @@ type StatusKey = TranslationStatus;
 
 const PAGE_SIZE = 20;
 
-// ステータスごとのカラム。色はステータスの意味に合わせる（公開=緑 / 進行中=アクセント / 下書き=琥珀）。
-const COLUMNS: { key: StatusKey; icon: IconName; tone: Tone }[] = [
-  { key: "published", icon: "check-circle", tone: "ok" },
-  { key: "active",    icon: "circle-dot",   tone: "active" },
-  { key: "draft",     icon: "lock",         tone: "wait" },
+// ステータスごとのカラム。アイコンと色は components/list/status.ts の対応表から引く
+// （公開済みは記事・プランの「公開」と同じ地球になる）。
+const COLUMNS: { key: StatusKey; status: ListStatus }[] = [
+  { key: "published", status: "public" },
+  { key: "active",    status: "recruiting" },
+  { key: "draft",     status: "draft" },
 ];
 
 export default function TranslationsPage() {
+  const t = useT();
+  return (
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
+      <TranslationsContent />
+    </Suspense>
+  );
+}
+
+function TranslationsContent() {
   const { user } = useAuth();
   const t = useT();
   const { lang } = useLang();
   const ui = translationUiText(lang);
   const isMobile = useIsMobile();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("q") ?? "";
   // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
-  const [projectSearch, setProjectSearch] = useState(searchQuery);
-  const deferredProjectSearch = useDeferredValue(projectSearch);
-  // 入力欄とURLは即時同期しつつ、3列分の検索リクエストは入力が止まってから送る。
-  const debouncedSearch = useDebouncedValue(deferredProjectSearch);
+  // 入力欄が正。URL と3列分の検索リクエストは、手が止まってからまとめて追いかける。
+  const {
+    value: projectSearch,
+    setValue: setProjectSearch,
+    debounced: debouncedSearch,
+  } = useQuerySearch("/translations");
   const visibleColumns = user ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
-
-  useEffect(() => {
-    // ブラウザーの戻る・進む操作で URL が変わったとき、入力欄も同じ値へ戻す。
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProjectSearch(searchQuery);
-  }, [searchQuery]);
-
-  const handleProjectSearchChange = (value: string) => {
-    setProjectSearch(value);
-    const nextParams = new URLSearchParams(searchParams.toString());
-    if (value) nextParams.set("q", value);
-    else nextParams.delete("q");
-    const query = nextParams.toString();
-    router.replace(query ? `/translations?${query}` : "/translations", { scroll: false });
-  };
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -90,7 +81,7 @@ export default function TranslationsPage() {
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
           value={projectSearch}
-          onChange={handleProjectSearchChange}
+          onChange={setProjectSearch}
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
           inputClassName="form-control text-sm"
@@ -101,7 +92,11 @@ export default function TranslationsPage() {
       {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
       {isMobile && (
         <ColumnTabs
-          tabs={visibleColumns.map((col) => ({ ...col, label: columnLabel(col.key) }))}
+          tabs={visibleColumns.map((col) => ({
+            key: col.key,
+            tone: listStatus(col.status).tone,
+            label: columnLabel(col.key),
+          }))}
           active={activeTab}
           onChange={setActiveTab}
           label={t.translationsTitle}
@@ -114,8 +109,7 @@ export default function TranslationsPage() {
           <TranslationColumn
             key={col.key}
             statusKey={col.key}
-            icon={col.icon}
-            tone={col.tone}
+            status={col.status}
             label={columnLabel(col.key)}
             desc={columnDesc(col.key)}
             search={debouncedSearch}
@@ -133,8 +127,7 @@ export default function TranslationsPage() {
 
 function TranslationColumn({
   statusKey,
-  icon,
-  tone,
+  status,
   label,
   desc,
   search,
@@ -145,8 +138,7 @@ function TranslationColumn({
   panelId,
 }: {
   statusKey: StatusKey;
-  icon: IconName;
-  tone: Tone;
+  status: ListStatus;
   label: string;
   desc: string;
   search: string;
@@ -196,8 +188,7 @@ function TranslationColumn({
 
   return (
     <ListColumn
-      icon={icon}
-      tone={tone}
+      {...listStatus(status)}
       title={label}
       count={count}
       description={desc}
@@ -240,7 +231,8 @@ function ProjectCard({
   return (
     <Link href={`/translations/${p.id}`} className="no-underline text-inherit">
       <div className="card-glow card-glow-interactive py-4 px-4 flex flex-col" >
-        <div className="flex items-start justify-end gap-3 mb-3">
+        {/* 状態のバッジはカードの左上に置く（記事・プランと揃える） */}
+        <div className="flex items-start gap-3 mb-3">
           <span className="badge badge-icon badge-tone">
             {label}
           </span>

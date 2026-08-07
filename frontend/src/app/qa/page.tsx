@@ -9,10 +9,9 @@ import { QAPostForm } from "@/components/qa/QAPostForm";
 import { QACard } from "@/components/qa/QACard";
 import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { AsyncList, SkeletonList, EmptyState, ErrorState, Button, LoadMoreButton } from "@/components/ui";
-import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
-import type { Tone } from "@/components/list/tone";
+import { ColumnTabs, ListColumn, ListPageHeader, listStatus, type ListStatus } from "@/components/list";
 import { useLoadMore } from "@/hooks/useLoadMore";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { Icon } from "@/components/ui/Icon";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { useT, bookLabel } from "@/lib/i18n";
@@ -20,13 +19,13 @@ import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
 import { getBookBySlug } from "@/lib/books";
 import { useBookCatalogState, catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
-import type { IconName } from "@/components/ui/Icon";
 
 // 翻訳プロジェクト一覧と同じ「解決済み / 未解決」の 2 列ボード。
+// アイコンと色は components/list/status.ts の対応表から引く。
 type QAColumnKey = "answered" | "unanswered";
-const QA_COLUMNS: { key: QAColumnKey; icon: IconName; tone: Tone }[] = [
-  { key: "answered",   icon: "check-circle", tone: "ok" },
-  { key: "unanswered", icon: "help-circle",  tone: "wait" },
+const QA_COLUMNS: { key: QAColumnKey; status: ListStatus }[] = [
+  { key: "answered",   status: "answered" },
+  { key: "unanswered", status: "unanswered" },
 ];
 
 export default function QAPage() {
@@ -56,13 +55,12 @@ function QAContent() {
   // スマホでは1カラムずつタブ切り替え。既定は「未解決」（回答が必要な列）。
   const [activeTab, setActiveTab] = useState<QAColumnKey>("unanswered");
   const [genreFilter, setGenreFilter] = useState("");
-  const urlQuestionSearch = searchParams.get("q") ?? "";
-  const [questionSearch, setQuestionSearch] = useState(urlQuestionSearch);
-  const [lastUrlQuestionSearch, setLastUrlQuestionSearch] = useState(urlQuestionSearch);
-  if (urlQuestionSearch !== lastUrlQuestionSearch) {
-    setLastUrlQuestionSearch(urlQuestionSearch);
-    setQuestionSearch(urlQuestionSearch);
-  }
+  // 入力欄が正。URL と検索リクエストは、手が止まってから追いかける。
+  const {
+    value: questionSearch,
+    setValue: setQuestionSearch,
+    debounced: debouncedSearch,
+  } = useQuerySearch("/qa");
   const [tags, setTags] = useState<Tag[]>([]);
   const [tagsError, setTagsError] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -108,8 +106,7 @@ function QAContent() {
 
   // 列ごとに独立して読み足す。全件取ってから画面側で2列に振り分けていた頃は、
   // 件数バッジが「読み込めた分」の数になり、片方の列だけ増えるといった破綻が起きる。
-  // 検索欄は手が止まってから投げる（1文字ごとに2列ぶんのリクエストが飛ぶのを防ぐ）。
-  const debouncedSearch = useDebouncedValue(questionSearch);
+  // 検索欄は手が止まってから投げる（1文字ごとに2列ぶんのリクエストが飛ぶのを防ぐ）＝ debouncedSearch。
   const filters = { book_id: bookIdParam || undefined, tag_id: selectedTagId || undefined, q: debouncedSearch };
   const filterKey = `${filters.book_id ?? ""}|${filters.tag_id ?? ""}|${filters.q}`;
 
@@ -204,10 +201,7 @@ function QAContent() {
         <div className="flex flex-wrap items-center gap-2">
           <ClearableSearchInput
             value={questionSearch}
-            onChange={(value) => {
-              setQuestionSearch(value);
-              updateParams({ q: value || null });
-            }}
+            onChange={setQuestionSearch}
             placeholder={t.qaSearchPlaceholder}
             ariaLabel={t.qaSearchLabel}
             inputClassName="form-control"
@@ -319,7 +313,12 @@ function QAContent() {
         {isMobile && (
           <ColumnTabs
             // 表示中の件数ではなく、サーバーが数えたその列の総数
-            tabs={QA_COLUMNS.map((col) => ({ ...col, label: columnLabel(col.key), count: columnList(col.key).total }))}
+            tabs={QA_COLUMNS.map((col) => ({
+              key: col.key,
+              tone: listStatus(col.status).tone,
+              label: columnLabel(col.key),
+              count: columnList(col.key).total,
+            }))}
             active={activeTab}
             onChange={setActiveTab}
             label={t.qaTitle}
@@ -333,8 +332,7 @@ function QAContent() {
             return (
               <ListColumn
                 key={col.key}
-                icon={col.icon}
-                tone={col.tone}
+                {...listStatus(col.status)}
                 title={columnLabel(col.key)}
                 // 表示中の件数ではなく、サーバーが数えたその列の総数
                 count={list.total}
