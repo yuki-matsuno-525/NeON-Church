@@ -11,4 +11,3 @@ export { ConfirmDialog } from "./ConfirmDialog";
 export { FilterChips, type FilterChip } from "./FilterChips";
 export { LoadMoreButton } from "./LoadMoreButton";
 export { AsyncList, AsyncPagedList } from "./AsyncList";
-export { ClearableSearchInput } from "./ClearableSearchInput";

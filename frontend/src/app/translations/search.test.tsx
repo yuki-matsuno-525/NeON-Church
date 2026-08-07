@@ -77,10 +77,7 @@ describe("TranslationsPage search", () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "Matthew");
     });
-    // URL への反映は手が止まってから
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenLastCalledWith("/translations?q=Matthew", { scroll: false });
-    });
+    expect(mockReplace).toHaveBeenLastCalledWith("/translations?q=Matthew", { scroll: false });
 
     fireEvent.click(screen.getByRole("button", { name: "入力をクリア" }));
 
@@ -88,9 +85,7 @@ describe("TranslationsPage search", () => {
     await waitFor(() => {
       expect(vi.mocked(fetchTranslations)).toHaveBeenCalledWith("published", 1, "");
     });
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenLastCalledWith("/translations", { scroll: false });
-    });
+    expect(mockReplace).toHaveBeenLastCalledWith("/translations", { scroll: false });
   });
 
   it("qパラメーターで入力欄を初期化し、戻る・進むのURL変更にも同期する", async () => {

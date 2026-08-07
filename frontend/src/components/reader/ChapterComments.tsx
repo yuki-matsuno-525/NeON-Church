@@ -5,7 +5,7 @@ import { fetchTags, createComment, type Tag } from "@/lib/api";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
-import { ClearableSearchInput, ErrorState, LoadMoreButton } from "@/components/ui";
+import { ErrorState, LoadMoreButton } from "@/components/ui";
 import { useT } from "@/lib/i18n";
 
 type Props = {
@@ -140,12 +140,13 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
       )}
 
       <div className="mb-3">
-        <ClearableSearchInput
+        <input
+          type="search"
           value={searchQuery}
-          onChange={setSearchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchLoadedComments}
-          ariaLabel={t.searchLoadedComments}
-          inputClassName="form-control text-sm"
+          aria-label={t.searchLoadedComments}
+          className="form-control text-sm"
         />
       </div>
 
