@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState, Suspense } from "react";
+import { useEffect, useId, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { searchBible, type SearchKind, type SearchResult } from "@/lib/api";
@@ -11,6 +11,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { EmptyState, SkeletonList } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Pagination } from "@/components/ui/Pagination";
+import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 
 // 検索結果（節）は50件ずつページ送りする。backend の VERSE_PAGE_SIZE と揃える。
 const VERSE_PAGE_SIZE = 50;
@@ -54,11 +55,21 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
+  // 自分が検索したときの語。URL がこれと違う値になったら「戻る・進む」なので入力欄を合わせる。
+  // 以前は結果取得と同じ effect で入力欄を上書きしていたため、絞り込みやページ送りをすると
+  // 打ちかけの文字が最後に検索した語へ戻ってしまっていた。
+  const submittedQ = useRef(q);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (q === submittedQ.current) return;
+    submittedQ.current = q;
     setInputValue(q);
+  }, [q]);
+
+  useEffect(() => {
     if (q.length < 1) {
+      // 検索語が消えたら前の結果を残さない（URL 由来の値に合わせるための意図的な更新）。
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResult(null);
       setError(false);
       return;
@@ -88,6 +99,8 @@ function SearchContent() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const trimmed = ((formData.get("q") as string) ?? inputValue).trim();
+    submittedQ.current = trimmed;
+    setInputValue(trimmed);
     const params = new URLSearchParams(searchParams.toString());
     if (trimmed) params.set("q", trimmed);
     else params.delete("q");
@@ -128,28 +141,16 @@ function SearchContent() {
 
       <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
         <label htmlFor={inputId} className="sr-only">{t.searchKeyword}</label>
-        <div className="flex-1 relative flex items-center">
-          <input
-            id={inputId}
-            name="q"
-            type="search"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={t.searchKeyword}
-            autoComplete="off"
-            className={`form-control bg-bg-alt text-sm${inputValue ? " has-clear-btn" : ""}`}
-          />
-          {inputValue && (
-            <button
-              type="button"
-              onClick={() => setInputValue("")}
-              aria-label={t.clearInput}
-              className="clear-input-btn"
-            >
-              ×
-            </button>
-          )}
-        </div>
+        <ClearableSearchInput
+          id={inputId}
+          name="q"
+          value={inputValue}
+          onChange={setInputValue}
+          placeholder={t.searchKeyword}
+          ariaLabel={t.searchKeyword}
+          inputClassName="form-control bg-bg-alt text-sm"
+          wrapperClassName="flex-1"
+        />
         <button type="submit" className="btn btn-primary">
           {t.searchTitle}
         </button>

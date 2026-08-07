@@ -1,12 +1,11 @@
 "use client";
 
-import { useDeferredValue, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { useT } from "@/lib/i18n";
 import { languageLabel } from "@/lib/languages";
 import { AsyncList } from "@/components/ui";
@@ -30,36 +29,29 @@ const COLUMNS: { key: StatusKey; icon: IconName; tone: Tone }[] = [
 ];
 
 export default function TranslationsPage() {
+  const t = useT();
+  return (
+    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
+      <TranslationsContent />
+    </Suspense>
+  );
+}
+
+function TranslationsContent() {
   const { user } = useAuth();
   const t = useT();
   const { lang } = useLang();
   const ui = translationUiText(lang);
   const isMobile = useIsMobile();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("q") ?? "";
   // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
   const [activeTab, setActiveTab] = useState<StatusKey>("published");
-  const [projectSearch, setProjectSearch] = useState(searchQuery);
-  const deferredProjectSearch = useDeferredValue(projectSearch);
-  // 入力欄とURLは即時同期しつつ、3列分の検索リクエストは入力が止まってから送る。
-  const debouncedSearch = useDebouncedValue(deferredProjectSearch);
+  // 入力欄が正。URL と3列分の検索リクエストは、手が止まってからまとめて追いかける。
+  const {
+    value: projectSearch,
+    setValue: setProjectSearch,
+    debounced: debouncedSearch,
+  } = useQuerySearch("/translations");
   const visibleColumns = user ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
-
-  useEffect(() => {
-    // ブラウザーの戻る・進む操作で URL が変わったとき、入力欄も同じ値へ戻す。
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProjectSearch(searchQuery);
-  }, [searchQuery]);
-
-  const handleProjectSearchChange = (value: string) => {
-    setProjectSearch(value);
-    const nextParams = new URLSearchParams(searchParams.toString());
-    if (value) nextParams.set("q", value);
-    else nextParams.delete("q");
-    const query = nextParams.toString();
-    router.replace(query ? `/translations?${query}` : "/translations", { scroll: false });
-  };
 
   const columnLabel = (key: StatusKey) => {
     if (key === "published") return t.statusPublished;
@@ -90,7 +82,7 @@ export default function TranslationsPage() {
         <span className="sr-only">{t.projectSearchLabel}</span>
         <ClearableSearchInput
           value={projectSearch}
-          onChange={handleProjectSearchChange}
+          onChange={setProjectSearch}
           placeholder={t.projectSearchPlaceholder}
           ariaLabel={t.projectSearchLabel}
           inputClassName="form-control text-sm"

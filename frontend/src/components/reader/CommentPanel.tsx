@@ -26,7 +26,7 @@ import { LoginRequiredModal } from "@/components/ui/LoginRequiredModal";
 import { Icon } from "@/components/ui/Icon";
 import { useT } from "@/lib/i18n";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
-import { LoadMoreButton, useToast } from "@/components/ui";
+import { ClearableSearchInput, LoadMoreButton, useToast } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import styles from "./CommentPanel.module.css";
@@ -488,13 +488,12 @@ export function CommentPanel({
 
         {/* Search */}
         <div className={styles.sectionTight}>
-          <input
-            type="search"
+          <ClearableSearchInput
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={setSearchQuery}
             placeholder={t.searchLoadedComments}
-            aria-label={t.searchLoadedComments}
-            className={styles.search}
+            ariaLabel={t.searchLoadedComments}
+            inputClassName={styles.search}
           />
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useDeferredValue, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchReadingProgress, fetchTranslationLibrary, type TranslationProject } from "@/lib/api";
@@ -15,6 +15,7 @@ import { BOOKS, GENRE_ORDER, getBookBySlug, slugFromDbName, chapterNumbersOf } f
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
+import { useQuerySearch } from "@/hooks/useQuerySearch";
 
 type ResumeTarget = { slug: string; chapter: number; bookName: string } | null;
 
@@ -41,7 +42,6 @@ export default function ReadPage() {
 function ReadContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useT();
   const { lang } = useLang();
   const resolved = useRef(false);
@@ -57,26 +57,10 @@ function ReadContent() {
   const [resumeRetryToken, setResumeRetryToken] = useState(0);
   // 書が多いのでカテゴリ（ジャンル）を選んでから、その書だけ表示するドリルダウン。
   const [activeGenre, setActiveGenre] = useState<string>("");
-  const urlBookSearch = searchParams.get("q") ?? "";
-  const [bookSearch, setBookSearch] = useState(urlBookSearch);
-  const [lastUrlBookSearch, setLastUrlBookSearch] = useState(urlBookSearch);
-  if (urlBookSearch !== lastUrlBookSearch) {
-    setLastUrlBookSearch(urlBookSearch);
-    setBookSearch(urlBookSearch);
-  }
+  // 入力欄が正。URL への反映は手が止まってから（useQuerySearch）。
+  // 絞り込みは手元の BOOKS を見るだけで通信しないので、待たずにそのまま反映する。
+  const { value: bookSearch, setValue: setBookSearch } = useQuerySearch("/read");
   const deferredBookSearch = useDeferredValue(bookSearch);
-
-  useEffect(() => {
-    if (bookSearch === urlBookSearch) return;
-    const timer = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (bookSearch.trim()) params.set("q", bookSearch);
-      else params.delete("q");
-      const query = params.toString();
-      router.replace(query ? `/read?${query}` : "/read", { scroll: false });
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [bookSearch, router, searchParams, urlBookSearch]);
 
   useEffect(() => {
     if (loading) return;

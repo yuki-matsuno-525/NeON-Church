@@ -6,6 +6,7 @@ import { useChapterNumbers } from "@/hooks/useChapterNumbers";
 import { DEFAULT_TRANSLATION } from "@/lib/translations";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
+import { ClearableSearchInput } from "@/components/ui";
 
 export type PickedChapter = {
   book: string;
@@ -52,13 +53,13 @@ export function ChapterPicker({
         <div className="flex gap-2 mb-2">
           <label className="flex-1">
             <span className="sr-only">{t.citationBookSearchPlaceholder}</span>
-            <input
-              type="search"
+            <ClearableSearchInput
               value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
+              onChange={setKeyword}
               placeholder={t.citationBookSearchPlaceholder}
+              ariaLabel={t.citationBookSearchPlaceholder}
               autoFocus
-              className="form-control w-full"
+              inputClassName="form-control w-full"
             />
           </label>
           <button type="button" onClick={onCancel} className="back-button">
