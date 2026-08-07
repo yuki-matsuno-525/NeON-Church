@@ -106,9 +106,12 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   await page.getByRole("alertdialog").getByRole("button", { name: "募集開始" }).click();
   await expect(page.getByRole("button", { name: "公開する" })).toBeVisible();
 
-  // 一覧ページに移動してプロジェクトが表示されることを確認
+  // 一覧ページに移動してプロジェクトが表示されることを確認。
+  // 一覧はサーバーが組み立てて返すため、届いた中身が差し込まれる一瞬だけ
+  // 同じカードが2つ見えることがある。件数ではなく「見えること」を確かめたいので
+  // 先頭の1枚に絞る。
   await page.goto("/translations");
-  await expect(page.getByText(projectName)).toBeVisible();
+  await expect(page.getByText(projectName).first()).toBeVisible();
 });
 
 test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる", async ({

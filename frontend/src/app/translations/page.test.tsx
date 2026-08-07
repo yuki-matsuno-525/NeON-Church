@@ -1,30 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TranslationsPage from "./page";
-import type { TranslationProject, TranslationStatus, PaginatedResponse } from "@/lib/api";
+import type { TranslationProject, TranslationStatus } from "@/lib/api";
+
+const replace = vi.fn();
+const refresh = vi.fn();
+let currentSearch = "";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ replace, refresh }),
+  usePathname: () => "/translations",
+  useSearchParams: () => new URLSearchParams(currentSearch),
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <a href={href}>{children}</a>
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
+    <a href={href} {...props}>{children}</a>
   ),
 }));
 
-vi.mock("@/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/api")>();
-  return {
-    ...actual,
-    fetchTranslations: vi.fn(),
-  };
+vi.mock("@/hooks/useIsMobile", () => ({ useIsMobile: () => false }));
+
+vi.mock("@/lib/i18nServer", async () => {
+  const { translations } = await import("@/lib/i18nDictionary");
+  return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
 });
 
-const mockUseAuth = vi.fn();
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => mockUseAuth(),
+vi.mock("@/lib/apiServer", () => ({
+  serverFetchPage: vi.fn(),
+  serverIsSignedIn: vi.fn(),
 }));
 
 const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationProject => ({
@@ -46,111 +50,138 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   ...overrides,
 });
 
-const paginated = (items: TranslationProject[]): PaginatedResponse<TranslationProject> => ({
-  count: items.length,
-  next: null,
-  previous: null,
-  results: items,
-});
+/** 列は status ごとに独立して取る。status に一致するものだけをその列に返す。 */
+async function mockServer({ signedIn = false, projects = [] as TranslationProject[] } = {}) {
+  const apiServer = await import("@/lib/apiServer");
+  vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
+  vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => {
+    const status = new URLSearchParams(path.split("?")[1]).get("status") as TranslationStatus;
+    const results = projects.filter((project) => project.status === status);
+    return { results, count: results.length, hasMore: false, counts: undefined };
+  });
+  return apiServer;
+}
 
-/**
- * カラムは status ごとに独立して fetchTranslations(status, page) を呼ぶ。
- * status に一致するプロジェクトだけをそのカラムに返すモックにする。
- */
-const mockByStatus = async (all: TranslationProject[]) => {
-  const { fetchTranslations } = await import("@/lib/api");
-  vi.mocked(fetchTranslations).mockImplementation((status?: TranslationStatus) =>
-    Promise.resolve(paginated(all.filter((p) => p.status === status)))
-  );
-};
+const renderPage = async (params: Record<string, string> = {}) =>
+  render(await TranslationsPage({ searchParams: Promise.resolve(params) }));
 
-describe("TranslationsPage", () => {
+describe("翻訳プロジェクト一覧", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    currentSearch = "";
   });
 
-  it("ローディング中に Skeleton が表示される", async () => {
-    const { fetchTranslations } = await import("@/lib/api");
-    vi.mocked(fetchTranslations).mockReturnValue(new Promise(() => {}));
-    mockUseAuth.mockReturnValue({ user: null });
+  it("ログイン済みなら新規作成の導線と下書きの列を出す", async () => {
+    const apiServer = await mockServer({ signedIn: true });
 
-    render(<TranslationsPage />);
-    // カラムごとに Skeleton が出る（3カラム）。
-    expect(screen.getAllByTestId("skeleton-list").length).toBeGreaterThan(0);
+    await renderPage();
+
+    expect(screen.getByText(/＋ 新規作成/)).toBeInTheDocument();
+    expect(vi.mocked(apiServer.serverFetchPage)).toHaveBeenCalledTimes(3);
   });
 
-  it("ログイン済みユーザーに「＋ 新規作成」リンクが表示される", async () => {
-    await mockByStatus([makeProject()]);
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" } });
+  it("未ログインでは新規作成も下書きの列も出さない", async () => {
+    const apiServer = await mockServer({ projects: [makeProject()] });
 
-    render(<TranslationsPage />);
+    await renderPage();
 
-    await screen.findByText(/＋ 新規作成/);
-  });
-
-  it("未ログインでは「＋ 新規作成」が表示されない", async () => {
-    await mockByStatus([makeProject()]);
-    mockUseAuth.mockReturnValue({ user: null });
-
-    render(<TranslationsPage />);
-
-    await screen.findByText("マタイ英訳プロジェクト");
     expect(screen.queryByText(/＋ 新規作成/)).not.toBeInTheDocument();
+    expect(vi.mocked(apiServer.serverFetchPage)).toHaveBeenCalledTimes(2);
   });
 
-  it("プロジェクト一覧が表示される（プロジェクト名・言語）", async () => {
-    await mockByStatus([makeProject()]);
-    mockUseAuth.mockReturnValue({ user: null });
+  it("プロジェクトを、開いた直後から進捗つきで並べる", async () => {
+    await mockServer({
+      projects: [
+        makeProject(),
+        makeProject({
+          id: "p2",
+          name: "マルコ仏訳プロジェクト",
+          target_language: "fr",
+          status: "published",
+          unit_count: 10,
+          done_count: 5,
+        }),
+      ],
+    });
 
-    render(<TranslationsPage />);
+    await renderPage();
 
-    await screen.findByText("マタイ英訳プロジェクト");
-    expect(screen.getByText(/English/)).toBeInTheDocument();
-  });
-
-  it("プロジェクトカードに進捗バーと進捗数が表示される", async () => {
-    await mockByStatus([makeProject()]);
-    mockUseAuth.mockReturnValue({ user: null });
-
-    render(<TranslationsPage />);
-
-    await screen.findByText("マタイ英訳プロジェクト");
-    expect(screen.getByText("30/100 (30%)")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: /マタイ英訳プロジェクト.*進捗/ })).toHaveAttribute("aria-valuenow", "30");
-  });
-
-  it("fetchTranslations 失敗でもクラッシュしない", async () => {
-    const { fetchTranslations } = await import("@/lib/api");
-    vi.mocked(fetchTranslations).mockRejectedValue(new Error("Network Error"));
-    mockUseAuth.mockReturnValue({ user: null });
-
-    render(<TranslationsPage />);
-
-    // 失敗を空一覧と誤認させず、各公開カラムで再試行できる。
-    expect(await screen.findAllByText("読み込みに失敗しました。通信状況を確認して再試行してください。")).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: "再試行" })).toHaveLength(2);
-  });
-
-  it("プロジェクトなしのとき各カラムに空メッセージが表示される", async () => {
-    await mockByStatus([]);
-    mockUseAuth.mockReturnValue({ user: null });
-
-    render(<TranslationsPage />);
-
-    expect(await screen.findAllByText("このステータスのプロジェクトはありません")).not.toHaveLength(0);
-  });
-
-  it("複数のステータスのプロジェクトがそれぞれのカラムに表示される", async () => {
-    await mockByStatus([
-      makeProject({ id: "p1", name: "マタイ英訳プロジェクト", status: "active" }),
-      makeProject({ id: "p2", name: "マルコ仏訳プロジェクト", target_language: "fr", status: "published" }),
-    ]);
-    mockUseAuth.mockReturnValue({ user: null });
-
-    render(<TranslationsPage />);
-
-    await screen.findByText("マタイ英訳プロジェクト");
+    expect(screen.getByText("マタイ英訳プロジェクト")).toBeInTheDocument();
     expect(screen.getByText("マルコ仏訳プロジェクト")).toBeInTheDocument();
-    expect(screen.getByText(/Français/)).toBeInTheDocument();
+    expect(screen.getByText(/English/)).toBeInTheDocument();
+    expect(screen.getByText("30/100 (30%)")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /マタイ英訳プロジェクト.*進捗/ })).toHaveAttribute(
+      "aria-valuenow",
+      "30",
+    );
+  });
+
+  it("1件も無いときは、列ごとに空だと伝える", async () => {
+    await mockServer();
+
+    await renderPage();
+
+    expect(screen.getAllByText("このステータスのプロジェクトはありません")).toHaveLength(2);
+  });
+
+  it("取得失敗を空一覧と誤表示せず、列ごとに再試行できる", async () => {
+    const apiServer = await mockServer();
+    vi.mocked(apiServer.serverFetchPage).mockRejectedValue(new Error("Network Error"));
+
+    await renderPage();
+
+    expect(
+      screen.getAllByText("読み込みに失敗しました。通信状況を確認して再試行してください。"),
+    ).toHaveLength(2);
+    fireEvent.click(screen.getAllByRole("button", { name: "再試行" })[0]);
+    expect(refresh).toHaveBeenCalled();
+  });
+
+  it("検索語は、手が止まってから URL に書き出す", async () => {
+    await mockServer({ projects: [makeProject()] });
+    currentSearch = "published=3";
+
+    await renderPage({ published: "3" });
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "プロジェクトを検索" }), {
+      target: { value: "Matthew" },
+    });
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/translations?published=3&q=Matthew", { scroll: false }),
+    );
+  });
+
+  it("開いていたページが無くなったら1ページ目に戻す", async () => {
+    const apiServer = await mockServer({ projects: [makeProject()] });
+    const { ApiError } = await import("@/lib/api");
+    const real = vi.mocked(apiServer.serverFetchPage).getMockImplementation()!;
+    // 3ページ目は無い（DRF は 404 を返す）。1ページ目なら取れる。
+    vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => {
+      if (path.includes("page=3")) throw new ApiError(404, "Invalid page.");
+      return real(path);
+    });
+
+    await renderPage({ published: "3" });
+
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths.some((path) => path.includes("status=published") && path.includes("page=1"))).toBe(true);
+    expect(
+      screen.queryByText("読み込みに失敗しました。通信状況を確認して再試行してください。"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("URL の検索語で入力欄を初期化する", async () => {
+    await mockServer({ projects: [makeProject()] });
+    currentSearch = "q=Luke";
+
+    const apiServer = await import("@/lib/apiServer");
+    await renderPage({ q: "Luke" });
+
+    expect(screen.getByRole("searchbox", { name: "プロジェクトを検索" })).toHaveValue("Luke");
+    for (const [path] of vi.mocked(apiServer.serverFetchPage).mock.calls) {
+      expect(path).toContain("q=Luke");
+    }
+    expect(replace).not.toHaveBeenCalled();
   });
 });

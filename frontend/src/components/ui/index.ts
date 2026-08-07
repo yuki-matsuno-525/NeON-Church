@@ -10,5 +10,6 @@ export { ToastProvider, useToast, type ToastType } from "./Toast";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { FilterChips, type FilterChip } from "./FilterChips";
 export { LoadMoreButton } from "./LoadMoreButton";
+export { RetryButton } from "./RetryButton";
 export { AsyncList, AsyncPagedList } from "./AsyncList";
 export { ClearableSearchInput } from "./ClearableSearchInput";

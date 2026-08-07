@@ -41,9 +41,12 @@ test("S-4: 検索フォームから送信すると URL が /search?q=... にな�
   // 検索ページを開く
   await page.goto("/search");
 
-  // 検索フォームにキーワードを入力して送信
+  // 検索フォームにキーワードを入力して送信。
+  // 入力すると「入力をクリア」ボタンが出る＝画面が操作を受け取れる状態になった印。
+  // これを待たずに押すと、まだ手が付いていないボタンを押すことになる。
   const keyword = "マタイ";
   await page.locator('input[placeholder="キーワードを入力..."]').fill(keyword);
+  await expect(page.getByRole("button", { name: "入力をクリア" })).toBeVisible();
   await page.getByRole("button", { name: "検索" }).click();
 
   // URL が /search?q=マタイ になる

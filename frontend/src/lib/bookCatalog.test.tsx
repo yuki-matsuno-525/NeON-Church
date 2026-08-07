@@ -1,33 +1,23 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { buildCatalog, useBookCatalogState } from "./bookCatalog";
+import { describe, expect, it } from "vitest";
+import { buildCatalog, catalogBookIdParam } from "./bookCatalog";
 
-vi.mock("@/lib/api", () => ({ fetchBooks: vi.fn() }));
+const matthewBooks = [
+  { id: "book-1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
+  { id: "book-2", name: "マタイによる福音書", translation: "KJV", order: 1 },
+];
 
 describe("book catalog", () => {
-  beforeEach(() => vi.clearAllMocks());
-
   it("DBの書を既知のslugと訳に対応付ける", () => {
-    expect(buildCatalog([
-      { id: "book-1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
-    ])).toContainEqual({ slug: "matthew", translations: [{ id: "口語訳", bookId: "book-1" }] });
+    expect(buildCatalog([matthewBooks[0]])).toContainEqual({
+      slug: "matthew",
+      translations: [{ id: "口語訳", bookId: "book-1" }],
+    });
   });
 
-  it("取得失敗を空一覧と区別し、再試行できる", async () => {
-    const api = await import("@/lib/api");
-    vi.mocked(api.fetchBooks)
-      .mockRejectedValueOnce(new Error("offline"))
-      .mockResolvedValueOnce([
-        { id: "book-1", name: "マタイによる福音書", translation: "口語訳", order: 1 },
-      ]);
-
-    const { result } = renderHook(() => useBookCatalogState());
-    await waitFor(() => expect(result.current.error).toBe(true));
-    expect(result.current.catalog).toEqual([]);
-
-    act(() => result.current.retry());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.error).toBe(false);
-    expect(result.current.catalog[0]?.slug).toBe("matthew");
+  it("訳を選んでいなければ、その書の全訳で絞る", () => {
+    const catalog = buildCatalog(matthewBooks);
+    expect(catalogBookIdParam(catalog, "matthew", "")?.split(",").sort()).toEqual(["book-1", "book-2"]);
+    expect(catalogBookIdParam(catalog, "matthew", "KJV")).toBe("book-2");
+    expect(catalogBookIdParam(catalog, "", "")).toBeUndefined();
   });
 });

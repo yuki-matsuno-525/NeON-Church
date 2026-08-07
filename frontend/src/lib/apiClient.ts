@@ -46,7 +46,7 @@ export class ApiError extends Error {
 // サーバーが理由を機械可読に添えているとき（{ detail: "...", code: "chapter_not_found" }）
 // その code を取り出す。表示する文言は言語に合わせて自前で決めるが、
 // 「その訳に書が無い」「章が無い」のような分岐は code で見分ける。
-function extractErrorCode(body: unknown): string | undefined {
+export function extractErrorCode(body: unknown): string | undefined {
   if (body && typeof body === "object" && !Array.isArray(body)) {
     const code = (body as Record<string, unknown>).code;
     if (typeof code === "string") return code;
@@ -613,7 +613,7 @@ export function confirmPasswordReset(data: {
 // ---------------------------------------------------------------------------
 
 /** 質問一覧の1ページ分。answered で「解決済み／未解決」の列ごとに分けて取る。 */
-export function fetchQuestionPage(params?: {
+export type QuestionListParams = {
   /** 訳ごとの Book id。カンマ区切りで複数渡すと、同じ書の全訳をまとめて絞れる。 */
   book_id?: string;
   /** 箇所で絞る（読書ページの Q&A タブ用）。訳非依存の書 slug。 */
@@ -624,7 +624,10 @@ export function fetchQuestionPage(params?: {
   answered?: boolean;
   q?: string;
   page?: number;
-}): Promise<ListPage<QAQuestion>> {
+};
+
+/** 質問一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使うため切り出してある。 */
+export function questionListPath(params?: QuestionListParams): string {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.book_slug) qs.set("book_slug", params.book_slug);
@@ -634,7 +637,11 @@ export function fetchQuestionPage(params?: {
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page && params.page > 1) qs.set("page", String(params.page));
-  return apiFetchPage(`/qa/questions/?${qs}`);
+  return `/qa/questions/?${qs}`;
+}
+
+export function fetchQuestionPage(params?: QuestionListParams): Promise<ListPage<QAQuestion>> {
+  return apiFetchPage(questionListPath(params));
 }
 
 export function fetchQuestion(id: string): Promise<QAQuestion> {
@@ -742,16 +749,21 @@ export function fetchTranslationLanguages(): Promise<TranslationLanguage[]> {
 export type TranslationStatus = "published" | "active" | "draft";
 
 // 翻訳一覧はステータス列ごとに 20 件ページング（ボードの各カラム用）。count で総ページ数を出す。
+/** 翻訳プロジェクト一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使う。 */
+export function translationListPath(status?: TranslationStatus, page = 1, q = ""): string {
+  const qs = new URLSearchParams();
+  if (status) qs.set("status", status);
+  if (q.trim()) qs.set("q", q.trim());
+  qs.set("page", String(page));
+  return `/translations/?${qs.toString()}`;
+}
+
 export function fetchTranslations(
   status?: TranslationStatus,
   page = 1,
   q = "",
 ): Promise<PaginatedResponse<TranslationProject>> {
-  const qs = new URLSearchParams();
-  if (status) qs.set("status", status);
-  if (q.trim()) qs.set("q", q.trim());
-  qs.set("page", String(page));
-  return apiFetch(`/translations/?${qs.toString()}`);
+  return apiFetch(translationListPath(status, page, q));
 }
 
 export function fetchTranslation(id: string): Promise<TranslationProject> {
@@ -978,13 +990,21 @@ export function reportComment(commentId: string, reason: string): Promise<void> 
 // 記事
 // ---------------------------------------------------------------------------
 
-export function fetchArticles(params?: {
+export type ArticleListParams = {
   mine?: boolean;
   excludeMine?: boolean;
   tag?: string;
   author?: string;
   page?: number;
-}): Promise<PaginatedResponse<Article>> {
+};
+
+/**
+ * 記事一覧の問い合わせ先。
+ *
+ * 一覧画面はサーバー側で 1 ページ目を取り、続きをブラウザ側が読み足す。
+ * 絞り込みの付け方が二手に分かれないよう、道の組み立てはここだけに置く。
+ */
+export function articleListPath(params?: ArticleListParams): string {
   const qs = new URLSearchParams();
   if (params?.mine) qs.set("mine", "true");
   if (params?.excludeMine) qs.set("exclude_mine", "true");
@@ -992,7 +1012,16 @@ export function fetchArticles(params?: {
   if (params?.author) qs.set("author", params.author);
   if (params?.page) qs.set("page", String(params.page));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch(`/articles/${suffix}`);
+  return `/articles/${suffix}`;
+}
+
+export function fetchArticles(params?: ArticleListParams): Promise<PaginatedResponse<Article>> {
+  return apiFetch(articleListPath(params));
+}
+
+/** 「もっと見る」で読み足す一覧向け。1 ページ分を ListPage の形で返す。 */
+export function fetchArticlePage(params?: ArticleListParams): Promise<ListPage<Article>> {
+  return apiFetchPage(articleListPath(params));
 }
 
 export function fetchArticle(id: string): Promise<Article> {

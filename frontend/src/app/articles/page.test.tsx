@@ -1,21 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 import ArticlesPage from "./page";
 import type { Article } from "@/lib/types";
-
-const mockUseAuth = vi.fn();
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a>,
 }));
 
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => mockUseAuth() }));
-
-vi.mock("@/lib/api", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, fetchArticles: vi.fn(), fetchArticleTags: vi.fn() };
+vi.mock("@/lib/i18nServer", async () => {
+  const { translations } = await import("@/lib/i18nDictionary");
+  return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
 });
+
+vi.mock("@/lib/apiServer", () => ({
+  serverFetchPage: vi.fn(),
+  serverFetchList: vi.fn(),
+  serverIsSignedIn: vi.fn(),
+}));
 
 const mine: Article = {
   id: "mine",
@@ -37,49 +38,75 @@ const published: Article = {
   owner_username: "bob",
 };
 
+/** サーバー側の取得をまとめて用意する。path で「自分の記事」か「公開記事」かを分ける。 */
+async function mockServer({ signedIn }: { signedIn: boolean }) {
+  const apiServer = await import("@/lib/apiServer");
+  vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
+  vi.mocked(apiServer.serverFetchList).mockResolvedValue([
+    { id: "t1", name: "断食", slug: "fasting", article_count: 1 },
+  ]);
+  vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => ({
+    // exclude_mine=true も mine=true を含むので、先頭の ? まで見て区別する
+    results: path.includes("?mine=true") ? [mine] : [published],
+    count: 1,
+    hasMore: false,
+    counts: undefined,
+  }));
+  return apiServer;
+}
+
+/** サーバーコンポーネントなので、await して返ってきたものを描く。 */
+async function renderPage(searchParams: { tag?: string } = {}) {
+  render(await ArticlesPage({ searchParams: Promise.resolve(searchParams) }));
+}
+
 describe("記事一覧", () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    window.history.replaceState(null, "", "/articles");
-    mockUseAuth.mockReturnValue({ user: { id: "u1", username: "alice" }, loading: false });
-    const api = await import("@/lib/api");
-    vi.mocked(api.fetchArticleTags).mockResolvedValue([{ id: "t1", name: "断食", slug: "fasting", article_count: 1 }]);
-    vi.mocked(api.fetchArticles).mockImplementation(async (params) => ({
-      count: 1,
-      next: null,
-      previous: null,
-      results: params?.mine ? [mine] : [published],
-    }));
   });
 
-  it("自分の記事では閲覧と編集を選べ、公開一覧から自分を除外して取得する", async () => {
-    const api = await import("@/lib/api");
-    render(<ArticlesPage />);
+  it("サーバー側で取った記事を最初から表示し、公開一覧からは自分を除外する", async () => {
+    const apiServer = await mockServer({ signedIn: true });
+    await renderPage();
 
-    expect(await screen.findByRole("link", { name: "自分の記事" })).toHaveAttribute("href", "/articles/mine");
+    expect(screen.getByRole("link", { name: "自分の記事" })).toHaveAttribute("href", "/articles/mine");
     expect(screen.getByRole("link", { name: "編集" })).toHaveAttribute("href", "/articles/mine/edit");
-    expect(await screen.findByRole("link", { name: "公開記事" })).toHaveAttribute("href", "/articles/public");
-    expect(api.fetchArticles).toHaveBeenCalledWith(expect.objectContaining({ excludeMine: true }));
+    expect(screen.getByRole("link", { name: "公開記事" })).toHaveAttribute("href", "/articles/public");
+
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths).toContain("/articles/?exclude_mine=true");
+    expect(paths).toContain("/articles/?mine=true");
   });
 
-  it("主題をURLへ同期して一覧を再取得する", async () => {
-    const user = userEvent.setup();
-    const api = await import("@/lib/api");
-    render(<ArticlesPage />);
+  it("主題は URL の tag として持ち、選ばれているものが分かる", async () => {
+    const apiServer = await mockServer({ signedIn: false });
+    await renderPage({ tag: "fasting" });
 
-    await user.click(await screen.findByRole("button", { name: /断食/ }));
+    const chip = screen.getByRole("link", { name: /断食/ });
+    expect(chip).toHaveAttribute("href", "/articles?tag=fasting");
+    expect(chip).toHaveAttribute("aria-current", "page");
 
-    await waitFor(() => expect(window.location.search).toBe("?tag=fasting"));
-    await waitFor(() => expect(api.fetchArticles).toHaveBeenCalledWith(expect.objectContaining({ tag: "fasting" })));
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths).toEqual(["/articles/?tag=fasting"]);
   });
 
   it("未ログインでも記事を書くためのログイン導線を示す", async () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
-    render(<ArticlesPage />);
+    await mockServer({ signedIn: false });
+    await renderPage();
 
-    expect(await screen.findByRole("link", { name: "ログインして記事を書く" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "ログインして記事を書く" })).toHaveAttribute(
       "href",
       "/login?from=%2Farticles%2Fnew",
     );
+    expect(screen.queryByText("自分の記事")).not.toBeInTheDocument();
+  });
+
+  it("主題が取れなくても記事は読める", async () => {
+    const apiServer = await mockServer({ signedIn: false });
+    vi.mocked(apiServer.serverFetchList).mockRejectedValue(new Error("offline"));
+    await renderPage();
+
+    expect(screen.getByRole("alert")).toHaveTextContent("主題");
+    expect(screen.getByRole("link", { name: "公開記事" })).toBeInTheDocument();
   });
 });

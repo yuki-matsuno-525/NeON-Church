@@ -1,68 +1,90 @@
-"use client";
-
-import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchTranslations, type TranslationProject, type TranslationStatus } from "@/lib/api";
-import { useAuth } from "@/contexts/AuthContext";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import { useQuerySearch } from "@/hooks/useQuerySearch";
-import { useT } from "@/lib/i18n";
-import { languageLabel } from "@/lib/languages";
-import { AsyncList } from "@/components/ui";
-import { ColumnTabs, ListColumn, ListPageHeader } from "@/components/list";
+import { ApiError, translationListPath, type ListPage, type TranslationProject, type TranslationStatus } from "@/lib/api";
+import { serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
+import { getT, getRequestLanguage } from "@/lib/i18nServer";
+import { ListPageHeader } from "@/components/list";
 import type { Tone } from "@/components/list/tone";
-import { Pagination } from "@/components/ui/Pagination";
-import { type IconName } from "@/components/ui/Icon";
-import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
-import { useLang } from "@/contexts/LanguageContext";
+import type { IconName } from "@/components/ui/Icon";
+import { RetryButton } from "@/components/ui";
+import { QueryPagination } from "@/components/ui/QueryPagination";
+import { ProjectCard } from "@/components/translations/ProjectCard";
+import { TranslationBoard, type BoardColumn } from "@/components/translations/TranslationBoard";
+import { TranslationSearch } from "@/components/translations/TranslationSearch";
 import { translationUiText } from "./translationUiText";
 
-type StatusKey = TranslationStatus;
-
+// バックエンドが 1 ページに返す件数。ページ送りの総数を出すのに使う。
 const PAGE_SIZE = 20;
 
 // ステータスごとのカラム。色はステータスの意味に合わせる（公開=緑 / 進行中=アクセント / 下書き=琥珀）。
-const COLUMNS: { key: StatusKey; icon: IconName; tone: Tone }[] = [
+const COLUMNS: { key: TranslationStatus; icon: IconName; tone: Tone }[] = [
   { key: "published", icon: "check-circle", tone: "ok" },
   { key: "active",    icon: "circle-dot",   tone: "active" },
   { key: "draft",     icon: "lock",         tone: "wait" },
 ];
 
-export default function TranslationsPage() {
-  const t = useT();
-  return (
-    <Suspense fallback={<div className="p-8 text-muted">{t.loading}</div>}>
-      <TranslationsContent />
-    </Suspense>
+/** 検索語と、列ごとのページ番号。どちらも URL に持つ。 */
+type TranslationsSearchParams = { q?: string; published?: string; active?: string; draft?: string };
+
+/**
+ * 翻訳プロジェクトの一覧。
+ *
+ * 3 つの列ぶんをサーバー側で取ってから返す。以前は画面が出てから列ごとに
+ * 取りに行っていたので、開いた直後は枠だけが 3 つ並んでいた。
+ *
+ * ブラウザ側に残しているのは、検索欄・ページ送り・スマホの列切り替えだけ。
+ * どの列の何ページ目を見ているかも URL に書くので、その URL を直接開ける。
+ */
+export default async function TranslationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<TranslationsSearchParams>;
+}) {
+  const params = await searchParams;
+  const q = params.q ?? "";
+  const t = await getT();
+  const ui = translationUiText(await getRequestLanguage());
+  const signedIn = await serverIsSignedIn();
+
+  // 下書きは自分のものしか見られないので、ログインしていないときは列ごと出さない。
+  const visible = signedIn ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
+
+  // 取れなかった列は null。他の列は読めるので、列ごとに受け止める。
+  const loaded = await Promise.all(
+    visible.map((column) => loadColumn(column.key, pageNumber(params[column.key]), q)),
   );
-}
 
-function TranslationsContent() {
-  const { user } = useAuth();
-  const t = useT();
-  const { lang } = useLang();
-  const ui = translationUiText(lang);
-  const isMobile = useIsMobile();
-  // スマホでは1カラムずつタブ切り替え。既定は「公開済み」。
-  const [activeTab, setActiveTab] = useState<StatusKey>("published");
-  // 入力欄が正。URL と3列分の検索リクエストは、手が止まってからまとめて追いかける。
-  const {
-    value: projectSearch,
-    setValue: setProjectSearch,
-    debounced: debouncedSearch,
-  } = useQuerySearch("/translations");
-  const visibleColumns = user ? COLUMNS : COLUMNS.filter((column) => column.key !== "draft");
-
-  const columnLabel = (key: StatusKey) => {
+  const columnLabel = (key: TranslationStatus) => {
     if (key === "published") return t.statusPublished;
     if (key === "active") return t.statusActive;
     return t.colDraftLabel;
   };
-  const columnDesc = (key: StatusKey) => {
+  const columnDesc = (key: TranslationStatus) => {
     if (key === "published") return t.colPublishedDesc;
     if (key === "active") return t.colActiveDesc;
     return t.colDraftDesc;
   };
+
+  const columns: BoardColumn[] = visible.map((column, index) => ({
+    key: column.key,
+    icon: column.icon,
+    tone: column.tone,
+    title: columnLabel(column.key),
+    description: columnDesc(column.key),
+    count: loaded[index].page?.count ?? 0,
+    body: (
+      <ColumnBody
+        page={loaded[index].page}
+        current={loaded[index].current}
+        param={column.key}
+        statusLabel={columnLabel(column.key)}
+        emptyText={t.emptyColumn}
+        errorText={ui.loadError}
+        retryLabel={ui.retry}
+        createdByLabel={t.createdBy}
+        progressLabel={t.progress}
+      />
+    ),
+  }));
 
   return (
     <div className="page page-full">
@@ -70,210 +92,95 @@ function TranslationsContent() {
         title={t.translationsTitle}
         description={t.translationsDesc}
         action={
-          user ? (
-            <Link href="/translations/new" className="cta-button">
-              {t.newProject}
-            </Link>
+          signedIn ? (
+            <Link href="/translations/new" className="cta-button">{t.newProject}</Link>
           ) : undefined
         }
       />
 
-      <label className="block mb-4">
-        <span className="sr-only">{t.projectSearchLabel}</span>
-        <ClearableSearchInput
-          value={projectSearch}
-          onChange={setProjectSearch}
-          placeholder={t.projectSearchPlaceholder}
-          ariaLabel={t.projectSearchLabel}
-          inputClassName="form-control text-sm"
-          wrapperClassName="w-full"
-        />
-      </label>
+      <TranslationSearch label={t.projectSearchLabel} placeholder={t.projectSearchPlaceholder} />
 
-      {/* スマホだけカラム切り替えタブを出す。PC はタブなしで3カラムを横並び。 */}
-      {isMobile && (
-        <ColumnTabs
-          tabs={visibleColumns.map((col) => ({ ...col, label: columnLabel(col.key) }))}
-          active={activeTab}
-          onChange={setActiveTab}
-          label={t.translationsTitle}
-          idPrefix="translations"
-        />
-      )}
-
-      <div className="list-board">
-        {visibleColumns.map((col) => (
-          <TranslationColumn
-            key={col.key}
-            statusKey={col.key}
-            icon={col.icon}
-            tone={col.tone}
-            label={columnLabel(col.key)}
-            desc={columnDesc(col.key)}
-            search={debouncedSearch}
-            retryLabel={ui.retry}
-            errorMessage={ui.loadError}
-            hidden={isMobile && col.key !== activeTab}
-            tabId={isMobile ? `translations-tab-${col.key}` : undefined}
-            panelId={`translations-panel-${col.key}`}
-          />
-        ))}
-      </div>
+      <TranslationBoard columns={columns} label={t.translationsTitle} idPrefix="translations" />
     </div>
   );
 }
 
-function TranslationColumn({
-  statusKey,
-  icon,
-  tone,
-  label,
-  desc,
-  search,
+/** 列の中身。読み込めなかった / 0 件 / 一覧、の 3 通り。 */
+function ColumnBody({
+  page,
+  current,
+  param,
+  statusLabel,
+  emptyText,
+  errorText,
   retryLabel,
-  errorMessage,
-  hidden,
-  tabId,
-  panelId,
+  createdByLabel,
+  progressLabel,
 }: {
-  statusKey: StatusKey;
-  icon: IconName;
-  tone: Tone;
-  label: string;
-  desc: string;
-  search: string;
+  page: ListPage<TranslationProject> | null;
+  current: number;
+  param: string;
+  statusLabel: string;
+  emptyText: string;
+  errorText: string;
   retryLabel: string;
-  errorMessage: string;
-  hidden: boolean;
-  tabId?: string;
-  panelId: string;
+  createdByLabel: string;
+  progressLabel: string;
 }) {
-  const t = useT();
-  const [items, setItems] = useState<TranslationProject[]>([]);
-  const [count, setCount] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
-    setError(false);
-    fetchTranslations(statusKey, page, search)
-      .then((res) => {
-        if (!active) return;
-        setItems(res.results);
-        setCount(res.count);
-      })
-      .catch(() => {
-        if (!active) return;
-        setItems([]);
-        setCount(0);
-        setError(true);
-      })
-      .finally(() => active && setLoading(false));
-    return () => {
-      active = false;
-    };
-  }, [statusKey, page, search, reloadKey]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-  }, [search]);
-
-  const totalPages = Math.ceil(count / PAGE_SIZE);
-
-  return (
-    <ListColumn
-      icon={icon}
-      tone={tone}
-      title={label}
-      count={count}
-      description={desc}
-      hidden={hidden}
-      id={panelId}
-      labelledBy={tabId}
-    >
-      <AsyncList
-        loading={loading}
-        error={error ? errorMessage : null}
-        isEmpty={items.length === 0}
-        emptyText={t.emptyColumn}
-        onRetry={() => setReloadKey((key) => key + 1)}
-        retryLabel={retryLabel}
-      >
-        <div className="flex flex-col gap-3">
-          {items.map((p) => (
-            <ProjectCard key={p.id} project={p} label={label} />
-          ))}
-        </div>
-        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-      </AsyncList>
-    </ListColumn>
-  );
-}
-
-function ProjectCard({
-  project: p,
-  label,
-}: {
-  project: TranslationProject;
-  label: string;
-}) {
-  const t = useT();
-  const progressPct = p.unit_count > 0 ? Math.round((p.done_count / p.unit_count) * 100) : 0;
-  const progressText = p.unit_count > 0
-    ? `${p.done_count}/${p.unit_count} (${progressPct}%)`
-    : `${p.done_count}/${p.unit_count}`;
-
-  return (
-    <Link href={`/translations/${p.id}`} className="no-underline text-inherit">
-      <div className="card-glow card-glow-interactive py-4 px-4 flex flex-col" >
-        <div className="flex items-start justify-end gap-3 mb-3">
-          <span className="badge badge-icon badge-tone">
-            {label}
-          </span>
-        </div>
-
-        <h3 className="card-title">{p.name}</h3>
-
-        {p.description && (
-          <p className="card-summary">
-            {p.description}
-          </p>
-        )}
-
-        <div className="flex gap-2 text-xs text-faint flex-wrap mb-3">
-          <span className="meta-pill">{p.source_book_name}</span>
-          <span className="meta-pill">{languageLabel(p.target_language)}</span>
-          <span className="meta-pill">{t.createdBy} {p.owner_username}</span>
-        </div>
-
-        <div className="mt-auto">
-          <div className="flex justify-between gap-3 text-xs text-muted mb-1">
-            <span>{t.progress}</span>
-            <span>{progressText}</span>
-          </div>
-          <div
-            role="progressbar"
-            aria-label={`${p.name} ${t.progress}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progressPct}
-            className="progress-track mt-0"
-          >
-            <div className="progress-fill progress-fill-tone" style={{ width: `${progressPct}%` }} />
-          </div>
-        </div>
+  // 見た目は AsyncList の「失敗」「0 件」に合わせてある（同じ画面で並ぶため）。
+  if (page === null) {
+    return (
+      <div role="alert" className="py-3 px-1">
+        <p className="mt-0 mx-0 mb-3 text-sm text-muted">{errorText}</p>
+        <RetryButton label={retryLabel} />
       </div>
-    </Link>
+    );
+  }
+  if (page.results.length === 0) {
+    return <p className="px-1 py-2 text-sm text-faint">{emptyText}</p>;
+  }
+  return (
+    <>
+      <div className="flex flex-col gap-3">
+        {page.results.map((project) => (
+          <ProjectCard
+            key={project.id}
+            project={project}
+            statusLabel={statusLabel}
+            createdByLabel={createdByLabel}
+            progressLabel={progressLabel}
+          />
+        ))}
+      </div>
+      <QueryPagination page={current} totalPages={Math.ceil(page.count / PAGE_SIZE)} param={param} />
+    </>
   );
 }
 
+/**
+ * 1 つの列を取る。
+ *
+ * 検索語を変えると件数が減り、開いていたページが無くなることがある。
+ * その場合（サーバーが「そんなページは無い」と返したとき）は 1 ページ目に戻す。
+ */
+async function loadColumn(
+  status: TranslationStatus,
+  requested: number,
+  q: string,
+): Promise<{ page: ListPage<TranslationProject> | null; current: number }> {
+  try {
+    return { page: await serverFetchPage<TranslationProject>(translationListPath(status, requested, q)), current: requested };
+  } catch (cause) {
+    if (requested > 1 && cause instanceof ApiError && cause.status === 404) {
+      const page = await serverFetchPage<TranslationProject>(translationListPath(status, 1, q)).catch(() => null);
+      return { page, current: 1 };
+    }
+    return { page: null, current: requested };
+  }
+}
 
-
-
-
+/** URL のページ番号。壊れた値や 1 未満は 1 ページ目として扱う。 */
+function pageNumber(value: string | undefined): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 1 ? parsed : 1;
+}

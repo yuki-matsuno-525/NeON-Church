@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import QuestionDetailPage from "./page";
-import type { ListPage, QAAnswer, QAQuestion } from "@/lib/api";
+import type { QAAnswer, QAQuestion } from "@/lib/api";
 
 const pushMock = vi.fn();
+const refreshMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({ id: "q1" }),
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+  usePathname: () => "/qa/q1",
 }));
 
 vi.mock("next/link", () => ({
@@ -21,12 +22,20 @@ vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "u1", username: "alice" } }),
 }));
 
+vi.mock("@/lib/i18nServer", async () => {
+  const { translations } = await import("@/lib/i18nDictionary");
+  return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
+});
+
+vi.mock("@/lib/apiServer", () => ({
+  serverFetch: vi.fn(),
+  serverFetchPage: vi.fn(),
+}));
+
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
   return {
     ...actual,
-    fetchQuestion: vi.fn(),
-    fetchAnswerPage: vi.fn(),
     createAnswer: vi.fn().mockResolvedValue({ id: "a2" }),
     setQuestionBestAnswer: vi.fn().mockResolvedValue(undefined),
   };
@@ -61,65 +70,76 @@ const makeAnswer = (overrides: Partial<QAAnswer> = {}): QAAnswer => ({
   ...overrides,
 });
 
-const makePage = (results: QAAnswer[]): ListPage<QAAnswer> => ({
-  results,
-  count: results.length,
-  hasMore: false,
-  counts: undefined,
-});
+async function mockServer({ answers = [makeAnswer()] } = {}) {
+  const apiServer = await import("@/lib/apiServer");
+  vi.mocked(apiServer.serverFetch).mockResolvedValue(makeQuestion());
+  vi.mocked(apiServer.serverFetchPage).mockResolvedValue({
+    results: answers,
+    count: answers.length,
+    hasMore: false,
+    counts: undefined,
+  });
+  return apiServer;
+}
+
+const renderPage = async () => render(await QuestionDetailPage({ params: Promise.resolve({ id: "q1" }) }));
 
 describe("Q&A 詳細ページ", () => {
-  beforeEach(async () => {
-    vi.clearAllMocks();
-    const { fetchQuestion, fetchAnswerPage } = await import("@/lib/api");
-    vi.mocked(fetchQuestion).mockResolvedValue(makeQuestion());
-    vi.mocked(fetchAnswerPage).mockResolvedValue(makePage([makeAnswer()]));
-  });
+  beforeEach(() => vi.clearAllMocks());
 
-  it("質問の全文と回答を表示する", async () => {
-    render(<QuestionDetailPage />);
+  it("質問の全文と回答を、開いた直後から表示する", async () => {
+    await mockServer();
 
-    expect(await screen.findByRole("heading", { name: "山上の説教について" })).toBeInTheDocument();
+    await renderPage();
+
+    expect(screen.getByRole("heading", { name: "山上の説教について" })).toBeInTheDocument();
     expect(screen.getByText("背景を知りたいです。")).toBeInTheDocument();
     expect(screen.getByText("旧約の背景があります")).toBeInTheDocument();
   });
 
   it("箇所から読書ページへ飛べる", async () => {
-    render(<QuestionDetailPage />);
-    const link = await screen.findByRole("link", { name: /マタイによる福音書 5章3節/ });
-    expect(link).toHaveAttribute("href", "/matthew/5#verse-3");
+    await mockServer();
+
+    await renderPage();
+
+    expect(screen.getByRole("link", { name: /マタイによる福音書 5章3節/ })).toHaveAttribute(
+      "href",
+      "/matthew/5#verse-3",
+    );
   });
 
   it("回答を投稿できる", async () => {
-    render(<QuestionDetailPage />);
-    await screen.findByRole("heading", { name: "山上の説教について" });
+    await mockServer();
 
-    const textbox = screen.getByRole("textbox", { name: "この質問に答える..." });
-    fireEvent.change(textbox, { target: { value: "回答本文" } });
+    await renderPage();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "この質問に答える..." }), {
+      target: { value: "回答本文" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "回答を投稿する" }));
 
     const { createAnswer } = await import("@/lib/api");
-    await waitFor(() => {
-      expect(vi.mocked(createAnswer)).toHaveBeenCalledWith("q1", "回答本文");
-    });
+    await waitFor(() => expect(vi.mocked(createAnswer)).toHaveBeenCalledWith("q1", "回答本文"));
   });
 
-  it("質問者はベストアンサーを選べる", async () => {
-    render(<QuestionDetailPage />);
-    const button = await screen.findByRole("button", { name: "ベストアンサー" });
-    fireEvent.click(button);
+  it("質問者はベストアンサーを選べ、質問側の表示も取り直す", async () => {
+    await mockServer();
+
+    await renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: "ベストアンサー" }));
 
     const { setQuestionBestAnswer } = await import("@/lib/api");
-    await waitFor(() => {
-      expect(vi.mocked(setQuestionBestAnswer)).toHaveBeenCalledWith("q1", "a1");
-    });
+    await waitFor(() => expect(vi.mocked(setQuestionBestAnswer)).toHaveBeenCalledWith("q1", "a1"));
+    await waitFor(() => expect(refreshMock).toHaveBeenCalled());
   });
 
   it("質問が見つからなければその旨を出す", async () => {
-    const { fetchQuestion } = await import("@/lib/api");
-    vi.mocked(fetchQuestion).mockRejectedValue(new Error("404"));
+    const apiServer = await mockServer();
+    vi.mocked(apiServer.serverFetch).mockRejectedValue(new Error("404"));
 
-    render(<QuestionDetailPage />);
-    expect(await screen.findByText("この質問は見つかりませんでした。")).toBeInTheDocument();
+    await renderPage();
+
+    expect(screen.getByText("この質問は見つかりませんでした。")).toBeInTheDocument();
   });
 });
