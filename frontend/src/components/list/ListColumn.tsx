@@ -10,8 +10,6 @@ type Props = {
   /** この列の分類の色。list.css の tone-* から選ぶ（色の値は書かない） */
   tone: Tone;
   title: string;
-  /** 見出しの横に出す件数。表示中の件数ではなく、サーバーが数えた総数を渡す */
-  count: number;
   description: string;
   /** スマホのタブ切り替えで、選ばれていない列を隠すとき true */
   hidden?: boolean;
@@ -25,16 +23,19 @@ type Props = {
 };
 
 /**
- * 一覧画面の 1 カラム。アイコン・見出し・件数バッジ・説明という同じ形を持つ。
+ * 一覧画面の 1 カラム。アイコン・見出し・説明という同じ形を持つ。
  *
  * 中身（カードの並べ方やデータの取り方）は children に任せるので、
  * 画面ごとに違うのは「何を並べるか」だけになる。
+ *
+ * 見出しに件数は出さない。塗りバッジだとカードに付く状態バッジと同じ形・同じ色になり、
+ * 数と状態が見分けられなくなるため。また、列の中を見ている人にとって
+ * その列の総数は何も決めない（数が効くのはどの列を見るか選ぶ前）。
  */
 export function ListColumn({
   icon,
   tone,
   title,
-  count,
   description,
   hidden,
   busy,
@@ -57,11 +58,10 @@ export function ListColumn({
             <Icon name={icon} size={18} />
           </span>
           <h2 className="m-0 text-md font-bold">{title}</h2>
-          <span className="badge badge-count badge-tone">
-            {count}
-          </span>
         </div>
-        <p className="mt-2 mb-0 text-xs text-muted">{description}</p>
+        {/* 説明は読ませたい文。--text-muted は紫みが強くて沈むので text-soft を使う
+            （カードの要約や明細のラベルと同じ濃さになる）。 */}
+        <p className="mt-2 mb-0 text-sm text-soft">{description}</p>
       </div>
       {children}
     </section>

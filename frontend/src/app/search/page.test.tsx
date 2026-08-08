@@ -87,10 +87,15 @@ describe("SearchPage", () => {
     );
     mockSearchParams = new URLSearchParams({ q: "アブラハム" });
     render(<SearchPage />);
-    // 書名ラベルが表示されることを確認（ハイライト対象外のため分割されない）
-    await screen.findByText(/マタイによる福音書/);
-    // ハイライトされたキーワードは mark 要素に入るため getAllByText を使用
-    expect(screen.getAllByText(/アブラハム/).length).toBeGreaterThan(0);
+    // 書名では待てない。この画面には書で絞り込む <select> があり、全書名が
+    // <option> として最初から入っているので、findByText(/マタイ…/) は
+    // 検索結果を待たずに option に当たって素通りしてしまう。
+    // 本文にしか出てこない語で待つこと。
+    // ハイライトされたキーワードは mark 要素に入るため findAllByText を使う。
+    const hits = await screen.findAllByText(/アブラハム/);
+    expect(hits.length).toBeGreaterThan(0);
+    // 書名は節番号ごと確かめる（この並びは結果にしか出ない）
+    expect(screen.getByText(/マタイによる福音書 1章1節/)).toBeInTheDocument();
   });
 
   it("節結果に、当たった本文の訳が表示される", async () => {

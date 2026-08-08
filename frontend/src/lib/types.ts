@@ -212,6 +212,8 @@ export type TranslationProject = {
   owner_username: string;
   source_book: string;
   source_book_name: string;
+  /** もとにした版（口語訳 / KJV / R. H. Charles (EN) など）。書名だけでは何から訳すのかが決まらない。 */
+  source_book_translation: string;
   target_language: string;
   status: "draft" | "active" | "published";
   unit_count: number;
@@ -392,5 +394,9 @@ export type PlanSubscription = {
   plan: string;
   plan_title: string;
   started_at: string;
+  /** 「やめる」を押したときだけ false。読み終わっても true のまま。 */
   is_active: boolean;
+  /** プランの日数と、そのうち読み終わった数。読書中と読み終わったの区別に使う。 */
+  day_count: number;
+  completed_count: number;
 };

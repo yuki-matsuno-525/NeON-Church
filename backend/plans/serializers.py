@@ -166,11 +166,29 @@ class PlanWriteSerializer(serializers.ModelSerializer):
 
 class PlanSubscriptionSerializer(serializers.ModelSerializer):
     plan_title = serializers.CharField(source="plan.title", read_only=True)
+    # 「何日中いくつ終わったか」。読み終わっても is_active は true のままなので
+    # （落ちるのは「やめる」を押したときだけ）、この 2 つが無いと画面は
+    # 読書中と読み終わったものを見分けられない。
+    day_count = serializers.SerializerMethodField()
+    completed_count = serializers.SerializerMethodField()
 
     class Meta:
         model = PlanSubscription
-        fields = ["id", "plan", "plan_title", "started_at", "is_active"]
+        fields = [
+            "id", "plan", "plan_title", "started_at", "is_active",
+            "day_count", "completed_count",
+        ]
         read_only_fields = fields
+
+    # 一覧では views の annotate が本体クエリでまとめて数える。
+    # 付いていなければその場で数える（1 件だけ返す経路のため）。
+    def get_day_count(self, obj) -> int:
+        annotated = getattr(obj, "annotated_day_count", None)
+        return annotated if annotated is not None else obj.plan.days.count()
+
+    def get_completed_count(self, obj) -> int:
+        annotated = getattr(obj, "annotated_completed_count", None)
+        return annotated if annotated is not None else obj.progress.count()
 
 
 def check_day_limit(plan: Plan) -> None:

@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { AsyncPagedList } from "@/components/ui";
 import { type IconName } from "@/components/ui/Icon";
-import { ListColumn } from "@/components/list";
+import { ListColumn, visibilityBadgeClass } from "@/components/list";
 import type { Tone } from "@/components/list/tone";
 
 type Props = {
@@ -57,7 +57,7 @@ export function ArticleFeedColumn({
   const list = useLoadMore(fetchPage, initial);
 
   return (
-    <ListColumn icon={icon} tone={tone} title={title} count={list.total} description={description} busy={list.loading}>
+    <ListColumn icon={icon} tone={tone} title={title} description={description} busy={list.loading}>
       <AsyncPagedList list={list} emptyText={empty}>
         <div className="flex flex-col gap-3">
           {list.items.map((article) => (
@@ -71,11 +71,10 @@ export function ArticleFeedColumn({
 
 function ArticleCard({ article, editable }: { article: Article; editable: boolean }) {
   const t = useT();
-  const isPublic = article.visibility === "public";
   return (
-    <article className="card-glow p-4 flex flex-col">
+    <article className="card-glow card-glow-interactive card-link p-4 flex flex-col">
       <div className="flex justify-between items-center gap-2 mb-3">
-        <span className={`badge ${isPublic ? "badge-tone tone-ok" : "badge-muted"}`}>
+        <span className={visibilityBadgeClass(article.visibility)}>
           {visibilityLabel(article.visibility, t)}
         </span>
         {editable && (
@@ -85,25 +84,33 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
         )}
       </div>
       <h3 className="card-title">
-        <Link href={`/articles/${article.id}`} className="text-inherit no-underline">
+        {/* card-link-main が影でカード全体を覆うので、どこを押しても記事へ飛ぶ。
+            書いた人と主題はその上に載っていて、別々に押せる。 */}
+        <Link href={`/articles/${article.id}`} className="card-link-main text-inherit no-underline">
           {article.title}
         </Link>
       </h3>
       {article.summary && <p className="card-summary">{article.summary}</p>}
-      <div className="flex gap-2 text-xs text-muted flex-wrap">
-        <Link href={`/profile/${article.owner_username}`} className="meta-pill meta-pill-link">
-          {article.owner_username}
-        </Link>
-        {article.tags.map((articleTag) => (
-          <Link
-            key={articleTag.id}
-            href={`/articles?tag=${articleTag.slug}`}
-            className="meta-pill meta-pill-link"
-          >
-            {articleTagLabel(articleTag.slug, articleTag.name, t)}
-          </Link>
-        ))}
-      </div>
+      {/* 灰色の箱を横に並べるのをやめ、翻訳カードと同じ明細に揃える。
+          箱では「tanaka」と「詩篇」が同じ見た目で、どちらが何なのか分からなかった。 */}
+      <dl className="meta-rows">
+        <dt>{t.cardAuthor}</dt>
+        <dd>
+          <Link href={`/profile/${article.owner_username}`}>{article.owner_username}</Link>
+        </dd>
+        {article.tags.length > 0 && (
+          <>
+            <dt>{t.cardTopics}</dt>
+            <dd>
+              {article.tags.map((articleTag) => (
+                <Link key={articleTag.id} href={`/articles?tag=${articleTag.slug}`}>
+                  {articleTagLabel(articleTag.slug, articleTag.name, t)}
+                </Link>
+              ))}
+            </dd>
+          </>
+        )}
+      </dl>
     </article>
   );
 }

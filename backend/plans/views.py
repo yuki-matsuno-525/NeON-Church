@@ -317,6 +317,14 @@ class MyPlanSubscriptionListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return PlanSubscription.objects.filter(
-            user=self.request.user, is_active=True
-        ).select_related("plan")
+        # 日数と完了数は本体クエリでまとめて数える。シリアライザ側で数えると
+        # 1 件につき 2 回問い合わせることになるため。
+        # 2 つの結合をまたぐので distinct=True が要る（付けないと掛け算になる）。
+        return (
+            PlanSubscription.objects.filter(user=self.request.user, is_active=True)
+            .select_related("plan")
+            .annotate(
+                annotated_day_count=Count("plan__days", distinct=True),
+                annotated_completed_count=Count("progress", distinct=True),
+            )
+        )

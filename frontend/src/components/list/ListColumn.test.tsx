@@ -6,29 +6,28 @@ import { ColumnTabs } from "./ColumnTabs";
 import { ListPageHeader } from "./ListPageHeader";
 
 describe("ListColumn", () => {
-  it("見出し・件数・説明と中身を並べる", () => {
+  it("見出し・説明と中身を並べる", () => {
     render(
-      <ListColumn icon="globe" tone="active" title="公開" count={3} description="誰でも読めます。">
+      <ListColumn icon="globe" tone="active" title="公開" description="誰でも読めます。">
         <p>カード</p>
       </ListColumn>
     );
 
     expect(screen.getByRole("heading", { name: "公開" })).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
     expect(screen.getByText("誰でも読めます。")).toBeInTheDocument();
     expect(screen.getByText("カード")).toBeInTheDocument();
   });
 
   it("labelledBy を渡したときだけタブの中身として扱う", () => {
     const { rerender } = render(
-      <ListColumn icon="globe" tone="ok" title="公開" count={0} description="説明">
+      <ListColumn icon="globe" tone="ok" title="公開" description="説明">
         <p>カード</p>
       </ListColumn>
     );
     expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
 
     rerender(
-      <ListColumn icon="globe" tone="ok" title="公開" count={0} description="説明" id="p" labelledBy="tab-p">
+      <ListColumn icon="globe" tone="ok" title="公開" description="説明" id="p" labelledBy="tab-p">
         <p>カード</p>
       </ListColumn>
     );

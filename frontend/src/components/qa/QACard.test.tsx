@@ -29,9 +29,15 @@ const makeQuestion = (overrides: Partial<QAQuestion> = {}): QAQuestion => ({
 });
 
 describe("QACard", () => {
-  it("カード全体が詳細ページへのリンクになる", () => {
+  it("題は詳細ページ、投稿者と主題はそれぞれの行き先へ飛ぶ", () => {
     const { container } = render(<QACard question={makeQuestion()} />);
-    expect(screen.getByRole("link")).toHaveAttribute("href", "/qa/q1");
+    // 題のリンクが影でカード全体を覆う（card.css の .card-link）。
+    // カードのどこを押しても詳細へ飛ぶが、投稿者と主題はその上に載っていて別々に押せる。
+    expect(
+      screen.getByRole("link", { name: "山上の説教の『心の貧しい人』とは？" })
+    ).toHaveAttribute("href", "/qa/q1");
+    expect(screen.getByRole("link", { name: "alice" })).toHaveAttribute("href", "/profile/alice");
+    expect(screen.getByRole("link", { name: "解説" })).toHaveAttribute("href", "/qa?tag=tag1");
     // 一覧へ戻ったときに元の質問へアンカーで戻れる
     expect(container.querySelector("#question-q1")).toBeInTheDocument();
   });
@@ -44,8 +50,10 @@ describe("QACard", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("未解決")).toBeInTheDocument();
     expect(screen.getByText("マタイによる福音書 5章3節")).toBeInTheDocument();
-    expect(screen.getByText("解説")).toBeInTheDocument();
-    expect(screen.getByText("回答 2件")).toBeInTheDocument();
+    // 明細は「説明 → 値」の組で並ぶ（灰色の箱を横に並べるのをやめた）。
+    expect(screen.getByText("主題").nextElementSibling).toHaveTextContent("解説");
+    expect(screen.getByText("回答").nextElementSibling).toHaveTextContent("2件");
+    expect(screen.getByText("質問した人").nextElementSibling).toHaveTextContent("alice");
   });
 
   it("ベストアンサーがあれば解決済みと出す", () => {

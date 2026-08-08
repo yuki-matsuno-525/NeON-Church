@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ApiError, translationListPath, type ListPage, type TranslationProject, type TranslationStatus } from "@/lib/api";
 import { serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
+import type { Translations } from "@/lib/i18n";
 import { ListPageHeader } from "@/components/list";
 import type { Tone } from "@/components/list/tone";
 import type { IconName } from "@/components/ui/Icon";
@@ -70,7 +71,6 @@ export default async function TranslationsPage({
     tone: column.tone,
     title: columnLabel(column.key),
     description: columnDesc(column.key),
-    count: loaded[index].page?.count ?? 0,
     body: (
       <ColumnBody
         page={loaded[index].page}
@@ -80,8 +80,7 @@ export default async function TranslationsPage({
         emptyText={t.emptyColumn}
         errorText={ui.loadError}
         retryLabel={ui.retry}
-        createdByLabel={t.createdBy}
-        progressLabel={t.progress}
+        t={t}
       />
     ),
   }));
@@ -114,8 +113,7 @@ function ColumnBody({
   emptyText,
   errorText,
   retryLabel,
-  createdByLabel,
-  progressLabel,
+  t,
 }: {
   page: ListPage<TranslationProject> | null;
   current: number;
@@ -124,8 +122,7 @@ function ColumnBody({
   emptyText: string;
   errorText: string;
   retryLabel: string;
-  createdByLabel: string;
-  progressLabel: string;
+  t: Translations;
 }) {
   // 見た目は AsyncList の「失敗」「0 件」に合わせてある（同じ画面で並ぶため）。
   if (page === null) {
@@ -147,8 +144,7 @@ function ColumnBody({
             key={project.id}
             project={project}
             statusLabel={statusLabel}
-            createdByLabel={createdByLabel}
-            progressLabel={progressLabel}
+            t={t}
           />
         ))}
       </div>

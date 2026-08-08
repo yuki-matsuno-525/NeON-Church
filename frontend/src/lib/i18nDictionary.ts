@@ -149,6 +149,19 @@ const ja = {
   planPublicTitle: "公開されたプラン",
   planPublicDesc: "誰でも読めるプラン。",
   planPublicEmpty: "公開されたプランはまだありません。",
+  // 一覧の切り替えタブ。読書プランは「続けること」が中身なので、
+  // 開いたときにまず出るのは自分がいま読んでいるものにする。
+  planTabsLabel: "プランの切り替え",
+  planTabReading: "読んでいる",
+  planTabDone: "読み終わった",
+  planTabMine: "作った",
+  planTabFind: "さがす",
+  planReadingEmpty: "まだ読んでいるプランはありません。「さがす」から選べます。",
+  planDoneEmpty: "読み終わったプランはまだありません。",
+  // 進捗。「3日目」ではなく終わった数を出す。始めた日から数えると、
+  // 何日か空けたときに実際に読んだ量とずれるため。
+  planProgressFmt: (done: number, total: number) => `${total}日中 ${done}日`,
+  planAllDone: "読了",
   planDayCount: (n: number) => `${n}日`,
   planReaderCount: (n: number) => `${n}人が読書中`,
   planLoginRequired: "プランを作るにはログインが必要です。",
@@ -443,6 +456,31 @@ const ja = {
   createdBy: "作成:",
   progress: "進捗:",
   translationLanguage: "言語:",
+
+  // 一覧カードの補足情報につける説明。値だけでは何のことか分からないので左に添える。
+  // 「書」と「もとの版」を分けているのは、DB の書が「書 × 版」で1件のため。
+  // 書名だけだと、エノク書なら英訳、創世記なら口語訳とも KJV とも取れてしまう。
+  cardBook: "書",
+  cardSourceVersion: "もとの版",
+  cardTargetLanguage: "訳す言語",
+  // 立ち上げて参加申請を承認する人。「作った人」だと完成させた人に読めてしまう。
+  cardOrganizer: "主催",
+  // 記事
+  cardAuthor: "書いた人",
+  cardTopics: "主題",
+  // プラン
+  cardPlanOwner: "作った人",
+  cardPlanDays: "日数",
+  cardPlanReaders: "読者",
+  // Q&A
+  cardAsker: "質問した人",
+  cardPostedAt: "投稿",
+  cardAnswers: "回答",
+  // 説明を左に付けるので、値には単位だけを置く。
+  // 一覧の他の場所で使う planReaderCount（「12人が読書中」）や
+  // qaAnswerCount（「回答 2件」）は文になっていて、説明と重なってしまうため。
+  cardReaderValue: (n: number) => `${n}人`,
+  cardAnswerValue: (n: number) => `${n}件`,
 
   // 新規翻訳作成
   newTranslationTitle: "新規翻訳プロジェクト",
@@ -860,6 +898,15 @@ const en: typeof ja = {
   planPublicTitle: "Published plans",
   planPublicDesc: "Plans anyone can read.",
   planPublicEmpty: "No plans have been published yet.",
+  planTabsLabel: "Switch plan list",
+  planTabReading: "Reading",
+  planTabDone: "Finished",
+  planTabMine: "Made by you",
+  planTabFind: "Find",
+  planReadingEmpty: "You are not reading any plan yet. Pick one from Find.",
+  planDoneEmpty: "You have not finished a plan yet.",
+  planProgressFmt: (done: number, total: number) => `${done} of ${total} days`,
+  planAllDone: "Finished",
   planDayCount: (n: number) => (n === 1 ? "1 day" : `${n} days`),
   planReaderCount: (n: number) => (n === 1 ? "1 reader" : `${n} readers`),
   planLoginRequired: "Sign in to make a plan.",
@@ -1140,6 +1187,21 @@ const en: typeof ja = {
   createdBy: "By:",
   progress: "Progress:",
   translationLanguage: "Language:",
+
+  cardBook: "Book",
+  cardSourceVersion: "Source version",
+  cardTargetLanguage: "Target language",
+  cardOrganizer: "Organizer",
+  cardAuthor: "Author",
+  cardTopics: "Topics",
+  cardPlanOwner: "Creator",
+  cardPlanDays: "Length",
+  cardPlanReaders: "Readers",
+  cardAsker: "Asked by",
+  cardPostedAt: "Posted",
+  cardAnswers: "Answers",
+  cardReaderValue: (n: number) => `${n}`,
+  cardAnswerValue: (n: number) => `${n}`,
 
   newTranslationTitle: "New Translation Project",
   backToTranslations: "← Translation projects",
