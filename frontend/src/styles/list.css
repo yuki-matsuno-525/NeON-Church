@@ -23,37 +23,57 @@
 }
 
 /* ----- 分類の色（トーン） -----
-   「解決済みは緑」「作業中は紫」のような色の使い分けは、一覧・タブ・バッジ・
+   「解決済みは緑」「作業中は青」のような色の使い分けは、一覧・タブ・バッジ・
    進捗バーで同じものを使う。以前は画面ごとに色の値を持ち、React の style で
    配っていたため、同じ緑が 6 か所に書かれていた。
 
    使い方: 外側に tone-* を付けると、中の badge-tone / icon-tone /
    progress-fill-tone がその色になる。色そのものは書かない。
      tone-ok     … 済み・公開（緑）
-     tone-active … 進行中（紫）
+     tone-active … 進行中（青）
      tone-wait   … 待ち・下書き（黄）
-     tone-ng     … 断られた・失敗（赤） */
+     tone-ng     … 断られた・失敗（赤）
+
+   色は 2 つ持つ。
+   - --tone       … 暗い地に「描く」明るい色。アイコン・進捗バー・タブの選択枠に使う
+   - --tone-solid … 白文字を「載せる」ための暗い色。バッジの地に使う
+   同じ色を両方に使い回せない。--state-success(#22c55e) に白文字を載せると 2.31:1、
+   --state-warning(#f59e0b) なら 2.15:1 で、どちらもまるで読めないため。
+   削除ボタン（button.css の .btn-destructive）が #ef4444 ではなく #b91c1c なのも同じ理由。
+   --tone-solid はどれも白文字で 4.9:1 以上あることを確かめてある。 */
 .tone-ok {
   --tone: var(--state-success);
   --tone-tint: rgba(34, 197, 94, 0.15);
+  --tone-solid: #15803d; /* 白文字で 5.01:1 */
 }
+/* 進行中は青。以前は --accent（紫）だったが、紫はサイトの地の色で、リンクも
+   フォーカスもカードの光もこの色なので、状態として何も伝えていなかった。
+   状態の色は「他と違うこと」でしか意味を作れないので、地の色とは別の色を当てる。 */
 .tone-active {
-  --tone: var(--accent);
-  --tone-tint: var(--accent-tint);
+  --tone: var(--state-info);
+  --tone-tint: rgba(59, 130, 246, 0.15);
+  --tone-solid: #1d4ed8; /* #3b82f6 は白文字で 3.68:1 と足りないので暗くした。6.70:1 */
 }
 .tone-wait {
   --tone: var(--state-warning);
   --tone-tint: rgba(245, 158, 11, 0.15);
+  /* 黄は白文字に一番きつい。#f59e0b のままだと 2.15:1、白が通るまで暗くすると
+     茶色になってしまうので、黄みを残せる範囲で落とした山吹色にする。4.92:1。 */
+  --tone-solid: #a16207;
 }
 .tone-ng {
   --tone: var(--state-danger);
   --tone-tint: rgba(239, 68, 68, 0.15);
+  --tone-solid: #b91c1c; /* 削除ボタンと同じ色。白文字で 6.47:1 */
 }
 
 /* 分類の色を使う側 */
+/* バッジは地を塗って白文字にする。以前は薄い色の地に色文字（--tone-tint と --tone）で、
+   紫のグローカードの上では地がほとんど沈んでバッジの形に見えず、文字も地と色みが
+   近くて読みにくかった。削除ボタンと同じ「塗って白文字」に揃える。 */
 .badge-tone {
-  background: var(--tone-tint);
-  color: var(--tone);
+  background: var(--tone-solid);
+  color: #fff;
 }
 .icon-tone {
   display: inline-flex;
@@ -79,16 +99,6 @@
   border-radius: var(--radius-full);
   white-space: nowrap;
 }
-/* 見出しの横に出す件数の丸バッジ。`class="badge badge-count"` のように重ねて使う。
-   数字が 1 桁でも 3 桁でも同じ高さで、丸が潰れないように最小幅を持たせている。
-   色は分類ごとに違うので、背景と文字色だけは画面側から渡す。 */
-.badge-count {
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 7px;
-}
-
 /* 投稿者名・日付・タグなど、カードに添える小さな囲み。押せないもの用。 */
 .meta-pill {
   display: inline-flex;
@@ -101,6 +111,65 @@
   color: var(--text-muted);
   font-size: var(--text-xs);
 }
+/* ----- ラベル付きで並べる小さな明細（カードの補足情報） -----
+   meta-pill を横に並べるやり方は、投稿者も書名も言語も同じ灰色の箱になるので、
+   値だけ見ても何の情報か分からなかった（翻訳カードの「英語」が、原文の言語なのか
+   訳す先なのか読み取れない、など）。左に説明、右に値を置いて縦に揃える。
+
+   ラベルを 6em 幅で固定しているのは、値の頭が縦に揃っていないと
+   目が拾えないため。長い説明は 6em を超えたぶんだけ押し出す（auto）。
+   使い方: <dl class="meta-rows"><dt>訳す言語</dt><dd>日本語</dd></dl> */
+.meta-rows {
+  display: grid;
+  grid-template-columns: minmax(6em, auto) 1fr;
+  gap: 4px var(--spacing-3);
+  margin: 0;
+  /* 12px（--text-xs）にしない。日本語は 12px だと漢字の画がつぶれる。
+     12px を使ってよいのは、読まなくても困らない添え物だけ。
+     ここは書名や訳す先といった、カードの中身そのもの。 */
+  font-size: var(--text-sm);
+}
+/* 説明を暗くして引っ込めるやり方は取らない。紫の地の上では、暗くした時点で
+   読めなくなるため（--text-faint で 3.85:1）。どちらが説明でどちらが値かは
+   左右に分かれた位置がすでに示しているので、色で言い直す必要がない。
+   説明と値の差は、太さ（normal と bold）だけで付ける。 */
+.meta-rows dt {
+  color: var(--text-soft);
+}
+.meta-rows dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: var(--font-weight-bold);
+  /* 版名には "Mark M. Mattison (EN)" のような長いものがあるので、
+     列幅に収まらなければ折り返す。 */
+  overflow-wrap: anywhere;
+}
+
+/* 値が押せるとき（投稿者や主題への絞り込み）。
+   押せることは色で示す。以前の meta-pill-link のように囲みは付けない。
+
+   高さは 32px。押せるものは 44px という決まりがこのサイトにはあるが
+   （button.css の .tap-target）、あれは単独で置くボタンの話で、
+   4 行の明細の全行を 44px にするとカードが 1.5 倍の高さになる。
+   文章の中のリンクと同じ扱いにして、下限（24px）は十分に超える 32px にした。 */
+.meta-rows dd a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.meta-rows dd a:hover,
+.meta-rows dd a:focus-visible {
+  text-decoration: underline;
+}
+/* 主題が複数あるときの区切り。中黒を CSS で入れ、文言側に持たせない。 */
+.meta-rows dd a + a::before {
+  content: "・";
+  margin: 0 var(--spacing-1);
+  color: var(--text-soft);
+}
+
 /* 押せる版（タグや投稿者へのリンク）。指で押せる高さを確保するぶん大きい。 */
 .meta-pill-link {
   min-height: 44px;
@@ -250,10 +319,12 @@
   color: var(--accent-text);
 }
 
-/* 下書きなど、公開されていないことを示すバッジ。 */
+/* 下書きなど、公開されていないことを示すバッジ。
+   badge-tone と並んで出るので、同じ「塗って白文字」にする。色だけが無彩色で、
+   それが「まだどの状態でもない」を表す。白文字で 9.2:1。 */
 .badge-muted {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-muted);
+  background: #4b4363;
+  color: #fff;
 }
 
 /* 選んだ章を並べる小さな札。右端に外すボタンが付く。 */

@@ -49,29 +49,73 @@ async function mockServer({ signedIn }: { signedIn: boolean }) {
   return apiServer;
 }
 
+/** どのタブを見ているかは URL（?tab=）で表す。既定は「読んでいる」。 */
+const renderPage = async (params: { tab?: string } = {}) =>
+  render(await PlansPage({ searchParams: Promise.resolve(params) }));
+
 describe("読書プラン一覧", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("自分のプランと公開プランを、用途に合うリンク先で表示する", async () => {
+  it("開いたときは「読んでいる」が出る", async () => {
+    // 読書プランは続けることが中身なので、毎日戻ってくる場所を既定にする。
     await mockServer({ signedIn: true });
 
-    render(await PlansPage());
+    await renderPage();
 
-    const planLinks = screen.getAllByRole("link", { name: /福音書を読む/ });
-    expect(planLinks[0]).toHaveAttribute("href", "/plans/p1/edit");
-    expect(planLinks[1]).toHaveAttribute("href", "/plans/p1");
-    expect(screen.getAllByText("7日")).toHaveLength(2);
-    expect(screen.getAllByText("2人が読書中")).toHaveLength(2);
+    expect(screen.getByRole("tab", { name: "読んでいる" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText(/まだ読んでいるプランはありません/)).toBeInTheDocument();
   });
 
-  it("未ログインでは公開プランだけを出し、作成の導線は出さない", async () => {
+  it("タブごとに、用途に合うリンク先のプランを出す", async () => {
+    await mockServer({ signedIn: true });
+
+    await renderPage({ tab: "mine" });
+    expect(screen.getByRole("link", { name: /福音書を読む/ })).toHaveAttribute("href", "/plans/p1/edit");
+    // 明細は「説明 → 値」の組で並ぶ（灰色の箱を横に並べるのをやめた）。
+    expect(screen.getByText("日数").nextElementSibling).toHaveTextContent("7日");
+    expect(screen.getByText("読者").nextElementSibling).toHaveTextContent("2人");
+    expect(screen.getByRole("link", { name: "alice" })).toHaveAttribute("href", "/profile/alice");
+  });
+
+  it("さがすタブでは公開プランを詳細へのリンクで出す", async () => {
+    await mockServer({ signedIn: true });
+
+    await renderPage({ tab: "find" });
+
+    expect(screen.getByRole("link", { name: /福音書を読む/ })).toHaveAttribute("href", "/plans/p1");
+  });
+
+  it("読み終わったプランは「読んでいる」から外れて「読み終わった」に入る", async () => {
+    // 読み終わっても購読は残る（is_active が落ちるのは「やめる」を押したときだけ）ので、
+    // 終わった日数がプランの日数に届いたかで振り分ける。
+    const apiServer = await mockServer({ signedIn: true });
+    vi.mocked(apiServer.serverFetchList).mockResolvedValue([
+      { id: "s1", plan: "p1", plan_title: "途中のプラン", started_at: "2026-08-01T00:00:00Z", is_active: true, day_count: 7, completed_count: 3 },
+      { id: "s2", plan: "p2", plan_title: "読了したプラン", started_at: "2026-08-01T00:00:00Z", is_active: true, day_count: 5, completed_count: 5 },
+    ]);
+
+    const reading = await renderPage();
+    expect(screen.getByRole("link", { name: "途中のプラン" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "読了したプラン" })).not.toBeInTheDocument();
+    // 進捗が数字とバーの両方で出る（以前は札が並ぶだけで進み具合が分からなかった）
+    expect(screen.getByText("7日中 3日")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /途中のプラン/ })).toHaveAttribute("aria-valuenow", "43");
+    reading.unmount();
+
+    await renderPage({ tab: "done" });
+    expect(screen.getByRole("link", { name: "読了したプラン" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "途中のプラン" })).not.toBeInTheDocument();
+  });
+
+  it("未ログインでは公開プランだけを出し、タブも作成の導線も出さない", async () => {
     const apiServer = await mockServer({ signedIn: false });
 
-    render(await PlansPage());
+    await renderPage();
 
     expect(screen.getAllByRole("link", { name: /福音書を読む/ })).toHaveLength(1);
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "新しいプラン" })).not.toBeInTheDocument();
     expect(vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path)).toEqual(["/plans/"]);
   });
@@ -81,7 +125,7 @@ describe("読書プラン一覧", () => {
     const apiServer = await mockServer({ signedIn: true });
     vi.mocked(apiServer.serverFetchPage).mockRejectedValue(new Error("Network Error"));
 
-    render(await PlansPage());
+    await renderPage();
 
     expect(screen.getByRole("alert")).toHaveTextContent("プランを読み込めませんでした");
     expect(screen.queryByText("公開されているプランはまだありません。")).not.toBeInTheDocument();

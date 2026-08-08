@@ -13,6 +13,10 @@ class LanguageSerializer(serializers.ModelSerializer):
 class TranslationProjectSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source="owner.username", read_only=True)
     source_book_name = serializers.CharField(source="source_book.name", read_only=True)
+    # 書は「書 × 版」で1件なので、書名だけでは何から訳しているのか分からない
+    # （エノク書は英訳しか無い／創世記は口語訳とも KJV とも原文とも取れる）。
+    # 一覧のカードで書と版を別々に出すため、版も返す。
+    source_book_translation = serializers.CharField(source="source_book.translation", read_only=True)
     unit_count = serializers.SerializerMethodField()
     done_count = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
@@ -23,11 +27,11 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         model = TranslationProject
         fields = [
             "id", "name", "description", "owner_username",
-            "source_book", "source_book_name", "target_language",
+            "source_book", "source_book_name", "source_book_translation", "target_language",
             "status", "unit_count", "done_count", "is_member", "membership_status", "is_in_library",
             "created_at", "updated_at",
         ]
-        read_only_fields = ["id", "owner_username", "source_book_name", "unit_count", "done_count", "is_member", "membership_status", "is_in_library", "created_at", "updated_at"]
+        read_only_fields = ["id", "owner_username", "source_book_name", "source_book_translation", "unit_count", "done_count", "is_member", "membership_status", "is_in_library", "created_at", "updated_at"]
 
     # 以下4つは、一覧では views.annotate_project_summary が本体クエリでまとめて求める。
     # 1件だけ返す経路（公開切替など）では annotate が無いので、その場で数える方に落ちる。

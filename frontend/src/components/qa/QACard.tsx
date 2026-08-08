@@ -36,12 +36,10 @@ export function QACard({ question, showLocation = true }: Props) {
       : question.body;
 
   return (
-    <Link
+    <article
       // 一覧内の特定の質問へアンカーで戻ってこられるようにする。
       id={`question-${question.id}`}
-      href={`/qa/${question.id}`}
-      className="card-glow card-glow-interactive block p-4 no-underline text-inherit"
-      
+      className="card-glow card-glow-interactive card-link block p-4"
     >
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <span
@@ -55,27 +53,42 @@ export function QACard({ question, showLocation = true }: Props) {
         )}
       </div>
 
-      <h3 className="card-title">{question.title}</h3>
+      <h3 className="card-title">
+        {/* card-link-main が影でカード全体を覆うので、カードのどこを押しても質問へ飛ぶ。
+            以前はカードを丸ごと <Link> で包んでいて、中の投稿者をリンクにできなかった。 */}
+        <Link href={`/qa/${question.id}`} className="card-link-main text-inherit no-underline">
+          {question.title}
+        </Link>
+      </h3>
       <p className="m-0 text-sm leading-base text-muted whitespace-pre-wrap">
         {body}
       </p>
 
-      {/* カード全体がリンクなので、ここでは投稿者名もリンクにしない（リンクの入れ子は押せない）。
-          投稿者のページへは詳細ページから辿る。 */}
-      <div className="flex gap-2 flex-wrap items-center mt-3">
-        <span className="meta-pill">{question.user.username}</span>
-        <span className="meta-pill">{formatRelativeTime(question.created_at)}</span>
-        {question.tags.map((tag) => (
-          <span key={tag.id} className="meta-pill">
-            {t.tagNames[tag.name] ?? tag.name}
-          </span>
-        ))}
-        <span className="meta-pill ml-auto gap-1">
-          <Icon name="message-square" size={12} />
-          {t.qaAnswerCount(question.answer_count)}
-        </span>
-      </div>
-    </Link>
+      {/* 灰色の箱を横に並べるのをやめ、記事・プラン・翻訳と同じ明細に揃える。
+          箱では投稿者・日付・主題・件数が全部同じ見た目だった。 */}
+      <dl className="meta-rows mt-3">
+        <dt>{t.cardAsker}</dt>
+        <dd>
+          <Link href={`/profile/${question.user.username}`}>{question.user.username}</Link>
+        </dd>
+        <dt>{t.cardPostedAt}</dt>
+        <dd>{formatRelativeTime(question.created_at)}</dd>
+        {question.tags.length > 0 && (
+          <>
+            <dt>{t.cardTopics}</dt>
+            <dd>
+              {question.tags.map((tag) => (
+                <Link key={tag.id} href={`/qa?tag=${tag.id}`}>
+                  {t.tagNames[tag.name] ?? tag.name}
+                </Link>
+              ))}
+            </dd>
+          </>
+        )}
+        <dt>{t.cardAnswers}</dt>
+        <dd>{t.cardAnswerValue(question.answer_count)}</dd>
+      </dl>
+    </article>
   );
 }
 

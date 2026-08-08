@@ -39,6 +39,7 @@ const project: TranslationProject = {
   owner_username: "alice",
   source_book: "b1",
   source_book_name: "マタイによる福音書",
+  source_book_translation: "口語訳",
   target_language: "en",
   status: "published",
   unit_count: 1,

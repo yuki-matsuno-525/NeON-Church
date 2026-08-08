@@ -165,6 +165,15 @@ class TestTranslationProjectList:
         ids = [p["id"] for p in res.data["results"]]
         assert published_project["id"] in ids
 
+    def test_list_reports_source_book_name_and_translation(self, anon_client, published_project):
+        # 一覧のカードは書と版を別々に出す。書名だけだと、同じ「創世記」でも
+        # 口語訳から訳すのか KJV から訳すのかが読み手に伝わらないため。
+        res = anon_client.get(LIST_URL)
+        assert res.status_code == status.HTTP_200_OK
+        card = next(p for p in res.data["results"] if p["id"] == published_project["id"])
+        assert card["source_book_name"] == "マタイによる福音書"
+        assert card["source_book_translation"] == "口語訳"
+
     def test_approved_member_can_list_draft_project(self, owner_client, member_client, project):
         membership = member_client.post(join_url(project["id"]))
         # 下書きは申請を受け付けないため、テスト用に承認済みmembershipを直接作る。

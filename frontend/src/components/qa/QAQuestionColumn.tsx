@@ -69,8 +69,6 @@ export function QAQuestionColumn({
       icon={icon}
       tone={tone}
       title={title}
-      // 表示中の件数ではなく、サーバーが数えたその列の総数
-      count={list.total}
       description={description}
       busy={list.loading}
       hidden={hidden}

@@ -354,6 +354,27 @@ def test_読んでいるプランの一覧が取れる(auth_client, other_client
 
 
 @pytest.mark.django_db
+def test_読んでいるプランに日数と完了数が付く(auth_client, other_client):
+    # 読み終わっても is_active は true のままなので、画面が「読書中」と
+    # 「読み終わった」を見分けるにはこの2つの数字が要る。
+    plan_id = _published_plan_with_reader(auth_client, other_client)
+    days = list(PlanDay.objects.filter(plan_id=plan_id))
+
+    before = other_client.get("/api/plan-subscriptions/").data[0]
+    assert before["day_count"] == len(days)
+    assert before["completed_count"] == 0
+
+    for day in days:
+        other_client.post(f"{PLANS_URL}{plan_id}/days/{day.id}/complete/")
+
+    after = other_client.get("/api/plan-subscriptions/").data[0]
+    assert after["completed_count"] == len(days)
+    assert after["day_count"] == len(days)
+    # 読み終わってもやめたことにはならない
+    assert after["is_active"] is True
+
+
+@pytest.mark.django_db
 def test_日の並びを変えられるかが返る(auth_client, other_client):
     plan_id = _published_plan_with_reader(auth_client, other_client)
 
