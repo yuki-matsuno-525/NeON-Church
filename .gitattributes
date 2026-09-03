@@ -1,0 +1,5 @@
+# Linux のコンテナの中で動くシェルスクリプトは、必ず改行を LF で取り出す。
+# Windows の git は既定で改行を CRLF に変換して取り出すため、docker-entrypoint.sh の
+# 1 行目が `set -e<CR>` となり、コンテナが起動直後に落ちていた
+# （`/app/docker-entrypoint.sh: 2: set: Illegal option -`）。
+*.sh text eol=lf
