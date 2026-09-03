@@ -1,0 +1,43 @@
+/* その日に読む章のリンクの寸法。
+   色・余白は Tailwind で書けるが、「余った幅を分け合って伸びる」書き方
+   （flex: 1 1 220px）だけは Tailwind のクラスに無いのでここに置く。 */
+
+.readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+/* 220px を下回らない範囲で、1 行の余った幅を分け合う。
+   1 日に置ける章は 10 までなので（lib/plans.ts の MAX_READINGS_PER_DAY）、
+   多い日は 2〜3 段に折り返る。 */
+.reading {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  /* 指で確実に押せる高さ */
+  min-height: 44px;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+
+.reading:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* 訳の指定があるときだけ、書名の下に小さく出す。 */
+.readingSub {
+  display: block;
+  color: var(--text-soft);
+  font-size: var(--text-xs);
+}

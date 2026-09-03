@@ -1,0 +1,91 @@
+/* 読書プランの「第N日」を並べるところ専用の寸法。
+
+   色・余白・文字サイズは Tailwind のクラスで書く決まりなので、
+   ここに置くのは Tailwind で書けないものだけ:
+   目盛りの丸の直径と、日をつなぐ点線。
+   （方針は plan/design-refactoring.md） */
+
+/* スマホは 1 列。左の目盛りは出さない。
+   狭い画面で目盛りに幅を取られると、章の名前が折り返してしまうため。 */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.rail {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  /* 点線は一覧全体に 1 本だけ引き、その上に丸を重ねる。
+     日ごとに引くと、カードとカードの隙間で線が切れてしまうため。 */
+  .timeline {
+    position: relative;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    /* 目盛りの幅 112px の中央 = 56px。丸の中心をここに合わせる。 */
+    left: 56px;
+    /* 上端は最初の丸の中心（丸 76px の半分）から。 */
+    top: 38px;
+    bottom: 0;
+    border-left: 1px dashed rgba(190, 95, 255, 0.45);
+  }
+
+  .dayRow {
+    display: grid;
+    grid-template-columns: 112px 1fr;
+    column-gap: var(--spacing-6);
+    align-items: start;
+  }
+
+  .rail {
+    display: flex;
+    justify-content: center;
+  }
+
+  .marker {
+    /* 重なりの順番を作るために position を持たせる。これが無いと点線が丸の上に出る。 */
+    position: relative;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(190, 95, 255, 0.70);
+    /* 背景と同じ色で塗り、丸の中を通る点線を隠す。 */
+    background: var(--bg);
+    box-shadow: 0 0 10px rgba(192, 52, 240, 0.35);
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+  }
+  /* 読み終えた日は丸をアクセント色にして、上から下へ進み具合が見えるようにする。 */
+  .markerDone {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+/* その日に添えられた文章。本文と地続きに見えないよう、うっすら囲う。 */
+.devotional {
+  display: flex;
+  align-items: start;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+}
+
+/* 文字の 1 行目の高さに合わせて、印を少し下げる。 */
+.devotionalIcon {
+  margin-top: 3px;
+}

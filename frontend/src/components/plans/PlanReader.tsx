@@ -17,7 +17,9 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { ReadingLinks } from "@/components/plans/ReadingChips";
 import { ConfirmDialog, EmptyState } from "@/components/ui";
+import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
+import styles from "./PlanReader.module.css";
 
 /**
  * プランを読み進めるところ。始める・やめる・読み終わった印を付ける。
@@ -138,32 +140,49 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
       )}
       {actionError && <p role="alert" className="text-danger text-sm mt-0 mx-0 mb-4">{actionError}</p>}
 
-      <div className="flex flex-col gap-4">
+      {/* 日は「左の目盛り＋右のカード」の 2 列で並べる。目盛りは画面が広いときだけ出る。
+          40 日のプランでも、いま何日目のあたりを見ているかが目で追えるようにするため。 */}
+      <ol className={styles.timeline}>
         {(plan.days ?? []).map((day) => (
-          <section key={day.id} className={`card-glow py-4 px-5${day.completed ? " opacity-70" : ""}`}>
-            <div className="flex items-center gap-3 mb-3 flex-wrap">
-              <span className="text-sm font-bold text-accent">{t.planDayLabel(day.number)}</span>
-              {day.title && <span className="text-sm font-bold">{day.title}</span>}
-              {isReading && (
-                <button
-                  type="button"
-                  onClick={() => void toggleDay(day.id, day.completed)}
-                  aria-label={day.completed ? text.unmarkDayCompleted(day.number) : text.markDayCompleted(day.number)}
-                  aria-pressed={day.completed}
-                  aria-busy={busyDayId === day.id}
-                  disabled={busyDayId !== null}
-                  className={`day-toggle${day.completed ? " day-toggle-done" : ""}`}
-                >
-                  {day.completed ? t.planDayDone : t.planDayMarkDone}
-                </button>
-              )}
+          <li key={day.id} className={styles.dayRow}>
+            {/* 見た目だけの目盛り。「第N日」はカードの見出しにも出るので、
+                画面読み上げで二重に読まれないよう隠す。 */}
+            <div className={styles.rail} aria-hidden="true">
+              <span className={`${styles.marker}${day.completed ? ` ${styles.markerDone}` : ""}`}>
+                {t.planDayLabel(day.number)}
+              </span>
             </div>
-            <ReadingLinks readings={day.readings} />
-            {day.devotional && <p className="mt-3 mx-0 mb-0 text-sm leading-reading whitespace-pre-wrap">{day.devotional}</p>}
-          </section>
+
+            <section className={`card-glow p-4${day.completed ? " opacity-70" : ""}`}>
+              <div className="flex items-center gap-3 mb-3 flex-wrap">
+                <span className="text-lg font-bold">{t.planDayLabel(day.number)}</span>
+                {day.title && <span className="text-sm text-muted">{day.title}</span>}
+                {isReading && (
+                  <button
+                    type="button"
+                    onClick={() => void toggleDay(day.id, day.completed)}
+                    aria-label={day.completed ? text.unmarkDayCompleted(day.number) : text.markDayCompleted(day.number)}
+                    aria-pressed={day.completed}
+                    aria-busy={busyDayId === day.id}
+                    disabled={busyDayId !== null}
+                    className={`day-toggle${day.completed ? " day-toggle-done" : ""}`}
+                  >
+                    {day.completed ? t.planDayDone : t.planDayMarkDone}
+                  </button>
+                )}
+              </div>
+              <ReadingLinks readings={day.readings} />
+              {day.devotional && (
+                <div className={styles.devotional}>
+                  <Icon name="sparkles" size={16} color="var(--accent)" className={styles.devotionalIcon} />
+                  <p className="m-0 text-sm leading-reading whitespace-pre-wrap">{day.devotional}</p>
+                </div>
+              )}
+            </section>
+          </li>
         ))}
-        {(plan.days ?? []).length === 0 && <EmptyState title={text.noDays} />}
-      </div>
+      </ol>
+      {(plan.days ?? []).length === 0 && <EmptyState title={text.noDays} />}
     </>
   );
 }
