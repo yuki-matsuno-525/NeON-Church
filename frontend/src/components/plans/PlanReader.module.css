@@ -1,9 +1,13 @@
-/* 読書プランの「第N日」を並べるところ専用の寸法。
+/* 読書プランの「第N日」のパネル専用の寸法。
 
    色・余白・文字サイズは Tailwind のクラスで書く決まりなので、
    ここに置くのは Tailwind で書けないものだけ:
-   目盛りの丸の直径と、日をつなぐ点線。
+   目盛りの丸の直径、日をつなぐ点線、行の左に置く丸い囲み。
    （方針は plan/design-refactoring.md） */
+
+/* ============================================================
+   左の目盛り（画面が広いときだけ出る）
+   ============================================================ */
 
 /* スマホは 1 列。左の目盛りは出さない。
    狭い画面で目盛りに幅を取られると、章の名前が折り返してしまうため。 */
@@ -72,20 +76,76 @@
   }
 }
 
-/* その日に添えられた文章。本文と地続きに見えないよう、うっすら囲う。 */
-.devotional {
-  display: flex;
-  align-items: start;
-  gap: var(--spacing-2);
-  margin-top: var(--spacing-3);
-  padding: var(--spacing-3) var(--spacing-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-soft);
+/* ============================================================
+   パネルの見出し
+   ============================================================ */
+
+/* 「第N日」と、その日の題のあいだの仕切り。飾りなので読み上げには入れない。 */
+.headDivider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 24px;
+  background: var(--border);
 }
 
-/* 文字の 1 行目の高さに合わせて、印を少し下げる。 */
-.devotionalIcon {
-  margin-top: 3px;
+/* ============================================================
+   パネルの中に並ぶ行
+
+   読む章の行と、その日の文章の行は同じ形にする。
+   同じ形を 2 つのファイルに書き分けると必ずずれるので、
+   ReadingChips.tsx もこのファイルを読む。
+   ============================================================ */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  /* 指で確実に押せる高さ */
+  min-height: 44px;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--duration-base) var(--ease-out),
+              background var(--duration-base) var(--ease-out);
+}
+
+/* 押せる行だけ、触れたときに反応する。文章の行は押せないので付けない。 */
+.rowLink:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* 行の左に置く丸い囲み。 */
+.rowBadge {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(190, 95, 255, 0.45);
+  background: var(--accent-tint);
+}
+
+/* 文章の行の囲みだけ点線にして、押せる行と見分けられるようにする。 */
+.rowBadgeDotted {
+  border-style: dotted;
+}
+
+/* 書名と訳名の 2 段。長い書名が囲みを押し広げないよう min-width: 0 を置く。 */
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }

@@ -42,7 +42,7 @@ const plan: Plan = {
       completed: false,
       readings: [
         { id: "r1", book: "matthew", book_name: "マタイによる福音書", chapter_number: 1, translation: "", order: 0 },
-        { id: "r2", book: "enoch", book_name: "エノク書", chapter_number: 5, translation: "kjv", order: 1 },
+        { id: "r2", book: "enoch", book_name: "エノク書", chapter_number: 5, translation: "口語訳", order: 1 },
       ],
     },
     {
@@ -90,8 +90,14 @@ describe("プランを読み進めるところ", () => {
     );
     expect(screen.getByRole("link", { name: /エノク書 5章/ })).toHaveAttribute(
       "href",
-      "/enoch/5?translation=kjv",
+      "/enoch/5?translation=%E5%8F%A3%E8%AA%9E%E8%A8%B3",
     );
+  });
+
+  it("訳の指定がある章だけ、書名の下に訳名が出る", () => {
+    render(<PlanReader initialPlan={plan} />);
+
+    expect(screen.getByText("口語訳")).toBeInTheDocument();
   });
 
   it("その日に添えられた文章が出る", () => {

@@ -153,10 +153,15 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
               </span>
             </div>
 
-            <section className={`card-glow p-4${day.completed ? " opacity-70" : ""}`}>
-              <div className="flex items-center gap-3 mb-3 flex-wrap">
-                <span className="text-lg font-bold">{t.planDayLabel(day.number)}</span>
-                {day.title && <span className="text-sm text-muted">{day.title}</span>}
+            <section className={`card-glow card-glow-strong p-6${day.completed ? " opacity-70" : ""}`}>
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
+                <span className="text-xl font-bold">{t.planDayLabel(day.number)}</span>
+                {day.title && (
+                  <>
+                    <span className={styles.headDivider} aria-hidden="true" />
+                    <span className="text-lg text-accent">{day.title}</span>
+                  </>
+                )}
                 {isReading && (
                   <button
                     type="button"
@@ -171,13 +176,18 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
                   </button>
                 )}
               </div>
-              <ReadingLinks readings={day.readings} />
-              {day.devotional && (
-                <div className={styles.devotional}>
-                  <Icon name="sparkles" size={16} color="var(--accent)" className={styles.devotionalIcon} />
-                  <p className="m-0 text-sm leading-reading whitespace-pre-wrap">{day.devotional}</p>
-                </div>
-              )}
+              {/* 章の行とその日の文章の行は、同じ箱に続けて並べて形を揃える。 */}
+              <div className={styles.rows}>
+                <ReadingLinks readings={day.readings} />
+                {day.devotional && (
+                  <div className={styles.row}>
+                    <span className={`${styles.rowBadge} ${styles.rowBadgeDotted}`} aria-hidden="true">
+                      <Icon name="sparkles" size={20} color="var(--accent)" />
+                    </span>
+                    <p className="m-0 text-md leading-reading whitespace-pre-wrap">{day.devotional}</p>
+                  </div>
+                )}
+              </div>
             </section>
           </li>
         ))}
