@@ -57,3 +57,39 @@ test("画面が広いときはハンバーガーボタンを出さない", async
   const style = await computed(page, ".hamburger-btn", ["display"]);
   expect(style.display).toBe("none");
 });
+
+test("メニューを開いたまま動かしても、上のバーは画面の上に残る", async ({ page }) => {
+  await page.goto("/read");
+  // スマホ幅では、ブラウザ側の処理が始まった時点でドロワーに inert が付く。
+  // これを待たずに押すと、まだ押しても何も起きない（サーバーが描いた見た目だけの状態）。
+  await page.locator("#app-sidebar[inert]").waitFor();
+  await page.locator(".hamburger-btn").first().click();
+  await expect(page.locator("#app-sidebar")).toHaveClass(/sidebar-open/);
+
+  await page.mouse.wheel(0, 600);
+  await page.waitForTimeout(300);
+
+  // 上のバーが上端にいる（position:sticky が効いている）。
+  // 以前は body に overflow:hidden を付けていたため、sticky の基準が body に移り、
+  // バーだけが本文と一緒に流れて画面外へ消えていた。
+  const navTop = await page.locator(".navbar-root").first().evaluate((el) => el.getBoundingClientRect().top);
+  expect(navTop).toBe(0);
+
+  // 同じ理由で、止めたかったはずの後ろの本文も動いてしまっていた
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("メニューを閉じれば、また本文をスクロールできる", async ({ page }) => {
+  await page.goto("/read");
+  // スマホ幅では、ブラウザ側の処理が始まった時点でドロワーに inert が付く。
+  // これを待たずに押すと、まだ押しても何も起きない（サーバーが描いた見た目だけの状態）。
+  await page.locator("#app-sidebar[inert]").waitFor();
+  await page.locator(".hamburger-btn").first().click();
+  await expect(page.locator("#app-sidebar")).toHaveClass(/sidebar-open/);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#app-sidebar")).not.toHaveClass(/sidebar-open/);
+
+  await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
