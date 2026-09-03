@@ -131,9 +131,8 @@
 
   width: var(--sidebar-width);
   min-width: var(--sidebar-width);
-  background: var(--glass-nav);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* 透けさせない。下の本文が動くと文字が読みにくくなるため、不透明な単色にする。 */
+  background: var(--sidebar-bg);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
