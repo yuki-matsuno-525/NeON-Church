@@ -203,4 +203,20 @@
     border-left: none;
     border-top: 1px solid var(--border);
   }
+
+  /* iOS の Safari は、指を置いた瞬間に後ろのページを送り始めることがあり、
+     あとから JavaScript で止めても間に合わない（動き出した後の中止は聞いてもらえない）。
+     そこで、シートの中でスクロールしない段には touch-action: none を付けて、
+     ブラウザに最初から送らせないようにする。押す・選ぶ操作はこれまでどおりできる。 */
+  .section,
+  .sectionTight,
+  .tabList {
+    touch-action: none;
+  }
+  /* 中で指で送る箱には付け直す。上の none があっても、こちらが優先される。 */
+  .verseTextExpanded,
+  .tabPanel,
+  .commentList {
+    touch-action: pan-y;
+  }
 }

@@ -299,6 +299,10 @@
     display: block;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
     padding-bottom: 70dvh;
+    /* シートを開いている間は、後ろの本文を指で送れないようにする。
+       iOS の Safari は指を置いた瞬間に送り始めるので、JavaScript で止めるだけでは
+       間に合わない。ブラウザに最初から送らせない。 */
+    touch-action: none;
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed;
