@@ -1,6 +1,7 @@
 import datetime
 
 from django.core.cache import cache
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
@@ -11,6 +12,7 @@ from rest_framework.exceptions import NotFound
 
 from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
+from .editions import DEFAULT_TRANSLATION, pick_edition
 from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
 
@@ -86,6 +88,28 @@ class BookListView(_CacheableScriptureView, generics.ListAPIView):
         return qs
 
 
+class TranslationListView(_CacheableScriptureView, APIView):
+    """GET /api/bible/translations/  実際に本文が入っている訳の一覧。認証不要。
+
+    どの訳が読めるかは、これまでフロントの books.ts に手書きされた宣言だけが持っていた。
+    宣言だけ先に足して本文をまだ入れていない訳を選ぶと、その訳が載っている書が
+    すべて読めなくなっていたので、実データを答えられる入口をここに作る。
+
+    形: [{"id": "口語訳", "books": 66}, ...]（books は収録済みの書の数）
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+
+    def get(self, request):
+        rows = (
+            Book.objects.values("translation")
+            .annotate(books=Count("id"))
+            .order_by("-books", "translation")
+        )
+        return Response([{"id": row["translation"], "books": row["books"]} for row in rows])
+
+
 class ChapterListView(_CacheableScriptureView, generics.ListAPIView):
     """指定した書の章一覧。書が存在しない場合は 404。"""
 
@@ -127,12 +151,22 @@ class _ReferenceView(_CacheableScriptureView, APIView):
             raise NotFound("Unknown book.")
 
 
-def _book_for_translation(slug: str, translation: str | None):
-    """箇所 slug と訳から Book を1冊決める。無ければ 404（訳の指定ミスと言い分けられる code 付き）。"""
-    books = Book.objects.filter(canonical_book__slug=slug)
-    if translation:
-        books = books.filter(translation=translation)
-    book = books.order_by("order", "translation").first()
+def _editions_for(slug: str):
+    """その箇所に収録されている版（訳）を、表示順に並べて返す。"""
+    return list(Book.objects.filter(canonical_book__slug=slug).order_by("order", "translation"))
+
+
+def _require_edition(editions, translation: str | None):
+    """引き当て済みの版一覧から、見せる1冊を決める。
+
+    希望の訳がまだ収録されていなくても 404 にはせず、別の版にたおす（pick_edition）。
+    以前はここで 404 を返していたため、books.ts に書いてはあるがまだ本文を入れていない
+    訳をいちど選ぶと、その訳が載っているすべての書が読めなくなっていた。
+    実際に使った訳はレスポンスの book.translation で分かる。
+
+    404 になるのは「その書の版が1つも無い」ときだけ。
+    """
+    book = pick_edition(editions, translation)
     if book is None:
         raise NotFound({"detail": "Book not found for this translation.", "code": "book_not_found"})
     return book
@@ -175,12 +209,14 @@ class ReferenceBookReadView(_ReferenceView):
 
     def get(self, request, slug):
         self._require_slug(slug)
-        book = _book_for_translation(slug, request.query_params.get("translation"))
+        editions = _editions_for(slug)
+        book = _require_edition(editions, request.query_params.get("translation"))
         chapters = Chapter.objects.filter(book=book)
         return Response({
             "reference": {"book": slug},
             "book": BookSerializer(book).data,
             "chapters": ChapterSerializer(chapters, many=True).data,
+            "translations": [b.translation for b in editions],
         })
 
 
@@ -199,7 +235,8 @@ class ReferenceReadView(_ReferenceView):
 
     def get(self, request, slug, chapter):
         self._require_slug(slug)
-        book = _book_for_translation(slug, request.query_params.get("translation"))
+        editions = _editions_for(slug)
+        book = _require_edition(editions, request.query_params.get("translation"))
         chapter_obj = Chapter.objects.filter(book=book, number=chapter).first()
         if chapter_obj is None:
             raise NotFound({"detail": "Chapter not found.", "code": "chapter_not_found"})
@@ -210,6 +247,8 @@ class ReferenceReadView(_ReferenceView):
             "book": BookSerializer(book).data,
             "chapter": ChapterSerializer(chapter_obj).data,
             "verses": VerseSerializer(verses, many=True).data,
+            # 訳の切替に出す候補。宣言ではなく実際に収録されている訳だけを渡す。
+            "translations": [b.translation for b in editions],
         })
 
 
@@ -314,14 +353,14 @@ class VerseOfDayView(APIView):
     authentication_classes: list = []
 
     def get(self, request):
-        translation = request.query_params.get("translation", "口語訳")
+        translation = request.query_params.get("translation", DEFAULT_TRANSLATION)
         today = timezone.localdate()
         cache_key = f"verse_of_day_{translation}_{today.isoformat()}"
         data = cache.get(cache_key)
         if data is None:
             day_of_year = today.timetuple().tm_yday
             # 常に口語訳を基準に「今日の節」の位置を決める
-            base_qs = Verse.objects.filter(chapter__book__translation="口語訳")
+            base_qs = Verse.objects.filter(chapter__book__translation=DEFAULT_TRANSLATION)
             count = base_qs.count()
             if count == 0:
                 return Response({"detail": "Bible data not found."}, status=503)
@@ -331,7 +370,7 @@ class VerseOfDayView(APIView):
                 .order_by("chapter__book__order", "chapter__number", "number")[index]
             )
 
-            if translation == "口語訳":
+            if translation == DEFAULT_TRANSLATION:
                 verse = base_verse
             else:
                 # 同じ「箇所」を指定翻訳で探す。書の同一性は訳非依存の canonical_book で判定する
