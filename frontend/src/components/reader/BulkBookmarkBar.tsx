@@ -52,7 +52,7 @@ export function BulkBookmarkBar({
       </span>
       {message && <span role="status" aria-live="polite" className="text-xs text-muted">{message}</span>}
       <div className="ml-auto flex gap-2">
-        <button type="button" onClick={onCancel} className="outline-button outline-button-muted">
+        <button type="button" onClick={onCancel} className="outline-button">
           {t.articleCancel}
         </button>
         <button

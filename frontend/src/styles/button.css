@@ -196,20 +196,40 @@
 }
 
 /* 枠線だけの控えめなボタン。btn-ghost より詰めてある。 */
+/* 主な操作（.cta-button）の隣に置く、それ以外の操作。
+   「やめる」「もう一度試す」など。
+
+   薄い紫で塗るのは、枠と薄い文字だけだと暗い背景に沈んで、押せるものだと
+   気づけなかったため。塗りの濃さで主・副を分ける（主は紫、副は薄い紫）。
+   色は読み終えた印の丸（PlanReader.module.css の .check）と同じ薄紫にして、
+   画面ごとに違う薄さが増えないようにする。 */
 .outline-button {
   min-height: 44px;
   padding: 8px 14px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(190, 95, 255, 0.45);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: var(--accent-tint);
   color: var(--text);
   font-family: inherit;
   font-size: var(--text-sm);
   cursor: pointer;
 }
-/* 消す操作など、目立たせたくないもの。 */
-.outline-button-muted {
-  color: var(--text-muted);
+.outline-button:hover,
+.outline-button:focus-visible {
+  border-color: var(--accent);
+  background: rgba(145, 60, 240, 0.28);
+}
+/* 消す操作。押し間違えると取り返しがつかないので、色で他と分ける。
+   塗らずに赤の枠と文字だけにして、隣の副操作より前に出ないようにする。 */
+.outline-button-danger {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: transparent;
+  color: var(--state-danger);
+}
+.outline-button-danger:hover,
+.outline-button-danger:focus-visible {
+  border-color: var(--state-danger);
+  background: rgba(239, 68, 68, 0.12);
 }
 
 /* ----- 一覧の右上に出す「新規作成」 -----

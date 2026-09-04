@@ -146,7 +146,7 @@ export default function NotificationsPage() {
           onClick={handleMarkAll}
           disabled={unreadCount === 0 || actionBusy}
           aria-busy={actionBusy}
-          className="outline-button outline-button-muted disabled:opacity-60 disabled:cursor-default"
+          className="outline-button disabled:opacity-60 disabled:cursor-default"
         >
           {t.markAllRead}
         </button>

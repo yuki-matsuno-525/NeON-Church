@@ -124,10 +124,10 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
               {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
             </span>
             <span className="text-sm text-muted">{t.planProgress(doneCount, plan.day_count)}</span>
-            <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} className="outline-button outline-button-muted">
+            <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} className="outline-button">
               {t.planRestart}
             </button>
-            <button type="button" onClick={() => void run(() => unsubscribeFromPlan(id))} disabled={busy} className="outline-button outline-button-muted">
+            <button type="button" onClick={() => void run(() => unsubscribeFromPlan(id))} disabled={busy} className="outline-button">
               {t.planStop}
             </button>
           </>
