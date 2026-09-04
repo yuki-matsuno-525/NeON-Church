@@ -307,12 +307,11 @@ export function CommentPanel({
       event.preventDefault();
     };
     // passive: false を付けないと、ブラウザは preventDefault を聞いてくれない。
-    const options = { passive: false } as const;
-    document.addEventListener("touchmove", block, options);
-    document.addEventListener("wheel", block, options);
+    document.addEventListener("touchmove", block, { passive: false });
+    document.addEventListener("wheel", block, { passive: false });
     return () => {
-      document.removeEventListener("touchmove", block, options);
-      document.removeEventListener("wheel", block, options);
+      document.removeEventListener("touchmove", block);
+      document.removeEventListener("wheel", block);
     };
   }, [isMobile]);
 
