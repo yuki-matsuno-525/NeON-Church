@@ -29,19 +29,29 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
   expect(planRes.ok(), `プラン作成に失敗: ${await planRes.text()}`).toBeTruthy();
   const plan = await planRes.json();
 
-  // 1日に章を3つ入れる。1つだけだと「最後の章に飛ぶ」不具合が隠れてしまう。
   const dayRes = await page.request.post(`${API_BASE}/api/plans/${plan.id}/days/`, {
-    data: {
-      title: "初日",
-      readings: [
-        { book: "matthew", chapter_number: 1 },
-        { book: "matthew", chapter_number: 2 },
-        { book: "matthew", chapter_number: 3 },
-      ],
-    },
+    data: { title: "初日" },
     headers,
   });
   expect(dayRes.ok(), `日の作成に失敗: ${await dayRes.text()}`).toBeTruthy();
+  const day = await dayRes.json();
+
+  // 章は日を作ったあとに入れる（作成時に一緒に送っても保存されない）。
+  // 1日に3つ入れるのは、1つだけだと「最後の章に飛ぶ」不具合が隠れてしまうため。
+  const readingsRes = await page.request.patch(
+    `${API_BASE}/api/plans/${plan.id}/days/${day.id}/`,
+    {
+      data: {
+        readings: [
+          { book: "matthew", chapter_number: 1 },
+          { book: "matthew", chapter_number: 2 },
+          { book: "matthew", chapter_number: 3 },
+        ],
+      },
+      headers,
+    },
+  );
+  expect(readingsRes.ok(), `章の追加に失敗: ${await readingsRes.text()}`).toBeTruthy();
 
   // 中身が入ったので公開に変える（下書きのままだと読む画面を開けない）。
   const publishRes = await page.request.patch(`${API_BASE}/api/plans/${plan.id}/`, {
