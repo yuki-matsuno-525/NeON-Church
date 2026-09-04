@@ -7,6 +7,7 @@ import { languageLabel } from "@/lib/languages";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { findSlugByBookName, resolveVersionChapterIds, resolveVersionVerseIds } from "@/lib/versions";
+import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { Button, SkeletonList } from "@/components/ui";
@@ -22,6 +23,8 @@ export default function TranslationReadChapterPage({
   const t = useT();
   const { lang } = useLang();
   const ui = translationUiText(lang);
+  // 上に貼り付く帯の高さを測って、コメント欄がその下から始まるようにする。
+  const headerRef = useReaderHeaderHeight();
 
   const [project, setProject] = useState<TranslationProject | null>(null);
   // この章の節だけ。以前は全章取ってから1章分を抜き出し、残りを捨てていた。
@@ -147,7 +150,7 @@ export default function TranslationReadChapterPage({
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header">
+      <div ref={headerRef} className="reader-sticky-header">
         <p className="m-0 text-sm font-normal text-muted">
           <Link href={`/translations/${id}`} className="text-muted no-underline">
             {project?.name ?? t.projectFallback}

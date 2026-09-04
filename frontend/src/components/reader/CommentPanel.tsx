@@ -64,6 +64,7 @@ export function CommentPanel({
   const toast = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile(768);
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -282,17 +283,44 @@ export function CommentPanel({
       if (event.key === "Escape" && !showLoginModalRef.current) onCloseRef.current();
     };
     window.addEventListener("keydown", onKeyDown);
-    closeRef.current?.focus();
+    // preventScroll を付けないと、開いた瞬間にブラウザが閉じるボタンまで画面を送ってしまう。
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      previouslyFocused?.focus();
+      previouslyFocused?.focus({ preventScroll: true });
     };
   }, []);
+
+  // スマホでは下から出るシートなので、開いている間は後ろの本文を動かないようにする。
+  // 本文が一緒に動くと、指がどちらを触っているのか分からなくなる。
+  // シートの中（コメント一覧・タブの中身）は今までどおりスクロールできる。
+  //
+  // html や body に overflow: hidden を掛ける手もあるが、それをすると上部バーと
+  // 読書画面の帯（どちらも position: sticky）が貼り付くのをやめて画面から消えてしまう。
+  // なのでページは動かせるままにして、シートの外での指とホイールの操作だけを止める。
+  useEffect(() => {
+    if (!isMobile) return;
+    const block = (event: Event) => {
+      const target = event.target;
+      // シートの中での操作はそのまま通す（コメント一覧はスクロールできる）。
+      if (target instanceof Node && panelRef.current?.contains(target)) return;
+      event.preventDefault();
+    };
+    // passive: false を付けないと、ブラウザは preventDefault を聞いてくれない。
+    const options = { passive: false } as const;
+    document.addEventListener("touchmove", block, options);
+    document.addEventListener("wheel", block, options);
+    return () => {
+      document.removeEventListener("touchmove", block, options);
+      document.removeEventListener("wheel", block, options);
+    };
+  }, [isMobile]);
 
   return (
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
       <div
+        ref={panelRef}
         className={`comment-panel ${styles.panel}`}
         role={isMobile ? "dialog" : "complementary"}
         aria-modal={isMobile ? true : undefined}

@@ -150,6 +150,11 @@
   --accent-text: #fff;
   --accent-tint: rgba(145, 60, 240, 0.18);
   --navbar-height: 60px;
+  /* 読書画面で上に貼り付く帯（パンくずと訳の切り替え）の高さ。
+     右に開くコメント欄は、この分だけ下げて貼り付くので帯と重ならない。
+     中身の高さは言語や画面幅で変わるので、開いている間は実測値で上書きする
+     （hooks/useReaderHeaderHeight.ts）。ここの値は最初の描画用の目安。 */
+  --reader-header-height: 61px;
   --sidebar-width: 200px;
   --panel-width: 320px;
 
@@ -203,5 +208,7 @@
      （--navbar-height を上書きすると sticky な top 参照箇所も自動追従する） */
   :root {
     --navbar-height: 104px;
+    /* 帯がパンくずと訳の切り替えの 2 段になるぶん高くなる */
+    --reader-header-height: 89px;
   }
 }

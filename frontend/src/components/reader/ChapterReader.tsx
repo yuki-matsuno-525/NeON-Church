@@ -26,6 +26,7 @@ import { VerseList } from "@/components/reader/VerseList";
 import { BulkBookmarkBar, useBulkBookmark } from "@/components/reader/BulkBookmarkBar";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 
@@ -73,6 +74,8 @@ export function ChapterReader({
   const t = useT();
   const toast = useToast();
   const { lang } = useLang();
+  // 上に貼り付く帯の高さを測って、コメント欄がその下から始まるようにする。
+  const headerRef = useReaderHeaderHeight();
 
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
@@ -227,12 +230,14 @@ export function ChapterReader({
     return `${pathname}${query ? `?${query}` : ""}${hash}`;
   };
 
-  const handleClosePanel = () => router.replace(verseUrl(null));
+  // 節の選び直しは URL だけを書き換える。scroll: false を付けないと Next.js が
+  // 画面を一番上へ戻してしまい、コメント欄を開くたびに読んでいた場所を見失う。
+  const handleClosePanel = () => router.replace(verseUrl(null), { scroll: false });
 
   const handleSelectVerse = (verseId: string) => {
     if (verseId === selectedVerseId) handleClosePanel();
-    else if (selectedVerseId) router.replace(verseUrl(verseId));
-    else router.push(verseUrl(verseId));
+    else if (selectedVerseId) router.replace(verseUrl(verseId), { scroll: false });
+    else router.push(verseUrl(verseId), { scroll: false });
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
@@ -311,7 +316,7 @@ export function ChapterReader({
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header">
+      <div ref={headerRef} className="reader-sticky-header">
         <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
           <Link href="/read" className="text-muted no-underline">{t.bookList}</Link>
           {" › "}
@@ -454,11 +459,12 @@ export function ChapterReader({
         />
       )}
 
-      {showScrollTop && (
+      {/* 一番上へ戻るボタン。コメント欄を開いている間は、その邪魔になるので出さない。 */}
+      {showScrollTop && !selectedVerse && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t.backToTop}
-          className={`fab${selectedVerseId ? " fab-raised" : ""}`}
+          className="fab"
         >
           ↑
         </button>

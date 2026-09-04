@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import ChapterPage from "./page";
+
+// URL の ?verse= を、テストごとに差し替えられるようにしておく。
+// 節を選んでいる＝コメント欄が開いている状態を作るのに使う。
+const nav = vi.hoisted(() => ({ searchParams: new URLSearchParams() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
   usePathname: () => "/matthew/4",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => nav.searchParams,
   redirect: vi.fn(),
 }));
 
@@ -49,14 +53,14 @@ async function mockChapterRead(
   bookId: string,
   name: string,
   number: number,
-  options: { served?: string; translations?: string[]; stored?: string[] } = {},
+  options: { served?: string; translations?: string[]; stored?: string[]; verses?: { id: string; number: number }[] } = {},
 ) {
   const served = options.served ?? "口語訳";
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverFetch).mockResolvedValue({
     book: { id: bookId, name, translation: served, order: 1 },
     chapter: { id: `ch${number}`, book: bookId, number },
-    verses: [],
+    verses: (options.verses ?? []).map((v) => ({ ...v, chapter: `ch${number}`, text: "" })),
     translations: options.translations ?? ["口語訳", "KJV"],
   });
   // 収録済みの訳の一覧。訳の切替に何を出すか・Cookie を直すかの判断に使う。
@@ -75,7 +79,10 @@ const renderChapter = async (slug: string, chapter: string) =>
   );
 
 describe("本文ページ - 章ナビゲーション", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    nav.searchParams = new URLSearchParams();
+  });
 
   const prevLink = () => screen.queryByRole("link", { name: /前の章/ });
   const nextLink = () => screen.queryByRole("link", { name: /次の章/ });
@@ -118,7 +125,10 @@ describe("本文ページ - 章ナビゲーション", () => {
 });
 
 describe("本文ページ - サーバー描画", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    nav.searchParams = new URLSearchParams();
+  });
 
   it("見出しを開いた直後から出す（読み込み中の枠を挟まない）", async () => {
     await mockChapterRead("book1", "マタイによる福音書", 4);
@@ -225,5 +235,41 @@ describe("本文ページ - サーバー描画", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("文語訳");
     expect(screen.getAllByRole("button", { name: /に切り替え$/ }).length).toBeGreaterThan(0);
+  });
+});
+
+describe("本文ページ - 一番上へ戻るボタン", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    nav.searchParams = new URLSearchParams();
+  });
+
+  /** 少し下までスクロールした状態にする（ボタンはここで初めて出る）。 */
+  const scrollDown = async () => {
+    Object.defineProperty(window, "scrollY", { value: 400, configurable: true });
+    await act(async () => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+  };
+
+  const button = () => screen.queryByRole("button", { name: "ページ上部へ" });
+
+  it("下までスクロールすると出る", async () => {
+    await mockChapterRead("book1", "マタイによる福音書", 4);
+
+    await renderChapter("matthew", "4");
+    await scrollDown();
+
+    expect(button()).toBeInTheDocument();
+  });
+
+  it("コメント欄を開いている間は出さない（パネルの邪魔になるため）", async () => {
+    nav.searchParams = new URLSearchParams("verse=v1");
+    await mockChapterRead("book1", "マタイによる福音書", 4, { verses: [{ id: "v1", number: 1 }] });
+
+    await renderChapter("matthew", "4");
+    await scrollDown();
+
+    expect(button()).not.toBeInTheDocument();
   });
 });
