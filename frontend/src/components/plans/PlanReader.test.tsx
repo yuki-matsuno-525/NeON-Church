@@ -18,8 +18,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
     ...actual,
     fetchPlan: vi.fn(),
     subscribeToPlan: vi.fn(),
-    completePlanDay: vi.fn(),
-    uncompletePlanDay: vi.fn(),
+    completePlanReading: vi.fn(),
+    uncompletePlanReading: vi.fn(),
   };
 });
 
@@ -41,8 +41,8 @@ const plan: Plan = {
       devotional: "声に出して読んでみてください。",
       completed: false,
       readings: [
-        { id: "r1", book: "matthew", book_name: "マタイによる福音書", chapter_number: 1, translation: "", order: 0 },
-        { id: "r2", book: "enoch", book_name: "エノク書", chapter_number: 5, translation: "口語訳", order: 1 },
+        { id: "r1", book: "matthew", book_name: "マタイによる福音書", chapter_number: 1, translation: "", order: 0, completed: false },
+        { id: "r2", book: "enoch", book_name: "エノク書", chapter_number: 5, translation: "口語訳", order: 1, completed: false },
       ],
     },
     {
@@ -106,21 +106,39 @@ describe("プランを読み進めるところ", () => {
     expect(screen.getByText("声に出して読んでみてください。")).toBeInTheDocument();
   });
 
-  it("読み始める前は「読み終えた」を出さない", () => {
+  it("読み始める前は章の印を出さない", () => {
     render(<PlanReader initialPlan={plan} />);
 
     expect(screen.getByRole("button", { name: "読み始める" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "第1日を読み終えたと記録" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
-  it("読書中なら「読み終えた」を押して印を付けられる", async () => {
+  it("読書中なら章ごとに読み終えた印を付けられる", async () => {
     const user = userEvent.setup();
     const api = await import("@/lib/api");
-    vi.mocked(api.completePlanDay).mockResolvedValue(undefined as never);
+    vi.mocked(api.completePlanReading).mockResolvedValue(undefined as never);
     render(<PlanReader initialPlan={readingPlan} />);
 
-    await user.click(screen.getByRole("button", { name: "第1日を読み終えたと記録" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: "マタイによる福音書 1章を読み終えたと記録" }),
+    );
 
-    expect(api.completePlanDay).toHaveBeenCalledWith("p1", "d1");
+    expect(api.completePlanReading).toHaveBeenCalledWith("p1", "r1");
+  });
+
+  it("その日の章に全部印が付くと、日の見出しの数が満ちる", async () => {
+    const user = userEvent.setup();
+    const api = await import("@/lib/api");
+    vi.mocked(api.completePlanReading).mockResolvedValue(undefined as never);
+    render(<PlanReader initialPlan={readingPlan} />);
+
+    expect(screen.getByText("0 / 2 章")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "マタイによる福音書 1章を読み終えたと記録" }),
+    );
+    await user.click(screen.getByRole("checkbox", { name: "エノク書 5章を読み終えたと記録" }));
+
+    expect(screen.getByText("2 / 2 章")).toBeInTheDocument();
   });
 });

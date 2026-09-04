@@ -6,7 +6,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardPageNumberPagination
-from .models import Plan, PlanDay, PlanDayProgress, PlanSubscription
+from .models import (
+    Plan,
+    PlanDay,
+    PlanDayProgress,
+    PlanDayReading,
+    PlanReadingProgress,
+    PlanSubscription,
+)
+from .progress import sync_day_progress
 from .serializers import (
     PlanDaySerializer,
     PlanDetailSerializer,
@@ -114,6 +122,15 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
                 set(
                     PlanDayProgress.objects.filter(subscription=subscription).values_list(
                         "day_id", flat=True
+                    )
+                )
+                if subscription
+                else None
+            )
+            context["completed_reading_ids"] = (
+                set(
+                    PlanReadingProgress.objects.filter(subscription=subscription).values_list(
+                        "reading_id", flat=True
                     )
                 )
                 if subscription
@@ -279,33 +296,43 @@ class PlanRestartView(APIView):
         return Response(PlanSubscriptionSerializer(subscription).data)
 
 
-class PlanDayCompleteView(APIView):
+class PlanReadingCompleteView(APIView):
     """
-    POST   /api/plans/{id}/days/{day_id}/complete/   その日を読み終えた印をつける
-    DELETE /api/plans/{id}/days/{day_id}/complete/   印を外す
+    POST   /api/plans/{id}/readings/{reading_id}/complete/   その章を読み終えた印をつける
+    DELETE /api/plans/{id}/readings/{reading_id}/complete/   印を外す
+
+    印は章ごとに付ける。1日ぶんまとめて印を付ける仕組みだと、3章のうち1章だけ
+    読んで中断した人が、次に開いたときにどこまで読んだか分からなくなるため。
     """
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, pk, day_id):
+    def _reader(self, request, pk, reading_id) -> tuple[PlanSubscription, PlanDayReading]:
         subscription = get_object_or_404(
             PlanSubscription,
             user=request.user,
             plan_id=pk,
             is_active=True,
         )
-        day = get_object_or_404(PlanDay, pk=day_id, plan_id=pk)
-        PlanDayProgress.objects.get_or_create(subscription=subscription, day=day)
+        reading = get_object_or_404(
+            PlanDayReading.objects.select_related("day"), pk=reading_id, day__plan_id=pk
+        )
+        return subscription, reading
+
+    def post(self, request, pk, reading_id):
+        subscription, reading = self._reader(request, pk, reading_id)
+        with transaction.atomic():
+            PlanReadingProgress.objects.get_or_create(subscription=subscription, reading=reading)
+            sync_day_progress(subscription, reading.day)
         return Response(status=status.HTTP_201_CREATED)
 
-    def delete(self, request, pk, day_id):
-        subscription = get_object_or_404(
-            PlanSubscription,
-            user=request.user,
-            plan_id=pk,
-            is_active=True,
-        )
-        PlanDayProgress.objects.filter(subscription=subscription, day_id=day_id).delete()
+    def delete(self, request, pk, reading_id):
+        subscription, reading = self._reader(request, pk, reading_id)
+        with transaction.atomic():
+            PlanReadingProgress.objects.filter(
+                subscription=subscription, reading=reading
+            ).delete()
+            sync_day_progress(subscription, reading.day)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

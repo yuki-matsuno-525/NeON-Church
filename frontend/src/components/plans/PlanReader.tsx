@@ -7,9 +7,10 @@ import {
   subscribeToPlan,
   unsubscribeFromPlan,
   restartPlan,
-  completePlanDay,
-  uncompletePlanDay,
+  completePlanReading,
+  uncompletePlanReading,
   type Plan,
+  type PlanReading,
 } from "@/lib/api";
 import { dayNumberToday } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +35,7 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
   const text = planUiText(lang);
   const [plan, setPlan] = useState(initialPlan);
   const [busy, setBusy] = useState(false);
-  const [busyDayId, setBusyDayId] = useState<string | null>(null);
+  const [busyReadingId, setBusyReadingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmRestart, setConfirmRestart] = useState(false);
 
@@ -60,26 +61,40 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
   };
 
   /**
-   * 読み終わった印は、押した瞬間に画面へ反映してから送る。
+   * 章の印は、押した瞬間に画面へ反映してから送る。
    * 待たされる感じを無くすため。失敗したら元に戻す。
+   *
+   * その日が読み終わりになったかどうかはサーバー側が決める（章に全部印が付いたとき）。
+   * ここでも同じ計算をして先に画面へ出す。押すたびに取り直すと待たされるため。
    */
-  const toggleDay = async (dayId: string, completed: boolean) => {
-    if (busyDayId) return;
+  const toggleReading = async (reading: PlanReading) => {
+    if (busyReadingId) return;
     const previous = plan;
-    setBusyDayId(dayId);
+    const nextCompleted = !reading.completed;
+    setBusyReadingId(reading.id);
     setActionError(null);
     setPlan((current) => ({
       ...current,
-      days: current.days?.map((day) => (day.id === dayId ? { ...day, completed: !completed } : day)),
+      days: current.days?.map((day) => {
+        if (!day.readings.some((item) => item.id === reading.id)) return day;
+        const readings = day.readings.map((item) =>
+          item.id === reading.id ? { ...item, completed: nextCompleted } : item,
+        );
+        return {
+          ...day,
+          readings,
+          completed: readings.length > 0 && readings.every((item) => item.completed),
+        };
+      }),
     }));
     try {
-      if (completed) await uncompletePlanDay(id, dayId);
-      else await completePlanDay(id, dayId);
+      if (nextCompleted) await completePlanReading(id, reading.id);
+      else await uncompletePlanReading(id, reading.id);
     } catch {
       setPlan(previous);
       setActionError(t.actionFailed);
     } finally {
-      setBusyDayId(null);
+      setBusyReadingId(null);
     }
   };
 
@@ -162,23 +177,24 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
                     <span className="text-lg text-accent">{day.title}</span>
                   </>
                 )}
-                {isReading && (
-                  <button
-                    type="button"
-                    onClick={() => void toggleDay(day.id, day.completed)}
-                    aria-label={day.completed ? text.unmarkDayCompleted(day.number) : text.markDayCompleted(day.number)}
-                    aria-pressed={day.completed}
-                    aria-busy={busyDayId === day.id}
-                    disabled={busyDayId !== null}
-                    className={`day-toggle${day.completed ? " day-toggle-done" : ""}`}
-                  >
-                    {day.completed ? t.planDayDone : t.planDayMarkDone}
-                  </button>
+                {/* 進み具合は数字だけにする。押すものではないので、
+                    ボタンの形にすると「押さないと記録されない」と読めてしまう。 */}
+                {isReading && day.readings.length > 0 && (
+                  <span className={`${styles.headCount} text-sm text-soft`}>
+                    {text.dayReadingCount(
+                      day.readings.filter((reading) => reading.completed).length,
+                      day.readings.length,
+                    )}
+                  </span>
                 )}
               </div>
               {/* 章の行とその日の文章の行は、同じ箱に続けて並べて形を揃える。 */}
               <div className={styles.rows}>
-                <ReadingLinks readings={day.readings} />
+                <ReadingLinks
+                  readings={day.readings}
+                  onToggle={isReading ? toggleReading : undefined}
+                  busyId={busyReadingId}
+                />
                 {day.devotional && (
                   <div className={styles.row}>
                     <span className={`${styles.rowBadge} ${styles.rowBadgeDotted}`} aria-hidden="true">

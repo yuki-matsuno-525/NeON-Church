@@ -1174,12 +1174,13 @@ export function restartPlan(planId: string): Promise<PlanSubscription> {
   return apiFetch(`/plans/${planId}/restart/`, { method: "POST" });
 }
 
-export function completePlanDay(planId: string, dayId: string): Promise<void> {
-  return apiFetch(`/plans/${planId}/days/${dayId}/complete/`, { method: "POST" });
+/** 章ごとに読み終えた印を付ける。その日の章に全部付くと、その日が読み終わりになる。 */
+export function completePlanReading(planId: string, readingId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/readings/${readingId}/complete/`, { method: "POST" });
 }
 
-export function uncompletePlanDay(planId: string, dayId: string): Promise<void> {
-  return apiFetch(`/plans/${planId}/days/${dayId}/complete/`, { method: "DELETE" });
+export function uncompletePlanReading(planId: string, readingId: string): Promise<void> {
+  return apiFetch(`/plans/${planId}/readings/${readingId}/complete/`, { method: "DELETE" });
 }
 
 export function fetchMyPlanSubscriptions(): Promise<PlanSubscription[]> {

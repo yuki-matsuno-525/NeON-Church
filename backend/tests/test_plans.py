@@ -170,14 +170,37 @@ def test_一覧に出るのは公開プランだけ(auth_client, plan_id, api_cl
 # 編集を凍結する条件
 # ---------------------------------------------------------------------------
 
-def _published_plan_with_reader(auth_client, other_client):
-    """公開して、別の人が1人読み始めている状態を作る。"""
+def _set_readings(client, plan_id, day_id, chapters):
+    """その日に読む章を入れ替える。章は (章番号, 訳) の並びで渡す。"""
+    return client.patch(
+        f"{PLANS_URL}{plan_id}/days/{day_id}/",
+        {
+            "readings": [
+                {"book": "matthew", "chapter_number": number, "translation": translation}
+                for number, translation in chapters
+            ]
+        },
+        format="json",
+    )
+
+
+def _published_plan_with_reader(auth_client, other_client, book):
+    """公開して、別の人が1人読み始めている状態を作る。各日に章を1つずつ入れる。
+
+    章を入れておくのは、読み終えた印が章ごとに付くようになったため
+    （章が1つも無い日は読み終えようがない）。
+    """
     plan_id = _create_plan(auth_client).data["id"]
-    _add_day(auth_client, plan_id)
-    _add_day(auth_client, plan_id, title="2日目")
+    for number, title in enumerate(["1日目", "2日目"], start=1):
+        day_id = _add_day(auth_client, plan_id, title=title).data["id"]
+        _set_readings(auth_client, plan_id, day_id, [(number, "")])
     auth_client.patch(f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json")
     other_client.post(f"{PLANS_URL}{plan_id}/subscribe/")
     return plan_id
+
+
+def _reading_ids(detail, day_index=0):
+    return [reading["id"] for reading in detail.data["days"][day_index]["readings"]]
 
 
 @pytest.mark.django_db
@@ -190,8 +213,8 @@ def test_誰も読んでいなければ日を消せる(auth_client, plan_id):
 
 
 @pytest.mark.django_db
-def test_読み始めた人がいると日は消せない(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読み始めた人がいると日は消せない(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
     day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
 
     response = auth_client.delete(f"{PLANS_URL}{plan_id}/days/{day_id}/")
@@ -200,8 +223,8 @@ def test_読み始めた人がいると日は消せない(auth_client, other_cli
 
 
 @pytest.mark.django_db
-def test_読み始めた人がいても日の中身は直せる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読み始めた人がいても日の中身は直せる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
     day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
 
     response = auth_client.patch(
@@ -214,8 +237,8 @@ def test_読み始めた人がいても日の中身は直せる(auth_client, oth
 
 
 @pytest.mark.django_db
-def test_読み始めた人がいても日は末尾に足せる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読み始めた人がいても日は末尾に足せる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
 
     response = _add_day(auth_client, plan_id, title="3日目")
 
@@ -224,8 +247,8 @@ def test_読み始めた人がいても日は末尾に足せる(auth_client, oth
 
 
 @pytest.mark.django_db
-def test_読み始めた人がいると日を並べ替えられない(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読み始めた人がいると日を並べ替えられない(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
     day_ids = [str(d.id) for d in PlanDay.objects.filter(plan_id=plan_id).order_by("-number")]
 
     response = auth_client.post(
@@ -249,8 +272,8 @@ def test_誰も読んでいなければ日を並べ替えられる(auth_client, 
 
 
 @pytest.mark.django_db
-def test_著者の注記はいつでも書き換えられる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_著者の注記はいつでも書き換えられる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
 
     response = auth_client.patch(
         f"{PLANS_URL}{plan_id}/",
@@ -266,33 +289,70 @@ def test_著者の注記はいつでも書き換えられる(auth_client, other_
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_読み始めて進捗をつけられる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
-    day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
+def test_章ごとに読み終えた印をつけられる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    reading_id = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))[0]
 
-    completed = other_client.post(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+    completed = other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
     detail = other_client.get(f"{PLANS_URL}{plan_id}/")
 
     assert completed.status_code == 201
-    assert detail.data["days"][0]["completed"] is True
+    assert detail.data["days"][0]["readings"][0]["completed"] is True
     assert detail.data["subscription"]["is_active"] is True
 
 
 @pytest.mark.django_db
-def test_進捗の印は外せる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
-    day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
-    other_client.post(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+def test_章に全部印が付くとその日が読み終わりになる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    day_id = other_client.get(f"{PLANS_URL}{plan_id}/").data["days"][0]["id"]
+    # 1日に2章にして、1章だけ印を付けた時点ではまだ終わっていないことを見る。
+    _set_readings(auth_client, plan_id, day_id, [(1, ""), (2, "")])
+    reading_ids = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))
 
-    other_client.delete(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+    other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_ids[0]}/complete/")
+    half = other_client.get(f"{PLANS_URL}{plan_id}/").data["days"][0]["completed"]
+
+    other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_ids[1]}/complete/")
+    whole = other_client.get(f"{PLANS_URL}{plan_id}/").data["days"][0]["completed"]
+
+    assert half is False
+    assert whole is True
+
+
+@pytest.mark.django_db
+def test_章の印を外すとその日の読み終わりも取り消される(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    reading_id = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))[0]
+    other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
+
+    other_client.delete(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
 
     detail = other_client.get(f"{PLANS_URL}{plan_id}/")
+    assert detail.data["days"][0]["readings"][0]["completed"] is False
     assert detail.data["days"][0]["completed"] is False
 
 
 @pytest.mark.django_db
-def test_途中でやめられて読み直せる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_日の中身を直しても読者の章の印は消えない(auth_client, other_client, book):
+    # 書いた人が題を直しただけで読者の印が消えると、読み直しを迫ることになる。
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    day_id = other_client.get(f"{PLANS_URL}{plan_id}/").data["days"][0]["id"]
+    reading_id = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))[0]
+    other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
+
+    # 同じ章を残したまま、後ろに1章足す
+    _set_readings(auth_client, plan_id, day_id, [(1, ""), (7, "")])
+
+    detail = other_client.get(f"{PLANS_URL}{plan_id}/")
+    readings = detail.data["days"][0]["readings"]
+    assert [reading["completed"] for reading in readings] == [True, False]
+    # 章が増えたので、その日は読み終わりではなくなる
+    assert detail.data["days"][0]["completed"] is False
+
+
+@pytest.mark.django_db
+def test_途中でやめられて読み直せる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
 
     other_client.delete(f"{PLANS_URL}{plan_id}/subscribe/")
     stopped = PlanSubscription.objects.get(plan_id=plan_id).is_active
@@ -305,21 +365,21 @@ def test_途中でやめられて読み直せる(auth_client, other_client):
 
 
 @pytest.mark.django_db
-def test_やめたプランの進捗は更新できない(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
-    day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
+def test_やめたプランの進捗は更新できない(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    reading_id = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))[0]
     other_client.delete(f"{PLANS_URL}{plan_id}/subscribe/")
 
-    completed = other_client.post(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
-    uncompleted = other_client.delete(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+    completed = other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
+    uncompleted = other_client.delete(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
 
     assert completed.status_code == 404
     assert uncompleted.status_code == 404
 
 
 @pytest.mark.django_db
-def test_読書中人数にはやめた人を含めない(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読書中人数にはやめた人を含めない(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
     reading = auth_client.get(PLANS_URL)
     reading_item = next(plan for plan in reading.data["results"] if plan["id"] == plan_id)
     assert reading_item["reader_count"] == 1
@@ -333,20 +393,21 @@ def test_読書中人数にはやめた人を含めない(auth_client, other_cli
 
 
 @pytest.mark.django_db
-def test_最初からやり直すと読んだ記録が消える(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
-    day_id = str(PlanDay.objects.filter(plan_id=plan_id).first().id)
-    other_client.post(f"{PLANS_URL}{plan_id}/days/{day_id}/complete/")
+def test_最初からやり直すと読んだ記録が消える(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
+    reading_id = _reading_ids(other_client.get(f"{PLANS_URL}{plan_id}/"))[0]
+    other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
 
     other_client.post(f"{PLANS_URL}{plan_id}/restart/")
 
     detail = other_client.get(f"{PLANS_URL}{plan_id}/")
     assert detail.data["days"][0]["completed"] is False
+    assert detail.data["days"][0]["readings"][0]["completed"] is False
 
 
 @pytest.mark.django_db
-def test_読んでいるプランの一覧が取れる(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_読んでいるプランの一覧が取れる(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
 
     response = other_client.get("/api/plan-subscriptions/")
 
@@ -354,18 +415,20 @@ def test_読んでいるプランの一覧が取れる(auth_client, other_client
 
 
 @pytest.mark.django_db
-def test_読んでいるプランに日数と完了数が付く(auth_client, other_client):
+def test_読んでいるプランに日数と完了数が付く(auth_client, other_client, book):
     # 読み終わっても is_active は true のままなので、画面が「読書中」と
     # 「読み終わった」を見分けるにはこの2つの数字が要る。
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
     days = list(PlanDay.objects.filter(plan_id=plan_id))
 
     before = other_client.get("/api/plan-subscriptions/").data[0]
     assert before["day_count"] == len(days)
     assert before["completed_count"] == 0
 
-    for day in days:
-        other_client.post(f"{PLANS_URL}{plan_id}/days/{day.id}/complete/")
+    detail = other_client.get(f"{PLANS_URL}{plan_id}/")
+    for day_index in range(len(days)):
+        for reading_id in _reading_ids(detail, day_index):
+            other_client.post(f"{PLANS_URL}{plan_id}/readings/{reading_id}/complete/")
 
     after = other_client.get("/api/plan-subscriptions/").data[0]
     assert after["completed_count"] == len(days)
@@ -375,8 +438,8 @@ def test_読んでいるプランに日数と完了数が付く(auth_client, oth
 
 
 @pytest.mark.django_db
-def test_日の並びを変えられるかが返る(auth_client, other_client):
-    plan_id = _published_plan_with_reader(auth_client, other_client)
+def test_日の並びを変えられるかが返る(auth_client, other_client, book):
+    plan_id = _published_plan_with_reader(auth_client, other_client, book)
 
     response = auth_client.get(f"{PLANS_URL}{plan_id}/")
 

@@ -27,6 +27,7 @@ const day: PlanDay = {
       chapter_number: 1,
       translation: "",
       order: 0,
+      completed: false,
     },
   ],
   completed: false,
