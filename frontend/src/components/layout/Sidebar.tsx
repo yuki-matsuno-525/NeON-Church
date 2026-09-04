@@ -80,8 +80,13 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
   useEffect(() => {
     if (!open) return;
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // 後ろの本文を止めるのは <html> 側。<body> に overflow:hidden を付けると
+    // body 自身がスクロールの入れ物になり、上のバーの position:sticky が
+    // 「動かない body」を基準にしてしまう。実際に動くのは画面のほうなので、
+    // バーは貼り付くのをやめて一緒に流れ、上へ消えていた。
+    const scrollRoot = document.documentElement;
+    const previousOverflow = scrollRoot.style.overflow;
+    scrollRoot.style.overflow = "hidden";
     sidebarRef.current?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -90,7 +95,7 @@ export function Sidebar({ open = false, onClose }: SidebarProps) {
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
+      scrollRoot.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
   }, [open]);

@@ -129,8 +129,47 @@ class PlanSubscription(BaseModel):
         return f"{self.user} → {self.plan.title}"
 
 
+class PlanReadingProgress(BaseModel):
+    """
+    その章を読み終えた印。
+
+    印は章ごとに付ける。1日に3章あるとき「日ごとに1つ」しか覚えられないと、
+    1章だけ読んで中断した人が次に開いたときに、どこまで読んだか分からなくなるため。
+
+    日の完了（PlanDayProgress）は、この印がその日の章に全部付いたときに作られる。
+    """
+
+    subscription = models.ForeignKey(
+        PlanSubscription,
+        on_delete=models.CASCADE,
+        related_name="reading_progress",
+    )
+    reading = models.ForeignKey(
+        PlanDayReading,
+        on_delete=models.CASCADE,
+        related_name="progress",
+    )
+
+    class Meta:
+        db_table = "plan_reading_progress"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["subscription", "reading"], name="unique_subscription_reading_progress"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.subscription} {self.reading}"
+
+
 class PlanDayProgress(BaseModel):
-    """その日を読み終えた印。連続日数などは持たない（数え始めると沼なので）。"""
+    """
+    その日を読み終えた印。連続日数などは持たない（数え始めると沼なので）。
+
+    直接は付けない。その日の章に全部印が付いた時点で作られ、1つでも外れると消える。
+    「読んでいるプラン」の一覧が「何日中いくつ終わったか」をここから数えるので、
+    章ごとの印とは別に残してある。
+    """
 
     subscription = models.ForeignKey(
         PlanSubscription,

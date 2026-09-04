@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Plan, PlanSubscription } from "@/lib/api";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
@@ -5,27 +6,21 @@ import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { visibilityLabel } from "@/lib/plans";
 import type { Translations } from "@/lib/i18n";
 import { planUiText } from "@/components/plans/planUiText";
-import { type IconName } from "@/components/ui/Icon";
-import { ErrorState } from "@/components/ui";
+import { Icon } from "@/components/ui/Icon";
+import { EmptyState, ErrorState } from "@/components/ui";
 import { RetryButton } from "@/components/ui/RetryButton";
-import { ListColumn, ListPageHeader, visibilityBadgeClass } from "@/components/list";
-import type { Tone } from "@/components/list/tone";
+import { ListPageHeader, visibilityBadgeClass } from "@/components/list";
 
 /* ----- 一覧の切り替え -----
    以前は「読んでいるプラン」を小さな札で上に並べ、その下に「自分の」「公開」の
    2 列を置いていた。読書プランは続けることが中身なので、毎日戻ってくる
-   「読んでいる」を最初に開く形にした。
+   「進行中」を最初に開く形にした。
 
    どのタブを見ているかは URL（?tab=）で表す。この画面はサーバー側で
    組み立てるので、ブラウザ側の状態を持てないため。URL に出るぶん、
    その場所をそのまま人に渡せるし、戻るボタンも効く。 */
-type PlanTabKey = "reading" | "done" | "mine" | "find";
-const PLAN_TABS: { key: PlanTabKey; icon: IconName; tone: Tone }[] = [
-  { key: "reading", icon: "book-open",    tone: "active" },
-  { key: "done",    icon: "check-circle", tone: "ok" },
-  { key: "mine",    icon: "lock",         tone: "wait" },
-  { key: "find",    icon: "globe",        tone: "ok" },
-];
+const PLAN_TABS = ["reading", "done", "mine", "find"] as const;
+type PlanTabKey = (typeof PLAN_TABS)[number];
 
 /**
  * 読書プランの一覧。
@@ -43,8 +38,11 @@ export default async function PlansPage({
   const supplementalText = planUiText(await getRequestLanguage());
   const signedIn = await serverIsSignedIn();
   const requested = (await searchParams).tab;
+  // 未ログインで最初に開くのは「さがす」。「進行中」を既定にすると、
+  // 開いた直後に見えるのがログインの案内だけになってしまうため。
+  const defaultTab: PlanTabKey = signedIn ? "reading" : "find";
   const activeTab: PlanTabKey =
-    PLAN_TABS.some((tab) => tab.key === requested) ? (requested as PlanTabKey) : "reading";
+    PLAN_TABS.includes(requested as PlanTabKey) ? (requested as PlanTabKey) : defaultTab;
 
   // 取れなかったものは null。読書中の一覧だけは、取れなくても
   // プランは読めるので黙って空にする。
@@ -56,7 +54,7 @@ export default async function PlansPage({
   const failed = publicPlans === null || myPlans === null;
 
   // 読み終わっても購読は残る（is_active が落ちるのは「やめる」を押したときだけ）ので、
-  // 読書中と読み終わったの区別は、終わった日数がプランの日数に届いたかで決める。
+  // 進行中と完了の区別は、終わった日数がプランの日数に届いたかで決める。
   const isFinished = (s: PlanSubscription) => s.day_count > 0 && s.completed_count >= s.day_count;
   const readingNow = reading.filter((s) => !isFinished(s));
   const finished = reading.filter(isFinished);
@@ -69,30 +67,31 @@ export default async function PlansPage({
 
   return (
     <div className="page page-full">
+      {/* 説明文は置かない。この下にタブがあり、その中にプランが並ぶので、
+          先に散文で言い直すと同じことが 3 段に重なる。 */}
       <ListPageHeader
         title={t.plansTitle}
-        description={t.plansDesc}
         action={signedIn ? <Link href="/plans/new" className="cta-button">{t.planNew}</Link> : undefined}
       />
 
-      {/* 未ログインでは自分のものが無く「さがす」しか無いので、タブを出さない。 */}
-      {signedIn && (
-        <div role="tablist" aria-label={t.planTabsLabel} className="tab-bar">
-          {PLAN_TABS.map((tab) => (
-            <Link
-              key={tab.key}
-              href={tab.key === "reading" ? "/plans" : `/plans?tab=${tab.key}`}
-              role="tab"
-              aria-selected={tab.key === activeTab}
-              id={`plans-tab-${tab.key}`}
-              aria-controls={`plans-panel-${tab.key}`}
-              className={`tab-underline${tab.key === activeTab ? " tab-underline-active" : ""}`}
-            >
-              {tabLabel(tab.key)}
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* 未ログインでもタブは4つとも出す。この画面が「読んだ記録を残せる場所」
+          だと先に分かるほうが、ログインする理由が伝わるため。ログインが要る
+          タブは、一覧の代わりにログインの案内を出す。 */}
+      <div role="tablist" aria-label={t.planTabsLabel} className="tab-bar">
+        {PLAN_TABS.map((key) => (
+          <Link
+            key={key}
+            href={key === defaultTab ? "/plans" : `/plans?tab=${key}`}
+            role="tab"
+            aria-selected={key === activeTab}
+            id={`plans-tab-${key}`}
+            aria-controls={`plans-panel-${key}`}
+            className={`tab-underline${key === activeTab ? " tab-underline-active" : ""}`}
+          >
+            {tabLabel(key)}
+          </Link>
+        ))}
+      </div>
 
       {failed ? (
         <ErrorState
@@ -101,51 +100,30 @@ export default async function PlansPage({
           message={supplementalText.loadErrorDescription}
           extraAction={<RetryButton label={t.retry} />}
         />
-      ) : !signedIn ? (
-        <PlanColumn
-          title={t.planPublicTitle}
-          desc={t.planPublicDesc}
-          icon="globe"
-          tone="ok"
-          plans={publicPlans ?? []}
-          empty={t.planPublicEmpty}
-          t={t}
-        />
+      ) : !signedIn && activeTab !== "find" ? (
+        <SignInColumn tabKey={activeTab} t={t} />
       ) : activeTab === "reading" || activeTab === "done" ? (
         <SubscriptionColumn
-          title={activeTab === "reading" ? t.planTabReading : t.planTabDone}
-          desc={activeTab === "reading" ? t.planReadingNow : t.planTabDone}
-          icon={activeTab === "reading" ? "book-open" : "check-circle"}
-          tone={activeTab === "reading" ? "active" : "ok"}
+          tabKey={activeTab}
           subscriptions={activeTab === "reading" ? readingNow : finished}
           empty={activeTab === "reading" ? t.planReadingEmpty : t.planDoneEmpty}
-          panelId={`plans-panel-${activeTab}`}
-          tabId={`plans-tab-${activeTab}`}
           t={t}
         />
       ) : activeTab === "mine" ? (
         <PlanColumn
-          title={t.planMineTitle}
-          desc={t.planMineDesc}
-          icon="lock"
-          tone="active"
+          tabKey="mine"
           plans={myPlans ?? []}
           empty={t.planMineEmpty}
           editable
-          panelId="plans-panel-mine"
-          tabId="plans-tab-mine"
+          // 自分のプランには下書きと限定公開が混ざるので、ここだけは印を出す。
+          showVisibility
           t={t}
         />
       ) : (
         <PlanColumn
-          title={t.planPublicTitle}
-          desc={t.planPublicDesc}
-          icon="globe"
-          tone="ok"
+          tabKey="find"
           plans={publicPlans ?? []}
           empty={t.planPublicEmpty}
-          panelId="plans-panel-find"
-          tabId="plans-tab-find"
           t={t}
         />
       )}
@@ -154,63 +132,108 @@ export default async function PlansPage({
 }
 
 /**
- * 読んでいる／読み終わったプランの一覧。
+ * タブを開いた先の中身を入れる箱。
+ *
+ * 以前は ListColumn（見出し・説明つきの枠）を使っていたが、タブを押した人は
+ * もうどのタブか分かっているので、中でもう一度名乗る必要がない。見出しを
+ * 外すと枠だけが残り、カードの枠と二重になるので、枠ごと外してある。
+ *
+ * タブと結び付ける id / role / aria-labelledby は残す。これが無いと、
+ * 画面読み上げでタブと中身の対応が切れる。
+ */
+function TabPanel({ tabKey, children }: { tabKey: PlanTabKey; children: ReactNode }) {
+  return (
+    <section
+      id={`plans-panel-${tabKey}`}
+      role="tabpanel"
+      aria-labelledby={`plans-tab-${tabKey}`}
+      className="flex flex-col gap-3"
+    >
+      {children}
+    </section>
+  );
+}
+
+/**
+ * 未ログインのときに、一覧の代わりに置くログインの案内。
+ *
+ * ここで LoginRequiredModal を使わないのは、あれが押したときに出す覆いで
+ * "use client" が付いているため。使うとこの画面ごとブラウザ側に回ってしまう。
+ * EmptyState は受け取ったものを描くだけなのでサーバー側から呼べる。
+ */
+function SignInColumn({ tabKey, t }: { tabKey: "reading" | "done" | "mine"; t: Translations }) {
+  const message =
+    tabKey === "reading" ? t.planSignInReading
+    : tabKey === "done" ? t.planSignInDone
+    : t.planSignInMine;
+
+  // 戻り先はサーバー側で組み立てられる（どのタブかは URL に出ているため）。
+  // ログインし終わったら、押したタブへそのまま戻ってくる。
+  const loginHref = `/login?from=${encodeURIComponent(`/plans?tab=${tabKey}`)}`;
+
+  return (
+    <TabPanel tabKey={tabKey}>
+      <EmptyState
+        icon={<Icon name="lock" size={36} />}
+        title={t.loginRequired}
+        description={message}
+        action={<Link href={loginHref} className="btn btn-primary">{t.loginBtn}</Link>}
+      />
+    </TabPanel>
+  );
+}
+
+/**
+ * 進行中／完了のプランの一覧。
  *
  * 以前は小さな札を横に並べるだけで、プランで一番知りたい「どこまで進んだか」が
  * 出ていなかった。翻訳カードと同じ進捗バーを持つカードにする。
  */
 function SubscriptionColumn({
-  title, desc, icon, tone, subscriptions, empty, panelId, tabId, t,
+  tabKey, subscriptions, empty, t,
 }: {
-  title: string;
-  desc: string;
-  icon: IconName;
-  tone: Tone;
+  tabKey: PlanTabKey;
   subscriptions: PlanSubscription[];
   empty: string;
-  panelId: string;
-  tabId: string;
   t: Translations;
 }) {
   return (
-    <ListColumn icon={icon} tone={tone} title={title} description={desc} id={panelId} labelledBy={tabId}>
+    <TabPanel tabKey={tabKey}>
       {subscriptions.length === 0 ? (
         <p className="px-1 py-2 text-sm text-faint">{empty}</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {subscriptions.map((s) => {
-            const pct = s.day_count > 0 ? Math.round((s.completed_count / s.day_count) * 100) : 0;
-            const done = s.day_count > 0 && s.completed_count >= s.day_count;
-            return (
-              <article
-                key={s.id}
-                className={`card-glow card-glow-interactive card-link p-4 ${done ? "tone-ok" : "tone-active"}`}
+        subscriptions.map((s) => {
+          const pct = s.day_count > 0 ? Math.round((s.completed_count / s.day_count) * 100) : 0;
+          const done = s.day_count > 0 && s.completed_count >= s.day_count;
+          return (
+            <article
+              key={s.id}
+              className={`card-glow card-glow-interactive card-link p-4 ${done ? "tone-ok" : "tone-active"}`}
+            >
+              <h3 className="card-title">
+                <Link href={`/plans/${s.plan}`} className="card-link-main text-inherit no-underline">
+                  {s.plan_title}
+                </Link>
+              </h3>
+              <div className="flex justify-between gap-3 text-sm mb-1">
+                <span className="text-soft">{done ? t.planAllDone : t.progress}</span>
+                <span className="text-body">{t.planProgressFmt(s.completed_count, s.day_count)}</span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label={`${s.plan_title} ${t.progress}`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={pct}
+                className="progress-track mt-0"
               >
-                <h3 className="card-title">
-                  <Link href={`/plans/${s.plan}`} className="card-link-main text-inherit no-underline">
-                    {s.plan_title}
-                  </Link>
-                </h3>
-                <div className="flex justify-between gap-3 text-sm mb-1">
-                  <span className="text-soft">{done ? t.planAllDone : t.progress}</span>
-                  <span className="text-body">{t.planProgressFmt(s.completed_count, s.day_count)}</span>
-                </div>
-                <div
-                  role="progressbar"
-                  aria-label={`${s.plan_title} ${t.progress}`}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={pct}
-                  className="progress-track mt-0"
-                >
-                  <div className="progress-fill progress-fill-tone" style={{ width: `${pct}%` }} />
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                <div className="progress-fill progress-fill-tone" style={{ width: `${pct}%` }} />
+              </div>
+            </article>
+          );
+        })
       )}
-    </ListColumn>
+    </TabPanel>
   );
 }
 
@@ -222,73 +245,65 @@ function loadPlans(path: string): Promise<Plan[] | null> {
 }
 
 function PlanColumn({
-  title,
-  desc,
-  icon,
-  tone,
+  tabKey,
   plans,
   empty,
   editable = false,
+  showVisibility = false,
   t,
-  panelId,
-  tabId,
 }: {
-  title: string;
-  desc: string;
-  icon: IconName;
-  tone: Tone;
+  tabKey: PlanTabKey;
   plans: Plan[];
   empty: string;
   editable?: boolean;
+  /** 公開範囲の印を出すか。「さがす」は全部公開なので出しても何も伝わらない */
+  showVisibility?: boolean;
   t: Translations;
-  /** タブから開かれるときだけ渡す */
-  panelId?: string;
-  tabId?: string;
 }) {
   return (
-    <ListColumn icon={icon} tone={tone} title={title} description={desc} id={panelId} labelledBy={tabId}>
+    <TabPanel tabKey={tabKey}>
       {plans.length === 0 ? (
         <p className="px-1 py-2 text-sm text-faint">{empty}</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {/* 以前はカードを丸ごと <Link> で包んでいたが、それだと中の作った人を
-              リンクにできなかった（リンクの入れ子は押せない）。題のリンクを
-              影で引き伸ばしてカード全体を覆う形にした（card.css の .card-link）。 */}
-          {plans.map((plan) => (
-            <article key={plan.id} className="card-glow card-glow-interactive card-link p-4">
+        /* 以前はカードを丸ごと <Link> で包んでいたが、それだと中の作った人を
+           リンクにできなかった（リンクの入れ子は押せない）。題のリンクを
+           影で引き伸ばしてカード全体を覆う形にした（card.css の .card-link）。 */
+        plans.map((plan) => (
+          <article key={plan.id} className="card-glow card-glow-interactive card-link p-4">
+            {showVisibility && (
               <div className="flex mb-3">
                 <span className={visibilityBadgeClass(plan.visibility)}>
                   {visibilityLabel(plan.visibility, t)}
                 </span>
               </div>
-              <h3 className="card-title">
-                <Link
-                  href={editable ? `/plans/${plan.id}/edit` : `/plans/${plan.id}`}
-                  className="card-link-main text-inherit no-underline"
-                >
-                  {plan.title}
-                </Link>
-              </h3>
-              {plan.description && <p className="card-summary">{plan.description}</p>}
-              {/* 灰色の箱を横に並べるのをやめ、翻訳カードと同じ明細に揃える。 */}
-              <dl className="meta-rows">
-                <dt>{t.cardPlanOwner}</dt>
-                <dd>
-                  <Link href={`/profile/${plan.owner_username}`}>{plan.owner_username}</Link>
-                </dd>
-                <dt>{t.cardPlanDays}</dt>
-                <dd>{t.planDayCount(plan.day_count)}</dd>
-                {plan.reader_count > 0 && (
-                  <>
-                    <dt>{t.cardPlanReaders}</dt>
-                    <dd>{t.cardReaderValue(plan.reader_count)}</dd>
-                  </>
-                )}
-              </dl>
-            </article>
-          ))}
-        </div>
+            )}
+            <h3 className="card-title">
+              <Link
+                href={editable ? `/plans/${plan.id}/edit` : `/plans/${plan.id}`}
+                className="card-link-main text-inherit no-underline"
+              >
+                {plan.title}
+              </Link>
+            </h3>
+            {plan.description && <p className="card-summary">{plan.description}</p>}
+            {/* 灰色の箱を横に並べるのをやめ、翻訳カードと同じ明細に揃える。 */}
+            <dl className="meta-rows">
+              <dt>{t.cardPlanOwner}</dt>
+              <dd>
+                <Link href={`/profile/${plan.owner_username}`}>{plan.owner_username}</Link>
+              </dd>
+              <dt>{t.cardPlanDays}</dt>
+              <dd>{t.planDayCount(plan.day_count)}</dd>
+              {plan.reader_count > 0 && (
+                <>
+                  <dt>{t.cardPlanReaders}</dt>
+                  <dd>{t.cardReaderValue(plan.reader_count)}</dd>
+                </>
+              )}
+            </dl>
+          </article>
+        ))
       )}
-    </ListColumn>
+    </TabPanel>
   );
 }

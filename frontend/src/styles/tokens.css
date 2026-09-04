@@ -157,6 +157,8 @@
   --glass-bg: rgba(14, 8, 42, 0.62);
   --glass-border: rgba(160, 82, 248, 0.26);
   --glass-nav: rgba(8, 4, 24, 0.74);
+  /* 左のサイドパネルの背景。透けさせず単色で塗る。 */
+  --sidebar-bg: #080418;
   --neon-pink: #ff2888;
   --neon-purple: #cc44ff;
   --glow-purple: rgba(192, 52, 240, 0.55);

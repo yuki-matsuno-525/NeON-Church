@@ -18,9 +18,9 @@ urlpatterns = [
         name="plan-day-detail",
     ),
     path(
-        "plans/<uuid:pk>/days/<uuid:day_id>/complete/",
-        views.PlanDayCompleteView.as_view(),
-        name="plan-day-complete",
+        "plans/<uuid:pk>/readings/<uuid:reading_id>/complete/",
+        views.PlanReadingCompleteView.as_view(),
+        name="plan-reading-complete",
     ),
     path("plans/<uuid:pk>/subscribe/", views.PlanSubscribeView.as_view(), name="plan-subscribe"),
     path("plans/<uuid:pk>/restart/", views.PlanRestartView.as_view(), name="plan-restart"),

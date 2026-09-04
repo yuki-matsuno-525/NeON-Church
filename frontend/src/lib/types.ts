@@ -361,6 +361,8 @@ export type PlanReading = {
   chapter_number: number;
   translation: string;
   order: number;
+  /** その章を読み終えたか。読んでいる人が取ったときだけ意味を持つ。 */
+  completed: boolean;
 };
 
 export type PlanDay = {

@@ -58,14 +58,16 @@ describe("読書プラン一覧", () => {
     vi.clearAllMocks();
   });
 
-  it("開いたときは「読んでいる」が出る", async () => {
+  it("開いたときは「進行中」が出る", async () => {
     // 読書プランは続けることが中身なので、毎日戻ってくる場所を既定にする。
     await mockServer({ signedIn: true });
 
     await renderPage();
 
-    expect(screen.getByRole("tab", { name: "読んでいる" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "進行中" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText(/まだ読んでいるプランはありません/)).toBeInTheDocument();
+    // タブを押した人はもうどのタブか分かっているので、中で名乗り直さない。
+    expect(screen.queryByRole("heading", { name: "進行中" })).not.toBeInTheDocument();
   });
 
   it("タブごとに、用途に合うリンク先のプランを出す", async () => {
@@ -77,17 +79,21 @@ describe("読書プラン一覧", () => {
     expect(screen.getByText("日数").nextElementSibling).toHaveTextContent("7日");
     expect(screen.getByText("読者").nextElementSibling).toHaveTextContent("2人");
     expect(screen.getByRole("link", { name: "alice" })).toHaveAttribute("href", "/profile/alice");
+    // 自分のプランには下書きが混ざるので、ここだけ公開範囲の印を出す。
+    expect(screen.getByText("下書き")).toBeInTheDocument();
   });
 
-  it("さがすタブでは公開プランを詳細へのリンクで出す", async () => {
+  it("さがすタブでは公開プランを詳細へのリンクで出し、公開の印は出さない", async () => {
     await mockServer({ signedIn: true });
 
     await renderPage({ tab: "find" });
 
     expect(screen.getByRole("link", { name: /福音書を読む/ })).toHaveAttribute("href", "/plans/p1");
+    // ここは全部公開なので、「公開」と書いても何も伝わらない。
+    expect(screen.queryByText("公開")).not.toBeInTheDocument();
   });
 
-  it("読み終わったプランは「読んでいる」から外れて「読み終わった」に入る", async () => {
+  it("読み終わったプランは「進行中」から外れて「完了」に入る", async () => {
     // 読み終わっても購読は残る（is_active が落ちるのは「やめる」を押したときだけ）ので、
     // 終わった日数がプランの日数に届いたかで振り分ける。
     const apiServer = await mockServer({ signedIn: true });
@@ -109,15 +115,42 @@ describe("読書プラン一覧", () => {
     expect(screen.queryByRole("link", { name: "途中のプラン" })).not.toBeInTheDocument();
   });
 
-  it("未ログインでは公開プランだけを出し、タブも作成の導線も出さない", async () => {
+  it("未ログインでもタブは4つ出て、最初は「さがす」が開く", async () => {
+    // 「進行中」を既定にすると、開いた直後に見えるのがログインの案内だけに
+    // なってしまう。実物の公開プランが先に見えるようにする。
     const apiServer = await mockServer({ signedIn: false });
 
     await renderPage();
 
-    expect(screen.getAllByRole("link", { name: /福音書を読む/ })).toHaveLength(1);
-    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(screen.getByRole("tab", { name: "さがす" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("link", { name: /福音書を読む/ })).toHaveAttribute("href", "/plans/p1");
+    // 作る導線はログインしてから。ログインが要るタブの案内から入ってもらう。
     expect(screen.queryByRole("link", { name: "新しいプラン" })).not.toBeInTheDocument();
+    // 自分のものと購読は認証が要るので、未ログインでは取りに行かない。
     expect(vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path)).toEqual(["/plans/"]);
+    expect(apiServer.serverFetchList).not.toHaveBeenCalled();
+  });
+
+  it("未ログインでログインが要るタブを開くと、タブごとの案内とログインの導線が出る", async () => {
+    await mockServer({ signedIn: false });
+
+    const reading = await renderPage({ tab: "reading" });
+    expect(screen.getByText(/読んでいるプランの進み具合がここに出ます/)).toBeInTheDocument();
+    // ログインし終わったら、押したタブへそのまま戻ってくる。
+    expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute(
+      "href",
+      "/login?from=%2Fplans%3Ftab%3Dreading",
+    );
+    expect(screen.queryByRole("link", { name: /福音書を読む/ })).not.toBeInTheDocument();
+    reading.unmount();
+
+    await renderPage({ tab: "mine" });
+    expect(screen.getByText(/自分で作ったプランを下書きも含めて/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute(
+      "href",
+      "/login?from=%2Fplans%3Ftab%3Dmine",
+    );
   });
 
   it("取得失敗を空一覧と誤表示せず、再試行できる", async () => {

@@ -10,6 +10,7 @@ from .models import (
     PlanDayReading,
     PlanSubscription,
 )
+from .progress import resync_day_progress_for_all_readers
 
 
 class PlanReadingSerializer(serializers.ModelSerializer):
@@ -24,11 +25,19 @@ class PlanReadingSerializer(serializers.ModelSerializer):
     )
     # 画面に出す書名（指定の訳、無ければ既定の訳のもの）。読むだけの情報。
     book_name = serializers.SerializerMethodField()
+    # その章を読み終えたか。読んでいる人が取得したときだけ true / false が入る。
+    completed = serializers.SerializerMethodField()
 
     class Meta:
         model = PlanDayReading
-        fields = ["id", "book", "book_name", "chapter_number", "translation", "order"]
-        read_only_fields = ["id", "order"]
+        fields = ["id", "book", "book_name", "chapter_number", "translation", "order", "completed"]
+        read_only_fields = ["id", "order", "completed"]
+
+    def get_completed(self, obj) -> bool:
+        completed_reading_ids = self.context.get("completed_reading_ids")
+        if completed_reading_ids is None:
+            return False
+        return obj.id in completed_reading_ids
 
     def get_book_name(self, obj) -> str:
         editions = list(Book.objects.filter(canonical_book_id=obj.canonical_book_id))
@@ -46,7 +55,7 @@ class PlanReadingSerializer(serializers.ModelSerializer):
 
 class PlanDaySerializer(serializers.ModelSerializer):
     readings = PlanReadingSerializer(many=True, required=False)
-    # 読んだかどうか。読んでいる人が取得したときだけ true / false が入る。
+    # その日を読み終えたか。章に全部印が付いたときだけ true になる。
     completed = serializers.SerializerMethodField()
 
     class Meta:
@@ -69,18 +78,55 @@ class PlanDaySerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        # 章の並びは丸ごと入れ替える。1日に10章までなので、差分を取るより単純で間違いがない。
         readings = validated_data.pop("readings", None)
         instance = super().update(instance, validated_data)
         if readings is not None:
-            instance.readings.all().delete()
-            PlanDayReading.objects.bulk_create(
-                [
-                    PlanDayReading(day=instance, order=order, **reading)
-                    for order, reading in enumerate(readings)
-                ]
-            )
+            self._replace_readings(instance, readings)
+            # 章が増減すると「その日を読み終えた」が実態と合わなくなるので付け直す。
+            resync_day_progress_for_all_readers(instance)
         return instance
+
+    @staticmethod
+    def _replace_readings(day: PlanDay, readings: list[dict]) -> None:
+        """
+        その日の章を、送られてきた並びに合わせる。
+
+        丸ごと消して作り直すほうが単純だが、それをすると読んでいる人が付けた
+        章ごとの印（PlanReadingProgress は章の行に紐づく）まで道連れに消える。
+        書いた人が題を直しただけで読者の印が消えるのは困るので、
+        同じ章（書・章番号・訳が一致）はその行のまま残し、順番だけ付け直す。
+        """
+        def key(book_id, chapter_number, translation):
+            return (str(book_id), chapter_number, translation or "")
+
+        existing_by_key = {}
+        for existing in day.readings.all():
+            existing_by_key.setdefault(
+                key(existing.canonical_book_id, existing.chapter_number, existing.translation),
+                [],
+            ).append(existing)
+
+        kept_ids = []
+        to_create = []
+        for order, reading in enumerate(readings):
+            candidates = existing_by_key.get(
+                key(
+                    reading["canonical_book"].id,
+                    reading["chapter_number"],
+                    reading.get("translation", ""),
+                )
+            )
+            if candidates:
+                existing = candidates.pop(0)
+                kept_ids.append(existing.id)
+                if existing.order != order:
+                    existing.order = order
+                    existing.save(update_fields=["order", "updated_at"])
+            else:
+                to_create.append(PlanDayReading(day=day, order=order, **reading))
+
+        day.readings.exclude(id__in=kept_ids).delete()
+        PlanDayReading.objects.bulk_create(to_create)
 
 
 class PlanListSerializer(serializers.ModelSerializer):

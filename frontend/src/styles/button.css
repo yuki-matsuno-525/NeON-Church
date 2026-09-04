@@ -247,11 +247,6 @@
   font-size: var(--text-xs);
   cursor: pointer;
 }
-.day-toggle-done {
-  border-color: var(--accent);
-  background: var(--accent-tint);
-  color: var(--accent);
-}
 .day-toggle:disabled {
   cursor: default;
 }
