@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { ApiError, extractErrorCode, type ListPage } from "./apiClient";
+import { toCookieHeader } from "./cookieHeader";
 import { getRequestLanguage } from "./serverLanguage";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -22,10 +23,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8
  */
 export async function serverFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const jar = await cookies();
-  const cookieHeader = jar
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
+  const cookieHeader = toCookieHeader(jar.getAll());
 
   const res = await fetch(`${API_BASE_URL}/api${path}`, {
     headers: {
@@ -49,6 +47,27 @@ export async function serverFetch<T>(path: string, init?: RequestInit): Promise<
     }
     throw new ApiError(res.status, `Request failed: ${path}`, code);
   }
+  return (await res.json()) as T;
+}
+
+/**
+ * 誰が見ても同じ中身（聖書の本文まわり）をサーバー側から取る。
+ *
+ * serverFetch との違いは2つ。Cookie を送らないことと、取り置きをすること。
+ * ログイン状態で答えが変わらないものに限って使う。Cookie を送ると人ごとに
+ * 別の取り置きになってしまうので、あえて外している。
+ */
+export async function serverFetchPublic<T>(path: string, revalidateSeconds: number): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}/api${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      "Accept-Language": await getRequestLanguage(),
+    },
+    cache: "force-cache",
+    next: { revalidate: revalidateSeconds },
+  });
+
+  if (!res.ok) throw new ApiError(res.status, `Request failed: ${path}`);
   return (await res.json()) as T;
 }
 
