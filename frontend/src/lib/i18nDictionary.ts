@@ -140,24 +140,25 @@ const ja = {
 
   // 読書プラン
   plansTitle: "読書プラン",
-  plansDesc: "書をまたいで章を並べ、日ごとに読んでいく道すじ。",
   planNew: "新しいプラン",
-  planReadingNow: "読んでいるプラン",
-  planMineTitle: "自分のプラン",
-  planMineDesc: "下書きも含めて、自分が作ったプラン。",
   planMineEmpty: "まだプランがありません。",
-  planPublicTitle: "公開されたプラン",
-  planPublicDesc: "誰でも読めるプラン。",
   planPublicEmpty: "公開されたプランはまだありません。",
   // 一覧の切り替えタブ。読書プランは「続けること」が中身なので、
   // 開いたときにまず出るのは自分がいま読んでいるものにする。
+  // タブを開いた先では見出しを出さない（押した人はもうどのタブか分かっている）ので、
+  // この名前がそのまま中身の名乗りになる。
   planTabsLabel: "プランの切り替え",
-  planTabReading: "読んでいる",
-  planTabDone: "読み終わった",
-  planTabMine: "作った",
+  planTabReading: "進行中",
+  planTabDone: "完了",
+  planTabMine: "マイプラン",
   planTabFind: "さがす",
   planReadingEmpty: "まだ読んでいるプランはありません。「さがす」から選べます。",
   planDoneEmpty: "読み終わったプランはまだありません。",
+  // 未ログインでもタブは4つとも出し、ログインが要るタブは一覧の代わりに
+  // これを出す。タブごとに「ログインすると何が見えるようになるか」を書く。
+  planSignInReading: "ログインすると、読んでいるプランの進み具合がここに出ます。",
+  planSignInDone: "ログインすると、読み終わったプランがここに並びます。",
+  planSignInMine: "ログインすると、自分で作ったプランを下書きも含めてここで扱えます。",
   // 進捗。「3日目」ではなく終わった数を出す。始めた日から数えると、
   // 何日か空けたときに実際に読んだ量とずれるため。
   planProgressFmt: (done: number, total: number) => `${total}日中 ${done}日`,
@@ -889,22 +890,19 @@ const en: typeof ja = {
 
   // Reading plans
   plansTitle: "Reading plans",
-  plansDesc: "Chapters arranged across books, read a day at a time.",
   planNew: "New plan",
-  planReadingNow: "Plans you are reading",
-  planMineTitle: "Your plans",
-  planMineDesc: "Plans you have made, drafts included.",
   planMineEmpty: "You have not made any plans yet.",
-  planPublicTitle: "Published plans",
-  planPublicDesc: "Plans anyone can read.",
   planPublicEmpty: "No plans have been published yet.",
   planTabsLabel: "Switch plan list",
-  planTabReading: "Reading",
-  planTabDone: "Finished",
-  planTabMine: "Made by you",
+  planTabReading: "In progress",
+  planTabDone: "Completed",
+  planTabMine: "My plans",
   planTabFind: "Find",
   planReadingEmpty: "You are not reading any plan yet. Pick one from Find.",
   planDoneEmpty: "You have not finished a plan yet.",
+  planSignInReading: "Sign in to see how far along you are in the plans you are reading.",
+  planSignInDone: "Sign in to see the plans you have finished.",
+  planSignInMine: "Sign in to manage the plans you have made, drafts included.",
   planProgressFmt: (done: number, total: number) => `${done} of ${total} days`,
   planAllDone: "Finished",
   planDayCount: (n: number) => (n === 1 ? "1 day" : `${n} days`),
