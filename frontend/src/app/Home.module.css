@@ -17,13 +17,6 @@
   gap: var(--spacing-6);
 }
 
-/* サイドバーのぶんだけ中身が右に寄って見えるので、その半分だけ左へ戻す */
-@media (min-width: 769px) {
-  .content {
-    transform: translateX(calc(-1 * var(--sidebar-width) / 2));
-  }
-}
-
 /* ----- ヒーロー ----- */
 
 .heroEyebrow {

@@ -108,6 +108,10 @@
 }
 
 .row {
+  /* 題のリンクの覆い（.rowText::after）をこの行の枠に留める。
+     これが無いと覆いが画面いっぱいに広がり、最後の行の覆いが
+     他の行の上に乗って、どこを押しても最後の章に飛んでしまう。 */
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--spacing-4);

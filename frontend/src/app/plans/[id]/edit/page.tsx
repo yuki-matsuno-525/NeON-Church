@@ -233,7 +233,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         </span>
         {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>}
         <Link href={`/plans/${id}`} className="action-link text-sm text-muted no-underline">{t.planView}</Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} className="outline-button outline-button-muted">{t.delete}</button>
+        <button type="button" onClick={() => setConfirmDelete(true)} className="outline-button outline-button-danger">{t.delete}</button>
       </div>
 
       {!title.trim() && <p id="plan-title-error" role="alert" className="error-text">{supplementalText.titleRequired}</p>}

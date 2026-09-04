@@ -304,7 +304,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
-        <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} className="outline-button outline-button-muted">
+        <button type="button" onClick={() => setConfirmDelete(true)} disabled={deleteBusy} className="outline-button outline-button-danger">
           {deleteBusy ? t.articleDeleting : t.delete}
         </button>
       </div>
