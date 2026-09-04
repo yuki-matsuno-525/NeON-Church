@@ -24,7 +24,12 @@ vi.mock("@/lib/serverLanguage", () => ({
   getRequestTranslation: vi.fn().mockResolvedValue("口語訳"),
 }));
 
-vi.mock("@/lib/apiServer", () => ({ serverFetch: vi.fn() }));
+vi.mock("@/lib/apiServer", () => ({ serverFetch: vi.fn(), serverFetchPublic: vi.fn() }));
+
+vi.mock("@/lib/translationPreference", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/translationPreference")>();
+  return { ...actual, saveTranslationPreference: vi.fn(), readTranslationPreference: vi.fn(() => null) };
+});
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
@@ -40,13 +45,24 @@ vi.mock("@/components/reader/CommentPanel", () => ({ CommentPanel: () => <div da
 vi.mock("@/components/reader/ChapterComments", () => ({ ChapterComments: () => <div data-testid="chapter-comments" /> }));
 
 /** 「この書のこの章を開いた」状態を作る。書・章・節は1回でまとめて返ってくる。 */
-async function mockChapterRead(bookId: string, name: string, number: number) {
+async function mockChapterRead(
+  bookId: string,
+  name: string,
+  number: number,
+  options: { served?: string; translations?: string[]; stored?: string[] } = {},
+) {
+  const served = options.served ?? "口語訳";
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverFetch).mockResolvedValue({
-    book: { id: bookId, name, translation: "口語訳", order: 1 },
+    book: { id: bookId, name, translation: served, order: 1 },
     chapter: { id: `ch${number}`, book: bookId, number },
     verses: [],
+    translations: options.translations ?? ["口語訳", "KJV"],
   });
+  // 収録済みの訳の一覧。訳の切替に何を出すか・Cookie を直すかの判断に使う。
+  vi.mocked(apiServer.serverFetchPublic).mockResolvedValue(
+    (options.stored ?? ["口語訳", "KJV"]).map((id) => ({ id, books: 1 })),
+  );
   return apiServer;
 }
 
@@ -122,6 +138,80 @@ describe("本文ページ - サーバー描画", () => {
     expect(vi.mocked(apiServer.serverFetch).mock.calls[0][0]).toContain(
       `translation=${encodeURIComponent("文語訳")}`,
     );
+  });
+
+  it("訳の切替候補は、実際に本文がある訳だけを出す", async () => {
+    // books.ts は文語訳も宣言しているが、まだ本文が入っていないので候補に出さない。
+    await mockChapterRead("book1", "マタイによる福音書", 4, { translations: ["口語訳", "KJV"] });
+
+    await renderChapter("matthew", "4");
+
+    const options = screen.getAllByRole("option").map((el) => el.textContent);
+    expect(options.some((label) => label?.includes("口語訳"))).toBe(true);
+    expect(options.some((label) => label?.includes("文語訳"))).toBe(false);
+  });
+
+  it("頼んだ訳がまだ収録されていないときは、代わりの訳で出して理由を伝える", async () => {
+    await mockChapterRead("book1", "マタイによる福音書", 4, {
+      served: "口語訳",
+      translations: ["口語訳", "KJV"],
+      stored: ["口語訳", "KJV"],
+    });
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("文語訳");
+
+    await renderChapter("matthew", "4");
+
+    // 本文は出る（以前はここで 404 のエラー画面になっていた）
+    expect(screen.getByRole("heading", { name: "マタイ 第4章" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("文語訳");
+    expect(screen.getByRole("status")).toHaveTextContent("口語訳");
+  });
+
+  it("この書に無いだけの訳（エノク書の口語訳など）では、お知らせを出さない", async () => {
+    // 頼んだ訳をこの書が持たないのは普通のこと。毎回お知らせを出すと邪魔になる。
+    await mockChapterRead("enoch", "Enoch", 1, {
+      served: "R. H. Charles (EN)",
+      translations: ["R. H. Charles (EN)"],
+      stored: ["口語訳", "R. H. Charles (EN)"],
+    });
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("口語訳");
+
+    await renderChapter("enoch", "1");
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("覚えている訳がどこにも無いときは、出している訳に覚え直す", async () => {
+    // 直さないと、どの書を開いても代わりの訳になりお知らせが出続けてしまう。
+    await mockChapterRead("book1", "マタイによる福音書", 4, {
+      served: "口語訳",
+      translations: ["口語訳", "KJV"],
+      stored: ["口語訳", "KJV"],
+    });
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("文語訳");
+    const { saveTranslationPreference } = await import("@/lib/translationPreference");
+
+    await renderChapter("matthew", "4");
+
+    expect(vi.mocked(saveTranslationPreference)).toHaveBeenCalledWith("口語訳");
+  });
+
+  it("この書に無いだけの訳では、覚えている訳を書き換えない", async () => {
+    await mockChapterRead("enoch", "Enoch", 1, {
+      served: "R. H. Charles (EN)",
+      translations: ["R. H. Charles (EN)"],
+      stored: ["口語訳", "R. H. Charles (EN)"],
+    });
+    const { getRequestTranslation } = await import("@/lib/serverLanguage");
+    vi.mocked(getRequestTranslation).mockResolvedValue("口語訳");
+    const { saveTranslationPreference } = await import("@/lib/translationPreference");
+
+    await renderChapter("enoch", "1");
+
+    expect(vi.mocked(saveTranslationPreference)).not.toHaveBeenCalled();
   });
 
   it("その訳にこの書が無いときは、別の訳へ切り替える導線を出す", async () => {

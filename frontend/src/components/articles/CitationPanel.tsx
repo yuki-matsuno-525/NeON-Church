@@ -4,8 +4,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   fetchVerseBookmarks,
-  fetchBooks,
-  fetchChapters,
+  fetchBookRead,
   fetchVerses,
   type Bookmark,
   type Verse,
@@ -119,13 +118,8 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     setLoadingChapters(true);
-    fetchBooks(translation)
-      .then((books) => {
-        const target = books.find((book) => book.name === bookNameFor(slug, translation));
-        if (!target) throw new Error(t.citationBookUnavailable);
-        return fetchChapters(target.id);
-      })
-      .then((chapters) => {
+    fetchBookRead(slug, translation)
+      .then(({ chapters }) => {
         if (!alive) return;
         setChapterNumbers(chapters.map((c) => c.number));
         setLoadingChapters(false);
@@ -147,13 +141,8 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     let alive = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    fetchBooks(translation)
-      .then((books) => {
-        const target = books.find((book) => book.name === bookNameFor(slug, translation));
-        if (!target) throw new Error(t.citationBookUnavailable);
-        return fetchChapters(target.id);
-      })
-      .then((chapters) => {
+    fetchBookRead(slug, translation)
+      .then(({ chapters }) => {
         const found = chapters.find((c) => c.number === chapter);
         if (!found) throw new Error(t.citationChapterUnavailable);
         return fetchVerses(found.id);
@@ -279,11 +268,6 @@ function SearchTab({ onInsert }: { onInsert: (mark: string) => void }) {
     setChapterNumbers([]);
     setError(null);
   }
-}
-
-function bookNameFor(slug: string, translation: string): string {
-  const meta = getBookBySlug(slug);
-  return meta?.translations.find((tr) => tr.id === translation)?.name ?? meta?.name ?? "";
 }
 
 // ---------------------------------------------------------------------------

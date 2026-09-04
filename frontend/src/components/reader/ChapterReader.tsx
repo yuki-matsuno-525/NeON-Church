@@ -36,6 +36,12 @@ type Props = {
   translationId: string;
   /** その訳が URL（?translation=）で指定されたものか。指定されていれば以後もそれを使う */
   fromQuery: boolean;
+  /** この書で実際に本文が入っている訳。切替の候補はここから作る（books.ts の宣言ではない） */
+  translations: string[];
+  /** 頼んだ訳がまだ収録されていないときのお知らせ。無ければ null */
+  notice: string | null;
+  /** 覚えている訳がサイトのどこにも無いとき、代わりに覚え直す訳。無ければ null */
+  correctCookieTo: string | null;
   /** 本文を取ってきた DB の書 id。読書履歴の保存に使う */
   bookId: string;
   chapter: Chapter;
@@ -48,7 +54,18 @@ type Props = {
  * 本文そのものはサーバーが取ってから渡ってくる（page.tsx）。ここが受け持つのは
  * 節を選ぶ・お気に入り・コメント欄・読書履歴の記録といった、開いたあとの操作。
  */
-export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, bookId, chapter, verses }: Props) {
+export function ChapterReader({
+  slug,
+  chapterNumber,
+  translationId,
+  fromQuery,
+  translations,
+  notice,
+  correctCookieTo,
+  bookId,
+  chapter,
+  verses,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -63,10 +80,16 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
   const chapterName = chapterTitle(slug, chapterNumber);
   // 章送りの行き先。章番号は連番とは限らない（トマスは第0章から、Q資料は飛び飛び）。
   const nav = adjacentChapter(slug, chapterNumber);
-  // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
+  // 訳の切替候補は「この本に本文が入っている訳」だけにする（エノク書なら Charles 英訳のみ）。
+  // サーバーが数えた実データを使う。books.ts の宣言だけを見ていた頃は、まだ本文を
+  // 入れていない訳も候補に並び、選ぶとその訳が載っている書が全部開けなくなっていた。
   const translationOptions = useMemo(
-    () => (meta?.translations ?? []).map((tr) => ({ id: tr.id, label: translationLabel(tr.id, lang) })),
-    [meta, lang],
+    () =>
+      (translations.length > 0 ? translations : (meta?.translations ?? []).map((tr) => tr.id)).map((id) => ({
+        id,
+        label: translationLabel(id, lang),
+      })),
+    [translations, meta, lang],
   );
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -94,14 +117,20 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
       saveTranslationPreference(translationId);
       return;
     }
+    // 覚えている訳がサイトのどこにも本文を持っていないときは、今出している訳に覚え直す。
+    // そのままだと、どの書を開いても代わりの訳になってお知らせが出続けてしまう。
+    if (correctCookieTo) {
+      saveTranslationPreference(correctCookieTo);
+      return;
+    }
     // 以前はブラウザの控えに訳を覚えていた。まだ移し替えていない人のために、
     // 1度だけ Cookie へ写して読み直す（次からはサーバーが最初から正しい訳で返す）。
     const remembered = readTranslationPreference();
     if (!remembered || remembered === translationId) return;
-    if (!meta?.translations.some((tr) => tr.id === remembered)) return;
+    if (!translations.includes(remembered)) return;
     saveTranslationPreference(remembered);
     router.refresh();
-  }, [fromQuery, translationId, meta, router]);
+  }, [fromQuery, correctCookieTo, translationId, translations, router]);
 
   // 読んだところを覚える。控えはこのブラウザに、履歴はログイン中ならサーバーにも。
   useEffect(() => {
@@ -313,6 +342,12 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
           </a>
         </div>
       </div>
+
+      {notice && (
+        <p role="status" className="m-0 py-2 px-4 text-sm text-muted border-b border-border text-center">
+          {notice}
+        </p>
+      )}
 
       {(progressError || bookmarkLoadError || versionResolutionError) && (
         <div role="alert" className="flex items-center justify-center gap-3 flex-wrap py-2 px-4 border-b border-border">

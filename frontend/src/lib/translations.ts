@@ -1,24 +1,9 @@
-export type TranslationOption = {
-  id: string;
-  label: string;
-};
-
-// 既知の訳の登録簿。id は DB の Book.translation と一致させる。
-// 表示ラベルは UI 言語別に TRANSLATION_LABELS で一元管理する（ここでは id のみ持つ）。
-export const BIBLE_TRANSLATIONS: { id: string }[] = [
-  { id: "口語訳" },
-  { id: "KJV" },
-  { id: "Nestle 1904 (GRC)" },
-  { id: "TR (GRC)" },
-  { id: "LXX (GRC)" },
-  { id: "WLC (HEB)" },
-  { id: "文語訳" },
-  { id: "R. H. Charles (EN)" },
-  { id: "Mark M. Mattison (EN)" },
-  { id: "L. S. A. Wells (EN)" },
-  { id: "Samuel Zinner (EN)" },
-  { id: "L. C. L. Brenton (EN)" },
-];
+// 訳の表示名と言語の登録簿。id は DB の Book.translation と一致させる。
+//
+// 「どの訳を選べるか」はここでは決めない。本文が入っているかどうかは DB にしか無く、
+// 宣言だけ先に足した訳を候補に並べると、選んだ人がその訳の書を開けなくなるため、
+// 候補はサーバー（/api/bible/translations/ と読書レスポンスの translations）が答える。
+// ここが受け持つのは、受け取った id をどう表示するかだけ。
 
 export const DEFAULT_TRANSLATION = "口語訳";
 

@@ -235,7 +235,6 @@ const ja = {
   autosaveError: "保存できませんでした",
   citationSearchTab: "さがす",
   citationBookmarksTab: "お気に入り",
-  citationBookUnavailable: "この訳にはこの書がありません。",
   citationChapterUnavailable: "この章はありません。",
   citationBookSearchPlaceholder: "書をさがす",
   citationChooseBookAgain: "← 書をえらび直す",
@@ -297,6 +296,9 @@ const ja = {
   markShorterEnding: "短い結び",
   switchTranslation: (label: string) => `${label} に切り替え`,
   translationNotFound: (name: string) => `「${name}」のデータが見つかりません。別の翻訳に切り替えてください。`,
+  // 頼まれた訳がまだ収録されていないとき、本文の上に出す帯。
+  translationFallbackNotice: (missing: string, shown: string) =>
+    `「${missing}」はまだ収録されていません。「${shown}」で表示しています。`,
 
   // お気に入り
   bookmarksTitle: "お気に入り",
@@ -975,7 +977,6 @@ const en: typeof ja = {
   autosaveError: "Could not save",
   citationSearchTab: "Search",
   citationBookmarksTab: "Favorites",
-  citationBookUnavailable: "This book is not available in the selected translation.",
   citationChapterUnavailable: "This chapter is unavailable.",
   citationBookSearchPlaceholder: "Search books",
   citationChooseBookAgain: "← Choose another book",
@@ -1034,6 +1035,8 @@ const en: typeof ja = {
   markShorterEnding: "Shorter Ending",
   switchTranslation: (label: string) => `Switch to ${label}`,
   translationNotFound: (name: string) => `"${name}" not found. Please switch to another translation.`,
+  translationFallbackNotice: (missing: string, shown: string) =>
+    `"${missing}" has not been added yet. Showing "${shown}" instead.`,
 
   bookmarksTitle: "Favorites",
   noBookmarks: "No favorites yet.",
