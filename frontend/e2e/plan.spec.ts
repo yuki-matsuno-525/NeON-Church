@@ -21,8 +21,9 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
   const csrfToken = cookies.find((c) => c.name === "csrftoken")?.value ?? "";
   const headers = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
+  // 公開するには1日以上の中身が要るので、まず下書きで作る。
   const planRes = await page.request.post(`${API_BASE}/api/plans/`, {
-    data: { title: `e2e 章の行 ${Date.now()}`, visibility: "public" },
+    data: { title: `e2e 章の行 ${Date.now()}` },
     headers,
   });
   expect(planRes.ok(), `プラン作成に失敗: ${await planRes.text()}`).toBeTruthy();
@@ -41,6 +42,13 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
     headers,
   });
   expect(dayRes.ok(), `日の作成に失敗: ${await dayRes.text()}`).toBeTruthy();
+
+  // 中身が入ったので公開に変える（下書きのままだと読む画面を開けない）。
+  const publishRes = await page.request.patch(`${API_BASE}/api/plans/${plan.id}/`, {
+    data: { title: plan.title, visibility: "public" },
+    headers,
+  });
+  expect(publishRes.ok(), `公開に失敗: ${await publishRes.text()}`).toBeTruthy();
 
   await page.goto(`/plans/${plan.id}`);
   const firstReading = page.getByRole("link", { name: /マタイによる福音書 1章/ });
