@@ -25,6 +25,18 @@ export function readingLabel(
 }
 
 /**
+ * その日に読む章を 1 行にまとめる。日を閉じているときの見出しの下に出す。
+ * 読む画面と作る画面の両方が使うので、区切りの書き方をここに 1 つだけ置く。
+ */
+export function readingsSummary(
+  readings: { book_name: string; chapter_number: number }[],
+  t: Translations,
+  lang: "ja" | "en",
+): string {
+  return readings.map((reading) => readingLabel(reading, t)).join(lang === "ja" ? "・" : ", ");
+}
+
+/**
  * その日に読む章を、1 行 1 章で並べる。
  *
  * 行を包む箱はここでは作らない。呼ぶ側（PlanReader）が、その日の文章の行と

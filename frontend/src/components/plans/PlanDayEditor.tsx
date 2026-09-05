@@ -10,7 +10,8 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
 import { ChapterPicker, type PickedChapter } from "./ChapterPicker";
-import { readingLabel } from "./ReadingChips";
+import { readingLabel, readingsSummary } from "./ReadingChips";
+import { PlanDayPanel } from "./PlanDayPanel";
 // 章の行の形は、読む画面と同じものを使う。作る画面と読む画面で形がずれないようにするため。
 import styles from "./PlanDay.module.css";
 
@@ -31,6 +32,8 @@ export function PlanDayEditor({
   canMoveDown,
   onDelete,
   onMove,
+  open,
+  onToggle,
 }: {
   planId: string;
   day: PlanDay;
@@ -39,6 +42,9 @@ export function PlanDayEditor({
   canMoveDown: boolean;
   onDelete: () => void;
   onMove: (direction: -1 | 1) => void;
+  /** この日を開いているか。開け閉めは日の一覧を持つ側が覚える。 */
+  open: boolean;
+  onToggle: () => void;
 }) {
   const [title, setTitle] = useState(day.title);
   const [devotional, setDevotional] = useState(day.devotional);
@@ -55,7 +61,6 @@ export function PlanDayEditor({
   const t = useT();
   const { lang } = useLang();
   const text = planUiText(lang);
-  const dayLabel = t.planDayLabel(day.number);
 
   const draft = useMemo(
     () => ({
@@ -107,18 +112,32 @@ export function PlanDayEditor({
   const canAdd = readings.length < MAX_READINGS_PER_DAY;
 
   return (
-    <section className="card-glow card-glow-strong p-6">
-      {/* パネルの見出し。左が「第N日」、右が消すところ。 */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Icon name="calendar" size={20} color="var(--accent)" />
-        <span className="text-lg font-bold text-accent">{dayLabel}</span>
-        <span role="status" aria-live="polite" className={autosave.status === "error" ? "text-xs text-danger" : "text-xs text-soft"}>
-          {saveStatusLabel(autosave.status, t)}
-        </span>
-        {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} className="link-button">{text.retry}</button>
-        )}
-        <div className="ml-auto flex items-center gap-1">
+    <PlanDayPanel
+      number={day.number}
+      title={title}
+      open={open}
+      onToggle={onToggle}
+      summary={readingsSummary(
+        readings.map((reading) => ({
+          book_name: reading.book_name || reading.book,
+          chapter_number: reading.chapter_number,
+        })),
+        t,
+        lang,
+      )}
+      leading={<Icon name="calendar" size={20} color="var(--accent)" />}
+      note={
+        <>
+          <span role="status" aria-live="polite" className={autosave.status === "error" ? "text-xs text-danger" : "text-xs text-soft"}>
+            {saveStatusLabel(autosave.status, t)}
+          </span>
+          {autosave.status === "error" && (
+            <button type="button" onClick={() => void autosave.retry()} className="link-button">{text.retry}</button>
+          )}
+        </>
+      }
+      actions={
+        <>
           {canMoveUp && (
             <button type="button" onClick={() => onMove(-1)} aria-label={text.moveUp(day.number)} className="icon-button">
               ↑
@@ -135,9 +154,9 @@ export function PlanDayEditor({
               {t.delete}
             </button>
           )}
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <div className="flex flex-col gap-4">
         {/* 1. この日の題 */}
         <div className="note-box">
@@ -275,6 +294,6 @@ export function PlanDayEditor({
           </label>
         </div>
       </div>
-    </section>
+    </PlanDayPanel>
   );
 }

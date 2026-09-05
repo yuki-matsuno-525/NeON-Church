@@ -51,6 +51,8 @@ function renderEditor(overrides: Partial<React.ComponentProps<typeof PlanDayEdit
       canMoveDown
       onDelete={vi.fn()}
       onMove={vi.fn()}
+      open
+      onToggle={vi.fn()}
       {...overrides}
     />,
   );
@@ -112,6 +114,18 @@ describe("プランの1日の編集", () => {
     expect(screen.getByText("この日に添える文章（任意）")).toBeInTheDocument();
     // 「＋ 章を足す」を押さなくても、書を探すところが出ている
     expect(screen.getByPlaceholderText("書をさがす")).toBeInTheDocument();
+  });
+
+  it("たたんでいるときは中身を出さず、読む章だけ見出しに出す", () => {
+    renderEditor({ day: threeChapterDay, open: false });
+
+    // 見出しのボタン（開け閉めするもの）。↑↓削除も「第1日…」の名前を持つので
+    // 開いているかどうかで選ぶ。
+    expect(screen.getByRole("button", { expanded: false })).toHaveTextContent(
+      "第1日光をわけた日マタイによる福音書 1章・ピレモンへの手紙 1章・ローマ人への手紙 8章",
+    );
+    expect(screen.queryByPlaceholderText("タイトルを入力してください")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("書をさがす")).not.toBeInTheDocument();
   });
 
   it("章が1つだけなら並び替えの案内を出さない", () => {

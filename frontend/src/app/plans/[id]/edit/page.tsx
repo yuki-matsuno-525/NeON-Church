@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { PlanDayEditor } from "@/components/plans/PlanDayEditor";
 import { ConfirmDialog, EmptyState, ErrorState, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
@@ -38,6 +39,10 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletingDayId, setDeletingDayId] = useState<string | null>(null);
 
+  // 日はたたんでおく。1 日ぶんのパネルは背が高いので、全部開いていると
+  // 目当ての日まで延々とスクロールすることになる。開くのは触っている日だけ。
+  const openDays = useToggleSet();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [note, setNote] = useState("");
@@ -52,8 +57,10 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         setDescription(data.description);
         setNote(data.note ?? "");
         setVisibility(data.visibility);
+        // 作り始めは日が1つ。閉じた箱だけが出ていると何をすればよいか分からないので開けておく。
+        if (data.days?.length === 1) openDays.add(data.days[0].id);
       }),
-    [id, setDescription, setLoadError, setNote, setPlan, setTitle, setVisibility],
+    [id, openDays, setDescription, setLoadError, setNote, setPlan, setTitle, setVisibility],
   );
 
   useEffect(() => {
@@ -81,7 +88,9 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
     setActionError(null);
     try {
       if (!(await autosave.saveNow())) throw new Error("autosave failed");
-      await addPlanDay(id);
+      // 足した日はすぐ書き込めるように開いておく。
+      const added = await addPlanDay(id);
+      openDays.add(added.id);
       await load();
     } catch {
       setActionError(t.actionFailed);
@@ -182,7 +191,10 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
   const days = plan.days ?? [];
   const canReorder = plan.can_reorder_days !== false;
-  const canPublish = days.length > 0;
+  // 章が1つも入っていない日があるうちは公開できない。その日は読み終わりの記録を
+  // 持てず（backend/plans/progress.py）、読む人がプランを最後まで終われないため。
+  const emptyDays = days.filter((day) => day.readings.length === 0);
+  const canPublish = days.length > 0 && emptyDays.length === 0;
 
   return (
     <div className="page page-detail">
@@ -250,7 +262,12 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         />
       </label>
 
-      {!canPublish && <p className="text-xs text-faint mt-0 mx-0 mb-3">{t.planDayRequired}</p>}
+      {days.length === 0 && <p className="text-xs text-faint mt-0 mx-0 mb-3">{t.planDayRequired}</p>}
+      {days.length > 0 && emptyDays.length > 0 && (
+        <p className="text-xs text-faint mt-0 mx-0 mb-3">
+          {supplementalText.publishNeedsChapters(emptyDays.map((day) => t.planDayLabel(day.number)))}
+        </p>
+      )}
 
       <label htmlFor="plan-reader-note" className="block text-xs text-muted mb-1">
         {t.planNoteFieldLabel}
@@ -266,6 +283,18 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
       {!canReorder && <p className="text-xs text-muted mt-0 mx-0 mb-4 leading-reading">{t.planFrozenNotice}</p>}
 
+      {days.length > 1 && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => (openDays.count === days.length ? openDays.closeAll() : openDays.openAll(days.map((day) => day.id)))}
+            className="text-button"
+          >
+            {openDays.count === days.length ? supplementalText.collapseAllDays : supplementalText.expandAllDays}
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 mt-4">
         {days.map((day, index) => (
           <PlanDayEditor
@@ -277,6 +306,8 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             canMoveDown={canReorder && index < days.length - 1}
             onDelete={() => setDeletingDayId(day.id)}
             onMove={(direction) => handleMoveDay(day.id, direction)}
+            open={openDays.has(day.id)}
+            onToggle={() => openDays.toggle(day.id)}
           />
         ))}
       </div>
