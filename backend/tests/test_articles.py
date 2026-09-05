@@ -244,6 +244,34 @@ def test_公開一覧から自分の記事を除外できる(auth_client, api_cl
 
 
 @pytest.mark.django_db
+def test_言葉で絞り込める(auth_client, verses):
+    _create_article(auth_client, title="断食について")
+    _create_article(auth_client, title="安息日について", summary="休むことを考える。", body="本文")
+
+    # 題に当たる
+    response = auth_client.get(ARTICLES_URL, {"q": "安息日"})
+    assert [a["title"] for a in response.data["results"]] == ["安息日について"]
+
+    # 要約にも当たる
+    response = auth_client.get(ARTICLES_URL, {"q": "休むこと"})
+    assert [a["title"] for a in response.data["results"]] == ["安息日について"]
+
+    # 当たらない語では 0 件
+    assert auth_client.get(ARTICLES_URL, {"q": "見つからない語"}).data["count"] == 0
+
+
+@pytest.mark.django_db
+def test_言葉で絞っても下書きは出ない(auth_client, api_client, other_user_payload, verses):
+    _create_article(auth_client, title="下書きの断食", visibility="private")
+    api_client.post("/api/auth/register/", other_user_payload, format="json")
+
+    # 別の人から見ると、公開されていない記事は言葉で探しても出てこない
+    response = api_client.get(ARTICLES_URL, {"q": "断食"})
+
+    assert response.data["count"] == 0
+
+
+@pytest.mark.django_db
 def test_タグで絞り込める(auth_client, verses):
     fasting = ArticleTag.objects.get(slug="fasting")
     _create_article(auth_client, tag_ids=[str(fasting.id)])

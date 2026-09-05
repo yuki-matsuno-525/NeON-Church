@@ -225,6 +225,33 @@ class TestTranslationProjectList:
         assert matched in ids
         assert missed not in ids
 
+    def test_language_filter_returns_only_that_language(self, db, anon_client, owner_client, book):
+        english = owner_client.post(LIST_URL, {
+            "name": "English reading", "source_book": str(book.id), "target_language": "en",
+        }, format="json").data["id"]
+        owner_client.post(activate_url(english))
+        japanese = owner_client.post(LIST_URL, {
+            "name": "やさしい日本語訳", "source_book": str(book.id), "target_language": "ja",
+        }, format="json").data["id"]
+        owner_client.post(activate_url(japanese))
+
+        res = anon_client.get(LIST_URL, {"target_language": "ja"})
+
+        assert res.status_code == status.HTTP_200_OK
+        ids = [p["id"] for p in res.data["results"]]
+        assert japanese in ids
+        assert english not in ids
+
+    def test_language_filter_does_not_leak_drafts(self, db, anon_client, owner_client, book):
+        # 下書きのまま（activate しない）ものは、言語で絞っても出てこない。
+        owner_client.post(LIST_URL, {
+            "name": "下書きの日本語訳", "source_book": str(book.id), "target_language": "ja",
+        }, format="json")
+
+        res = anon_client.get(LIST_URL, {"target_language": "ja"})
+
+        assert [p["name"] for p in res.data["results"]] == []
+
     def test_list_is_paginated_20_per_page(self, db, anon_client, owner_client, book):
         # 公開列を21件つくると、1ページ目20件・2ページ目1件になる。
         for i in range(21):

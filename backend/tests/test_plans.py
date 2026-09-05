@@ -482,3 +482,34 @@ def test_他人のプランは書き換えられない(auth_client, plan_id, oth
     response = other_client.patch(f"{PLANS_URL}{plan_id}/", {"title": "乗っ取り"}, format="json")
 
     assert response.status_code in (403, 404)
+
+
+# ---------------------------------------------------------------------------
+# 言葉で絞り込む
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+def test_言葉で絞り込める(auth_client):
+    # 作った直後は下書きなので、自分の一覧（mine）で確かめる。
+    # 公開に変えるには日と章を入れる必要があり、この検査には関係がない。
+    _create_plan(auth_client, title="7日で読む断食")
+    _create_plan(auth_client, title="40日で読む詩篇", description="毎朝すこしずつ。")
+
+    # 題に当たる
+    response = auth_client.get(PLANS_URL, {"mine": "true", "q": "詩篇"})
+    assert [p["title"] for p in response.data["results"]] == ["40日で読む詩篇"]
+
+    # 説明にも当たる
+    response = auth_client.get(PLANS_URL, {"mine": "true", "q": "毎朝"})
+    assert [p["title"] for p in response.data["results"]] == ["40日で読む詩篇"]
+
+    # 当たらない語では 0 件
+    assert auth_client.get(PLANS_URL, {"mine": "true", "q": "見つからない語"}).data["count"] == 0
+
+
+@pytest.mark.django_db
+def test_言葉で絞っても下書きは出ない(auth_client, other_client):
+    _create_plan(auth_client, title="下書きの断食")  # 既定は private
+
+    # 別の人から見ると、公開していないプランは言葉で探しても出てこない
+    assert other_client.get(PLANS_URL, {"q": "断食"}).data["count"] == 0

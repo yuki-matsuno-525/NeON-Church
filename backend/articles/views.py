@@ -65,6 +65,18 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         if author:
             queryset = queryset.filter(owner__username=author)
 
+        # 言葉での絞り込み。Q&A・翻訳の一覧と同じ書き方に揃えてある。
+        # 上でもう公開範囲を決めているので、ここで下書きが混ざることはない。
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            queryset = queryset.filter(
+                Q(title__icontains=q)
+                | Q(summary__icontains=q)
+                | Q(body__icontains=q)
+                | Q(owner__username__icontains=q)
+                | Q(tags__name__icontains=q)
+            )
+
         return queryset.select_related("owner").prefetch_related("tags").distinct()
 
     def perform_create(self, serializer):
