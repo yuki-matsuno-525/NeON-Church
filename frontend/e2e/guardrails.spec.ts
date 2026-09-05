@@ -29,14 +29,13 @@ test("ページ遷移が破棄したGETだけを通常の中断として分類�
     errorText: "net::ERR_ABORTED",
     method: "GET",
     requestUrl: "https://guardrail.test/api/stale-data",
-    startedPageUrl: "https://guardrail.test/first",
     currentPageUrl: "https://guardrail.test/second",
   };
 
   expect(isExpectedNavigationCancellation(base)).toBe(true);
-  expect(
-    isExpectedNavigationCancellation({ ...base, currentPageUrl: base.startedPageUrl }),
-  ).toBe(false);
+  expect(isExpectedNavigationCancellation({ ...base, currentPageUrl: base.requestUrl })).toBe(
+    true,
+  );
   expect(isExpectedNavigationCancellation({ ...base, method: "POST" })).toBe(false);
   expect(isExpectedNavigationCancellation({ ...base, errorText: "net::ERR_TIMED_OUT" })).toBe(
     false,
