@@ -232,7 +232,7 @@ API:
 
 API 呼び出し共通処理は `frontend/src/lib/apiClient.ts` の `apiFetch` です。401 が返ると `token/refresh` を 1 回だけ試し、その後も失敗すれば `ApiError(401, "Unauthorized")` を投げます。
 
-### コメント、返信、Q&A
+### コメントと返信
 
 実装:
 
@@ -241,19 +241,24 @@ API 呼び出し共通処理は `frontend/src/lib/apiClient.ts` の `apiFetch` �
 | DB | `backend/comments/models.py` |
 | API | `backend/comments/views.py` |
 | URL | `backend/comments/urls.py` |
-| フロント API | `frontend/src/lib/apiClient.ts` の `fetchComments`, `createComment`, `upvoteComment`, `fetchQAComments` など |
-| 主要 UI | `frontend/src/components/reader/CommentPanel.tsx`, `frontend/src/components/reader/ChapterComments.tsx`, `frontend/src/components/qa/QACard.tsx`, `frontend/src/components/qa/QAPostForm.tsx` |
+| フロント API | `frontend/src/lib/apiClient.ts` の `fetchComments`, `createComment`, `upvoteComment` など |
+| 主要 UI | `frontend/src/components/reader/CommentPanel.tsx`, `frontend/src/components/reader/ChapterComments.tsx` |
 
 model:
 
 | model | 意味 |
 | --- | --- |
-| `Comment` | 節・章・書へのコメント。`parent` で返信、`is_qa` で Q&A 化 |
-| `Tag` | コメント・Q&A のタグ |
+| `Comment` | 節・章・書へのコメント。`parent` で返信 |
+| `Tag` | コメントのタグ |
 | `Vote` | コメントへの upvote。ユーザーとコメントの組み合わせは一意 |
 | `Report` | コメント通報。ユーザーとコメントの組み合わせは一意 |
 
-`Comment` は `verse`、`chapter`、`book` のいずれかに紐づきます。返信の場合は `parent` に親コメントが入ります。Q&A の質問は `is_qa=True` かつ `parent=None` のコメントとして扱われ、ベストアンサーは `best_answer` に返信コメントを参照します。
+`Comment` は `verse`、`chapter`、`book` のいずれかに紐づきます。返信の場合は `parent` に親コメントが入ります。
+
+**Q&A はコメントとは別のデータです**（`backend/qa/` の `Question` / `Answer`）。以前は
+「`is_qa` の印を付けたコメント」として扱っていましたが、質問と回答はコメントとは別の
+ものを必要とした（ベストアンサー、未解決の絞り込み、回答の数え上げ）ため分けました。
+`/qa` が索引、`/qa/[id]` が読み書きの画面です。投票とお気に入りは Q&A にはありません。
 
 主要 API:
 
@@ -268,8 +273,6 @@ model:
 | `DELETE /api/comments/{id}/` | `CommentUpdateDestroyView` | 自分のコメントを論理削除 |
 | `POST /api/comments/{id}/upvote/` | `CommentUpvoteView` | upvote |
 | `DELETE /api/comments/{id}/upvote/` | `CommentUpvoteView` | upvote 取り消し |
-| `GET /api/comments/qa/` | `QACommentListView` | Q&A 一覧 |
-| `PATCH /api/comments/{id}/best-answer/` | `SetBestAnswerView` | ベストアンサー設定 |
 | `POST /api/comments/{id}/report/` | `ReportView` | 通報 |
 | `GET /api/comments/trending/` | `TrendingCommentView` | upvote 順の注目コメント |
 
@@ -426,7 +429,9 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | --- | --- |
 | 聖書 | `fetchBooks`, `fetchChapters`, `fetchVerses`, `fetchVerseOfDay`, `searchBible` |
 | コメント | `fetchComments`, `createComment`, `updateComment`, `deleteComment`, `upvoteComment`, `removeUpvote` |
-| Q&A | `fetchQAComments`, `fetchCommentReplies`, `setBestAnswer`, `fetchTrendingComments`, `reportComment` |
+| Q&A | `fetchQuestionPage`, `fetchQuestion`, `createQuestion`, `fetchAnswerPage`, `createAnswer`, `setQuestionBestAnswer` |
+| 記事 | `fetchArticlePage`, `fetchArticle`, `createArticle`, `updateArticle` など |
+| プラン | `fetchPlans`, `fetchPlan`, `createPlan`, `subscribePlan` など |
 | お気に入り | `fetchBookmarks`, `createBookmark`, `createCommentBookmark`, `removeBookmark` |
 | 認証 | `login`, `register`, `logout`, `fetchMe` |
 | プロフィール | `updateProfile`, `uploadAvatar`, `fetchUserProfile`, `fetchUserComments`, `fetchUserBookmarks` |
@@ -529,7 +534,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 
 流れ:
 
-1. UI が `createComment()` に `verse`、`chapter`、`book`、`parent`、`body`、`is_qa`、`tag_ids` などを渡す。
+1. UI が `createComment()` に `verse`、`chapter`、`book`、`parent`、`body`、`tag_ids` などを渡す。
 2. `POST /api/comments/` が呼ばれる。
 3. `CommentListCreateView.get_permissions()` が POST だけログイン必須にする。
 4. serializer が入力を検証して `Comment` を保存する。
@@ -547,31 +552,34 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 
 ### 4. Q&A を投稿し、ベストアンサーを設定する
 
+Q&A はコメントとは別のデータです（`backend/qa/` の `Question` / `Answer`）。
+
 読むファイル:
 
 | 段階 | ファイル |
 | --- | --- |
-| Q&A 一覧 | `frontend/src/app/qa/page.tsx` |
+| Q&A 一覧 | `frontend/src/app/qa/page.tsx`（未解決 / 解決済みのタブ） |
+| 質問の読み書き | `frontend/src/app/qa/[id]/page.tsx` |
 | 投稿フォーム | `frontend/src/components/qa/QAPostForm.tsx` |
 | Q&A カード | `frontend/src/components/qa/QACard.tsx` |
-| API | `backend/comments/views.py` の `QACommentListView`, `SetBestAnswerView` |
-| model | `backend/comments/models.py` の `Comment.best_answer`, `Comment.is_qa` |
+| API | `backend/qa/views.py` |
+| model | `backend/qa/models.py` の `Question`, `Answer` |
 
 流れ:
 
-1. `/qa` が `fetchQAComments()` で `GET /api/comments/qa/` を呼ぶ。
-2. `QACommentListView` は `is_qa=True`, `parent=None`, `is_deleted=False` のコメントを取得する。
-3. フィルタとして `book_id`、`tag_id`、`answered` が使える。
-4. 新規質問は `QAPostForm` から `createComment({ is_qa: true, ... })` で投稿する。
-5. 回答は質問コメントへの返信として投稿される。
-6. 質問投稿者だけが `PATCH /api/comments/{id}/best-answer/` で `best_answer` を設定・解除できる。
+1. `/qa` はサーバー側で `GET /api/qa/questions/` を呼び、開いているタブのぶんだけ取る。
+2. 絞り込みは `book_id`、`tag_id`、`q`、`answered`（タブがこれを使う）。
+3. 新規質問は `QAPostForm` から `createQuestion()` で投稿する。
+4. 回答は `createAnswer(questionId, body)` で、質問にぶら下がる別のデータとして入る。
+5. 質問した人だけが `setQuestionBestAnswer()` でベストアンサーを設定・解除できる。
+6. 削除は論理削除（`is_deleted`）。**本文は残る**ので、一覧や検索では必ず外す。
 
 修正の勘所:
 
 | やりたいこと | 見る場所 |
 | --- | --- |
-| Q&A 一覧のフィルタを増やす | `frontend/src/app/qa/page.tsx`, `backend/comments/views.py` |
-| ベストアンサー条件を変える | `SetBestAnswerView` |
+| Q&A 一覧のフィルタを増やす | `frontend/src/components/qa/QAFilters.tsx`, `backend/qa/views.py` |
+| ベストアンサー条件を変える | `backend/qa/views.py` の `BestAnswerView` |
 | Q&A カード表示を変える | `frontend/src/components/qa/QACard.tsx` |
 
 ### 5. 検索する
@@ -587,11 +595,14 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 
 流れ:
 
-1. `/search?q=...` の query parameter を読む。
-2. 2 文字未満なら検索しない。
+1. `/search?q=...&kind=...&book=...&page=...` の query parameter を読む。
+2. 短すぎる語では検索しない。かな・カナ・漢字が入っていれば 1 文字から、
+   それ以外は 2 文字から（`backend/bible/views.py` の `_min_query_len`）。
 3. `GET /api/search/?q=...` を呼ぶ。
 4. バックエンドは `Book.name`, `Verse.text`, `Comment.body` を `icontains` で検索する。
-5. 節は最大 30 件、コメントは最大 20 件に制限する。
+   `Verse.text` と `Comment.body` には trigram の索引が張ってあるので、
+   `LIKE '%…%'` でも全表走査にならない。
+5. 節だけページ送りできる（1 ページ 50 件）。書とコメントは各 20 件のプレビュー。
 6. フロントは書、節、コメントに分けて表示する。
 
 修正の勘所:
@@ -599,7 +610,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 | やりたいこと | 見る場所 |
 | --- | --- |
 | 検索対象を増やす | `backend/bible/views.py` の `SearchView` |
-| 最小文字数を変える | frontend と backend の両方 |
+| 最小文字数を変える | `backend/bible/views.py` の `_min_query_len` |
 | ハイライトを変える | `frontend/src/app/search/page.tsx` の `highlight` |
 
 ### 6. お気に入りに追加する
@@ -719,11 +730,11 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 例: 「Q&A の未解決だけ表示する条件を変えたい」
 
 1. `/qa` なので `frontend/src/app/qa/page.tsx` を読む。
-2. `fetchQAComments()` を使っている。
-3. `fetchQAComments()` は `/comments/qa/` を呼ぶ。
-4. `backend/comments/urls.py` で `QACommentListView` だと分かる。
-5. `backend/comments/views.py` の `QACommentListView.get_queryset()` の `answered` 条件を見る。
-6. 必要なら `backend/tests/test_comments.py` にテストを足す。
+2. タブが `answered` を URL に書き、サーバー側で `questionListPath()` に渡している。
+3. その先は `GET /api/qa/questions/`。
+4. `backend/qa/urls.py` で `QuestionListCreateView` だと分かる。
+5. `backend/qa/views.py` の `get_queryset()` の `answered` 条件を見る。
+6. 必要なら `backend/tests/test_qa.py` にテストを足す。
 
 ## テストの見方
 
@@ -919,7 +930,7 @@ Next.js App Router なので、`frontend/src/app/` のディレクトリが URL 
 rg --files
 
 # API 関数を探す
-rg "fetchQAComments|createComment|saveReadingProgress" frontend/src
+rg "fetchQuestionPage|createComment|saveReadingProgress" frontend/src
 
 # backend の view を探す
 rg "class .*View" backend
@@ -931,7 +942,7 @@ rg "path\\(" backend
 rg "class .*\\(.*models.Model|class .*\\(BaseModel" backend
 
 # 特定 API の呼び出し元を探す
-rg "/comments/qa|comments/qa|fetchQAComments" .
+rg "/qa/questions|fetchQuestionPage" .
 ```
 
 ## 最後に

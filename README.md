@@ -34,7 +34,7 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 <td width="50%"><img src="docs/assets/screenshot-translation.webp" alt="Translation project" /></td>
 </tr>
 <tr>
-<td align="center"><sub>Q&A — a two-column board of answered / unanswered</sub></td>
+<td align="center"><sub>Q&A — tabs for unanswered / answered</sub></td>
 <td align="center"><sub>A collaborative translation project</sub></td>
 </tr>
 </table>
@@ -45,12 +45,14 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 
 - **Scripture reading** — Hierarchical navigation: book → chapter → verse.
 - **Comments** — Post on a verse, a chapter, or a whole book. Threaded replies, upvotes, editing, deletion, and tagging.
-- **Q&A** — Comments flagged with `is_qa` are listed together, with best-answer selection and a resolved filter.
-- **Full-text search** — Searches across verse text, comment bodies, and book names.
-- **Favorites** — Add verses and comments to your favorites; browse them from your profile.
+- **Q&A** — Questions and answers live in their own app (`backend/qa/`), separate from comments. Ask, answer, and mark a best answer; the list is split into unanswered / answered tabs.
+- **Articles** — Write essays on a theme, citing passages inline with `[[matthew 6:16-18]]` marks. Draft / unlisted / public, with topics and their own comment threads.
+- **Reading plans** — Build a plan of N days, assign chapters to each day, and let readers subscribe and track their progress.
+- **Collaborative translation** — Start a translation project and assign translators verse by verse.
+- **Full-text search** — Searches across verse text, comment bodies, and book names (trigram indexes on Postgres).
+- **Favorites** — Add verses, chapters, books, comments, and translation projects to your favorites; browse them from your profile.
 - **Notifications** — Get notified when someone replies to your comment, with an unread badge.
 - **Reading progress** — Remembers the last verse you read so you can pick up where you left off.
-- **Collaborative translation** — Start a translation project and assign translators verse by verse.
 - **Profiles** — Avatar, bio, comment history, and favorites. Other users' profiles are public too.
 
 ## Tech stack
@@ -64,7 +66,7 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 | Error monitoring | Sentry |
 | OpenAPI | drf-spectacular |
 | Tests (BE) | pytest / pytest-django |
-| Tests (FE) | Jest / React Testing Library |
+| Tests (FE) | Vitest / React Testing Library / Playwright (E2E) |
 
 ## Deployment
 
@@ -105,10 +107,19 @@ Once it is up:
 docker-compose exec backend python manage.py import_gospel
 
 # KJV (English)
-docker-compose exec backend python manage.py import_kjv
+docker-compose exec backend python manage.py import_kvj
 
 # Nestle 1904 (Greek source text, the four Gospels)
 docker-compose exec backend python manage.py import_greek
+
+# Whole-Bible translations from the ibibles dataset (several languages at once)
+docker-compose exec backend python manage.py import_ibibles
+
+# One book in one translation, from a normalized JSON file
+docker-compose exec backend python manage.py import_scripture
+
+# Coptic source texts
+docker-compose exec backend python manage.py import_coptic
 
 # Apocrypha and Pseudepigrapha in one go
 # (Enoch, the Gospels of Mary / Peter / Judas, the Infancy Gospel of Thomas, the Life of Adam and Eve)
@@ -216,10 +227,16 @@ docker-compose down -v
 # Backend
 docker-compose exec backend pytest
 
-# Frontend
-cd frontend
-npm test
+# Frontend (unit)
+docker-compose exec frontend npm test
+
+# Frontend (E2E — builds and starts the app, then drives it with Playwright)
+docker-compose exec frontend npx playwright test
 ```
+
+Run the frontend commands inside the container. Starting a second dev server on the host
+breaks the one in Docker: `docker-compose.yml` mounts `./frontend` into the container, so
+both processes share the same `.next` directory.
 
 </details>
 
@@ -267,8 +284,11 @@ Base URL: `http://localhost:8000/api/`
 | `POST /comments/{id}/upvote/` | Upvote |
 | `GET/POST /bookmarks/` | List and create favorites |
 | `GET /notifications/` | List notifications |
-| `GET /search/?q=...` | Full-text search |
-| `GET /qa/` | List Q&A comments |
+| `GET /search/?q=...&kind=...` | Full-text search (verses / books / comments) |
+| `GET/POST /qa/questions/` | List and post questions |
+| `GET/POST /qa/questions/{id}/answers/` | List and post answers |
+| `GET/POST /articles/` | List and create articles |
+| `GET/POST /plans/` | List and create reading plans |
 | `GET/POST /translations/` | List and create translation projects |
 | `POST /auth/register/` | Register |
 | `POST /auth/login/` | Log in |
@@ -289,7 +309,10 @@ The full schema is available at `/api/schema/swagger-ui/`.
 NeON-Church/
 ├── backend/             # Django REST Framework
 │   ├── bible/           # Book / chapter / verse models, search
-│   ├── comments/        # Comments, tags, upvotes, Q&A
+│   ├── comments/        # Comments, tags, upvotes
+│   ├── qa/              # Questions and answers (separate from comments)
+│   ├── articles/        # Articles, topics, citations
+│   ├── plans/           # Reading plans, days, subscriptions
 │   ├── bookmarks/       # Favorites
 │   ├── notifications/   # Notifications
 │   ├── reading_progress/# Reading progress
@@ -305,8 +328,8 @@ NeON-Church/
 │       ├── hooks/       # Custom hooks such as useComments
 │       └── lib/         # API client and type definitions
 ├── text/                # Scripture text data (for importing)
-├── plan/                # Design documents
-│   └── pre-launch-checklist.md
+├── plan/                # Design documents (one per body of work)
+├── docs/                # Codebase guide (Japanese)
 └── docker-compose.yml
 ```
 
