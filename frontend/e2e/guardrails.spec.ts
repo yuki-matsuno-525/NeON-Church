@@ -1,7 +1,15 @@
-import { test, expect, type BrowserGuardrailOptions } from "./fixtures";
+import {
+  DEFAULT_BROWSER_GUARDRAIL_OPTIONS,
+  test,
+  expect,
+  type BrowserGuardrailOptions,
+} from "./fixtures";
 
 const consoleAllowlist = [/guardrail-probe console warning/];
-const httpResponseAllowlist = [/GET https:\/\/guardrail\.test\/expected-401 \(fetch\): HTTP 401/];
+const httpResponseAllowlist = [
+  ...(DEFAULT_BROWSER_GUARDRAIL_OPTIONS.allowHttpResponses ?? []),
+  /GET https:\/\/guardrail\.test\/expected-401 \(fetch\): HTTP 401/,
+];
 const guardrailOptions: BrowserGuardrailOptions = {
   allowConsoleMessages: consoleAllowlist,
   allowHydrationErrors: [/guardrail-probe hydration mismatch/],
@@ -102,6 +110,37 @@ test("明示許可したHTTPエラーレスポンスだけを合格にできる"
     ])
   );
   expect(browserDiagnostics.unexpectedIncidents).toHaveLength(0);
+});
+
+test("匿名セッション確認の401だけを既定で許可する", async ({
+  page,
+  browserDiagnostics,
+}) => {
+  await page.route("https://guardrail.test/**", async (route) => {
+    await route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "authentication required" }),
+    });
+  });
+
+  await page.goto("data:text/html,<title>anonymous auth probe</title>");
+  await page.evaluate(async () => {
+    await fetch("https://guardrail.test/api/auth/me/");
+    await fetch("https://guardrail.test/api/auth/token/refresh/", { method: "POST" });
+    await fetch("https://guardrail.test/api/auth/login/");
+  });
+  await page.waitForTimeout(0);
+
+  const unexpectedHttp = browserDiagnostics.unexpectedIncidents.filter(
+    (incident) => incident.kind === "httpresponse",
+  );
+  expect(unexpectedHttp).toHaveLength(1);
+  expect(unexpectedHttp[0].message).toContain("GET https://guardrail.test/api/auth/login/");
+
+  // Keep the fixture's own teardown green only after proving this adjacent 401
+  // is rejected by the default policy.
+  httpResponseAllowlist.push(/GET https:\/\/guardrail\.test\/api\/auth\/login\//);
 });
 
 test("同一originの明示的なNext RSC prefetchキャンセルだけを無視する", async ({

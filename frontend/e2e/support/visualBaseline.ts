@@ -326,6 +326,21 @@ export async function openVisualRoute(
   const response = await page.goto(resolved.path, { waitUntil: "domcontentloaded" });
   expect(response, `No navigation response for ${route.template}`).not.toBeNull();
   expect(response!.status(), `Unexpected HTTP status for ${route.template}`).toBeLessThan(400);
+  expect(new URL(page.url()).pathname, `${route.template} redirected unexpectedly`).toBe(
+    new URL(resolved.path, WEB_BASE).pathname,
+  );
+
+  if (resolved.username) {
+    const authenticatedUser = await page.evaluate(async () => {
+      const authResponse = await fetch("/api/auth/me/", { credentials: "include" });
+      return {
+        status: authResponse.status,
+        body: authResponse.ok ? await authResponse.json() : null,
+      };
+    });
+    expect(authenticatedUser.status, `${route.template} lost its authenticated session`).toBe(200);
+    expect(authenticatedUser.body?.username).toBe(resolved.username);
+  }
 
   const ready = route.readySelector
     ? page.locator(route.readySelector).first()

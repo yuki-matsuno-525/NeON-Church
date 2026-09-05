@@ -42,6 +42,16 @@ export type BrowserGuardrailOptions = {
   allowHttpResponses?: readonly MessageMatcher[];
 };
 
+// Cookie-based auth discovers an anonymous session through these two exact 401
+// responses: /auth/me may refresh an expired access cookie, and refresh confirms
+// that no refresh cookie exists. Other endpoints and statuses remain failures.
+export const DEFAULT_BROWSER_GUARDRAIL_OPTIONS: BrowserGuardrailOptions = {
+  allowHttpResponses: [
+    /^GET https?:\/\/[^/]+\/api\/auth\/me\/ \(fetch\): HTTP 401$/,
+    /^POST https?:\/\/[^/]+\/api\/auth\/token\/refresh\/ \(fetch\): HTTP 401$/,
+  ],
+};
+
 export type BrowserDiagnostics = {
   readonly incidents: readonly BrowserIncident[];
   readonly unexpectedIncidents: readonly BrowserIncident[];
@@ -84,9 +94,11 @@ function matches(matcher: MessageMatcher, value: string): boolean {
 
 function matchesAny(
   matchers: readonly MessageMatcher[] | undefined,
-  value: string
+  values: readonly string[],
 ): boolean {
-  return matchers?.some((matcher) => matches(matcher, value)) ?? false;
+  return (
+    matchers?.some((matcher) => values.some((value) => matches(matcher, value))) ?? false
+  );
 }
 
 function isHydrationError(message: string): boolean {
@@ -106,9 +118,9 @@ function isAllowed(
   incident: BrowserIncident,
   options: BrowserGuardrailOptions
 ): boolean {
-  const searchable = [incident.message, incident.source, incident.pageUrl]
-    .filter(Boolean)
-    .join("\n");
+  const searchable = [incident.message, incident.source, incident.pageUrl].filter(
+    (value): value is string => Boolean(value),
+  );
 
   switch (incident.kind) {
     case "console":
@@ -360,7 +372,7 @@ async function installBrowserGuardrails(
 }
 
 export const test = base.extend<Fixtures>({
-  browserGuardrailOptions: [{}, { option: true }],
+  browserGuardrailOptions: [DEFAULT_BROWSER_GUARDRAIL_OPTIONS, { option: true }],
 
   browserDiagnostics: async (
     { browserGuardrailOptions },
