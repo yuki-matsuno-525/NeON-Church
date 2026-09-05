@@ -1,8 +1,9 @@
 import datetime
 
 from django.core.cache import cache
-from django.db.models import Count
+from django.db.models import Count, OuterRef, Subquery
 from django.utils import timezone
+from django.utils.text import Truncator
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -207,17 +208,46 @@ class ReferenceBookReadView(_ReferenceView):
     こちらも以前は books → chapters の2往復で、1回目は全書一覧を落としていた。
     """
 
+    # 章の書き出しに載せる長さ。1 行に収まる分だけあれば「何の章か」は分かる。
+    OPENING_LENGTH = 80
+
     def get(self, request, slug):
         self._require_slug(slug)
         editions = _editions_for(slug)
         book = _require_edition(editions, request.query_params.get("translation"))
         chapters = Chapter.objects.filter(book=book)
+        rows = ChapterSerializer(chapters, many=True).data
+        openings = self._openings(book)
+        for row in rows:
+            row["opening"] = openings.get(row["id"], "")
         return Response({
             "reference": {"book": slug},
             "book": BookSerializer(book).data,
-            "chapters": ChapterSerializer(chapters, many=True).data,
+            "chapters": rows,
             "translations": [b.translation for b in editions],
         })
+
+    def _openings(self, book):
+        """章ごとの書き出し（いちばん小さい番号の節の頭）を、まとめて 1 回で引く。
+
+        プランを作る人が、章の中身を見ないまま「マルコ 1章」を選ばずに済むようにするため。
+        章ごとに問い合わせると 150 章の書で 150 往復になるので、ここで 1 回にまとめる。
+        節の番号は 1 から始まらない書があるので、番号の小さいものを各章から 1 つ取る。
+        （DISTINCT ON は PostgreSQL 専用でテストの SQLite が動かないため、
+          章ごとに「先頭の節」を差し込む形にしてある）
+        """
+        first_text = (
+            Verse.objects.filter(chapter=OuterRef("pk")).order_by("number").values("text")[:1]
+        )
+        rows = (
+            Chapter.objects.filter(book=book)
+            .annotate(opening=Subquery(first_text))
+            .values_list("id", "opening")
+        )
+        return {
+            str(chapter_id): Truncator(text).chars(self.OPENING_LENGTH) if text else ""
+            for chapter_id, text in rows
+        }
 
 
 class ReferenceReadView(_ReferenceView):

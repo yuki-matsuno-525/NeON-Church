@@ -9,9 +9,18 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     updatePlanDay: vi.fn(),
-    fetchBooks: vi.fn().mockResolvedValue([]),
-    fetchChapters: vi.fn().mockResolvedValue([]),
+    fetchBookRead: vi.fn().mockResolvedValue({ book: null, chapters: [], translations: [] }),
   };
+});
+
+const reading = (id: string, book: string, book_name: string, chapter_number: number, order: number) => ({
+  id,
+  book,
+  book_name,
+  chapter_number,
+  translation: "",
+  order,
+  completed: false,
 });
 
 const day: PlanDay = {
@@ -19,18 +28,17 @@ const day: PlanDay = {
   number: 1,
   title: "光をわけた日",
   devotional: "はじめに。",
-  readings: [
-    {
-      id: "r1",
-      book: "matthew",
-      book_name: "マタイによる福音書",
-      chapter_number: 1,
-      translation: "",
-      order: 0,
-      completed: false,
-    },
-  ],
+  readings: [reading("r1", "matthew", "マタイによる福音書", 1, 0)],
   completed: false,
+};
+
+const threeChapterDay: PlanDay = {
+  ...day,
+  readings: [
+    reading("r1", "matthew", "マタイによる福音書", 1, 0),
+    reading("r2", "philemon", "ピレモンへの手紙", 1, 1),
+    reading("r3", "romans", "ローマ人への手紙", 8, 2),
+  ],
 };
 
 function renderEditor(overrides: Partial<React.ComponentProps<typeof PlanDayEditor>> = {}) {
@@ -72,7 +80,7 @@ describe("プランの1日の編集", () => {
     vi.mocked(api.updatePlanDay).mockResolvedValue(day);
     renderEditor();
 
-    await user.type(screen.getByPlaceholderText("この日の題（任意）"), "！");
+    await user.type(screen.getByPlaceholderText("タイトルを入力してください"), "！");
 
     await waitFor(
       () => {
@@ -92,15 +100,76 @@ describe("プランの1日の編集", () => {
     expect(screen.queryByRole("button", { name: "第1日を上へ移動" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "第1日を削除" })).not.toBeInTheDocument();
     // 中身は直せるので、入力欄は出したまま
-    expect(screen.getByPlaceholderText("この日の題（任意）")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("タイトルを入力してください")).toBeInTheDocument();
   });
 
-  it("章を足すと書をさがす画面が出る", async () => {
-    const user = userEvent.setup();
+  it("4つの区画がそろっていて、章を足すところは最初から開いている", () => {
     renderEditor();
 
-    await user.click(screen.getByRole("button", { name: "＋ 章を足す" }));
-
+    expect(screen.getByText("この日の題（任意）")).toBeInTheDocument();
+    expect(screen.getByText("選択した章")).toBeInTheDocument();
+    expect(screen.getByText("章を追加")).toBeInTheDocument();
+    expect(screen.getByText("この日に添える文章（任意）")).toBeInTheDocument();
+    // 「＋ 章を足す」を押さなくても、書を探すところが出ている
     expect(screen.getByPlaceholderText("書をさがす")).toBeInTheDocument();
+  });
+
+  it("章が1つだけなら並び替えの案内を出さない", () => {
+    renderEditor();
+
+    expect(screen.queryByText("ドラッグして順番変更")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "並び替えモード" })).not.toBeInTheDocument();
+  });
+
+  it("取っ手に焦点を当てて矢印キーを押すと、章の順番が入れ替わる", async () => {
+    const user = userEvent.setup();
+    const api = await import("@/lib/api");
+    vi.mocked(api.updatePlanDay).mockResolvedValue(threeChapterDay);
+    renderEditor({ day: threeChapterDay });
+
+    const handle = screen.getByRole("button", {
+      name: "ローマ人への手紙 8章を並び替える。上下の矢印キーでも動かせます",
+    });
+    handle.focus();
+    await user.keyboard("{ArrowUp}");
+
+    // 3番目だったローマ8章が2番目になる（行の左の丸の番号でも確かめられる）
+    const order = screen
+      .getAllByRole("button", { name: /を外す$/ })
+      .map((button) => button.getAttribute("aria-label"));
+    expect(order).toEqual([
+      "マタイによる福音書 1章を外す",
+      "ローマ人への手紙 8章を外す",
+      "ピレモンへの手紙 1章を外す",
+    ]);
+  });
+
+  it("並び替えた順番がそのまま保存される", async () => {
+    const user = userEvent.setup();
+    const api = await import("@/lib/api");
+    vi.mocked(api.updatePlanDay).mockResolvedValue(threeChapterDay);
+    renderEditor({ day: threeChapterDay });
+
+    screen.getByRole("button", {
+      name: "ローマ人への手紙 8章を並び替える。上下の矢印キーでも動かせます",
+    }).focus();
+    await user.keyboard("{ArrowUp}");
+
+    await waitFor(
+      () => {
+        expect(api.updatePlanDay).toHaveBeenCalledWith(
+          "p1",
+          "d1",
+          expect.objectContaining({
+            readings: [
+              { book: "matthew", chapter_number: 1, translation: "" },
+              { book: "romans", chapter_number: 8, translation: "" },
+              { book: "philemon", chapter_number: 1, translation: "" },
+            ],
+          }),
+        );
+      },
+      { timeout: 4000 },
+    );
   });
 });

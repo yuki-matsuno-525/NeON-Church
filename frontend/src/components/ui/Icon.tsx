@@ -17,7 +17,15 @@ export type IconName =
   | "message-square"
   | "book-open"
   | "bookmark"
-  | "sparkles";
+  | "sparkles"
+  | "calendar"
+  | "trash"
+  | "plus"
+  | "x"
+  | "search"
+  | "external-link"
+  | "arrow-up-down"
+  | "grip-vertical";
 
 type IconProps = Omit<SVGProps<SVGSVGElement>, "name"> & {
   name: IconName;
@@ -110,6 +118,65 @@ const PATHS: Record<IconName, ReactElement> = {
       <path d="M22 5h-4" />
       <path d="M4 17v2" />
       <path d="M5 18H3" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4" />
+      <path d="M8 2v4" />
+      <path d="M3 10h18" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </>
+  ),
+  plus: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </>
+  ),
+  x: (
+    <>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </>
+  ),
+  "external-link": (
+    <>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" />
+    </>
+  ),
+  "arrow-up-down": (
+    <>
+      <path d="m21 16-4 4-4-4" />
+      <path d="M17 20V4" />
+      <path d="m3 8 4-4 4 4" />
+      <path d="M7 4v16" />
+    </>
+  ),
+  // つまんで動かす取っ手。線ではなく点で描くので、ここだけ塗りつぶす。
+  "grip-vertical": (
+    <>
+      <circle cx="9" cy="5" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="19" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="5" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="19" r="1.4" fill="currentColor" stroke="none" />
     </>
   ),
 };

@@ -343,6 +343,10 @@
   max-height: 220px;
   overflow-y: auto;
 }
+/* 1 行が 2 段（題と書き出し）ある一覧用。220px だと 3 行しか見えないため。 */
+.scroll-list-tall {
+  max-height: 360px;
+}
 
 /* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */
 .tab-bar {
@@ -358,4 +362,87 @@
 .badge-icon {
   gap: 3px;
   flex-shrink: 0;
+}
+
+/* 区画の見出しに付ける丸番号（プランを作る画面の ①②③④）。
+   読む画面の行の丸（PlanDay.module.css の .rowBadge）を、見出し用に縮めたもの。
+   手順が本当に順番を持つときだけ使う。飾りで番号を振らない。 */
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(190, 95, 255, 0.45);
+  border-radius: var(--radius-full);
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* 一覧から 1 つ選ぶ行。下線で区切る。
+   中に押せるものを複数置ける（選ぶ・読む・足す）ところが .row-button との違い。
+   押せるものが 1 つだけなら button.css の .row-button で足りる。 */
+.select-row {
+  /* 下の .select-row-add の覆いを、この行の枠に留めるために要る。 */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 行のどこを押しても足せるように、＋ のボタンを影で行いっぱいに引き伸ばす。
+   （card.css の .card-link と同じ手）そうしないと、狭い画面で 44px の丸を
+   ねらって押すことになる。 */
+.select-row-add::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* 覆いより上に出したいもの（行の中の別のリンク）。 */
+.select-row-aside {
+  position: relative;
+  z-index: 2;
+}
+.select-row:last-child {
+  border-bottom: none;
+}
+.select-row:hover {
+  background: var(--bg-hover);
+}
+
+/* その行の大部分を占める、選ぶためのボタン。
+   題と、その下の書き出しの 2 段。長い書名が右の印を押し出さないよう min-width: 0 を置く。 */
+.select-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 行に添える 1 行の説明（章の書き出しなど）。あふれたら「…」で切る。
+   2 行以上にすると行の高さが揃わず、一覧が読みにくくなるため 1 行に留める。 */
+.select-row-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-soft);
+  font-size: var(--text-xs);
 }

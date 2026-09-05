@@ -20,7 +20,7 @@ import { ReadingLinks } from "@/components/plans/ReadingChips";
 import { ConfirmDialog, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
-import styles from "./PlanReader.module.css";
+import styles from "./PlanDay.module.css";
 
 /**
  * プランを読み進めるところ。始める・やめる・読み終わった印を付ける。

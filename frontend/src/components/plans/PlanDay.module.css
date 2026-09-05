@@ -1,4 +1,9 @@
-/* 読書プランの「第N日」のパネル専用の寸法。
+/* 読書プランの「第N日」のパネル専用の寸法。読む画面と作る画面の両方が読む。
+
+   同じ形を 2 つのファイルに書き分けると必ずずれるので、
+   PlanReader.tsx（読む）・ReadingChips.tsx（読む章の行）・
+   PlanDayEditor.tsx（作る）・ChapterPicker.tsx（章を足す）が
+   このファイルを共有している。
 
    色・余白・文字サイズは Tailwind のクラスで書く決まりなので、
    ここに置くのは Tailwind で書けないものだけ:
@@ -134,8 +139,12 @@
 }
 
 /* 章の題のリンクを影で引き伸ばして、行のどこを押しても章へ飛べるようにする。
-   （styles/card.css の .card-link と同じ手）左の印はこの覆いより上に出す。 */
-.rowText::after {
+   （styles/card.css の .card-link と同じ手）左の印はこの覆いより上に出す。
+
+   .rowLink を付けた行（＝読む画面の、章へ飛ぶ行）だけに掛ける。
+   作る画面の行は同じ .rowText を使うが押して飛ぶ行ではなく、覆いを掛けると
+   つまむ取っ手と × がその下にもぐって押せなくなる。 */
+.rowLink .rowText::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -202,4 +211,52 @@
 }
 .check:disabled {
   cursor: default;
+}
+
+/* ============================================================
+   作る画面だけで使うところ
+   ============================================================ */
+
+/* つまんで持ち上げた行。パソコンでファイルを動かすときと同じで、
+   影が濃くなって浮き上がり、指について来る。
+   浮かせる位置と大きさは hooks/useDragReorder.ts が付ける。 */
+.row[data-dragging] {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.50), 0 0 20px rgba(192, 52, 240, 0.55);
+  cursor: grabbing;
+}
+
+/* 「並び替えモード」の間は、取っ手だけでなく行のどこをつかんでも動かせる。
+   指で細い取っ手をねらわなくて済むようにするため。
+   iOS はスクロールを JS で止められないので、ここで touch-action を当てる。 */
+.rowsReorderable .row {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* 動かしている最中は、まだ触れていない行に反応させない
+   （指が通り過ぎただけで色が変わると、どれを動かしているのか分からなくなる）。 */
+.rowsDragging .row:hover {
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+.rowsDragging .row[data-dragging] {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+/* 狭い画面では、取っ手と丸に幅を取られて書名が 1 文字ずつ折り返してしまう。
+   間隔を詰め、番号の丸を小さくして、書名に幅を回す。
+   読む画面の行には当てない（あちらの丸は押すものなので 44px が要る）。 */
+@media (max-width: 768px) {
+  .rowsEditable .row {
+    gap: var(--spacing-2);
+    padding-left: var(--spacing-2);
+    padding-right: var(--spacing-2);
+  }
+  .rowsEditable .rowBadge {
+    width: 32px;
+    height: 32px;
+  }
 }

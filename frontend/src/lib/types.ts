@@ -1,5 +1,8 @@
 export type Book = { id: string; name: string; translation: string; order: number };
 export type Chapter = { id: string; book: string; number: number };
+// 書のページが返す章。章の書き出し（いちばん小さい番号の節の頭・80字まで）が付く。
+// プランを作るときに、中身を見ないまま章を選ばずに済むようにするため。
+export type BookChapter = Chapter & { opening: string };
 export type Verse = { id: string; chapter: string; number: number; text: string };
 export type CommentUser = { id: string; username: string };
 export type Comment = {
