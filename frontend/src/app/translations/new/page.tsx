@@ -11,6 +11,7 @@ import { translationLabel } from "@/lib/translations";
 import { catalogEntry, groupCatalogByGenre } from "@/lib/bookCatalog";
 import { useBookCatalogState } from "@/hooks/useBookCatalog";
 import { Button, SkeletonList } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 import { translationUiText } from "../translationUiText";
 
 export default function NewTranslationPage() {
@@ -105,9 +106,12 @@ export default function NewTranslationPage() {
   return (
     <div className="page page-narrow">
       <div className="mb-6">
-        <Link href="/translations" className="text-sm text-muted no-underline">
-          {t.backToTranslations}
-        </Link>
+        <Breadcrumb
+          items={[
+            { label: t.translationsTitle, href: "/translations" },
+            { label: t.newTranslationTitle },
+          ]}
+        />
       </div>
       <h1 className="text-lg font-bold mb-6">{t.newTranslationTitle}</h1>
 

@@ -29,6 +29,7 @@ import { ChapterComments } from "@/components/reader/ChapterComments";
 import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
+import { Breadcrumb } from "@/components/list";
 
 type Props = {
   slug: string;
@@ -317,15 +318,13 @@ export function ChapterReader({
   return (
     <div className="min-h-page">
       <div ref={headerRef} className="reader-sticky-header">
-        <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
-          <Link href="/read" className="text-muted no-underline">{t.bookList}</Link>
-          {" › "}
-          <Link href={`/${slug}?list=1`} className="text-muted no-underline">
-            {label?.short ?? meta?.short ?? slug}
-          </Link>
-          {" › "}
-          <span>{t.chapterFmt(chapterNumber)}</span>
-        </p>
+        <Breadcrumb
+          items={[
+            { label: t.bookList, href: "/read" },
+            { label: label?.short ?? meta?.short ?? slug, href: `/${slug}?list=1` },
+            { label: t.chapterFmt(chapterNumber) },
+          ]}
+        />
         <div className="reader-header-actions flex items-center gap-2">
           <label className="inline-flex items-center gap-2 text-xs text-muted">
             <span>{t.translationLabel}</span>

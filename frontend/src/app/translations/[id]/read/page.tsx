@@ -9,6 +9,7 @@ import { findSlugByBookName, resolveVersionBookIds } from "@/lib/versions";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { Button, SkeletonList } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 import { translationUiText } from "../../translationUiText";
 
 export default function TranslationReadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -95,13 +96,14 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   return (
     <div className="min-h-page">
       <div className="reader-sticky-header">
-        <p className="m-0 text-sm font-normal text-muted">
-          <Link href={`/translations/${id}`} className="text-muted no-underline">
-            {project?.name ?? t.projectFallback}
-          </Link>
-          {" › "}
-          <span>{t.selectChapterHeading}</span>
-        </p>
+        {/* 以前は企画名から始まっていて、翻訳の一覧へ戻る道が無かった。1 段足す。 */}
+        <Breadcrumb
+          items={[
+            { label: t.translationsTitle, href: "/translations" },
+            { label: project?.name ?? t.projectFallback, href: `/translations/${id}` },
+            { label: t.selectChapterHeading },
+          ]}
+        />
       </div>
     <div className="page page-wide">
 

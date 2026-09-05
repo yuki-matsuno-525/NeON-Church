@@ -308,6 +308,58 @@
   max-height: 360px;
 }
 
+/* ----- パンくず -----
+   いまどこにいるかと、上の階層への戻り道。
+   広い画面では全部の階層を › でつなぎ、狭い画面ではすぐ上の 1 段だけにする。
+   長い書名が並ぶと 2 段に折り返して場所を食うため。
+   出し分けを CSS でやるのは、画面幅をブラウザ側で測ると
+   開いた直後に見た目が入れ替わってしまうから。 */
+.breadcrumb {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.breadcrumb-full {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.breadcrumb-full a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.breadcrumb-full a:hover,
+.breadcrumb-full a:focus-visible {
+  color: var(--accent);
+}
+.breadcrumb-full [aria-current="page"] {
+  color: var(--text-soft);
+}
+.breadcrumb-sep {
+  margin: 0 6px;
+  color: var(--text-faint);
+}
+/* 狭い画面用。広い画面では出さない。 */
+.breadcrumb-back {
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .breadcrumb-full {
+    display: none;
+  }
+  .breadcrumb-back {
+    display: inline-flex;
+  }
+}
+
 /* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */
 .tab-bar {
   display: flex;

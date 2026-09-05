@@ -19,6 +19,7 @@ import { BookmarkStar } from "@/components/ui/BookmarkStar";
 import { SkeletonList } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useToast } from "@/components/ui/Toast";
+import { Breadcrumb } from "@/components/list";
 import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
@@ -142,13 +143,12 @@ function BookContent() {
   return (
     <div className="min-h-page">
       <div className="reader-sticky-header">
-        <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
-          <Link href="/read" className="text-muted no-underline">
-            {t.bookList}
-          </Link>
-          {" › "}
-          <span>{label?.short ?? meta.short}</span>
-        </p>
+        <Breadcrumb
+          items={[
+            { label: t.bookList, href: "/read" },
+            { label: label?.short ?? meta.short },
+          ]}
+        />
       </div>
     <div className="page page-wide">
 

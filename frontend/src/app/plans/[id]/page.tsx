@@ -8,6 +8,7 @@ import { planUiText } from "@/components/plans/planUiText";
 import { PlanOwnerActions } from "@/components/plans/PlanOwnerActions";
 import { PlanReader } from "@/components/plans/PlanReader";
 import { ErrorState } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 
 /** 共有したときやタブに出る題を、そのプランのものにする。 */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -57,6 +58,10 @@ export default async function PlanDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="page page-detail">
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: t.plansTitle, href: "/plans" }, { label: plan.title }]} />
+      </div>
+
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {plan.visibility !== "public" && (
           <span className="badge badge-muted">{visibilityLabel(plan.visibility, t)}</span>

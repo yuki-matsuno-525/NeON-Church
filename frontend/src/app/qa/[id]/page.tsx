@@ -3,10 +3,10 @@ import Link from "next/link";
 import type { QAAnswer, QAQuestion } from "@/lib/api";
 import { serverFetch, serverFetchPage } from "@/lib/apiServer";
 import { getT } from "@/lib/i18nServer";
-import { Icon } from "@/components/ui/Icon";
 import { ErrorState } from "@/components/ui";
 import { QAAnswerSection } from "@/components/qa/QAAnswerSection";
 import { QuestionArticle } from "@/components/qa/QuestionArticle";
+import { Breadcrumb } from "@/components/list";
 
 /** 共有したときやタブに出る題を、その質問のものにする。 */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -56,10 +56,10 @@ export default async function QuestionDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="page page-narrow">
-      <Link href="/qa" className="action-link gap-1 text-sm text-muted no-underline">
-        <Icon name="arrow-left" size={14} />
-        {t.qaBackToList}
-      </Link>
+      {/* 戻る道はパンくずに任せる（他の画面と同じ形にした） */}
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: t.qaTitle, href: "/qa" }, { label: question.title }]} />
+      </div>
 
       <QuestionArticle question={question} />
 

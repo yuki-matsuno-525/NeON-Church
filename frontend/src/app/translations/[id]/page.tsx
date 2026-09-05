@@ -53,6 +53,7 @@ import { ReviewTab } from "@/components/translations/ReviewTab";
 import { MembersTab } from "@/components/translations/MembersTab";
 import { UnitDiscussion } from "@/components/translations/UnitDiscussion";
 import { unitStatusBadgeClass, unitStatusLabel } from "@/components/translations/unitStatus";
+import { Breadcrumb } from "@/components/list";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 
 
@@ -711,9 +712,13 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="page page-wide">
       <div className="mb-2">
-        <Link href="/translations" onClick={guardNavigation} className="text-sm text-muted no-underline">
-          {t.backToTranslations}
-        </Link>
+        {/* 書きかけがあるときに確かめる仕掛け（guardNavigation）はそのまま渡す。 */}
+        <Breadcrumb
+          items={[
+            { label: t.translationsTitle, href: "/translations", onNavigate: guardNavigation },
+            { label: project.name },
+          ]}
+        />
       </div>
 
       <div className="flex items-start gap-3 mb-4 flex-wrap">
