@@ -35,9 +35,7 @@
   align-items: center;
   padding: 8px 32px;
   border-bottom: 1px solid var(--border);
-  background: var(--glass-nav);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--nav-bg);
 }
 
 /* ----- 章を送る左右のつまみ -----

@@ -38,15 +38,8 @@
   gap: var(--spacing-4);
   height: var(--navbar-height);
   padding: 0 var(--spacing-4);
-  background: var(--glass-nav);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--nav-bg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  transition: background var(--duration-base) var(--ease-out);
-}
-/* 少しでもスクロールしたら、後ろの文字と重なっても読めるよう濃くする */
-.navbar-root.is-scrolled {
-  background: rgba(8, 4, 24, 0.88);
 }
 
 /* ロゴ画像。高さは上部バーに合わせた固定値で、余白の表とは無関係。 */
