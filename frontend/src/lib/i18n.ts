@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useSyncExternalStore } from "react";
+
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
 import { translations, type Translations } from "@/lib/i18nDictionary";
@@ -26,7 +28,58 @@ export function useBookLabel(slug: string): { name: string; short: string } | nu
     : { name: b.name, short: b.short };
 }
 
+const CLOCK_REFRESH_MS = 60_000;
+const clockListeners = new Set<() => void>();
+let clockSnapshot = Date.now();
+let clockInterval: ReturnType<typeof setInterval> | undefined;
+
+function updateClock() {
+  clockSnapshot = Date.now();
+  clockListeners.forEach((listener) => listener());
+}
+
+function subscribeToClock(listener: () => void) {
+  clockListeners.add(listener);
+
+  if (clockListeners.size === 1) {
+    clockSnapshot = Date.now();
+    clockInterval = setInterval(updateClock, CLOCK_REFRESH_MS);
+  }
+
+  return () => {
+    clockListeners.delete(listener);
+    if (clockListeners.size === 0 && clockInterval !== undefined) {
+      clearInterval(clockInterval);
+      clockInterval = undefined;
+    }
+  };
+}
+
+function getClockSnapshot() {
+  return clockSnapshot;
+}
+
+function getServerClockSnapshot() {
+  return null;
+}
+
+function useClock(): number | null {
+  return useSyncExternalStore(subscribeToClock, getClockSnapshot, getServerClockSnapshot);
+}
+
 export function useRelativeTime(): (dateStr: string) => string {
   const t = useT();
-  return (dateStr: string) => relativeTime(dateStr, t);
+  const now = useClock();
+  return useCallback((dateStr: string) => relativeTime(dateStr, t, now), [now, t]);
+}
+
+/** 相対時刻部品で使う、hydration-safe な表示文字列とツールチップ。 */
+export function useRelativeTimeDisplay(dateStr: string): { label: string; title: string } {
+  const t = useT();
+  const now = useClock();
+  return {
+    label: relativeTime(dateStr, t, now),
+    // 初回は逐語的な入力を共有し、hydration 後は従来どおり閲覧環境の日時にする。
+    title: now === null ? dateStr : new Date(dateStr).toLocaleString(),
+  };
 }
