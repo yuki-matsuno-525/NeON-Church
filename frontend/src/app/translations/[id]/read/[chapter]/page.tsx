@@ -11,6 +11,7 @@ import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { Button, SkeletonList } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 import { translationUiText } from "../../../translationUiText";
 
 export default function TranslationReadChapterPage({
@@ -151,17 +152,15 @@ export default function TranslationReadChapterPage({
   return (
     <div className="min-h-page">
       <div ref={headerRef} className="reader-sticky-header">
-        <p className="m-0 text-sm font-normal text-muted">
-          <Link href={`/translations/${id}`} className="text-muted no-underline">
-            {project?.name ?? t.projectFallback}
-          </Link>
-          {" › "}
-          <Link href={`/translations/${id}/read`} className="text-muted no-underline">
-            {t.chapterList}
-          </Link>
-          {" › "}
-          <span>{t.chapterFmt(chapterNum)}</span>
-        </p>
+        {/* 以前は企画名から始まっていて、翻訳の一覧へ戻る道が無かった。1 段足す。 */}
+        <Breadcrumb
+          items={[
+            { label: t.translationsTitle, href: "/translations" },
+            { label: project?.name ?? t.projectFallback, href: `/translations/${id}` },
+            { label: t.chapterList, href: `/translations/${id}/read` },
+            { label: t.chapterFmt(chapterNum) },
+          ]}
+        />
       </div>
 
       <div

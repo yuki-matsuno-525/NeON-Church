@@ -22,6 +22,7 @@ import { useToggleSet } from "@/hooks/useToggleSet";
 import { PlanDayEditor } from "@/components/plans/PlanDayEditor";
 import { ConfirmDialog, EmptyState, ErrorState, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
+import { Breadcrumb } from "@/components/list";
 
 export default function PlanEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -198,6 +199,16 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div className="page page-detail">
+      <div className="mb-3">
+        <Breadcrumb
+          items={[
+            { label: t.plansTitle, href: "/plans" },
+            { label: plan.title, href: `/plans/${plan.id}` },
+            { label: t.articleEditShort },
+          ]}
+        />
+      </div>
+
       <ConfirmDialog
         open={confirmDelete}
         title={t.planDeleteConfirmTitle}

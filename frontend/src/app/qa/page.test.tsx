@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import QAPage from "./page";
 import type { Book, QAQuestion } from "@/lib/api";
 
@@ -18,8 +17,6 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(currentSearch),
   usePathname: () => "/qa",
 }));
-
-vi.mock("@/hooks/useIsMobile", () => ({ useIsMobile: () => false }));
 
 vi.mock("@/lib/i18nServer", async () => {
   const { translations } = await import("@/lib/i18nDictionary");
@@ -56,7 +53,7 @@ const question = (overrides: Partial<QAQuestion> = {}): QAQuestion => ({
   ...overrides,
 });
 
-/** 解決済み / 未解決の 2 列ぶんを、問い合わせ先の answered で振り分けて返す。 */
+/** 解決済み / 未解決を、問い合わせ先の answered で振り分けて返す。 */
 async function mockServer({ signedIn = false, answered = [] as QAQuestion[], unanswered = [] as QAQuestion[] } = {}) {
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
@@ -92,22 +89,44 @@ describe("Q&A 一覧", () => {
     render(await QAPage({ searchParams: Promise.resolve({ book: "matthew" }) }));
 
     const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
-    expect(paths).toHaveLength(2);
-    for (const path of paths) expect(path).toContain("book_id=book-1%2Cbook-2");
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).toContain("book_id=book-1%2Cbook-2");
   });
 
-  it("取得失敗を空一覧と誤表示せず、再試行できる", async () => {
-    const user = userEvent.setup();
-    const apiServer = await mockServer();
-    vi.mocked(apiServer.serverFetchPage).mockRejectedValue(new Error("Network Error"));
+  it("最初は未解決のタブを開き、開いているほうだけを取りに行く", async () => {
+    const apiServer = await mockServer({ answered: [question({ id: "q2", title: "解決済みの質問" })], unanswered: [question()] });
 
     render(await QAPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("読み込めませんでした");
-    expect(screen.queryByText("質問はまだありません。")).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "未解決" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("link", { name: /解決済みの質問/ })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "もう一度試す" }));
-    expect(refresh).toHaveBeenCalled();
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).toContain("answered=false");
+  });
+
+  it("タブは URL で切り替わり、絞り込みを引き継ぐ", async () => {
+    const apiServer = await mockServer({ answered: [question({ id: "q2", title: "解決済みの質問" })] });
+    currentSearch = "book=matthew&tab=answered";
+
+    render(await QAPage({ searchParams: Promise.resolve({ book: "matthew", tab: "answered" }) }));
+
+    expect(screen.getByRole("link", { name: /解決済みの質問/ })).toHaveAttribute("href", "/qa/q2");
+    expect(screen.getByRole("tab", { name: "未解決" })).toHaveAttribute("href", "/qa?book=matthew");
+    expect(vi.mocked(apiServer.serverFetchPage).mock.calls[0][0]).toContain("answered=true");
+  });
+
+  it("取得失敗を空一覧と誤表示せず、再試行できる", async () => {
+    const apiServer = await mockServer();
+    vi.mocked(apiServer.serverFetchPage).mockRejectedValue(new Error("Network Error"));
+    const api = await import("@/lib/api");
+    vi.spyOn(api, "fetchQuestionPage").mockRejectedValue(new Error("Network Error"));
+
+    render(await QAPage({ searchParams: Promise.resolve({}) }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("読み込めませんでした");
+    expect(screen.queryByText("この状態の質問はありません")).not.toBeInTheDocument();
   });
 
   it("1件も無いときは、質問する導線を出す", async () => {
@@ -115,7 +134,7 @@ describe("Q&A 一覧", () => {
 
     render(await QAPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText("質問はまだありません。")).toBeInTheDocument();
+    expect(await screen.findByText("この状態の質問はありません")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "質問する" })[0]).toHaveAttribute("href", "/qa?ask=1");
   });
 

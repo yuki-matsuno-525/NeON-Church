@@ -11,7 +11,11 @@ vi.mock("next/link", () => ({
     <a href={href} {...props}>{children}</a>
   ),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh, replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/plans",
+}));
 
 vi.mock("@/lib/i18nServer", async () => {
   const { translations } = await import("@/lib/i18nDictionary");

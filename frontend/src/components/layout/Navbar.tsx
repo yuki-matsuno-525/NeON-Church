@@ -25,15 +25,8 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   const pathname = usePathname();
   const rootSegment = pathname.split("/").filter(Boolean)[0] ?? "";
   const isReadRoute = pathname.startsWith("/read") || BOOKS.some((book) => book.slug === rootSegment);
-  const [scrolled, setScrolled] = React.useState(false);
   const [logoutBusy, setLogoutBusy] = React.useState(false);
   const [logoutError, setLogoutError] = React.useState(false);
-
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // 6 本のリンクは見た目も作りも同じなので、並びだけをここに持つ
   const navLinks = [
@@ -60,7 +53,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   };
 
   return (
-    <nav className={`navbar-root${scrolled ? " is-scrolled" : ""}`}>
+    <nav className="navbar-root">
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         type="button"

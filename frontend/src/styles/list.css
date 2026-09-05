@@ -4,23 +4,12 @@
    ============================================================ */
 
 /* ----- 一覧の 4 画面（qa / articles / plans / translations）で共通の部品 -----
-   この 4 画面は「見出し＋2 カラムのカード一覧」という同じ骨格を持つ。
+   この 4 画面は「見出し＋タブ＋カードの一覧」という同じ骨格を持つ。
    以前は同じ見た目を各 page.tsx が別々に書いていた（同名の定数が最大 4 個）。
    ここにまとめ、画面側はクラス名を付けるだけにする。
 
    px の直書きが混じっているのは、この作業が「重複を消す」ことだけを目的にしていて、
    見た目を 1px も変えないため。値を段（--radius-* など）に揃えるのは別の作業。 */
-
-/* カラムを横に並べる盤面。入る幅があるだけ列を作り、狭ければ縦に積む。
-   min(100%, 300px) にしているのは、画面が 300px より狭いときに
-   はみ出さないようにするため。スマホで 1 列だけ表示するときは、
-   選ばれていない列を display:none にすれば自然に 1 列幅になる。 */
-.list-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 16px;
-  align-items: start;
-}
 
 /* ----- 分類の色（トーン） -----
    「解決済みは緑」「作業中は青」のような色の使い分けは、一覧・タブ・バッジ・
@@ -78,15 +67,6 @@
 .icon-tone {
   display: inline-flex;
   color: var(--tone);
-}
-
-/* 一覧の 1 カラム分の入れ物。中にカードを縦に並べる。
-   .card より背景が薄いので、中のカードが浮いて見える。 */
-.list-column {
-  padding: 18px 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
 }
 
 /* バッジ */
@@ -255,26 +235,6 @@
   background: var(--tone);
 }
 
-/* スマホで 1 カラムずつ切り替えるタブ。選ばれているものは分類の色になる。 */
-.column-tab {
-  flex: 1;
-  min-height: 44px;
-  padding: var(--spacing-2) var(--spacing-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-alt);
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  cursor: pointer;
-}
-.column-tab[aria-selected="true"] {
-  border-color: var(--tone);
-  background: var(--tone-tint);
-  color: var(--tone);
-}
-
 /* 作業メモの 1 件。下線で区切る。 */
 .discussion-row {
   padding: 6px 0;
@@ -346,6 +306,95 @@
 /* 1 行が 2 段（題と書き出し）ある一覧用。220px だと 3 行しか見えないため。 */
 .scroll-list-tall {
   max-height: 360px;
+}
+
+/* ----- 一覧の絞り込み -----
+   検索欄はいつも出し、その他（書・言語など）は漏斗のボタンで開く。
+   読む画面のコメント欄と同じやり方。 */
+.filter-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.filter-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.filter-toggle-on {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 閉じていても絞り込みが効いていることを示す点。 */
+.filter-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-pink);
+}
+
+/* ----- パンくず -----
+   いまどこにいるかと、上の階層への戻り道。
+   広い画面では全部の階層を › でつなぎ、狭い画面ではすぐ上の 1 段だけにする。
+   長い書名が並ぶと 2 段に折り返して場所を食うため。
+   出し分けを CSS でやるのは、画面幅をブラウザ側で測ると
+   開いた直後に見た目が入れ替わってしまうから。 */
+.breadcrumb {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.breadcrumb-full {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.breadcrumb-full a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.breadcrumb-full a:hover,
+.breadcrumb-full a:focus-visible {
+  color: var(--accent);
+}
+.breadcrumb-full [aria-current="page"] {
+  color: var(--text-soft);
+}
+.breadcrumb-sep {
+  margin: 0 6px;
+  color: var(--text-faint);
+}
+/* 狭い画面用。広い画面では出さない。 */
+.breadcrumb-back {
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .breadcrumb-full {
+    display: none;
+  }
+  .breadcrumb-back {
+    display: inline-flex;
+  }
 }
 
 /* 下線で区切るタブの並び。横に長ければ中でスクロールする。 */

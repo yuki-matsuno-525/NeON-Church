@@ -36,19 +36,22 @@ test("スマホの読書画面は本文の余白が 16px になる", async ({ pa
   expect(style["padding-top"]).toBe("16px");
 });
 
-test("スマホで節を選ぶと、コメントが下から重なって出る", async ({ page }) => {
+test("スマホで節を選ぶと、コメントが画面いっぱいに出る", async ({ page }) => {
   await page.goto("/matthew/1");
   await page.getByTestId("verse-item").first().click();
 
-  const panel = await computed(page, ".reader-panel", ["position", "bottom", "left", "display"]);
+  const panel = await computed(page, ".reader-panel", ["position", "top", "bottom", "left", "display"]);
   expect(panel.position).toBe("fixed");
+  expect(panel.top).toBe("0px");
   expect(panel.bottom).toBe("0px");
   expect(panel.left).toBe("0px");
   expect(panel.display).toBe("flex");
 
-  // 本文はシートの下に隠れないよう、下に余白を取る
-  const main = await computed(page, ".reader-main", ["padding-bottom"]);
-  expect(parseFloat(main["padding-bottom"])).toBeGreaterThan(100);
+  // 上部バー（ロゴ）が隠れるところまで来ている
+  const viewport = page.viewportSize()!;
+  const box = (await page.locator(".reader-panel").boundingBox())!;
+  expect(box.y).toBe(0);
+  expect(box.height).toBeGreaterThanOrEqual(viewport.height - 1);
 });
 
 test("画面が広いときはハンバーガーボタンを出さない", async ({ page }) => {

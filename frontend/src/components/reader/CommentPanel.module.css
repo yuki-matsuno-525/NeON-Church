@@ -83,10 +83,47 @@
   line-height: 1;
 }
 
-/* コメント / Q&A / 記事 の切り替えタブ */
+/* コメント / Q&A / 記事 の切り替えタブと、その右端の絞り込みボタン。
+   下の線は外側の帯が引く。タブ側で引くと、ボタンの下だけ線が切れる。 */
+.tabBar {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--glass-border);
+}
+
 .tabList {
   display: flex;
-  border-bottom: 1px solid var(--glass-border);
+  flex: 1;
+  min-width: 0;
+}
+
+/* 並び替えと検索をしまっておくボタン。押すと下に開く。 */
+.filterButton {
+  position: relative;
+  flex: 0 0 auto;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filterButtonOn {
+  color: var(--accent);
+}
+
+/* 閉じていても絞り込みが効いていることを示す点。 */
+.filterDot {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-pink);
 }
 
 .tab {
@@ -120,19 +157,32 @@
 }
 
 /* 「コメントを書く」「質問する」の大きな誘導ボタン */
+/* 「コメントを書く」「この節について質問する」。
+   以前は光るカードと同じ見た目の大きなボタンで、節を開くたびに
+   節の本文とコメントより先に目に入っていた。書く場所だと分かればよいので、
+   言葉は残したまま入力欄のような 1 行に落とす。
+   高さ 44px は指で押せる大きさとして残す。 */
 .ctaButton {
   width: 100%;
   min-height: 44px;
-  padding: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: var(--spacing-2);
-  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
   font-family: inherit;
   font-size: var(--text-sm);
-  font-weight: 700;
+  text-align: left;
   cursor: pointer;
+}
+
+.ctaButton:hover,
+.ctaButton:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 /* 並び順の切り替え（新着 / 高評価） */
@@ -201,7 +251,10 @@
     flex: 1;
     height: auto;
     border-left: none;
-    border-top: 1px solid var(--border);
+    /* 画面いっぱいに開くので、後ろが透けないように地を塗る。
+       半透明のままだと、覆っているはずの上部バーが透けて見える
+       （本番では backdrop-filter が効かないので、なおさら透ける）。 */
+    background: var(--bg);
   }
 
   /* iOS の Safari は、指を置いた瞬間に後ろのページを送り始めることがあり、
@@ -210,6 +263,7 @@
      ブラウザに最初から送らせないようにする。押す・選ぶ操作はこれまでどおりできる。 */
   .section,
   .sectionTight,
+  .tabBar,
   .tabList {
     touch-action: none;
   }

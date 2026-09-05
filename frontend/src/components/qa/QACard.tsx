@@ -13,6 +13,12 @@ type Props = {
   question: QAQuestion;
   /** 箇所を出すか。読書ページのパネルでは、その節を見ているので出さない。 */
   showLocation?: boolean;
+  /**
+   * 解決済み / 未解決の札を出すか。
+   * 一覧はタブで分かれているので出さない。読書ページのパネルでは
+   * 両方が混ざって並ぶので、そこでは出す。
+   */
+  showStatus?: boolean;
 };
 
 /**
@@ -21,7 +27,7 @@ type Props = {
  * 読むのも書くのも詳細ページ（/qa/[id]）で行う。ここで展開や返信までできると
  * カードの高さが揃わず、一覧としてスクロールして探せなくなる。
  */
-export function QACard({ question, showLocation = true }: Props) {
+export function QACard({ question, showLocation = true, showStatus = true }: Props) {
   const t = useT();
   const { lang } = useLang();
   const formatRelativeTime = useRelativeTime();
@@ -41,17 +47,21 @@ export function QACard({ question, showLocation = true }: Props) {
       id={`question-${question.id}`}
       className="card-glow card-glow-interactive card-link block p-4"
     >
-      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-        <span
-          className={`badge badge-icon badge-tone ${answered ? "tone-ok" : "tone-wait"}`}
-        >
-          <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
-          {answered ? t.filterAnswered : t.filterUnanswered}
-        </span>
-        {showLocation && location && (
-          <span className="text-xs text-accent whitespace-nowrap">{location}</span>
-        )}
-      </div>
+      {(showStatus || (showLocation && location)) && (
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          {showStatus && (
+            <span
+              className={`badge badge-icon badge-tone ${answered ? "tone-ok" : "tone-wait"}`}
+            >
+              <Icon name={answered ? "check-circle" : "help-circle"} size={11} />
+              {answered ? t.filterAnswered : t.filterUnanswered}
+            </span>
+          )}
+          {showLocation && location && (
+            <span className="ml-auto text-xs text-accent whitespace-nowrap">{location}</span>
+          )}
+        </div>
+      )}
 
       <h3 className="card-title">
         {/* card-link-main が影でカード全体を覆うので、カードのどこを押しても質問へ飛ぶ。

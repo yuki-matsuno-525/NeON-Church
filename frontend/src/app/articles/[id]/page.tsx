@@ -8,6 +8,7 @@ import { ArticleBody } from "@/components/articles/ArticleBody";
 import { ArticleComments } from "@/components/articles/ArticleComments";
 import { ArticleOwnerActions } from "@/components/articles/ArticleOwnerActions";
 import { RelativeTime } from "@/components/ui/RelativeTime";
+import { Breadcrumb } from "@/components/list";
 
 /**
  * 共有したときやタブに出る題を、その記事のものにする。
@@ -72,6 +73,10 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="page page-detail">
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: t.articlesTitle, href: "/articles" }, { label: article.title }]} />
+      </div>
+
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {article.visibility !== "public" && (
           <span className="badge badge-muted">

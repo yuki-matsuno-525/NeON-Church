@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ArticleFeedColumn } from "./ArticleFeedColumn";
+import { ArticleFeed } from "./ArticleFeed";
 import type { Article, ListPage } from "@/lib/api";
 
 vi.mock("next/link", () => ({
@@ -33,19 +33,11 @@ const page = (items: Article[], hasMore = false): ListPage<Article> => ({
 
 function renderColumn(initial?: ListPage<Article>) {
   return render(
-    <ArticleFeedColumn
-      title="公開記事"
-      description="みんなが読める記事"
-      icon="globe"
-      tone="ok"
-      empty="まだありません"
-      excludeMine
-      initial={initial}
-    />,
+    <ArticleFeed empty="まだありません" initial={initial} />,
   );
 }
 
-describe("記事一覧の列", () => {
+describe("記事一覧のタブの中身", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -68,7 +60,7 @@ describe("記事一覧の列", () => {
 
     expect(await screen.findByRole("link", { name: "次の記事" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "最初の記事" })).toBeInTheDocument();
-    expect(api.fetchArticlePage).toHaveBeenCalledWith({ mine: undefined, excludeMine: true, tag: undefined, page: 2 });
+    expect(api.fetchArticlePage).toHaveBeenCalledWith({ mine: undefined, tag: undefined, page: 2 });
   });
 
   it("サーバー側で取れていなければブラウザ側が取りに行く", async () => {
@@ -78,7 +70,7 @@ describe("記事一覧の列", () => {
     renderColumn(undefined);
 
     expect(await screen.findByRole("link", { name: "あとから届いた記事" })).toBeInTheDocument();
-    expect(api.fetchArticlePage).toHaveBeenCalledWith({ mine: undefined, excludeMine: true, tag: undefined, page: 1 });
+    expect(api.fetchArticlePage).toHaveBeenCalledWith({ mine: undefined, tag: undefined, page: 1 });
   });
 
   it("サーバー側でもブラウザ側でも取れなければ、空ではなく失敗として出す", async () => {

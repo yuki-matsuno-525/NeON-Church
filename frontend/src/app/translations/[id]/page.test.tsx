@@ -130,7 +130,7 @@ describe("TranslationDetailPage", () => {
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
-    await screen.findByText("マタイ英訳プロジェクト");
+    await screen.findByRole("heading", { name: "マタイ英訳プロジェクト" });
     expect(screen.getByText("状態")).toBeInTheDocument();
     expect(screen.getByText("進行中")).toBeInTheDocument();
     expect(screen.getByText("1/3 (33%)")).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe("TranslationDetailPage", () => {
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
-    await screen.findByText("マタイ英訳プロジェクト");
+    await screen.findByRole("heading", { name: "マタイ英訳プロジェクト" });
     fireEvent.click(await screen.findByRole("tab", { name: "レビュー (1)" }));
 
     fireEvent.click(await screen.findByRole("button", { name: "該当ユニットへ" }));
@@ -170,7 +170,7 @@ describe("TranslationDetailPage", () => {
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
-    await screen.findByText("マタイ英訳プロジェクト");
+    await screen.findByRole("heading", { name: "マタイ英訳プロジェクト" });
     fireEvent.click(await screen.findByRole("tab", { name: "レビュー (1)" }));
 
     fireEvent.click(await screen.findByRole("button", { name: "承認" }));
@@ -226,7 +226,7 @@ describe("TranslationDetailPage", () => {
 
     render(<TranslationDetailPage params={Promise.resolve({ id: "p1" })} />);
 
-    await screen.findByText("マタイ英訳プロジェクト");
+    await screen.findByRole("heading", { name: "マタイ英訳プロジェクト" });
     fireEvent.click(screen.getByRole("button", { name: /^第5章/ }));
     await waitFor(() => expect(document.getElementById("translation-body-u1")).toBeInTheDocument());
     const textarea = document.getElementById("translation-body-u1") as HTMLTextAreaElement;

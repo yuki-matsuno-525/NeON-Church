@@ -135,6 +135,17 @@
   color: rgba(255, 255, 255, 0.94);
 }
 
+/* 何ができる場所かの一行。題より小さく、控えめな色にする。
+   word-break: auto-phrase は、日本語を文節で折り返してくれる指定。
+   これが無いと「節を引きなが／ら書いた文章」のように語の途中で切れる。 */
+.sectionDesc {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  color: var(--text-soft);
+  word-break: auto-phrase;
+}
+
 /* ----- 一覧のカード（トレンド・最近の Q&A で共通） ----- */
 
 .listHeading {

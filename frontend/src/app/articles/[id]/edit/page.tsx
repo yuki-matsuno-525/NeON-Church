@@ -21,6 +21,7 @@ import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
 import { ArticleBody } from "@/components/articles/ArticleBody";
 import { CitationPanel } from "@/components/articles/CitationPanel";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 
 const MAX_TAGS = 3;
 const MAX_TITLE_LENGTH = 120;
@@ -259,6 +260,16 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         }}
         onCancel={() => setPendingVisibility(null)}
       />
+
+      <div className="mb-3">
+        <Breadcrumb
+          items={[
+            { label: t.articlesTitle, href: "/articles" },
+            { label: title || t.articleNewTitle, href: `/articles/${id}` },
+            { label: t.articleEditShort },
+          ]}
+        />
+      </div>
 
       {/* 題と公開範囲 */}
       <div className="flex gap-3 items-center flex-wrap mb-3">

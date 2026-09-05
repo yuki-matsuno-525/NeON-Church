@@ -8,19 +8,20 @@ import { languageLabel } from "@/lib/languages";
 
 type Props = {
   project: TranslationProject;
-  /** バッジに出す状態の名前（「公開」など） */
-  statusLabel: string;
   t: Translations;
 };
 
 /**
  * 翻訳プロジェクト 1 件のカード。
  *
+ * 状態（公開・進行中・下書き）の札は持たない。一覧はタブで状態ごとに分かれていて、
+ * 1 枚ずつに同じ言葉を繰り返しても何も伝わらないため。
+ *
  * 題のリンクが影でカード全体を覆うので、どこを押しても詳細へ飛ぶ。
  * 以前はカードを丸ごと <Link> で包んでいたため、中の主催者をリンクにできなかった
  * （リンクの入れ子は HTML として無効で押せない）。
  */
-export function ProjectCard({ project, statusLabel, t }: Props) {
+export function ProjectCard({ project, t }: Props) {
   const progressPct = project.unit_count > 0
     ? Math.round((project.done_count / project.unit_count) * 100)
     : 0;
@@ -30,10 +31,6 @@ export function ProjectCard({ project, statusLabel, t }: Props) {
 
   return (
     <article className="card-glow card-glow-interactive card-link py-4 px-4 flex flex-col">
-      <div className="flex items-start gap-3 mb-3">
-        <span className="badge badge-icon badge-tone">{statusLabel}</span>
-      </div>
-
       <h3 className="card-title">
         <Link href={`/translations/${project.id}`} className="card-link-main text-inherit no-underline">
           {project.name}

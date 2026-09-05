@@ -9,6 +9,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
+import { Breadcrumb } from "@/components/list";
 
 /** 新しいプランを始める。題だけ聞いて下書きを作り、編集画面へ送る。 */
 export default function NewPlanPage() {
@@ -74,6 +75,9 @@ export default function NewPlanPage() {
         onConfirm={() => router.push("/plans")}
         onCancel={() => setConfirmCancel(false)}
       />
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: t.plansTitle, href: "/plans" }, { label: t.planNewTitle }]} />
+      </div>
       <h1 className="mt-0 mb-2 text-lg font-bold">{t.planNewTitle}</h1>
       <p className="mt-0 mb-6 text-sm text-muted">
         {t.planNewDesc}

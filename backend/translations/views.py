@@ -154,6 +154,12 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         }
         if status_param in valid_statuses:
             qs = qs.filter(status=status_param)
+        # 訳す先の言語で絞る。選択肢は GET /api/translations/languages/ が返す tag。
+        # 未知の値でも素直に絞る（該当なしになるだけで、他の企画が漏れることはない）。
+        target_language = (self.request.query_params.get("target_language") or "").strip()
+        if target_language:
+            qs = qs.filter(target_language=target_language)
+
         q = (self.request.query_params.get("q") or "").strip()
         if q:
             qs = qs.filter(

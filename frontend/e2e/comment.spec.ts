@@ -114,7 +114,12 @@ test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ p
   await page.goto("/matthew/1");
 
   // 章コメント欄にスクロール (heading 文言が label に依存して変わるため section#chapter-comments を直接使う)
-  await page.locator("#chapter-comments").scrollIntoViewIfNeeded();
+  // サーバーが描いた HTML はすぐ見えるが、React が組み立て直すあいだに要素が差し替わる。
+  // scrollIntoViewIfNeeded は差し替わっても取り直してくれない（「DOM に無い」で落ちる）ので、
+  // 先に expect で落ち着くのを待つ。expect は毎回引き直す。
+  const chapterComments = page.locator("#chapter-comments");
+  await expect(chapterComments).toBeVisible();
+  await chapterComments.scrollIntoViewIfNeeded();
 
   const ts = Date.now();
   const chapterComment = `chapter_${ts}`;

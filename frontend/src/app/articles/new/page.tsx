@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createArticle } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
+import { Breadcrumb } from "@/components/list";
 import { useT } from "@/lib/i18n";
 
 const MAX_TITLE_LENGTH = 120;
@@ -78,6 +79,9 @@ export default function NewArticlePage() {
         onConfirm={() => router.push("/articles")}
         onCancel={() => setConfirmCancel(false)}
       />
+      <div className="mb-3">
+        <Breadcrumb items={[{ label: t.articlesTitle, href: "/articles" }, { label: t.articleNewTitle }]} />
+      </div>
       <h1 className="mt-0 mb-2 text-lg font-bold">{t.articleNewTitle}</h1>
       <p className="mt-0 mb-6 text-sm text-muted">
         {t.articleNewDesc}

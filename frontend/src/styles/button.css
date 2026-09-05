@@ -52,13 +52,17 @@
   background: var(--accent);
   color: var(--accent-text);
 }
+/* 副の操作（「一覧へ戻る」「取り消す」など）。以前は枠だけで中が透明だったが、
+   暗い地の上では枠も薄い文字も沈み、押せるものだと気づけなかった。
+   主（btn-primary の光るグラデーション）とは分けたいので、単色の紫で塗る。 */
 .btn-ghost {
-  background: transparent;
-  color: var(--text-muted);
-  border-color: var(--border);
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+  font-weight: 700;
 }
 .btn-ghost:hover {
-  background: var(--bg-hover);
+  background: var(--accent-active);
 }
 /* 削除など取り返しのつかない操作。--state-danger(#ef4444) より暗いのは、
    白文字を載せたときの読みやすさ（コントラスト比 4.5 以上）を満たすため。 */
@@ -92,8 +96,10 @@
   color: var(--accent);
 }
 
-/* 一覧や詳細に並ぶ、枠だけの小さな操作ボタン（編集・削除・報告など）。
-   .btn-text（枠なし）より控えめに主張したいときに使う。 */
+/* 一覧や詳細に並ぶ、小さな操作ボタン（編集・削除・報告など）。
+   .btn-text（枠なし）より主張し、主の操作（濃い紫）よりは引く。
+   以前は中が透明で、暗い地に沈んで押せると分からなかったので薄い紫で塗る。
+   濃さは outline-button と同じにして、画面ごとに違う薄さを増やさない。 */
 .action-chip {
   display: inline-flex;
   align-items: center;
@@ -101,12 +107,17 @@
   min-height: 28px;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
+  border: 1px solid rgba(190, 95, 255, 0.45);
+  background: var(--accent-tint);
+  color: var(--text);
   font-size: var(--text-xs);
   font-family: inherit;
   cursor: pointer;
+}
+.action-chip:hover,
+.action-chip:focus-visible {
+  border-color: var(--accent);
+  background: rgba(145, 60, 240, 0.28);
 }
 
 /* 文字だけのリンクだが、指で押せる高さを確保するもの（「一覧へ戻る」など）。 */
@@ -220,20 +231,21 @@
   background: rgba(145, 60, 240, 0.28);
 }
 /* 消す操作。押し間違えると取り返しがつかないので、色で他と分ける。
-   塗らずに赤の枠と文字だけにして、隣の副操作より前に出ないようにする。 */
+   周りを塗ったので、ここだけ枠のままだと逆に沈む。赤で塗る。
+   #ef4444 ではなく暗い赤なのは、白文字を載せて読めるようにするため。 */
 .outline-button-danger {
-  border-color: rgba(239, 68, 68, 0.55);
-  background: transparent;
-  color: var(--state-danger);
+  border-color: transparent;
+  background: #b91c1c;
+  color: #fff;
+  font-weight: 700;
 }
 .outline-button-danger:hover,
 .outline-button-danger:focus-visible {
-  border-color: var(--state-danger);
-  background: rgba(239, 68, 68, 0.12);
+  background: #991b1b;
 }
 
 /* ----- 一覧の右上に出す「新規作成」 -----
-   articles / plans が同じ形をそれぞれ書いていた。塗り版と枠だけの版がある。 */
+   articles / plans が同じ形をそれぞれ書いていた。 */
 .cta-button {
   display: inline-flex;
   align-items: center;
@@ -248,12 +260,6 @@
   text-decoration: none;
   cursor: pointer;
 }
-.cta-button-outline {
-  border-color: var(--accent);
-  background: transparent;
-  color: var(--accent);
-}
-
 /* 読み終わった日に付ける印。押すたびに入り切りする。 */
 .day-toggle {
   min-height: 44px;
@@ -271,17 +277,23 @@
   cursor: default;
 }
 
-/* 引用パネルなど、狭いところに置く小さめのボタン。 */
+/* 引用パネルなど、狭いところに置く小さめのボタン。
+   中が透明だと暗い地に沈むので、action-chip と同じ薄い紫で塗る。 */
 .small-button {
   min-height: 44px;
   padding: 5px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(190, 95, 255, 0.45);
   border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-muted);
+  background: var(--accent-tint);
+  color: var(--text);
   font-family: inherit;
   font-size: var(--text-xs);
   cursor: pointer;
+}
+.small-button:hover,
+.small-button:focus-visible {
+  border-color: var(--accent);
+  background: rgba(145, 60, 240, 0.28);
 }
 /* 一回り大きい版。文字色も本文と同じにする。 */
 .small-button-strong {
