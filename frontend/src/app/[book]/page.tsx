@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { defaultTranslationForLang } from "@/lib/translations";
+import { readTranslationPreference } from "@/lib/translationPreference";
 
 function BookContent() {
   const t = useT();
@@ -99,9 +100,10 @@ function BookContent() {
       return;
     }
 
-    // UI 言語の既定訳をその本が持っていればそれを、無ければその本の訳（英訳のみの本など）を使う。
-    // meta は上で確認済みなので resolveTranslation は必ず訳を返す。
-    const tr = resolveTranslation(slug, defaultTranslationForLang(lang))!;
+    // 覚えている訳をその本が持っていればそれを、無ければその本の訳（英訳のみの本など）を使う。
+    // ここだけ UI 言語の既定訳を見ていたため、本文ページと訳が食い違っていた。
+    // その訳の本文がまだ無くてもサーバーが別の訳にたおすので、章の一覧は必ず出る。
+    const tr = resolveTranslation(slug, readTranslationPreference() ?? defaultTranslationForLang(lang))!;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);

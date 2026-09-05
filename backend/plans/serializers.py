@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from bible.editions import pick_edition
 from bible.models import Book, CanonicalBook
 from .models import (
     MAX_DAYS_PER_PLAN,
@@ -40,17 +41,9 @@ class PlanReadingSerializer(serializers.ModelSerializer):
         return obj.id in completed_reading_ids
 
     def get_book_name(self, obj) -> str:
-        editions = list(Book.objects.filter(canonical_book_id=obj.canonical_book_id))
-        if not editions:
-            return obj.canonical_book.slug
-        if obj.translation:
-            for book in editions:
-                if book.translation == obj.translation:
-                    return book.name
-        for book in editions:
-            if book.translation == "口語訳":
-                return book.name
-        return sorted(editions, key=lambda book: book.order)[0].name
+        editions = Book.objects.filter(canonical_book_id=obj.canonical_book_id)
+        book = pick_edition(editions, obj.translation)
+        return book.name if book else obj.canonical_book.slug
 
 
 class PlanDaySerializer(serializers.ModelSerializer):

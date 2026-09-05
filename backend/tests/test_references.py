@@ -153,10 +153,39 @@ def test_read_unknown_slug_is_404(api):
     assert api.get("/api/references/nosuchbook/read/3/").status_code == 404
 
 
-def test_read_missing_translation_says_book_not_found(api):
-    # 「その訳にこの書が無い」と「その章が無い」を画面が言い分けられるよう code を返す。
+def test_read_falls_back_when_the_translation_has_no_text(api):
+    # まだ本文を入れていない訳を選んでも読めなくならない。既定の訳（口語訳）にたおす。
+    # 以前はここが 404 だったため、その訳が載っている書がすべて開けなくなっていた。
     _make_matthew()
     res = api.get("/api/references/matthew/read/3/", {"translation": "存在しない訳"})
+
+    assert res.status_code == 200
+    assert res.json()["book"]["translation"] == "口語訳"
+
+
+def test_read_falls_back_to_first_edition_without_the_default(api):
+    # 既定の訳すら無い書（英訳しか無いエノク書など）は、順番が最初の版にたおす。
+    _make_matthew(_VERSIONS[1:])
+    res = api.get("/api/references/matthew/read/3/", {"translation": "存在しない訳"})
+
+    assert res.status_code == 200
+    assert res.json()["book"]["translation"] == "KJV"
+
+
+def test_read_returns_the_translations_actually_stored(api):
+    # 訳の切替に出す候補。フロントの宣言ではなく実データを答える。
+    _make_matthew()
+    res = api.get("/api/references/matthew/read/3/", {"translation": "口語訳"})
+
+    assert res.json()["translations"] == _SORTED_TRANSLATIONS
+
+
+def test_read_is_404_only_when_the_book_has_no_edition(api):
+    # 版が1冊も無いときだけ book_not_found。canonical だけ在って本文が無い状態。
+    from bible.models import CanonicalBook
+
+    CanonicalBook.objects.create(slug="matthew")
+    res = api.get("/api/references/matthew/read/3/", {"translation": "口語訳"})
 
     assert res.status_code == 404
     assert res.json()["code"] == "book_not_found"
@@ -183,12 +212,44 @@ def test_book_read_returns_book_and_all_chapters(api):
     assert sorted(c["number"] for c in data["chapters"]) == [3, 4]
 
 
-def test_book_read_missing_translation_is_404(api):
+def test_book_read_falls_back_when_the_translation_has_no_text(api):
     _make_matthew()
     res = api.get("/api/references/matthew/book/", {"translation": "存在しない訳"})
 
-    assert res.status_code == 404
-    assert res.json()["code"] == "book_not_found"
+    assert res.status_code == 200
+    data = res.json()
+    assert data["book"]["translation"] == "口語訳"
+    assert data["translations"] == _SORTED_TRANSLATIONS
+
+
+# ------------------------------------------------------------------
+# 収録済みの訳の一覧
+#
+# どの訳が読めるかは、これまでフロントの books.ts の手書き宣言しか知らなかった。
+# 宣言だけ先に足した訳を選ぶと全部の書が読めなくなっていたので、実データを答える。
+# ------------------------------------------------------------------
+def test_translation_list_returns_only_stored_translations(api):
+    _make_matthew()
+    make_book("Enoch", "R. H. Charles (EN)", 1, slug="enoch")
+
+    res = api.get("/api/bible/translations/")
+
+    assert res.status_code == 200
+    rows = res.json()
+    assert {row["id"] for row in rows} == {"口語訳", "KJV", "Nestle 1904 (GRC)", "R. H. Charles (EN)"}
+    # 収録した書の数が多い訳から並ぶ
+    assert rows[0]["books"] == 1
+    assert all(row["books"] >= 1 for row in rows)
+
+
+def test_translation_list_is_empty_before_import(api):
+    assert api.get("/api/bible/translations/").json() == []
+
+
+def test_translation_list_is_cacheable(api):
+    _make_matthew()
+    res = api.get("/api/bible/translations/")
+    assert res["Cache-Control"] == "public, max-age=3600"
 
 
 # ------------------------------------------------------------------

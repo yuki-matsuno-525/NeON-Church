@@ -26,6 +26,7 @@ import { VerseList } from "@/components/reader/VerseList";
 import { BulkBookmarkBar, useBulkBookmark } from "@/components/reader/BulkBookmarkBar";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
 
@@ -36,6 +37,12 @@ type Props = {
   translationId: string;
   /** その訳が URL（?translation=）で指定されたものか。指定されていれば以後もそれを使う */
   fromQuery: boolean;
+  /** この書で実際に本文が入っている訳。切替の候補はここから作る（books.ts の宣言ではない） */
+  translations: string[];
+  /** 頼んだ訳がまだ収録されていないときのお知らせ。無ければ null */
+  notice: string | null;
+  /** 覚えている訳がサイトのどこにも無いとき、代わりに覚え直す訳。無ければ null */
+  correctCookieTo: string | null;
   /** 本文を取ってきた DB の書 id。読書履歴の保存に使う */
   bookId: string;
   chapter: Chapter;
@@ -48,7 +55,18 @@ type Props = {
  * 本文そのものはサーバーが取ってから渡ってくる（page.tsx）。ここが受け持つのは
  * 節を選ぶ・お気に入り・コメント欄・読書履歴の記録といった、開いたあとの操作。
  */
-export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, bookId, chapter, verses }: Props) {
+export function ChapterReader({
+  slug,
+  chapterNumber,
+  translationId,
+  fromQuery,
+  translations,
+  notice,
+  correctCookieTo,
+  bookId,
+  chapter,
+  verses,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -56,6 +74,8 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
   const t = useT();
   const toast = useToast();
   const { lang } = useLang();
+  // 上に貼り付く帯の高さを測って、コメント欄がその下から始まるようにする。
+  const headerRef = useReaderHeaderHeight();
 
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
@@ -63,10 +83,16 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
   const chapterName = chapterTitle(slug, chapterNumber);
   // 章送りの行き先。章番号は連番とは限らない（トマスは第0章から、Q資料は飛び飛び）。
   const nav = adjacentChapter(slug, chapterNumber);
-  // 訳の切替候補は「この本が持つ訳」だけにする（エノク書なら Charles 英訳のみ）。
+  // 訳の切替候補は「この本に本文が入っている訳」だけにする（エノク書なら Charles 英訳のみ）。
+  // サーバーが数えた実データを使う。books.ts の宣言だけを見ていた頃は、まだ本文を
+  // 入れていない訳も候補に並び、選ぶとその訳が載っている書が全部開けなくなっていた。
   const translationOptions = useMemo(
-    () => (meta?.translations ?? []).map((tr) => ({ id: tr.id, label: translationLabel(tr.id, lang) })),
-    [meta, lang],
+    () =>
+      (translations.length > 0 ? translations : (meta?.translations ?? []).map((tr) => tr.id)).map((id) => ({
+        id,
+        label: translationLabel(id, lang),
+      })),
+    [translations, meta, lang],
   );
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -94,14 +120,20 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
       saveTranslationPreference(translationId);
       return;
     }
+    // 覚えている訳がサイトのどこにも本文を持っていないときは、今出している訳に覚え直す。
+    // そのままだと、どの書を開いても代わりの訳になってお知らせが出続けてしまう。
+    if (correctCookieTo) {
+      saveTranslationPreference(correctCookieTo);
+      return;
+    }
     // 以前はブラウザの控えに訳を覚えていた。まだ移し替えていない人のために、
     // 1度だけ Cookie へ写して読み直す（次からはサーバーが最初から正しい訳で返す）。
     const remembered = readTranslationPreference();
     if (!remembered || remembered === translationId) return;
-    if (!meta?.translations.some((tr) => tr.id === remembered)) return;
+    if (!translations.includes(remembered)) return;
     saveTranslationPreference(remembered);
     router.refresh();
-  }, [fromQuery, translationId, meta, router]);
+  }, [fromQuery, correctCookieTo, translationId, translations, router]);
 
   // 読んだところを覚える。控えはこのブラウザに、履歴はログイン中ならサーバーにも。
   useEffect(() => {
@@ -198,12 +230,14 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
     return `${pathname}${query ? `?${query}` : ""}${hash}`;
   };
 
-  const handleClosePanel = () => router.replace(verseUrl(null));
+  // 節の選び直しは URL だけを書き換える。scroll: false を付けないと Next.js が
+  // 画面を一番上へ戻してしまい、コメント欄を開くたびに読んでいた場所を見失う。
+  const handleClosePanel = () => router.replace(verseUrl(null), { scroll: false });
 
   const handleSelectVerse = (verseId: string) => {
     if (verseId === selectedVerseId) handleClosePanel();
-    else if (selectedVerseId) router.replace(verseUrl(verseId));
-    else router.push(verseUrl(verseId));
+    else if (selectedVerseId) router.replace(verseUrl(verseId), { scroll: false });
+    else router.push(verseUrl(verseId), { scroll: false });
   };
 
   const selectedVerse = verses.find((v) => v.id === selectedVerseId) ?? null;
@@ -282,7 +316,7 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
 
   return (
     <div className="min-h-page">
-      <div className="reader-sticky-header">
+      <div ref={headerRef} className="reader-sticky-header">
         <p className="reader-breadcrumb m-0 text-sm font-normal text-muted">
           <Link href="/read" className="text-muted no-underline">{t.bookList}</Link>
           {" › "}
@@ -313,6 +347,12 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
           </a>
         </div>
       </div>
+
+      {notice && (
+        <p role="status" className="m-0 py-2 px-4 text-sm text-muted border-b border-border text-center">
+          {notice}
+        </p>
+      )}
 
       {(progressError || bookmarkLoadError || versionResolutionError) && (
         <div role="alert" className="flex items-center justify-center gap-3 flex-wrap py-2 px-4 border-b border-border">
@@ -419,11 +459,12 @@ export function ChapterReader({ slug, chapterNumber, translationId, fromQuery, b
         />
       )}
 
-      {showScrollTop && (
+      {/* 一番上へ戻るボタン。コメント欄を開いている間は、その邪魔になるので出さない。 */}
+      {showScrollTop && !selectedVerse && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t.backToTop}
-          className={`fab${selectedVerseId ? " fab-raised" : ""}`}
+          className="fab"
         >
           ↑
         </button>

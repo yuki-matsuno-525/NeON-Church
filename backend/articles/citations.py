@@ -18,6 +18,7 @@ from collections import defaultdict
 
 from django.db.models import Q
 
+from bible.editions import pick_edition
 from bible.models import Book, CanonicalBook, Verse
 
 # 本文から印を抜き出す。改行をまたぐ印は認めない（書きかけの括弧を拾わないため）。
@@ -32,8 +33,6 @@ REFERENCE_PATTERN = re.compile(
     r"(?:\s*\|\s*(?P<translation>[^|]+?))?\s*$"
 )
 
-# 好んで使う既定の訳。指定が無いときはこれを探し、無ければ最初の訳を使う。
-DEFAULT_TRANSLATION = "口語訳"
 
 
 def parse_body(body: str) -> list[dict]:
@@ -138,7 +137,7 @@ def resolve_citations(citations) -> list[dict]:
 
     editions = _editions_by_canonical_book(citations)
     chosen = {
-        citation.id: _pick_edition(
+        citation.id: pick_edition(
             editions.get(citation.canonical_book_id, []), citation.translation
         )
         for citation in citations
@@ -218,25 +217,6 @@ def _editions_by_canonical_book(citations) -> dict:
     for book in Book.objects.filter(canonical_book_id__in=book_ids):
         grouped[book.canonical_book_id].append(book)
     return grouped
-
-
-def _pick_edition(editions: list, translation: str):
-    """
-    使う訳を選ぶ。指定があればその訳、無ければ既定の訳、それも無ければ最初の訳。
-
-    指定した訳が存在しなくても既定の訳にたおす（記事が壊れるより、
-    出典に別の訳名が出ているほうが書いた人も気づける）。
-    """
-    if not editions:
-        return None
-    if translation:
-        for book in editions:
-            if book.translation == translation:
-                return book
-    for book in editions:
-        if book.translation == DEFAULT_TRANSLATION:
-            return book
-    return sorted(editions, key=lambda book: book.order)[0]
 
 
 def _verses_by_chapter(citations, chosen) -> dict:

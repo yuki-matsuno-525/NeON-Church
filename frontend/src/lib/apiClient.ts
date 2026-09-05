@@ -241,6 +241,20 @@ export function fetchBooks(translation?: string): Promise<Book[]> {
   return apiFetch(`/books/${qs}`);
 }
 
+/** どの訳に本文が入っているか。訳の切替に「選べる訳」を出すための正。 */
+export type StoredTranslation = { id: string; books: number };
+
+/**
+ * サイト全体で本文が入っている訳の一覧。
+ *
+ * 読める訳の候補は長らく books.ts の手書き宣言だけが持っていた。宣言だけ先に足して
+ * 本文をまだ入れていない訳を選ぶと、その訳が載っている書がすべて開けなくなるので、
+ * 「本当に読める訳」はサーバーに聞く。
+ */
+export function fetchStoredTranslations(): Promise<StoredTranslation[]> {
+  return apiFetch("/bible/translations/");
+}
+
 export function fetchChapters(bookId: string): Promise<Chapter[]> {
   return apiFetch(`/books/${bookId}/chapters/`);
 }
@@ -274,7 +288,7 @@ export function fetchChapterRead(
   slug: string,
   chapter: number,
   translation: string
-): Promise<{ book: Book; chapter: Chapter; verses: Verse[] }> {
+): Promise<{ book: Book; chapter: Chapter; verses: Verse[]; translations: string[] }> {
   return apiFetch(
     `/references/${slug}/read/${chapter}/?translation=${encodeURIComponent(translation)}`
   );
@@ -284,7 +298,7 @@ export function fetchChapterRead(
 export function fetchBookRead(
   slug: string,
   translation: string
-): Promise<{ book: Book; chapters: Chapter[] }> {
+): Promise<{ book: Book; chapters: Chapter[]; translations: string[] }> {
   return apiFetch(`/references/${slug}/book/?translation=${encodeURIComponent(translation)}`);
 }
 

@@ -4,6 +4,8 @@ from . import views
 
 urlpatterns = [
     path("books/", views.BookListView.as_view(), name="book-list"),
+    # 実際に本文が入っている訳の一覧（translations アプリの /api/translations/ とは別物）
+    path("bible/translations/", views.TranslationListView.as_view(), name="bible-translation-list"),
     path("books/<uuid:book_id>/chapters/", views.ChapterListView.as_view(), name="chapter-list"),
     path("chapters/<uuid:chapter_id>/verses/", views.VerseListView.as_view(), name="verse-list"),
     # 箇所（canonical slug）→ 各版の書/章/節をまとめて返す（N+1 解消）

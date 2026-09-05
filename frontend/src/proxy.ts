@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { toCookieHeader } from "@/lib/cookieHeader";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -100,10 +101,7 @@ function rewriteRequestCookies(request: NextRequest, setCookies: string[]): Head
     const index = pair.indexOf("=");
     if (index > 0) jar.set(pair.slice(0, index).trim(), pair.slice(index + 1).trim());
   }
-  headers.set(
-    "cookie",
-    Array.from(jar, ([name, value]) => `${name}=${value}`).join("; ")
-  );
+  headers.set("cookie", toCookieHeader(Array.from(jar, ([name, value]) => ({ name, value }))));
   return headers;
 }
 

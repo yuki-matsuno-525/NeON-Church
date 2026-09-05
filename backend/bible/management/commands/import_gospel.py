@@ -16,9 +16,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from bible.canonical import get_or_create_book_with_canonical
+from bible.editions import DEFAULT_TRANSLATION
 from bible.models import Book, Chapter, Verse
-
-DEFAULT_TRANSLATION = "口語訳"
 
 # <a name="101-1:1"> 形式のアンカーを識別する正規表現
 _VERSE_ANCHOR = re.compile(r"^(\d+)-(\d+):(\d+)$")

@@ -2,7 +2,6 @@
 
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
-import { BIBLE_TRANSLATIONS, translationLabel } from "@/lib/translations";
 import { translations, type Translations } from "@/lib/i18nDictionary";
 import { bookLabel, formatBookLocation, relativeTime } from "@/lib/i18nFormat";
 
@@ -25,12 +24,6 @@ export function useBookLabel(slug: string): { name: string; short: string } | nu
   return lang === "en"
     ? { name: b.englishName, short: b.englishName }
     : { name: b.name, short: b.short };
-}
-
-// 全訳の一覧（翻訳プロジェクトの元訳選択など、本に依らない場面で使う）。
-export function useTranslationOptions(): { id: string; label: string }[] {
-  const { lang } = useLang();
-  return BIBLE_TRANSLATIONS.map((tr) => ({ id: tr.id, label: translationLabel(tr.id, lang) }));
 }
 
 export function useRelativeTime(): (dateStr: string) => string {

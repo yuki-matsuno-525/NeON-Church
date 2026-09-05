@@ -2,13 +2,17 @@
    幅だけは利用者がドラッグで変えられるので JavaScript 側で指定する。
    それ以外の見た目はここに置く。 */
 
+/* 上部バーと、読書画面の帯（パンくずと訳の切り替え）の下から始める。
+   以前は上部バーの下＝帯と同じ位置に貼り付いていたので、帯と重なっていた。 */
 .panel {
   position: sticky;
-  top: var(--navbar-height);
-  height: calc(100vh - var(--navbar-height));
+  top: calc(var(--navbar-height) + var(--reader-header-height));
+  height: calc(100vh - var(--navbar-height) - var(--reader-header-height));
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* パネルの中で指やホイールを動かしたとき、行き止まりでも後ろの本文へ流れないようにする。 */
+  overscroll-behavior: contain;
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -108,6 +112,7 @@
 .tabPanel {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--spacing-3) var(--spacing-4);
   display: flex;
   flex-direction: column;
@@ -165,6 +170,7 @@
 .commentList {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 var(--spacing-4);
 }
 
@@ -196,5 +202,21 @@
     height: auto;
     border-left: none;
     border-top: 1px solid var(--border);
+  }
+
+  /* iOS の Safari は、指を置いた瞬間に後ろのページを送り始めることがあり、
+     あとから JavaScript で止めても間に合わない（動き出した後の中止は聞いてもらえない）。
+     そこで、シートの中でスクロールしない段には touch-action: none を付けて、
+     ブラウザに最初から送らせないようにする。押す・選ぶ操作はこれまでどおりできる。 */
+  .section,
+  .sectionTight,
+  .tabList {
+    touch-action: none;
+  }
+  /* 中で指で送る箱には付け直す。上の none があっても、こちらが優先される。 */
+  .verseTextExpanded,
+  .tabPanel,
+  .commentList {
+    touch-action: pan-y;
   }
 }

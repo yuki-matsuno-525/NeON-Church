@@ -18,6 +18,11 @@
   padding: var(--spacing-8);
   overflow-y: auto;
 }
+/* コメント欄を入れる右の列。中の .comment-panel が、上の帯のすぐ下に貼り付く。
+   列そのものは本文と同じ高さまで伸ばしておく（貼り付く範囲になる）。 */
+.reader-panel {
+  align-self: stretch;
+}
 
 /* ----- 読書画面の上に貼り付く帯 -----
    書名と章の送り、訳の切り替えが乗る。以前は見た目を要素側に書いていたため、
@@ -286,10 +291,6 @@
   font-size: 18px;
   cursor: pointer;
 }
-/* コメント欄が下から出ているときは、その上へ避ける。 */
-.fab-raised {
-  bottom: calc(70vh + 12px);
-}
 
 @media (max-width: 768px) {
   /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
@@ -298,6 +299,10 @@
     display: block;
     /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
     padding-bottom: 70dvh;
+    /* シートを開いている間は、後ろの本文を指で送れないようにする。
+       iOS の Safari は指を置いた瞬間に送り始めるので、JavaScript で止めるだけでは
+       間に合わない。ブラウザに最初から送らせない。 */
+    touch-action: none;
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed;
@@ -323,8 +328,9 @@
     padding: var(--spacing-4);
   }
 
+  /* スマホでもスクロール中ずっと見えるようにする（PC と同じ貼り付き）。
+     以前は position: static で、少し下げると訳の切り替えが消えていた。 */
   .reader-sticky-header {
-    position: static;
     padding: 8px 16px;
     flex-direction: column;
     align-items: stretch;

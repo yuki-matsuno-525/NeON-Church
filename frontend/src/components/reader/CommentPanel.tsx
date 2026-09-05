@@ -64,6 +64,7 @@ export function CommentPanel({
   const toast = useToast();
   const { user } = useAuth();
   const isMobile = useIsMobile(768);
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -282,17 +283,88 @@ export function CommentPanel({
       if (event.key === "Escape" && !showLoginModalRef.current) onCloseRef.current();
     };
     window.addEventListener("keydown", onKeyDown);
-    closeRef.current?.focus();
+    // preventScroll を付けないと、開いた瞬間にブラウザが閉じるボタンまで画面を送ってしまう。
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      previouslyFocused?.focus();
+      previouslyFocused?.focus({ preventScroll: true });
     };
   }, []);
+
+  // スマホでは下から出るシートなので、開いている間は後ろの本文を動かないようにする。
+  // 本文が一緒に動くと、指がどちらを触っているのか分からなくなる。
+  //
+  // 通すのは「いま指が乗っている場所が、その向きへまだ動かせるスクロール領域のとき」だけ。
+  // それ以外（シートの外、シートの中でもスクロールしない節の文やタブ、一覧の端で
+  // さらに引っ張ったとき）は止める。シートの中というだけで素通しにすると、
+  // スクロールしない場所をなぞったぶんが後ろの本文へ流れてしまう。
+  // CSS の overscroll-behavior は iOS の Safari が見てくれないので、ここで判断する。
+  //
+  // html や body に overflow: hidden を掛ける手もあるが、それをすると上部バーと
+  // 読書画面の帯（どちらも position: sticky）が貼り付くのをやめて画面から消えてしまう。
+  useEffect(() => {
+    if (!isMobile) return;
+    /** 触った場所から親をたどって、シートの中でスクロールできる箱を探す。無ければ null。 */
+    const findScroller = (target: EventTarget | null) => {
+      const panel = panelRef.current;
+      if (!panel || !(target instanceof Node) || !panel.contains(target)) return null;
+      let el = target instanceof HTMLElement ? target : target.parentElement;
+      while (el && panel.contains(el)) {
+        const { overflowY } = window.getComputedStyle(el);
+        if ((overflowY === "auto" || overflowY === "scroll") && el.scrollHeight > el.clientHeight) return el;
+        el = el.parentElement;
+      }
+      return null;
+    };
+
+    /**
+     * その箱が、まだその向きへ動けるか。
+     * towardTop が正なら下へなぞった（＝中身を上へ戻す向き）。
+     * 端まで来てから同じ向きへ引くと、そのぶんが後ろのページへ流れるので、そこは止める。
+     */
+    const canScroll = (el: HTMLElement | null, towardTop: number) => {
+      if (!el) return false;
+      if (towardTop > 0) return el.scrollTop > 0;
+      if (towardTop < 0) return el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      return true;
+    };
+
+    let startY = 0;
+    // 指を置いた時点で、この指が動かしてよい箱を決めておく。
+    // 途中で指が別の場所へずれても、同じ箱を見続ける（判定が入れ替わらないように）。
+    let touchScroller: HTMLElement | null = null;
+
+    const onTouchStart = (event: TouchEvent) => {
+      startY = event.touches[0]?.clientY ?? 0;
+      touchScroller = findScroller(event.target);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      // 2本指の拡大などは邪魔しない。
+      if (event.touches.length !== 1) return;
+      const towardTop = (event.touches[0]?.clientY ?? 0) - startY;
+      if (!canScroll(touchScroller, towardTop)) event.preventDefault();
+    };
+    const onWheel = (event: WheelEvent) => {
+      // ホイールを下へ回す（deltaY が正）のは、指を上へなぞるのと同じ向き。
+      if (!canScroll(findScroller(event.target), -event.deltaY)) event.preventDefault();
+    };
+
+    // passive: false を付けないと、ブラウザは preventDefault を聞いてくれない。
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("wheel", onWheel);
+    };
+  }, [isMobile]);
 
   return (
     <>
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
       <div
+        ref={panelRef}
         className={`comment-panel ${styles.panel}`}
         role={isMobile ? "dialog" : "complementary"}
         aria-modal={isMobile ? true : undefined}

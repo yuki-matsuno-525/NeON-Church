@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { ApiError, type Book, type Chapter, type Verse } from "@/lib/api";
-import { serverFetch } from "@/lib/apiServer";
+import { ApiError, type Book, type Chapter, type StoredTranslation, type Verse } from "@/lib/api";
+import { serverFetch, serverFetchPublic } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { getRequestTranslation } from "@/lib/serverLanguage";
 import { getBookBySlug, resolveTranslation } from "@/lib/books";
@@ -10,7 +10,20 @@ import { RetryButton } from "@/components/ui";
 import { ChapterReader } from "@/components/reader/ChapterReader";
 import { TranslationSwitchActions } from "@/components/reader/TranslationSwitchActions";
 
-type ChapterRead = { book: Book; chapter: Chapter; verses: Verse[] };
+// translations は新しいサーバーだけが返す。入れ替えの最中は届かないことがある。
+type ChapterRead = { book: Book; chapter: Chapter; verses: Verse[]; translations?: string[] };
+
+/** 収録済みの訳の一覧。取れなくても本文は出したいので、失敗は null にして先へ進む。 */
+const STORED_TRANSLATIONS_TTL_SECONDS = 60 * 60;
+
+async function storedTranslations(): Promise<string[] | null> {
+  try {
+    const rows = await serverFetchPublic<StoredTranslation[]>("/bible/translations/", STORED_TRANSLATIONS_TTL_SECONDS);
+    return rows.map((row) => row.id);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * 聖書本文の1章。
@@ -18,6 +31,9 @@ type ChapterRead = { book: Book; chapter: Chapter; verses: Verse[] };
  * 本文はサーバー側で取ってから返す。以前は画面が出てから取りに行っていたので、
  * 開いた直後は枠だけだった。どの訳で読むかは Cookie に覚えてあるので、
  * サーバーもその訳を知っている。
+ *
+ * 訳の候補は books.ts の宣言ではなく、サーバーが答えた「実際に本文がある訳」を使う。
+ * 宣言だけ先に足した訳を選ぶと、以前はその訳が載っている書がすべて 404 になっていた。
  *
  * 開いたあとの操作（節を選ぶ・お気に入り・コメント欄）は ChapterReader が持つ。
  */
@@ -40,17 +56,22 @@ export default async function ChapterPage({
 
   // ?translation= がこの本の訳を指していればそれを優先（今日の聖句などからの遷移用）。
   const queryTranslation = fromQuery && meta.translations.some((tr) => tr.id === fromQuery) ? fromQuery : null;
-  const preferred = queryTranslation ?? (await getRequestTranslation());
+  const remembered = await getRequestTranslation();
+  const preferred = queryTranslation ?? remembered;
   // meta を確認済みなので resolveTranslation は必ず訳を返す。
   const active = resolveTranslation(slug, preferred)!;
 
   let data: ChapterRead;
+  let stored: string[] | null;
   try {
-    data = await serverFetch<ChapterRead>(
-      `/references/${slug}/read/${chapterNumber}/?translation=${encodeURIComponent(active.id)}`,
-    );
+    [data, stored] = await Promise.all([
+      serverFetch<ChapterRead>(
+        `/references/${slug}/read/${chapterNumber}/?translation=${encodeURIComponent(active.id)}`,
+      ),
+      storedTranslations(),
+    ]);
   } catch (cause) {
-    // サーバーは「その訳にこの書が無い」「その章が無い」を code で言い分ける。
+    // サーバーは「その書の版が1つも無い」「その章が無い」を code で言い分ける。
     const code = cause instanceof ApiError ? cause.code : undefined;
     const message =
       code === "book_not_found"
@@ -81,12 +102,25 @@ export default async function ChapterPage({
     );
   }
 
+  // 頼んだ訳と返ってきた訳が違う ＝ その訳はまだ本文が入っていない。黙って別の訳を
+  // 出すと「なぜ違う言語なのか」が分からないので、本文の上で理由を伝える。
+  const served = data.book.translation;
+  const notice =
+    served === active.id ? null : t.translationFallbackNotice(translationLabel(active.id, lang), translationLabel(served, lang));
+
+  // 覚えている訳がサイトのどこにも無いなら、Cookie ごと直す。放っておくと
+  // どの書を開いても代わりの訳になり、お知らせが出続けてしまう。
+  const rememberedIsGone = stored !== null && stored.length > 0 && !stored.includes(remembered);
+
   return (
     <ChapterReader
       slug={slug}
       chapterNumber={chapterNumber}
-      translationId={active.id}
+      translationId={served}
       fromQuery={queryTranslation !== null}
+      translations={data.translations ?? []}
+      notice={notice}
+      correctCookieTo={rememberedIsGone && !queryTranslation ? served : null}
       bookId={data.book.id}
       chapter={data.chapter}
       verses={data.verses}
