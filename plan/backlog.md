@@ -4,7 +4,7 @@
 - 対象ブランチ: `codex/all-features-bug-audit`
 - 対象worktree: `C:\Users\ymats\NeON-Church-all-features-bug-audit`
 - 基準コミット: `abfefac`
-- 状態: 実行待ち（本書のチェック項目はまだ完了していない）
+- 状態: 実行中（完了条件を満たしたStepだけを順次closeする）
 
 ## 1. 目的
 
@@ -592,12 +592,12 @@ Step 1で `docs/release-audit/` 以下に次の台帳を作る。
 4. backendで全`pytest`を実行し、passを確認する。
 5. frontendで全`npm test`を実行し、passを確認する。
 6. Stepに該当するlint、typecheck、build、OpenAPI、PostgreSQL、E2E、security、visual、performance等の追加gateを実行する。
-7. warning、skip、flake、retry救済、未追跡artifactがないことを確認する。
+7. 当該Stepで新たに生じたwarning、skip、flake、retry救済、未追跡artifactがないことを確認する。既存または監査で発見したものは、黙認せずFindingへ登録し、解消対象Stepを割り当てる。
 8. 意図しない視覚/UI/UX差分がないことを確認する。
 9. 小さく説明可能なcommitを作成する。
 10. `codex/all-features-bug-audit`を`git push`する。
 
-テストが落ちたまま、または証跡が不足したままcheckboxを完了にせず、pushしない。
+段階的なStep完了は既知リスクの免除を意味しない。Step 12の最終判定では、前節のrelease gateに従って有効機能のwarning、skip、flake、retry救済を0にする。テストが落ちたまま、当該Stepの証跡が不足したまま、または発見事項が未追跡のままcheckboxを完了にせず、pushしない。
 
 ## 11. マルチエージェント運用
 
