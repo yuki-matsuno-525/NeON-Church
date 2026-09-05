@@ -85,7 +85,7 @@ describe("表紙", () => {
 
     render(await Home());
 
-    expect(screen.getByRole("link", { name: "記事" })).toHaveAttribute("href", "/articles");
+    expect(screen.getByRole("link", { name: /^記事/ })).toHaveAttribute("href", "/articles");
   });
 
   it("今日の聖句・盛り上がっている意見・最近の質問を、開いた直後から出す", async () => {
@@ -103,7 +103,7 @@ describe("表紙", () => {
 
     render(await Home());
 
-    expect(screen.getByRole("link", { name: "記事" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^記事/ })).toBeInTheDocument();
     expect(screen.getByText("本日の聖句を取得できませんでした")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("読み込めませんでした");
   });

@@ -15,7 +15,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { RetryButton } from "@/components/ui";
 import styles from "./Home.module.css";
 
-type HomeSection = { title: string; href: string; icon: string; featured?: boolean };
+type HomeSection = { title: string; description: string; href: string; icon: string; featured?: boolean };
 
 // 表紙に出すのは冒頭の数件だけ。
 const RECENT_QA_LIMIT = 4;
@@ -36,11 +36,11 @@ export default async function Home() {
   const lang = await getRequestLanguage();
 
   const sections: HomeSection[] = [
-    { title: t.read, href: "/read", icon: "/img/icon-read.webp", featured: true },
-    { title: t.qa, href: "/qa", icon: "/img/icon-qa.webp" },
-    { title: t.translate, href: "/translations", icon: "/img/icon-translation.webp" },
-    { title: t.articles, href: "/articles", icon: "/img/icon-articles.webp" },
-    { title: t.plans, href: "/plans", icon: "/img/icon-plans.webp" },
+    { title: t.read, description: t.homeReadDesc, href: "/read", icon: "/img/icon-read.webp", featured: true },
+    { title: t.qa, description: t.homeQaDesc, href: "/qa", icon: "/img/icon-qa.webp" },
+    { title: t.translate, description: t.homeTranslateDesc, href: "/translations", icon: "/img/icon-translation.webp" },
+    { title: t.articles, description: t.homeArticlesDesc, href: "/articles", icon: "/img/icon-articles.webp" },
+    { title: t.plans, description: t.homePlansDesc, href: "/plans", icon: "/img/icon-plans.webp" },
   ];
 
   // どれか1つが取れなくても、残りは出す。
@@ -190,7 +190,7 @@ function TrendingCard({ comment, t, lang }: { comment: TrendingComment; t: Trans
   );
 }
 
-function SectionCard({ title, href, icon, featured = false }: HomeSection) {
+function SectionCard({ title, description, href, icon, featured = false }: HomeSection) {
   // 触れたときに明るくするのは CSS の :hover / :focus-visible に任せる。
   // 以前は JavaScript で style を直接書き換えていたため、キーボードで
   // 選んだときには光らなかった。
@@ -209,6 +209,9 @@ function SectionCard({ title, href, icon, featured = false }: HomeSection) {
         <img src={icon} alt="" className={styles.sectionIcon} />
         <p className={styles.sectionTitle}>{title}</p>
       </div>
+      {/* 名前だけでは何ができる場所か分からなかったので、一行だけ足す。
+          絵の横ではなくカードの幅いっぱいに置く（横だと文の途中で折り返す）。 */}
+      <p className={styles.sectionDesc}>{description}</p>
     </Link>
   );
 }
