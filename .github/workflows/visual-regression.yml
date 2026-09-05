@@ -269,12 +269,43 @@ jobs:
               > /work/artifacts/visual-regression/candidate-evidence.sha256
           '
 
-      - name: Prove major journeys pass ten consecutive times without retries
-        id: release_smoke
+      - name: Repeat visual rendering against the same snapshots
+        id: visual_repeat
         if: >-
           ${{ always() &&
               (steps.compare_integrity.outcome == 'success' ||
                steps.candidate_integrity.outcome == 'success') }}
+        shell: bash
+        run: >-
+          docker exec
+          --env PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report-visual-repeat
+          --workdir /work/frontend "$VISUAL_CONTAINER"
+          npm run e2e:visual --
+          --output=test-results-visual-repeat
+
+      - name: Verify repeated visual evidence is complete
+        id: visual_repeat_integrity
+        if: ${{ always() && steps.visual_repeat.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER" bash -lc '
+            actual="$(mktemp)"
+            find e2e/visual-baseline.spec.ts-snapshots -maxdepth 1 -type f -name "*.png" \
+              -printf "%f\n" | LC_ALL=C sort > "$actual"
+            diff -u e2e/visual-snapshot-manifest.txt "$actual"
+            expected_count="$(wc -l < e2e/visual-snapshot-manifest.txt)"
+            test "$expected_count" -gt 0
+            test "$(find test-results-visual-repeat -type f -name "*.webm" | wc -l)" -eq "$expected_count"
+            find e2e/visual-baseline.spec.ts-snapshots test-results-visual-repeat \
+              -type f \( -name "*.png" -o -name "*.webm" \) -print0 \
+              | sort -z | xargs -0 sha256sum \
+              > /work/artifacts/visual-regression/repeated-visual-evidence.sha256
+          '
+
+      - name: Prove major journeys pass ten consecutive times without retries
+        id: release_smoke
+        if: ${{ always() && steps.visual_repeat_integrity.outcome == 'success' }}
         shell: bash
         run: >-
           docker exec
@@ -291,6 +322,7 @@ jobs:
         if: >-
           ${{ always() &&
               steps.candidate_integrity.outcome == 'success' &&
+              steps.visual_repeat_integrity.outcome == 'success' &&
               steps.release_smoke.outcome == 'success' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -298,6 +330,7 @@ jobs:
           path: |
             frontend/e2e/visual-baseline.spec.ts-snapshots/
             artifacts/visual-regression/candidate-evidence.sha256
+            artifacts/visual-regression/repeated-visual-evidence.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -316,14 +349,14 @@ jobs:
       - name: Upload operation videos
         if: >-
           ${{ always() &&
-              (steps.compare_integrity.outcome == 'success' ||
-               steps.candidate_integrity.outcome == 'success') }}
+               steps.visual_repeat_integrity.outcome == 'success' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: visual-operation-videos-${{ github.sha }}
           path: |
             frontend/test-results-visual-compare/**/*.webm
             frontend/test-results-visual-candidates/**/*.webm
+            frontend/test-results-visual-repeat/**/*.webm
           if-no-files-found: error
           retention-days: 14
 
@@ -335,9 +368,11 @@ jobs:
           path: |
             frontend/playwright-report-visual-compare/
             frontend/playwright-report-visual-candidates/
+            frontend/playwright-report-visual-repeat/
             frontend/playwright-report-release-smoke/
             frontend/test-results-visual-compare/
             frontend/test-results-visual-candidates/
+            frontend/test-results-visual-repeat/
             frontend/test-results-release-smoke/
             artifacts/visual-regression/
           if-no-files-found: warn
