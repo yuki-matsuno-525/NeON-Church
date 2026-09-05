@@ -134,7 +134,138 @@ def test_作成日時が過去にばらける(seeded):
     assert len(set(times)) > 1, "全部が同じ日時になっている"
 
 
-def test_基準時刻を固定できる(scripture):
+def _visual_seed_signature():
+    """Return stable, user-visible seed data without random UUID primary keys."""
+
+    return {
+        "comments": list(
+            Comment.objects.order_by("body", "user__username").values_list(
+                "body",
+                "user__username",
+                "canonical_book__slug",
+                "chapter_number",
+                "verse_number",
+                "source_translation",
+                "translation_project__name",
+                "parent__body",
+                "is_deleted",
+                "created_at",
+            )
+        ),
+        "comment_tags": list(
+            Comment.objects.order_by("body", "tags__name").values_list("body", "tags__name")
+        ),
+        "articles": list(
+            Article.objects.order_by("title", "owner__username").values_list(
+                "title",
+                "owner__username",
+                "summary",
+                "body",
+                "visibility",
+                "created_at",
+            )
+        ),
+        "article_tags": list(
+            Article.objects.order_by("title", "tags__name").values_list("title", "tags__name")
+        ),
+        "article_citations": list(
+            ArticleCitation.objects.order_by("article__title", "order", "raw").values_list(
+                "article__title",
+                "raw",
+                "kind",
+                "canonical_book__slug",
+                "chapter_number",
+                "verse_number_start",
+                "verse_number_end",
+                "translation",
+                "order",
+            )
+        ),
+        "plans": list(
+            Plan.objects.order_by("title", "owner__username").values_list(
+                "title",
+                "owner__username",
+                "description",
+                "note",
+                "visibility",
+                "created_at",
+            )
+        ),
+        "plan_days": list(
+            PlanDay.objects.order_by("plan__title", "number").values_list(
+                "plan__title", "number", "title", "devotional"
+            )
+        ),
+        "plan_readings": list(
+            PlanDayReading.objects.order_by(
+                "day__plan__title", "day__number", "order"
+            ).values_list(
+                "day__plan__title",
+                "day__number",
+                "canonical_book__slug",
+                "chapter_number",
+                "translation",
+                "order",
+            )
+        ),
+        "questions": list(
+            Question.objects.order_by("title", "user__username").values_list(
+                "title",
+                "user__username",
+                "body",
+                "canonical_book__slug",
+                "chapter_number",
+                "verse_number",
+                "source_translation",
+                "best_answer__body",
+                "is_deleted",
+                "created_at",
+            )
+        ),
+        "question_tags": list(
+            Question.objects.order_by("title", "tags__name").values_list(
+                "title", "tags__name"
+            )
+        ),
+        "answers": list(
+            Answer.objects.order_by("question__title", "created_at", "body").values_list(
+                "question__title", "user__username", "body", "is_deleted", "created_at"
+            )
+        ),
+        "translation_projects": list(
+            TranslationProject.objects.order_by("name", "owner__username").values_list(
+                "name",
+                "owner__username",
+                "description",
+                "source_book__canonical_book__slug",
+                "source_book__translation",
+                "target_language",
+                "status",
+                "created_at",
+            )
+        ),
+        "translation_memberships": list(
+            TranslationMembership.objects.order_by("project__name", "user__username").values_list(
+                "project__name", "user__username", "role", "status"
+            )
+        ),
+        "translation_units": list(
+            TranslationUnit.objects.order_by(
+                "project__name", "verse__chapter__number", "verse__number"
+            ).values_list(
+                "project__name",
+                "verse__chapter__book__canonical_book__slug",
+                "verse__chapter__number",
+                "verse__number",
+                "assigned_to__username",
+                "body",
+                "status",
+            )
+        ),
+    }
+
+
+def test_基準時刻と主要表示データを固定できる(scripture):
     reference_time = "2026-08-02T12:00:00+09:00"
     call_command(
         "seed_demo",
@@ -145,9 +276,7 @@ def test_基準時刻を固定できる(scripture):
         "--reference-time",
         reference_time,
     )
-    first_run = list(
-        Comment.objects.order_by("body").values_list("body", "created_at")[:20]
-    )
+    first_run = _visual_seed_signature()
 
     call_command(
         "seed_demo",
@@ -159,9 +288,7 @@ def test_基準時刻を固定できる(scripture):
         "--reference-time",
         reference_time,
     )
-    second_run = list(
-        Comment.objects.order_by("body").values_list("body", "created_at")[:20]
-    )
+    second_run = _visual_seed_signature()
 
     assert second_run == first_run
 
