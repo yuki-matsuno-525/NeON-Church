@@ -1,5 +1,6 @@
 // この部品は受け取ったものを描くだけなので、サーバー側で組み立てる画面からも使える
 // （"use client" を付けると、使う側がサーバーでもブラウザ側に回ってしまう）。
+import type { MouseEvent } from "react";
 import Link from "next/link";
 
 export type Crumb = {
@@ -11,7 +12,7 @@ export type Crumb = {
    * ブラウザ側で動く画面からしか渡せない。渡さないときは onClick 自体を付けない
    * （サーバー側で組み立てる画面から使えなくなるため）。
    */
-  onNavigate?: () => void;
+  onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 /**
