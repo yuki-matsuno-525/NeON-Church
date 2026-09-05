@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/noto-serif-jp/wght.css";
+import "@/styles/noto-serif-jp.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
@@ -8,8 +8,8 @@ import { siteCopy } from "@/lib/siteCopy";
 import { getRequestLanguage } from "@/lib/serverLanguage";
 
 // 本文はシステム日本語フォント（globals.css の --font-sans）を使い、見出しだけ
-// Noto Serif JP を読む。Fontsource の固定版を自己ホストし、build が Google Fonts の
-// 可用性や配信内容に依存しないようにする。
+// Noto Serif JP を読む。旧 next/font と同一の配布ファイルを固定して自己ホストし、
+// build が Google Fonts の可用性や配信内容に依存しないようにする。
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
