@@ -108,6 +108,11 @@ def test_公開状態と解決状態が両方そろう(seeded):
     assert Plan.objects.filter(visibility=Plan.VISIBILITY_PUBLIC).exists()
     assert Question.objects.filter(best_answer__isnull=False).exists(), "解決済みが無い"
     assert Question.objects.filter(best_answer__isnull=True).exists(), "未解決が無い"
+    assert set(TranslationProject.objects.values_list("status", flat=True)) == {
+        TranslationProject.STATUS_DRAFT,
+        TranslationProject.STATUS_ACTIVE,
+        TranslationProject.STATUS_PUBLISHED,
+    }, "small seedで翻訳の全ライフサイクル状態が再現できない"
 
 
 def test_日本語と英語が混ざる(seeded):
@@ -127,6 +132,53 @@ def test_返信の木と論理削除がある(seeded):
 def test_作成日時が過去にばらける(seeded):
     times = list(Comment.objects.values_list("created_at", flat=True)[:50])
     assert len(set(times)) > 1, "全部が同じ日時になっている"
+
+
+def test_基準時刻を固定できる(scripture):
+    reference_time = "2026-08-02T12:00:00+09:00"
+    call_command(
+        "seed_demo",
+        "--scale",
+        "small",
+        "--seed",
+        "1",
+        "--reference-time",
+        reference_time,
+    )
+    first_run = list(
+        Comment.objects.order_by("body").values_list("body", "created_at")[:20]
+    )
+
+    call_command(
+        "seed_demo",
+        "--wipe",
+        "--scale",
+        "small",
+        "--seed",
+        "1",
+        "--reference-time",
+        reference_time,
+    )
+    second_run = list(
+        Comment.objects.order_by("body").values_list("body", "created_at")[:20]
+    )
+
+    assert second_run == first_run
+
+
+@pytest.mark.parametrize(
+    "reference_time",
+    ["not-a-date", "2026-08-02T12:00:00"],
+)
+def test_基準時刻はoffset付きISO8601だけを受け付ける(scripture, reference_time):
+    with pytest.raises(CommandError, match="UTC offset付きISO 8601"):
+        call_command(
+            "seed_demo",
+            "--scale",
+            "small",
+            "--reference-time",
+            reference_time,
+        )
 
 
 def test_引用の索引が本文から作られる(seeded):

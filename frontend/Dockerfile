@@ -5,7 +5,7 @@
 # ローカルの docker-compose 開発環境専用。
 # ==============================================================
 
-FROM node:22-alpine
+FROM node:22.23.1-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
 
 WORKDIR /app
 

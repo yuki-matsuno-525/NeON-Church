@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /**
  * スマホ幅でのレイアウトが崩れていないことを、実際の計算結果で確かめる。

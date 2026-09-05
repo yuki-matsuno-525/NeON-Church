@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
 
 test("Rp-1: 他ユーザーのコメントを報告できる", async ({ page, request }) => {

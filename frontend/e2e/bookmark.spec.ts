@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { registerUser, loginWithUI } from "./helpers";
 
 // 節を選択すると右の CommentPanel ヘッダーにお気に入り(リボン)アイコンが現れる。

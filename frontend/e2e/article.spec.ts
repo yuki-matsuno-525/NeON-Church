@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { registerUser, loginWithUI } from "./helpers";
 
 /**
@@ -86,7 +86,12 @@ test("A-4: 公開した記事は、引用した節のページから引ける", 
   await expect(page.getByText(title)).toBeVisible();
 });
 
-test("A-5: 下書きは他の人から見えない", async ({ page, request, browser }) => {
+test("A-5: 下書きは他の人から見えない", async ({
+  page,
+  request,
+  browser,
+  browserDiagnostics,
+}) => {
   const author = await registerUser(request, "_a5a");
   await loginWithUI(page, author.username, author.password);
 
@@ -99,6 +104,7 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   // 別のユーザーで開くと読めない
   const other = await registerUser(request, "_a5b");
   const context = await browser.newContext();
+  await browserDiagnostics.monitorContext(context);
   const otherPage = await context.newPage();
   await loginWithUI(otherPage, other.username, other.password);
   await otherPage.goto(url);

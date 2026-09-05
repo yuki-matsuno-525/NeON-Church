@@ -1,0 +1,229 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, codex/all-features-bug-audit]
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: Generate reviewed Linux snapshot candidates as an artifact
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chromium-fixed-seed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
+
+    services:
+      postgres:
+        image: postgres:16.15-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_DB: neon_church_visual
+          POSTGRES_USER: neon_visual
+          POSTGRES_PASSWORD: visual-${{ github.run_id }}-${{ github.run_attempt }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neon_visual -d neon_church_visual"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      CI: "true"
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_DEV_THROTTLE_RATE: 1000/min
+      DJANGO_SECRET_KEY: visual-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: http://localhost:3000
+      POSTGRES_DB: neon_church_visual
+      POSTGRES_USER: neon_visual
+      POSTGRES_PASSWORD: visual-${{ github.run_id }}-${{ github.run_attempt }}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
+      PLAYWRIGHT_API_BASE: http://localhost:8000
+      PLAYWRIGHT_VISUAL_BASELINE: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate ephemeral visual-test credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "VISUAL_BASELINE_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          echo "VISUAL_BASELINE_USER_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+          test -n "$POSTGRES_PASSWORD"
+          test -n "$DJANGO_SECRET_KEY"
+
+      - name: Set up Python 3.13.15
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.15"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Build fixed visual database
+        working-directory: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          python manage.py migrate
+          python manage.py import_gospel --path ../text
+          python manage.py seed_demo \
+            --wipe \
+            --scale small \
+            --seed 42 \
+            --reference-time "2026-08-02T12:00:00+09:00" \
+            --admin-username visual_admin \
+            --admin-password "$VISUAL_BASELINE_ADMIN_PASSWORD" \
+            --user-password "$VISUAL_BASELINE_USER_PASSWORD" \
+            > /dev/null
+
+      - name: Start backend
+        working-directory: backend
+        shell: bash
+        run: |
+          mkdir -p ../artifacts/visual-regression
+          nohup python manage.py runserver 0.0.0.0:8000 \
+            > ../artifacts/visual-regression/backend.log 2>&1 &
+
+      - name: Wait for backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:8000/healthz/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/visual-regression/backend.log
+          exit 1
+
+      - name: Set up Node.js 22.23.1
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.1"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Verify Playwright image and package versions match
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('@playwright/test/package.json').version")" = "1.59.1"
+          test "$(npx playwright --version)" = "Version 1.59.1"
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Start frontend
+        working-directory: frontend
+        shell: bash
+        run: |
+          nohup npm run start > ../artifacts/visual-regression/frontend.log 2>&1 &
+
+      - name: Wait for frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/visual-regression/frontend.log
+          exit 1
+
+      - name: Compare committed visual baselines
+        id: compare
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.update_snapshots }}
+        continue-on-error: true
+        working-directory: frontend
+        run: >-
+          npx playwright test e2e/visual-baseline.spec.ts
+          --project=chromium
+          --output=test-results-visual-compare
+
+      - name: Generate Linux snapshot candidates
+        if: >-
+          ${{ always() &&
+              ((github.event_name == 'workflow_dispatch' && inputs.update_snapshots) ||
+               steps.compare.outcome == 'failure') }}
+        working-directory: frontend
+        run: >-
+          npx playwright test e2e/visual-baseline.spec.ts
+          --project=chromium
+          --output=test-results-visual-candidates
+          --update-snapshots
+
+      - name: Upload Linux snapshot candidates
+        if: >-
+          ${{ always() &&
+              ((github.event_name == 'workflow_dispatch' && inputs.update_snapshots) ||
+               steps.compare.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-snapshot-candidates-${{ github.sha }}
+          path: frontend/e2e/visual-baseline.spec.ts-snapshots/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload operation videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-operation-videos-${{ github.sha }}
+          path: |
+            frontend/test-results-visual-compare/**/*.webm
+            frontend/test-results-visual-candidates/**/*.webm
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostics
+        if: ${{ failure() || steps.compare.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-diagnostics-${{ github.sha }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results-visual-compare/
+            frontend/test-results-visual-candidates/
+            artifacts/visual-regression/
+          if-no-files-found: warn
+          retention-days: 14
+
+      # continue-on-error is used only so the first branch run can publish missing
+      # Linux PNG candidates. The original comparison remains the release verdict.
+      - name: Preserve comparison failure after artifact upload
+        if: ${{ always() && steps.compare.outcome == 'failure' }}
+        shell: bash
+        run: exit 1

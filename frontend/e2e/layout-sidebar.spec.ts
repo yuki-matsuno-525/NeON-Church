@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /**
  * どのページでも、本文が左のサイドバーに重ならないことを確かめる。

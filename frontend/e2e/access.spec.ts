@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
 
 test("P-1: 他者のコメントに削除ボタンが表示されない", async ({ page, request }) => {

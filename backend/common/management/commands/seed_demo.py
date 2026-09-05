@@ -26,6 +26,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Max
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from articles.citations import parse_body
 from articles.models import (
@@ -183,13 +184,21 @@ class Command(BaseCommand):
             default=20260802,
             help="乱数の種。同じ種なら同じデータができる",
         )
+        parser.add_argument(
+            "--reference-time",
+            default="",
+            help=(
+                "作成日時を生成するときの基準時刻（ISO 8601、UTC offset必須）。"
+                "省略時は現在時刻を使う"
+            ),
+        )
 
     # ── 入口 ────────────────────────────────────────────────────────────────
 
     def handle(self, *args, **options):
         self.rng = random.Random(options["seed"])
         self.scale = SCALES[options["scale"]]
-        self.now = timezone.now()
+        self.now = self._reference_time(options["reference_time"])
         self.counts = {}
 
         if options["wipe"]:
@@ -232,6 +241,20 @@ class Command(BaseCommand):
         self._seed_reports(people, comments, questions, answers)
 
         self._report(admin, admin_password, user_password, article_comments)
+
+    @staticmethod
+    def _reference_time(raw_value):
+        """固定seed用の基準時刻を検証する。通常利用では現在時刻を返す。"""
+        if not raw_value:
+            return timezone.now()
+
+        value = parse_datetime(raw_value)
+        if value is None or timezone.is_naive(value):
+            raise CommandError(
+                "--reference-time はUTC offset付きISO 8601で指定してください"
+                "（例: 2026-08-02T12:00:00+09:00）"
+            )
+        return value
 
     # ── 片付け ──────────────────────────────────────────────────────────────
 
@@ -906,6 +929,11 @@ class Command(BaseCommand):
             + [TranslationProject.STATUS_ACTIVE] * 3
             + [TranslationProject.STATUS_DRAFT] * 2
         )
+        required_statuses = (
+            TranslationProject.STATUS_PUBLISHED,
+            TranslationProject.STATUS_ACTIVE,
+            TranslationProject.STATUS_DRAFT,
+        )
         source_books = list(
             Book.objects.filter(
                 id__in=[entry["rep_book_id"] for entry in self.catalog]
@@ -928,7 +956,13 @@ class Command(BaseCommand):
                 target_language=(
                     locale.LANG if self.rng.random() < 0.6 else self.rng.choice(languages)
                 ),
-                status=self.rng.choice(statuses),
+                # smallでも主要ライフサイクルを必ず目視できるよう、
+                # 最初の3件は確定的に割り当て、以後だけ分布付きで選ぶ。
+                status=(
+                    required_statuses[index]
+                    if index < len(required_statuses)
+                    else self.rng.choice(statuses)
+                ),
             ))
             times.append(self._past(bias=1.5))
         self._save(TranslationProject, projects, times, "翻訳プロジェクト")
