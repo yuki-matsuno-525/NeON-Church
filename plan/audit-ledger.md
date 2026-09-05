@@ -6,9 +6,9 @@
 |---|---|
 | worktree | `C:\Users\ymats\NeON-Church-all-features-bug-audit` |
 | branch | `codex/all-features-bug-audit` |
-| 記録時 HEAD | `2b63e7a` |
+| 記録時 HEAD | `f3b9d7c` |
 | 実行中 Step | Step 0: 再現可能なベースライン |
-| 視覚 CI | run `33972582629`（plan editorの`networkidle` timeoutを検出、修正済み） |
+| 視覚 CI | run `33974352447`（50画面×2一致・主要7導線×10成功、golden未登録による意図的redのみ） |
 | 固定時刻 | `2026-08-02T12:00:00+09:00` |
 | 固定 seed | `42` |
 | main 保護 | 元 worktree のユーザー変更には未接触 |
@@ -23,14 +23,14 @@
 - 候補画像と操作動画の件数をmanifestから導出し、ファイル名・hashを検証する。
 - 全routeのdesktopに加え、mobile・英語・認証route・主要6画面のfull-pageを含む50枚へ拡張済み。
 - seedの同一性を、コメント20件から記事・プラン・Q&A・翻訳を含む主要表示データ全体へ拡張済み。
+- run `33974352447` で同一SHA・seedの50画面を二重生成し、snapshot hash差分0を確認済み。主要7導線も各10回retryなしで成功した。
+- 50枚の候補はhash・破損・寸法・空画像を機械確認し、代表画面と最長full-pageを目視確認してgoldenへ採用済み。
+- Noto Serif JPはOFL-1.1のFontsource固定版`5.3.0`へ移し、Google Fontsへのbuild-time依存を除去。production buildはwarning 0で成功済み。
 
 ## Step 0 の未完了ゲート
 
-- run `33959059962` で匿名認証確認の正常な401、run `33959814584` で意図的404、run `33972582629` でautosave中の`networkidle` timeoutを順に検出。いずれも狭い回帰テストまたは利用者に見えるready条件へ修正済み。CI再実行待ち。
-- 成功した Linux 候補画像だけを取得し、人手で代表画面を確認する。
-- golden を commit 後、比較 CI を緑にする。
-- 同一 SHA・同一 seed の二重生成で PNG hash が一致することを証明する。
-- Google Fonts の build-time 外部依存を、デザイン差分を確認しつつ固定・自己ホスト化する。
+- run `33959059962` で匿名認証確認の正常な401、run `33959814584` で意図的404、run `33972582629` でautosave中の`networkidle` timeout、run `33972929404` と `33973638127` でclient-cancelled GETと章一覧遷移のflakeを順に検出し、狭い分類・利用者に見えるready条件・導線の契約へ修正済み。
+- 自己ホストfontとgoldenを含む比較CIを緑にし、pixel差分の有無を確認する。
 - Step 0 証跡を記録し、backend 全 pytest と frontend 全 npm test を通して push する。
 
 ## 後続 Step に明示して持ち越す事項
