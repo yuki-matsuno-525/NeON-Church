@@ -293,12 +293,20 @@
 }
 
 @media (max-width: 768px) {
-  /* 節選択時: 本文は背景に残し、コメントパネルを bottom sheet として上に被せる。
-     本文の文脈 (前後の節) を失わずにコメントを書ける。 */
+  /* 節選択時: コメントパネルを画面いっぱいに開く。
+     以前は下 7 割までで、狭い画面ではコメントが数件しか見えなかった。
+     上部バーごと覆うので、戻るのは右上の × から。
+
+     上部バーは z-index を上げても隠せない。パネルは .app-body（layout.css で
+     position: relative + z-index: 2 が付いた重なりの区画）の中にあるので、
+     中でいくつに上げても区画ごと上部バー（z-index: 50）の下に沈む。
+     画面いっぱいに出すのだから、開いている間は上部バーそのものを消す。 */
+  body:has(.reader-wrapper.has-verse) .navbar-root {
+    display: none;
+  }
+
   .reader-wrapper.has-verse .reader-main {
     display: block;
-    /* シートに隠れる下半分を考慮し、コンテンツが上に詰まって見えるよう余白を入れる */
-    padding-bottom: 70dvh;
     /* シートを開いている間は、後ろの本文を指で送れないようにする。
        iOS の Safari は指を置いた瞬間に送り始めるので、JavaScript で止めるだけでは
        間に合わない。ブラウザに最初から送らせない。 */
@@ -306,18 +314,15 @@
   }
   .reader-wrapper.has-verse .reader-panel {
     position: fixed;
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 70dvh;
-    z-index: 50;
+    inset: 0;
+    height: 100dvh;
+    /* 同じ区画の中の帯（reader-sticky-header は 10）より上に載せる。 */
+    z-index: 60;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
     overflow: hidden;
+    /* iPhone の切り欠きの下から始める（× ボタンが時計に重ならないように）。 */
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .reader-wrapper.has-verse .resize-handle {
