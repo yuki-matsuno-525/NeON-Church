@@ -26,7 +26,7 @@
   /* 本文はシステム日本語フォント（Web フォントを読まず高速化）。見出しのみ Web フォントの明朝体。 */
   --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", "YuGothic", "Noto Sans CJK JP", Meiryo, system-ui, sans-serif;
-  --font-serif: "Noto Serif JP", "Noto Serif JP Fallback", serif;
+  --font-serif: "Noto Serif JP", "Noto Serif JP Fallback";
 }
 
 /* こちらは `inline` を付けない @theme。
