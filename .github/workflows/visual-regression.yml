@@ -24,8 +24,6 @@ jobs:
   chromium-fixed-seed:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
-    container:
-      image: mcr.microsoft.com/playwright:v1.59.1-noble@sha256:eac9b0a5312cdab40ee8c2429df5bf19bffdccf8f3bf3c42268e173f97541645
 
     services:
       postgres:
@@ -44,6 +42,8 @@ jobs:
 
     env:
       CI: "true"
+      VISUAL_CONTAINER: neon-church-visual-${{ github.run_id }}-${{ github.run_attempt }}
+      VISUAL_IMAGE: neon-church-visual-runner:${{ github.sha }}
       DJANGO_SETTINGS_MODULE: config.settings.dev
       DJANGO_DEV_THROTTLE_RATE: 1000/min
       DJANGO_SECRET_KEY: visual-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
@@ -53,7 +53,7 @@ jobs:
       POSTGRES_DB: neon_church_visual
       POSTGRES_USER: neon_visual
       POSTGRES_PASSWORD: visual-${{ github.run_id }}-${{ github.run_attempt }}
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
       PLAYWRIGHT_BASE_URL: http://localhost:3000
@@ -62,14 +62,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: Install Python setup prerequisite
-        shell: bash
-        run: |
-          set -euo pipefail
-          apt-get update
-          apt-get install --no-install-recommends -y lsb-release
-          rm -rf /var/lib/apt/lists/*
 
       - name: Generate ephemeral visual-test credentials
         shell: bash
@@ -81,42 +73,92 @@ jobs:
           echo "::add-mask::$user_password"
           echo "VISUAL_BASELINE_ADMIN_PASSWORD=$admin_password" >> "$GITHUB_ENV"
           echo "VISUAL_BASELINE_USER_PASSWORD=$user_password" >> "$GITHUB_ENV"
-          test -n "$POSTGRES_PASSWORD"
-          test -n "$DJANGO_SECRET_KEY"
 
-      - name: Set up Python 3.13.15
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.13.15"
+      - name: Build immutable visual runner
+        shell: bash
+        run: >-
+          docker build
+          --file frontend/Dockerfile.visual
+          --tag "$VISUAL_IMAGE"
+          frontend
 
-      - name: Install backend dependencies
-        working-directory: backend
-        run: pip install -r requirements.txt
-
-      - name: Build fixed visual database
-        working-directory: backend
+      - name: Start isolated visual runner
         shell: bash
         run: |
           set -euo pipefail
-          python manage.py migrate
-          python manage.py import_gospel --path ../text
-          python manage.py seed_demo \
-            --wipe \
-            --scale small \
-            --seed 42 \
-            --reference-time "2026-08-02T12:00:00+09:00" \
-            --admin-username visual_admin \
-            --admin-password "$VISUAL_BASELINE_ADMIN_PASSWORD" \
-            --user-password "$VISUAL_BASELINE_USER_PASSWORD" \
-            > /dev/null
+          docker run --detach \
+            --name "$VISUAL_CONTAINER" \
+            --network host \
+            --ipc=host \
+            --volume "$GITHUB_WORKSPACE:/work" \
+            --workdir /work \
+            --env CI \
+            --env DJANGO_SETTINGS_MODULE \
+            --env DJANGO_DEV_THROTTLE_RATE \
+            --env DJANGO_SECRET_KEY \
+            --env DJANGO_DEBUG \
+            --env DJANGO_ALLOWED_HOSTS \
+            --env CSRF_TRUSTED_ORIGINS \
+            --env POSTGRES_DB \
+            --env POSTGRES_USER \
+            --env POSTGRES_PASSWORD \
+            --env POSTGRES_HOST \
+            --env POSTGRES_PORT \
+            --env NEXT_PUBLIC_API_BASE_URL \
+            --env PLAYWRIGHT_BASE_URL \
+            --env PLAYWRIGHT_API_BASE \
+            --env PLAYWRIGHT_VISUAL_BASELINE \
+            --env VISUAL_BASELINE_ADMIN_PASSWORD \
+            --env VISUAL_BASELINE_USER_PASSWORD \
+            "$VISUAL_IMAGE" \
+            sleep infinity
 
-      - name: Start backend
-        working-directory: backend
+      - name: Install locked dependencies
         shell: bash
         run: |
-          mkdir -p ../artifacts/visual-regression
-          nohup python manage.py runserver 0.0.0.0:8000 \
-            > ../artifacts/visual-regression/backend.log 2>&1 &
+          set -euo pipefail
+          docker exec --workdir /work/backend "$VISUAL_CONTAINER" \
+            python -m pip install --disable-pip-version-check --no-cache-dir -r requirements.txt
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER" npm ci
+
+      - name: Verify pinned runner versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker exec "$VISUAL_CONTAINER" python --version)" = "Python 3.13.15"
+          test "$(docker exec "$VISUAL_CONTAINER" node --version)" = "v22.23.1"
+          test "$(docker exec "$VISUAL_CONTAINER" npm --version)" = "10.9.8"
+          test "$(docker exec --workdir /work/frontend "$VISUAL_CONTAINER" node -p \
+            "require('@playwright/test/package.json').version")" = "1.59.1"
+          test "$(docker exec --workdir /work/frontend "$VISUAL_CONTAINER" npx playwright --version)" \
+            = "Version 1.59.1"
+
+      - name: Build fixed visual database
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --workdir /work/backend "$VISUAL_CONTAINER" python manage.py migrate
+          docker exec --workdir /work/backend "$VISUAL_CONTAINER" \
+            python manage.py import_gospel --path ../text
+          docker exec --workdir /work/backend "$VISUAL_CONTAINER" \
+            python manage.py seed_demo \
+              --wipe \
+              --scale small \
+              --seed 42 \
+              --reference-time "2026-08-02T12:00:00+09:00" \
+              --admin-username visual_admin \
+              --admin-password "$VISUAL_BASELINE_ADMIN_PASSWORD" \
+              --user-password "$VISUAL_BASELINE_USER_PASSWORD" \
+              > /dev/null
+
+      - name: Start backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/visual-regression
+          docker exec --detach --workdir /work/backend "$VISUAL_CONTAINER" \
+            bash -lc "python manage.py runserver 0.0.0.0:8000 \
+              > /work/artifacts/visual-regression/backend.log 2>&1"
 
       - name: Wait for backend
         shell: bash
@@ -131,34 +173,16 @@ jobs:
           cat artifacts/visual-regression/backend.log
           exit 1
 
-      - name: Set up Node.js 22.23.1
-        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: "22.23.1"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Verify Playwright image and package versions match
-        working-directory: frontend
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(node -p "require('@playwright/test/package.json').version")" = "1.59.1"
-          test "$(npx playwright --version)" = "Version 1.59.1"
-
       - name: Build frontend
-        working-directory: frontend
-        run: npm run build
+        shell: bash
+        run: docker exec --workdir /work/frontend "$VISUAL_CONTAINER" npm run build
 
       - name: Start frontend
-        working-directory: frontend
         shell: bash
-        run: |
-          nohup npm run start > ../artifacts/visual-regression/frontend.log 2>&1 &
+        run: >-
+          docker exec --detach --workdir /work/frontend "$VISUAL_CONTAINER"
+          bash -lc "npm run start -- --hostname 0.0.0.0
+          > /work/artifacts/visual-regression/frontend.log 2>&1"
 
       - name: Wait for frontend
         shell: bash
@@ -177,19 +201,22 @@ jobs:
         id: compare
         if: ${{ github.event_name != 'workflow_dispatch' || !inputs.update_snapshots }}
         continue-on-error: true
-        working-directory: frontend
+        shell: bash
         run: >-
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER"
           npx playwright test e2e/visual-baseline.spec.ts
           --project=chromium
           --output=test-results-visual-compare
 
       - name: Generate Linux snapshot candidates
+        id: candidates
         if: >-
           ${{ always() &&
               ((github.event_name == 'workflow_dispatch' && inputs.update_snapshots) ||
                steps.compare.outcome == 'failure') }}
-        working-directory: frontend
+        shell: bash
         run: >-
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER"
           npx playwright test e2e/visual-baseline.spec.ts
           --project=chromium
           --output=test-results-visual-candidates
@@ -208,7 +235,12 @@ jobs:
           retention-days: 7
 
       - name: Upload operation videos
-        if: always()
+        if: >-
+          ${{ always() &&
+              (steps.compare.outcome == 'success' ||
+               steps.compare.outcome == 'failure' ||
+               steps.candidates.outcome == 'success' ||
+               steps.candidates.outcome == 'failure') }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: visual-operation-videos-${{ github.sha }}
@@ -237,3 +269,8 @@ jobs:
         if: ${{ always() && steps.compare.outcome == 'failure' }}
         shell: bash
         run: exit 1
+
+      - name: Stop isolated visual runner
+        if: always()
+        shell: bash
+        run: docker rm --force "$VISUAL_CONTAINER" || true

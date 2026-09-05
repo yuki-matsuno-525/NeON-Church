@@ -22,3 +22,5 @@ Patch upgrades are maintenance work, not unreviewed floating updates. When upgra
 5. record any migration or compatibility impact in the change.
 
 Docker image digests may be refreshed for a rebuild of the same reviewed version, but a tag or digest that resolves to another runtime version requires the full upgrade procedure above.
+
+Visual regression evidence has stricter rendering requirements. `frontend/Dockerfile.visual` composes the exact Python and Node.js installations above with the architecture-specific digest of the Playwright browser image. The visual workflow builds that image, then verifies Python, Node.js, npm, and Playwright versions inside the running container before it creates evidence. Host-runner tool caches are not part of the visual baseline environment.

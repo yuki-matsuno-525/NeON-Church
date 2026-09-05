@@ -13,7 +13,7 @@
 画像の正本は次の条件をすべて固定したLinux環境でのみ更新する。Windows/macOSのローカル画像はフォントラスタライズが異なるため、調査用であって正本としてcommitしない。
 
 - release候補と同じproduction buildのNext.jsを使用する。
-- Playwright公式image `mcr.microsoft.com/playwright:v1.59.1-noble`をdigestで固定し、lockfileの`@playwright/test`も1.59.1に一致させる。imageに含まれるChromiumとfontを使用する。
+- `frontend/Dockerfile.visual`でPlaywright公式image `mcr.microsoft.com/playwright:v1.59.1-noble`、Python 3.13.15、Node.js 22.23.1をそれぞれarchitecture固有のdigestで固定する。lockfileの`@playwright/test`も1.59.1に一致させ、imageに含まれるChromiumとfontを使用する。
 - PostgreSQL 16の専用DBを使用する。開発DB、共有DB、本番DBでは実行しない。
 - viewportはdesktop `1440 x 1000`、mobile `390 x 844`、device scale factorは1。
 - timezoneは`Asia/Tokyo`、localeは`ja-JP`、color schemeはdark、reduced motionを有効にする。
@@ -56,7 +56,9 @@ npx playwright test e2e/visual-baseline.spec.ts --project=chromium
 
 `PLAYWRIGHT_VISUAL_BASELINE=1`の実行では各routeの動画を`test-results`へ保存する。動画はroute到達までのloading、hydration、最終表示を含む操作証跡であり、成功時も保存する。CIはPNG比較の成否にかかわらず`.webm`をartifact化する。長期保存する承認証跡はrelease SHAと紐付け、日常的な重複artifactはCIの保存期限で削除する。
 
-`.github/workflows/visual-regression.yml`の通常経路はLinuxでcommit済みPNGと比較する。Playwrightは比較実行時にsnapshotを自動生成して合格にしないため、PNGが1枚でも欠ければ失敗する。初回branch pushまたは実差分で比較が落ちた場合は、別のoutput directoryで候補生成を続行してartifactへ載せ、artifact upload後に元の比較失敗をjobへ戻す。したがって候補を取得できてもrelease gateは失敗のままである。`workflow_dispatch`の`update_snapshots=true`も候補をartifactへ出すだけでリポジトリを更新せず、レビューなしの正本昇格を防ぐ。
+`.github/workflows/visual-regression.yml`の通常経路は、host runnerの可変tool cacheを利用せず、`frontend/Dockerfile.visual`から構築した専用Linux container内で依存関係の導入、production build、server起動、画像比較を一貫して行う。CIは実行時にもPython、Node.js、npm、Playwright package/CLIのexact versionを照合し、1つでも違えば撮影前に停止する。
+
+Playwrightは比較実行時にsnapshotを自動生成して合格にしないため、PNGが1枚でも欠ければ失敗する。初回branch pushまたは実差分で比較が落ちた場合は、別のoutput directoryで候補生成を続行してartifactへ載せ、artifact upload後に元の比較失敗をjobへ戻す。したがって候補を取得できてもrelease gateは失敗のままである。`workflow_dispatch`の`update_snapshots=true`も候補をartifactへ出すだけでリポジトリを更新せず、レビューなしの正本昇格を防ぐ。
 
 ## 動的URLと認証状態
 
