@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Serif_JP } from "next/font/google";
+import "@fontsource-variable/noto-serif-jp/wght.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ClientLayout } from "./ClientLayout";
@@ -7,18 +7,9 @@ import { Footer } from "@/components/layout/Footer";
 import { siteCopy } from "@/lib/siteCopy";
 import { getRequestLanguage } from "@/lib/serverLanguage";
 
-// 本文はシステム日本語フォント（globals.css の --font-sans）を使い、Web フォントを読まない。
-// 見出しのみブランドの明朝体 Noto Serif JP を Web フォントで読む。
-// 日本語フォントは 1 ウェイトあたり多数のサブセット @font-face を生成するため、
-// 本文 Web フォントを廃止すると render-blocking CSS とフォントファイル数が大きく減る。
-// ウェイトは 400/700 のみ（500 は未読込時 400 にフォールバックする）。
-const notoSerifJp = Noto_Serif_JP({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-  variable: "--font-serif",
-  preload: false,
-});
+// 本文はシステム日本語フォント（globals.css の --font-sans）を使い、見出しだけ
+// Noto Serif JP を読む。Fontsource の固定版を自己ホストし、build が Google Fonts の
+// 可用性や配信内容に依存しないようにする。
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://neon-church.com";
 
@@ -55,7 +46,7 @@ export default async function RootLayout({
 }) {
   const lang = await getRequestLanguage();
   return (
-    <html lang={lang} className={notoSerifJp.variable} suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <body>
         <Providers initialLang={lang}>
           <ClientLayout footer={<Footer />}>{children}</ClientLayout>
