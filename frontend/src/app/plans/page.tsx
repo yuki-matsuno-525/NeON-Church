@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Plan, PlanSubscription } from "@/lib/api";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
@@ -9,7 +8,7 @@ import { planUiText } from "@/components/plans/planUiText";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState, ErrorState } from "@/components/ui";
 import { RetryButton } from "@/components/ui/RetryButton";
-import { ListPageHeader, visibilityBadgeClass } from "@/components/list";
+import { LinkTabs, ListPageHeader, TabPanel, visibilityBadgeClass } from "@/components/list";
 
 /* ----- 一覧の切り替え -----
    以前は「読んでいるプラン」を小さな札で上に並べ、その下に「自分の」「公開」の
@@ -77,21 +76,16 @@ export default async function PlansPage({
       {/* 未ログインでもタブは4つとも出す。この画面が「読んだ記録を残せる場所」
           だと先に分かるほうが、ログインする理由が伝わるため。ログインが要る
           タブは、一覧の代わりにログインの案内を出す。 */}
-      <div role="tablist" aria-label={t.planTabsLabel} className="tab-bar">
-        {PLAN_TABS.map((key) => (
-          <Link
-            key={key}
-            href={key === defaultTab ? "/plans" : `/plans?tab=${key}`}
-            role="tab"
-            aria-selected={key === activeTab}
-            id={`plans-tab-${key}`}
-            aria-controls={`plans-panel-${key}`}
-            className={`tab-underline${key === activeTab ? " tab-underline-active" : ""}`}
-          >
-            {tabLabel(key)}
-          </Link>
-        ))}
-      </div>
+      <LinkTabs
+        tabs={PLAN_TABS.map((key) => ({
+          key,
+          label: tabLabel(key),
+          href: key === defaultTab ? "/plans" : `/plans?tab=${key}`,
+        }))}
+        active={activeTab}
+        label={t.planTabsLabel}
+        idPrefix="plans"
+      />
 
       {failed ? (
         <ErrorState
@@ -132,29 +126,6 @@ export default async function PlansPage({
 }
 
 /**
- * タブを開いた先の中身を入れる箱。
- *
- * 以前は ListColumn（見出し・説明つきの枠）を使っていたが、タブを押した人は
- * もうどのタブか分かっているので、中でもう一度名乗る必要がない。見出しを
- * 外すと枠だけが残り、カードの枠と二重になるので、枠ごと外してある。
- *
- * タブと結び付ける id / role / aria-labelledby は残す。これが無いと、
- * 画面読み上げでタブと中身の対応が切れる。
- */
-function TabPanel({ tabKey, children }: { tabKey: PlanTabKey; children: ReactNode }) {
-  return (
-    <section
-      id={`plans-panel-${tabKey}`}
-      role="tabpanel"
-      aria-labelledby={`plans-tab-${tabKey}`}
-      className="flex flex-col gap-3"
-    >
-      {children}
-    </section>
-  );
-}
-
-/**
  * 未ログインのときに、一覧の代わりに置くログインの案内。
  *
  * ここで LoginRequiredModal を使わないのは、あれが押したときに出す覆いで
@@ -172,7 +143,7 @@ function SignInColumn({ tabKey, t }: { tabKey: "reading" | "done" | "mine"; t: T
   const loginHref = `/login?from=${encodeURIComponent(`/plans?tab=${tabKey}`)}`;
 
   return (
-    <TabPanel tabKey={tabKey}>
+    <TabPanel idPrefix="plans" tabKey={tabKey}>
       <EmptyState
         icon={<Icon name="lock" size={36} />}
         title={t.loginRequired}
@@ -198,7 +169,7 @@ function SubscriptionColumn({
   t: Translations;
 }) {
   return (
-    <TabPanel tabKey={tabKey}>
+    <TabPanel idPrefix="plans" tabKey={tabKey}>
       {subscriptions.length === 0 ? (
         <p className="px-1 py-2 text-sm text-faint">{empty}</p>
       ) : (
@@ -261,7 +232,7 @@ function PlanColumn({
   t: Translations;
 }) {
   return (
-    <TabPanel tabKey={tabKey}>
+    <TabPanel idPrefix="plans" tabKey={tabKey}>
       {plans.length === 0 ? (
         <p className="px-1 py-2 text-sm text-faint">{empty}</p>
       ) : (

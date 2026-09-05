@@ -56,7 +56,7 @@ async function mockServer({ signedIn }: { signedIn: boolean }) {
 }
 
 /** サーバーコンポーネントなので、await して返ってきたものを描く。 */
-async function renderPage(searchParams: { tag?: string } = {}) {
+async function renderPage(searchParams: { tab?: string; tag?: string } = {}) {
   render(await ArticlesPage({ searchParams: Promise.resolve(searchParams) }));
 }
 
@@ -65,17 +65,28 @@ describe("記事一覧", () => {
     vi.clearAllMocks();
   });
 
-  it("サーバー側で取った記事を最初から表示し、公開一覧からは自分を除外する", async () => {
+  it("最初は公開記事のタブを開き、自分の記事は取りに行かない", async () => {
     const apiServer = await mockServer({ signedIn: true });
     await renderPage();
 
-    expect(screen.getByRole("link", { name: "自分の記事" })).toHaveAttribute("href", "/articles/mine");
-    expect(screen.getByRole("link", { name: "編集" })).toHaveAttribute("href", "/articles/mine/edit");
     expect(screen.getByRole("link", { name: "公開記事" })).toHaveAttribute("href", "/articles/public");
+    expect(screen.queryByRole("link", { name: "自分の記事" })).not.toBeInTheDocument();
 
     const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
-    expect(paths).toContain("/articles/?exclude_mine=true");
-    expect(paths).toContain("/articles/?mine=true");
+    expect(paths).toEqual(["/articles/"]);
+  });
+
+  it("タブは URL で切り替わり、開いているほうだけを取りに行く", async () => {
+    const apiServer = await mockServer({ signedIn: true });
+    await renderPage({ tab: "mine" });
+
+    expect(screen.getByRole("tab", { name: "自分の記事" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "公開された記事" })).toHaveAttribute("href", "/articles");
+    expect(screen.getByRole("link", { name: "自分の記事" })).toHaveAttribute("href", "/articles/mine");
+    expect(screen.getByRole("link", { name: "編集" })).toHaveAttribute("href", "/articles/mine/edit");
+
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths).toEqual(["/articles/?mine=true"]);
   });
 
   it("主題は URL の tag として持ち、選ばれているものが分かる", async () => {
@@ -84,6 +95,7 @@ describe("記事一覧", () => {
 
     const chip = screen.getByRole("link", { name: /断食/ });
     expect(chip).toHaveAttribute("href", "/articles?tag=fasting");
+    expect(screen.getByRole("tab", { name: "自分の記事" })).toHaveAttribute("href", "/articles?tab=mine&tag=fasting");
     expect(chip).toHaveAttribute("aria-current", "page");
 
     const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
@@ -98,7 +110,18 @@ describe("記事一覧", () => {
       "href",
       "/login?from=%2Farticles%2Fnew",
     );
-    expect(screen.queryByText("自分の記事")).not.toBeInTheDocument();
+  });
+
+  it("未ログインで自分の記事のタブを開くと、一覧の代わりにログインの案内を出す", async () => {
+    const apiServer = await mockServer({ signedIn: false });
+    await renderPage({ tab: "mine" });
+
+    expect(screen.getByText("ログインが必要です")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ログインする" })).toHaveAttribute(
+      "href",
+      "/login?from=%2Farticles%3Ftab%3Dmine",
+    );
+    expect(vi.mocked(apiServer.serverFetchPage)).not.toHaveBeenCalled();
   });
 
   it("主題が取れなくても記事は読める", async () => {

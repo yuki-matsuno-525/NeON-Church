@@ -4,23 +4,12 @@
    ============================================================ */
 
 /* ----- 一覧の 4 画面（qa / articles / plans / translations）で共通の部品 -----
-   この 4 画面は「見出し＋2 カラムのカード一覧」という同じ骨格を持つ。
+   この 4 画面は「見出し＋タブ＋カードの一覧」という同じ骨格を持つ。
    以前は同じ見た目を各 page.tsx が別々に書いていた（同名の定数が最大 4 個）。
    ここにまとめ、画面側はクラス名を付けるだけにする。
 
    px の直書きが混じっているのは、この作業が「重複を消す」ことだけを目的にしていて、
    見た目を 1px も変えないため。値を段（--radius-* など）に揃えるのは別の作業。 */
-
-/* カラムを横に並べる盤面。入る幅があるだけ列を作り、狭ければ縦に積む。
-   min(100%, 300px) にしているのは、画面が 300px より狭いときに
-   はみ出さないようにするため。スマホで 1 列だけ表示するときは、
-   選ばれていない列を display:none にすれば自然に 1 列幅になる。 */
-.list-board {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 16px;
-  align-items: start;
-}
 
 /* ----- 分類の色（トーン） -----
    「解決済みは緑」「作業中は青」のような色の使い分けは、一覧・タブ・バッジ・
@@ -78,15 +67,6 @@
 .icon-tone {
   display: inline-flex;
   color: var(--tone);
-}
-
-/* 一覧の 1 カラム分の入れ物。中にカードを縦に並べる。
-   .card より背景が薄いので、中のカードが浮いて見える。 */
-.list-column {
-  padding: 18px 16px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
 }
 
 /* バッジ */
@@ -253,26 +233,6 @@
 /* 外側の分類の色に合わせる版 */
 .progress-fill-tone {
   background: var(--tone);
-}
-
-/* スマホで 1 カラムずつ切り替えるタブ。選ばれているものは分類の色になる。 */
-.column-tab {
-  flex: 1;
-  min-height: 44px;
-  padding: var(--spacing-2) var(--spacing-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-alt);
-  color: var(--text-muted);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  cursor: pointer;
-}
-.column-tab[aria-selected="true"] {
-  border-color: var(--tone);
-  background: var(--tone-tint);
-  color: var(--tone);
 }
 
 /* 作業メモの 1 件。下線で区切る。 */

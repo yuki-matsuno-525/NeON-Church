@@ -67,12 +67,15 @@ const ja = {
   articlesDesc: "節を引きながら、主題について書いた文章。",
   articleNew: "新しく書く",
   articleAllTopics: "すべて",
+  // 一覧の切り替えタブ。タブを開いた先では見出しを出さない
+  // （押した人はもうどのタブか分かっている）ので、この名前がそのまま中身の名乗りになる。
+  articleTabsLabel: "記事の切り替え",
   articleMineTitle: "自分の記事",
-  articleMineDesc: "下書きも含めて、自分が書いた記事。",
   articleMineEmpty: "まだ記事がありません。",
   articlePublicTitle: "公開された記事",
-  articlePublicDesc: "誰でも読める記事。",
   articlePublicEmpty: "公開された記事はまだありません。",
+  // 未ログインでもタブは出し、ログインが要るタブでは一覧の代わりにこれを出す。
+  articleSignInMine: "ログインすると、自分が書いた記事を下書きも含めてここで扱えます。",
   articleLoginRequired: "記事を書くにはログインが必要です。",
   articleNewTitle: "新しい記事",
   articleNewDesc: "題を決めると下書きができます。要約やタグはあとから足せます。",
@@ -327,8 +330,7 @@ const ja = {
   filterUnanswered: "未解決",
   filterAnswered: "解決済み",
   answerQuestion: "回答する",
-  qaColAnsweredDesc: "ベストアンサーが選ばれた質問",
-  qaColUnansweredDesc: "まだ解決していない質問",
+  qaTabsLabel: "質問の切り替え",
   qaEmptyColumn: "この状態の質問はありません",
 
   // Q&A 詳細ページ
@@ -447,9 +449,8 @@ const ja = {
   projectSearchPlaceholder: "プロジェクト名・説明・書名で検索",
   newProject: "＋ 新規作成",
   colDraftLabel: "下書き",
-  colPublishedDesc: "公開・リリース済みのプロジェクト",
-  colActiveDesc: "進行中のプロジェクト",
-  colDraftDesc: "計画中・下書きのプロジェクト",
+  translationTabsLabel: "プロジェクトの切り替え",
+  translationSignInDraft: "ログインすると、自分の下書きのプロジェクトがここに並びます。",
   emptyColumn: "このステータスのプロジェクトはありません",
   noProjects: "まだ公開されたプロジェクトはありません。",
   createFirst: "最初のプロジェクトを作成する →",
@@ -645,6 +646,9 @@ const ja = {
   searchComments: "コメントを検索...",
   // 一覧は少しずつ読み込むので、この欄は「読み込み済みの分」にしか効かない
   searchLoadedComments: "表示中のコメントを絞り込む",
+  // 並び替えと検索は、いつも出しておくと 2 段ぶん場所を取ってコメントが下へ押し出される。
+  // ボタンを押したときだけ開く。効いている間はボタンに印を出す。
+  commentFilters: "並び替えと検索",
   filterCommentsNoMatch: "表示中のコメントに一致するものはありません。",
 
   // Q&A 投稿フォーム
@@ -818,12 +822,12 @@ const en: typeof ja = {
   articlesDesc: "Essays on themes, written alongside passages from the texts.",
   articleNew: "Write an article",
   articleAllTopics: "All",
+  articleTabsLabel: "Switch article list",
   articleMineTitle: "Your articles",
-  articleMineDesc: "Everything you have written, including drafts.",
   articleMineEmpty: "You have not written any articles yet.",
   articlePublicTitle: "Published articles",
-  articlePublicDesc: "Articles anyone can read.",
   articlePublicEmpty: "No articles have been published yet.",
+  articleSignInMine: "Sign in to manage the articles you have written, drafts included.",
   articleLoginRequired: "Sign in to write an article.",
   articleNewTitle: "New article",
   articleNewDesc: "Choose a title to create a draft. You can add a summary and topics later.",
@@ -1061,8 +1065,7 @@ const en: typeof ja = {
   filterUnanswered: "Unanswered",
   filterAnswered: "Answered",
   answerQuestion: "Answer",
-  qaColAnsweredDesc: "Questions with a chosen best answer",
-  qaColUnansweredDesc: "Questions that are not resolved yet",
+  qaTabsLabel: "Switch question list",
   qaEmptyColumn: "No questions in this state",
 
   qaBackToList: "Back to Q&A",
@@ -1173,9 +1176,8 @@ const en: typeof ja = {
   projectSearchPlaceholder: "Search by project, description, or book",
   newProject: "+ New project",
   colDraftLabel: "Draft",
-  colPublishedDesc: "Projects that are published and released",
-  colActiveDesc: "Projects currently in progress",
-  colDraftDesc: "Projects in early planning or draft",
+  translationTabsLabel: "Switch project list",
+  translationSignInDraft: "Sign in to see your draft projects.",
   emptyColumn: "No projects with this status",
   noProjects: "No public projects yet.",
   createFirst: "Create the first project →",
@@ -1343,6 +1345,7 @@ const en: typeof ja = {
   allVersionsToggle: "All versions",
   searchComments: "Search comments...",
   searchLoadedComments: "Filter loaded comments",
+  commentFilters: "Sort and search",
   filterCommentsNoMatch: "No loaded comments match this filter.",
 
   qaInputTitlePlaceholder: "Question title (required)",

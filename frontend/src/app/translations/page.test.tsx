@@ -19,8 +19,6 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/hooks/useIsMobile", () => ({ useIsMobile: () => false }));
-
 vi.mock("@/lib/i18nServer", async () => {
   const { translations } = await import("@/lib/i18nDictionary");
   return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
@@ -51,7 +49,7 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
   ...overrides,
 });
 
-/** 列は status ごとに独立して取る。status に一致するものだけをその列に返す。 */
+/** タブは status ごとに独立して取る。status に一致するものだけを返す。 */
 async function mockServer({ signedIn = false, projects = [] as TranslationProject[] } = {}) {
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
@@ -72,28 +70,41 @@ describe("翻訳プロジェクト一覧", () => {
     currentSearch = "";
   });
 
-  it("ログイン済みなら新規作成の導線と下書きの列を出す", async () => {
+  it("ログイン済みなら新規作成の導線を出し、開いているタブだけを取りに行く", async () => {
     const apiServer = await mockServer({ signedIn: true });
 
     await renderPage();
 
     expect(screen.getByText(/＋ 新規作成/)).toBeInTheDocument();
-    expect(vi.mocked(apiServer.serverFetchPage)).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(apiServer.serverFetchPage)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(apiServer.serverFetchPage).mock.calls[0][0]).toContain("status=published");
   });
 
-  it("未ログインでは新規作成も下書きの列も出さない", async () => {
+  it("未ログインでは新規作成を出さず、下書きのタブはログインの案内にする", async () => {
     const apiServer = await mockServer({ projects: [makeProject()] });
 
-    await renderPage();
+    await renderPage({ tab: "draft" });
 
     expect(screen.queryByText(/＋ 新規作成/)).not.toBeInTheDocument();
-    expect(vi.mocked(apiServer.serverFetchPage)).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("ログインが必要です")).toBeInTheDocument();
+    expect(vi.mocked(apiServer.serverFetchPage)).not.toHaveBeenCalled();
+  });
+
+  it("タブは URL で切り替わる", async () => {
+    await mockServer({ signedIn: true, projects: [makeProject()] });
+
+    await renderPage({ tab: "active" });
+
+    expect(screen.getByRole("tab", { name: "進行中" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "公開済み" })).toHaveAttribute("href", "/translations");
+    expect(screen.getByRole("tab", { name: "下書き" })).toHaveAttribute("href", "/translations?tab=draft");
+    expect(screen.getByText("マタイ英訳プロジェクト")).toBeInTheDocument();
   });
 
   it("プロジェクトを、開いた直後から進捗つきで並べる", async () => {
     await mockServer({
       projects: [
-        makeProject(),
+        makeProject({ status: "published" }),
         makeProject({
           id: "p2",
           name: "マルコ仏訳プロジェクト",
@@ -117,29 +128,39 @@ describe("翻訳プロジェクト一覧", () => {
     );
   });
 
-  it("1件も無いときは、列ごとに空だと伝える", async () => {
+  it("状態の札はカードに出さない。タブがその役目を持つ", async () => {
+    await mockServer({ projects: [makeProject({ status: "published" })] });
+
+    await renderPage();
+
+    // 「公開済み」はタブにだけ出る（カードの札としては出ない）
+    expect(screen.getAllByText("公開済み")).toHaveLength(1);
+    expect(screen.getByRole("tab", { name: "公開済み" })).toBeInTheDocument();
+  });
+
+  it("1件も無いときは空だと伝える", async () => {
     await mockServer();
 
     await renderPage();
 
-    expect(screen.getAllByText("このステータスのプロジェクトはありません")).toHaveLength(2);
+    expect(screen.getByText("このステータスのプロジェクトはありません")).toBeInTheDocument();
   });
 
-  it("取得失敗を空一覧と誤表示せず、列ごとに再試行できる", async () => {
+  it("取得失敗を空一覧と誤表示せず、再試行できる", async () => {
     const apiServer = await mockServer();
     vi.mocked(apiServer.serverFetchPage).mockRejectedValue(new Error("Network Error"));
 
     await renderPage();
 
     expect(
-      screen.getAllByText("読み込みに失敗しました。通信状況を確認して再試行してください。"),
-    ).toHaveLength(2);
-    fireEvent.click(screen.getAllByRole("button", { name: "再試行" })[0]);
+      screen.getByText("読み込みに失敗しました。通信状況を確認して再試行してください。"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "再試行" }));
     expect(refresh).toHaveBeenCalled();
   });
 
   it("検索語は、手が止まってから URL に書き出す", async () => {
-    await mockServer({ projects: [makeProject()] });
+    await mockServer({ projects: [makeProject({ status: "published" })] });
     currentSearch = "published=3";
 
     await renderPage({ published: "3" });
@@ -154,7 +175,7 @@ describe("翻訳プロジェクト一覧", () => {
   });
 
   it("開いていたページが無くなったら1ページ目に戻す", async () => {
-    const apiServer = await mockServer({ projects: [makeProject()] });
+    const apiServer = await mockServer({ projects: [makeProject({ status: "published" })] });
     const { ApiError } = await import("@/lib/api");
     const real = vi.mocked(apiServer.serverFetchPage).getMockImplementation()!;
     // 3ページ目は無い（DRF は 404 を返す）。1ページ目なら取れる。
@@ -173,7 +194,7 @@ describe("翻訳プロジェクト一覧", () => {
   });
 
   it("URL の検索語で入力欄を初期化する", async () => {
-    await mockServer({ projects: [makeProject()] });
+    await mockServer({ projects: [makeProject({ status: "published" })] });
     currentSearch = "q=Luke";
 
     const apiServer = await import("@/lib/apiServer");

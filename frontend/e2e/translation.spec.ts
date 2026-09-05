@@ -110,7 +110,8 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   // 一覧はサーバーが組み立てて返すため、届いた中身が差し込まれる一瞬だけ
   // 同じカードが2つ見えることがある。件数ではなく「見えること」を確かめたいので
   // 先頭の1枚に絞る。
-  await page.goto("/translations");
+  // 募集開始にしたので、このプロジェクトは「進行中」のタブに入る。
+  await page.goto("/translations?tab=active");
   await expect(page.getByText(projectName).first()).toBeVisible();
 });
 
