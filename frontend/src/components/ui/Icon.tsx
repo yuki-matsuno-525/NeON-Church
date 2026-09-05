@@ -23,6 +23,7 @@ export type IconName =
   | "plus"
   | "x"
   | "search"
+  | "filter"
   | "external-link"
   | "arrow-up-down"
   | "grip-vertical";
@@ -153,6 +154,8 @@ const PATHS: Record<IconName, ReactElement> = {
       <path d="m21 21-4.3-4.3" />
     </>
   ),
+  // 漏斗。並び替えと検索をしまっておく「絞り込み」のボタンに使う。
+  filter: <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />,
   "external-link": (
     <>
       <path d="M15 3h6v6" />

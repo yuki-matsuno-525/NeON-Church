@@ -78,6 +78,10 @@ export function CommentPanel({
   const qaPanelId = useId();
   const articlesPanelId = useId();
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
+  // 並び替えと検索は畳んでおく。いつも出していると 2 段ぶん場所を取り、
+  // 節を開くたびコメント本体が下へ押し出されていた。
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterPanelId = useId();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
@@ -220,6 +224,8 @@ export function CommentPanel({
   const visibleComments = q
     ? comments.filter((c) => c.body.toLowerCase().includes(q))
     : comments;
+  // 絞り込みを畳んでいる間も、効いていることが分かるように印を出すための判定。
+  const filterActive = q !== "" || ordering !== "new";
 
   // 本文が長いときは省略しつつ、折り畳みで全文展開できるようにする。
   const VERSE_PREVIEW_LEN = 90;
@@ -446,17 +452,35 @@ export function CommentPanel({
 
         {/* コメント / Q&A / 引用した記事。Q&A は別のデータなので常にタブを出す。
             記事は1件も無いときに空タブを押させても仕方がないので、あるときだけ出す。 */}
-        <div role="tablist" aria-label={t.panelContentTabs} onKeyDown={handleHorizontalTabListKeyDown} className={styles.tabList}>
-          <PanelTab id={commentsTabId} controls={commentsPanelId} active={tab === "comments"} onClick={() => setTab("comments")}>
-            {t.tabComments}
-          </PanelTab>
-          <PanelTab id={qaTabId} controls={qaPanelId} active={tab === "qa"} onClick={() => setTab("qa")}>
-            {t.tabQa(questions.length)}
-          </PanelTab>
-          {(citingArticles.length > 0 || articlesError) && (
-            <PanelTab id={articlesTabId} controls={articlesPanelId} active={tab === "articles"} onClick={() => setTab("articles")}>
-              {t.citingArticles(citingArticles.length)}
+        <div className={styles.tabBar}>
+          <div role="tablist" aria-label={t.panelContentTabs} onKeyDown={handleHorizontalTabListKeyDown} className={styles.tabList}>
+            <PanelTab id={commentsTabId} controls={commentsPanelId} active={tab === "comments"} onClick={() => setTab("comments")}>
+              {t.tabComments}
             </PanelTab>
+            <PanelTab id={qaTabId} controls={qaPanelId} active={tab === "qa"} onClick={() => setTab("qa")}>
+              {t.tabQa(questions.length)}
+            </PanelTab>
+            {(citingArticles.length > 0 || articlesError) && (
+              <PanelTab id={articlesTabId} controls={articlesPanelId} active={tab === "articles"} onClick={() => setTab("articles")}>
+                {t.citingArticles(citingArticles.length)}
+              </PanelTab>
+            )}
+          </div>
+          {/* 並び替えと検索はコメントにしか効かないので、コメントのタブのときだけ出す。
+              閉じていても効いていることが分かるよう、効いている間は印を出す。 */}
+          {tab === "comments" && (
+            <button
+              type="button"
+              onClick={() => setFilterOpen((open) => !open)}
+              aria-expanded={filterOpen}
+              aria-controls={filterPanelId}
+              aria-label={t.commentFilters}
+              title={t.commentFilters}
+              className={`${styles.filterButton} ${filterOpen ? styles.filterButtonOn : ""}`}
+            >
+              <Icon name="filter" size={15} />
+              {filterActive && <span aria-hidden="true" className={styles.filterDot} />}
+            </button>
           )}
         </div>
 
@@ -543,31 +567,31 @@ export function CommentPanel({
           )}
         </div>
 
-        {/* Ordering toggle */}
-        <div className={`${styles.sectionTight} flex gap-2`}>
-          {(["new", "votes"] as const).map((ord) => (
-            <button
-              key={ord}
-              type="button"
-              onClick={() => setOrdering(ord)}
-              aria-pressed={ordering === ord}
-              className={`${styles.orderButton} ${ordering === ord ? styles.orderButtonOn : ""}`}
-            >
-              {ord === "new" ? t.orderNew : t.orderVotes}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <div className={styles.sectionTight}>
-          <ClearableSearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t.searchLoadedComments}
-            ariaLabel={t.searchLoadedComments}
-            inputClassName={styles.search}
-          />
-        </div>
+        {/* 並び替えと検索。上の絞り込みボタンを押したときだけ出す。 */}
+        {filterOpen && (
+          <div id={filterPanelId} className={styles.sectionTight}>
+            <div className="flex gap-2 mb-2">
+              {(["new", "votes"] as const).map((ord) => (
+                <button
+                  key={ord}
+                  type="button"
+                  onClick={() => setOrdering(ord)}
+                  aria-pressed={ordering === ord}
+                  className={`${styles.orderButton} ${ordering === ord ? styles.orderButtonOn : ""}`}
+                >
+                  {ord === "new" ? t.orderNew : t.orderVotes}
+                </button>
+              ))}
+            </div>
+            <ClearableSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t.searchLoadedComments}
+              ariaLabel={t.searchLoadedComments}
+              inputClassName={styles.search}
+            />
+          </div>
+        )}
 
         {/* Comment list */}
         <div className={styles.commentList}>

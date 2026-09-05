@@ -120,6 +120,27 @@ describe("CommentPanel の「引用した記事」タブ", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it("並び替えと検索は畳んであり、絞り込みボタンで開く", async () => {
+    const { fetchArticlesCitingVerse } = await import("@/lib/api");
+    vi.mocked(fetchArticlesCitingVerse).mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
+
+    renderPanel();
+
+    expect(screen.queryByRole("searchbox", { name: "表示中のコメントを絞り込む" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "新しい順" })).not.toBeInTheDocument();
+
+    const toggle = screen.getByRole("button", { name: "並び替えと検索" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("searchbox", { name: "表示中のコメントを絞り込む" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新しい順" })).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(screen.queryByRole("searchbox", { name: "表示中のコメントを絞り込む" })).not.toBeInTheDocument();
+  });
+
   it("区切り線をキーボードでリサイズできる", async () => {
     const { fetchArticlesCitingVerse } = await import("@/lib/api");
     vi.mocked(fetchArticlesCitingVerse).mockResolvedValue({ count: 0, next: null, previous: null, results: [] });
