@@ -17,7 +17,7 @@ import { articleTagLabel, visibilityOptions } from "@/lib/articles";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
 import { ArticleBody } from "@/components/articles/ArticleBody";
 import { CitationPanel } from "@/components/articles/CitationPanel";
 import { ConfirmDialog, SkeletonList } from "@/components/ui";
@@ -291,16 +291,6 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             </option>
           ))}
         </select>
-        <span
-          role="status"
-          aria-live="polite"
-          className={`text-xs min-w-30 ${autosave.status === "error" ? "text-danger" : "text-muted"}`}
-        >
-          {saveStatusLabel(autosave.status, t)}
-        </span>
-        {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} className="outline-button">{t.retry}</button>
-        )}
         <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
@@ -308,11 +298,18 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
           {deleteBusy ? t.articleDeleting : t.delete}
         </button>
       </div>
+      {/* うまくいっているときは何も出さない。失敗したときだけ、直せる形で出す。 */}
+      {autosave.status === "error" && (
+        <p role="alert" className="-mt-1 mx-0 mb-3 text-danger text-sm">
+          {saveErrorLabel(autosave.status, t)}{" "}
+          <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>
+        </p>
+      )}
       {actionError && <p role="alert" className="-mt-1 mx-0 mb-3 text-danger text-sm">{actionError}</p>}
 
       <div className="flex justify-between gap-3 -mt-1 mx-0 mb-3 text-xs text-muted">
         <span id={!title.trim() ? "article-title-error" : undefined} className={!title.trim() ? "text-danger" : undefined}>
-          {!title.trim() ? t.articleTitleRequired : t.articleAutosaveHelp}
+          {!title.trim() ? t.articleTitleRequired : t.autosaveNotice}
         </span>
         <span>{title.length}/{MAX_TITLE_LENGTH}</span>
       </div>

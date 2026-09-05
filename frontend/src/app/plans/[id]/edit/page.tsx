@@ -17,7 +17,7 @@ import { visibilityOptions } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
-import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
 import { useToggleSet } from "@/hooks/useToggleSet";
 import { PlanDayEditor } from "@/components/plans/PlanDayEditor";
 import { ConfirmDialog, EmptyState, ErrorState, SkeletonList } from "@/components/ui";
@@ -240,15 +240,21 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             ))}
           </select>
         </label>
-        <span role="status" aria-live="polite" className={`save-status${autosave.status === "error" ? " save-status-error" : ""}`}>
-          {saveStatusLabel(autosave.status, t)}
-        </span>
-        {autosave.status === "error" && <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>}
         <Link href={`/plans/${id}`} className="action-link text-sm text-muted no-underline">{t.planView}</Link>
         <button type="button" onClick={() => setConfirmDelete(true)} className="outline-button outline-button-danger">{t.delete}</button>
       </div>
 
+      {/* 自動で保存されることは、状態を出し続ける代わりにここで 1 度だけ伝える。 */}
+      <p className="text-xs text-muted mt-0 mx-0 mb-3">{t.autosaveNotice}</p>
+
       {!title.trim() && <p id="plan-title-error" role="alert" className="error-text">{supplementalText.titleRequired}</p>}
+      {/* うまくいっているときは何も出さない。失敗したときだけ、直せる形で出す。 */}
+      {autosave.status === "error" && (
+        <p role="alert" className="error-text">
+          {saveErrorLabel(autosave.status, t)}{" "}
+          <button type="button" onClick={() => void autosave.retry()} className="link-button">{t.retry}</button>
+        </p>
+      )}
       {actionError && <p role="alert" className="error-text">{actionError}</p>}
 
       <label>

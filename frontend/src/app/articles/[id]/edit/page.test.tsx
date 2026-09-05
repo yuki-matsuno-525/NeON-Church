@@ -128,7 +128,9 @@ describe("記事の編集画面", () => {
       },
       { timeout: 4000 },
     );
-    expect(await screen.findByText("保存しました")).toBeInTheDocument();
+    // うまくいったときは何も出さない（画面の端で文字が出たり消えたりしないように）。
+    // 保存されたかどうかは、保存の呼び出しそのもので確かめる。
+    expect(screen.queryByText("保存できませんでした")).not.toBeInTheDocument();
   });
 
   it("主題は3つまでしか選べない", async () => {

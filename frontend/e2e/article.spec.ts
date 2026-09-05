@@ -6,6 +6,25 @@ import { registerUser, loginWithUI } from "./helpers";
  * 節のページから「引用した記事」として引ける、までを通す。
  */
 
+/**
+ * 記事が保存されるのを待つ。
+ *
+ * 以前は画面の「保存しました」を待っていたが、うまくいったときは何も出さない
+ * ようにしたので（自動保存の状態を出し続けると画面の端で文字が明滅する）、
+ * 保存そのもの＝PATCH の返事を待つ。表示の文言に頼らないぶん、e2e としても素直。
+ *
+ * 動かす前に呼んで受け取り、動かしたあとに await すること。
+ */
+function articleSaved(page: import("@playwright/test").Page) {
+  return page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH"
+      && /\/api\/articles\/[0-9a-f-]+\/$/.test(new URL(response.url()).pathname)
+      && response.ok(),
+    { timeout: 15000 },
+  );
+}
+
 /** 題を決めて下書きを作り、編集画面まで進む。 */
 async function startArticle(page: import("@playwright/test").Page, title: string) {
   await page.goto("/articles/new");
@@ -26,9 +45,9 @@ test("A-1: 記事を書いて公開すると一覧に出る", async ({ page, req
 
   // 要約を入れると公開が選べるようになる
   await page.locator("select").first().selectOption("public");
+  const saved = articleSaved(page);
   await page.getByRole("button", { name: "変更して保存" }).click();
-
-  await expect(page.getByText("保存しました")).toBeVisible({ timeout: 10000 });
+  await saved;
 
   await page.goto("/articles");
   await expect(page.getByText(title).first()).toBeVisible();
@@ -73,8 +92,9 @@ test("A-4: 公開した記事は、引用した節のページから引ける", 
   await page.getByPlaceholder(/本文を書きます/).fill("[[matthew 1:1]] について。");
   await page.getByPlaceholder(/要約/).fill("系図のはじまりについて。");
   await page.locator("select").first().selectOption("public");
+  const saved = articleSaved(page);
   await page.getByRole("button", { name: "変更して保存" }).click();
-  await expect(page.getByText("保存しました")).toBeVisible({ timeout: 10000 });
+  await saved;
 
   // 引用した節のページを開く
   await page.goto("/matthew/1");
@@ -93,8 +113,9 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   const title = `下書き_${Date.now()}`;
   await startArticle(page, title);
   const url = page.url().replace("/edit", "");
+  const saved = articleSaved(page);
   await page.getByPlaceholder(/本文を書きます/).fill("まだ人には見せない。");
-  await expect(page.getByText("保存しました")).toBeVisible({ timeout: 10000 });
+  await saved;
 
   // 別のユーザーで開くと読めない
   const other = await registerUser(request, "_a5b");
