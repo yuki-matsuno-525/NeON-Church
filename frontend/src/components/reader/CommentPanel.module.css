@@ -157,19 +157,32 @@
 }
 
 /* 「コメントを書く」「質問する」の大きな誘導ボタン */
+/* 「コメントを書く」「この節について質問する」。
+   以前は光るカードと同じ見た目の大きなボタンで、節を開くたびに
+   節の本文とコメントより先に目に入っていた。書く場所だと分かればよいので、
+   言葉は残したまま入力欄のような 1 行に落とす。
+   高さ 44px は指で押せる大きさとして残す。 */
 .ctaButton {
   width: 100%;
   min-height: 44px;
-  padding: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: var(--spacing-2);
-  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
   font-family: inherit;
   font-size: var(--text-sm);
-  font-weight: 700;
+  text-align: left;
   cursor: pointer;
+}
+
+.ctaButton:hover,
+.ctaButton:focus-visible {
+  border-color: var(--accent);
+  color: var(--text);
 }
 
 /* 並び順の切り替え（新着 / 高評価） */

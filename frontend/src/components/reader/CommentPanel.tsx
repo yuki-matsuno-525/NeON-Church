@@ -507,7 +507,7 @@ export function CommentPanel({
                   if (!user) { setShowLoginModal(true); return; }
                   setAskOpen(true);
                 }}
-                className={`card-glow card-glow-interactive ${styles.ctaButton}`}
+                className={styles.ctaButton}
               >
                 <Icon name="help-circle" size={16} />
                 {t.qaAskAboutThis}
@@ -545,7 +545,7 @@ export function CommentPanel({
         ) : (
         <div id={commentsPanelId} role="tabpanel" aria-labelledby={commentsTabId} className="contents">
         {/* Comment input (デフォルト折りたたみで読書圧を減らす) */}
-        <div className={styles.section}>
+        <div className={styles.sectionTight}>
           {composeOpen ? (
             <CommentInput
               onSubmit={handleSubmit}
@@ -559,7 +559,7 @@ export function CommentPanel({
             <button
               type="button"
               onClick={handleOpenCompose}
-              className={`card-glow card-glow-interactive ${styles.ctaButton}`}
+              className={styles.ctaButton}
             >
               <Icon name="message-square" size={16} />
               {t.writeCommentCta}
