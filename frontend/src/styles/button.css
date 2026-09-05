@@ -201,7 +201,7 @@
 
    薄い紫で塗るのは、枠と薄い文字だけだと暗い背景に沈んで、押せるものだと
    気づけなかったため。塗りの濃さで主・副を分ける（主は紫、副は薄い紫）。
-   色は読み終えた印の丸（PlanReader.module.css の .check）と同じ薄紫にして、
+   色は読み終えた印の丸（PlanDay.module.css の .check）と同じ薄紫にして、
    画面ごとに違う薄さが増えないようにする。 */
 .outline-button {
   min-height: 44px;
@@ -402,4 +402,71 @@
 .dashed-button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* 行の端に置く、印だけの丸いボタン（章を足す・外す）。
+   大きさは読む画面の行の丸（PlanDay.module.css の .rowBadge）と同じ 44px。
+   小さく作ると、狭い画面で高さだけ 44px に伸ばされて縦長の楕円になってしまう。 */
+.circle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(190, 95, 255, 0.45);
+  border-radius: var(--radius-full);
+  background: var(--accent-tint);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              color var(--duration-base) var(--ease-out);
+}
+.circle-button:hover:not(:disabled),
+.circle-button:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+/* すでに足した章。押しても何も起きないことを薄さで示す。 */
+.circle-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* 外すほうは目立たせない。足すのと同じ強さで並ぶと、消すほうを先に押してしまう。 */
+.circle-button-quiet {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--text-faint);
+}
+.circle-button-quiet:hover,
+.circle-button-quiet:focus-visible {
+  border-color: var(--state-danger);
+  background: transparent;
+  color: var(--state-danger);
+}
+
+/* つまんで並べ替えるための取っ手。
+   動かす仕組みは hooks/useDragReorder.ts が持つ（touch-action もそちらが付ける）。 */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  cursor: grab;
+}
+.drag-handle:hover,
+.drag-handle:focus-visible {
+  color: var(--accent);
+}
+.drag-handle:active {
+  cursor: grabbing;
 }

@@ -7,7 +7,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
 // 行の見た目は、その日の文章の行と揃える必要があるのでパネル側が持っている。
-import styles from "./PlanReader.module.css";
+import styles from "./PlanDay.module.css";
 
 /** その章を読む画面へのリンク。訳の指定があればその訳で開く。 */
 export function readingHref(reading: { book: string; chapter_number: number; translation: string }): string {
