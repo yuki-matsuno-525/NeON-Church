@@ -48,6 +48,7 @@ jobs:
       DJANGO_DEV_THROTTLE_RATE: 1000/min
       DJANGO_SECRET_KEY: visual-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.sha }}
       DJANGO_DEBUG: "True"
+      DJANGO_REFERENCE_TIME: "2026-08-02T12:00:00+09:00"
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
       CSRF_TRUSTED_ORIGINS: http://localhost:3000
       POSTGRES_DB: neon_church_visual
@@ -97,6 +98,7 @@ jobs:
             --env DJANGO_DEV_THROTTLE_RATE \
             --env DJANGO_SECRET_KEY \
             --env DJANGO_DEBUG \
+            --env DJANGO_REFERENCE_TIME \
             --env DJANGO_ALLOWED_HOSTS \
             --env CSRF_TRUSTED_ORIGINS \
             --env POSTGRES_DB \
@@ -132,6 +134,10 @@ jobs:
             "require('@playwright/test/package.json').version")" = "1.59.1"
           test "$(docker exec --workdir /work/frontend "$VISUAL_CONTAINER" npx playwright --version)" \
             = "Version 1.59.1"
+          browser_path="$(docker exec --workdir /work/frontend "$VISUAL_CONTAINER" node -e \
+            "const { chromium } = require('@playwright/test'); process.stdout.write(chromium.executablePath())")"
+          test "$(docker exec "$VISUAL_CONTAINER" "$browser_path" --version)" \
+            = "Google Chrome for Testing 147.0.7727.15 "
 
       - name: Build fixed visual database
         shell: bash
@@ -203,10 +209,29 @@ jobs:
         continue-on-error: true
         shell: bash
         run: >-
-          docker exec --workdir /work/frontend "$VISUAL_CONTAINER"
-          npx playwright test e2e/visual-baseline.spec.ts
-          --project=chromium
+          docker exec
+          --env PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report-visual-compare
+          --workdir /work/frontend "$VISUAL_CONTAINER"
+          npm run e2e:visual --
           --output=test-results-visual-compare
+
+      - name: Verify comparison evidence is complete
+        id: compare_integrity
+        if: ${{ always() && steps.compare.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER" bash -lc '
+            actual="$(mktemp)"
+            find e2e/visual-baseline.spec.ts-snapshots -maxdepth 1 -type f -name "*.png" \
+              -printf "%f\n" | LC_ALL=C sort > "$actual"
+            diff -u e2e/visual-snapshot-manifest.txt "$actual"
+            test "$(find test-results-visual-compare -type f -name "*.webm" | wc -l)" -eq 44
+            find e2e/visual-baseline.spec.ts-snapshots test-results-visual-compare \
+              -type f \( -name "*.png" -o -name "*.webm" \) -print0 \
+              | sort -z | xargs -0 sha256sum \
+              > /work/artifacts/visual-regression/comparison-evidence.sha256
+          '
 
       - name: Generate Linux snapshot candidates
         id: candidates
@@ -216,31 +241,79 @@ jobs:
                steps.compare.outcome == 'failure') }}
         shell: bash
         run: >-
-          docker exec --workdir /work/frontend "$VISUAL_CONTAINER"
-          npx playwright test e2e/visual-baseline.spec.ts
-          --project=chromium
+          docker exec
+          --env PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report-visual-candidates
+          --workdir /work/frontend "$VISUAL_CONTAINER"
+          npm run e2e:visual:update --
           --output=test-results-visual-candidates
-          --update-snapshots
+
+      - name: Verify candidate evidence is complete
+        id: candidate_integrity
+        if: ${{ always() && steps.candidates.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --workdir /work/frontend "$VISUAL_CONTAINER" bash -lc '
+            actual="$(mktemp)"
+            find e2e/visual-baseline.spec.ts-snapshots -maxdepth 1 -type f -name "*.png" \
+              -printf "%f\n" | LC_ALL=C sort > "$actual"
+            diff -u e2e/visual-snapshot-manifest.txt "$actual"
+            test "$(find test-results-visual-candidates -type f -name "*.webm" | wc -l)" -eq 44
+            find e2e/visual-baseline.spec.ts-snapshots test-results-visual-candidates \
+              -type f \( -name "*.png" -o -name "*.webm" \) -print0 \
+              | sort -z | xargs -0 sha256sum \
+              > /work/artifacts/visual-regression/candidate-evidence.sha256
+          '
+
+      - name: Prove major journeys pass ten consecutive times without retries
+        id: release_smoke
+        if: >-
+          ${{ always() &&
+              (steps.compare_integrity.outcome == 'success' ||
+               steps.candidate_integrity.outcome == 'success') }}
+        shell: bash
+        run: >-
+          docker exec
+          --env PLAYWRIGHT_HTML_OUTPUT_DIR=playwright-report-release-smoke
+          --workdir /work/frontend "$VISUAL_CONTAINER"
+          npm run e2e --
+          --grep "@release-smoke"
+          --repeat-each=10
+          --retries=0
+          --project=chromium
+          --output=test-results-release-smoke
 
       - name: Upload Linux snapshot candidates
         if: >-
           ${{ always() &&
-              ((github.event_name == 'workflow_dispatch' && inputs.update_snapshots) ||
-               steps.compare.outcome == 'failure') }}
+              steps.candidate_integrity.outcome == 'success' &&
+              steps.release_smoke.outcome == 'success' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: visual-snapshot-candidates-${{ github.sha }}
-          path: frontend/e2e/visual-baseline.spec.ts-snapshots/
+          path: |
+            frontend/e2e/visual-baseline.spec.ts-snapshots/
+            artifacts/visual-regression/candidate-evidence.sha256
           if-no-files-found: error
           retention-days: 7
+
+      - name: Upload repeated-journey report
+        if: >-
+          ${{ always() &&
+              (steps.release_smoke.outcome == 'success' ||
+               steps.release_smoke.outcome == 'failure') }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-smoke-10x-${{ github.sha }}
+          path: frontend/playwright-report-release-smoke/
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload operation videos
         if: >-
           ${{ always() &&
-              (steps.compare.outcome == 'success' ||
-               steps.compare.outcome == 'failure' ||
-               steps.candidates.outcome == 'success' ||
-               steps.candidates.outcome == 'failure') }}
+              (steps.compare_integrity.outcome == 'success' ||
+               steps.candidate_integrity.outcome == 'success') }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: visual-operation-videos-${{ github.sha }}
@@ -256,9 +329,12 @@ jobs:
         with:
           name: visual-regression-diagnostics-${{ github.sha }}
           path: |
-            frontend/playwright-report/
+            frontend/playwright-report-visual-compare/
+            frontend/playwright-report-visual-candidates/
+            frontend/playwright-report-release-smoke/
             frontend/test-results-visual-compare/
             frontend/test-results-visual-candidates/
+            frontend/test-results-release-smoke/
             artifacts/visual-regression/
           if-no-files-found: warn
           retention-days: 14
@@ -266,7 +342,10 @@ jobs:
       # continue-on-error is used only so the first branch run can publish missing
       # Linux PNG candidates. The original comparison remains the release verdict.
       - name: Preserve comparison failure after artifact upload
-        if: ${{ always() && steps.compare.outcome == 'failure' }}
+        if: >-
+          ${{ always() &&
+              (steps.compare.outcome == 'failure' ||
+               (github.event_name == 'workflow_dispatch' && inputs.update_snapshots)) }}
         shell: bash
         run: exit 1
 

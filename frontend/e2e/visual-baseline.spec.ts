@@ -6,7 +6,10 @@ import {
   captureVisualBaseline,
   discoverAppPageTemplates,
   openVisualRoute,
+  VISUAL_ENGLISH_VARIANT_IDS,
   VISUAL_BASELINE_ENABLED,
+  VISUAL_LINUX_SNAPSHOT_FILENAMES,
+  VISUAL_MOBILE_VARIANT_IDS,
   VISUAL_ROUTE_CASES,
 } from "./support/visualBaseline";
 
@@ -28,6 +31,15 @@ test("visual route inventory matches every App Router page", () => {
     VISUAL_ROUTE_CASES.length,
   );
   expect(baselineRoutes).toEqual(sourceRoutes);
+
+  const manifestPath = path.join(process.cwd(), "e2e", "visual-snapshot-manifest.txt");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const manifest = (require("node:fs") as typeof import("node:fs"))
+    .readFileSync(manifestPath, "utf8")
+    .trim()
+    .split(/\r?\n/)
+    .sort();
+  expect(manifest).toEqual(VISUAL_LINUX_SNAPSHOT_FILENAMES);
 });
 
 if (VISUAL_BASELINE_ENABLED) {
@@ -43,11 +55,8 @@ if (VISUAL_BASELINE_ENABLED) {
   // Cross-product snapshots grow quickly and make review less reliable. These
   // variants cover each major responsive layout family and both rendering languages;
   // individual findings add a focused snapshot rather than duplicating all 35 pages.
-  const mobileVariants = ["01-home", "03-chapter", "23-qa", "07-article-edit"];
-  const englishVariants = ["01-home", "03-chapter", "14-login", "06-article-detail"];
-
   test.describe("responsive and language sentinels", () => {
-    for (const id of mobileVariants) {
+    for (const id of VISUAL_MOBILE_VARIANT_IDS) {
       const route = VISUAL_ROUTE_CASES.find((candidate) => candidate.id === id)!;
       test(`${route.id}: mobile`, async ({ page }) => {
         await openVisualRoute(page, route, { viewport: { width: 390, height: 844 } });
@@ -55,7 +64,7 @@ if (VISUAL_BASELINE_ENABLED) {
       });
     }
 
-    for (const id of englishVariants) {
+    for (const id of VISUAL_ENGLISH_VARIANT_IDS) {
       const route = VISUAL_ROUTE_CASES.find((candidate) => candidate.id === id)!;
       test(`${route.id}: English`, async ({ page }) => {
         await openVisualRoute(page, route, { language: "en" });

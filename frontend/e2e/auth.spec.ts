@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import { uniqueE2EId } from "./helpers";
 
 /**
  * E2E 2: 登録・ログイン
@@ -9,10 +10,9 @@ import { test, expect } from "./fixtures";
  * 3. ログインする
  * 4. ログイン済み状態になっていることを確認する
  */
-test("登録・ログアウト・ログイン", async ({ page }) => {
-  const ts = Date.now();
-  const username = `e2e_auth_${ts}`;
-  const email = `e2e_auth_${ts}@test.example`;
+test("登録・ログアウト・ログイン", { tag: "@release-smoke" }, async ({ page }) => {
+  const username = uniqueE2EId("e2e_auth");
+  const email = `${username}@test.example`;
   const password = "testpass123";
 
   // 登録ページでフォームを使って登録

@@ -1,11 +1,17 @@
 import { type APIRequestContext, expect } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 
 export const API_BASE =
   process.env.PLAYWRIGHT_API_BASE ?? "http://localhost:8000";
 
+/** Parallel/repeated tests must never share mutable records. */
+export function uniqueE2EId(prefix: string): string {
+  return `${prefix}_${randomUUID().replaceAll("-", "")}`;
+}
+
 /**
  * テスト用ユーザーをAPIで作成し、認証情報を返す。
- * username はタイムスタンプ + suffix でユニークにする。
+ * username は暗号学的random UUID + suffixで並列・repeat間も一意にする。
  */
 export async function registerUser(
   request: APIRequestContext,
@@ -16,9 +22,9 @@ export async function registerUser(
   const state = await request.storageState();
   const csrfToken = state.cookies.find((c) => c.name === "csrftoken")?.value ?? "";
 
-  const ts = Date.now();
-  const username = `e2e_${ts}${suffix}`;
-  const email = `e2e_${ts}${suffix}@test.example`;
+  const id = uniqueE2EId("e2e");
+  const username = `${id}${suffix}`;
+  const email = `${id}${suffix}@test.example`;
   const password = "testpass123";
 
   const res = await request.post(`${API_BASE}/api/auth/register/`, {

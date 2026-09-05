@@ -120,6 +120,30 @@ export const VISUAL_ROUTE_CASES: readonly VisualRouteCase[] = [
   },
 ] as const;
 
+export const VISUAL_MOBILE_VARIANT_IDS = [
+  "01-home",
+  "03-chapter",
+  "23-qa",
+  "07-article-edit",
+] as const;
+export const VISUAL_ENGLISH_VARIANT_IDS = [
+  "01-home",
+  "03-chapter",
+  "14-login",
+  "06-article-detail",
+] as const;
+
+export const VISUAL_SNAPSHOT_BASENAMES = [
+  ...VISUAL_ROUTE_CASES.map((route) => `route-${route.id}-ja-desktop`),
+  ...VISUAL_MOBILE_VARIANT_IDS.map((id) => `route-${id}-ja-mobile`),
+  ...VISUAL_ENGLISH_VARIANT_IDS.map((id) => `route-${id}-en-desktop`),
+  "route-404-ja-desktop",
+].sort();
+
+export const VISUAL_LINUX_SNAPSHOT_FILENAMES = VISUAL_SNAPSHOT_BASENAMES.map(
+  (basename) => `${basename}-chromium-linux.png`
+).sort();
+
 type ListEnvelope<T> = { results?: T[] } | T[];
 type OwnedItem = { id: string; owner_username: string };
 type QuestionItem = { id: string; user?: { username?: string } };

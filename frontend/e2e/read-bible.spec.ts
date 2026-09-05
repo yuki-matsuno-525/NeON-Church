@@ -10,7 +10,7 @@ import { test, expect } from "./fixtures";
  * 4. 本文が表示される
  * 5. 節番号が表示される
  */
-test("聖書本文を読む", async ({ page }) => {
+test("聖書本文を読む", { tag: "@release-smoke" }, async ({ page }) => {
   // /matthew/1 に直接アクセス（ページコンテンツ読み込みを待つ）
   await page.goto("/matthew/1");
   await expect(page).toHaveURL(/\/matthew\/1$/);

@@ -15,7 +15,10 @@ import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
  * 8. コメントを削除する（確認ダイアログを通る）
  * 9. 「このコメントは削除されました」と表示される
  */
-test("コメント投稿・返信・削除", async ({ page, request }) => {
+test(
+  "コメント投稿・返信・削除",
+  { tag: "@release-smoke" },
+  async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_comment");
 
   await loginWithUI(page, username, password);
@@ -66,7 +69,8 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
   await expect(
     panel.getByText("このコメントは削除されました").first()
   ).toBeVisible();
-});
+  }
+);
 
 test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c3");

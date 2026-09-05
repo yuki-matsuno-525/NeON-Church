@@ -169,3 +169,23 @@ class TestVerseOfDay:
         assert res.status_code == status.HTTP_200_OK
         assert res.data["translation"] == "KJV"
         assert res.data["text"] == kjv_verse.text
+
+    def test_reference_time_deterministically_selects_the_same_verse(
+        self, api_client, chapter, settings
+    ):
+        from bible.models import Verse
+        from django.core.cache import cache
+
+        settings.APPLICATION_REFERENCE_TIME = "2026-08-02T12:00:00+09:00"
+        first = Verse.objects.create(chapter=chapter, number=1, text="first")
+        second = Verse.objects.create(chapter=chapter, number=2, text="second")
+
+        # 2026-08-02 is day 214: (214 - 1) % 2 == 1.
+        first_response = api_client.get(VERSE_OF_DAY_URL)
+        cache.clear()
+        second_response = api_client.get(VERSE_OF_DAY_URL)
+
+        assert first_response.status_code == status.HTTP_200_OK
+        assert first_response.data["id"] == str(second.id)
+        assert second_response.data == first_response.data
+        assert first_response.data["id"] != str(first.id)

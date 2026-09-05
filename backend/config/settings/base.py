@@ -158,6 +158,10 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# Deterministic evidence environments may inject an aware ISO-8601 application
+# clock. Production leaves this empty and follows the real system clock.
+APPLICATION_REFERENCE_TIME = config("DJANGO_REFERENCE_TIME", default="")
+
 # ------------------------------------------------------------------
 # 静的ファイル・メディアファイル
 # ------------------------------------------------------------------

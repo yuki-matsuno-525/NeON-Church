@@ -14,7 +14,10 @@ async function startArticle(page: import("@playwright/test").Page, title: string
   await expect(page).toHaveURL(/\/articles\/[0-9a-f-]+\/edit$/);
 }
 
-test("A-1: 記事を書いて公開すると一覧に出る", async ({ page, request }) => {
+test(
+  "A-1: 記事を書いて公開すると一覧に出る",
+  { tag: "@release-smoke" },
+  async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_a1");
   await loginWithUI(page, username, password);
 
@@ -32,7 +35,8 @@ test("A-1: 記事を書いて公開すると一覧に出る", async ({ page, req
 
   await page.goto("/articles");
   await expect(page.getByText(title).first()).toBeVisible();
-});
+  }
+);
 
 test("A-2: 要約が空のあいだは公開を選べない", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_a2");

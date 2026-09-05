@@ -38,10 +38,9 @@ test("Tr-3: 未ログインでは「＋ 新規作成」ボタンが表示され�
   await expect(page.getByRole("link", { name: "＋ 新規作成" })).not.toBeVisible();
 });
 
-test("Tr-4: /translations/new から新規プロジェクトを作成できる", async ({
-  page,
-  request,
-}) => {
+test("Tr-4: /translations/new から新規プロジェクトを作成できる", {
+  tag: "@release-smoke",
+}, async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_tr4");
   await loginWithUI(page, username, password);
 

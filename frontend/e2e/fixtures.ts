@@ -5,6 +5,7 @@ import {
   type ConsoleMessage,
   type Page,
   type Request,
+  type Response,
 } from "@playwright/test";
 
 export { expect };
@@ -14,7 +15,8 @@ export type BrowserIncidentKind =
   | "hydration"
   | "pageerror"
   | "unhandledrejection"
-  | "requestfailed";
+  | "requestfailed"
+  | "httpresponse";
 
 export type BrowserIncident = {
   kind: BrowserIncidentKind;
@@ -28,8 +30,8 @@ type MessageMatcher = string | RegExp;
 /**
  * 意図したブラウザエラーを、テスト単位で狭く許可するための設定。
  *
- * 文字列は部分一致、RegExp は正規表現一致。HTTP 4xx/5xx は requestfailed
- * ではないため、API の期待エラーレスポンスをここで許可する必要はない。
+ * 文字列は部分一致、RegExp は正規表現一致。HTTPエラーはmethod、URL、
+ * resource type、statusを連結したmessageに対して照合する。
  */
 export type BrowserGuardrailOptions = {
   allowConsoleMessages?: readonly MessageMatcher[];
@@ -37,12 +39,14 @@ export type BrowserGuardrailOptions = {
   allowPageErrors?: readonly MessageMatcher[];
   allowUnhandledRejections?: readonly MessageMatcher[];
   allowRequestFailures?: readonly MessageMatcher[];
+  allowHttpResponses?: readonly MessageMatcher[];
 };
 
 export type BrowserDiagnostics = {
   readonly incidents: readonly BrowserIncident[];
   readonly unexpectedIncidents: readonly BrowserIncident[];
   monitorContext(context: BrowserContext): Promise<void>;
+  assertNoUnexpectedIncidents(): void;
 };
 
 type UnhandledRejectionPayload = {
@@ -57,6 +61,7 @@ type Fixtures = {
 };
 
 const UNHANDLED_REJECTION_BINDING = "__neonE2EUnhandledRejection";
+const FLUSH_BROWSER_GUARDRAILS = "__neonE2EFlushBrowserGuardrails";
 
 const HYDRATION_ERROR_PATTERNS = [
   /hydration (?:failed|mismatch|error)/i,
@@ -122,6 +127,8 @@ function isAllowed(
       return matchesAny(options.allowUnhandledRejections, searchable);
     case "requestfailed":
       return matchesAny(options.allowRequestFailures, searchable);
+    case "httpresponse":
+      return matchesAny(options.allowHttpResponses, searchable);
   }
 }
 
@@ -135,7 +142,63 @@ function consoleSource(message: ConsoleMessage): string | undefined {
 
 function requestFailureMessage(request: Request): string {
   const errorText = request.failure()?.errorText ?? "unknown network failure";
-  return `${request.method()} ${request.url()} (${request.resourceType()}): ${errorText}`;
+  const headers = request.headers();
+  const signals = [
+    headers["next-router-prefetch"]
+      ? `next-router-prefetch=${headers["next-router-prefetch"]}`
+      : undefined,
+    headers.purpose ? `purpose=${headers.purpose}` : undefined,
+    headers["sec-purpose"] ? `sec-purpose=${headers["sec-purpose"]}` : undefined,
+    headers.rsc ? `rsc=${headers.rsc}` : undefined,
+  ].filter(Boolean);
+  return (
+    `${request.method()} ${request.url()} (${request.resourceType()}): ${errorText}` +
+    (signals.length > 0 ? ` [${signals.join(", ")}]` : "")
+  );
+}
+
+function httpResponseMessage(response: Response): string {
+  const request = response.request();
+  return `${request.method()} ${response.url()} (${request.resourceType()}): HTTP ${response.status()}`;
+}
+
+/**
+ * Next App Router intentionally aborts speculative Flight requests when a Link
+ * prefetch is superseded. Exempt only an aborted, same-origin RSC request that
+ * carries Next's explicit prefetch signal; ordinary fetch/navigation aborts stay
+ * release failures.
+ */
+function isExpectedNextPrefetchCancellation(request: Request, page: Page): boolean {
+  if (
+    request.failure()?.errorText !== "net::ERR_ABORTED" ||
+    request.method() !== "GET" ||
+    request.resourceType() !== "fetch"
+  ) {
+    return false;
+  }
+
+  let requestUrl: URL;
+  let pageUrl: URL;
+  try {
+    requestUrl = new URL(request.url());
+    pageUrl = new URL(page.url());
+  } catch {
+    return false;
+  }
+
+  const headers = request.headers();
+  const explicitPrefetch =
+    headers["next-router-prefetch"] === "1" ||
+    headers["next-router-prefetch"] === "2" ||
+    headers.purpose === "prefetch" ||
+    headers["sec-purpose"]?.split(";").some((value) => value.trim() === "prefetch");
+
+  return (
+    requestUrl.origin === pageUrl.origin &&
+    requestUrl.searchParams.has("_rsc") &&
+    headers.rsc === "1" &&
+    Boolean(explicitPrefetch)
+  );
 }
 
 function formatIncidents(incidents: readonly BrowserIncident[]): string {
@@ -166,7 +229,17 @@ async function installBrowserGuardrails(
     }
   );
 
-  await context.addInitScript((bindingName: string) => {
+  await context.addInitScript(({ bindingName, flushName }) => {
+    const pendingReports = new Set<Promise<void>>();
+    Object.defineProperty(globalThis, flushName, {
+      configurable: true,
+      value: async () => {
+        while (pendingReports.size > 0) {
+          await Promise.allSettled([...pendingReports]);
+        }
+      },
+    });
+
     globalThis.addEventListener("unhandledrejection", (event) => {
       const reason: unknown = event.reason;
       let message: string;
@@ -194,12 +267,14 @@ async function installBrowserGuardrails(
       )[bindingName];
 
       if (report) {
-        void report({ message, url: globalThis.location.href }).catch(() => {
+        const pending = report({ message, url: globalThis.location.href }).catch(() => {
           // コンテキスト終了時の binding 切断は、検査対象のアプリ障害ではない。
         });
+        pendingReports.add(pending);
+        void pending.finally(() => pendingReports.delete(pending));
       }
     });
-  }, UNHANDLED_REJECTION_BINDING);
+  }, { bindingName: UNHANDLED_REJECTION_BINDING, flushName: FLUSH_BROWSER_GUARDRAILS });
 
   const attachPage = (page: Page) => {
     if (pageDisposers.has(page)) {
@@ -237,6 +312,9 @@ async function installBrowserGuardrails(
     };
 
     const onRequestFailed = (request: Request) => {
+      if (isExpectedNextPrefetchCancellation(request, page)) {
+        return;
+      }
       incidents.push({
         kind: "requestfailed",
         message: requestFailureMessage(request),
@@ -244,14 +322,28 @@ async function installBrowserGuardrails(
       });
     };
 
+    const onResponse = (response: Response) => {
+      if (response.status() < 400) {
+        return;
+      }
+      incidents.push({
+        kind: "httpresponse",
+        message: httpResponseMessage(response),
+        pageUrl: page.url(),
+        source: response.url(),
+      });
+    };
+
     page.on("console", onConsole);
     page.on("pageerror", onPageError);
     page.on("requestfailed", onRequestFailed);
+    page.on("response", onResponse);
 
     pageDisposers.set(page, () => {
       page.off("console", onConsole);
       page.off("pageerror", onPageError);
       page.off("requestfailed", onRequestFailed);
+      page.off("response", onResponse);
     });
   };
 
@@ -296,6 +388,18 @@ export const test = base.extend<Fixtures>({
           await installBrowserGuardrails(context, incidents)
         );
       },
+      assertNoUnexpectedIncidents() {
+        const unexpected = incidents.filter(
+          (incident) => !isAllowed(incident, browserGuardrailOptions)
+        );
+        if (unexpected.length > 0) {
+          throw new Error(
+            `ブラウザで未許可のエラーを ${unexpected.length} 件検出しました。\n` +
+              `${formatIncidents(unexpected)}\n` +
+              "意図した障害だけを browserGuardrailOptions の狭い条件で許可してください。"
+          );
+        }
+      },
     };
 
     await runFixture(diagnostics);
@@ -324,16 +428,8 @@ export const test = base.extend<Fixtures>({
       });
     }
 
-    const unexpected = diagnostics.unexpectedIncidents;
-    if (
-      unexpected.length > 0 &&
-      testInfo.status === testInfo.expectedStatus
-    ) {
-      throw new Error(
-        `ブラウザで未許可のエラーを ${unexpected.length} 件検出しました。\n` +
-          `${formatIncidents(unexpected)}\n` +
-          "意図した障害だけを browserGuardrailOptions の狭い条件で許可してください。"
-      );
+    if (testInfo.status === testInfo.expectedStatus) {
+      diagnostics.assertNoUnexpectedIncidents();
     }
   },
 
@@ -342,12 +438,27 @@ export const test = base.extend<Fixtures>({
       await browserDiagnostics.monitorContext(context);
       await runFixture();
 
-      // テスト末尾で発火した同一ターンのエラーイベントまで受け取ってから判定する。
+      // Browser側のmacrotaskとbinding promiseを明示的にdrainし、テスト末尾の
+      // unhandled rejectionをlistener解放前にNode側へ届ける。
       await Promise.all(
         context
           .pages()
           .filter((page) => !page.isClosed())
-          .map((page) => page.waitForTimeout(0).catch(() => undefined))
+          .map((page) =>
+            page
+              .evaluate(async (flushName) => {
+                await new Promise<void>((resolve) => setTimeout(resolve, 0));
+                const flush = (
+                  globalThis as typeof globalThis & {
+                    [key: string]: (() => Promise<void>) | undefined;
+                  }
+                )[flushName];
+                if (flush) await flush();
+                await new Promise<void>((resolve) => setTimeout(resolve, 0));
+                if (flush) await flush();
+              }, FLUSH_BROWSER_GUARDRAILS)
+              .catch(() => undefined)
+          )
       );
     },
     { auto: true },

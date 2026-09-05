@@ -13,6 +13,7 @@ from rest_framework.exceptions import NotFound
 
 from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
+from common import clock
 from .editions import DEFAULT_TRANSLATION, pick_edition
 from .models import Book, CanonicalBook, Chapter, Verse
 from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
@@ -384,7 +385,8 @@ class VerseOfDayView(APIView):
 
     def get(self, request):
         translation = request.query_params.get("translation", DEFAULT_TRANSLATION)
-        today = timezone.localdate()
+        reference_now = clock.now()
+        today = timezone.localdate(reference_now)
         cache_key = f"verse_of_day_{translation}_{today.isoformat()}"
         data = cache.get(cache_key)
         if data is None:
@@ -423,6 +425,6 @@ class VerseOfDayView(APIView):
             data = VerseOfDaySerializer(verse).data
             tomorrow = today + datetime.timedelta(days=1)
             midnight = timezone.make_aware(datetime.datetime.combine(tomorrow, datetime.time.min))
-            ttl = int((midnight - timezone.now()).total_seconds())
+            ttl = max(1, int((midnight - reference_now).total_seconds()))
             cache.set(cache_key, data, ttl)
         return Response(data)

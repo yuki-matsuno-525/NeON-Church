@@ -17,7 +17,7 @@
 - PostgreSQL 16の専用DBを使用する。開発DB、共有DB、本番DBでは実行しない。
 - viewportはdesktop `1440 x 1000`、mobile `390 x 844`、device scale factorは1。
 - timezoneは`Asia/Tokyo`、localeは`ja-JP`、color schemeはdark、reduced motionを有効にする。
-- ブラウザ時刻とseed基準時刻は`2026-08-02T12:00:00+09:00`で一致させる。
+- ブラウザ時刻、Django application clock、seed基準時刻は`2026-08-02T12:00:00+09:00`で一致させる。OSのwall clockに依存する「今日の聖句」も同じ日付になる。
 - animation、transition、caretを撮影時だけ停止し、`document.fonts.ready`、画像読み込み、二重`requestAnimationFrame`を待つ。
 - リトライで画像差分を救済しない。同じrelease SHAで初回成功することを求める。
 
@@ -29,7 +29,8 @@ test-only passwordは画面へ出ないため毎回同じ値である必要は�
 
 ```powershell
 cd backend
-$env:DJANGO_SETTINGS_MODULE = "config.settings.e2e"
+$env:DJANGO_SETTINGS_MODULE = "config.settings.dev"
+$env:DJANGO_REFERENCE_TIME = "2026-08-02T12:00:00+09:00"
 if (!$env:VISUAL_BASELINE_ADMIN_PASSWORD -or !$env:VISUAL_BASELINE_USER_PASSWORD) {
   throw "Set the two visual-baseline password environment variables first."
 }
@@ -49,14 +50,16 @@ cd frontend
 $env:PLAYWRIGHT_VISUAL_BASELINE = "1"
 $env:PLAYWRIGHT_BASE_URL = "http://localhost:3000"
 $env:PLAYWRIGHT_API_BASE = "http://localhost:8000"
-npx playwright test e2e/visual-baseline.spec.ts --project=chromium
+npm run e2e:visual
 ```
 
-初回または承認済み変更後に正本を更新するときだけ、同じコマンドへ`--update-snapshots`を加える。失敗画像を正本へ自動昇格しない。変更前後画像、変更理由、関連するFindingまたはWCAG 2.2達成基準をレビューし、承認された画像だけをcommitする。
+初回または承認済み変更後に正本を更新するときだけ、同じ環境で`npm run e2e:visual:update`を使う。CIもこの2つのnpm scriptをそのまま呼び出し、追加するのはartifact用output directoryだけである。失敗画像を正本へ自動昇格しない。変更前後画像、変更理由、関連するFindingまたはWCAG 2.2達成基準をレビューし、承認された画像だけをcommitする。
 
 `PLAYWRIGHT_VISUAL_BASELINE=1`の実行では各routeの動画を`test-results`へ保存する。動画はroute到達までのloading、hydration、最終表示を含む操作証跡であり、成功時も保存する。CIはPNG比較の成否にかかわらず`.webm`をartifact化する。長期保存する承認証跡はrelease SHAと紐付け、日常的な重複artifactはCIの保存期限で削除する。
 
 `.github/workflows/visual-regression.yml`の通常経路は、host runnerの可変tool cacheを利用せず、`frontend/Dockerfile.visual`から構築した専用Linux container内で依存関係の導入、production build、server起動、画像比較を一貫して行う。CIは実行時にもPython、Node.js、npm、Playwright package/CLIのexact versionを照合し、1つでも違えば撮影前に停止する。
+
+画像の完全性を確認した後、`@release-smoke`を付けた認証、聖書閲覧、検索、記事、コメント、プラン、翻訳の7導線を`--repeat-each=10 --retries=0`で実行する。70件がすべて初回成功しなければStep 0を合格にしない。
 
 Playwrightは比較実行時にsnapshotを自動生成して合格にしないため、PNGが1枚でも欠ければ失敗する。初回branch pushまたは実差分で比較が落ちた場合は、別のoutput directoryで候補生成を続行してartifactへ載せ、artifact upload後に元の比較失敗をjobへ戻す。したがって候補を取得できてもrelease gateは失敗のままである。`workflow_dispatch`の`update_snapshots=true`も候補をartifactへ出すだけでリポジトリを更新せず、レビューなしの正本昇格を防ぐ。
 

@@ -10,16 +10,15 @@ import { API_BASE, registerUser, loginWithUI } from "./helpers";
  * 飛んでしまう。目で見ても分からない（見た目は変わらない）ので、
  * 実際に押して行き先を確かめる。
  */
-test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章に飛ばない）", async ({
-  page,
-  request,
-}) => {
+test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章に飛ばない）", {
+  tag: "@release-smoke",
+}, async ({ page, request }) => {
   const user = await registerUser(request);
   await loginWithUI(page, user.username, user.password);
 
   const cookies = await page.context().cookies();
   const csrfToken = cookies.find((c) => c.name === "csrftoken")?.value ?? "";
-  const headers = csrfToken ? { "X-CSRFToken": csrfToken } : {};
+  const headers: Record<string, string> = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
   // 公開するには1日以上の中身が要るので、まず下書きで作る。
   const planRes = await page.request.post(`${API_BASE}/api/plans/`, {

@@ -1,13 +1,18 @@
-import { test, expect } from "./fixtures";
+import { test, expect, type BrowserGuardrailOptions } from "./fixtures";
+
+const consoleAllowlist = [/guardrail-probe console warning/];
+const httpResponseAllowlist = [/GET https:\/\/guardrail\.test\/expected-401 \(fetch\): HTTP 401/];
+const guardrailOptions: BrowserGuardrailOptions = {
+  allowConsoleMessages: consoleAllowlist,
+  allowHydrationErrors: [/guardrail-probe hydration mismatch/],
+  allowPageErrors: [/guardrail-probe/],
+  allowUnhandledRejections: [/guardrail-probe unhandled rejection/],
+  allowRequestFailures: [/guardrail-probe-request/],
+  allowHttpResponses: httpResponseAllowlist,
+};
 
 test.use({
-  browserGuardrailOptions: {
-    allowConsoleMessages: [/guardrail-probe console warning/],
-    allowHydrationErrors: [/guardrail-probe hydration mismatch/],
-    allowPageErrors: [/guardrail-probe/],
-    allowUnhandledRejections: [/guardrail-probe unhandled rejection/],
-    allowRequestFailures: [/guardrail-probe-request/],
-  },
+  browserGuardrailOptions: guardrailOptions,
 });
 
 test("ブラウザ診断fixtureが全カテゴリの障害を捕捉する", async ({
@@ -59,7 +64,7 @@ test("ブラウザ診断fixtureが全カテゴリの障害を捕捉する", asyn
     );
 });
 
-test("期待されたHTTPエラーレスポンスを通信障害と誤判定しない", async ({
+test("明示許可したHTTPエラーレスポンスだけを合格にできる", async ({
   page,
   browserDiagnostics,
 }) => {
@@ -88,5 +93,55 @@ test("期待されたHTTPエラーレスポンスを通信障害と誤判定し�
 
   expect(status).toBe(401);
   await page.waitForTimeout(0);
-  expect(browserDiagnostics.incidents).toHaveLength(0);
+  expect(browserDiagnostics.incidents).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        kind: "httpresponse",
+        message: expect.stringContaining("GET https://guardrail.test/expected-401 (fetch): HTTP 401"),
+      }),
+    ])
+  );
+  expect(browserDiagnostics.unexpectedIncidents).toHaveLength(0);
+});
+
+test("同一originの明示的なNext RSC prefetchキャンセルだけを無視する", async ({
+  page,
+  browserDiagnostics,
+}) => {
+  await page.route("https://guardrail.test/**", async (route) => {
+    if (route.request().url().includes("_rsc=")) {
+      await route.abort("aborted");
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "text/html", body: "<title>prefetch probe</title>" });
+  });
+
+  await page.goto("https://guardrail.test/");
+  await page.evaluate(async () => {
+    await fetch("/?_rsc=guardrail", {
+      headers: { RSC: "1", "Next-Router-Prefetch": "1" },
+    }).catch(() => undefined);
+  });
+  await page.waitForTimeout(0);
+
+  expect(
+    browserDiagnostics.incidents.filter((incident) => incident.kind === "requestfailed")
+  ).toHaveLength(0);
+});
+
+test("未許可incidentはrelease failureを生成する", async ({ page, browserDiagnostics }) => {
+  await page.goto("data:text/html,<title>unexpected incident probe</title>");
+  await page.evaluate(() => console.error("guardrail-probe unexpected console error"));
+
+  await expect
+    .poll(() => browserDiagnostics.unexpectedIncidents.length)
+    .toBeGreaterThan(0);
+  expect(() => browserDiagnostics.assertNoUnexpectedIncidents()).toThrow(
+    /未許可のエラーを 1 件検出/
+  );
+
+  // The assertion above proves the same method used by fixture teardown fails.
+  // Permit this one synthetic probe only after observing the failure so the
+  // guardrail's own conformance test can finish green.
+  consoleAllowlist.push(/guardrail-probe unexpected console error/);
 });

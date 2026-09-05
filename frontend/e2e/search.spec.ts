@@ -15,7 +15,10 @@ test("S-1: 1文字の日本語（神）でも検索が実行される", async ({
   await expect(page.getByText(/「神」の検索結果/)).toBeVisible({ timeout: 10000 });
 });
 
-test("S-2: キーワード「イエス」で検索すると節結果が表示される", async ({ page }) => {
+test(
+  "S-2: キーワード「イエス」で検索すると節結果が表示される",
+  { tag: "@release-smoke" },
+  async ({ page }) => {
   // バックエンドにデータが存在するキーワードで検索
   await page.goto("/search?q=イエス");
 
@@ -24,7 +27,8 @@ test("S-2: キーワード「イエス」で検索すると節結果が表示さ
 
   // 節ヒットセクションの見出しが表示される
   await expect(page.getByRole("heading", { name: "節", exact: true })).toBeVisible();
-});
+  }
+);
 
 test("S-3: 存在しないキーワードで「一致する結果が見つかりませんでした」が表示される", async ({ page }) => {
   // ヒットしないであろうランダムな文字列で検索

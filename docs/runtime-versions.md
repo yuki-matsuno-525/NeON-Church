@@ -8,6 +8,7 @@ NeON Church uses one reviewed runtime set for local development, CI, and contain
 | npm | 10.9.8 | `frontend/package.json` (`packageManager`, `engines`, and `devEngines`); bundled with the selected Node.js release |
 | Python | 3.13.15 | `.tool-versions`, `.python-version`, CI, Docker |
 | PostgreSQL | 16.15 | `.tool-versions`, CI, Docker Compose |
+| Chromium | 147.0.7727.15 (Playwright revision 1217) | `frontend/Dockerfile.visual`, visual CI runtime assertion |
 
 `.tool-versions` is the cross-runtime source of truth. The single-runtime files are compatibility declarations for common Node.js and Python version managers. The duplicate declarations must be updated in the same change.
 
