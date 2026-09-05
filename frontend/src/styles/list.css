@@ -308,6 +308,43 @@
   max-height: 360px;
 }
 
+/* ----- 一覧の絞り込み -----
+   検索欄はいつも出し、その他（書・言語など）は漏斗のボタンで開く。
+   読む画面のコメント欄と同じやり方。 */
+.filter-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.filter-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.filter-toggle-on {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+/* 閉じていても絞り込みが効いていることを示す点。 */
+.filter-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-pink);
+}
+
 /* ----- パンくず -----
    いまどこにいるかと、上の階層への戻り道。
    広い画面では全部の階層を › でつなぎ、狭い画面ではすぐ上の 1 段だけにする。

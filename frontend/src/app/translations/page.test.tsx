@@ -26,6 +26,7 @@ vi.mock("@/lib/i18nServer", async () => {
 
 vi.mock("@/lib/apiServer", () => ({
   serverFetchPage: vi.fn(),
+  serverFetchList: vi.fn(),
   serverIsSignedIn: vi.fn(),
 }));
 
@@ -53,6 +54,8 @@ const makeProject = (overrides: Partial<TranslationProject> = {}): TranslationPr
 async function mockServer({ signedIn = false, projects = [] as TranslationProject[] } = {}) {
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
+  // 絞り込みの言語プルダウンの選択肢。中身は今の検査に関係しないので空でよい。
+  vi.mocked(apiServer.serverFetchList).mockResolvedValue([]);
   vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => {
     const status = new URLSearchParams(path.split("?")[1]).get("status") as TranslationStatus;
     const results = projects.filter((project) => project.status === status);

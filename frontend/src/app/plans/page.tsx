@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Plan, PlanSubscription } from "@/lib/api";
+import { planListPath, type Plan, type PlanSubscription } from "@/lib/api";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { visibilityLabel } from "@/lib/plans";
@@ -8,7 +8,7 @@ import { planUiText } from "@/components/plans/planUiText";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState, ErrorState } from "@/components/ui";
 import { RetryButton } from "@/components/ui/RetryButton";
-import { LinkTabs, ListPageHeader, TabPanel, visibilityBadgeClass } from "@/components/list";
+import { LinkTabs, ListFilters, ListPageHeader, TabPanel, visibilityBadgeClass } from "@/components/list";
 
 /* ----- 一覧の切り替え -----
    以前は「読んでいるプラン」を小さな札で上に並べ、その下に「自分の」「公開」の
@@ -31,12 +31,14 @@ type PlanTabKey = (typeof PLAN_TABS)[number];
 export default async function PlansPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const t = await getT();
   const supplementalText = planUiText(await getRequestLanguage());
   const signedIn = await serverIsSignedIn();
-  const requested = (await searchParams).tab;
+  const params = await searchParams;
+  const requested = params.tab;
+  const q = params.q ?? "";
   // 未ログインで最初に開くのは「さがす」。「進行中」を既定にすると、
   // 開いた直後に見えるのがログインの案内だけになってしまうため。
   const defaultTab: PlanTabKey = signedIn ? "reading" : "find";
@@ -46,8 +48,8 @@ export default async function PlansPage({
   // 取れなかったものは null。読書中の一覧だけは、取れなくても
   // プランは読めるので黙って空にする。
   const [publicPlans, myPlans, reading] = await Promise.all([
-    loadPlans("/plans/"),
-    signedIn ? loadPlans("/plans/?mine=true") : [],
+    loadPlans(planListPath({ q })),
+    signedIn ? loadPlans(planListPath({ mine: true, q })) : [],
     signedIn ? serverFetchList<PlanSubscription>("/plan-subscriptions/").catch(() => []) : [],
   ]);
   const failed = publicPlans === null || myPlans === null;
@@ -80,12 +82,24 @@ export default async function PlansPage({
         tabs={PLAN_TABS.map((key) => ({
           key,
           label: tabLabel(key),
-          href: key === defaultTab ? "/plans" : `/plans?tab=${key}`,
+          href: plansHref(key, defaultTab, q),
         }))}
         active={activeTab}
         label={t.planTabsLabel}
         idPrefix="plans"
       />
+
+      {/* 言葉での絞り込み。「進行中」「完了」は読んでいるプランをブラウザ側で
+          分けているので、絞り込みが効くのは「マイプラン」と「さがす」だけ。 */}
+      {(activeTab === "mine" || activeTab === "find") && (
+        <ListFilters
+          basePath="/plans"
+          searchLabel={t.planSearchLabel}
+          toggleLabel={t.filterToggle}
+          total={activeTab === "mine" ? myPlans?.length ?? null : publicPlans?.length ?? null}
+          totalLabel={t.planCount}
+        />
+      )}
 
       {failed ? (
         <ErrorState
@@ -206,6 +220,15 @@ function SubscriptionColumn({
       )}
     </TabPanel>
   );
+}
+
+/** タブと検索語を保った /plans の URL。既定のタブと空の検索語は書かない。 */
+function plansHref(tab: PlanTabKey, defaultTab: PlanTabKey, q: string): string {
+  const qs = new URLSearchParams();
+  if (tab !== defaultTab) qs.set("tab", tab);
+  if (q) qs.set("q", q);
+  const query = qs.toString();
+  return query ? `/plans?${query}` : "/plans";
 }
 
 /** 一覧を取る。取れなければ null を返し、呼ぶ側で「読み込めませんでした」を出す。 */

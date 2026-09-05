@@ -7,6 +7,12 @@ vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a>,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/",
+}));
+
 vi.mock("@/lib/i18nServer", async () => {
   const { translations } = await import("@/lib/i18nDictionary");
   return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };

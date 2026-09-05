@@ -14,9 +14,10 @@ type Props = {
   empty: string;
   /** 自分の記事のタブなら true。カードに「編集」を出す */
   editable?: boolean;
-  /** 絞り込み。この 2 つが変わると 1 ページ目から読み直す */
+  /** 絞り込み。この 3 つが変わると 1 ページ目から読み直す */
   mine?: boolean;
   tag?: string;
+  q?: string;
   /**
    * サーバーが取り終えた 1 ページ目。
    * 取れなかったときは省略する。その場合だけブラウザ側が取りに行く。
@@ -30,10 +31,10 @@ type Props = {
  * 1 ページ目はサーバーが取って initial で渡してくる。ここが受け持つのは
  * 「もっと見る」で続きを読み足すところだけ。
  */
-export function ArticleFeed({ empty, editable = false, mine, tag, initial }: Props) {
+export function ArticleFeed({ empty, editable = false, mine, tag, q, initial }: Props) {
   const fetchPage = useCallback(
-    (page: number) => fetchArticlePage({ mine, tag, page }),
-    [mine, tag],
+    (page: number) => fetchArticlePage({ mine, tag, q, page }),
+    [mine, tag, q],
   );
   const list = useLoadMore(fetchPage, initial);
 

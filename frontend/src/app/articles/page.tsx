@@ -4,7 +4,7 @@ import { articleTagLabel } from "@/lib/articles";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT } from "@/lib/i18nServer";
 import type { Translations } from "@/lib/i18n";
-import { LinkTabs, ListPageHeader, TabPanel } from "@/components/list";
+import { LinkTabs, ListFilters, ListPageHeader, TabPanel } from "@/components/list";
 import { EmptyState } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { ArticleFeed } from "@/components/articles/ArticleFeed";
@@ -34,9 +34,9 @@ type ArticleTabKey = (typeof ARTICLE_TABS)[number];
 export default async function ArticlesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; tag?: string }>;
+  searchParams: Promise<{ tab?: string; tag?: string; q?: string }>;
 }) {
-  const { tab, tag } = await searchParams;
+  const { tab, tag, q } = await searchParams;
   const t = await getT();
   const signedIn = await serverIsSignedIn();
   const activeTab: ArticleTabKey =
@@ -47,8 +47,8 @@ export default async function ArticlesPage({
   const [tags, feed] = await Promise.all([
     serverFetchList<ArticleTag>("/article-tags/").catch(() => null),
     activeTab === "mine"
-      ? signedIn ? loadFeed({ mine: true, tag }) : undefined
-      : loadFeed({ tag }),
+      ? signedIn ? loadFeed({ mine: true, tag, q }) : undefined
+      : loadFeed({ tag, q }),
   ]);
 
   const tabLabel = (key: ArticleTabKey) =>
@@ -76,22 +76,31 @@ export default async function ArticlesPage({
         tabs={ARTICLE_TABS.map((key) => ({
           key,
           label: tabLabel(key),
-          href: articlesHref(key, tag),
+          href: articlesHref(key, tag, q),
         }))}
         active={activeTab}
         label={t.articleTabsLabel}
         idPrefix="articles"
       />
 
+      {/* 言葉での絞り込み。主題（下のチップ）と合わせて効く。 */}
+      <ListFilters
+        basePath="/articles"
+        searchLabel={t.articleSearchLabel}
+        toggleLabel={t.filterToggle}
+        total={feed?.count ?? null}
+        totalLabel={t.articleCount}
+      />
+
       {/* 主題はタブの中を絞るものなので、タブより下に置く。タブを移っても保つ。 */}
       <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
-        <TagChip label={t.articleAllTopics} href={articlesHref(activeTab)} active={!tag} />
+        <TagChip label={t.articleAllTopics} href={articlesHref(activeTab, undefined, q)} active={!tag} />
         {(tags ?? []).map((articleTag) => (
           <TagChip
             key={articleTag.id}
             label={articleTagLabel(articleTag.slug, articleTag.name, t)}
             count={articleTag.article_count}
-            href={articlesHref(activeTab, articleTag.slug)}
+            href={articlesHref(activeTab, articleTag.slug, q)}
             active={tag === articleTag.slug}
           />
         ))}
@@ -111,6 +120,7 @@ export default async function ArticlesPage({
             editable={activeTab === "mine"}
             mine={activeTab === "mine" || undefined}
             tag={tag}
+            q={q}
             initial={feed}
           />
         </TabPanel>
@@ -143,17 +153,18 @@ function SignInPanel({ t }: { t: Translations }) {
   );
 }
 
-/** タブと主題を保った /articles の URL。既定のタブと空の主題は書かない。 */
-function articlesHref(tab: ArticleTabKey, tag?: string): string {
+/** タブ・主題・検索語を保った /articles の URL。既定のタブと空の値は書かない。 */
+function articlesHref(tab: ArticleTabKey, tag?: string, q?: string): string {
   const qs = new URLSearchParams();
   if (tab !== "public") qs.set("tab", tab);
   if (tag) qs.set("tag", tag);
+  if (q) qs.set("q", q);
   const query = qs.toString();
   return query ? `/articles?${query}` : "/articles";
 }
 
 /** 一覧の 1 ページ目。取れなければ undefined を返し、ブラウザ側に任せる。 */
-function loadFeed(params: { mine?: boolean; tag?: string }): Promise<ListPage<Article> | undefined> {
+function loadFeed(params: { mine?: boolean; tag?: string; q?: string }): Promise<ListPage<Article> | undefined> {
   return serverFetchPage<Article>(articleListPath(params)).catch(() => undefined);
 }
 

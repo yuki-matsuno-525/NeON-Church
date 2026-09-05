@@ -765,10 +765,16 @@ export type TranslationStatus = "published" | "active" | "draft";
 
 // 翻訳一覧はステータス列ごとに 20 件ページング（ボードの各カラム用）。count で総ページ数を出す。
 /** 翻訳プロジェクト一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使う。 */
-export function translationListPath(status?: TranslationStatus, page = 1, q = ""): string {
+export function translationListPath(
+  status?: TranslationStatus,
+  page = 1,
+  q = "",
+  targetLanguage = "",
+): string {
   const qs = new URLSearchParams();
   if (status) qs.set("status", status);
   if (q.trim()) qs.set("q", q.trim());
+  if (targetLanguage) qs.set("target_language", targetLanguage);
   qs.set("page", String(page));
   return `/translations/?${qs.toString()}`;
 }
@@ -777,8 +783,9 @@ export function fetchTranslations(
   status?: TranslationStatus,
   page = 1,
   q = "",
+  targetLanguage = "",
 ): Promise<PaginatedResponse<TranslationProject>> {
-  return apiFetch(translationListPath(status, page, q));
+  return apiFetch(translationListPath(status, page, q, targetLanguage));
 }
 
 export function fetchTranslation(id: string): Promise<TranslationProject> {
@@ -1010,6 +1017,8 @@ export type ArticleListParams = {
   excludeMine?: boolean;
   tag?: string;
   author?: string;
+  /** 言葉での絞り込み。題・要約・本文・書いた人・主題に当たる */
+  q?: string;
   page?: number;
 };
 
@@ -1025,6 +1034,7 @@ export function articleListPath(params?: ArticleListParams): string {
   if (params?.excludeMine) qs.set("exclude_mine", "true");
   if (params?.tag) qs.set("tag", params.tag);
   if (params?.author) qs.set("author", params.author);
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page) qs.set("page", String(params.page));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return `/articles/${suffix}`;
@@ -1113,12 +1123,20 @@ export function sendFeedback(data: {
 // 読書プラン
 // ---------------------------------------------------------------------------
 
-export function fetchPlans(params?: { mine?: boolean; page?: number }): Promise<PaginatedResponse<Plan>> {
+export type PlanListParams = { mine?: boolean; q?: string; page?: number };
+
+/** プラン一覧の問い合わせ先。組み立てを 1 か所に置く（記事・翻訳と同じ形）。 */
+export function planListPath(params?: PlanListParams): string {
   const qs = new URLSearchParams();
   if (params?.mine) qs.set("mine", "true");
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page) qs.set("page", String(params.page));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
-  return apiFetch(`/plans/${suffix}`);
+  return `/plans/${suffix}`;
+}
+
+export function fetchPlans(params?: PlanListParams): Promise<PaginatedResponse<Plan>> {
+  return apiFetch(planListPath(params));
 }
 
 export function fetchPlan(id: string): Promise<Plan> {

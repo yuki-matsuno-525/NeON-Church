@@ -1,6 +1,13 @@
 import Link from "next/link";
-import { ApiError, translationListPath, type ListPage, type TranslationProject, type TranslationStatus } from "@/lib/api";
-import { serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
+import {
+  ApiError,
+  translationListPath,
+  type ListPage,
+  type TranslationLanguage,
+  type TranslationProject,
+  type TranslationStatus,
+} from "@/lib/api";
+import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import type { Translations } from "@/lib/i18n";
 import { LinkTabs, ListPageHeader, TabPanel } from "@/components/list";
@@ -8,7 +15,7 @@ import { EmptyState, RetryButton } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { QueryPagination } from "@/components/ui/QueryPagination";
 import { ProjectCard } from "@/components/translations/ProjectCard";
-import { TranslationSearch } from "@/components/translations/TranslationSearch";
+import { TranslationFilters } from "@/components/translations/TranslationFilters";
 import { translationUiText } from "./translationUiText";
 
 // バックエンドが 1 ページに返す件数。ページ送りの総数を出すのに使う。
@@ -22,7 +29,14 @@ const PAGE_SIZE = 20;
 const TABS: TranslationStatus[] = ["published", "active", "draft"];
 
 /** 検索語と、いま開いているタブ、そのタブのページ番号。すべて URL に持つ。 */
-type TranslationsSearchParams = { q?: string; tab?: string; published?: string; active?: string; draft?: string };
+type TranslationsSearchParams = {
+  q?: string;
+  target_language?: string;
+  tab?: string;
+  published?: string;
+  active?: string;
+  draft?: string;
+};
 
 /**
  * 翻訳プロジェクトの一覧。
@@ -39,6 +53,7 @@ export default async function TranslationsPage({
 }) {
   const params = await searchParams;
   const q = params.q ?? "";
+  const targetLanguage = params.target_language ?? "";
   const t = await getT();
   const ui = translationUiText(await getRequestLanguage());
   const signedIn = await serverIsSignedIn();
@@ -47,9 +62,11 @@ export default async function TranslationsPage({
 
   // 下書きは自分のものしか見られないので、未ログインのときは取りに行かない。
   const signInRequired = activeTab === "draft" && !signedIn;
-  const loaded = signInRequired
-    ? null
-    : await loadColumn(activeTab, pageNumber(params[activeTab]), q);
+  // 言語の選択肢は絞り込みを開いたときに要る。取れなくても一覧は読めるので個別に受け止める。
+  const [loaded, languages] = await Promise.all([
+    signInRequired ? null : loadColumn(activeTab, pageNumber(params[activeTab]), q, targetLanguage),
+    serverFetchList<TranslationLanguage>("/translations/languages/").catch(() => []),
+  ]);
 
   const tabLabel = (key: TranslationStatus) => {
     if (key === "published") return t.statusPublished;
@@ -75,14 +92,18 @@ export default async function TranslationsPage({
         tabs={TABS.map((key) => ({
           key,
           label: tabLabel(key),
-          href: translationsHref(key, q),
+          href: translationsHref(key, q, targetLanguage),
         }))}
         active={activeTab}
         label={t.translationTabsLabel}
         idPrefix="translations"
       />
 
-      <TranslationSearch label={t.projectSearchLabel} placeholder={t.projectSearchPlaceholder} />
+      <TranslationFilters
+        languages={languages}
+        targetLanguage={targetLanguage}
+        total={loaded?.page?.count ?? null}
+      />
 
       <TabPanel idPrefix="translations" tabKey={activeTab}>
         {loaded === null ? (
@@ -112,10 +133,11 @@ export default async function TranslationsPage({
   );
 }
 
-/** タブと検索語を保った /translations の URL。既定のタブと空の検索語は書かない。 */
-function translationsHref(tab: TranslationStatus, q: string): string {
+/** タブと絞り込みを保った /translations の URL。既定のタブと空の値は書かない。 */
+function translationsHref(tab: TranslationStatus, q: string, targetLanguage: string): string {
   const qs = new URLSearchParams();
   if (q) qs.set("q", q);
+  if (targetLanguage) qs.set("target_language", targetLanguage);
   if (tab !== "published") qs.set("tab", tab);
   const query = qs.toString();
   return query ? `/translations?${query}` : "/translations";
@@ -173,12 +195,14 @@ async function loadColumn(
   status: TranslationStatus,
   requested: number,
   q: string,
+  targetLanguage: string,
 ): Promise<{ page: ListPage<TranslationProject> | null; current: number }> {
+  const path = (page: number) => translationListPath(status, page, q, targetLanguage);
   try {
-    return { page: await serverFetchPage<TranslationProject>(translationListPath(status, requested, q)), current: requested };
+    return { page: await serverFetchPage<TranslationProject>(path(requested)), current: requested };
   } catch (cause) {
     if (requested > 1 && cause instanceof ApiError && cause.status === 404) {
-      const page = await serverFetchPage<TranslationProject>(translationListPath(status, 1, q)).catch(() => null);
+      const page = await serverFetchPage<TranslationProject>(path(1)).catch(() => null);
       return { page, current: 1 };
     }
     return { page: null, current: requested };
