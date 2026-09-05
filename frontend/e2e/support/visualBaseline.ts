@@ -401,8 +401,50 @@ export async function captureVisualBaseline(
   snapshotName: string,
   options: { fullPage?: boolean } = {},
 ) {
+  const landmark = page.locator("main h1:visible, main input:visible").first();
+  await expect(landmark, `${snapshotName} has no visible render landmark`).toBeVisible();
+
+  const box = await landmark.boundingBox();
+  expect(box, `${snapshotName} render landmark has no paint box`).not.toBeNull();
+  const clip = {
+    x: Math.max(0, box!.x),
+    y: Math.max(0, box!.y),
+    width: Math.max(1, box!.width),
+    height: Math.max(1, box!.height),
+  };
+  const painted = await page.screenshot({ animations: "allow", caret: "hide", clip });
+  const previousVisibility = await landmark.evaluate((element) => ({
+    priority: element.style.getPropertyPriority("visibility"),
+    value: element.style.getPropertyValue("visibility"),
+  }));
+  let withoutLandmark: Buffer;
+  try {
+    await landmark.evaluate((element) => element.style.setProperty("visibility", "hidden", "important"));
+    await page.evaluate(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+    );
+    withoutLandmark = await page.screenshot({ animations: "allow", caret: "hide", clip });
+  } finally {
+    await landmark.evaluate((element, previous) => {
+      if (previous.value) {
+        element.style.setProperty("visibility", previous.value, previous.priority);
+      } else {
+        element.style.removeProperty("visibility");
+      }
+    }, previousVisibility);
+    await page.evaluate(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
+    );
+  }
+  expect(
+    painted.equals(withoutLandmark),
+    `${snapshotName} landmark exists in the DOM but was absent from the rendered pixels`,
+  ).toBe(false);
+
   await expect(page).toHaveScreenshot(`${snapshotName}.png`, {
-    animations: "disabled",
+    // openVisualRoute already removes motion in CSS. Keeping Playwright from
+    // manipulating compositor animations avoids accepting background-only frames.
+    animations: "allow",
     caret: "hide",
     fullPage: options.fullPage ?? false,
     maxDiffPixels: 0,
