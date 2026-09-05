@@ -13,10 +13,12 @@ import {
   type PlanReading,
 } from "@/lib/api";
 import { dayNumberToday } from "@/lib/plans";
+import { useToggleSet } from "@/hooks/useToggleSet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
-import { ReadingLinks } from "@/components/plans/ReadingChips";
+import { ReadingLinks, readingsSummary } from "@/components/plans/ReadingChips";
+import { PlanDayPanel } from "@/components/plans/PlanDayPanel";
 import { ConfirmDialog, EmptyState } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
@@ -44,6 +46,24 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
   const isReading = subscription?.is_active === true;
   const today = subscription ? dayNumberToday(subscription.started_at) : null;
   const doneCount = plan.days?.filter((day) => day.completed).length ?? 0;
+  const days = plan.days ?? [];
+
+  // 日はたたんでおく。40 日のプランで全部開いていると、目当ての日にたどり着けないため。
+  // 開けておくのは「続きの 1 日」＝まだ読み終えていない最初の日だけ。
+  //
+  // 上の帯に出す「今日は N 日目」（dayNumberToday）は読み始めてからの
+  // カレンダー日数なので、何日か空けると、まだ読んでいない日を飛び越して
+  // 先の日が開いてしまう。開く日は読んだ記録のほうで決める。
+  //
+  // 章が無い日（文章だけの日）は飛ばす。読み終わりの記録は「その日の章に
+  // 全部印が付いたとき」に作られるので（backend/plans/progress.py）、
+  // 章が無い日はいつまでも読み終わりにならず、そこで止まってしまうため。
+  const openDays = useToggleSet(() => {
+    const start =
+      initialPlan.days?.find((day) => day.readings.length > 0 && !day.completed)
+      ?? initialPlan.days?.[0];
+    return start ? [start.id] : [];
+  });
 
   /** 始める・やめる・やり直すは、どれも押したあとに取り直す。 */
   const run = async (action: () => Promise<unknown>) => {
@@ -157,8 +177,20 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
 
       {/* 日は「左の目盛り＋右のカード」の 2 列で並べる。目盛りは画面が広いときだけ出る。
           40 日のプランでも、いま何日目のあたりを見ているかが目で追えるようにするため。 */}
+      {days.length > 1 && (
+        <div className="flex justify-end mb-3">
+          <button
+            type="button"
+            onClick={() => (openDays.count === days.length ? openDays.closeAll() : openDays.openAll(days.map((day) => day.id)))}
+            className="text-button"
+          >
+            {openDays.count === days.length ? text.collapseAllDays : text.expandAllDays}
+          </button>
+        </div>
+      )}
+
       <ol className={styles.timeline}>
-        {(plan.days ?? []).map((day) => (
+        {days.map((day) => (
           <li key={day.id} className={styles.dayRow}>
             {/* 見た目だけの目盛り。「第N日」はカードの見出しにも出るので、
                 画面読み上げで二重に読まれないよう隠す。 */}
@@ -168,26 +200,26 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
               </span>
             </div>
 
-            <section className={`card-glow card-glow-strong p-6${day.completed ? " opacity-70" : ""}`}>
-              <div className="flex items-center gap-3 mb-4 flex-wrap">
-                <span className="text-xl font-bold">{t.planDayLabel(day.number)}</span>
-                {day.title && (
-                  <>
-                    <span className={styles.headDivider} aria-hidden="true" />
-                    <span className="text-lg text-accent">{day.title}</span>
-                  </>
-                )}
-                {/* 進み具合は数字だけにする。押すものではないので、
-                    ボタンの形にすると「押さないと記録されない」と読めてしまう。 */}
-                {isReading && day.readings.length > 0 && (
-                  <span className={`${styles.headCount} text-sm text-soft`}>
+            <PlanDayPanel
+              number={day.number}
+              title={day.title}
+              open={openDays.has(day.id)}
+              onToggle={() => openDays.toggle(day.id)}
+              summary={readingsSummary(day.readings, t, lang)}
+              dimmed={day.completed}
+              actions={
+                /* 進み具合は数字だけにする。押すものではないので、
+                   ボタンの形にすると「押さないと記録されない」と読めてしまう。 */
+                isReading && day.readings.length > 0 ? (
+                  <span className="text-sm text-soft">
                     {text.dayReadingCount(
                       day.readings.filter((reading) => reading.completed).length,
                       day.readings.length,
                     )}
                   </span>
-                )}
-              </div>
+                ) : undefined
+              }
+            >
               {/* 章の行とその日の文章の行は、同じ箱に続けて並べて形を揃える。 */}
               <div className={styles.rows}>
                 <ReadingLinks
@@ -204,11 +236,11 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
                   </div>
                 )}
               </div>
-            </section>
+            </PlanDayPanel>
           </li>
         ))}
       </ol>
-      {(plan.days ?? []).length === 0 && <EmptyState title={text.noDays} />}
+      {days.length === 0 && <EmptyState title={text.noDays} />}
     </>
   );
 }

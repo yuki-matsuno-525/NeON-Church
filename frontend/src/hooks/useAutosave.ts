@@ -173,9 +173,14 @@ export function useAutosave<T>({
   return { status, isDirty, saveNow, retry: saveNow };
 }
 
-export function saveStatusLabel(status: SaveStatus, t: Translations): string {
-  if (status === "saving") return t.saving;
-  if (status === "saved") return t.autosaveSaved;
-  if (status === "error") return t.autosaveError;
-  return "";
+/**
+ * 保存が失敗したときの言い方。うまくいっているときは何も返さない。
+ *
+ * 以前は「保存中…」「保存しました」も出していたが、1.2 秒で終わるものを毎回出すと
+ * 画面の端で文字が出たり消えたりし続けることになる。うまくいっているのが当たり前なので、
+ * 知らせるのは失敗したときだけにする。自動で保存されること自体は、編集画面に
+ * 1 行の案内として置いてある。
+ */
+export function saveErrorLabel(status: SaveStatus, t: Translations): string {
+  return status === "error" ? t.autosaveError : "";
 }

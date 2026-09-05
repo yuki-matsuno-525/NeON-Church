@@ -69,6 +69,50 @@ describe("プランを読み進めるところ", () => {
     mockUseAuth.mockReturnValue({ user: { id: "u1", username: "bob" }, loading: false });
   });
 
+  it("日はたたまれていて、続きの1日だけが開いている", () => {
+    render(<PlanReader initialPlan={readingPlan} />);
+
+    // 第1日（まだ読み終えていない最初の日）は開く
+    expect(screen.getByRole("button", { name: /第1日/ })).toHaveAttribute("aria-expanded", "true");
+    // 第2日は閉じたまま
+    expect(screen.getByRole("button", { name: /第2日/ })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("閉じている日でも、読む章が見出しの下に1行で出る", async () => {
+    const user = userEvent.setup();
+    render(<PlanReader initialPlan={readingPlan} />);
+    const head = screen.getByRole("button", { name: /第1日/ });
+
+    // 開いているうちは、同じことが下に並んでいるので出さない
+    expect(head).not.toHaveTextContent("マタイによる福音書 1章・エノク書 5章");
+
+    await user.click(head);
+
+    expect(head).toHaveTextContent("マタイによる福音書 1章・エノク書 5章");
+  });
+
+  it("見出しを押すと開け閉めできる", async () => {
+    const user = userEvent.setup();
+    render(<PlanReader initialPlan={readingPlan} />);
+
+    const head = screen.getByRole("button", { name: /第2日/ });
+    await user.click(head);
+    expect(head).toHaveAttribute("aria-expanded", "true");
+    await user.click(head);
+    expect(head).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("すべて開く・すべて閉じるで一度に切り替わる", async () => {
+    const user = userEvent.setup();
+    render(<PlanReader initialPlan={readingPlan} />);
+
+    await user.click(screen.getByRole("button", { name: "すべて開く" }));
+    expect(screen.getByRole("button", { name: /第2日/ })).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByRole("button", { name: "すべて閉じる" }));
+    expect(screen.getByRole("button", { name: /第1日/ })).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("日の見出しは、左の目盛りを足しても 1 回しか読み上げられない", () => {
     render(<PlanReader initialPlan={plan} />);
 

@@ -940,7 +940,7 @@ export default function TranslationDetailPage({ params }: { params: Promise<{ id
                     <select
                       value={unitChapterId}
                       onChange={handleUnitChapterChange}
-                      className="py-2 px-3 tap-target border border-border rounded-md bg-bg-alt text-body text-sm"
+                      className="py-2 pl-3 pr-9 tap-target border border-border rounded-md bg-bg-alt text-body text-sm"
                       required
                     >
                       <option value="">{t.selectChapter}</option>

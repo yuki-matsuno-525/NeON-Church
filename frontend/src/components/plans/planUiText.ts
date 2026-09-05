@@ -96,6 +96,12 @@ export const planUiText = (lang: "ja" | "en") => lang === "ja" ? {
   // ---- 1日ぶんのパネル（PlanDayEditor / ChapterPicker） ----
   // 見出しの番号（①②③④）は飾りではなく、上から順にやれば1日ぶんが出来上がる手順を表す。
   stepTitle: "この日の題（任意）",
+  // 日の折りたたみ
+  expandAllDays: "すべて開く",
+  // 章が1つも入っていない日があると公開できない。どの日かを名指しで伝える。
+  publishNeedsChapters: (days: string[]) =>
+    `${days.join("、")}に章が入っていません。章を入れると公開できるようになります。`,
+  collapseAllDays: "すべて閉じる",
   dayTitleInputPlaceholder: "タイトルを入力してください",
   stepSelected: "選択した章",
   stepAdd: "章を追加",
@@ -228,6 +234,11 @@ export const planUiText = (lang: "ja" | "en") => lang === "ja" ? {
   addChapter: "+ Add chapter",
   // ---- One day's panel (PlanDayEditor / ChapterPicker) ----
   stepTitle: "Title for this day (optional)",
+  // Collapsing days
+  expandAllDays: "Expand all",
+  publishNeedsChapters: (days: string[]) =>
+    `${days.join(", ")} ${days.length === 1 ? "has" : "have"} no chapters. Add chapters to publish this plan.`,
+  collapseAllDays: "Collapse all",
   dayTitleInputPlaceholder: "Enter a title",
   stepSelected: "Chapters you picked",
   stepAdd: "Add chapters",

@@ -470,3 +470,33 @@
 .drag-handle:active {
   cursor: grabbing;
 }
+
+/* パネル全体を開け閉めする見出しのボタン。
+   「第N日」と題をそのまま押せるようにして、小さな三角をねらわずに済むようにする。
+   右端に別のボタン（削除など）を並べるので、幅は目いっぱいには広げない。 */
+.panel-head-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 閉じているとき、見出しの下に出す 1 行のまとめ。
+   あふれたら「…」で切る。2 行になると閉じている意味が薄れるため。 */
+.panel-head-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+}

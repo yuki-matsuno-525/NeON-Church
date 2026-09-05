@@ -142,11 +142,42 @@ def test_作成時も中身が空のまま公開できない(auth_client, visibi
 
 
 @pytest.mark.django_db
-def test_日があれば公開できる(auth_client, plan_id):
-    _add_day(auth_client, plan_id)
+def test_章の入っていない日があるうちは公開できない(auth_client, plan_id, book):
+    """章が無い日は読み終わりの記録を持てず、読む人が最後まで終われないため。"""
+    day = _add_day(auth_client, plan_id).data
+    _add_day(auth_client, plan_id)  # こちらは空のまま
+    _set_readings(auth_client, plan_id, day["id"], [(1, "")])
 
     response = auth_client.patch(
         f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert "第2日" in str(response.data["visibility"])
+
+
+@pytest.mark.django_db
+def test_どの日にも章があれば公開できる(auth_client, plan_id, book):
+    day = _add_day(auth_client, plan_id).data
+    _set_readings(auth_client, plan_id, day["id"], [(1, "")])
+
+    response = auth_client.patch(
+        f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json"
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_公開したあとは章の無い日があっても題を直せる(auth_client, plan_id, book):
+    """すでに公開しているプランの保存まで弾くと、直すこと自体ができなくなるため。"""
+    day = _add_day(auth_client, plan_id).data
+    _set_readings(auth_client, plan_id, day["id"], [(1, "")])
+    auth_client.patch(f"{PLANS_URL}{plan_id}/", {"visibility": "public"}, format="json")
+    _add_day(auth_client, plan_id)  # 公開後に空の日を足す
+
+    response = auth_client.patch(
+        f"{PLANS_URL}{plan_id}/", {"title": "直した題", "visibility": "public"}, format="json"
     )
 
     assert response.status_code == 200

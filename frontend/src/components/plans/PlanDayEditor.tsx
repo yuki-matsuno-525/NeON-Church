@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { updatePlanDay, type PlanDay } from "@/lib/api";
-import { useAutosave, saveStatusLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { MAX_READINGS_PER_DAY } from "@/lib/plans";
 import { useT } from "@/lib/i18n";
@@ -10,9 +10,18 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
 import { ChapterPicker, type PickedChapter } from "./ChapterPicker";
-import { readingLabel } from "./ReadingChips";
+import { readingLabel, readingsSummary } from "./ReadingChips";
+import { PlanDayPanel } from "./PlanDayPanel";
 // 章の行の形は、読む画面と同じものを使う。作る画面と読む画面で形がずれないようにするため。
 import styles from "./PlanDay.module.css";
+
+/** 画面が持っている章 1 つぶん。サーバーの PlanReading から表示に要る分だけ取り出したもの。 */
+type EditableReading = {
+  book: string;
+  book_name: string;
+  chapter_number: number;
+  translation: string;
+};
 
 /**
  * プランの1日ぶんを編集する。パネルの形は、プランを読む画面の日パネルと同じ。
@@ -31,6 +40,8 @@ export function PlanDayEditor({
   canMoveDown,
   onDelete,
   onMove,
+  open,
+  onToggle,
 }: {
   planId: string;
   day: PlanDay;
@@ -39,6 +50,9 @@ export function PlanDayEditor({
   canMoveDown: boolean;
   onDelete: () => void;
   onMove: (direction: -1 | 1) => void;
+  /** この日を開いているか。開け閉めは日の一覧を持つ側が覚える。 */
+  open: boolean;
+  onToggle: () => void;
 }) {
   const [title, setTitle] = useState(day.title);
   const [devotional, setDevotional] = useState(day.devotional);
@@ -55,7 +69,6 @@ export function PlanDayEditor({
   const t = useT();
   const { lang } = useLang();
   const text = planUiText(lang);
-  const dayLabel = t.planDayLabel(day.number);
 
   const draft = useMemo(
     () => ({
@@ -74,14 +87,18 @@ export function PlanDayEditor({
     async (value: typeof draft) => {
       const saved = await updatePlanDay(planId, day.id, value);
       // 書名はサーバー側で訳に合わせて決まるので、保存の返事で入れ直す。
-      setReadings(
-        saved.readings.map((reading) => ({
-          book: reading.book,
-          book_name: reading.book_name,
-          chapter_number: reading.chapter_number,
-          translation: reading.translation,
-        })),
-      );
+      //
+      // ただし中身が同じなら、今の並びをそのまま返して配列を作り直さない。
+      // 作り直すと draft（useMemo）が別物になり、自動保存が「変わった」と見て
+      // また保存する、という輪になる。何も触っていないのに 1.2 秒ごとに
+      // 保存が飛び続けていたのはこれが原因。
+      const next = saved.readings.map((reading) => ({
+        book: reading.book,
+        book_name: reading.book_name,
+        chapter_number: reading.chapter_number,
+        translation: reading.translation,
+      }));
+      setReadings((current) => (sameReadings(current, next) ? current : next));
     },
     [planId, day.id],
   );
@@ -107,18 +124,33 @@ export function PlanDayEditor({
   const canAdd = readings.length < MAX_READINGS_PER_DAY;
 
   return (
-    <section className="card-glow card-glow-strong p-6">
-      {/* パネルの見出し。左が「第N日」、右が消すところ。 */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <Icon name="calendar" size={20} color="var(--accent)" />
-        <span className="text-lg font-bold text-accent">{dayLabel}</span>
-        <span role="status" aria-live="polite" className={autosave.status === "error" ? "text-xs text-danger" : "text-xs text-soft"}>
-          {saveStatusLabel(autosave.status, t)}
-        </span>
-        {autosave.status === "error" && (
-          <button type="button" onClick={() => void autosave.retry()} className="link-button">{text.retry}</button>
-        )}
-        <div className="ml-auto flex items-center gap-1">
+    <PlanDayPanel
+      number={day.number}
+      title={title}
+      open={open}
+      onToggle={onToggle}
+      summary={readingsSummary(
+        readings.map((reading) => ({
+          book_name: reading.book_name || reading.book,
+          chapter_number: reading.chapter_number,
+        })),
+        t,
+        lang,
+      )}
+      leading={<Icon name="calendar" size={20} color="var(--accent)" />}
+      note={
+        /* うまくいっているときは何も出さない。日が並ぶ画面で「保存しました」が
+           あちこち点滅するのを避けるため。失敗したときだけ、その日の見出しに出す。 */
+        autosave.status === "error" ? (
+          /* 赤い字は紫のカードの上だと地に沈むので、暗い地の小さな札に載せる。 */
+          <span role="alert" className="text-xs text-danger bg-bg rounded-sm px-2 py-1">
+            {saveErrorLabel(autosave.status, t)}{" "}
+            <button type="button" onClick={() => void autosave.retry()} className="link-button">{text.retry}</button>
+          </span>
+        ) : undefined
+      }
+      actions={
+        <>
           {canMoveUp && (
             <button type="button" onClick={() => onMove(-1)} aria-label={text.moveUp(day.number)} className="icon-button">
               ↑
@@ -135,9 +167,9 @@ export function PlanDayEditor({
               {t.delete}
             </button>
           )}
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <div className="flex flex-col gap-4">
         {/* 1. この日の題 */}
         <div className="note-box">
@@ -275,6 +307,19 @@ export function PlanDayEditor({
           </label>
         </div>
       </div>
-    </section>
+    </PlanDayPanel>
+  );
+}
+
+/** 章の並びが同じか。順番も中身も一致していれば同じとみなす。 */
+function sameReadings(a: EditableReading[], b: EditableReading[]): boolean {
+  return (
+    a.length === b.length
+    && a.every((reading, index) =>
+      reading.book === b[index].book
+      && reading.chapter_number === b[index].chapter_number
+      && reading.translation === b[index].translation
+      // 書名はサーバー側が訳に合わせて決めるので、変わったら入れ直す必要がある。
+      && reading.book_name === b[index].book_name)
   );
 }
