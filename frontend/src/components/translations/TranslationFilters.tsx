@@ -43,8 +43,7 @@ export function TranslationFilters({ languages, targetLanguage, total }: Props) 
       searchPlaceholder={t.projectSearchPlaceholder}
       toggleLabel={t.filterToggle}
       active={targetLanguage !== ""}
-      total={total}
-      totalLabel={t.projectCount}
+      totalText={total == null ? undefined : t.projectCount(total)}
     >
       <label className="inline-flex items-center gap-2 text-sm text-muted">
         <span className="sr-only">{t.translationLanguage}</span>

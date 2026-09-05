@@ -96,8 +96,7 @@ export default async function PlansPage({
           basePath="/plans"
           searchLabel={t.planSearchLabel}
           toggleLabel={t.filterToggle}
-          total={activeTab === "mine" ? myPlans?.length ?? null : publicPlans?.length ?? null}
-          totalLabel={t.planCount}
+          totalText={planCountText(activeTab === "mine" ? myPlans : publicPlans, t)}
         />
       )}
 
@@ -220,6 +219,11 @@ function SubscriptionColumn({
       )}
     </TabPanel>
   );
+}
+
+/** 件数の表示。取れなかったときは出さない。 */
+function planCountText(plans: Plan[] | null, t: Translations): string | undefined {
+  return plans ? t.planCount(plans.length) : undefined;
 }
 
 /** タブと検索語を保った /plans の URL。既定のタブと空の検索語は書かない。 */
