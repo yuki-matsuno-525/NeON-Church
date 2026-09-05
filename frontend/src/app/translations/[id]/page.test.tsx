@@ -39,7 +39,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     activateTranslation: vi.fn(),
     fetchTranslationLanguages: vi.fn().mockResolvedValue([]),
     fetchTranslationMembers: vi.fn().mockResolvedValue([]),
-    fetchBookmarks: vi.fn().mockResolvedValue([]),
+    fetchProjectBookmarks: vi.fn().mockResolvedValue([]),
   };
 });
 

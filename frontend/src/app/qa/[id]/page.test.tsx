@@ -37,6 +37,11 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     createAnswer: vi.fn().mockResolvedValue({ id: "a2" }),
+    fetchAnswerPage: vi.fn().mockResolvedValue({
+      count: 0,
+      hasMore: false,
+      results: [],
+    }),
     setQuestionBestAnswer: vi.fn().mockResolvedValue(undefined),
   };
 });

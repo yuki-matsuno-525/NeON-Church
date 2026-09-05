@@ -37,7 +37,13 @@ vi.mock("@/lib/translationPreference", async (importOriginal) => {
 
 vi.mock("@/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api")>();
-  return { ...actual, fetchChapterBookmarks: vi.fn().mockResolvedValue([]) };
+  return {
+    ...actual,
+    fetchChapterBookmarks: vi.fn().mockResolvedValue([]),
+    fetchReferenceChapters: vi.fn().mockResolvedValue([]),
+    fetchReferenceVerses: vi.fn().mockResolvedValue([]),
+    saveReadingProgress: vi.fn().mockResolvedValue(undefined),
+  };
 });
 
 vi.mock("@/contexts/AuthContext", () => ({
