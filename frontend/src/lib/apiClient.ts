@@ -1,6 +1,7 @@
 import type {
   Book,
   Chapter,
+  BookChapter,
   Verse,
   Comment,
   Bookmark,
@@ -298,7 +299,7 @@ export function fetchChapterRead(
 export function fetchBookRead(
   slug: string,
   translation: string
-): Promise<{ book: Book; chapters: Chapter[]; translations: string[] }> {
+): Promise<{ book: Book; chapters: BookChapter[]; translations: string[] }> {
   return apiFetch(`/references/${slug}/book/?translation=${encodeURIComponent(translation)}`);
 }
 

@@ -212,6 +212,44 @@ def test_book_read_returns_book_and_all_chapters(api):
     assert sorted(c["number"] for c in data["chapters"]) == [3, 4]
 
 
+def test_book_read_gives_each_chapter_its_opening(api):
+    """章の書き出しを返す。プランを作る人が中身を見ないまま章を選ばずに済むようにするため。
+
+    節の番号は 1 から始まらない書があるので、番号のいちばん小さい節を書き出しにする。
+    """
+    ja = make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
+    _add_verse(ja, 1, 2, text="つぎの節")
+    _add_verse(ja, 1, 1, text="アブラハムの子であるダビデの子、イエス・キリストの系図。")
+    _add_verse(ja, 5, 3, text="こころの貧しい人たちは、さいわいである。")
+
+    res = api.get("/api/references/matthew/book/", {"translation": "口語訳"})
+
+    assert res.status_code == 200
+    openings = {c["number"]: c["opening"] for c in res.json()["chapters"]}
+    assert openings[1] == "アブラハムの子であるダビデの子、イエス・キリストの系図。"
+    assert openings[5] == "こころの貧しい人たちは、さいわいである。"
+
+
+def test_book_read_shortens_a_long_opening(api):
+    ja = make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
+    _add_verse(ja, 1, 1, text="あ" * 200)
+
+    res = api.get("/api/references/matthew/book/", {"translation": "口語訳"})
+
+    opening = res.json()["chapters"][0]["opening"]
+    assert len(opening) <= 81  # 80 文字＋末尾の「…」
+    assert opening.endswith("…")
+
+
+def test_book_read_leaves_the_opening_empty_when_a_chapter_has_no_verse(api):
+    ja = make_book("マタイによる福音書", "口語訳", 1, slug="matthew")
+    Chapter.objects.create(book=ja, number=1)
+
+    res = api.get("/api/references/matthew/book/", {"translation": "口語訳"})
+
+    assert res.json()["chapters"][0]["opening"] == ""
+
+
 def test_book_read_falls_back_when_the_translation_has_no_text(api):
     _make_matthew()
     res = api.get("/api/references/matthew/book/", {"translation": "存在しない訳"})
