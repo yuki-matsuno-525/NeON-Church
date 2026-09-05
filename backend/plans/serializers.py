@@ -194,12 +194,30 @@ class PlanWriteSerializer(serializers.ModelSerializer):
         visibility = attrs.get(
             "visibility", getattr(self.instance, "visibility", Plan.VISIBILITY_PRIVATE)
         )
+        was_private = (
+            getattr(self.instance, "visibility", Plan.VISIBILITY_PRIVATE)
+            == Plan.VISIBILITY_PRIVATE
+        )
         if visibility != Plan.VISIBILITY_PRIVATE:
             # 作成時点ではまだ日を追加できないため、公開・限定公開での直接作成も拒否する。
             if self.instance is None or not self.instance.days.exists():
                 raise serializers.ValidationError(
                     {"visibility": "公開するには、1日以上の中身が必要です。"}
                 )
+            # 章が1つも入っていない日があると、その日は読み終わりの記録を持てず
+            # （progress.py は「その日の章に全部印が付いたとき」に作る）、
+            # 読む人はプランを最後まで終わらせられない。
+            #
+            # 見るのは下書きから公開へ変えるときだけ。すでに公開されているプランの
+            # 題や説明を直すたびに弾かれると、直すこと自体ができなくなるため。
+            if was_private:
+                empty = self.instance.days.filter(readings__isnull=True).order_by("number")
+                numbers = "、".join(f"第{day.number}日" for day in empty)
+                if numbers:
+                    raise serializers.ValidationError({
+                        "visibility": f"章が入っていない日があります（{numbers}）。"
+                        "章を入れてから公開してください。"
+                    })
         return attrs
 
 
