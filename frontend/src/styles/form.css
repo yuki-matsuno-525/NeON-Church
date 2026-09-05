@@ -31,17 +31,6 @@
   font-size: var(--text-sm);
 }
 
-/* 「保存しました」「保存できません」の表示。文字数で幅が動くと
-   隣のボタンが左右にずれるので、最小の幅を決めておく。 */
-.save-status {
-  min-width: 80px;
-  color: var(--text-faint);
-  font-size: var(--text-xs);
-}
-.save-status-error {
-  color: var(--state-danger);
-}
-
 /* 「消す」ボタンが出ているあいだ、文字がボタンに重ならないよう右を空ける */
 .has-clear-btn {
   padding-right: 48px;
@@ -205,4 +194,30 @@
 /* 入力に不備があるとき、枠を赤くする。 */
 .form-control-invalid {
   border-color: var(--state-danger);
+}
+
+/* プルダウンには自前で下向きの印を描く。
+   背景色を付けた <select> は iOS Safari が既定の印を描かなくなり、
+   押せる場所だと分からないただの箱になってしまうため。
+
+   クラスごとではなく <select> そのものに掛ける。.form-control / .filter-select /
+   .select-sm / .select-md と書き分けると、どれかを取りこぼすため。
+   背景色は各クラスのものを残したいので、ここでは色を指定しない
+   （background の一括指定を書くと、せっかくの背景色を消してしまう）。
+
+   印の形は components/ui/Icon.tsx の chevron-down と同じ。
+   色は --text-muted (#a898d8)。データ URI の中では var() が使えないので写している。
+
+   一覧型（multiple / size 付き）は矢印を出す相手ではないので外す。
+   ついでに、この :not() 2 つぶんでクラス 1 つより強くなる。
+   .form-control が background と padding をクラスで指定しているので、
+   要素だけの指定（select { … }）では負けて何も効かない。 */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a898d8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
 }
