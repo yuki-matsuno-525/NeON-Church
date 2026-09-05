@@ -23,13 +23,21 @@ vi.mock("@/lib/i18nServer", () => ({
 }));
 
 describe("AboutContent", () => {
-  it("現在の状態と主要な次アクションを示す", async () => {
+  it("いまの状態と、何ができる場所かを示す", async () => {
     // サーバーコンポーネントは呼び出すと Promise を返すので、待ってから描く。
     render(await AboutContent());
 
     expect(screen.getByRole("status")).toHaveTextContent("ベータ版");
-    expect(screen.getByRole("link", { name: "書を読む" })).toHaveAttribute("href", "/read");
-    expect(screen.getByRole("link", { name: "Q&A" })).toHaveAttribute("href", "/qa");
-    expect(screen.getByRole("link", { name: "翻訳に参加" })).toHaveAttribute("href", "/translations");
+    expect(screen.getByRole("heading", { name: "概要" })).toBeInTheDocument();
+    expect(screen.getByText("読む")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "トップへ戻る" })).toHaveAttribute("href", "/");
+  });
+
+  it("目次のパネルは置かない", async () => {
+    render(await AboutContent());
+
+    // 節が 3 つしかないので目次は出さない（規約など長い画面では引き続き使う）。
+    expect(screen.queryByText("このページの内容")).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });
 });

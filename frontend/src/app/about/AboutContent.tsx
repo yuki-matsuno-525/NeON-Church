@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
-import { ContentPageMeta } from "@/components/ContentPageMeta";
 
 /**
  * この画面は文字を並べるだけで、押したり入力したりする部分が無い。
  * 表示文言をサーバー側の getT() で取ることで `"use client"` が不要になり、
  * ブラウザに JavaScript を送らずに描ける。
+ *
+ * 目次のパネル（ContentPageMeta）は置かない。節が 3 つしかない画面で目次を出しても
+ * 行き先が増えず、読み始める前に箱を 1 つまたぐことになるため。
+ * 規約やプライバシーのように長い画面では引き続き使う。
  */
 export async function AboutContent() {
   const t = await getT();
@@ -23,19 +26,6 @@ export async function AboutContent() {
       >
         {lang === "ja" ? "現在ベータ版として改善中です" : "Currently improving in public beta"}
       </div>
-
-      <ContentPageMeta
-        updatedAt="2026-08-01"
-        sections={[t.aboutSection1Title, t.aboutSection2Title, t.aboutSection3Title]}
-        relatedLinks={[
-          { href: "/read", label: lang === "ja" ? "書を読む" : "Read texts" },
-          { href: "/qa", label: "Q&A" },
-          { href: "/translations", label: lang === "ja" ? "翻訳に参加" : "Join translations" },
-        ]}
-        labels={lang === "ja"
-          ? { updated: "更新日", contents: "このページの内容", related: "今すぐ始める" }
-          : { updated: "Last updated", contents: "On this page", related: "Get started" }}
-      />
 
       <Section id="section-1" title={t.aboutSection1Title}>
         <p className="m-0">{t.aboutSection1Body}</p>
