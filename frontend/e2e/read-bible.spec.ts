@@ -5,7 +5,7 @@ import { test, expect } from "./fixtures";
  *
  * 確認する流れ:
  * 1. /matthew/1 を開く
- * 2. Sidebar からマタイを選ぶ（localStorage に保存済みなので /matthew/1 にリダイレクト）
+ * 2. Sidebar からマタイの章一覧を開く
  * 3. 章一覧から5章を選ぶ
  * 4. 本文が表示される
  * 5. 節番号が表示される
@@ -20,12 +20,13 @@ test("聖書本文を読む", { tag: "@release-smoke" }, async ({ page }) => {
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
 
-  // サイドバー「マタイ」クリック → localStorage参照で /matthew/1 にリダイレクト
+  // 明示的に書を選んだ場合は、記憶済みの章へ自動転送せず章一覧を開く。
   await page.getByRole("link", { name: "マタイ" }).first().click();
-  await expect(page).toHaveURL(/\/matthew\/1$/);
+  await expect(page).toHaveURL(/\/matthew\?list=1$/);
+  await expect(page.getByRole("heading", { name: "マタイによる福音書" })).toBeVisible();
 
-  // 直接 /matthew/5 に移動
-  await page.goto("/matthew/5");
+  // 章一覧から5章を選ぶ。
+  await page.locator('a.chapter-cell[href="/matthew/5"]').click();
   await expect(page).toHaveURL(/\/matthew\/5$/);
 
   // 本文ページのh1が表示される

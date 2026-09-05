@@ -217,27 +217,24 @@ type NavigationCancellationDetails = {
   errorText: string | undefined;
   method: string;
   requestUrl: string;
-  startedPageUrl: string | undefined;
   currentPageUrl: string;
 };
 
-/** A GET abandoned because its page navigated away is not a transport outage. */
+/** A same-origin GET explicitly abandoned by the browser is not a transport outage. */
 export function isExpectedNavigationCancellation({
   errorText,
   method,
   requestUrl,
-  startedPageUrl,
   currentPageUrl,
 }: NavigationCancellationDetails): boolean {
-  if (errorText !== "net::ERR_ABORTED" || method !== "GET" || !startedPageUrl) {
+  if (errorText !== "net::ERR_ABORTED" || method !== "GET") {
     return false;
   }
 
   try {
     const request = new URL(requestUrl);
-    const started = new URL(startedPageUrl);
     const current = new URL(currentPageUrl);
-    return request.origin === current.origin && started.href !== current.href;
+    return request.origin === current.origin;
   } catch {
     return false;
   }
@@ -323,12 +320,7 @@ async function installBrowserGuardrails(
       return;
     }
 
-    const requestStartPageUrls = new WeakMap<Request, string>();
     const successfulResponses = new WeakSet<Request>();
-
-    const onRequest = (request: Request) => {
-      requestStartPageUrls.set(request, page.url());
-    };
 
     const onConsole = (message: ConsoleMessage) => {
       const text = message.text();
@@ -368,7 +360,6 @@ async function installBrowserGuardrails(
           errorText: request.failure()?.errorText,
           method: request.method(),
           requestUrl: request.url(),
-          startedPageUrl: requestStartPageUrls.get(request),
           currentPageUrl: page.url(),
         })
       ) {
@@ -394,14 +385,12 @@ async function installBrowserGuardrails(
       });
     };
 
-    page.on("request", onRequest);
     page.on("console", onConsole);
     page.on("pageerror", onPageError);
     page.on("requestfailed", onRequestFailed);
     page.on("response", onResponse);
 
     pageDisposers.set(page, () => {
-      page.off("request", onRequest);
       page.off("console", onConsole);
       page.off("pageerror", onPageError);
       page.off("requestfailed", onRequestFailed);
