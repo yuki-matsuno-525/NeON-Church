@@ -8,6 +8,7 @@ import {
   openVisualRoute,
   VISUAL_ENGLISH_VARIANT_IDS,
   VISUAL_BASELINE_ENABLED,
+  VISUAL_FULL_PAGE_VARIANT_IDS,
   VISUAL_LINUX_SNAPSHOT_FILENAMES,
   VISUAL_MOBILE_VARIANT_IDS,
   VISUAL_ROUTE_CASES,
@@ -53,9 +54,9 @@ if (VISUAL_BASELINE_ENABLED) {
   });
 
   // Cross-product snapshots grow quickly and make review less reliable. These
-  // variants cover each major responsive layout family and both rendering languages;
-  // individual findings add a focused snapshot rather than duplicating all 35 pages.
-  test.describe("responsive and language sentinels", () => {
+  // variants cover each major responsive layout family, both rendering languages,
+  // and representative content below the initial viewport.
+  test.describe("responsive, language, and below-fold sentinels", () => {
     for (const id of VISUAL_MOBILE_VARIANT_IDS) {
       const route = VISUAL_ROUTE_CASES.find((candidate) => candidate.id === id)!;
       test(`${route.id}: mobile`, async ({ page }) => {
@@ -69,6 +70,16 @@ if (VISUAL_BASELINE_ENABLED) {
       test(`${route.id}: English`, async ({ page }) => {
         await openVisualRoute(page, route, { language: "en" });
         await captureVisualBaseline(page, `route-${route.id}-en-desktop`);
+      });
+    }
+
+    for (const id of VISUAL_FULL_PAGE_VARIANT_IDS) {
+      const route = VISUAL_ROUTE_CASES.find((candidate) => candidate.id === id)!;
+      test(`${route.id}: full page`, async ({ page }) => {
+        await openVisualRoute(page, route);
+        await captureVisualBaseline(page, `route-${route.id}-ja-desktop-full-page`, {
+          fullPage: true,
+        });
       });
     }
   });

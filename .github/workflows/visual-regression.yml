@@ -226,7 +226,9 @@ jobs:
             find e2e/visual-baseline.spec.ts-snapshots -maxdepth 1 -type f -name "*.png" \
               -printf "%f\n" | LC_ALL=C sort > "$actual"
             diff -u e2e/visual-snapshot-manifest.txt "$actual"
-            test "$(find test-results-visual-compare -type f -name "*.webm" | wc -l)" -eq 44
+            expected_count="$(wc -l < e2e/visual-snapshot-manifest.txt)"
+            test "$expected_count" -gt 0
+            test "$(find test-results-visual-compare -type f -name "*.webm" | wc -l)" -eq "$expected_count"
             find e2e/visual-baseline.spec.ts-snapshots test-results-visual-compare \
               -type f \( -name "*.png" -o -name "*.webm" \) -print0 \
               | sort -z | xargs -0 sha256sum \
@@ -258,7 +260,9 @@ jobs:
             find e2e/visual-baseline.spec.ts-snapshots -maxdepth 1 -type f -name "*.png" \
               -printf "%f\n" | LC_ALL=C sort > "$actual"
             diff -u e2e/visual-snapshot-manifest.txt "$actual"
-            test "$(find test-results-visual-candidates -type f -name "*.webm" | wc -l)" -eq 44
+            expected_count="$(wc -l < e2e/visual-snapshot-manifest.txt)"
+            test "$expected_count" -gt 0
+            test "$(find test-results-visual-candidates -type f -name "*.webm" | wc -l)" -eq "$expected_count"
             find e2e/visual-baseline.spec.ts-snapshots test-results-visual-candidates \
               -type f \( -name "*.png" -o -name "*.webm" \) -print0 \
               | sort -z | xargs -0 sha256sum \

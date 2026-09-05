@@ -132,11 +132,20 @@ export const VISUAL_ENGLISH_VARIANT_IDS = [
   "14-login",
   "06-article-detail",
 ] as const;
+export const VISUAL_FULL_PAGE_VARIANT_IDS = [
+  "01-home",
+  "03-chapter",
+  "06-article-detail",
+  "17-plan-detail",
+  "24-question-detail",
+  "34-translation-chapter",
+] as const;
 
 export const VISUAL_SNAPSHOT_BASENAMES = [
   ...VISUAL_ROUTE_CASES.map((route) => `route-${route.id}-ja-desktop`),
   ...VISUAL_MOBILE_VARIANT_IDS.map((id) => `route-${id}-ja-mobile`),
   ...VISUAL_ENGLISH_VARIANT_IDS.map((id) => `route-${id}-en-desktop`),
+  ...VISUAL_FULL_PAGE_VARIANT_IDS.map((id) => `route-${id}-ja-desktop-full-page`),
   "route-404-ja-desktop",
 ].sort();
 
@@ -348,7 +357,10 @@ export async function openVisualRoute(
   await expect(ready, `${route.template} never reached its representative state`).toBeVisible();
   await expect(page.locator('[data-testid="skeleton-list"]:visible')).toHaveCount(0);
   await expect(page.locator(".spinning:visible")).toHaveCount(0);
-  await page.waitForLoadState("networkidle");
+  // Editors autosave and some pages poll, so a global lack of network activity is
+  // neither a user-visible readiness condition nor guaranteed to occur. The stable
+  // UI markers above and the asset/font checks below define screenshot readiness.
+  await page.waitForLoadState("load");
 
   await page.addStyleTag({
     content: `
@@ -384,11 +396,15 @@ export async function openVisualRoute(
   });
 }
 
-export async function captureVisualBaseline(page: Page, snapshotName: string) {
+export async function captureVisualBaseline(
+  page: Page,
+  snapshotName: string,
+  options: { fullPage?: boolean } = {},
+) {
   await expect(page).toHaveScreenshot(`${snapshotName}.png`, {
     animations: "disabled",
     caret: "hide",
-    fullPage: false,
+    fullPage: options.fullPage ?? false,
     maxDiffPixels: 0,
     scale: "css",
   });
