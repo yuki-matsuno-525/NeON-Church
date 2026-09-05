@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { expect, test } from "./fixtures";
+import { DEFAULT_BROWSER_GUARDRAIL_OPTIONS, expect, test } from "./fixtures";
 
 import {
   captureVisualBaseline,
@@ -73,19 +73,30 @@ if (VISUAL_BASELINE_ENABLED) {
     }
   });
 
-  test("404 uses a path that cannot be captured by root dynamic routes", async ({ page }) => {
-    await page.context().addCookies([
-      {
-        name: "neon_lang",
-        value: "ja",
-        url: new URL(process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000").origin,
-        sameSite: "Lax",
+  test.describe("intentional not-found baseline", () => {
+    test.use({
+      browserGuardrailOptions: {
+        allowHttpResponses: [
+          ...(DEFAULT_BROWSER_GUARDRAIL_OPTIONS.allowHttpResponses ?? []),
+          /^GET https?:\/\/[^/]+\/__visual_missing__\/__visual_missing__\/__visual_missing__ \(document\): HTTP 404$/,
+        ],
       },
-    ]);
-    const response = await page.goto("/__visual_missing__/__visual_missing__/__visual_missing__");
-    expect(response?.status()).toBe(404);
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await page.evaluate(async () => document.fonts.ready);
-    await captureVisualBaseline(page, "route-404-ja-desktop");
+    });
+
+    test("404 uses a path that cannot be captured by root dynamic routes", async ({ page }) => {
+      await page.context().addCookies([
+        {
+          name: "neon_lang",
+          value: "ja",
+          url: new URL(process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000").origin,
+          sameSite: "Lax",
+        },
+      ]);
+      const response = await page.goto("/__visual_missing__/__visual_missing__/__visual_missing__");
+      expect(response?.status()).toBe(404);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await page.evaluate(async () => document.fonts.ready);
+      await captureVisualBaseline(page, "route-404-ja-desktop");
+    });
   });
 }
