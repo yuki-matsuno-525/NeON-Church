@@ -34,10 +34,9 @@ export function LoadMoreButton({
         onClick={onClick}
         disabled={loading}
         aria-busy={loading}
-        className={[
-          "tap-target rounded-md border border-border bg-transparent px-4 py-2 text-sm",
-          loading ? "cursor-default text-faint" : "cursor-pointer text-muted",
-        ].join(" ")}
+        // 以前はここだけ枠だけの見た目を直に書いていた。暗い地に沈んで
+        // 押せると気づけなかったので、他の副操作と同じ塗りのボタンに揃える。
+        className="btn btn-ghost"
       >
         {loading ? t.loading : error ? t.retry : t.loadMore}
       </button>

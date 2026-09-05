@@ -63,7 +63,7 @@ export default async function ArticlesPage({
           signedIn ? (
             <Link href="/articles/new" className="cta-button">{t.articleNew}</Link>
           ) : (
-            <Link href="/login?from=%2Farticles%2Fnew" className="cta-button cta-button-outline">
+            <Link href="/login?from=%2Farticles%2Fnew" className="cta-button">
               {t.articleLoginToWrite}
             </Link>
           )
