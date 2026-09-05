@@ -36,6 +36,8 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   allowedDevOrigins: ALLOWED_DEV_ORIGINS,
+  // Do not let unrelated lockfiles above this checkout change tracing or build roots.
+  turbopack: { root: process.cwd() },
   experimental: {
     // @/components/ui のような「まとめ口」から1つだけ読み込んでも、
     // 実際には中身が全部ついてくる。使ったものだけを読むようにする。
