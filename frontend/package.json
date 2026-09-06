@@ -29,7 +29,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:visual": "playwright test e2e/visual-baseline.spec.ts --project=chromium --workers=1",
+    "e2e:visual": "playwright test e2e/visual-baseline.spec.ts --project=chromium",
     "e2e:visual:update": "npm run e2e:visual -- --update-snapshots",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report"
