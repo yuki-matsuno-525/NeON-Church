@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoReady } from "./helpers";
 
 /**
  * E2E: 検索機能
@@ -9,7 +10,7 @@ import { test, expect } from "@playwright/test";
 
 test("S-1: 1文字の日本語（神）でも検索が実行される", async ({ page }) => {
   // CJK は1文字でも検索できる（2文字未満で弾かない）
-  await page.goto("/search?q=神");
+  await gotoReady(page, "/search?q=神");
 
   // 検索結果の見出しが出る＝検索が実行されている
   await expect(page.getByText(/「神」の検索結果/)).toBeVisible({ timeout: 10000 });
@@ -17,7 +18,7 @@ test("S-1: 1文字の日本語（神）でも検索が実行される", async ({
 
 test("S-2: キーワード「イエス」で検索すると節結果が表示される", async ({ page }) => {
   // バックエンドにデータが存在するキーワードで検索
-  await page.goto("/search?q=イエス");
+  await gotoReady(page, "/search?q=イエス");
 
   // 検索結果の見出しが表示される（節セクション）
   await expect(page.getByText(/「イエス」の検索結果/)).toBeVisible({ timeout: 10000 });
@@ -29,7 +30,7 @@ test("S-2: キーワード「イエス」で検索すると節結果が表示さ
 test("S-3: 存在しないキーワードで「一致する結果が見つかりませんでした」が表示される", async ({ page }) => {
   // ヒットしないであろうランダムな文字列で検索
   const uniqueQuery = `zzz_nohit_${Date.now()}`;
-  await page.goto(`/search?q=${encodeURIComponent(uniqueQuery)}`);
+  await gotoReady(page, `/search?q=${encodeURIComponent(uniqueQuery)}`);
 
   // ヒット0件のメッセージが表示される
   await expect(
@@ -39,7 +40,7 @@ test("S-3: 存在しないキーワードで「一致する結果が見つかり
 
 test("S-4: 検索フォームから送信すると URL が /search?q=... になる", async ({ page }) => {
   // 検索ページを開く
-  await page.goto("/search");
+  await gotoReady(page, "/search");
 
   // 検索フォームにキーワードを入力して送信。
   // 入力すると「入力をクリア」ボタンが出る＝画面が操作を受け取れる状態になった印。

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, openVerseCompose, registerUser } from "./helpers";
 
 /**
  * E2E 3: コメント投稿・返信・削除
@@ -21,7 +21,7 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
   await loginWithUI(page, username, password);
 
   // マタイ1章に移動
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await expect(
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
@@ -71,7 +71,7 @@ test("コメント投稿・返信・削除", async ({ page, request }) => {
 test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c3");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
@@ -107,7 +107,7 @@ test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, r
 test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c5");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // 章コメント欄そのものを待たない。サーバーが描いた HTML（未ログインの見た目）と
   // React が組み立て直したもの（ログイン済みの見た目）が一瞬どちらも DOM にいるので、
@@ -128,7 +128,7 @@ test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ p
 test("C-6: 書コメント投稿 — エラーなく投稿できる", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c6");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew");
+  await gotoReady(page, "/matthew");
 
   const ts = Date.now();
   const bookComment = `book_${ts}`;
@@ -141,7 +141,7 @@ test("C-6: 書コメント投稿 — エラーなく投稿できる", async ({ p
 test("C-7: 節コメントが章コメント欄に混入しない", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c7");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // 節コメント投稿
   await page.getByTestId("verse-item").first().click();

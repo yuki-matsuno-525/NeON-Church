@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoReady } from "./helpers";
 
 /**
  * E2E 1: 聖書本文を読む
@@ -12,7 +13,7 @@ import { test, expect } from "@playwright/test";
  */
 test("聖書本文を読む", async ({ page }) => {
   // /matthew/1 に直接アクセス（ページコンテンツ読み込みを待つ）
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await expect(page).toHaveURL(/\/matthew\/1$/);
 
   // 本文ページのh1が表示されるまで待つ（localStorage に章が保存される）
@@ -25,7 +26,7 @@ test("聖書本文を読む", async ({ page }) => {
   await expect(page).toHaveURL(/\/matthew\/1$/);
 
   // 直接 /matthew/5 に移動
-  await page.goto("/matthew/5");
+  await gotoReady(page, "/matthew/5");
   await expect(page).toHaveURL(/\/matthew\/5$/);
 
   // 本文ページのh1が表示される
@@ -40,7 +41,7 @@ test("聖書本文を読む", async ({ page }) => {
 });
 
 test("B-2: 章ナビゲーション — 前後章に遷移する", async ({ page }) => {
-  await page.goto("/matthew/5");
+  await gotoReady(page, "/matthew/5");
   await expect(
     page.getByRole("heading", { name: "マタイ 第5章", exact: true })
   ).toBeVisible();
@@ -62,7 +63,7 @@ test("B-2: 章ナビゲーション — 前後章に遷移する", async ({ page
 
 test("B-3: サイドバー — モバイルでハンバーガーメニューが機能する", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   // Client hydration and chapter data loading are complete before testing an
   // interactive control; otherwise an early click can land on server HTML.
   await expect(

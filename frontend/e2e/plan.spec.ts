@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { API_BASE, registerUser, loginWithUI } from "./helpers";
+import { API_BASE, gotoReady, loginWithUI, registerUser } from "./helpers";
 
 /**
  * プラン詳細（読む画面）の章の行。
@@ -60,7 +60,7 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
   });
   expect(publishRes.ok(), `公開に失敗: ${await publishRes.text()}`).toBeTruthy();
 
-  await page.goto(`/plans/${plan.id}`);
+  await gotoReady(page, `/plans/${plan.id}`);
   const firstReading = page.getByRole("link", { name: /マタイによる福音書 1章/ });
   await expect(firstReading).toBeVisible();
   await firstReading.click();

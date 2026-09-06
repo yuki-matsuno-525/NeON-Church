@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI } from "./helpers";
+import { gotoReady, loginWithUI, registerUser } from "./helpers";
 
 /**
  * E2E: 期限切れが近いログイン状態を、画面を出す前に更新できているか
@@ -23,7 +23,7 @@ test("期限切れでもページを開けばログイン状態が続く", async
   expect((await context.cookies()).some((c) => c.name === "access_token")).toBe(false);
 
   // ログインが要る画面を開く
-  await page.goto("/bookmarks");
+  await gotoReady(page, "/bookmarks");
 
   // 新しい access_token が発行され、ログアウトさせられていない
   await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
@@ -34,7 +34,7 @@ test("期限切れでもページを開けばログイン状態が続く", async
 test("ログインしていない人のページ表示は変わらない", async ({ page, context }) => {
   await context.clearCookies();
 
-  await page.goto("/read");
+  await gotoReady(page, "/read");
 
   await expect(page.getByRole("navigation").getByRole("link", { name: "ログイン" })).toBeVisible();
 });

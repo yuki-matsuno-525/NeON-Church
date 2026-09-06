@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, openVerseCompose, registerUser } from "./helpers";
 
 /**
  * E2E: プロフィールページ
@@ -15,7 +15,7 @@ test("Pr-1: ログイン済みユーザーが /profile にアクセスすると�
   const { username, password } = await registerUser(request, "_pr1");
   await loginWithUI(page, username, password);
 
-  await page.goto("/profile");
+  await gotoReady(page, "/profile");
 
   // ページタイトル
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
@@ -31,7 +31,7 @@ test("Pr-2: bio を更新すると保存成功メッセージが表示される"
   const { username, password } = await registerUser(request, "_pr2");
   await loginWithUI(page, username, password);
 
-  await page.goto("/profile");
+  await gotoReady(page, "/profile");
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // 自己紹介欄を更新
@@ -51,13 +51,13 @@ test("Pr-3: お気に入りタブにお気に入り一覧が表示される", as
   await loginWithUI(page, username, password);
 
   // 事前にお気に入りを登録する（CommentPanel のお気に入りアイコン）
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   await page.getByTestId("verse-bookmark").click();
   await expect(page.getByTestId("verse-bookmark")).toHaveAttribute("aria-label", "お気に入りを解除");
 
   // プロフィールページのお気に入りタブを確認
-  await page.goto("/profile");
+  await gotoReady(page, "/profile");
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // 「お気に入り」タブが表示されていることを確認（デフォルトで選択されている）
@@ -76,7 +76,7 @@ test("Pr-4: コメントタブに自分のコメントが表示される（コ�
   await loginWithUI(page, username, password);
 
   // 事前にコメントを投稿する
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
   const commentBody = `プロフィールE2Eコメント_${ts}`;
@@ -93,7 +93,7 @@ test("Pr-4: コメントタブに自分のコメントが表示される（コ�
   await expect(panel.getByText(commentBody)).toBeVisible();
 
   // プロフィールページのコメントタブを確認
-  await page.goto("/profile");
+  await gotoReady(page, "/profile");
   await expect(page.getByRole("heading", { name: "プロフィール" })).toBeVisible();
 
   // 「コメント」タブをクリック
@@ -114,7 +114,7 @@ test("Pr-5: 他ユーザーのプロフィール /profile/[username] にアク�
 
   // ユーザーBでログインして、ユーザーAのプロフィールを閲覧
   await loginWithUI(page, userB.username, userB.password);
-  await page.goto(`/profile/${userA.username}`);
+  await gotoReady(page, `/profile/${userA.username}`);
 
   // ユーザーAのユーザー名が見出しに表示される
   await expect(page.getByRole("heading", { name: userA.username })).toBeVisible();
@@ -128,7 +128,7 @@ test("Pr-6: 自分のプロフィールを /profile/[username] でアクセス�
   await loginWithUI(page, username, password);
 
   // 自分の username で /profile/[username] にアクセス
-  await page.goto(`/profile/${username}`);
+  await gotoReady(page, `/profile/${username}`);
 
   // 「こちら」リンク（/profile へのリダイレクト案内）が表示される
   await expect(page.getByRole("link", { name: "こちら" })).toBeVisible();
@@ -139,7 +139,7 @@ test("Pr-7: 存在しないユーザー名で「ユーザーが見つかりま�
   page,
 }) => {
   // 存在しないユーザー名でアクセス
-  await page.goto("/profile/this_user_does_not_exist_zzz");
+  await gotoReady(page, "/profile/this_user_does_not_exist_zzz");
 
   await expect(page.getByText("ユーザーが見つかりません。")).toBeVisible({
     timeout: 10000,

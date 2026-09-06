@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, logoutWithUI, openVerseCompose, registerUser } from "./helpers";
 
 test("Rp-1: 他ユーザーのコメントを報告できる", async ({ page, request }) => {
   const ts = Date.now();
@@ -7,7 +7,7 @@ test("Rp-1: 他ユーザーのコメントを報告できる", async ({ page, re
   // ユーザーA: コメント投稿
   const userA = await registerUser(request, `_rpa${ts}`);
   await loginWithUI(page, userA.username, userA.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const panel = page.locator(".comment-panel");
   await openVerseCompose(page);
@@ -20,7 +20,7 @@ test("Rp-1: 他ユーザーのコメントを報告できる", async ({ page, re
   // ユーザーB: 他ユーザーのコメントに「報告」ボタンが表示される
   const userB = await registerUser(request, `_rpb${ts}`);
   await loginWithUI(page, userB.username, userB.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
 
   const commentInner = panel.locator("p").filter({ hasText: commentText }).locator("xpath=..");
@@ -39,7 +39,7 @@ test("Rp-1: 他ユーザーのコメントを報告できる", async ({ page, re
 test("Rp-2: 自分のコメントには「報告」ボタンが表示されない", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_rp2");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoReady } from "./helpers";
 
 /**
  * E2E 2: 登録・ログイン
@@ -16,7 +17,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   const password = "testpass123";
 
   // 登録ページでフォームを使って登録
-  await page.goto("/register");
+  await gotoReady(page, "/register");
   await page.locator('input[type="text"]').waitFor({ state: "visible" });
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="email"]').fill(email);
@@ -36,7 +37,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
   ).toBeVisible();
 
   // ログインページへ移動
-  await page.goto("/login");
+  await gotoReady(page, "/login");
   await page.locator('input[type="text"]').fill(username);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
@@ -46,7 +47,7 @@ test("登録・ログアウト・ログイン", async ({ page }) => {
 });
 
 test("A-4: 未認証アクセス — コメントフォームが表示されない", async ({ page }) => {
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   // 未ログインのためテキストエリアは表示されず、ログインリンクが表示される
   await expect(page.getByPlaceholder("この節へのコメント...")).not.toBeVisible();

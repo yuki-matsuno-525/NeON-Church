@@ -93,3 +93,45 @@ export async function openVerseCompose(page: import("@playwright/test").Page) {
     .getByRole("button", { name: "コメントを書く" })
     .click();
 }
+
+/**
+ * 画面を開き、ブラウザ側の作り直しが終わるまで待つ。
+ *
+ * このサイトはサーバーが Cookie を見て中身を描く。そのあとブラウザが
+ * /auth/me で「いま誰か」を確かめ直し、その結果でもう一度組み立てる。
+ * **入れ替わる一瞬だけ、古い中身と新しい中身がどちらも DOM にいる**
+ * （React は古いほうをすぐ捨てず、見えなくして残す）。
+ *
+ * その一瞬に当たると、たとえば読む画面で
+ *   1) …投稿する…            ← ログイン済みの側
+ *   2) …ログインしてコメントする… ← 未ログインの側
+ * のように同じ場所が 2 つ見つかり、Playwright は「どちらか分からない」と言って落ちる。
+ * これが再実行だと通る不安定の正体だった。
+ *
+ * 上部バーは、確かめ終わったかどうかを data-auth-state という印で出している。
+ * それが loading でなくなった＝作り直しは終わっている、という合図に使う。
+ */
+export async function gotoReady(
+  page: import("@playwright/test").Page,
+  url: string,
+  options?: Parameters<import("@playwright/test").Page["goto"]>[1]
+) {
+  await page.goto(url, options);
+  // 上部バーの data-auth-state が loading でなくなったら、確かめ終わっている。
+  // 「ログアウト」ボタンの表示では待てない（狭い画面では隠れているため）。
+  await page
+    .locator('.navbar-root[data-auth-state="signed-in"], .navbar-root[data-auth-state="signed-out"]')
+    .waitFor({ state: "attached" });
+}
+
+/**
+ * 画面に見えているものだけに絞る。
+ *
+ * gotoReady で待ってもなお、区画の中で古い内容が見えないまま残ることがある。
+ * 利用者に見えているものだけを見れば、そこに引っかからない。
+ */
+export function visible(
+  locator: import("@playwright/test").Locator
+): import("@playwright/test").Locator {
+  return locator.filter({ visible: true });
+}

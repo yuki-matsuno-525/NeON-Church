@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI } from "./helpers";
+import { gotoReady, loginWithUI, registerUser } from "./helpers";
 
 /**
  * 記事の一連。書きはじめ → 引用パネルから節を入れる → 要約を書いて公開 →
@@ -27,7 +27,7 @@ function articleSaved(page: import("@playwright/test").Page) {
 
 /** 題を決めて下書きを作り、編集画面まで進む。 */
 async function startArticle(page: import("@playwright/test").Page, title: string) {
-  await page.goto("/articles/new");
+  await gotoReady(page, "/articles/new");
   await page.getByPlaceholder("例: 断食について").fill(title);
   await page.getByRole("button", { name: "書きはじめる" }).click();
   await expect(page).toHaveURL(/\/articles\/[0-9a-f-]+\/edit$/);
@@ -49,7 +49,7 @@ test("A-1: 記事を書いて公開すると一覧に出る", async ({ page, req
   await page.getByRole("button", { name: "変更して保存" }).click();
   await saved;
 
-  await page.goto("/articles");
+  await gotoReady(page, "/articles");
   await expect(page.getByText(title).first()).toBeVisible();
 });
 
@@ -97,7 +97,7 @@ test("A-4: 公開した記事は、引用した節のページから引ける", 
   await saved;
 
   // 引用した節のページを開く
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
 
   const tab = page.getByRole("tab", { name: /引用した記事/ });
@@ -122,7 +122,7 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   const context = await browser.newContext();
   const otherPage = await context.newPage();
   await loginWithUI(otherPage, other.username, other.password);
-  await otherPage.goto(url);
+  await gotoReady(otherPage, url);
 
   await expect(otherPage.getByText(/記事が見つかりません。|この記事は非公開です。/).first()).toBeVisible();
   await expect(otherPage.getByText("まだ人には見せない。")).toHaveCount(0);

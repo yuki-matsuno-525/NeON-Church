@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI } from "./helpers";
+import { gotoReady, loginWithUI, registerUser } from "./helpers";
 
 /**
  * E2E: 読書進捗
@@ -34,7 +34,7 @@ test("RP-1: 聖書ページを開くと読書進捗がバックエンドに保�
   const { username, password } = await registerUser(request, "_rp1");
   await loginWithUI(page, username, password);
   // loginWithUI はホーム ("/") に着地するので明示的にマタイ1章へ
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   await expect(
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
@@ -64,7 +64,7 @@ test("RP-2: ログインしていない状態では進捗が localStorage に保
   page,
 }) => {
   // 未ログインでマタイ1章を開く
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await expect(
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
@@ -84,7 +84,7 @@ test("RP-2: ログインしていない状態では進捗が localStorage に保
 
 test("RP-3: 異なる章に移動すると進捗が更新される", async ({ page }) => {
   // マタイ1章を開く
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await expect(
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
@@ -94,7 +94,7 @@ test("RP-3: 異なる章に移動すると進捗が更新される", async ({ pa
   expect(JSON.parse(progress1).chapterNumber).toBe(1);
 
   // マタイ5章に移動
-  await page.goto("/matthew/5");
+  await gotoReady(page, "/matthew/5");
   await expect(
     page.getByRole("heading", { name: "マタイ 第5章", exact: true })
   ).toBeVisible();

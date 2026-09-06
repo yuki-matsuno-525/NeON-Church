@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, logoutWithUI, openVerseCompose, registerUser } from "./helpers";
 
 test("P-1: 他者のコメントに削除ボタンが表示されない", async ({ page, request }) => {
   const ts = Date.now();
@@ -7,7 +7,7 @@ test("P-1: 他者のコメントに削除ボタンが表示されない", async 
   // ユーザーA: 登録・ログイン・コメント投稿
   const userA = await registerUser(request, `_p1a${ts}`);
   await loginWithUI(page, userA.username, userA.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const commentText = `other_comment_${ts}`;
   const panel = page.locator(".comment-panel");
@@ -20,7 +20,7 @@ test("P-1: 他者のコメントに削除ボタンが表示されない", async 
   // ユーザーB: 登録・ログイン
   const userB = await registerUser(request, `_p1b${ts}`);
   await loginWithUI(page, userB.username, userB.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   await expect(page.getByText(commentText)).toBeVisible();
 
@@ -29,7 +29,7 @@ test("P-1: 他者のコメントに削除ボタンが表示されない", async 
 });
 
 test("P-2: 未認証ではコメント投稿フォームが表示されない", async ({ page }) => {
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
 
   // テキストエリアがなく、ログインリンクが表示される

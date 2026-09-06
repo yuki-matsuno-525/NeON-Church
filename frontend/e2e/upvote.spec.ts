@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, openVerseCompose, registerUser } from "./helpers";
 
 test("U-1,U-2: upvote・取り消し — vote 数が増減する", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_upv");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // コメント投稿
   await page.getByTestId("verse-item").first().click();
@@ -34,7 +34,7 @@ test("U-1,U-2: upvote・取り消し — vote 数が増減する", async ({ page
 test("U-3: 連続upvoteは最大1票に留まる", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_u3");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // コメント投稿
   await page.getByTestId("verse-item").first().click();

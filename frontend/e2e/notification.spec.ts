@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, logoutWithUI, openVerseCompose, registerUser } from "./helpers";
 
 test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({ page, request }) => {
   const ts = Date.now();
@@ -7,7 +7,7 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   // ユーザーA: 登録・ログイン・コメント投稿
   const userA = await registerUser(request, `_na${ts}`);
   await loginWithUI(page, userA.username, userA.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   const panel = page.locator(".comment-panel");
   await openVerseCompose(page);
@@ -20,7 +20,7 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   // ユーザーB: 登録・ログイン・Aのコメントに返信
   const userB = await registerUser(request, `_nb${ts}`);
   await loginWithUI(page, userB.username, userB.password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await page.getByTestId("verse-item").first().click();
   await expect(panel.getByText(commentText)).toBeVisible();
   // commentText を含む inner-div にスコープして返信（他コメントのボタンと混同しない）
@@ -43,7 +43,7 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   await expect(notifLink.locator("span")).toHaveText("1");
 
   // 通知ページで確認
-  await page.goto("/notifications");
+  await gotoReady(page, "/notifications");
   // 種類の絞り込みにも「返信」ボタンが出るので、通知カードのバッジだけを見る。
   await expect(page.locator("span.badge").filter({ hasText: "返信" })).toBeVisible();
   await expect(page.getByText(userB.username)).toBeVisible();
@@ -56,7 +56,7 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
 test("N-3: 自己返信では通知が来ない", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_n3");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // コメント投稿
   await page.getByTestId("verse-item").first().click();

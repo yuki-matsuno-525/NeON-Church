@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { gotoReady } from "./helpers";
 
 /**
  * どのページでも、本文が左のサイドバーに重ならないことを確かめる。
@@ -13,7 +14,7 @@ const paths = ["/", "/read", "/plans", "/articles", "/qa", "/translations", "/ab
 
 for (const path of paths) {
   test(`${path} は本文がサイドバーに重ならない`, async ({ page }) => {
-    await page.goto(path, { waitUntil: "domcontentloaded" });
+    await gotoReady(page, path, { waitUntil: "domcontentloaded" });
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 });
       const result = await page.evaluate(() => {

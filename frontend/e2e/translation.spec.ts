@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, loginWithUI, logoutWithUI } from "./helpers";
+import { gotoReady, loginWithUI, logoutWithUI, registerUser } from "./helpers";
 
 /**
  * E2E: 翻訳プロジェクト
@@ -10,7 +10,7 @@ import { registerUser, loginWithUI, logoutWithUI } from "./helpers";
  */
 
 test("Tr-1: /translations にアクセスするとページが表示される", async ({ page }) => {
-  await page.goto("/translations");
+  await gotoReady(page, "/translations");
 
   // ページタイトルが表示される
   await expect(
@@ -25,14 +25,14 @@ test("Tr-2: ログイン済みユーザーに「＋ 新規作成」ボタンが�
   const { username, password } = await registerUser(request, "_tr2");
   await loginWithUI(page, username, password);
 
-  await page.goto("/translations");
+  await gotoReady(page, "/translations");
 
   // 「＋ 新規作成」リンクが表示される（ログイン済みの場合のみ）
   await expect(page.getByRole("link", { name: "＋ 新規作成" })).toBeVisible();
 });
 
 test("Tr-3: 未ログインでは「＋ 新規作成」ボタンが表示されない", async ({ page }) => {
-  await page.goto("/translations");
+  await gotoReady(page, "/translations");
 
   // 「＋ 新規作成」リンクが表示されない
   await expect(page.getByRole("link", { name: "＋ 新規作成" })).not.toBeVisible();
@@ -45,7 +45,7 @@ test("Tr-4: /translations/new から新規プロジェクトを作成できる",
   const { username, password } = await registerUser(request, "_tr4");
   await loginWithUI(page, username, password);
 
-  await page.goto("/translations/new");
+  await gotoReady(page, "/translations/new");
 
   // フォームが表示される
   await expect(
@@ -88,7 +88,7 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   await loginWithUI(page, username, password);
 
   // 新規プロジェクトを作成
-  await page.goto("/translations/new");
+  await gotoReady(page, "/translations/new");
 
   const ts = Date.now();
   const projectName = `E2E一覧確認_${ts}`;
@@ -111,7 +111,7 @@ test("Tr-5: 作成したプロジェクトが一覧に表示される", async ({
   // 同じカードが2つ見えることがある。件数ではなく「見えること」を確かめたいので
   // 先頭の1枚に絞る。
   // 募集開始にしたので、このプロジェクトは「進行中」のタブに入る。
-  await page.goto("/translations?tab=active");
+  await gotoReady(page, "/translations?tab=active");
   await expect(page.getByText(projectName).first()).toBeVisible();
 });
 
@@ -125,7 +125,7 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
   const userA = await registerUser(request, `_tr6a${ts}`);
   await loginWithUI(page, userA.username, userA.password);
 
-  await page.goto("/translations/new");
+  await gotoReady(page, "/translations/new");
   const projectName = `E2E参加申請_${ts}`;
   await page.locator('input[placeholder="例: マタイ英語翻訳"]').fill(projectName);
   await page.locator("select").nth(1).selectOption({ label: "マタイによる福音書" });
@@ -151,7 +151,7 @@ test("Tr-6: 別ユーザーが翻訳プロジェクトに参加申請できる",
   const userB = await registerUser(request, `_tr6b${ts}`);
   await loginWithUI(page, userB.username, userB.password);
 
-  await page.goto(projectUrl);
+  await gotoReady(page, projectUrl);
 
   // 「参加申請」ボタンが表示される（active プロジェクトで非メンバーのユーザー）
   await expect(page.getByRole("button", { name: "参加申請" })).toBeVisible();
