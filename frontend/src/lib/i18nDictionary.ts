@@ -384,7 +384,7 @@ const ja = {
   searchEmpty: (q: string) => `「${q}」に一致する結果が見つかりませんでした。`,
   sectionBooks: "書名",
   sectionVerses: "節",
-  sectionComments: "コメント（最大20件）",
+  sectionComments: "コメント",
   searchLoadMore: (n: number) => `もっと見る（残り${n}件）`,
   readLink: "読む →",
 
@@ -772,6 +772,16 @@ const ja = {
   nextChapter: "次の章",
 
   // 検索 (UX-14)
+  searchKindArticle: "記事",
+  searchKindPlan: "プラン",
+  searchKindQuestion: "Q&A",
+  searchKindProject: "翻訳",
+  // 「すべて」では種別ごとに数件だけ出す。続きはこのボタンでその種別へ。
+  searchSeeMore: (kindLabel: string) => `${kindLabel}をもっと見る`,
+  sectionArticles: "記事",
+  sectionPlans: "プラン",
+  sectionQuestions: "Q&A",
+  sectionProjects: "翻訳プロジェクト",
   searchKindBook: "書",
   searchKindVerse: "節",
   searchKindComment: "コメント",
@@ -1136,7 +1146,7 @@ const en: typeof ja = {
   searchEmpty: (q: string) => `No results found for "${q}".`,
   sectionBooks: "Books",
   sectionVerses: "Verses",
-  sectionComments: "Comments (up to 20)",
+  sectionComments: "Comments",
   searchLoadMore: (n: number) => `Show more (${n} remaining)`,
   readLink: "Read →",
 
@@ -1475,6 +1485,15 @@ const en: typeof ja = {
   prevChapter: "Previous chapter",
   nextChapter: "Next chapter",
 
+  searchKindArticle: "Articles",
+  searchKindPlan: "Plans",
+  searchKindQuestion: "Q&A",
+  searchKindProject: "Translations",
+  searchSeeMore: (kindLabel: string) => `See more ${kindLabel}`,
+  sectionArticles: "Articles",
+  sectionPlans: "Plans",
+  sectionQuestions: "Q&A",
+  sectionProjects: "Translation projects",
   searchKindBook: "Book",
   searchKindVerse: "Verse",
   searchKindComment: "Comment",

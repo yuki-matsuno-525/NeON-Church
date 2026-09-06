@@ -282,6 +282,11 @@ export type SearchResult = {
     created_at: string;
     location: string;
   }[];
+  // 節以外は「まず少しだけ」返る（件数は数えない）。種別を選ぶと最大 20 件まで。
+  articles: { id: string; title: string; summary: string; owner_username: string }[];
+  plans: { id: string; title: string; description: string; owner_username: string }[];
+  questions: { id: string; title: string; body: string; username: string }[];
+  projects: { id: string; name: string; description: string; owner_username: string }[];
   verse_total: number; // 集約後の節ヒット総数（ページングの母数）
   has_more: boolean; // さらに次ページの節があるか
 };

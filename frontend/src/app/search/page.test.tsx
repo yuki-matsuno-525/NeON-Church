@@ -29,6 +29,10 @@ const makeSearchResult = (overrides: Partial<SearchResult> = {}): SearchResult =
   verses: [],
   books: [],
   comments: [],
+  articles: [],
+  plans: [],
+  questions: [],
+  projects: [],
   verse_total: 0,
   has_more: false,
   ...overrides,
@@ -168,13 +172,15 @@ describe("SearchPage", () => {
     vi.mocked(searchBible).mockResolvedValue(
       makeSearchResult({ verses: [verse("A", 1)], verse_total: 120, has_more: true })
     );
-    mockSearchParams = new URLSearchParams({ q: "テスト" });
+    // ページ送りは節の一覧を開いているときだけ出す。「すべて」は各種数件のプレビューなので、
+    // 送る先が無い（E-3）。
+    mockSearchParams = new URLSearchParams({ q: "テスト", kind: "verses" });
     render(<SearchPage />);
 
     await screen.findByText("結果A");
     // 2ページ目のボタンを押すと URL に page=2 が付く。
     fireEvent.click(screen.getByRole("button", { name: "2" }));
-    expect(mockPush).toHaveBeenCalledWith("/search?q=%E3%83%86%E3%82%B9%E3%83%88&page=2");
+    expect(mockPush).toHaveBeenCalledWith("/search?q=%E3%83%86%E3%82%B9%E3%83%88&kind=verses&page=2");
   });
 
   it("URL の種別・書フィルタを searchBible に渡す", async () => {
