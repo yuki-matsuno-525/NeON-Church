@@ -83,7 +83,7 @@ export function ArticleComments({ articleId }: { articleId: string }) {
   };
 
   return (
-    <section className="mt-8">
+    <section className="mt-8" aria-busy={loading}>
       <ConfirmDialog
         open={deleting !== null}
         title={t.articleCommentDeleteConfirmTitle}

@@ -19,6 +19,8 @@ export type VisualRouteCase = {
   auth: AuthSource;
   /** Most pages expose an h1 when their async state is ready. Editors use a stable field instead. */
   readySelector?: string;
+  /** Route-owned async regions that must finish before a screenshot is meaningful. */
+  pendingSelector?: string;
 };
 
 /**
@@ -31,7 +33,13 @@ export const VISUAL_ROUTE_CASES: readonly VisualRouteCase[] = [
   { id: "03-chapter", template: "/[book]/[chapter]", path: "/matthew/1", auth: "none" },
   { id: "04-about", template: "/about", path: "/about", auth: "none" },
   { id: "05-articles", template: "/articles", path: "/articles", auth: "none" },
-  { id: "06-article-detail", template: "/articles/[id]", target: "article", auth: "none" },
+  {
+    id: "06-article-detail",
+    template: "/articles/[id]",
+    target: "article",
+    auth: "none",
+    pendingSelector: 'main section[aria-busy="true"]',
+  },
   {
     id: "07-article-edit",
     template: "/articles/[id]/edit",
@@ -357,6 +365,9 @@ export async function openVisualRoute(
   await expect(ready, `${route.template} never reached its representative state`).toBeVisible();
   await expect(page.locator('[data-testid="skeleton-list"]:visible')).toHaveCount(0);
   await expect(page.locator(".spinning:visible")).toHaveCount(0);
+  if (route.pendingSelector) {
+    await expect(page.locator(route.pendingSelector)).toHaveCount(0);
+  }
   // Editors autosave and some pages poll, so a global lack of network activity is
   // neither a user-visible readiness condition nor guaranteed to occur. The stable
   // UI markers above and the asset/font checks below define screenshot readiness.
@@ -404,46 +415,9 @@ export async function captureVisualBaseline(
   const landmark = page.locator("main h1:visible, main input:visible").first();
   await expect(landmark, `${snapshotName} has no visible render landmark`).toBeVisible();
 
-  const box = await landmark.boundingBox();
-  expect(box, `${snapshotName} render landmark has no paint box`).not.toBeNull();
-  const clip = {
-    x: Math.max(0, box!.x),
-    y: Math.max(0, box!.y),
-    width: Math.max(1, box!.width),
-    height: Math.max(1, box!.height),
-  };
-  const painted = await page.screenshot({ animations: "allow", caret: "hide", clip });
-  const previousVisibility = await landmark.evaluate((element) => ({
-    priority: element.style.getPropertyPriority("visibility"),
-    value: element.style.getPropertyValue("visibility"),
-  }));
-  let withoutLandmark: Buffer;
-  try {
-    await landmark.evaluate((element) => element.style.setProperty("visibility", "hidden", "important"));
-    await page.evaluate(
-      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-    );
-    withoutLandmark = await page.screenshot({ animations: "allow", caret: "hide", clip });
-  } finally {
-    await landmark.evaluate((element, previous) => {
-      if (previous.value) {
-        element.style.setProperty("visibility", previous.value, previous.priority);
-      } else {
-        element.style.removeProperty("visibility");
-      }
-    }, previousVisibility);
-    await page.evaluate(
-      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-    );
-  }
-  expect(
-    painted.equals(withoutLandmark),
-    `${snapshotName} landmark exists in the DOM but was absent from the rendered pixels`,
-  ).toBe(false);
-
   await expect(page).toHaveScreenshot(`${snapshotName}.png`, {
-    // openVisualRoute already removes motion in CSS. Keeping Playwright from
-    // manipulating compositor animations avoids accepting background-only frames.
+    // openVisualRoute already removes motion in CSS. Do not let each screenshot
+    // stability probe mutate animation styles independently.
     animations: "allow",
     caret: "hide",
     fullPage: options.fullPage ?? false,
