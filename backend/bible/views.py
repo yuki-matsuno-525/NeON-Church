@@ -1,7 +1,7 @@
 import datetime
 
 from django.core.cache import cache
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Count, OuterRef, Q, Subquery
 from django.utils import timezone
 from django.utils.text import Truncator
 from rest_framework import generics
@@ -15,7 +15,17 @@ from comments.models import Comment
 from comments.serializers import CommentSearchSerializer
 from .editions import DEFAULT_TRANSLATION, pick_edition
 from .models import Book, CanonicalBook, Chapter, Verse
-from .serializers import BookSerializer, ChapterSerializer, VerseSerializer, VerseOfDaySerializer, VerseSearchSerializer
+from .serializers import (
+    ArticleSearchSerializer,
+    BookSerializer,
+    ChapterSerializer,
+    PlanSearchSerializer,
+    ProjectSearchSerializer,
+    QuestionSearchSerializer,
+    VerseOfDaySerializer,
+    VerseSearchSerializer,
+    VerseSerializer,
+)
 
 # 検索対象の訳。UI 言語では絞らない。
 #
@@ -43,7 +53,12 @@ SEARCH_TRANSLATIONS = [
     "WLC (HEB)",
 ]
 
-SEARCH_KINDS = {"all", "verses", "books", "comments"}
+SEARCH_KINDS = {"all", "verses", "books", "comments", "articles", "plans", "questions", "projects"}
+
+# 「すべて」のときに、節以外の種別から返す件数。
+# ここを増やすと 1 回の検索で撃つ問い合わせが太る。種別を選んだときだけ
+# たくさん出せばよいので、まとめて見るときは少しずつにしておく。
+SEARCH_PREVIEW_SIZE = 20
 
 
 def _min_query_len(q: str) -> int:
@@ -303,13 +318,17 @@ class ReferenceVersesView(_ReferenceView):
 
 
 class SearchView(APIView):
-    """GET /api/search/?q=&page=&kind=&book=  節テキスト・書名・コメントを icontains で検索。
+    """GET /api/search/?q=&page=&kind=&book=  サイト全体を icontains で検索。
 
-    - 検索対象は SEARCH_TRANSLATIONS の全訳。UI 言語では絞らない（検索語が言語を選ぶ）。
-    - kind（all/verses/books/comments）で返すセクションを絞る。
-    - book（canonical_book.slug）で書を絞る。
+    - 探すもの: 節テキスト・書名・コメント・記事・プラン・Q&A の質問・翻訳プロジェクト。
+    - 検索対象の訳は SEARCH_TRANSLATIONS の全訳。UI 言語では絞らない（検索語が言語を選ぶ）。
+    - kind で返すものを絞る。
+    - book（canonical_book.slug）で書を絞る（節・書名・コメントにだけ効く）。
     - 節は page でページングする（1冊が上位を独占しても、後続ページで全書に到達できる）。
-      books / comments は1ページ目のプレビュー用（ページングしない）。
+      それ以外は SEARCH_PREVIEW_SIZE 件のプレビュー（ページングも件数も出さない）。
+      まとめて見るときに全部を数え上げると、1 回の検索で撃つ問い合わせが太るため。
+    - **この画面は常に匿名として扱う**（authentication_classes = []）。下書き・限定公開・
+      削除済みは決して返さない。各 _xxx() のコメントを参照。
     """
 
     permission_classes = [AllowAny]
@@ -327,7 +346,11 @@ class SearchView(APIView):
         except ValueError:
             page = 1
         if len(q) < _min_query_len(q):
-            return Response({"verses": [], "books": [], "comments": [], "verse_total": 0, "has_more": False})
+            return Response({
+                "verses": [], "books": [], "comments": [],
+                "articles": [], "plans": [], "questions": [], "projects": [],
+                "verse_total": 0, "has_more": False,
+            })
 
         # 代表訳に絞って書順で並べる（同じ書を重複して持つ訳は除いてあるので重複しない）。
         verses_qs = (
@@ -348,7 +371,7 @@ class SearchView(APIView):
             verses = []
             has_more = False
 
-        # 書名・コメントは1ページ目のプレビュー（ページングしない）。
+        # 節以外は 1 ページ目のプレビュー（ページングしない）。
         books_qs = Book.objects.filter(name__icontains=q, translation__in=SEARCH_TRANSLATIONS).order_by("order")
         comments_qs = (
             Comment.objects.filter(body__icontains=q, is_deleted=False, parent=None, translation_project__isnull=True)
@@ -358,16 +381,78 @@ class SearchView(APIView):
         if book_slug:
             books_qs = books_qs.filter(canonical_book__slug=book_slug)
             comments_qs = comments_qs.filter(canonical_book__slug=book_slug)
-        books = books_qs[:20] if kind in ("all", "books") else []
-        comments = comments_qs[:20] if kind in ("all", "comments") else []
+        books = books_qs[:SEARCH_PREVIEW_SIZE] if kind in ("all", "books") else []
+        comments = comments_qs[:SEARCH_PREVIEW_SIZE] if kind in ("all", "comments") else []
 
         return Response({
             "verses": VerseSearchSerializer(verses, many=True).data,
             "books": BookSerializer(books, many=True).data,
             "comments": CommentSearchSerializer(comments, many=True).data,
+            "articles": ArticleSearchSerializer(self._articles(q, kind), many=True).data,
+            "plans": PlanSearchSerializer(self._plans(q, kind), many=True).data,
+            "questions": QuestionSearchSerializer(self._questions(q, kind), many=True).data,
+            "projects": ProjectSearchSerializer(self._projects(q, kind), many=True).data,
             "verse_total": verse_total,
             "has_more": has_more,
         })
+
+    # ----- 節以外の検索 -------------------------------------------------------
+    #
+    # この画面は誰でも開ける（authentication_classes = []）ので、**必ず匿名として**
+    # 扱う。「自分の下書きも出す」は作らない。ログインを見てしまうと、公開向けの
+    # キャッシュに人ごとの結果が混ざる恐れがあるため。
+    # 公開範囲の条件は、一覧画面のヘルパー（_visible_articles など）を使い回さない。
+    # あちらは限定公開や自分の下書きを含むので、検索から呼ぶと漏れる。
+
+    def _articles(self, q, kind):
+        if kind not in ("all", "articles"):
+            return []
+        from articles.models import Article
+
+        return (
+            Article.objects.filter(visibility=Article.VISIBILITY_PUBLIC)
+            .filter(Q(title__icontains=q) | Q(summary__icontains=q) | Q(body__icontains=q))
+            .select_related("owner")
+            .order_by("-created_at")[:SEARCH_PREVIEW_SIZE]
+        )
+
+    def _plans(self, q, kind):
+        if kind not in ("all", "plans"):
+            return []
+        from plans.models import Plan
+
+        return (
+            Plan.objects.filter(visibility=Plan.VISIBILITY_PUBLIC)
+            .filter(Q(title__icontains=q) | Q(description__icontains=q))
+            .select_related("owner")
+            .order_by("-created_at")[:SEARCH_PREVIEW_SIZE]
+        )
+
+    def _questions(self, q, kind):
+        if kind not in ("all", "questions"):
+            return []
+        from qa.models import Question
+
+        # Q&A は消しても本文が DB に残る作りなので、is_deleted を外すと
+        # 消したはずの文が検索に出てしまう。ここは必ず要る。
+        return (
+            Question.objects.filter(is_deleted=False)
+            .filter(Q(title__icontains=q) | Q(body__icontains=q))
+            .select_related("user")
+            .order_by("-created_at")[:SEARCH_PREVIEW_SIZE]
+        )
+
+    def _projects(self, q, kind):
+        if kind not in ("all", "projects"):
+            return []
+        from translations.models import TranslationProject
+
+        return (
+            TranslationProject.objects.exclude(status=TranslationProject.STATUS_DRAFT)
+            .filter(Q(name__icontains=q) | Q(description__icontains=q))
+            .select_related("owner")
+            .order_by("-created_at")[:SEARCH_PREVIEW_SIZE]
+        )
 
 
 class VerseOfDayView(APIView):

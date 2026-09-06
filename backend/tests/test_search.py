@@ -272,3 +272,91 @@ class TestSearchView:
         assert res.status_code == status.HTTP_200_OK
         assert len(res.data["comments"]) == 1
         assert res.data["comments"][0]["id"] == str(search_comment_mark.id)
+
+
+@pytest.mark.django_db
+class TestSearchCoversEverything:
+    """記事・プラン・Q&A・翻訳プロジェクトも探せること、
+    そして**見えてはいけないものが出ないこと**を固定する。"""
+
+    @pytest.fixture
+    def owner(self, db, django_user_model):
+        return django_user_model.objects.create_user(username="searchowner", password="testpass123")
+
+    def test_公開記事は探せるが下書きと限定公開は出ない(self, api_client, owner):
+        from articles.models import Article
+
+        found = Article.objects.create(
+            owner=owner, title="断食のカイロス", summary="要約", body="本文", visibility=Article.VISIBILITY_PUBLIC
+        )
+        Article.objects.create(
+            owner=owner, title="下書きのカイロス", summary="", body="", visibility=Article.VISIBILITY_PRIVATE
+        )
+        Article.objects.create(
+            owner=owner, title="限定公開のカイロス", summary="", body="", visibility=Article.VISIBILITY_UNLISTED
+        )
+
+        res = api_client.get(SEARCH_URL, {"q": "カイロス"})
+
+        assert [a["id"] for a in res.data["articles"]] == [str(found.id)]
+
+    def test_公開プランは探せるが下書きは出ない(self, api_client, owner):
+        from plans.models import Plan
+
+        found = Plan.objects.create(
+            owner=owner, title="40日のカイロス", description="毎朝", visibility=Plan.VISIBILITY_PUBLIC
+        )
+        Plan.objects.create(owner=owner, title="下書きのカイロス", visibility=Plan.VISIBILITY_PRIVATE)
+
+        res = api_client.get(SEARCH_URL, {"q": "カイロス"})
+
+        assert [p["id"] for p in res.data["plans"]] == [str(found.id)]
+
+    def test_質問は探せるが消したものは出ない(self, api_client, owner, book):
+        from qa.models import Question
+
+        # 質問は必ず箇所（訳に依らない書）を持つ
+        canonical = book.canonical_book
+        found = Question.objects.create(
+            user=owner, canonical_book=canonical, title="カイロスとは何ですか", body="教えてください"
+        )
+        # 消しても本文は DB に残る作りなので、ここを外すと消した文が検索に出る
+        Question.objects.create(
+            user=owner, canonical_book=canonical, title="消したカイロスの質問", body="本文", is_deleted=True
+        )
+
+        res = api_client.get(SEARCH_URL, {"q": "カイロス"})
+
+        assert [q["id"] for q in res.data["questions"]] == [str(found.id)]
+
+    def test_翻訳企画は探せるが下書きは出ない(self, api_client, owner, book):
+        from translations.models import TranslationProject
+
+        found = TranslationProject.objects.create(
+            name="カイロス私訳", owner=owner, source_book=book, target_language="ja",
+            status=TranslationProject.STATUS_ACTIVE,
+        )
+        TranslationProject.objects.create(
+            name="下書きのカイロス訳", owner=owner, source_book=book, target_language="ja",
+            status=TranslationProject.STATUS_DRAFT,
+        )
+
+        res = api_client.get(SEARCH_URL, {"q": "カイロス"})
+
+        assert [p["id"] for p in res.data["projects"]] == [str(found.id)]
+
+    def test_種別を選ぶと他の種別は引かない(self, api_client, owner):
+        from articles.models import Article
+        from plans.models import Plan
+
+        Article.objects.create(
+            owner=owner, title="カイロスの記事", summary="要約", body="本文", visibility=Article.VISIBILITY_PUBLIC
+        )
+        Plan.objects.create(owner=owner, title="カイロスのプラン", visibility=Plan.VISIBILITY_PUBLIC)
+
+        res = api_client.get(SEARCH_URL, {"q": "カイロス", "kind": "articles"})
+
+        assert len(res.data["articles"]) == 1
+        assert res.data["plans"] == []
+        assert res.data["questions"] == []
+        assert res.data["projects"] == []
