@@ -347,6 +347,13 @@ export async function openVisualRoute(
     new URL(resolved.path, WEB_BASE).pathname,
   );
 
+  // Server HTML and the client-side auth result briefly coexist during the
+  // App Router transition. Wait for the shared auth boundary before selecting
+  // route content, otherwise strict locators can observe both trees.
+  await page
+    .locator('.navbar-root[data-auth-state="signed-in"], .navbar-root[data-auth-state="signed-out"]')
+    .waitFor({ state: "attached" });
+
   if (resolved.username) {
     const authenticatedUser = await page.evaluate(async () => {
       const authResponse = await fetch("/api/auth/me/", { credentials: "include" });

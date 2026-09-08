@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures";
-import { registerUser, loginWithUI, openVerseCompose } from "./helpers";
+import { gotoReady, loginWithUI, openVerseCompose, registerUser } from "./helpers";
 
 /**
  * E2E 3: コメント投稿・返信・削除
@@ -24,7 +24,7 @@ test(
   await loginWithUI(page, username, password);
 
   // マタイ1章に移動
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
   await expect(
     page.getByRole("heading", { name: "マタイ 第1章", exact: true })
   ).toBeVisible();
@@ -75,7 +75,7 @@ test(
 test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c3");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   await page.getByTestId("verse-item").first().click();
   const ts = Date.now();
@@ -111,19 +111,18 @@ test("C-3: 返信の返信（depth ≥ 2）が表示される", async ({ page, r
 test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c5");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
-  // 章コメント欄にスクロール (heading 文言が label に依存して変わるため section#chapter-comments を直接使う)
-  // サーバーが描いた HTML はすぐ見えるが、React が組み立て直すあいだに要素が差し替わる。
-  // scrollIntoViewIfNeeded は差し替わっても取り直してくれない（「DOM に無い」で落ちる）ので、
-  // 先に expect で落ち着くのを待つ。expect は毎回引き直す。
-  const chapterComments = page.locator("#chapter-comments");
-  await expect(chapterComments).toBeVisible();
-  await chapterComments.scrollIntoViewIfNeeded();
-
+  // 章コメント欄そのものを待たない。サーバーが描いた HTML（未ログインの見た目）と
+  // React が組み立て直したもの（ログイン済みの見た目）が一瞬どちらも DOM にいるので、
+  // #chapter-comments は 2 つに見えることがある。
+  // 入力欄はログイン済みの側にしか無いので、これを待てば取り違えない。
+  // fill は自分でその場所までスクロールしてくれるので、スクロールも要らない。
   const ts = Date.now();
   const chapterComment = `chapter_${ts}`;
-  await page.getByPlaceholder("コメントを入力...").fill(chapterComment);
+  const input = page.getByPlaceholder("コメントを入力...");
+  await expect(input).toBeVisible();
+  await input.fill(chapterComment);
   await page.getByRole("button", { name: "投稿する" }).click();
 
   // 投稿成功（エラーなし、コメントが表示される）
@@ -133,7 +132,7 @@ test("C-5: 章コメント投稿 — エラーなく投稿できる", async ({ p
 test("C-6: 書コメント投稿 — エラーなく投稿できる", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c6");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew");
+  await gotoReady(page, "/matthew");
 
   const ts = Date.now();
   const bookComment = `book_${ts}`;
@@ -146,7 +145,7 @@ test("C-6: 書コメント投稿 — エラーなく投稿できる", async ({ p
 test("C-7: 節コメントが章コメント欄に混入しない", async ({ page, request }) => {
   const { username, password } = await registerUser(request, "_c7");
   await loginWithUI(page, username, password);
-  await page.goto("/matthew/1");
+  await gotoReady(page, "/matthew/1");
 
   // 節コメント投稿
   await page.getByTestId("verse-item").first().click();

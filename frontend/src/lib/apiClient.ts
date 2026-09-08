@@ -736,7 +736,22 @@ export function fetchCommentReplies(parentId: string): Promise<Comment[]> {
   return apiFetchAll(`/comments/?parent_id=${parentId}`);
 }
 
-export type SearchKind = "all" | "verses" | "books" | "comments";
+/**
+ * 検索で探すもの。バックエンドの SEARCH_KINDS と揃える。
+ * 増やすときは isSearchKind（app/search/page.tsx）も直す。
+ */
+export const SEARCH_KINDS = [
+  "all",
+  "verses",
+  "books",
+  "comments",
+  "articles",
+  "plans",
+  "questions",
+  "projects",
+] as const;
+
+export type SearchKind = (typeof SEARCH_KINDS)[number];
 
 // 検索対象は UI 言語で絞らない（検索語そのものが言語を選ぶ）ため lang は送らない。
 export function searchBible(

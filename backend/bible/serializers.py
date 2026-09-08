@@ -48,3 +48,39 @@ class VerseSearchSerializer(serializers.ModelSerializer):
     def get_book_slug(self, obj) -> str:
         cb = obj.chapter.book.canonical_book
         return cb.slug if cb else ""
+
+
+# ---------------------------------------------------------------------------
+# 検索の結果カード
+#
+# 一覧画面の serializer（ArticleListSerializer など）は使わない。あちらは
+# 一覧側の annotate（件数や進捗）に頼っていて、検索から呼ぶと壊れるため。
+# 検索の結果に出す項目だけを持つ、軽い serializer をここに置く。
+# ---------------------------------------------------------------------------
+
+class ArticleSearchSerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    summary = serializers.CharField(read_only=True)
+    owner_username = serializers.CharField(source="owner.username", read_only=True)
+
+
+class PlanSearchSerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+    owner_username = serializers.CharField(source="owner.username", read_only=True)
+
+
+class QuestionSearchSerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    title = serializers.CharField(read_only=True)
+    body = serializers.CharField(read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+
+
+class ProjectSearchSerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    description = serializers.CharField(read_only=True)
+    owner_username = serializers.CharField(source="owner.username", read_only=True)

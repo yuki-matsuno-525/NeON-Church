@@ -88,8 +88,7 @@ export default async function ArticlesPage({
         basePath="/articles"
         searchLabel={t.articleSearchLabel}
         toggleLabel={t.filterToggle}
-        total={feed?.count ?? null}
-        totalLabel={t.articleCount}
+        totalText={feed ? t.articleCount(feed.count) : undefined}
       />
 
       {/* 主題はタブの中を絞るものなので、タブより下に置く。タブを移っても保つ。 */}

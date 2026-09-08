@@ -53,7 +53,12 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   };
 
   return (
-    <nav className="navbar-root">
+    // data-auth-state は「いま誰かを確かめ終わったか」を外から見えるようにするための印。
+    // サーバーは Cookie を見て描き、ブラウザは開いたあとに /auth/me で確かめ直して
+    // もう一度組み立てる。その入れ替わりが終わったかどうかは、画面のどこを見ても
+    // 分かりにくい（上部バーのログアウトは、狭い画面では隠れている）。
+    // e2e はこの印が loading でなくなるのを待ってから中身を見る。
+    <nav className="navbar-root" data-auth-state={loading ? "loading" : user ? "signed-in" : "signed-out"}>
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         type="button"

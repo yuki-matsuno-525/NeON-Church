@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { searchBible, type SearchKind, type SearchResult } from "@/lib/api";
+import { searchBible, SEARCH_KINDS, type SearchKind, type SearchResult } from "@/lib/api";
 import { BOOKS } from "@/lib/books";
 import { useT } from "@/lib/i18n";
 import { translationLabel } from "@/lib/translations";
@@ -17,16 +17,34 @@ import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 const VERSE_PAGE_SIZE = 50;
 
 
-const SEARCH_KIND_OPTIONS: { value: SearchKind; labelKey: "all" | "searchKindVerse" | "searchKindBook" | "searchKindComment" }[] = [
+type KindLabelKey =
+  | "all"
+  | "searchKindVerse"
+  | "searchKindBook"
+  | "searchKindComment"
+  | "searchKindArticle"
+  | "searchKindPlan"
+  | "searchKindQuestion"
+  | "searchKindProject";
+
+const SEARCH_KIND_OPTIONS: { value: SearchKind; labelKey: KindLabelKey }[] = [
   { value: "all", labelKey: "all" },
   { value: "verses", labelKey: "searchKindVerse" },
   { value: "books", labelKey: "searchKindBook" },
   { value: "comments", labelKey: "searchKindComment" },
+  { value: "articles", labelKey: "searchKindArticle" },
+  { value: "plans", labelKey: "searchKindPlan" },
+  { value: "questions", labelKey: "searchKindQuestion" },
+  { value: "projects", labelKey: "searchKindProject" },
 ];
 
+// 種別の名前は apiClient の SEARCH_KINDS が正。ここで二重に書かない。
 function isSearchKind(value: string | null): value is SearchKind {
-  return value === "all" || value === "verses" || value === "books" || value === "comments";
+  return SEARCH_KINDS.includes(value as SearchKind);
 }
+
+// 「すべて」で種別ごとに出す件数。続きはその種別のタブへ入って見る。
+const PREVIEW_PER_KIND = 3;
 
 function getSlugByName(name: string): string | null {
   return BOOKS.find((b) => b.name === name || b.englishName === name)?.slug ?? null;
@@ -133,7 +151,26 @@ function SearchContent() {
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
   };
 
-  const totalHits = (result?.verse_total ?? 0) + (result?.books.length ?? 0) + (result?.comments.length ?? 0);
+  const totalHits =
+    (result?.verse_total ?? 0) +
+    (result?.books.length ?? 0) +
+    (result?.comments.length ?? 0) +
+    (result?.articles.length ?? 0) +
+    (result?.plans.length ?? 0) +
+    (result?.questions.length ?? 0) +
+    (result?.projects.length ?? 0);
+
+  /** 「すべて」のときは数件だけ。種別を選んでいるときは返ってきたぶん全部。 */
+  const preview = <T,>(rows: T[]) => (kind === "all" ? rows.slice(0, PREVIEW_PER_KIND) : rows);
+  /** その種別に続きがあるなら「もっと見る」を出す。 */
+  const seeMore = (target: SearchKind, rows: unknown[], labelKey: KindLabelKey) =>
+    kind === "all" && rows.length > PREVIEW_PER_KIND ? (
+      <div className="flex justify-center pt-3">
+        <button type="button" onClick={() => updateFilters({ kind: target })} className="btn btn-ghost">
+          {t.searchSeeMore(t[labelKey])}
+        </button>
+      </div>
+    ) : null;
 
   return (
     <div className="page page-narrow">
@@ -220,7 +257,7 @@ function SearchContent() {
                 {t.sectionBooks}
               </h2>
               <div className="flex flex-col gap-3">
-                {result.books.map((b) => {
+                {preview(result.books).map((b) => {
                   const slug = getSlugByName(b.name);
                   return (
                     <Link
@@ -234,6 +271,7 @@ function SearchContent() {
                   );
                 })}
               </div>
+              {seeMore("books", result.books, "searchKindBook")}
             </section>
           )}
 
@@ -243,7 +281,7 @@ function SearchContent() {
                 {t.sectionVerses}
               </h2>
               <div className="flex flex-col gap-3">
-                {result.verses.map((v) => {
+                {preview(result.verses).map((v) => {
                   const slug = v.book_slug || getSlugByName(v.book_name);
                   const url = slug ? `/${slug}/${v.chapter_number}#verse-${v.number}` : null;
                   const parts = highlight(v.text, q).split("**");
@@ -279,11 +317,16 @@ function SearchContent() {
                   );
                 })}
               </div>
-              <Pagination
-                page={page}
-                totalPages={Math.ceil(result.verse_total / VERSE_PAGE_SIZE)}
-                onChange={goToPage}
-              />
+              {seeMore("verses", result.verses, "searchKindVerse")}
+              {/* ページ送りは節の一覧を開いているときだけ。まとめて見るときは
+                  各種数件のプレビューなので、送る先が無い。 */}
+              {kind === "verses" && (
+                <Pagination
+                  page={page}
+                  totalPages={Math.ceil(result.verse_total / VERSE_PAGE_SIZE)}
+                  onChange={goToPage}
+                />
+              )}
             </section>
           )}
 
@@ -293,7 +336,7 @@ function SearchContent() {
                 {t.sectionComments}
               </h2>
               <div className="flex flex-col gap-3">
-                {result.comments.map((c) => {
+                {preview(result.comments).map((c) => {
                   const parts = highlight(c.body, q).split("**");
                   return (
                     <div
@@ -316,7 +359,74 @@ function SearchContent() {
                   );
                 })}
               </div>
+              {seeMore("comments", result.comments, "searchKindComment")}
             </section>
+          )}
+
+          {/* ここから下は、節・書・コメントに続いて足した種別。
+              形はどれも同じ（題＋説明＋書いた人）なので、1 つの部品で描く。 */}
+          {page === 1 && result.articles.length > 0 && (
+            <ResultSection
+              title={t.sectionArticles}
+              badge={t.searchKindArticle}
+              rows={preview(result.articles).map((a) => ({
+                id: a.id,
+                href: `/articles/${a.id}`,
+                title: a.title,
+                body: a.summary,
+                meta: a.owner_username,
+              }))}
+              q={q}
+              footer={seeMore("articles", result.articles, "searchKindArticle")}
+            />
+          )}
+
+          {page === 1 && result.plans.length > 0 && (
+            <ResultSection
+              title={t.sectionPlans}
+              badge={t.searchKindPlan}
+              rows={preview(result.plans).map((plan) => ({
+                id: plan.id,
+                href: `/plans/${plan.id}`,
+                title: plan.title,
+                body: plan.description,
+                meta: plan.owner_username,
+              }))}
+              q={q}
+              footer={seeMore("plans", result.plans, "searchKindPlan")}
+            />
+          )}
+
+          {page === 1 && result.questions.length > 0 && (
+            <ResultSection
+              title={t.sectionQuestions}
+              badge={t.searchKindQuestion}
+              rows={preview(result.questions).map((question) => ({
+                id: question.id,
+                href: `/qa/${question.id}`,
+                title: question.title,
+                body: question.body,
+                meta: question.username,
+              }))}
+              q={q}
+              footer={seeMore("questions", result.questions, "searchKindQuestion")}
+            />
+          )}
+
+          {page === 1 && result.projects.length > 0 && (
+            <ResultSection
+              title={t.sectionProjects}
+              badge={t.searchKindProject}
+              rows={preview(result.projects).map((project) => ({
+                id: project.id,
+                href: `/translations/${project.id}`,
+                title: project.name,
+                body: project.description,
+                meta: project.owner_username,
+              }))}
+              q={q}
+              footer={seeMore("projects", result.projects, "searchKindProject")}
+            />
           )}
 
           {totalHits === 0 && (
@@ -344,4 +454,66 @@ export default function SearchPage() {
       <SearchContent />
     </Suspense>
   );
+}
+
+/**
+ * 記事・プラン・Q&A・翻訳の結果 1 区画。
+ *
+ * どれも「題・短い説明・書いた人」という同じ形なので、区画ごとに書き分けない。
+ * 節・書・コメントは形が違う（箇所や訳が要る）ので、そちらはそのままにしてある。
+ */
+function ResultSection({
+  title,
+  badge,
+  rows,
+  q,
+  footer,
+}: {
+  title: string;
+  badge: string;
+  rows: { id: string; href: string; title: string; body: string; meta: string }[];
+  q: string;
+  footer: React.ReactNode;
+}) {
+  return (
+    <section className="mb-6">
+      <h2 className="mb-3 text-md font-bold text-body">{title}</h2>
+      <div className="flex flex-col gap-3">
+        {rows.map((row) => (
+          <Link key={row.id} href={row.href} className="result-card no-underline text-body">
+            <div className="flex gap-2 items-center text-xs text-muted mb-2">
+              <span className="badge border border-border bg-bg uppercase tracking-wide text-muted">{badge}</span>
+              <span className="font-bold">{row.meta}</span>
+            </div>
+            <p className="m-0 text-sm font-bold">
+              <Marked text={row.title} q={q} />
+            </p>
+            {row.body && (
+              <p className="mt-1 mb-0 text-sm leading-base text-muted">
+                <Marked text={truncate(row.body)} q={q} />
+              </p>
+            )}
+          </Link>
+        ))}
+      </div>
+      {footer}
+    </section>
+  );
+}
+
+/** 探した語のところだけ色を付ける。 */
+function Marked({ text, q }: { text: string; q: string }) {
+  const parts = highlight(text, q).split("**");
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <mark key={i} className="search-mark">{part}</mark> : <span key={i}>{part}</span>
+      )}
+    </>
+  );
+}
+
+/** 本文は長いので、結果の一覧では頭だけ出す。 */
+function truncate(text: string, max = 120): string {
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }

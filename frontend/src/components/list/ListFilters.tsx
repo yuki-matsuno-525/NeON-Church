@@ -20,9 +20,11 @@ type Props = {
   children?: ReactNode;
   /** 中身のどれかが効いているか。閉じていても分かるよう、ボタンに印を出す */
   active?: boolean;
-  /** 絞り込み後の件数。取れなかったときは省略する */
-  total?: number | null;
-  totalLabel?: (count: number) => string;
+  /**
+   * 絞り込み後の件数（「12件」のように組み立て済みの文字列）。
+   * 関数ではなく文字列で受ける。サーバー側で組み立てる画面から関数は渡せないため。
+   */
+  totalText?: string;
 };
 
 /**
@@ -43,8 +45,7 @@ export function ListFilters({
   toggleLabel,
   children,
   active = false,
-  total,
-  totalLabel,
+  totalText,
 }: Props) {
   const { value, setValue } = useQuerySearch(basePath);
   const [open, setOpen] = useState(false);
@@ -75,8 +76,8 @@ export function ListFilters({
             {active && <span aria-hidden="true" className="filter-dot" />}
           </button>
         )}
-        {total != null && totalLabel && (
-          <span className="whitespace-nowrap text-xs text-faint">{totalLabel(total)}</span>
+        {totalText && (
+          <span className="whitespace-nowrap text-xs text-faint">{totalText}</span>
         )}
       </div>
 
