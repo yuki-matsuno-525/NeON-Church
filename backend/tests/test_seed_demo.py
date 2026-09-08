@@ -232,6 +232,20 @@ def _visual_seed_signature():
                 "question__title", "user__username", "body", "is_deleted", "created_at"
             )
         ),
+        "notifications": list(
+            Notification.objects.order_by(
+                "recipient__username", "-created_at", "-id"
+            ).values_list(
+                "recipient__username",
+                "actor__username",
+                "notification_type",
+                "comment__body",
+                "translation_comment__body",
+                "answer__body",
+                "is_read",
+                "created_at",
+            )
+        ),
         "translation_projects": list(
             TranslationProject.objects.order_by("name", "owner__username").values_list(
                 "name",

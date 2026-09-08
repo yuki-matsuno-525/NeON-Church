@@ -1358,6 +1358,15 @@ class Command(BaseCommand):
         """通知。返信・投票・メンション・Q&A の回答・翻訳の議論をすべて入れる。"""
         by_id = {comment.id: comment for comment in comments}
         objects, times, total = [], [], 0
+        used_moments = set()
+
+        def unique_moment(moment):
+            # 同時刻の通知をDBの未定義順序へ任せない。固定seedでは同じ入力から
+            # 同じ一意な時刻列を作り、実ブラウザの一覧まで再現可能にする。
+            while moment in used_moments:
+                moment += timedelta(microseconds=1)
+            used_moments.add(moment)
+            return moment
 
         def flush():
             # 通知も数が多いので、票と同じく小分けで保存して手元から捨てる。
@@ -1376,7 +1385,7 @@ class Command(BaseCommand):
                 is_read=self.rng.random() < 0.55,
                 **target,
             ))
-            times.append(moment)
+            times.append(unique_moment(moment))
             if len(objects) >= FLUSH_EVERY:
                 flush()
 
@@ -1389,15 +1398,32 @@ class Command(BaseCommand):
                     reply.created_at, comment=reply,
                 )
 
-        voted = Vote.objects.values_list("comment__user_id", "user_id", "comment_id")[
-            :20000
-        ]
-        for owner_id, voter_id, comment_id in voted:
-            if self.rng.random() < 0.35:
-                add(
-                    owner_id, voter_id, Notification.UPVOTE,
-                    self._past(bias=3.0), comment_id=comment_id,
+        # UUID主キーのDB自然順はseedのたびに変わる。生成済みコメントの安定した
+        # 作成順とusernameで並べ、乱数の消費順も固定する。
+        vote_limit = 20000
+        processed_votes = 0
+        for start in range(0, len(comments), 100):
+            comment_batch = comments[start:start + 100]
+            comment_order = {
+                comment.id: index for index, comment in enumerate(comment_batch)
+            }
+            voted = list(
+                Vote.objects.filter(comment_id__in=comment_order).values_list(
+                    "comment__user_id", "user_id", "comment_id", "user__username"
                 )
+            )
+            voted.sort(key=lambda vote: (comment_order[vote[2]], vote[3]))
+            for owner_id, voter_id, comment_id, _username in voted:
+                if processed_votes >= vote_limit:
+                    break
+                processed_votes += 1
+                if self.rng.random() < 0.35:
+                    add(
+                        owner_id, voter_id, Notification.UPVOTE,
+                        self._past(bias=3.0), comment_id=comment_id,
+                    )
+            if processed_votes >= vote_limit:
+                break
 
         alive = [c for c in comments if not c.is_deleted]
         for comment in self.rng.sample(alive, min(400, len(alive))):
@@ -1432,7 +1458,7 @@ class Command(BaseCommand):
                 comment=comment,
                 is_read=self.rng.random() < 0.3,
             ))
-            times.append(self._past(bias=3.0))
+            times.append(unique_moment(self._past(bias=3.0)))
 
         flush()
         self.stdout.write(f"  通知 {total} 件")

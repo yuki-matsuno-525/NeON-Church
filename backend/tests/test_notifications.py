@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 from rest_framework import status
 
 from tests.conftest import REGISTER_URL
@@ -144,6 +145,23 @@ class TestNotificationList:
         other_auth_client.post(upvote_url(comment["id"]))
         res = auth_client.get(NOTIFICATIONS_URL)
         assert res.data["results"][0]["body_snippet"] == "テストコメント"
+
+    def test_equal_timestamps_have_a_stable_total_order(
+        self, auth_client, other_auth_client, comment
+    ):
+        """同時刻の行も主キーで一意に並び、pagination中に前後しない。"""
+        from notifications.models import Notification
+
+        for _ in range(3):
+            other_auth_client.post(upvote_url(comment["id"]))
+        moment = timezone.now()
+        Notification.objects.update(created_at=moment)
+
+        first = [item["id"] for item in auth_client.get(NOTIFICATIONS_URL).data["results"]]
+        second = [item["id"] for item in auth_client.get(NOTIFICATIONS_URL).data["results"]]
+
+        assert first == sorted(first, reverse=True)
+        assert second == first
 
 
 # ------------------------------------------------------------------
