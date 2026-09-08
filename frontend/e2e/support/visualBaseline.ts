@@ -69,6 +69,7 @@ export const VISUAL_ROUTE_CASES: readonly VisualRouteCase[] = [
     template: "/notifications",
     path: "/notifications",
     auth: "shared-user",
+    readySelector: "main .notification-row",
   },
   { id: "16-plans", template: "/plans", path: "/plans", auth: "none" },
   { id: "17-plan-detail", template: "/plans/[id]", target: "plan", auth: "none" },
@@ -353,7 +354,7 @@ export async function openVisualRoute(
   // route content, otherwise strict locators can observe both trees.
   await page
     .locator('.navbar-root[data-auth-state="signed-in"], .navbar-root[data-auth-state="signed-out"]')
-    .waitFor({ state: "attached" });
+    .waitFor({ state: "visible" });
 
   if (resolved.username) {
     const authenticatedUser = await page.evaluate(async () => {
@@ -420,7 +421,11 @@ export async function captureVisualBaseline(
   snapshotName: string,
   options: { fullPage?: boolean } = {},
 ) {
+  const appShell = page
+    .locator('.navbar-root[data-auth-state="signed-in"], .navbar-root[data-auth-state="signed-out"]')
+    .first();
   const landmark = page.locator("main h1:visible, main input:visible").first();
+  await expect(appShell, `${snapshotName} has no visible application shell`).toBeVisible();
   await expect(landmark, `${snapshotName} has no visible render landmark`).toBeVisible();
 
   await expect(page).toHaveScreenshot(`${snapshotName}.png`, {

@@ -127,7 +127,7 @@ export async function gotoReady(
   // 「ログアウト」ボタンの表示では待てない（狭い画面では隠れているため）。
   await page
     .locator('.navbar-root[data-auth-state="signed-in"], .navbar-root[data-auth-state="signed-out"]')
-    .waitFor({ state: "attached" });
+    .waitFor({ state: "visible" });
 }
 
 /**
