@@ -146,6 +146,7 @@ export const VISUAL_FULL_PAGE_VARIANT_IDS = [
   "06-article-detail",
   "17-plan-detail",
   "24-question-detail",
+  "28-search",
   "34-translation-chapter",
 ] as const;
 

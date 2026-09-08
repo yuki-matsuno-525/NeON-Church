@@ -39,6 +39,7 @@ route-25-read-ja-desktop-chromium-linux.png
 route-26-register-ja-desktop-chromium-linux.png
 route-27-reset-password-ja-desktop-chromium-linux.png
 route-28-search-ja-desktop-chromium-linux.png
+route-28-search-ja-desktop-full-page-chromium-linux.png
 route-29-settings-ja-desktop-chromium-linux.png
 route-30-terms-ja-desktop-chromium-linux.png
 route-31-translations-ja-desktop-chromium-linux.png
