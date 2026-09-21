@@ -1,5 +1,7 @@
 from django.db import models
-from django.db.models import Count
+from django.core.cache import cache
+from django.db.models import Count, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -309,8 +311,35 @@ class MyCommentListView(generics.ListAPIView):
         )
 
 
+# 表紙の「盛り上がっている意見」を覚えておく秒数。
+# 全コメントの票を数えて並べ直す重い集計なので、開くたびには数えない。
+TRENDING_CACHE_KEY = "comments_trending"
+TRENDING_CACHE_SECONDS = 300
+
+
+def _count_of(model, field: str, **filters):
+    """コメント1件ごとの件数を、別の問い合わせとして数える式。
+
+    票と返信を JOIN して同時に数えると「票の数 × 返信の数」の行ができて
+    コメントが増えるほど急に重くなるので、それぞれ別に数える。
+    """
+    return Coalesce(
+        Subquery(
+            model.objects.filter(**{field: OuterRef("pk")}, **filters)
+            .order_by()
+            .values(field)
+            .annotate(n=Count("pk"))
+            .values("n")[:1]
+        ),
+        0,
+    )
+
+
 class TrendingCommentView(generics.ListAPIView):
-    """GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要）"""
+    """GET /api/comments/trending/  トレンドコメント（vote数順トップ5、認証不要）
+
+    結果は TRENDING_CACHE_SECONDS のあいだ使い回す。
+    """
 
     permission_classes = [permissions.AllowAny]
 
@@ -322,17 +351,20 @@ class TrendingCommentView(generics.ListAPIView):
         return (
             Comment.objects.filter(is_deleted=False, parent=None, translation_project__isnull=True)
             .select_related("user", "canonical_book")
-            .prefetch_related("tags")
             .annotate(
-                vote_count=Count("votes", distinct=True),
-                reply_count=Count(
-                    "replies",
-                    distinct=True,
-                    filter=models.Q(replies__is_deleted=False),
-                ),
+                vote_count=_count_of(Vote, "comment"),
+                reply_count=_count_of(Comment, "parent", is_deleted=False),
             )
             .order_by("-vote_count", "-created_at")[:5]
         )
+
+    def list(self, request, *args, **kwargs):
+        data = cache.get(TRENDING_CACHE_KEY)
+        if data is None:
+            # ReturnList は元のシリアライザを抱えているので、素のリストにしてから覚える。
+            data = list(self.get_serializer(self.get_queryset(), many=True).data)
+            cache.set(TRENDING_CACHE_KEY, data, TRENDING_CACHE_SECONDS)
+        return Response(data)
 
 
 class ReportView(APIView):

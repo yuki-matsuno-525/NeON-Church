@@ -46,7 +46,7 @@ export default async function Home() {
   // どれか1つが取れなくても、残りは出す。
   const [verse, recent, trending] = await Promise.all([
     serverFetch<VerseOfDay>(versePath(defaultTranslationForLang(lang))).catch(() => null),
-    serverFetchPage<QAQuestion>(questionListPath())
+    serverFetchPage<QAQuestion>(questionListPath({ page_size: RECENT_QA_LIMIT }))
       .then((page) => page.results.slice(0, RECENT_QA_LIMIT))
       .catch(() => null),
     serverFetch<TrendingComment[]>("/comments/trending/").catch(() => null),

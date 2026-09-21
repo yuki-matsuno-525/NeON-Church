@@ -639,6 +639,8 @@ export type QuestionListParams = {
   answered?: boolean;
   q?: string;
   page?: number;
+  /** 1ページの件数。省略時はサーバーの既定（20件）。 */
+  page_size?: number;
 };
 
 /** 質問一覧の問い合わせ先。サーバー側とブラウザ側で同じ道を使うため切り出してある。 */
@@ -652,6 +654,7 @@ export function questionListPath(params?: QuestionListParams): string {
   if (params?.answered !== undefined) qs.set("answered", String(params.answered));
   if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page && params.page > 1) qs.set("page", String(params.page));
+  if (params?.page_size) qs.set("page_size", String(params.page_size));
   return `/qa/questions/?${qs}`;
 }
 

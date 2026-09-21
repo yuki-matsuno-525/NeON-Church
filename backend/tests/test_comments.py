@@ -384,6 +384,30 @@ class TestTrendingComments:
         res = api_client.get(TRENDING_URL)
         assert len(res.data) <= 5
 
+    def test_trending_counts_votes_and_live_replies(self, api_client, auth_client, other_auth_client, verse):
+        """票と返信を別々に数えても、件数が掛け合わさらない。削除済みの返信は数えない。"""
+        from comments.models import Comment
+        res = auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "親"}, format="json")
+        parent_id = res.data["id"]
+        other_auth_client.post(f"/api/comments/{parent_id}/upvote/")
+        reply_ids = [
+            auth_client.post(
+                COMMENTS_URL, {"verse": str(verse.id), "body": f"返信{i}", "parent": parent_id}, format="json"
+            ).data["id"]
+            for i in range(3)
+        ]
+        Comment.objects.filter(id=reply_ids[0]).update(is_deleted=True)
+
+        item = next(c for c in api_client.get(TRENDING_URL).data if c["id"] == parent_id)
+        assert item["vote_count"] == 1
+        assert item["reply_count"] == 2
+
+    def test_trending_is_cached(self, api_client, auth_client, verse):
+        """一度数えた結果は、しばらく数え直さない。"""
+        first = api_client.get(TRENDING_URL).data
+        auth_client.post(COMMENTS_URL, {"verse": str(verse.id), "body": "あとから"}, format="json")
+        assert api_client.get(TRENDING_URL).data == first
+
 
 # ------------------------------------------------------------------
 # 段階6A: 箇所列・投稿時訳フィールドの追加（列追加のみ・dual-write なし）
