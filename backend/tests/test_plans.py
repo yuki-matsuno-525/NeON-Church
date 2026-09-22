@@ -478,6 +478,43 @@ def test_日の並びを変えられるかが返る(auth_client, other_client, b
 
 
 @pytest.mark.django_db
+def test_詳細のクエリ数は章数に比例しない(
+    auth_client, api_client, book, django_assert_num_queries
+):
+    """各章の表示名を一括先読みし、詳細オブジェクトも二重取得しない。"""
+    from django.contrib.auth import get_user_model
+    from plans.models import PlanDayReading
+
+    plan = Plan.objects.create(
+        owner=get_user_model().objects.get(username="testuser"),
+        title="長い通読プラン",
+        description="問い合わせ数の回帰テスト",
+        visibility=Plan.VISIBILITY_PUBLIC,
+    )
+    days = PlanDay.objects.bulk_create(
+        [PlanDay(plan=plan, number=number, title=f"第{number}日") for number in range(1, 21)]
+    )
+    PlanDayReading.objects.bulk_create(
+        [
+            PlanDayReading(
+                day=day,
+                canonical_book=book.canonical_book,
+                chapter_number=day.number,
+                order=0,
+            )
+            for day in days
+        ]
+    )
+
+    with django_assert_num_queries(5):
+        response = api_client.get(f"{PLANS_URL}{plan.id}/")
+
+    assert response.status_code == 200
+    assert len(response.data["days"]) == 20
+    assert response.data["days"][-1]["readings"][0]["book_name"] == book.name
+
+
+@pytest.mark.django_db
 def test_他人のプランは書き換えられない(auth_client, plan_id, other_client):
     response = other_client.patch(f"{PLANS_URL}{plan_id}/", {"title": "乗っ取り"}, format="json")
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
-import { fetchTranslation, fetchTranslationRead, type TranslationProject, type TranslationUnit } from "@/lib/api";
+import { fetchTranslation, fetchTranslationRead, type TranslationReadProject, type TranslationUnit } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
@@ -27,7 +27,7 @@ export default function TranslationReadChapterPage({
   // 上に貼り付く帯の高さを測って、コメント欄がその下から始まるようにする。
   const headerRef = useReaderHeaderHeight();
 
-  const [project, setProject] = useState<TranslationProject | null>(null);
+  const [project, setProject] = useState<TranslationReadProject | null>(null);
   // この章の節だけ。以前は全章取ってから1章分を抜き出し、残りを捨てていた。
   const [units, setUnits] = useState<TranslationUnit[]>([]);
   // 前後の章へのリンクを出すための章番号一覧（本文は含まない）。
@@ -47,8 +47,10 @@ export default function TranslationReadChapterPage({
     setLoading(true);
     setError(null);
     try {
-      const [proj, read] = await Promise.all([fetchTranslation(id), fetchTranslationRead(id, chapterNum)]);
-      setProject(proj);
+      const read = await fetchTranslationRead(id, chapterNum);
+      // 通常は read 1本で完結する。旧backendが稼働中のローリングデプロイ時だけ
+      // 詳細APIへフォールバックし、デプロイ順による一時的な画面停止を避ける。
+      setProject(read.project ?? await fetchTranslation(id));
       setChapterNums(read.chapters);
       setUnits(read.units);
     } catch {
@@ -60,10 +62,11 @@ export default function TranslationReadChapterPage({
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchTranslation(id), fetchTranslationRead(id, chapterNum)])
-      .then(([proj, read]) => {
+    fetchTranslationRead(id, chapterNum)
+      .then(async (read) => {
+        const loadedProject = read.project ?? await fetchTranslation(id);
         if (!active) return;
-        setProject(proj);
+        setProject(loadedProject);
         setChapterNums(read.chapters);
         setUnits(read.units);
       })

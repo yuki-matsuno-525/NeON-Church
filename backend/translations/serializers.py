@@ -76,6 +76,17 @@ class TranslationProjectSerializer(serializers.ModelSerializer):
         return obj.library_entries.filter(user=request.user).exists()
 
 
+class TranslationReadProjectSerializer(serializers.ModelSerializer):
+    """公開済み翻訳を読む画面に必要な、変化しない最小限の企画情報。"""
+
+    source_book_name = serializers.CharField(source="source_book.name", read_only=True)
+
+    class Meta:
+        model = TranslationProject
+        fields = ["id", "name", "source_book", "source_book_name", "target_language"]
+        read_only_fields = fields
+
+
 class TranslationMembershipSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
 

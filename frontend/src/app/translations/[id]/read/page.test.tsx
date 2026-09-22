@@ -56,10 +56,11 @@ describe("TranslationReadPage", () => {
     vi.clearAllMocks();
     const { fetchTranslation, fetchTranslationRead } = await import("@/lib/api");
     vi.mocked(fetchTranslation).mockResolvedValue(project);
-    vi.mocked(fetchTranslationRead).mockResolvedValue({ chapters: [1], units: [] });
+    vi.mocked(fetchTranslationRead).mockResolvedValue({ project, chapters: [1], units: [] });
   });
 
   it("関連翻訳IDの解決失敗を警告し、その場で再試行できる", async () => {
+    const { fetchTranslation } = await import("@/lib/api");
     const { resolveVersionBookIds } = await import("@/lib/versions");
     vi.mocked(resolveVersionBookIds)
       .mockRejectedValueOnce(new Error("network"))
@@ -67,6 +68,8 @@ describe("TranslationReadPage", () => {
     const ui = translationUiText("ja");
 
     render(<TranslationReadPage params={Promise.resolve({ id: "p1" })} />);
+
+    await waitFor(() => expect(fetchTranslation).not.toHaveBeenCalled());
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(ui.relatedCommentsLoadError);

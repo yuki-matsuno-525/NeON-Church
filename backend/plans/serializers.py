@@ -2,7 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from bible.editions import pick_edition
-from bible.models import Book, CanonicalBook
+from bible.models import CanonicalBook
 from .models import (
     MAX_DAYS_PER_PLAN,
     MAX_READINGS_PER_DAY,
@@ -41,7 +41,10 @@ class PlanReadingSerializer(serializers.ModelSerializer):
         return obj.id in completed_reading_ids
 
     def get_book_name(self, obj) -> str:
-        editions = Book.objects.filter(canonical_book_id=obj.canonical_book_id)
+        # 詳細・日編集の view は editions までまとめて prefetch する。章ごとに Book を
+        # 引くと、長いプランほど問い合わせが直線的に増えるため、prefetch 済みの
+        # related manager をそのまま使う。単体利用時は通常の queryset として動く。
+        editions = obj.canonical_book.editions.all()
         book = pick_edition(editions, obj.translation)
         return book.name if book else obj.canonical_book.slug
 

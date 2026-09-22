@@ -75,16 +75,18 @@ describe("TranslationReadChapterPage", () => {
     const { fetchTranslation, fetchTranslationRead } = await import("@/lib/api");
     const { findSlugByBookName, resolveVersionChapterIds, resolveVersionVerseIds } = await import("@/lib/versions");
     vi.mocked(fetchTranslation).mockResolvedValue(project);
-    vi.mocked(fetchTranslationRead).mockResolvedValue({ chapters: [1], units: [unit] });
+    vi.mocked(fetchTranslationRead).mockResolvedValue({ project, chapters: [1], units: [unit] });
     vi.mocked(findSlugByBookName).mockReturnValue(null);
     vi.mocked(resolveVersionChapterIds).mockResolvedValue([]);
     vi.mocked(resolveVersionVerseIds).mockResolvedValue([]);
   });
 
   it("原文は既定で隠し、比較操作で表示する", async () => {
+    const { fetchTranslation } = await import("@/lib/api");
     render(<TranslationReadChapterPage params={Promise.resolve({ id: "p1", chapter: "1" })} />);
 
     await screen.findByText("公開された訳文");
+    expect(fetchTranslation).not.toHaveBeenCalled();
     expect(screen.queryByText(/Source text/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "原文を表示" }));
     expect(screen.getByText(/Source text/)).toBeInTheDocument();

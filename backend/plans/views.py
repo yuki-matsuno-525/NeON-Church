@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -140,15 +140,27 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
                     filter=Q(subscriptions__is_active=True),
                 )
             )
-            .prefetch_related("days__readings__canonical_book")
+            .prefetch_related(
+                Prefetch(
+                    "days__readings",
+                    queryset=PlanDayReading.objects.select_related(
+                        "canonical_book"
+                    ).prefetch_related("canonical_book__editions"),
+                )
+            )
         )
 
     def get_object(self):
+        # retrieve() と get_serializer_context() の両方が同じ詳細を必要とする。
+        # 重い days/readings の prefetch 一式を1リクエストで二度繰り返さない。
+        if hasattr(self, "_plan_object"):
+            return self._plan_object
         plan = super().get_object()
         if self.request.method == "GET":
             is_owner = self.request.user.is_authenticated and plan.owner_id == self.request.user.id
             if plan.visibility == Plan.VISIBILITY_PRIVATE and not is_owner:
                 self.permission_denied(self.request, message="このプランは下書きです。")
+        self._plan_object = plan
         return plan
 
     def check_object_permissions(self, request, obj):
@@ -220,7 +232,12 @@ class PlanDayDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return PlanDay.objects.filter(plan__owner=self.request.user).prefetch_related(
-            "readings__canonical_book"
+            Prefetch(
+                "readings",
+                queryset=PlanDayReading.objects.select_related(
+                    "canonical_book"
+                ).prefetch_related("canonical_book__editions"),
+            )
         )
 
     def get_object(self):
