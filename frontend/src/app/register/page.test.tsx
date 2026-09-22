@@ -32,6 +32,12 @@ describe("RegisterPage", () => {
     mockFrom = null;
   });
 
+  it("利用規約とプライバシーポリシーへのリンク付きで同意の一文を出す", () => {
+    render(<RegisterPage />);
+    expect(screen.getByRole("link", { name: "利用規約" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toHaveAttribute("href", "/privacy");
+  });
+
   it("フォームフィールドとボタンが表示される", () => {
     render(<RegisterPage />);
     expect(screen.getByRole("button", { name: "登録する" })).toBeInTheDocument();

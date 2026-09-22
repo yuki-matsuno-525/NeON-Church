@@ -406,6 +406,7 @@ const ja = {
   usernameHint: "英数字と _ . + - @ のみ、150文字以内",
   registering: "登録中...",
   registerBtn: "登録する",
+  registerAgree: { before: "登録すると（Google / GitHub での登録も含む）、", terms: "利用規約", and: "と", privacy: "プライバシーポリシー", after: "に同意したものとみなします。" },
   registerFailed: "登録に失敗しました",
   hasAccount: "すでにアカウントをお持ちの方は",
 
@@ -1170,6 +1171,7 @@ const en: typeof ja = {
   usernameHint: "Letters, numbers, and _ . + - @ only; up to 150 characters",
   registering: "Signing up...",
   registerBtn: "Sign up",
+  registerAgree: { before: "By signing up (including with Google or GitHub), you agree to the ", terms: "Terms", and: " and ", privacy: "Privacy Policy", after: "." },
   registerFailed: "Sign up failed",
   hasAccount: "Already have an account?",
 

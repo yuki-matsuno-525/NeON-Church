@@ -18,7 +18,7 @@ const content: Record<string, Content> = {
     sections: [
       {
         heading: "1. 収集する情報",
-        body: "ユーザー名、メールアドレス、パスワード（ハッシュ化）、自己紹介、アバター画像、投稿したコメント・Q&A・翻訳、お気に入り、読書進捗、通知設定、IP アドレスおよび User Agent（不正利用対策のため）を収集します。",
+        body: "ユーザー名、メールアドレス、パスワード（ハッシュ化して保存）、自己紹介、投稿したコメント・Q&A・記事・翻訳、お気に入り、読書進捗、通知設定を保存します。Google / GitHub でログインした場合は、各サービスから受け取る識別子・メールアドレス・表示名を保存します。また、アクセスの際の IP アドレスおよび User Agent を、不正利用対策（投稿回数の制限など）とサーバーの記録のために一時的に扱います。",
       },
       {
         heading: "2. 利用目的",
@@ -26,23 +26,31 @@ const content: Record<string, Content> = {
       },
       {
         heading: "3. 第三者への提供",
-        body: "本サービスは収集した個人情報を、本人の同意なく第三者へ提供することはありません。ただし、法令に基づく開示要請があった場合、または生命・身体・財産の保護のために必要な場合は除きます。",
+        body: "本サービスは収集した個人情報を、本人の同意なく第三者へ提供することはありません。ただし、法令に基づく開示要請があった場合、または生命・身体・財産の保護のために必要な場合は除きます。なお、サービスの運営のため、次項の外部サービスにデータの保管・処理を任せています。",
       },
       {
-        heading: "4. Cookie とセッション",
+        heading: "4. 外部サービスの利用",
+        body: "本サービスは次の外部サービスを利用しており、これらの事業者のサーバー（日本国外を含む）に情報が保存・処理されます。サーバーとデータベース：Render（米国）、画面の配信：Vercel（米国）、エラーの記録：Sentry（米国。個人を特定する情報は送らない設定）、ログイン：Google / GitHub（利用した場合のみ）、メール送信：パスワード再設定や通知のメール配信事業者。各事業者は、それぞれのプライバシーポリシーに従って情報を取り扱います。",
+      },
+      {
+        heading: "5. Cookie とセッション",
         body: "認証状態の維持・CSRF 対策のために Cookie を使用します。これらは本サービスの動作に必要であり、無効化するとログインなどの機能が利用できなくなります。",
       },
       {
-        heading: "5. 公開範囲",
-        body: "ユーザー名・自己紹介・アバター・投稿コメント・Q&A・公開翻訳プロジェクトは、本サービス内および検索エンジンから閲覧可能です。お気に入りは既定で非公開です。プロフィール設定から公開範囲を変更できます。",
+        heading: "6. 公開範囲",
+        body: "ユーザー名・自己紹介・投稿したコメント・Q&A・記事・公開した翻訳は、本サービス内および検索エンジンから閲覧可能です。お気に入りは既定で非公開です。プロフィール設定から公開範囲を変更できます。",
       },
       {
-        heading: "6. データの削除と訂正",
+        heading: "7. データの削除と訂正",
         body: "アカウント設定からアカウントを削除すると、紐づく個人情報は速やかに削除されます。すでに公開された投稿の削除は別途リクエストが必要となる場合があります。",
       },
       {
-        heading: "7. お問い合わせ",
-        body: "プライバシーに関するご質問・ご要望はフィードバックページからご連絡ください。",
+        heading: "8. お問い合わせ",
+        body: "プライバシーに関するご質問・ご要望、保存している情報の開示・訂正・削除のご請求は、フィードバックページからご連絡ください。",
+      },
+      {
+        heading: "9. 運営者",
+        body: "本サービスは y-matsuno525（個人）が運営しています。運営者の氏名・住所は、請求があれば遅滞なく開示します。",
       },
     ],
     back: "← トップへ戻る",
@@ -54,7 +62,7 @@ const content: Record<string, Content> = {
     sections: [
       {
         heading: "1. Information We Collect",
-        body: "We collect your username, email, hashed password, bio, posted comments / Q&A / translations, favorites, reading progress, notification preferences, IP address and User Agent (for abuse prevention).",
+        body: "We store your username, email, hashed password, bio, posted comments / Q&A / articles / translations, favorites, reading progress, and notification preferences. If you sign in with Google or GitHub, we store the identifier, email, and display name received from that service. Your IP address and User Agent are processed temporarily for abuse prevention (such as rate limits) and server logs.",
       },
       {
         heading: "2. How We Use Information",
@@ -62,23 +70,31 @@ const content: Record<string, Content> = {
       },
       {
         heading: "3. Sharing With Third Parties",
-        body: "We do not share your personal information with third parties without your consent, except where required by law or where necessary to protect life, body, or property.",
+        body: "We do not share your personal information with third parties without your consent, except where required by law or where necessary to protect life, body, or property. To operate the Service, we entrust storage and processing of data to the external services listed in the next section.",
       },
       {
-        heading: "4. Cookies and Sessions",
+        heading: "4. External Services",
+        body: "The Service relies on the following external services, and information is stored and processed on their servers, including outside Japan: servers and database: Render (US); web delivery: Vercel (US); error tracking: Sentry (US, configured not to send personally identifying information); sign-in: Google / GitHub (only if you use them); email: the provider that delivers password reset and notification emails. Each provider handles information under its own privacy policy.",
+      },
+      {
+        heading: "5. Cookies and Sessions",
         body: "We use cookies to maintain authentication state and provide CSRF protection. These are required to operate the Service; disabling them will break features such as login.",
       },
       {
-        heading: "5. Visibility",
+        heading: "6. Visibility",
         body: "Your username, bio, public comments, Q&A, and published translation projects are visible inside the Service and may be indexed by search engines. Favorites are private by default. You can change visibility from your profile settings.",
       },
       {
-        heading: "6. Deletion and Correction",
+        heading: "7. Deletion and Correction",
         body: "Deleting your account from settings will promptly remove associated personal information. Removing content that has already been published may require a separate request.",
       },
       {
-        heading: "7. Contact",
-        body: "For privacy questions or requests, please reach out via the Feedback page.",
+        heading: "8. Contact",
+        body: "For privacy questions, or requests to disclose, correct, or delete the information we hold, please reach out via the Feedback page.",
+      },
+      {
+        heading: "9. Operator",
+        body: "The Service is operated by y-matsuno525 (an individual). The operator's name and address will be disclosed without delay upon request.",
       },
     ],
     back: "← Back to home",
@@ -96,7 +112,7 @@ export async function PrivacyContent() {
         {c.intro}
       </p>
       <ContentPageMeta
-        updatedAt="2026-08-01"
+        updatedAt="2026-09-22"
         sections={c.sections.map((section) => section.heading)}
         relatedLinks={[
           { href: "/settings", label: lang === "ja" ? "アカウント設定" : "Account settings" },

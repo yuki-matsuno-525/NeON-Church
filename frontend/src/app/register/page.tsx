@@ -174,6 +174,14 @@ function RegisterForm() {
             </p>
           )}
 
+          <p className="text-xs text-muted leading-reading mb-4">
+            {t.registerAgree.before}
+            <Link href="/terms" className="text-accent">{t.registerAgree.terms}</Link>
+            {t.registerAgree.and}
+            <Link href="/privacy" className="text-accent">{t.registerAgree.privacy}</Link>
+            {t.registerAgree.after}
+          </p>
+
           <button
             type="submit"
             disabled={submitting}
