@@ -513,3 +513,80 @@ def test_言葉で絞っても下書きは出ない(auth_client, other_client):
 
     # 別の人から見ると、公開していないプランは言葉で探しても出てこない
     assert other_client.get(PLANS_URL, {"q": "断食"}).data["count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# 一覧の絞り込み（書・日数・並び順）
+# ---------------------------------------------------------------------------
+
+def _public_plan(owner, title, *, days=1, book_slug=None, readers=()):
+    """ORM で公開プランを直接作る。日数・読む書・読んでいる人を指定できる。"""
+    from bible.models import CanonicalBook
+    from plans.models import PlanDayReading
+
+    plan = Plan.objects.create(owner=owner, title=title, visibility=Plan.VISIBILITY_PUBLIC)
+    for number in range(1, days + 1):
+        day = PlanDay.objects.create(plan=plan, number=number)
+        if book_slug:
+            canon, _ = CanonicalBook.objects.get_or_create(slug=book_slug)
+            PlanDayReading.objects.create(day=day, canonical_book=canon, chapter_number=number)
+    for reader in readers:
+        PlanSubscription.objects.create(user=reader, plan=plan)
+    return plan
+
+
+@pytest.fixture
+def owners(db):
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    return [User.objects.create_user(username=f"u{i}", email=f"u{i}@example.com", password="pw123456!") for i in range(3)]
+
+
+def _titles(response):
+    return [plan["title"] for plan in response.data["results"]]
+
+
+@pytest.mark.django_db
+def test_書で絞り込める(api_client, owners):
+    _public_plan(owners[0], "マタイ", days=2, book_slug="matthew")
+    _public_plan(owners[0], "マルコ", days=2, book_slug="mark")
+
+    response = api_client.get(PLANS_URL, {"book": "matthew"})
+
+    assert _titles(response) == ["マタイ"]
+
+
+@pytest.mark.django_db
+def test_日数で絞り込める(api_client, owners):
+    _public_plan(owners[0], "短い", days=7)
+    _public_plan(owners[0], "中くらい", days=8)
+    _public_plan(owners[0], "長い", days=31)
+
+    assert _titles(api_client.get(PLANS_URL, {"days": "short"})) == ["短い"]
+    assert _titles(api_client.get(PLANS_URL, {"days": "mid"})) == ["中くらい"]
+    assert _titles(api_client.get(PLANS_URL, {"days": "long"})) == ["長い"]
+    # 知らない値は絞らない
+    assert len(_titles(api_client.get(PLANS_URL, {"days": "zzz"}))) == 3
+
+
+@pytest.mark.django_db
+def test_読んでいる人が多い順に並べられる(api_client, owners):
+    _public_plan(owners[0], "少ない", readers=owners[:1])
+    _public_plan(owners[0], "多い", readers=owners[:3])
+    _public_plan(owners[0], "いない")
+
+    assert _titles(api_client.get(PLANS_URL, {"sort": "popular"})) == ["多い", "少ない", "いない"]
+    # 既定は新しい順
+    assert _titles(api_client.get(PLANS_URL)) == ["いない", "多い", "少ない"]
+
+
+@pytest.mark.django_db
+def test_絞り込みを重ねても人数と日数が膨らまない(api_client, owners):
+    _public_plan(owners[0], "マタイ", days=3, book_slug="matthew", readers=owners[:2])
+
+    response = api_client.get(PLANS_URL, {"book": "matthew", "days": "short", "sort": "popular"})
+
+    [plan] = response.data["results"]
+    assert plan["day_count"] == 3
+    assert plan["reader_count"] == 2

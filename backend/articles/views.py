@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from common.pagination import StandardPageNumberPagination
 from .citations import sync_citations
-from .models import Article, ArticleComment, ArticleTag
+from .models import Article, ArticleCitation, ArticleComment, ArticleTag
 from .serializers import (
     ArticleCommentSerializer,
     ArticleDetailSerializer,
@@ -59,6 +59,14 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         tag_slug = self.request.query_params.get("tag")
         if tag_slug:
             queryset = queryset.filter(tags__slug=tag_slug)
+
+        # 書での絞り込み。その書を引用している記事。引用の表と JOIN すると
+        # 同じ記事が引用の数だけ重なるので、副問い合わせで絞る（プランの一覧と同じ）。
+        book = (self.request.query_params.get("book") or "").strip()
+        if book:
+            queryset = queryset.filter(
+                id__in=ArticleCitation.objects.filter(canonical_book__slug=book).values("article_id")
+            )
 
         # プロフィールの記事タブで使う。公開記事だけが対象なので、下書きは漏れない。
         author = self.request.query_params.get("author")

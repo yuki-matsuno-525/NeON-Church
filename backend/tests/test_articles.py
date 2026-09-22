@@ -282,6 +282,18 @@ def test_タグで絞り込める(auth_client, verses):
     assert len(response.data["results"]) == 1
 
 
+@pytest.mark.django_db
+def test_引用している書で絞り込める(auth_client, verses):
+    # 同じ書を何度引用していても 1 件として出る
+    _create_article(auth_client, title="マタイを引く")
+    _create_article(auth_client, title="引用なし", body="本文だけ")
+
+    response = auth_client.get(ARTICLES_URL, {"book": "matthew"})
+
+    assert [a["title"] for a in response.data["results"]] == ["マタイを引く"]
+    assert auth_client.get(ARTICLES_URL, {"book": "mark"}).data["count"] == 0
+
+
 # ---------------------------------------------------------------------------
 # 節から記事を引く
 # ---------------------------------------------------------------------------

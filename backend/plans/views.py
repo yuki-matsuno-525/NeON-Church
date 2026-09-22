@@ -42,9 +42,18 @@ def _subscription_for(request, plan: Plan) -> PlanSubscription | None:
     return PlanSubscription.objects.filter(user=request.user, plan=plan).first()
 
 
+# 一覧の「日数」の絞り込み。?days= の値 → (以上, 以下)。以下が None なら上限なし。
+DAYS_RANGES: dict[str, tuple[int, int | None]] = {
+    "short": (1, 7),
+    "mid": (8, 30),
+    "long": (31, None),
+}
+
+
 class PlanListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/plans/   プラン一覧。既定は公開のみ。?mine=true で自分の（下書き含む）
+                       ?q= 言葉 / ?book= 書の slug / ?days=short|mid|long / ?sort=popular
     POST /api/plans/   プランを作る（要認証）
     """
 
@@ -71,18 +80,40 @@ class PlanListCreateView(generics.ListCreateAPIView):
                 | Q(owner__username__icontains=q)
             )
 
-        return (
-            queryset.select_related("owner")
-            .annotate(
-                active_reader_count=Count(
-                    "subscriptions",
-                    filter=Q(subscriptions__is_active=True),
-                )
+        # 書での絞り込み。その書を読む日が 1 つでもあるプラン。
+        # 読む章の表と JOIN すると下の人数・日数の数え上げが膨らむので、副問い合わせで絞る。
+        book = (self.request.query_params.get("book") or "").strip()
+        if book:
+            queryset = queryset.filter(
+                id__in=PlanDayReading.objects.filter(canonical_book__slug=book).values("day__plan_id")
             )
-            .order_by("-created_at")
-            .prefetch_related("days")
-            .distinct()
+
+        queryset = queryset.select_related("owner").annotate(
+            # 日数での絞り込みと人数の数え上げが同じ問い合わせで JOIN し合うので、
+            # どちらも重なりを除いて数える。
+            active_reader_count=Count(
+                "subscriptions",
+                filter=Q(subscriptions__is_active=True),
+                distinct=True,
+            ),
+            num_days=Count("days", distinct=True),
         )
+
+        # 日数での絞り込み。知らない値は無視して、絞らずに返す。
+        days_range = DAYS_RANGES.get(self.request.query_params.get("days") or "")
+        if days_range:
+            low, high = days_range
+            queryset = queryset.filter(num_days__gte=low)
+            if high is not None:
+                queryset = queryset.filter(num_days__lte=high)
+
+        # 並び順。既定は新しい順。popular は読んでいる人が多い順。
+        if self.request.query_params.get("sort") == "popular":
+            ordering = ("-active_reader_count", "-created_at")
+        else:
+            ordering = ("-created_at",)
+
+        return queryset.order_by(*ordering).prefetch_related("days").distinct()
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
