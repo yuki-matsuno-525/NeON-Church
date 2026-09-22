@@ -4,14 +4,12 @@ import type { Translations } from "./i18n";
 /** 公開範囲のラベル。画面に英語の private/public を出さないための変換。 */
 export function visibilityLabel(visibility: PlanVisibility, t: Translations): string {
   if (visibility === "public") return t.visibilityPublic;
-  if (visibility === "unlisted") return t.visibilityUnlisted;
   return t.visibilityPrivate;
 }
 
 export function visibilityOptions(t: Translations): { value: PlanVisibility; label: string }[] {
   return [
     { value: "private", label: t.visibilityPrivate },
-    { value: "unlisted", label: t.visibilityUnlisted },
     { value: "public", label: t.visibilityPublic },
   ];
 }

@@ -305,7 +305,7 @@ export type PublicUser = {
 // 記事
 // ---------------------------------------------------------------------------
 
-export type ArticleVisibility = "private" | "unlisted" | "public";
+export type ArticleVisibility = "private" | "public";
 
 export type ArticleTag = {
   id: string;
@@ -359,7 +359,7 @@ export type ArticleComment = {
 // 読書プラン
 // ---------------------------------------------------------------------------
 
-export type PlanVisibility = "private" | "unlisted" | "public";
+export type PlanVisibility = "private" | "public";
 
 /** その日に読む章1つ。book は訳に依らない書の slug。 */
 export type PlanReading = {

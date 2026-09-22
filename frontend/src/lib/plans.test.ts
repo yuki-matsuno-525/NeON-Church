@@ -34,12 +34,10 @@ describe("visibilityLabel", () => {
     // 辞書のどのキーを引くかを確かめたいので、見分けやすい値を入れておく。
     const t = {
       visibilityPrivate: "draft-label",
-      visibilityUnlisted: "unlisted-label",
       visibilityPublic: "public-label",
     } as Translations;
 
     expect(visibilityLabel("private", t)).toBe("draft-label");
-    expect(visibilityLabel("unlisted", t)).toBe("unlisted-label");
     expect(visibilityLabel("public", t)).toBe("public-label");
   });
 });

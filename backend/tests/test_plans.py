@@ -133,9 +133,8 @@ def test_中身が空のままでは公開できない(auth_client, plan_id):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("visibility", ["public", "unlisted"])
-def test_作成時も中身が空のまま公開できない(auth_client, visibility):
-    response = _create_plan(auth_client, visibility=visibility)
+def test_作成時も中身が空のまま公開できない(auth_client):
+    response = _create_plan(auth_client, visibility="public")
 
     assert response.status_code == 400
     assert Plan.objects.count() == 0

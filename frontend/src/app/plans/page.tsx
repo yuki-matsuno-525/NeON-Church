@@ -147,7 +147,7 @@ export default async function PlansPage({
           plans={myPlans ?? []}
           empty={t.planMineEmpty}
           editable
-          // 自分のプランには下書きと限定公開が混ざるので、ここだけは印を出す。
+          // 自分のプランには下書きが混ざるので、ここだけは印を出す。
           showVisibility
           t={t}
         />

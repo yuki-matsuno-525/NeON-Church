@@ -311,7 +311,7 @@ class PlanDayReorderView(APIView):
 
 def _readable_plan(request, plan_id: str) -> Plan:
     """読んでよいプランを取り出す。下書きは書いた人だけ。"""
-    visible = Q(visibility__in=[Plan.VISIBILITY_PUBLIC, Plan.VISIBILITY_UNLISTED])
+    visible = Q(visibility=Plan.VISIBILITY_PUBLIC)
     if request.user.is_authenticated:
         visible |= Q(owner=request.user)
     return get_object_or_404(Plan.objects.filter(visible), pk=plan_id)

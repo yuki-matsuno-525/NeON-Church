@@ -1,4 +1,3 @@
-import type { PlanVisibility } from "@/lib/types";
 
 export const planUiText = (lang: "ja" | "en") => lang === "ja" ? {
   plansTitle: "読書プラン",
@@ -14,12 +13,6 @@ export const planUiText = (lang: "ja" | "en") => lang === "ja" ? {
   loadErrorTitle: "読書プランを読み込めませんでした",
   loadErrorDescription: "通信状態を確認して、もう一度お試しください。",
   retry: "もう一度試す",
-  visibilityLabel: (visibility: PlanVisibility) => visibility === "public" ? "公開" : visibility === "unlisted" ? "限定公開" : "下書き",
-  visibilityOptions: [
-    { value: "private" as const, label: "下書き" },
-    { value: "unlisted" as const, label: "限定公開" },
-    { value: "public" as const, label: "公開" },
-  ],
   dayCount: (count: number) => `${count}日`,
   readerCount: (count: number) => `${count}人が読書中`,
   newTitle: "新しいプラン",
@@ -155,12 +148,6 @@ export const planUiText = (lang: "ja" | "en") => lang === "ja" ? {
   loadErrorTitle: "Couldn't load reading plans",
   loadErrorDescription: "Check your connection and try again.",
   retry: "Try again",
-  visibilityLabel: (visibility: PlanVisibility) => visibility === "public" ? "Public" : visibility === "unlisted" ? "Unlisted" : "Draft",
-  visibilityOptions: [
-    { value: "private" as const, label: "Draft" },
-    { value: "unlisted" as const, label: "Unlisted" },
-    { value: "public" as const, label: "Public" },
-  ],
   dayCount: (count: number) => `${count} ${count === 1 ? "day" : "days"}`,
   readerCount: (count: number) => `${count} reading`,
   newTitle: "New plan",

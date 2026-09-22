@@ -251,9 +251,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
       <ConfirmDialog
         open={pendingVisibility !== null}
         title={t.articleVisibilityConfirmTitle}
-        description={pendingVisibility === "public"
-          ? t.articleVisibilityPublicConfirmDesc
-          : t.articleVisibilityUnlistedConfirmDesc}
+        description={t.articleVisibilityPublicConfirmDesc}
         confirmText={t.articleVisibilityConfirmAction}
         onConfirm={() => {
           if (pendingVisibility) setVisibility(pendingVisibility);

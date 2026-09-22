@@ -723,12 +723,11 @@ class Command(BaseCommand):
     # ── 記事 ────────────────────────────────────────────────────────────────
 
     def _seed_articles(self, people, admin):
-        """記事。公開・限定公開・下書きと、引用の印を全パターン入れる。"""
+        """記事。公開・下書きと、引用の印を全パターン入れる。"""
         tags = self._ensure_article_tags()
         articles, times, tag_rows = [], [], []
         visibilities = (
             [Article.VISIBILITY_PUBLIC] * 8
-            + [Article.VISIBILITY_UNLISTED]
             + [Article.VISIBILITY_PRIVATE]
         )
         for index in range(self.scale["articles"]):
@@ -754,10 +753,9 @@ class Command(BaseCommand):
             for tag in self.rng.sample(tags, self.rng.randint(1, 3)):
                 tag_rows.append((article.id, tag.id))
 
-        # 管理者の記事は、公開・限定公開・下書きを必ず 1 本ずつ持たせる。
+        # 管理者の記事は、公開・下書きを必ず 1 本ずつ持たせる。
         for visibility in (
             Article.VISIBILITY_PUBLIC,
-            Article.VISIBILITY_UNLISTED,
             Article.VISIBILITY_PRIVATE,
         ):
             locale = LOCALES[0]
@@ -1187,7 +1185,6 @@ class Command(BaseCommand):
         """プラン。日数のばらつき・正典と外典をまたぐ並び・購読と進捗を作る。"""
         visibilities = (
             [Plan.VISIBILITY_PUBLIC] * 8
-            + [Plan.VISIBILITY_UNLISTED]
             + [Plan.VISIBILITY_PRIVATE]
         )
         plans, times, day_counts = [], [], []

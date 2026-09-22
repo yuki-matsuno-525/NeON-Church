@@ -202,7 +202,7 @@ class PlanWriteSerializer(serializers.ModelSerializer):
             == Plan.VISIBILITY_PRIVATE
         )
         if visibility != Plan.VISIBILITY_PRIVATE:
-            # 作成時点ではまだ日を追加できないため、公開・限定公開での直接作成も拒否する。
+            # 作成時点ではまだ日を追加できないため、公開での直接作成も拒否する。
             if self.instance is None or not self.instance.days.exists():
                 raise serializers.ValidationError(
                     {"visibility": "公開するには、1日以上の中身が必要です。"}

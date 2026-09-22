@@ -59,11 +59,9 @@ class Article(BaseModel):
     """
 
     VISIBILITY_PRIVATE = "private"
-    VISIBILITY_UNLISTED = "unlisted"
     VISIBILITY_PUBLIC = "public"
     VISIBILITY_CHOICES = [
         (VISIBILITY_PRIVATE, "Private"),
-        (VISIBILITY_UNLISTED, "Unlisted"),
         (VISIBILITY_PUBLIC, "Public"),
     ]
 

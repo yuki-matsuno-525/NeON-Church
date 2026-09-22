@@ -283,7 +283,7 @@ class TestSearchCoversEverything:
     def owner(self, db, django_user_model):
         return django_user_model.objects.create_user(username="searchowner", password="testpass123")
 
-    def test_公開記事は探せるが下書きと限定公開は出ない(self, api_client, owner):
+    def test_公開記事は探せるが下書きは出ない(self, api_client, owner):
         from articles.models import Article
 
         found = Article.objects.create(
@@ -291,9 +291,6 @@ class TestSearchCoversEverything:
         )
         Article.objects.create(
             owner=owner, title="下書きのカイロス", summary="", body="", visibility=Article.VISIBILITY_PRIVATE
-        )
-        Article.objects.create(
-            owner=owner, title="限定公開のカイロス", summary="", body="", visibility=Article.VISIBILITY_UNLISTED
         )
 
         res = api_client.get(SEARCH_URL, {"q": "カイロス"})

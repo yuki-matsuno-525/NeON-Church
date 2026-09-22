@@ -155,11 +155,12 @@ def test_下書きは他のログイン済みユーザーにも見えない(
 
 
 @pytest.mark.django_db
-def test_限定公開は一覧に出ないがURLを知っていれば読める(auth_client, api_client, verses):
-    created = _create_article(auth_client, visibility="unlisted")
+def test_限定公開は選べない(auth_client, verses):
+    """公開範囲は「下書き」と「公開」の2つだけ。わかりにくかった限定公開はなくした。"""
+    response = _create_article(auth_client, visibility="unlisted")
 
-    assert api_client.get(f"{ARTICLES_URL}{created.data['id']}/").status_code == 200
-    assert api_client.get(ARTICLES_URL).data["results"] == []
+    assert response.status_code == 400
+    assert "visibility" in response.data
 
 
 @pytest.mark.django_db

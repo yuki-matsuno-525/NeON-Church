@@ -25,7 +25,7 @@ class IsArticleOwner(permissions.BasePermission):
 
 
 def _visible_articles(user):
-    """その人が見てよい記事だけに絞る。公開は誰でも、下書き・限定公開は書いた人だけ。"""
+    """その人が見てよい記事だけに絞る。公開は誰でも、下書きは書いた人だけ。"""
     visible = Q(visibility=Article.VISIBILITY_PUBLIC)
     if user and user.is_authenticated:
         visible |= Q(owner=user)
@@ -60,7 +60,7 @@ class ArticleListCreateView(generics.ListCreateAPIView):
         if self.request.query_params.get("mine") == "true" and user.is_authenticated:
             queryset = Article.objects.filter(owner=user)
         else:
-            # 一覧に出るのは公開記事だけ（限定公開はURLを知っている人だけが見る）。
+            # 一覧に出るのは公開記事だけ。
             queryset = Article.objects.filter(visibility=Article.VISIBILITY_PUBLIC)
             if self.request.query_params.get("exclude_mine") == "true" and user.is_authenticated:
                 queryset = queryset.exclude(owner=user)
@@ -104,7 +104,7 @@ class ArticleListCreateView(generics.ListCreateAPIView):
 
 class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
-    GET    /api/articles/{id}/   記事1件。下書き・限定公開は書いた人だけ。
+    GET    /api/articles/{id}/   記事1件。下書きは書いた人だけ。
     PATCH  /api/articles/{id}/   書き換え（書いた人だけ）
     DELETE /api/articles/{id}/   削除。コメントも一緒に消える（書いた人だけ）
     """
@@ -122,7 +122,7 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         article = super().get_object()
-        # 読むだけなら、公開・限定公開は誰でも見てよい。下書きは書いた人だけ。
+        # 読むだけなら、公開は誰でも見てよい。下書きは書いた人だけ。
         if self.request.method == "GET":
             is_owner = self.request.user.is_authenticated and article.owner_id == self.request.user.id
             if article.visibility == Article.VISIBILITY_PRIVATE and not is_owner:

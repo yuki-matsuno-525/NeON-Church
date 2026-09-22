@@ -55,7 +55,7 @@ function ArticleCard({ article, editable }: { article: Article; editable: boolea
   return (
     <article className="card-glow card-glow-interactive card-link p-4 flex flex-col">
       {/* 公開はこの一覧では当たり前なので、札は出さない。
-          下書き・限定公開だけ、まだ人に見えていないことを示すために出す。 */}
+          下書きだけ、まだ人に見えていないことを示すために出す。 */}
       {(article.visibility !== "public" || editable) && (
         <div className="flex justify-between items-center gap-2 mb-3">
           {article.visibility !== "public" && (
