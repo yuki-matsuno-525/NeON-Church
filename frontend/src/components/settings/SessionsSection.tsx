@@ -6,6 +6,7 @@ import { Button, ConfirmDialog, ErrorState, SkeletonList } from "@/components/ui
 import { useLang } from "@/contexts/LanguageContext";
 import styles from "@/app/settings/SettingsPage.module.css";
 import { errorMessage, InlineMessage, type SettingsText as Text } from "./settingsShared";
+import { formatDateTime } from "@/lib/dateFormat";
 
 /** いま確認を求めている操作。1 つのダイアログを使い回すので、種類で見分ける。 */
 type Confirmation = { kind: "session"; id: string } | { kind: "others" } | null;
@@ -71,7 +72,7 @@ export function SessionsSection({ text, reloadToken, onCurrentRevoked }: { text:
     }
   };
 
-  const date = (value: string) => new Intl.DateTimeFormat(lang === "ja" ? "ja-JP" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  const date = (value: string) => formatDateTime(value, lang === "ja" ? "ja-JP" : "en-US", { dateStyle: "medium", timeStyle: "short" });
 
   return (
     <section id="sessions" className={styles.section} aria-labelledby="sessions-heading" aria-busy={busy || loading}>

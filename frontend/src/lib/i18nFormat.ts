@@ -4,6 +4,7 @@
 
 import { getBookBySlug } from "@/lib/books";
 import { translations, type Translations } from "@/lib/i18nDictionary";
+import { formatDate } from "@/lib/dateFormat";
 
 export function bookLabel(slug: string, lang: string): { name: string; short: string } | null {
   const book = getBookBySlug(slug);
@@ -36,5 +37,5 @@ export function relativeTime(dateStr: string, t: Translations): string {
   if (diff < 3600) return t.relMinutesAgo(Math.floor(diff / 60));
   if (diff < 86400) return t.relHoursAgo(Math.floor(diff / 3600));
   if (diff < 86400 * 30) return t.relDaysAgo(Math.floor(diff / 86400));
-  return new Date(dateStr).toLocaleDateString(t.dateLocale);
+  return formatDate(dateStr, t.dateLocale);
 }

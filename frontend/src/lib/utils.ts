@@ -3,6 +3,8 @@
  * API 通信とは無関係な共通処理をここに置く。
  */
 
+import { formatDate } from "@/lib/dateFormat";
+
 /**
  * ISO 8601 日時文字列を選択言語の相対表記に変換する。
  */
@@ -24,5 +26,5 @@ export function formatRelativeTime(dateStr: string, lang: "ja" | "en" = "ja"): s
     const days = Math.floor(diff / 86400);
     return lang === "en" ? `${days}d ago` : `${days}日前`;
   }
-  return date.toLocaleDateString(lang === "en" ? "en-US" : "ja-JP");
+  return formatDate(date, lang === "en" ? "en-US" : "ja-JP");
 }

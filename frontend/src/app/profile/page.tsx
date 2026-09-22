@@ -22,6 +22,7 @@ import { AsyncPagedList, SkeletonList, EmptyState, Button, Toggle, FilterChips, 
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
 import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
+import { formatDate } from "@/lib/dateFormat";
 
 type Tab = "bookmarks" | "comments";
 
@@ -127,7 +128,8 @@ export default function ProfilePage() {
     }
   };
 
-  const joinedDate = new Date(user.created_at).toLocaleDateString(
+  const joinedDate = formatDate(
+    user.created_at,
     lang === "en" ? "en-US" : "ja-JP",
     { year: "numeric", month: "long", day: "numeric" }
   );

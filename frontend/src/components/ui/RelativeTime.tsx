@@ -1,6 +1,7 @@
 "use client";
 
-import { useRelativeTime } from "@/lib/i18n";
+import { useRelativeTime, useT } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/dateFormat";
 
 /**
  * 「3日前」のような、いまとの差で書いた日時。
@@ -11,8 +12,9 @@ import { useRelativeTime } from "@/lib/i18n";
  */
 export function RelativeTime({ dateStr, className }: { dateStr: string; className?: string }) {
   const formatRelativeTime = useRelativeTime();
+  const t = useT();
   return (
-    <time dateTime={dateStr} title={new Date(dateStr).toLocaleString()} className={className}>
+    <time dateTime={dateStr} title={formatDateTime(dateStr, t.dateLocale, { dateStyle: "medium", timeStyle: "short" })} className={className}>
       {formatRelativeTime(dateStr)}
     </time>
   );

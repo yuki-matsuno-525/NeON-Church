@@ -3,6 +3,8 @@
 // まるごとブラウザに送られ、サーバー側から読むこともできなくなる。
 // フック（useT など）は client 側の i18n.ts が持つ。
 
+import { formatDate } from "@/lib/dateFormat";
+
 const ja = {
   // 共通
   loading: "読み込み中...",
@@ -636,7 +638,7 @@ const ja = {
   selfProfileLink: "こちら",
   selfProfileAfter: "から確認できます。",
   joinedOn: (dateStr: string) =>
-    `${new Date(dateStr).toLocaleDateString("ja-JP")} 登録`,
+    `${formatDate(dateStr, "ja-JP")} 登録`,
 
   // コメント関連の見出し・空状態
   noCommentsYet: "コメントはまだありません",
@@ -1376,7 +1378,7 @@ const en: typeof ja = {
   selfProfileLink: "here",
   selfProfileAfter: ".",
   joinedOn: (dateStr: string) =>
-    `Joined ${new Date(dateStr).toLocaleDateString("en-US")}`,
+    `Joined ${formatDate(dateStr, "en-US")}`,
 
   noCommentsYet: "No comments yet",
   bookCommentsHeading: "Comments on this book",
