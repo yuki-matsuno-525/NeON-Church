@@ -58,11 +58,20 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
         setDescription(data.description);
         setNote(data.note ?? "");
         setVisibility(data.visibility);
-        // 作り始めは日が1つ。閉じた箱だけが出ていると何をすればよいか分からないので開けておく。
-        if (data.days?.length === 1) openDays.add(data.days[0].id);
       }),
-    [id, openDays, setDescription, setLoadError, setNote, setPlan, setTitle, setVisibility],
+    // openDays（描き直すたびに作り直される）を依存に入れてはいけない。以前はここで
+    // 日を開いていたため入っていて、取り直しが止まらず、打った文字がサーバーの値で
+    // 上書きされ続けていた（説明・注記が入力できなかった原因）。
+    [id, setDescription, setLoadError, setNote, setPlan, setTitle, setVisibility],
   );
+
+  // 作り始めは日が1つ。閉じた箱だけが出ていると何をすればよいか分からないので、
+  // プランを初めて受け取ったときに 1 度だけ開けておく。
+  const [autoOpenedFor, setAutoOpenedFor] = useState<string | null>(null);
+  if (plan && autoOpenedFor !== plan.id) {
+    setAutoOpenedFor(plan.id);
+    if (plan.days?.length === 1) openDays.add(plan.days[0].id);
+  }
 
   useEffect(() => {
     load()
