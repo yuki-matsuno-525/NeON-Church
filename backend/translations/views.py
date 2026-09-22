@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -121,6 +122,14 @@ class TranslationProjectListCreateView(generics.ListCreateAPIView):
         一覧は3カラムのボードなので、フロントは列ごとに独立してページングする。
     POST /api/translations/  プロジェクト作成（要認証）
     """
+
+    # 公開される投稿を作る窓口なので、コメントと同じ回数制限をかける（荒らし・スパム対策）。
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     serializer_class = TranslationProjectSerializer
     pagination_class = StandardPageNumberPagination
@@ -558,6 +567,14 @@ class TranslationCommentListCreateView(generics.ListCreateAPIView):
     コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
     フロントは「もっと見る」で読み足す。
     """
+
+    # 公開される投稿を作る窓口なので、コメントと同じ回数制限をかける（荒らし・スパム対策）。
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     serializer_class = TranslationCommentSerializer
     pagination_class = StandardPageNumberPagination

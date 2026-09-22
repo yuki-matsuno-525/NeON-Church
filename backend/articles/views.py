@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
@@ -39,6 +40,14 @@ class ArticleListCreateView(generics.ListCreateAPIView):
                                ?exclude_mine=true で自分の記事を公開一覧から除く。
     POST /api/articles/        記事を作る（要認証）
     """
+
+    # 公開される投稿を作る窓口なので、コメントと同じ回数制限をかける（荒らし・スパム対策）。
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardPageNumberPagination
@@ -199,6 +208,14 @@ class ArticleCommentListCreateView(generics.ListCreateAPIView):
 
     コメントは利用者が好きなだけ増やせるので、1回のリクエストで全件返さないようページングする。
     """
+
+    # 公開される投稿を作る窓口なので、コメントと同じ回数制限をかける（荒らし・スパム対策）。
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     serializer_class = ArticleCommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]

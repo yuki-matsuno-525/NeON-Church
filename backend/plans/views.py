@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.shortcuts import get_object_or_404
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -56,6 +57,14 @@ class PlanListCreateView(generics.ListCreateAPIView):
                        ?q= 言葉 / ?book= 書の slug / ?days=short|mid|long / ?sort=popular
     POST /api/plans/   プランを作る（要認証）
     """
+
+    # 公開される投稿を作る窓口なので、コメントと同じ回数制限をかける（荒らし・スパム対策）。
+    throttle_scope = "comment_create"
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = StandardPageNumberPagination

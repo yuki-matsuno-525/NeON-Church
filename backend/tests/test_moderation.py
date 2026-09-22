@@ -156,3 +156,32 @@ class TestThrottle:
         other_auth_client.post(report_url(comment["id"]), {"reason": "spam"}, format="json")
         res = other_auth_client.post(report_url(str(second_comment.id)), {"reason": "offensive"}, format="json")
         assert res.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("url", ["/api/articles/", "/api/plans/", "/api/translations/"])
+def test_public_content_create_is_throttled(monkeypatch, auth_client, url):
+    """記事・プラン・翻訳プロジェクトの作成にも、コメントと同じ回数制限がかかる。"""
+    from rest_framework.throttling import SimpleRateThrottle
+    monkeypatch.setattr(SimpleRateThrottle, "THROTTLE_RATES", {
+        "comment_create": "1/min",
+        "report": "5/min",
+        "auth": "5/min",
+    })
+    auth_client.post(url, {}, format="json")
+    res = auth_client.post(url, {}, format="json")
+    assert res.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+
+
+@pytest.mark.django_db
+def test_public_content_list_is_not_throttled(monkeypatch, api_client):
+    """読むだけの GET には回数制限をかけない。"""
+    from rest_framework.throttling import SimpleRateThrottle
+    monkeypatch.setattr(SimpleRateThrottle, "THROTTLE_RATES", {
+        "comment_create": "1/min",
+        "report": "5/min",
+        "auth": "5/min",
+    })
+    api_client.get("/api/articles/")
+    res = api_client.get("/api/articles/")
+    assert res.status_code == status.HTTP_200_OK
