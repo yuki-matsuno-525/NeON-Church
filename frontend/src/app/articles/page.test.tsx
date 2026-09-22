@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import ArticlesPage from "./page";
 import type { Article } from "@/lib/types";
 
@@ -7,8 +8,10 @@ vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a>,
 }));
 
+const replace = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ replace, refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => "/",
 }));
@@ -48,9 +51,10 @@ const published: Article = {
 async function mockServer({ signedIn }: { signedIn: boolean }) {
   const apiServer = await import("@/lib/apiServer");
   vi.mocked(apiServer.serverIsSignedIn).mockResolvedValue(signedIn);
-  vi.mocked(apiServer.serverFetchList).mockResolvedValue([
-    { id: "t1", name: "断食", slug: "fasting", article_count: 1 },
-  ]);
+  // 主題の一覧だけを返す。書の一覧（絞り込み用）は空。
+  vi.mocked(apiServer.serverFetchList).mockImplementation(async (path: string) =>
+    path.startsWith("/article-tags/") ? [{ id: "t1", name: "断食", slug: "fasting", article_count: 1 }] : [],
+  );
   vi.mocked(apiServer.serverFetchPage).mockImplementation(async (path: string) => ({
     // exclude_mine=true も mine=true を含むので、先頭の ? まで見て区別する
     results: path.includes("?mine=true") ? [mine] : [published],
@@ -62,7 +66,7 @@ async function mockServer({ signedIn }: { signedIn: boolean }) {
 }
 
 /** サーバーコンポーネントなので、await して返ってきたものを描く。 */
-async function renderPage(searchParams: { tab?: string; tag?: string } = {}) {
+async function renderPage(searchParams: Record<string, string> = {}) {
   render(await ArticlesPage({ searchParams: Promise.resolve(searchParams) }));
 }
 
@@ -95,17 +99,31 @@ describe("記事一覧", () => {
     expect(paths).toEqual(["/articles/?mine=true"]);
   });
 
-  it("主題は URL の tag として持ち、選ばれているものが分かる", async () => {
+  it("書と主題は URL で持ち、漏斗のボタンの中で選ばれているものが分かる", async () => {
     const apiServer = await mockServer({ signedIn: false });
-    await renderPage({ tag: "fasting" });
+    await renderPage({ tag: "fasting", book: "matthew" });
 
-    const chip = screen.getByRole("link", { name: /断食/ });
-    expect(chip).toHaveAttribute("href", "/articles?tag=fasting");
-    expect(screen.getByRole("tab", { name: "自分の記事" })).toHaveAttribute("href", "/articles?tab=mine&tag=fasting");
-    expect(chip).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("tab", { name: "自分の記事" })).toHaveAttribute(
+      "href",
+      "/articles?tab=mine&tag=fasting&book=matthew",
+    );
+    // 閉じているあいだは出さない
+    expect(screen.queryByRole("combobox", { name: "記事の主題" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "絞り込み" }));
+    expect(screen.getByRole("combobox", { name: "記事の主題" })).toHaveValue("fasting");
 
     const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
-    expect(paths).toEqual(["/articles/?tag=fasting"]);
+    expect(paths).toEqual(["/articles/?tag=fasting&book=matthew"]);
+  });
+
+  it("主題を選ぶと URL に書く", async () => {
+    await mockServer({ signedIn: false });
+    await renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "絞り込み" }));
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "記事の主題" }), "fasting");
+
+    expect(replace).toHaveBeenLastCalledWith("/articles?tag=fasting", { scroll: false });
   });
 
   it("未ログインでも記事を書くためのログイン導線を示す", async () => {

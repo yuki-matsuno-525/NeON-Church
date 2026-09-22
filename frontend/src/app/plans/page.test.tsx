@@ -5,6 +5,7 @@ import PlansPage from "./page";
 import type { Plan } from "@/lib/types";
 
 const refresh = vi.fn();
+const replace = vi.fn();
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
@@ -12,7 +13,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh, replace: vi.fn() }),
+  useRouter: () => ({ refresh, replace }),
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => "/plans",
 }));
@@ -54,7 +55,7 @@ async function mockServer({ signedIn }: { signedIn: boolean }) {
 }
 
 /** どのタブを見ているかは URL（?tab=）で表す。既定は「読んでいる」。 */
-const renderPage = async (params: { tab?: string } = {}) =>
+const renderPage = async (params: Record<string, string> = {}) =>
   render(await PlansPage({ searchParams: Promise.resolve(params) }));
 
 describe("読書プラン一覧", () => {
@@ -133,7 +134,8 @@ describe("読書プラン一覧", () => {
     expect(screen.queryByRole("link", { name: "新しいプラン" })).not.toBeInTheDocument();
     // 自分のものと購読は認証が要るので、未ログインでは取りに行かない。
     expect(vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path)).toEqual(["/plans/"]);
-    expect(apiServer.serverFetchList).not.toHaveBeenCalled();
+    // 取りに行くのは絞り込み用の書の一覧だけ。
+    expect(vi.mocked(apiServer.serverFetchList).mock.calls.map(([path]) => path)).toEqual(["/books/"]);
   });
 
   it("未ログインでログインが要るタブを開くと、タブごとの案内とログインの導線が出る", async () => {
@@ -170,5 +172,42 @@ describe("読書プラン一覧", () => {
     await user.click(screen.getByRole("button", { name: "もう一度試す" }));
 
     expect(refresh).toHaveBeenCalled();
+  });
+  it("書・日数・並び順の絞り込みを API に渡し、タブを移っても保つ", async () => {
+    const apiServer = await mockServer({ signedIn: true });
+
+    await renderPage({ tab: "find", q: "福音", book: "matthew", days: "short", sort: "popular" });
+
+    const paths = vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path);
+    expect(paths).toContain("/plans/?q=%E7%A6%8F%E9%9F%B3&book=matthew&days=short&sort=popular");
+    expect(paths).toContain("/plans/?mine=true&q=%E7%A6%8F%E9%9F%B3&book=matthew&days=short&sort=popular");
+    expect(screen.getByRole("tab", { name: "マイプラン" })).toHaveAttribute(
+      "href",
+      "/plans?tab=mine&q=%E7%A6%8F%E9%9F%B3&book=matthew&days=short&sort=popular",
+    );
+  });
+
+  it("知らない日数・並び順は URL に来ても使わない", async () => {
+    const apiServer = await mockServer({ signedIn: false });
+
+    await renderPage({ days: "forever", sort: "random" });
+
+    expect(vi.mocked(apiServer.serverFetchPage).mock.calls.map(([path]) => path)).toEqual(["/plans/"]);
+  });
+
+  it("絞り込みは漏斗のボタンの中にあり、選ぶと URL に書く", async () => {
+    await mockServer({ signedIn: false });
+    await renderPage();
+
+    // 閉じているあいだは出さない
+    expect(screen.queryByRole("combobox", { name: "日数で絞り込む" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "絞り込み" }));
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "日数で絞り込む" }), "mid");
+    expect(replace).toHaveBeenLastCalledWith("/plans?days=mid", { scroll: false });
+
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "並び順" }), "popular");
+    expect(replace).toHaveBeenLastCalledWith("/plans?sort=popular", { scroll: false });
+    expect(screen.getByRole("combobox", { name: "すべての書" })).toBeInTheDocument();
   });
 });

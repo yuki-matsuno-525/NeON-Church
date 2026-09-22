@@ -1034,6 +1034,8 @@ export type ArticleListParams = {
   mine?: boolean;
   excludeMine?: boolean;
   tag?: string;
+  /** その書を引用している記事だけ（書の slug） */
+  book?: string;
   author?: string;
   /** 言葉での絞り込み。題・要約・本文・書いた人・主題に当たる */
   q?: string;
@@ -1051,6 +1053,7 @@ export function articleListPath(params?: ArticleListParams): string {
   if (params?.mine) qs.set("mine", "true");
   if (params?.excludeMine) qs.set("exclude_mine", "true");
   if (params?.tag) qs.set("tag", params.tag);
+  if (params?.book) qs.set("book", params.book);
   if (params?.author) qs.set("author", params.author);
   if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.page) qs.set("page", String(params.page));
@@ -1141,13 +1144,28 @@ export function sendFeedback(data: {
 // 読書プラン
 // ---------------------------------------------------------------------------
 
-export type PlanListParams = { mine?: boolean; q?: string; page?: number };
+/** 一覧の日数の区切り。short=〜7日 / mid=8〜30日 / long=31日以上 */
+export type PlanDaysRange = "short" | "mid" | "long";
+export type PlanSort = "new" | "popular";
+export type PlanListParams = {
+  mine?: boolean;
+  q?: string;
+  /** その書を読む日を含むプランだけ（書の slug） */
+  book?: string;
+  days?: PlanDaysRange;
+  sort?: PlanSort;
+  page?: number;
+};
 
 /** プラン一覧の問い合わせ先。組み立てを 1 か所に置く（記事・翻訳と同じ形）。 */
 export function planListPath(params?: PlanListParams): string {
   const qs = new URLSearchParams();
   if (params?.mine) qs.set("mine", "true");
   if (params?.q?.trim()) qs.set("q", params.q.trim());
+  if (params?.book) qs.set("book", params.book);
+  if (params?.days) qs.set("days", params.days);
+  // 新しい順は既定なので書かない。
+  if (params?.sort === "popular") qs.set("sort", "popular");
   if (params?.page) qs.set("page", String(params.page));
   const suffix = qs.toString() ? `?${qs.toString()}` : "";
   return `/plans/${suffix}`;

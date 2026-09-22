@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { articleListPath, type Article, type ArticleTag, type ListPage } from "@/lib/api";
-import { articleTagLabel } from "@/lib/articles";
+import { articleListPath, type Article, type ArticleTag, type Book, type ListPage } from "@/lib/api";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT } from "@/lib/i18nServer";
 import type { Translations } from "@/lib/i18n";
-import { LinkTabs, ListFilters, ListPageHeader, TabPanel } from "@/components/list";
+import { buildCatalog } from "@/lib/bookCatalog";
+import { LinkTabs, ListPageHeader, TabPanel } from "@/components/list";
 import { EmptyState } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
 import { ArticleFeed } from "@/components/articles/ArticleFeed";
+import { ArticleFilters } from "@/components/articles/ArticleFilters";
 
 /* ----- 一覧の切り替え -----
    以前は「公開された記事」と「自分の記事」を 2 列で横に並べていた。
@@ -27,16 +28,16 @@ type ArticleTabKey = (typeof ARTICLE_TABS)[number];
  * 2 か所に出てしまうので自分のぶんを除いていたが、タブなら一度に見えないうえ、
  * 公開したものが公開の一覧に出ないほうが分かりにくい（プランの「さがす」と同じ）。
  *
- * ブラウザ側に残しているのは「もっと見る」で続きを読み足すところだけ。
- * 主題での絞り込みも URL の tag で表すので、押すと別の URL へ移り、
+ * ブラウザ側に残しているのは絞り込みの操作と「もっと見る」だけ。
+ * 書・主題での絞り込みも URL（?book= / ?tag=）で表すので、選ぶと別の URL へ移り、
  * 移った先をまたサーバーが組み立てて返す。
  */
 export default async function ArticlesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; tag?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; tag?: string; book?: string; q?: string }>;
 }) {
-  const { tab, tag, q } = await searchParams;
+  const { tab, tag, book, q } = await searchParams;
   const t = await getT();
   const signedIn = await serverIsSignedIn();
   const activeTab: ArticleTabKey =
@@ -44,12 +45,14 @@ export default async function ArticlesPage({
 
   // 一覧が取れなくても他の部分は出したいので、それぞれ個別に受け止める。
   // 取れなかった一覧は initial なしで渡し、ブラウザ側の取り直しに任せる。
-  const [tags, feed] = await Promise.all([
+  const [tags, dbBooks, feed] = await Promise.all([
     serverFetchList<ArticleTag>("/article-tags/").catch(() => null),
+    serverFetchList<Book>("/books/").catch(() => null),
     activeTab === "mine"
-      ? signedIn ? loadFeed({ mine: true, tag, q }) : undefined
-      : loadFeed({ tag, q }),
+      ? signedIn ? loadFeed({ mine: true, tag, book, q }) : undefined
+      : loadFeed({ tag, book, q }),
   ]);
+  const catalog = dbBooks ? buildCatalog(dbBooks) : [];
 
   const tabLabel = (key: ArticleTabKey) =>
     key === "public" ? t.articlePublicTitle : t.articleMineTitle;
@@ -76,39 +79,26 @@ export default async function ArticlesPage({
         tabs={ARTICLE_TABS.map((key) => ({
           key,
           label: tabLabel(key),
-          href: articlesHref(key, tag, q),
+          href: articlesHref(key, { tag, book, q }),
         }))}
         active={activeTab}
         label={t.articleTabsLabel}
         idPrefix="articles"
       />
 
-      {/* 言葉での絞り込み。主題（下のチップ）と合わせて効く。 */}
-      <ListFilters
-        basePath="/articles"
-        searchLabel={t.articleSearchLabel}
-        toggleLabel={t.filterToggle}
+      {/* 絞り込み。検索欄はいつも出し、書と主題は漏斗のボタンの中に置く。
+          タブを移っても保つ。 */}
+      <ArticleFilters
+        catalog={catalog}
+        catalogFailed={dbBooks === null}
+        tags={tags ?? []}
+        book={book ?? ""}
+        tag={tag ?? ""}
         totalText={feed ? t.articleCount(feed.count) : undefined}
       />
-
-      {/* 主題はタブの中を絞るものなので、タブより下に置く。タブを移っても保つ。 */}
-      <div role="group" aria-label={t.articleTopicsLabel} className="flex flex-wrap gap-2 mb-4">
-        <TagChip label={t.articleAllTopics} href={articlesHref(activeTab, undefined, q)} active={!tag} />
-        {(tags ?? []).map((articleTag) => (
-          <TagChip
-            key={articleTag.id}
-            label={articleTagLabel(articleTag.slug, articleTag.name, t)}
-            count={articleTag.article_count}
-            href={articlesHref(activeTab, articleTag.slug, q)}
-            active={tag === articleTag.slug}
-          />
-        ))}
-        {tags === null && (
-          <span role="alert" className="inline-flex items-center gap-2 text-xs text-danger">
-            {t.articleTopicsLoadFailed}
-          </span>
-        )}
-      </div>
+      {tags === null && (
+        <p role="alert" className="text-xs text-danger mt-0 mb-4">{t.articleTopicsLoadFailed}</p>
+      )}
 
       {activeTab === "mine" && !signedIn ? (
         <SignInPanel t={t} />
@@ -119,6 +109,7 @@ export default async function ArticlesPage({
             editable={activeTab === "mine"}
             mine={activeTab === "mine" || undefined}
             tag={tag}
+            book={book}
             q={q}
             initial={feed}
           />
@@ -152,30 +143,18 @@ function SignInPanel({ t }: { t: Translations }) {
   );
 }
 
-/** タブ・主題・検索語を保った /articles の URL。既定のタブと空の値は書かない。 */
-function articlesHref(tab: ArticleTabKey, tag?: string, q?: string): string {
+/** タブ・絞り込みを保った /articles の URL。既定のタブと空の値は書かない。 */
+function articlesHref(tab: ArticleTabKey, filters: { tag?: string; book?: string; q?: string }): string {
   const qs = new URLSearchParams();
   if (tab !== "public") qs.set("tab", tab);
-  if (tag) qs.set("tag", tag);
-  if (q) qs.set("q", q);
+  if (filters.tag) qs.set("tag", filters.tag);
+  if (filters.book) qs.set("book", filters.book);
+  if (filters.q) qs.set("q", filters.q);
   const query = qs.toString();
   return query ? `/articles?${query}` : "/articles";
 }
 
 /** 一覧の 1 ページ目。取れなければ undefined を返し、ブラウザ側に任せる。 */
-function loadFeed(params: { mine?: boolean; tag?: string; q?: string }): Promise<ListPage<Article> | undefined> {
+function loadFeed(params: { mine?: boolean; tag?: string; book?: string; q?: string }): Promise<ListPage<Article> | undefined> {
   return serverFetchPage<Article>(articleListPath(params)).catch(() => undefined);
-}
-
-function TagChip({ label, count, href, active }: { label: string; count?: number; href: string; active: boolean }) {
-  return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={`chip chip-bold${active ? " chip-active" : ""}`}
-    >
-      {label}
-      {count !== undefined && <span className="ml-1 text-xs">({count})</span>}
-    </Link>
-  );
 }

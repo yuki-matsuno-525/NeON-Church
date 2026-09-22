@@ -4,3 +4,4 @@ export { Breadcrumb, type Crumb } from "./Breadcrumb";
 export { ListFilters } from "./ListFilters";
 export { toneClass, type Tone } from "./tone";
 export { visibilityBadgeClass } from "./visibility";
+export { BookFilterSelects } from "./BookFilterSelects";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { planListPath, type Plan, type PlanSubscription } from "@/lib/api";
+import { planListPath, type Book, type Plan, type PlanDaysRange, type PlanSort, type PlanSubscription } from "@/lib/api";
 import { serverFetchList, serverFetchPage, serverIsSignedIn } from "@/lib/apiServer";
 import { getT, getRequestLanguage } from "@/lib/i18nServer";
 import { visibilityLabel } from "@/lib/plans";
@@ -8,7 +8,9 @@ import { planUiText } from "@/components/plans/planUiText";
 import { Icon } from "@/components/ui/Icon";
 import { EmptyState, ErrorState } from "@/components/ui";
 import { RetryButton } from "@/components/ui/RetryButton";
-import { LinkTabs, ListFilters, ListPageHeader, TabPanel, visibilityBadgeClass } from "@/components/list";
+import { buildCatalog } from "@/lib/bookCatalog";
+import { PlanFilters } from "@/components/plans/PlanFilters";
+import { LinkTabs, ListPageHeader, TabPanel, visibilityBadgeClass } from "@/components/list";
 
 /* ----- 一覧の切り替え -----
    以前は「読んでいるプラン」を小さな札で上に並べ、その下に「自分の」「公開」の
@@ -21,6 +23,10 @@ import { LinkTabs, ListFilters, ListPageHeader, TabPanel, visibilityBadgeClass }
 const PLAN_TABS = ["reading", "done", "mine", "find"] as const;
 type PlanTabKey = (typeof PLAN_TABS)[number];
 
+/** 絞り込みの値。タブを移っても保つ。知らない値は URL に来ても使わない。 */
+type PlanFilterValues = { q: string; book: string; days: PlanDaysRange | ""; sort: PlanSort };
+const DAYS_VALUES: PlanDaysRange[] = ["short", "mid", "long"];
+
 /**
  * 読書プランの一覧。
  *
@@ -31,14 +37,25 @@ type PlanTabKey = (typeof PLAN_TABS)[number];
 export default async function PlansPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; book?: string; days?: string; sort?: string }>;
 }) {
   const t = await getT();
   const supplementalText = planUiText(await getRequestLanguage());
   const signedIn = await serverIsSignedIn();
   const params = await searchParams;
   const requested = params.tab;
-  const q = params.q ?? "";
+  const filters: PlanFilterValues = {
+    q: params.q ?? "",
+    book: params.book ?? "",
+    days: DAYS_VALUES.includes(params.days as PlanDaysRange) ? (params.days as PlanDaysRange) : "",
+    sort: params.sort === "popular" ? "popular" : "new",
+  };
+  const listParams = {
+    q: filters.q,
+    book: filters.book || undefined,
+    days: filters.days || undefined,
+    sort: filters.sort,
+  };
   // 未ログインで最初に開くのは「さがす」。「進行中」を既定にすると、
   // 開いた直後に見えるのがログインの案内だけになってしまうため。
   const defaultTab: PlanTabKey = signedIn ? "reading" : "find";
@@ -47,11 +64,16 @@ export default async function PlansPage({
 
   // 取れなかったものは null。読書中の一覧だけは、取れなくても
   // プランは読めるので黙って空にする。
-  const [publicPlans, myPlans, reading] = await Promise.all([
-    loadPlans(planListPath({ q })),
-    signedIn ? loadPlans(planListPath({ mine: true, q })) : [],
+  // 絞り込みを出すのは「マイプラン」と「さがす」だけ（下のコメント参照）。
+  const showFilters = activeTab === "mine" || activeTab === "find";
+  // 書の一覧は絞り込みのプルダウン用。取れなくてもプランは出せるので個別に受け止める。
+  const [publicPlans, myPlans, reading, dbBooks] = await Promise.all([
+    loadPlans(planListPath(listParams)),
+    signedIn ? loadPlans(planListPath({ mine: true, ...listParams })) : [],
     signedIn ? serverFetchList<PlanSubscription>("/plan-subscriptions/").catch(() => []) : [],
+    showFilters ? serverFetchList<Book>("/books/").catch(() => null) : [],
   ]);
+  const catalog = dbBooks ? buildCatalog(dbBooks) : [];
   const failed = publicPlans === null || myPlans === null;
 
   // 読み終わっても購読は残る（is_active が落ちるのは「やめる」を押したときだけ）ので、
@@ -82,20 +104,23 @@ export default async function PlansPage({
         tabs={PLAN_TABS.map((key) => ({
           key,
           label: tabLabel(key),
-          href: plansHref(key, defaultTab, q),
+          href: plansHref(key, defaultTab, filters),
         }))}
         active={activeTab}
         label={t.planTabsLabel}
         idPrefix="plans"
       />
 
-      {/* 言葉での絞り込み。「進行中」「完了」は読んでいるプランをブラウザ側で
-          分けているので、絞り込みが効くのは「マイプラン」と「さがす」だけ。 */}
-      {(activeTab === "mine" || activeTab === "find") && (
-        <ListFilters
-          basePath="/plans"
-          searchLabel={t.planSearchLabel}
-          toggleLabel={t.filterToggle}
+      {/* 絞り込み。「進行中」「完了」は読んでいるプランをブラウザ側で
+          分けているので、絞り込みが効くのは「マイプラン」と「さがす」だけ。
+          書・日数・並び順は漏斗のボタンの中に置く。 */}
+      {showFilters && (
+        <PlanFilters
+          catalog={catalog}
+          catalogFailed={dbBooks === null}
+          book={filters.book}
+          days={filters.days}
+          sort={filters.sort}
           totalText={planCountText(activeTab === "mine" ? myPlans : publicPlans, t)}
         />
       )}
@@ -226,11 +251,14 @@ function planCountText(plans: Plan[] | null, t: Translations): string | undefine
   return plans ? t.planCount(plans.length) : undefined;
 }
 
-/** タブと検索語を保った /plans の URL。既定のタブと空の検索語は書かない。 */
-function plansHref(tab: PlanTabKey, defaultTab: PlanTabKey, q: string): string {
+/** タブと絞り込みを保った /plans の URL。既定のタブ・並び順と空の値は書かない。 */
+function plansHref(tab: PlanTabKey, defaultTab: PlanTabKey, filters: PlanFilterValues): string {
   const qs = new URLSearchParams();
   if (tab !== defaultTab) qs.set("tab", tab);
-  if (q) qs.set("q", q);
+  if (filters.q) qs.set("q", filters.q);
+  if (filters.book) qs.set("book", filters.book);
+  if (filters.days) qs.set("days", filters.days);
+  if (filters.sort === "popular") qs.set("sort", "popular");
   const query = qs.toString();
   return query ? `/plans?${query}` : "/plans";
 }
