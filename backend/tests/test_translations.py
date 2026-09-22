@@ -1043,6 +1043,13 @@ class TestTranslationRead:
         # 章を指定しないと目次（章一覧）だけが返る
         index = APIClient().get(read_url(published_project["id"]))
         assert index.status_code == status.HTTP_200_OK
+        assert index.data["project"] == {
+            "id": published_project["id"],
+            "name": published_project["name"],
+            "source_book": published_project["source_book"],
+            "source_book_name": published_project["source_book_name"],
+            "target_language": published_project["target_language"],
+        }
         assert index.data["chapters"] == [verse.chapter.number]
         assert index.data["units"] == []
         # 章を指定するとその章の本文が返る
@@ -1363,6 +1370,49 @@ class TestTranslationReadChapter:
         res = APIClient().get(read_url(published_project["id"]), {"chapter": "abc"})
         assert res.status_code == status.HTTP_200_OK
         assert res.data["units"] == []
+
+    def test_chapter_query_count_does_not_grow_with_assigned_units(
+        self,
+        published_project,
+        chapter,
+        django_assert_num_queries,
+    ):
+        """担当者名を返しても、節ごとの user 取得に戻らない。"""
+        from django.contrib.auth import get_user_model
+        from rest_framework.test import APIClient
+        from bible.models import Verse
+        from translations.models import TranslationProject, TranslationUnit
+
+        user_model = get_user_model()
+        users = user_model.objects.bulk_create(
+            [
+                user_model(username=f"translator-{number}", email=f"t{number}@test.com")
+                for number in range(1, 31)
+            ]
+        )
+        verses = Verse.objects.bulk_create(
+            [Verse(chapter=chapter, number=number, text=f"verse {number}") for number in range(1, 31)]
+        )
+        project = TranslationProject.objects.get(pk=published_project["id"])
+        TranslationUnit.objects.bulk_create(
+            [
+                TranslationUnit(
+                    project=project,
+                    verse=verse,
+                    assigned_to=user,
+                    body=f"translated {verse.number}",
+                    status=TranslationUnit.STATUS_DONE,
+                )
+                for verse, user in zip(verses, users)
+            ]
+        )
+
+        with django_assert_num_queries(3):
+            response = APIClient().get(read_url(project.id), {"chapter": chapter.number})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.data["units"]) == 30
+        assert response.data["units"][-1]["assigned_to_username"] == "translator-30"
 
 
 # ------------------------------------------------------------------

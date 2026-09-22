@@ -73,6 +73,7 @@ def _create_mention_notifications(comment: TranslationComment) -> None:
 from .serializers import (
     LanguageSerializer,
     TranslationProjectSerializer,
+    TranslationReadProjectSerializer,
     TranslationMembershipSerializer,
     TranslationUnitSerializer,
     TranslationUnitCreateSerializer,
@@ -748,14 +749,17 @@ class TranslationReadView(APIView):
     以前は常に全章の完了ユニットを返し、章のページが画面側で1章分だけ抜き出して
     残りを捨てていた。1章開くたびに書全体が飛ぶので、章で絞れるようにした。
 
-    返り値: {"chapters": [1, 2, 3], "units": [...]}
+    返り値: {"project": {...}, "chapters": [1, 2, 3], "units": [...]}
+
+    読む画面で使う企画名・対象言語・元の書も同時に返す。以前は画面を開くたびに
+    企画詳細 API とこの API の2本を呼んでいたが、ここだけで描画に必要な情報が揃う。
     """
 
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, project_id):
         project = get_object_or_404(
-            TranslationProject,
+            TranslationProject.objects.select_related("source_book"),
             pk=project_id,
             status=TranslationProject.STATUS_PUBLISHED,
         )
@@ -778,10 +782,13 @@ class TranslationReadView(APIView):
             if chapter_number is not None:
                 units = (
                     done.filter(verse__chapter__number=chapter_number)
-                    .select_related("verse__chapter")
+                    # serializer は担当者名も返す。ここで先読みしないと、担当者がいる
+                    # 節の数だけ user を追加取得してしまう。
+                    .select_related("verse__chapter", "assigned_to")
                     .order_by("verse__number")
                 )
         return Response({
+            "project": TranslationReadProjectSerializer(project).data,
             "chapters": chapters,
             "units": TranslationUnitSerializer(units, many=True).data,
         })

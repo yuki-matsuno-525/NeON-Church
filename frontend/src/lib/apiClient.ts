@@ -969,7 +969,17 @@ export function deleteTranslationComment(projectId: string, commentId: string): 
  * chapter を渡すとその章だけ、渡さないと目次用に章一覧だけ（units は空）を返す。
  * 以前は常に全章返していたので、1章開くたびに書全体が飛んでいた。
  */
-export type TranslationReadResult = { chapters: number[]; units: TranslationUnit[] };
+export type TranslationReadProject = Pick<
+  TranslationProject,
+  "id" | "name" | "source_book" | "source_book_name" | "target_language"
+>;
+
+export type TranslationReadResult = {
+  // backend と frontend が別々にローリングデプロイされる間だけ旧レスポンスも許す。
+  project?: TranslationReadProject;
+  chapters: number[];
+  units: TranslationUnit[];
+};
 
 export function fetchTranslationRead(
   projectId: string,

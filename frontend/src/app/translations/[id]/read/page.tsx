@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
-import { fetchTranslation, fetchTranslationRead, type TranslationProject } from "@/lib/api";
+import { fetchTranslation, fetchTranslationRead, type TranslationReadProject } from "@/lib/api";
 import { languageLabel } from "@/lib/languages";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { findSlugByBookName, resolveVersionBookIds } from "@/lib/versions";
@@ -17,7 +17,7 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
   const t = useT();
   const { lang } = useLang();
   const ui = translationUiText(lang);
-  const [project, setProject] = useState<TranslationProject | null>(null);
+  const [project, setProject] = useState<TranslationReadProject | null>(null);
   // 目次は章番号だけあればよい。以前は全章の本文を取ってから章を数えていた。
   const [chapterNums, setChapterNums] = useState<number[]>([]);
   const [allVersionBookIds, setAllVersionBookIds] = useState<string[]>([]);
@@ -29,8 +29,10 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
     setLoading(true);
     setError(null);
     try {
-      const [proj, read] = await Promise.all([fetchTranslation(id), fetchTranslationRead(id)]);
-      setProject(proj);
+      const read = await fetchTranslationRead(id);
+      // 通常は read 1本で完結する。旧backendが稼働中のローリングデプロイ時だけ
+      // 詳細APIへフォールバックし、デプロイ順による一時的な画面停止を避ける。
+      setProject(read.project ?? await fetchTranslation(id));
       setChapterNums(read.chapters);
       // 全バージョン表示用：元の書名から slug を逆引きし、各訳の書idを集める。
     } catch {
@@ -42,10 +44,11 @@ export default function TranslationReadPage({ params }: { params: Promise<{ id: 
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchTranslation(id), fetchTranslationRead(id)])
-      .then(([proj, read]) => {
+    fetchTranslationRead(id)
+      .then(async (read) => {
+        const loadedProject = read.project ?? await fetchTranslation(id);
         if (!active) return;
-        setProject(proj);
+        setProject(loadedProject);
         setChapterNums(read.chapters);
       })
       .catch(() => active && setError(t.notPublishedOrMissing))
