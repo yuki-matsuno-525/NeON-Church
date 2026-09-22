@@ -349,4 +349,4 @@ NeON-Church/
 
 ## License
 
-Private
+ソースコードは [MIT License](LICENSE)。収録している聖書本文などのテキストデータは、それぞれの出典のライセンスに従います（一覧はサイトの /licenses）。

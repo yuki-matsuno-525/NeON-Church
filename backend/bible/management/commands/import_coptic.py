@@ -136,10 +136,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--license",
             choices=["open", "cc", "all"],
-            default="all",
+            # 公開サイトに載せてよいのは再配布できるものだけなので、既定は open。
+            default="open",
             help=(
                 "インポートするライセンスティア: "
-                "open=CC-BY/CC-BY-SA/PD, cc=openにNC追加, all=学術限定含む全て（デフォルト）"
+                "open=CC-BY/CC-BY-SA/PD（デフォルト）, cc=openにNC追加, all=学術限定含む全て"
             ),
         )
         parser.add_argument(

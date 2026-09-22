@@ -23,7 +23,7 @@ const content: Record<string, Content> = {
       },
       {
         heading: "2. 投稿コンテンツ",
-        body: "コメント、Q&A、共同翻訳など、ユーザーが本サービス上に投稿したコンテンツの著作権はユーザーに帰属します。ユーザーは本サービスがそのコンテンツを表示・配信・保存・引用するために必要な範囲で利用することを許諾するものとします。",
+        body: "コメント、Q&A、共同翻訳など、ユーザーが本サービス上に投稿したコンテンツの著作権はユーザーに帰属します。ユーザーは本サービスがそのコンテンツを表示・配信・保存・引用するために必要な範囲で利用することを許諾するものとします。なお、共同翻訳で公開した翻訳は、クリエイティブ・コモンズ 表示 4.0 国際（CC BY 4.0）で提供されるものとします。",
       },
       {
         heading: "3. 禁止事項",
@@ -56,7 +56,7 @@ const content: Record<string, Content> = {
       },
       {
         heading: "2. User Content",
-        body: "You retain copyright in the content you submit (comments, Q&A, collaborative translations, etc.). You grant the Service the rights necessary to display, distribute, store, and quote your content as part of operating the Service.",
+        body: "You retain copyright in the content you submit (comments, Q&A, collaborative translations, etc.). You grant the Service the rights necessary to display, distribute, store, and quote your content as part of operating the Service. Collaborative translations you publish are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).",
       },
       {
         heading: "3. Prohibited Conduct",
@@ -95,7 +95,7 @@ function PolicyLayout({ c, feedbackLabel, lang }: { c: Content; feedbackLabel: s
         {c.intro}
       </p>
       <ContentPageMeta
-        updatedAt="2026-08-01"
+        updatedAt="2026-09-22"
         sections={c.sections.map((section) => section.heading)}
         relatedLinks={[
           { href: "/guidelines", label: lang === "ja" ? "コミュニティガイドライン" : "Community Guidelines" },

@@ -26,6 +26,7 @@ import { VerseList } from "@/components/reader/VerseList";
 import { BulkBookmarkBar, useBulkBookmark } from "@/components/reader/BulkBookmarkBar";
 import { CommentPanel } from "@/components/reader/CommentPanel";
 import { ChapterComments } from "@/components/reader/ChapterComments";
+import { TranslationCredit } from "@/components/reader/TranslationCredit";
 import { useReaderHeaderHeight } from "@/hooks/useReaderHeaderHeight";
 import { useT, useBookLabel } from "@/lib/i18n";
 import { useToast } from "@/components/ui/Toast";
@@ -417,6 +418,8 @@ export function ChapterReader({
               isMarkShorterEnding(slug, translationId, v.number) ? t.markShorterEnding : v.number
             }
           />
+
+          <TranslationCredit translationId={translationId} lang={lang} />
 
           <ChapterComments
             chapterId={chapter.id}
