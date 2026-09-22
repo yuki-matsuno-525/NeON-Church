@@ -22,11 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
+      images: [{ url: "/img/icon-512.png", width: 512, height: 512, alt: "NeON Church" }],
     },
     twitter: {
-      card: "summary_large_image",
-      images: ["/img/logo-og.png"],
+      card: "summary",
+      images: ["/img/icon-512.png"],
     },
   };
 }

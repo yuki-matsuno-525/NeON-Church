@@ -37,13 +37,14 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: lang === "en" ? "en_US" : "ja_JP",
       alternateLocale: [lang === "en" ? "ja_JP" : "en_US"],
       type: "website",
-      images: [{ url: "/img/logo-og.png", width: 512, height: 512, alt: "NeON Church" }],
+      // SNS のカードは小さい正方形にする。横長ロゴだと X などの大きいカードで両端が切れるため。
+      images: [{ url: "/img/icon-512.png", width: 512, height: 512, alt: "NeON Church" }],
     },
     twitter: {
-      card: "summary_large_image",
+      card: "summary",
       title: "NeON Church",
       description: copy.socialDescription,
-      images: ["/img/logo-og.png"],
+      images: ["/img/icon-512.png"],
     },
   };
 }
