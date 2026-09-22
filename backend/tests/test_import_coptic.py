@@ -350,7 +350,7 @@ class TestImportCopticLicense:
         assert not Book.objects.filter(name="Mark", translation="Sahidic Coptic").exists()
 
     def test_license_all_includes_academic(self, tmp_path):
-        """--license all（デフォルト）で Warren Wells 文書もインポートされる。"""
+        """--license all で Warren Wells 文書もインポートされる。"""
         meta = {
             "41_Mark_01": {
                 "corpus": "sahidica.nt",
@@ -443,7 +443,8 @@ def test_import_coptic_errors_when_not_in_canonical(tmp_path):
     (nt_dir / "41_Mark_01.conllu").write_text(MARK_CH1_CONTENT, encoding="utf-8")
 
     with pytest.raises(CanonicalDataError):
-        call_command("import_coptic", str(tmp_path), "--skip-en")
+        # ライセンス欄の無いテスト用データなので、ライセンスで弾かれないよう all を指定する。
+        call_command("import_coptic", str(tmp_path), "--license", "all", "--skip-en")
 
     # 中途半端に Book が作られていないこと
     assert not Book.objects.filter(translation="Sahidic Coptic").exists()
