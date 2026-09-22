@@ -153,6 +153,21 @@ def test_wipeは聖書と管理者を残す(scripture):
     assert Book.objects.count() == len(scripture)
 
 
+def test_wipe_onlyは消すだけで入れ直さない(scripture):
+    admin = User.objects.create_superuser(
+        username="keeper", email="keeper@example.com", password="x"
+    )
+    call_command("seed_demo", "--scale", "small", "--seed", "5")
+    verses_before = Verse.objects.count()
+
+    call_command("seed_demo", "--wipe-only")
+
+    for model in (Comment, Question, Article, Plan, TranslationProject, Bookmark, Notification):
+        assert not model.objects.exists(), f"{model.__name__} が残っている"
+    assert list(User.objects.values_list("pk", flat=True)) == [admin.pk]
+    assert Verse.objects.count() == verses_before, "聖書本文が消えている"
+
+
 def test_管理者が居なければ作られる(scripture):
     call_command("seed_demo", "--scale", "small", "--seed", "4")
     assert User.objects.filter(is_superuser=True).count() == 1

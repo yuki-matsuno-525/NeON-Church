@@ -3,6 +3,7 @@
 
     python manage.py seed_demo --wipe            # 既存を消して特大シードを入れる
     python manage.py seed_demo --wipe --scale small   # 開発コンテナ起動時の軽いシード
+    python manage.py seed_demo --wipe-only       # 消すだけ（入れ直さない）
 
 狙いは「たくさんの人に長く使われてきたサイト」の状態を丸ごと作ること。
 一覧は全部 1 ページ 20 件なので、どの一覧も何ページも続く量を入れる。
@@ -157,6 +158,11 @@ class Command(BaseCommand):
             help="既存の利用者データを消してから投入する（付けないと消さない）",
         )
         parser.add_argument(
+            "--wipe-only",
+            action="store_true",
+            help="既存の利用者データを消すだけで、シードは入れない",
+        )
+        parser.add_argument(
             "--scale",
             choices=sorted(SCALES),
             default="xl",
@@ -192,6 +198,9 @@ class Command(BaseCommand):
         self.now = timezone.now()
         self.counts = {}
 
+        if options["wipe_only"]:
+            self._wipe()
+            return
         if options["wipe"]:
             self._wipe()
         elif Comment.objects.exists() or Article.objects.exists():
