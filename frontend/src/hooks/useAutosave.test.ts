@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { createElement, StrictMode, type ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useAutosave } from "./useAutosave";
+import { combineSaveStatus, useAutosave } from "./useAutosave";
 
 describe("useAutosave", () => {
   afterEach(() => {
@@ -93,5 +93,21 @@ describe("useAutosave", () => {
     window.dispatchEvent(event);
 
     expect(event.defaultPrevented).toBe(true);
+  });
+});
+
+describe("combineSaveStatus", () => {
+  it("どれか 1 つでも失敗していれば失敗", () => {
+    expect(combineSaveStatus(["saved", "error", "saving"])).toBe("error");
+  });
+
+  it("書きかけか保存中が残っていれば保存中", () => {
+    expect(combineSaveStatus(["saved", "dirty"])).toBe("saving");
+    expect(combineSaveStatus(["idle", "saving"])).toBe("saving");
+  });
+
+  it("どれも終わっていれば保存済み（まだ触っていないものも含む）", () => {
+    expect(combineSaveStatus(["idle", "saved"])).toBe("saved");
+    expect(combineSaveStatus([])).toBe("saved");
   });
 });

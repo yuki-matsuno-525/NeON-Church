@@ -174,12 +174,21 @@ export function useAutosave<T>({
 }
 
 /**
- * 保存が失敗したときの言い方。うまくいっているときは何も返さない。
+ * 1 つの画面にある自動保存をまとめて、題の横の表示（SaveIndicator）に渡す形にする。
  *
- * 以前は「保存中…」「保存しました」も出していたが、1.2 秒で終わるものを毎回出すと
- * 画面の端で文字が出たり消えたりし続けることになる。うまくいっているのが当たり前なので、
- * 知らせるのは失敗したときだけにする。自動で保存されること自体は、編集画面に
- * 1 行の案内として置いてある。
+ * プランの編集画面は、プラン本体と日ごとに別々の自動保存を持っている。
+ * どれか 1 つでも失敗していれば「失敗」、書きかけか保存中なら「保存中」、
+ * どれも終わっていれば「保存済み」。
+ */
+export function combineSaveStatus(statuses: SaveStatus[]): "saving" | "saved" | "error" {
+  if (statuses.includes("error")) return "error";
+  if (statuses.some((status) => status === "dirty" || status === "saving")) return "saving";
+  return "saved";
+}
+
+/**
+ * 保存が失敗したときの言い方。うまくいっているときは何も返さない。
+ * 失敗したときは、どう直すか（もう一度試す）と一緒に、その場所に出す。
  */
 export function saveErrorLabel(status: SaveStatus, t: Translations): string {
   return status === "error" ? t.autosaveError : "";

@@ -17,10 +17,10 @@ import { articleTagLabel, visibilityOptions } from "@/lib/articles";
 import { useT } from "@/lib/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel, combineSaveStatus } from "@/hooks/useAutosave";
 import { ArticleBody } from "@/components/articles/ArticleBody";
 import { CitationPanel } from "@/components/articles/CitationPanel";
-import { ConfirmDialog, SkeletonList } from "@/components/ui";
+import { ConfirmDialog, HowToGuide, SaveIndicator, SkeletonList } from "@/components/ui";
 import { Breadcrumb } from "@/components/list";
 
 const MAX_TAGS = 3;
@@ -301,6 +301,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
             </option>
           ))}
         </select>
+        {title.trim() && <SaveIndicator status={combineSaveStatus([autosave.status])} />}
         <Link href={`/articles/${id}`} className="text-sm text-muted no-underline">
           {t.articleView}
         </Link>
@@ -319,10 +320,12 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
 
       <div className="flex justify-between gap-3 -mt-1 mx-0 mb-3 text-xs text-muted">
         <span id={!title.trim() ? "article-title-error" : undefined} className={!title.trim() ? "text-danger" : undefined}>
-          {!title.trim() ? t.articleTitleRequired : t.autosaveNotice}
+          {!title.trim() && t.articleTitleRequired}
         </span>
         <span>{title.length}/{MAX_TITLE_LENGTH}</span>
       </div>
+
+      <HowToGuide id="article-edit" title={t.articleGuideTitle} steps={t.articleGuideSteps} note={t.autosaveNotice} />
 
       {/* 要約 */}
       <label htmlFor="article-summary" className="form-label">{t.articleSummaryLabel}</label>

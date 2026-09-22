@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { updatePlanDay, type PlanDay } from "@/lib/api";
-import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel, type SaveStatus } from "@/hooks/useAutosave";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { MAX_READINGS_PER_DAY } from "@/lib/plans";
 import { useT } from "@/lib/i18n";
@@ -42,6 +42,7 @@ export function PlanDayEditor({
   onMove,
   open,
   onToggle,
+  onSaveStatusChange,
 }: {
   planId: string;
   day: PlanDay;
@@ -53,6 +54,8 @@ export function PlanDayEditor({
   /** この日を開いているか。開け閉めは日の一覧を持つ側が覚える。 */
   open: boolean;
   onToggle: () => void;
+  /** この日の保存の状態。画面の上の「保存済み」の表示を、日の保存も含めて出すために渡す。 */
+  onSaveStatusChange?: (status: SaveStatus) => void;
 }) {
   const [title, setTitle] = useState(day.title);
   const [devotional, setDevotional] = useState(day.devotional);
@@ -104,6 +107,9 @@ export function PlanDayEditor({
   );
 
   const autosave = useAutosave({ value: draft, onSave: handleSave });
+  useEffect(() => {
+    onSaveStatusChange?.(autosave.status);
+  }, [autosave.status, onSaveStatusChange]);
 
   const addChapter = (picked: PickedChapter) => {
     if (readings.length >= MAX_READINGS_PER_DAY) return;
@@ -139,8 +145,8 @@ export function PlanDayEditor({
       )}
       leading={<Icon name="calendar" size={20} color="var(--accent)" />}
       note={
-        /* うまくいっているときは何も出さない。日が並ぶ画面で「保存しました」が
-           あちこち点滅するのを避けるため。失敗したときだけ、その日の見出しに出す。 */
+        /* うまくいっているときは何も出さない。「保存済み」は画面の上に 1 つだけ出す
+           （日が並ぶ画面であちこち点滅させないため）。失敗したときだけ、その日の見出しに出す。 */
         autosave.status === "error" ? (
           /* 赤い字は紫のカードの上だと地に沈むので、暗い地の小さな札に載せる。 */
           <span role="alert" className="text-xs text-danger bg-bg rounded-sm px-2 py-1">

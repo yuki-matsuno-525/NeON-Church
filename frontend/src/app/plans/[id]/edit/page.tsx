@@ -17,10 +17,10 @@ import { visibilityOptions } from "@/lib/plans";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
-import { useAutosave, saveErrorLabel } from "@/hooks/useAutosave";
+import { useAutosave, saveErrorLabel, combineSaveStatus, type SaveStatus } from "@/hooks/useAutosave";
 import { useToggleSet } from "@/hooks/useToggleSet";
 import { PlanDayEditor } from "@/components/plans/PlanDayEditor";
-import { ConfirmDialog, EmptyState, ErrorState, SkeletonList } from "@/components/ui";
+import { ConfirmDialog, EmptyState, ErrorState, HowToGuide, SaveIndicator, SkeletonList } from "@/components/ui";
 import { planUiText } from "@/components/plans/planUiText";
 import { Breadcrumb } from "@/components/list";
 
@@ -43,6 +43,11 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   // 日はたたんでおく。1 日ぶんのパネルは背が高いので、全部開いていると
   // 目当ての日まで延々とスクロールすることになる。開くのは触っている日だけ。
   const openDays = useToggleSet();
+  // 日ごとの保存の状態。上の「保存済み」の表示は、プラン本体と全部の日をまとめて出す。
+  const [dayStatuses, setDayStatuses] = useState<Record<string, SaveStatus>>({});
+  const reportDayStatus = useCallback((dayId: string, status: SaveStatus) => {
+    setDayStatuses((current) => (current[dayId] === status ? current : { ...current, [dayId]: status }));
+  }, []);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -205,6 +210,11 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
   // 持てず（backend/plans/progress.py）、読む人がプランを最後まで終われないため。
   const emptyDays = days.filter((day) => day.readings.length === 0);
   const canPublish = days.length > 0 && emptyDays.length === 0;
+  const saveStatus = combineSaveStatus([
+    autosave.status,
+    busyAction ? "saving" : "saved",
+    ...days.map((day) => dayStatuses[day.id] ?? "idle"),
+  ]);
 
   return (
     <div className="page page-detail">
@@ -260,12 +270,13 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             ))}
           </select>
         </label>
+        {/* 題が空のあいだは保存を止めているので、「保存中」と言い続けないよう出さない。 */}
+        {title.trim() && <SaveIndicator status={saveStatus} />}
         <Link href={`/plans/${id}`} className="action-link text-sm text-muted no-underline">{t.planView}</Link>
         <button type="button" onClick={() => setConfirmDelete(true)} className="outline-button outline-button-danger">{t.delete}</button>
       </div>
 
-      {/* 自動で保存されることは、状態を出し続ける代わりにここで 1 度だけ伝える。 */}
-      <p className="text-xs text-muted mt-0 mx-0 mb-3">{t.autosaveNotice}</p>
+      <HowToGuide id="plan-edit" title={t.planGuideTitle} steps={t.planGuideSteps} note={t.autosaveNotice} />
 
       {!title.trim() && <p id="plan-title-error" role="alert" className="error-text">{supplementalText.titleRequired}</p>}
       {/* うまくいっているときは何も出さない。失敗したときだけ、直せる形で出す。 */}
@@ -334,6 +345,7 @@ export default function PlanEditPage({ params }: { params: Promise<{ id: string 
             onMove={(direction) => handleMoveDay(day.id, direction)}
             open={openDays.has(day.id)}
             onToggle={() => openDays.toggle(day.id)}
+            onSaveStatusChange={(status) => reportDayStatus(day.id, status)}
           />
         ))}
       </div>
