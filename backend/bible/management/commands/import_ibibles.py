@@ -60,6 +60,19 @@ _VERSE_RE = re.compile(r"^\S+\s+(\d+):(\d+)\s+(.*)$")
 # 限らず、多語（ギリシャ語の "Κατα Ματθαιον 1:1 " 等）もあるため、
 # 章:節 の直前にある1語以上の書名トークンをまとめて除去する。
 _DUP_REF_RE = re.compile(r"^(?:\S+\s+)+?\d+:\d+\s+")
+# 公認本文（gtr.txt）は2つの版の違いを {VAR1: Stephanus 1550 の読み } {VAR2: Scrivener 1894 の読み }
+# の形で本文に埋め込んでいる。KJV の元になった Scrivener 1894 に揃え、記号は画面に出さない。
+_VAR1_RE = re.compile(r"\{VAR1:[^}]*\}")
+_VAR2_RE = re.compile(r"\{VAR2:\s*([^}]*?)\s*\}")
+
+
+def pick_scrivener_reading(body: str) -> str:
+    """異読の記号を取り除き、Scrivener 1894 の読みだけを残す。記号が無ければそのまま返す。"""
+    if "{VAR" not in body:
+        return body
+    body = _VAR1_RE.sub("", body)
+    body = _VAR2_RE.sub(lambda m: m.group(1), body)
+    return " ".join(body.split())
 
 
 def parse_ibibles_text(text: str):
@@ -86,7 +99,7 @@ def parse_ibibles_text(text: str):
         if m and idx is not None:
             ch, vs = int(m.group(1)), int(m.group(2))
             body = m.group(3)
-            body = _DUP_REF_RE.sub("", body, count=1).strip()
+            body = pick_scrivener_reading(_DUP_REF_RE.sub("", body, count=1).strip())
             if body:
                 verses[(ch, vs)] = body
     flush()

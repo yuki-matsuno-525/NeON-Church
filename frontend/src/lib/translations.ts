@@ -96,7 +96,7 @@ const TRANSLATION_SOURCES: Record<string, TranslationSource> = {
     origin: { name: "ibibles.net", url: "https://www.ibibles.net/" },
   },
   "TR (GRC)": {
-    work: { ja: "公認本文 Textus Receptus（Stephanus 1550 / Scrivener 1894）", en: "Textus Receptus (Stephanus 1550 / Scrivener 1894)" },
+    work: { ja: "公認本文 Textus Receptus（Scrivener 1894）", en: "Textus Receptus (Scrivener 1894)" },
     license: PD,
     origin: { name: "ibibles.net", url: "https://www.ibibles.net/" },
   },
