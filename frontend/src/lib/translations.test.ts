@@ -22,6 +22,12 @@ describe("translationSource", () => {
     expect(translationSource("Nestle 1904 (GRC)")?.license.en).toContain("CC BY-SA 4.0");
   });
 
+  it("七十人訳は電子データの非商用条件と CCAT を明記している", () => {
+    const source = translationSource("LXX (GRC)")!;
+    expect(source.license.ja).toContain("非商用");
+    expect(source.license.ja).toContain("CCAT");
+  });
+
   it("口語訳には初版をそのまま載せている旨の注記がある", () => {
     expect(translationSource("口語訳")?.note?.ja).toContain("改変せず");
   });

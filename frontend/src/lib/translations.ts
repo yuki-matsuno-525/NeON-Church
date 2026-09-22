@@ -110,8 +110,13 @@ const TRANSLATION_SOURCES: Record<string, TranslationSource> = {
   },
   "LXX (GRC)": {
     work: { ja: "七十人訳ギリシャ語旧約聖書（Rahlfs 1935 系）", en: "Septuagint (based on Rahlfs 1935)" },
-    license: PD,
-    origin: { name: "ibibles.net", url: "https://www.ibibles.net/" },
+    // 底本の著作権は切れているが、電子データは CCAT が「非商用に限る」条件で配っているもの。
+    // 商用化するときは条件のはっきりした Swete 版（CC BY-SA 4.0）へ切り替えること。
+    license: {
+      ja: "底本はパブリックドメイン。電子データは CCAT（ペンシルベニア大学）作成、非商用での利用に限る",
+      en: "Base text: public domain. Digital text by CCAT (University of Pennsylvania), for non-commercial use only",
+    },
+    origin: { name: "CCAT / ibibles.net", url: "https://ccat.sas.upenn.edu/gopher/text/religion/biblical/" },
   },
   "WLC (HEB)": {
     work: { ja: "ウェストミンスター・レニングラード写本（WLC）", en: "Westminster Leningrad Codex (WLC)" },

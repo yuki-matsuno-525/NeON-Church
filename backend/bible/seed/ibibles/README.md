@@ -15,7 +15,7 @@ importer は第1参照（正規化番号）を使う。よって LXX/ヘブラ�
 | `kjv.txt` | `KJV` | 英語・全巻 | 66 | King James Version（PD） |
 | `gtr.txt` | `TR (GRC)` | 新約ギリシャ語 | 27 | Textus Receptus（Stephanus 1550／Scrivener 1894 併記・PD。異読は `{VAR1: …} {VAR2: …}` で入っており、取り込み時に Scrivener 1894 の読みだけを残す） |
 | `jcl.txt` | `文語訳` | 日本語・全巻 | 66 | 文語訳（明治・大正／PD） |
-| `lxx.txt` | `LXX (GRC)` | ギリシャ語旧約 | 39 | Septuagint（Rahlfs 1935 系。ダニエル書は古ギリシャ語訳とテオドティオン訳の2本立て・PD） |
+| `lxx.txt` | `LXX (GRC)` | ギリシャ語旧約 | 39 | Septuagint（Rahlfs 1935 系。ダニエル書は古ギリシャ語訳とテオドティオン訳の2本立て。底本は PD だが、電子データは CCAT／ペンシルベニア大学の作成で「非商用に限る」条件付き。商用化するなら Swete 版〔CC BY-SA 4.0〕へ切り替える） |
 | `hwl.txt` | `WLC (HEB)` | ヘブライ語旧約 | 39 | Leningrad Codex 系（PD） |
 
 底本はいずれもパブリックドメイン。使うのは本文のみ。第二正典（トビト書等）は ibibles の
