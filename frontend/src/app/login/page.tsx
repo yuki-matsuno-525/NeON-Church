@@ -42,6 +42,8 @@ function LoginForm() {
     } else if (oauthResult === "error") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(t.oauthError);
+    } else if (oauthResult === "email_taken") {
+      setError(t.oauthEmailTaken);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

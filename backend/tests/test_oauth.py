@@ -46,7 +46,7 @@ def test_callback_success_creates_user_and_sets_jwt(mock_post, mock_get, api):
     state, nonce = user_views._make_oauth_state("/bookmarks")
     api.cookies[NONCE_COOKIE] = nonce
     mock_post.return_value = _resp_ok({"access_token": "tok"})
-    mock_get.return_value = _resp_ok({"sub": "g-1", "email": "a@example.com", "name": "Alice"})
+    mock_get.return_value = _resp_ok({"sub": "g-1", "email": "a@example.com", "email_verified": True, "name": "Alice"})
 
     res = api.get(GOOGLE_CB, {"code": "abc", "state": state})
 
@@ -91,3 +91,68 @@ def test_callback_without_code_errors(api):
     api.cookies[NONCE_COOKIE] = nonce
     res = api.get(GOOGLE_CB, {"state": state})  # code なし
     assert "oauth=error" in res["Location"]
+
+
+# ---------------------------------------------------------------------------
+# 既存アカウントへのつなぎ込み（他人のメールで先に登録しておく乗っ取りを防ぐ）
+# ---------------------------------------------------------------------------
+
+
+def _google_login(api, mock_post, mock_get, userinfo: dict):
+    state, nonce = user_views._make_oauth_state("")
+    api.cookies[NONCE_COOKIE] = nonce
+    mock_post.return_value = _resp_ok({"access_token": "tok"})
+    mock_get.return_value = _resp_ok(userinfo)
+    return api.get(GOOGLE_CB, {"code": "abc", "state": state})
+
+
+@patch("users.views.http_requests.get")
+@patch("users.views.http_requests.post")
+def test_verified_email_does_not_link_to_password_account(mock_post, mock_get, api, django_user_model):
+    squatter = django_user_model.objects.create_user(username="squatter", email="victim@example.com", password="pw-123456!")
+
+    res = _google_login(api, mock_post, mock_get, {"sub": "g-v", "email": "victim@example.com", "email_verified": True, "name": "Victim"})
+
+    assert "oauth=email_taken" in res["Location"]
+    assert "access_token" not in res.cookies
+    from users.models import SocialAccount
+    assert not SocialAccount.objects.filter(user=squatter).exists()
+
+
+@patch("users.views.http_requests.get")
+@patch("users.views.http_requests.post")
+def test_unverified_email_is_neither_linked_nor_saved(mock_post, mock_get, api, django_user_model):
+    social_only = django_user_model.objects.create_user(username="gh_user", email="x@example.com", password=None)
+
+    res = _google_login(api, mock_post, mock_get, {"sub": "g-u", "email": "x@example.com", "email_verified": False, "name": "X"})
+
+    assert "oauth=success" in res["Location"]
+    from users.models import SocialAccount
+    new_user = SocialAccount.objects.get(provider="google", provider_uid="g-u").user
+    assert new_user != social_only
+    assert new_user.email == ""
+
+
+@patch("users.views.http_requests.get")
+@patch("users.views.http_requests.post")
+def test_verified_email_links_to_social_only_account(mock_post, mock_get, api, django_user_model):
+    social_only = django_user_model.objects.create_user(username="gh_user", email="y@example.com", password=None)
+
+    res = _google_login(api, mock_post, mock_get, {"sub": "g-y", "email": "y@example.com", "email_verified": True, "name": "Y"})
+
+    assert "oauth=success" in res["Location"]
+    from users.models import SocialAccount
+    assert SocialAccount.objects.get(provider="google", provider_uid="g-y").user == social_only
+
+
+@patch("users.views.http_requests.get")
+@patch("users.views.http_requests.post")
+def test_inactive_user_cannot_login_with_google(mock_post, mock_get, api, django_user_model):
+    user = django_user_model.objects.create_user(username="banned", email="b@example.com", password=None, is_active=False)
+    from users.models import SocialAccount
+    SocialAccount.objects.create(provider="google", provider_uid="g-b", user=user)
+
+    res = _google_login(api, mock_post, mock_get, {"sub": "g-b", "email": "b@example.com", "email_verified": True, "name": "B"})
+
+    assert "oauth=error" in res["Location"]
+    assert "access_token" not in res.cookies

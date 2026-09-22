@@ -5,9 +5,12 @@ import LoginPage from "./page";
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
 let mockFrom: string | null = null;
+let mockOauth: string | null = null;
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
-  useSearchParams: () => ({ get: (key: string) => key === "from" ? mockFrom : null }),
+  useSearchParams: () => ({
+    get: (key: string) => (key === "from" ? mockFrom : key === "oauth" ? mockOauth : null),
+  }),
 }));
 
 vi.mock("next/link", () => ({
@@ -30,6 +33,13 @@ describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFrom = null;
+    mockOauth = null;
+  });
+
+  it("パスワード登録済みのメールで Google/GitHub から戻ったら、パスワードでのログインを案内する", async () => {
+    mockOauth = "email_taken";
+    render(<LoginPage />);
+    expect(await screen.findByText(/パスワードで登録済み/)).toBeInTheDocument();
   });
 
   it("フォームフィールドとボタンが表示される", () => {

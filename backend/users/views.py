@@ -520,8 +520,20 @@ _GITHUB_USERINFO_URL = "https://api.github.com/user"
 _GITHUB_EMAILS_URL = "https://api.github.com/user/emails"
 
 
-def _get_or_create_social_user(provider: str, provider_uid: str, email: str | None, name: str | None) -> "User":
-    """SocialAccount からユーザーを取得または新規作成する。"""
+class _EmailTakenError(Exception):
+    """同じメールアドレスがパスワード登録済みで、ソーシャルログインを自動ではつながないとき。"""
+
+
+def _get_or_create_social_user(
+    provider: str, provider_uid: str, email: str | None, name: str | None, email_verified: bool
+) -> "User":
+    """SocialAccount からユーザーを取得または新規作成する。
+
+    既存ユーザーにつなぐのは、プロバイダーがメールの持ち主だと確認済みで、かつ既存ユーザーが
+    パスワードを持たない（＝ソーシャルログインで作られた）ときだけ。
+    他人のメールアドレスで先にパスワード登録しておけば、本人が後から Google でログインしたとき
+    そのアカウントに入り込めてしまうため（登録時にメール確認をしていない）。
+    """
     from .models import SocialAccount
 
     try:
@@ -531,8 +543,13 @@ def _get_or_create_social_user(provider: str, provider_uid: str, email: str | No
     except SocialAccount.DoesNotExist:
         pass
 
-    # メールが一致する既存ユーザーと連携
+    # 確認されていないメールは持ち主が分からないので、つなぐのにも保存にも使わない。
+    if not email_verified:
+        email = None
+
     user = User.objects.filter(email=email).first() if email else None
+    if user is not None and user.has_usable_password():
+        raise _EmailTakenError()
 
     if user is None:
         base = (name or provider_uid)[:30].lower().replace(" ", "_")
@@ -547,8 +564,8 @@ def _get_or_create_social_user(provider: str, provider_uid: str, email: str | No
     return user
 
 
-def _oauth_error_redirect() -> HttpResponseRedirect:
-    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/login?oauth=error")
+def _oauth_error_redirect(reason: str = "error") -> HttpResponseRedirect:
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/login?oauth={reason}")
 
 
 # ---------------------------------------------------------------------------
@@ -661,7 +678,16 @@ class GoogleCallbackView(APIView):
             return _oauth_error_redirect()
 
         info = userinfo_resp.json()
-        user = _get_or_create_social_user("google", info["sub"], info.get("email"), info.get("name"))
+        try:
+            user = _get_or_create_social_user(
+                "google", info["sub"], info.get("email"), info.get("name"),
+                email_verified=info.get("email_verified") is True,
+            )
+        except _EmailTakenError:
+            return _oauth_error_redirect("email_taken")
+        # 管理画面で利用停止にした人は、ソーシャルログインでも入れない。
+        if not user.is_active:
+            return _oauth_error_redirect()
 
         redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
         response = HttpResponseRedirect(redirect_to)
@@ -744,7 +770,14 @@ class GithubCallbackView(APIView):
                 )
                 email = primary
 
-        user = _get_or_create_social_user("github", provider_uid, email, info.get("login"))
+        # GitHub のプロフィールに出せるメールは確認済みのものだけ。emails API からも verified だけを拾っている。
+        try:
+            user = _get_or_create_social_user("github", provider_uid, email, info.get("login"), email_verified=True)
+        except _EmailTakenError:
+            return _oauth_error_redirect("email_taken")
+        # 管理画面で利用停止にした人は、ソーシャルログインでも入れない。
+        if not user.is_active:
+            return _oauth_error_redirect()
 
         redirect_to = f"{settings.FRONTEND_URL}{next_path}?oauth=success" if next_path else f"{settings.FRONTEND_URL}?oauth=success"
         response = HttpResponseRedirect(redirect_to)

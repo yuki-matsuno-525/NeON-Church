@@ -393,6 +393,7 @@ const ja = {
   oauthGoogle: "Google でログイン",
   oauthGithub: "GitHub でログイン",
   oauthError: "ソーシャルログインに失敗しました。もう一度お試しください。",
+  oauthEmailTaken: "このメールアドレスはパスワードで登録済みです。ユーザー名とパスワードでログインしてください。パスワードを忘れた場合は再設定できます。",
   sessionExpiredTitle: "セッションが切れました",
   sessionExpiredDesc: "もう一度ログインしてください。",
 
@@ -1157,6 +1158,7 @@ const en: typeof ja = {
   oauthGoogle: "Sign in with Google",
   oauthGithub: "Sign in with GitHub",
   oauthError: "Social login failed. Please try again.",
+  oauthEmailTaken: "This email address is already registered with a password. Please log in with your username and password, or reset your password if you forgot it.",
   sessionExpiredTitle: "Your session has expired",
   sessionExpiredDesc: "Please sign in again.",
 
