@@ -23,6 +23,12 @@ export function useDialogBehavior<T extends HTMLElement>(open: boolean, onClose:
   const ref = useRef<T>(null);
   // 開く前にフォーカスがあった場所。閉じたときにここへ戻す。
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // 閉じる処理は ref で持つ。呼ぶ側はたいてい () => ... をその場で渡すので、
+  // 依存に入れると背後が描き直されるたびにフォーカスが先頭へ飛び戻ってしまう。
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -35,7 +41,7 @@ export function useDialogBehavior<T extends HTMLElement>(open: boolean, onClose:
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -59,7 +65,7 @@ export function useDialogBehavior<T extends HTMLElement>(open: boolean, onClose:
       window.removeEventListener("keydown", onKeyDown);
       previouslyFocused.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   return ref;
 }

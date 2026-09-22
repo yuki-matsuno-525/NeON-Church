@@ -38,7 +38,8 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const [article, setArticle] = useState<Article | null>(null);
   const [tags, setTags] = useState<ArticleTag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // 読み込めなかったか。文言は描くときに選ぶ（言語を切り替えても取り直さないため）。
+  const [loadFailed, setLoadFailed] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -82,9 +83,9 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
         setTagIds(data.tags.map((tag) => tag.id));
         setCitations(data.citations ?? []);
       })
-      .catch(() => setError(t.articleCannotEdit))
+      .catch(() => setLoadFailed(true))
       .finally(() => setLoading(false));
-  }, [id, t]);
+  }, [id]);
 
   const draft = useMemo(
     () => ({ title, summary, body, visibility, tag_ids: tagIds }),
@@ -104,7 +105,7 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
   const autosave = useAutosave({
     value: draft,
     onSave: handleSave,
-    enabled: !loading && !authLoading && !!user && !error && user.username === article?.owner_username,
+    enabled: !loading && !authLoading && !!user && !loadFailed && user.username === article?.owner_username,
   });
 
   /** 引用パネルから呼ばれる。本文のカーソル位置に印を差し込む。 */
@@ -170,10 +171,10 @@ export default function ArticleEditPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (error || !article) {
+  if (loadFailed || !article) {
     return (
       <div className="page page-narrow">
-        <p className="text-muted">{error ?? t.articleCannotEdit}</p>
+        <p className="text-muted">{t.articleCannotEdit}</p>
         <Link href="/articles" className="text-accent">
           {t.articleBackToList}
         </Link>

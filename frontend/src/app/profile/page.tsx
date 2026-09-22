@@ -46,17 +46,22 @@ export default function ProfilePage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setBio(user.bio);
-    }
-  }, [user]);
+  // 自己紹介の欄は、ログインした人が決まったときに 1 度だけ埋める。
+  // user は公開設定を切り替えただけでも新しくなるので、それに合わせて埋め直すと
+  // 打ちかけの自己紹介が消えてしまう。
+  const [bioLoadedFor, setBioLoadedFor] = useState<string | null>(null);
+  if (user && bioLoadedFor !== user.id) {
+    setBioLoadedFor(user.id);
+    setBio(user.bio);
+  }
+  // 一覧はログインしているかどうかだけで決まる。user の中身が変わるたびに
+  // 最初から読み直さないよう、依存には有無だけを渡す。
+  const signedIn = !!user;
 
   // 一覧は2つとも「もっと見る」で読み足す。user が入るまでは取りに行かない。
   const fetchBookmarks = useCallback(
     (page: number) =>
-      user
+      signedIn
         ? fetchBookmarkPage({ type: kind ?? undefined, page })
         : Promise.resolve({
             results: [] as Bookmark[],
@@ -64,13 +69,13 @@ export default function ProfilePage() {
             hasMore: false,
             counts: EMPTY_BOOKMARK_COUNTS,
           }),
-    [user, kind]
+    [signedIn, kind]
   );
   const bookmarkList = useLoadMore(fetchBookmarks);
 
   const fetchComments = useCallback(
     (page: number) =>
-      user
+      signedIn
         ? fetchMyCommentPage(page)
         : Promise.resolve({
             results: [] as MyComment[],
@@ -78,7 +83,7 @@ export default function ProfilePage() {
             hasMore: false,
             counts: undefined,
           }),
-    [user]
+    [signedIn]
   );
   const commentList = useLoadMore(fetchComments);
 
