@@ -11,7 +11,13 @@ from django.db import migrations, models
 
 
 def clear_commentary(apps, schema_editor):
-    apps.get_model("commentary", "Work").objects.all().delete()
+    # PostgreSQL では、1行ずつ消すと「消したあとの確認」が取引の終わりまで保留され、
+    # 同じ取引の中で続けて表を作り替えられない（pending trigger events）。
+    # TRUNCATE は保留を残さないので、そのあと同じマイグレーションで表を変えられる。
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute("TRUNCATE commentary_passage_links, commentary_sections, commentary_works")
+    else:
+        apps.get_model("commentary", "Work").objects.all().delete()
 
 
 class Migration(migrations.Migration):
