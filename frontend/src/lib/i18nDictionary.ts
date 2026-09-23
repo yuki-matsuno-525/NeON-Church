@@ -342,6 +342,7 @@ const ja = {
   // 読む
   readTitle: "聖書を読む",
   resumeReading: (bookName: string, chapter: number) => `続きから読む — ${bookName} 第${chapter}章 ›`,
+  resumeCommentary: (work: string, chapter: string) => `続きから読む — ${work} ${chapter} ›`,
   selectBook: "書を選択",
   totalChapters: (n: number) => `全${n}章`,
   myTranslationsHeading: "本棚",
@@ -1182,6 +1183,7 @@ const en: typeof ja = {
 
   readTitle: "Read the Bible",
   resumeReading: (bookName: string, chapter: number) => `Resume — ${bookName} Ch.${chapter} ›`,
+  resumeCommentary: (work: string, chapter: string) => `Resume — ${work}, ${chapter} ›`,
   selectBook: "Select a book",
   totalChapters: (n: number) => `${n} chapters`,
   myTranslationsHeading: "Bookshelf",

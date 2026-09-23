@@ -298,6 +298,13 @@
   border-color: var(--accent);
 }
 
+/* 最後に開いた章（聖書の書のページの chapter-cell-current と同じ色） */
+.chapterItemCurrent {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
 .chapterItemCount {
   margin-left: auto;
   font-size: var(--text-xs);

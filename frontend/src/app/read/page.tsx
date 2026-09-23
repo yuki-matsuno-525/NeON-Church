@@ -8,6 +8,7 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { BookBrowser } from "@/components/read/BookBrowser";
 import { ResumeLink } from "@/components/read/ResumeLink";
 import { CommentaryBrowser } from "@/components/commentary/CommentaryBrowser";
+import { CommentaryResumeLink } from "@/components/commentary/CommentaryResumeLink";
 
 /* ----- 聖書と解釈書のタブ -----
    読むものは聖書の書と、教父・ラシ・カルヴァン・内村などの解釈書の2つ。プランの画面と同じタブで分け、
@@ -79,6 +80,7 @@ async function commentaryTab(t: Translations) {
   return (
     <>
       <p className="mt-0 mb-4 text-sm text-muted">{t.commentaryDesc}</p>
+      <CommentaryResumeLink />
       <CommentaryBrowser works={works} />
     </>
   );
