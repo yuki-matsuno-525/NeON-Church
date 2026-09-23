@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework import serializers
 
 from .models import CommentaryChapter, PassageLink, Section, Work
@@ -40,9 +41,10 @@ class WorkDetailSerializer(WorkSerializer):
         fields = WorkSerializer.Meta.fields + ["chapters"]
 
     def get_chapters(self, obj: Work) -> list[dict]:
-        counts: dict[int, int] = {}
-        for number in obj.sections.values_list("chapter_number", flat=True):
-            counts[number] = counts.get(number, 0) + 1
+        # 章ごとの区切りの数は、データベース側でまとめて数える（区切りを全部取ってこない）。
+        counts = dict(
+            obj.sections.order_by().values("chapter_number").annotate(n=Count("pk")).values_list("chapter_number", "n")
+        )
         return [
             {"number": c.number, "title": c.title, "section_count": counts.get(c.number, 0)}
             for c in obj.chapters.all()

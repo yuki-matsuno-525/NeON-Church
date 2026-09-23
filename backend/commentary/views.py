@@ -1,4 +1,5 @@
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -38,6 +39,29 @@ def covering_links_q(book: str, chapter: int, verse: int | None) -> Q:
     return Q(canonical_book__slug=book) & (whole_book | (starts_before & ends_after))
 
 
+def with_counts(queryset):
+    """解釈書に区切りの数と章の数を付ける。
+
+    Count("sections") と Count("chapters") を1つの問い合わせで数えると、区切り×章の行ができて
+    とても遅くなる（区切り5,730・章52の本で30万行）。それぞれを別の小さな問い合わせで数える。
+    """
+
+    def count_of(model):
+        return Coalesce(
+            Subquery(
+                model.objects.filter(work=OuterRef("pk"))
+                .order_by()
+                .values("work")
+                .annotate(n=Count("pk"))
+                .values("n"),
+                output_field=IntegerField(),
+            ),
+            0,
+        )
+
+    return queryset.annotate(section_count=count_of(Section), chapter_count=count_of(CommentaryChapter))
+
+
 def _int_param(request, name: str) -> int | None:
     value = request.query_params.get(name)
     try:
@@ -54,9 +78,7 @@ class WorkListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return Work.objects.annotate(
-            section_count=Count("sections", distinct=True), chapter_count=Count("chapters", distinct=True)
-        ).order_by("year", "slug")
+        return with_counts(Work.objects.all()).order_by("year", "slug")
 
 
 class WorkDetailView(generics.RetrieveAPIView):
@@ -67,9 +89,7 @@ class WorkDetailView(generics.RetrieveAPIView):
     lookup_field = "slug"
 
     def get_queryset(self):
-        return Work.objects.annotate(
-            section_count=Count("sections", distinct=True), chapter_count=Count("chapters", distinct=True)
-        ).prefetch_related("chapters")
+        return with_counts(Work.objects.all()).prefetch_related("chapters")
 
 
 class ChapterDetailView(generics.RetrieveAPIView):
