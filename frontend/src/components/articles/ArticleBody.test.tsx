@@ -94,3 +94,42 @@ describe("ArticleBody", () => {
     expect(screen.getByText("まだ何も書かれていません。")).toBeInTheDocument();
   });
 });
+
+describe("ArticleBody（解釈書の引用）", () => {
+  const commentaryInline: ArticleCitation = {
+    raw: "[[@uchimura-romans 41:2]]",
+    kind: "inline",
+    found: true,
+    label: "ロマ書の研究 › 第41講 › 2",
+    book_slug: "",
+    book_name: "",
+    chapter_number: 41,
+    verse_number_start: 2,
+    verse_number_end: 2,
+    translation: "",
+    verses: [],
+    commentary_work: "uchimura-romans",
+  };
+
+  it("文中の参照は解釈書のその区切りへのリンクになる", () => {
+    render(<ArticleBody body="内村は [[@uchimura-romans 41:2]] と言う。" citations={[commentaryInline]} />);
+    const link = screen.getByRole("link", { name: "（ロマ書の研究 › 第41講 › 2）" });
+    expect(link).toHaveAttribute("href", "/commentary/uchimura-romans/41?s=2#s-2");
+  });
+
+  it("引用ブロックは区切りの本文と場所を出し、訳名は出さない", () => {
+    const block: ArticleCitation = {
+      ...commentaryInline,
+      raw: "{{@uchimura-romans 41:2-3}}",
+      kind: "block",
+      label: "ロマ書の研究 › 第41講 › 2–3",
+      verse_number_end: 3,
+      verses: [{ number: 2, text: "二段落目" }, { number: 3, text: "三段落目" }],
+    };
+    render(<ArticleBody body="{{@uchimura-romans 41:2-3}}" citations={[block]} />);
+    expect(screen.getByText("三段落目")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "ロマ書の研究 › 第41講 › 2–3" })).toHaveAttribute(
+      "href", "/commentary/uchimura-romans/41?s=2#s-2",
+    );
+  });
+});

@@ -340,6 +340,9 @@ export type ArticleCitation = {
   verse_number_end: number | null;
   translation: string;
   verses: { number: number; text: string }[];
+  /** 解釈書の引用（印が [[@…]]）なら、その解釈書の slug。聖書の引用では空。
+   *  このとき chapter_number は解釈書の章、verse_number_* は区切りの番号、label はサーバーが組んだ場所の名前。 */
+  commentary_work?: string;
 };
 
 export type Article = {
@@ -374,9 +377,15 @@ export type PlanVisibility = "private" | "public";
 /** その日に読む章1つ。book は訳に依らない書の slug。 */
 export type PlanReading = {
   id: string;
-  book: string;
+  /** 聖書の章なら書の slug。解釈書の章なら null で、代わりに work が入る。 */
+  book: string | null;
+  /** 解釈書の章なら、その解釈書の slug（例: "calvin-romans"）。 */
+  work?: string | null;
+  /** 聖書の書名、または解釈書の題 */
   book_name: string;
   chapter_number: number;
+  /** 解釈書の章の題（「第41講　救いの完成」など）。聖書の章では空。 */
+  chapter_title?: string;
   translation: string;
   order: number;
   /** その章を読み終えたか。読んでいる人が取ったときだけ意味を持つ。 */

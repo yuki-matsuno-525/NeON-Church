@@ -6,11 +6,18 @@ import { useT, type Translations } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
+import { commentaryPlaceHref } from "@/lib/commentary";
 // 行の見た目は、その日の文章の行と揃える必要があるのでパネル側が持っている。
 import styles from "./PlanDay.module.css";
 
-/** その章を読む画面へのリンク。訳の指定があればその訳で開く。 */
-export function readingHref(reading: { book: string; chapter_number: number; translation: string }): string {
+/** その章を読む画面へのリンク。訳の指定があればその訳で開く。解釈書の章ならその章のページ。 */
+export function readingHref(reading: {
+  book: string | null;
+  work?: string | null;
+  chapter_number: number;
+  translation: string;
+}): string {
+  if (reading.work) return commentaryPlaceHref({ work: reading.work, chapter: reading.chapter_number });
   const query = reading.translation
     ? `?translation=${encodeURIComponent(reading.translation)}`
     : "";
@@ -18,9 +25,11 @@ export function readingHref(reading: { book: string; chapter_number: number; tra
 }
 
 export function readingLabel(
-  reading: { book_name: string; chapter_number: number },
+  reading: { book_name: string; chapter_number: number; work?: string | null; chapter_title?: string },
   t: Translations,
 ): string {
+  // 解釈書の章は番号より題（「第41講　救いの完成」）のほうが言い当てる。
+  if (reading.work) return `${reading.book_name} ${reading.chapter_title || reading.chapter_number}`;
   return t.planReadingLabel(reading.book_name, reading.chapter_number);
 }
 
@@ -29,7 +38,7 @@ export function readingLabel(
  * 読む画面と作る画面の両方が使うので、区切りの書き方をここに 1 つだけ置く。
  */
 export function readingsSummary(
-  readings: { book_name: string; chapter_number: number }[],
+  readings: { book_name: string; chapter_number: number; work?: string | null; chapter_title?: string }[],
   t: Translations,
   lang: "ja" | "en",
 ): string {

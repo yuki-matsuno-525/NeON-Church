@@ -6,6 +6,7 @@ import type { ArticleCitation } from "@/lib/types";
 import { bookLabel, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { translationLabel } from "@/lib/translations";
+import { commentaryPlaceHref } from "@/lib/commentary";
 
 /**
  * 記事の本文を表示する。
@@ -203,7 +204,9 @@ function CitationBlock({ raw, citation }: { raw: string; citation?: ArticleCitat
         href={verseHref(citation)}
         className="inline-block mt-1 text-xs text-muted no-underline"
       >
-        {citationDisplayLabel(citation, lang, t)}（{translationLabel(citation.translation, lang)}）
+        {citationDisplayLabel(citation, lang, t)}
+        {/* 解釈書には訳の別が無いので、訳名は聖書の引用だけ */}
+        {!citation.commentary_work && `（${translationLabel(citation.translation, lang)}）`}
       </Link>
     </blockquote>
   );
@@ -228,6 +231,8 @@ function citationDisplayLabel(
   lang: "ja" | "en",
   t: ReturnType<typeof useT>,
 ): string {
+  // 解釈書の場所の名前（「ロマ書の研究 › 第41講 › 2」）はサーバーが組んで返す。
+  if (citation.commentary_work) return citation.label;
   const name = bookLabel(citation.book_slug, lang)?.name ?? citation.book_name;
   if (citation.verse_number_start === null) return `${name} ${t.chapterFmt(citation.chapter_number)}`;
   const start = `${citation.chapter_number}:${citation.verse_number_start}`;
@@ -250,6 +255,13 @@ function NotFound({ raw, block = false }: { raw: string; block?: boolean }) {
 }
 
 function verseHref(citation: ArticleCitation): string {
+  if (citation.commentary_work) {
+    return commentaryPlaceHref({
+      work: citation.commentary_work,
+      chapter: citation.chapter_number,
+      number: citation.verse_number_start ?? undefined,
+    });
+  }
   const query = citation.translation
     ? `?translation=${encodeURIComponent(citation.translation)}`
     : "";

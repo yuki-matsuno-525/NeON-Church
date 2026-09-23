@@ -17,7 +17,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
     fetchCommentPage: vi.fn().mockResolvedValue(empty),
     fetchQuestionPage: vi.fn().mockResolvedValue(empty),
     fetchTags: vi.fn().mockResolvedValue([]),
-    fetchArticlesCitingVerse: vi.fn(),
+    fetchArticlesCitingVerse: vi.fn().mockResolvedValue({ count: 0, next: null, previous: null, results: [] }),
     fetchPassageCommentary: vi.fn().mockResolvedValue(empty),
     fetchCommentarySections: vi.fn(),
     createComment: vi.fn(),
@@ -70,7 +70,7 @@ describe("解釈書の章のページ", () => {
     );
   });
 
-  it("区切りを押すとパネルが開き、コメント・Q&Aはその区切りの場所で取る（引用した記事・解釈のタブは無い）", async () => {
+  it("区切りを押すとパネルが開き、コメント・Q&A・引用した記事はその区切りの場所で取る", async () => {
     render(<CommentaryChapterReader chapter={chapter} initial={page([section(1, "萬物と"), section(2, "第二段落")])} initialPage={1} />);
     fireEvent.click(screen.getAllByTestId("commentary-section")[1]);
 
@@ -85,7 +85,8 @@ describe("解釈書の章のページ", () => {
       })),
     );
     expect(fetchQuestionPage).toHaveBeenCalledWith({ work_slug: "uchimura-romans", chapter_number: 41, verse_number: 2 });
-    expect(fetchArticlesCitingVerse).not.toHaveBeenCalled();
+    expect(fetchArticlesCitingVerse).toHaveBeenCalledWith({ work: "uchimura-romans", chapter: 41, verse: 2 });
+    // 解釈（解釈の解釈）のタブは出ない。引用した記事は0件なので出ない。
     expect(within(panel).queryByRole("tab", { name: /引用した記事|解釈/ })).not.toBeInTheDocument();
   });
 

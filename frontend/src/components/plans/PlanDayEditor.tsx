@@ -10,6 +10,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { Icon } from "@/components/ui/Icon";
 import { planUiText } from "@/components/plans/planUiText";
 import { ChapterPicker, type PickedChapter } from "./ChapterPicker";
+import { CommentaryChapterPicker } from "./CommentaryChapterPicker";
 import { readingLabel, readingsSummary } from "./ReadingChips";
 import { PlanDayPanel } from "./PlanDayPanel";
 // 章の行の形は、読む画面と同じものを使う。作る画面と読む画面で形がずれないようにするため。
@@ -17,11 +18,26 @@ import styles from "./PlanDay.module.css";
 
 /** 画面が持っている章 1 つぶん。サーバーの PlanReading から表示に要る分だけ取り出したもの。 */
 type EditableReading = {
-  book: string;
+  book: string | null;
+  /** 解釈書の章なら、その解釈書の slug */
+  work?: string | null;
   book_name: string;
   chapter_number: number;
+  chapter_title?: string;
   translation: string;
 };
+
+/** サーバーの章を、画面が持つ形にする。 */
+function toEditable(reading: PlanDay["readings"][number]): EditableReading {
+  return {
+    book: reading.book,
+    work: reading.work ?? null,
+    book_name: reading.book_name,
+    chapter_number: reading.chapter_number,
+    chapter_title: reading.chapter_title ?? "",
+    translation: reading.translation,
+  };
+}
 
 /**
  * プランの1日ぶんを編集する。パネルの形は、プランを読む画面の日パネルと同じ。
@@ -59,14 +75,9 @@ export function PlanDayEditor({
 }) {
   const [title, setTitle] = useState(day.title);
   const [devotional, setDevotional] = useState(day.devotional);
-  const [readings, setReadings] = useState(
-    day.readings.map((reading) => ({
-      book: reading.book,
-      book_name: reading.book_name,
-      chapter_number: reading.chapter_number,
-      translation: reading.translation,
-    })),
-  );
+  const [readings, setReadings] = useState<EditableReading[]>(day.readings.map(toEditable));
+  // 章を足す欄で、聖書の章を選ぶか解釈書の章を選ぶか。
+  const [pickSource, setPickSource] = useState<"bible" | "commentary">("bible");
   // 指で並べ替えるための持ち方。細い取っ手をねらわずに、行のどこでもつかめるようにする。
   const [reorderMode, setReorderMode] = useState(false);
   const t = useT();
@@ -77,11 +88,10 @@ export function PlanDayEditor({
     () => ({
       title,
       devotional,
-      readings: readings.map(({ book, chapter_number, translation }) => ({
-        book,
-        chapter_number,
-        translation,
-      })),
+      // 聖書の章は書と訳、解釈書の章は解釈書だけを送る（解釈書には訳が無い）。
+      readings: readings.map(({ book, work, chapter_number, translation }) =>
+        work ? { work, chapter_number } : { book: book ?? undefined, chapter_number, translation },
+      ),
     }),
     [title, devotional, readings],
   );
@@ -95,12 +105,7 @@ export function PlanDayEditor({
       // 作り直すと draft（useMemo）が別物になり、自動保存が「変わった」と見て
       // また保存する、という輪になる。何も触っていないのに 1.2 秒ごとに
       // 保存が飛び続けていたのはこれが原因。
-      const next = saved.readings.map((reading) => ({
-        book: reading.book,
-        book_name: reading.book_name,
-        chapter_number: reading.chapter_number,
-        translation: reading.translation,
-      }));
+      const next = saved.readings.map(toEditable);
       setReadings((current) => (sameReadings(current, next) ? current : next));
     },
     [planId, day.id],
@@ -137,7 +142,8 @@ export function PlanDayEditor({
       onToggle={onToggle}
       summary={readingsSummary(
         readings.map((reading) => ({
-          book_name: reading.book_name || reading.book,
+          ...reading,
+          book_name: reading.book_name || reading.book || reading.work || "",
           chapter_number: reading.chapter_number,
         })),
         t,
@@ -231,14 +237,14 @@ export function PlanDayEditor({
             >
               {readings.map((reading, index) => {
                 const label = readingLabel(
-                  { book_name: reading.book_name || reading.book, chapter_number: reading.chapter_number },
+                  { ...reading, book_name: reading.book_name || reading.book || reading.work || "" },
                   t,
                 );
                 const rowProps = drag.rowProps(index);
                 const handleProps = drag.handleProps(index);
                 return (
                   <div
-                    key={`${reading.book}-${reading.chapter_number}-${index}`}
+                    key={`${reading.book ?? reading.work}-${reading.chapter_number}-${index}`}
                     className={styles.row}
                     {...rowProps}
                     // 並び替えモードのときは、行のどこをつかんでも動かせる。
@@ -288,11 +294,33 @@ export function PlanDayEditor({
               <span className="text-xs text-soft">{text.chapterLimit(MAX_READINGS_PER_DAY)}</span>
             )}
           </div>
-          <ChapterPicker
-            picked={readings.map(({ book, chapter_number }) => ({ book, chapter_number }))}
-            canAdd={canAdd}
-            onPick={addChapter}
-          />
+          {/* 聖書の章か、解釈書の章か。どちらも同じ日に混ぜて入れられる。 */}
+          <div className="flex gap-2 mb-3" role="group" aria-label={t.planPickSource}>
+            {(["bible", "commentary"] as const).map((source) => (
+              <button
+                key={source}
+                type="button"
+                onClick={() => setPickSource(source)}
+                aria-pressed={pickSource === source}
+                className={`chip chip-sm${pickSource === source ? " chip-on" : ""}`}
+              >
+                {source === "bible" ? t.planPickBible : t.commentary}
+              </button>
+            ))}
+          </div>
+          {pickSource === "bible" ? (
+            <ChapterPicker
+              picked={readings.map(({ book, work, chapter_number }) => ({ book, work, chapter_number }))}
+              canAdd={canAdd}
+              onPick={addChapter}
+            />
+          ) : (
+            <CommentaryChapterPicker
+              picked={readings.map(({ book, work, chapter_number }) => ({ book, work, chapter_number }))}
+              canAdd={canAdd}
+              onPick={addChapter}
+            />
+          )}
         </div>
 
         {/* 4. この日に添える文章 */}
@@ -323,6 +351,7 @@ function sameReadings(a: EditableReading[], b: EditableReading[]): boolean {
     a.length === b.length
     && a.every((reading, index) =>
       reading.book === b[index].book
+      && (reading.work ?? null) === (b[index].work ?? null)
       && reading.chapter_number === b[index].chapter_number
       && reading.translation === b[index].translation
       // 書名はサーバー側が訳に合わせて決めるので、変わったら入れ直す必要がある。

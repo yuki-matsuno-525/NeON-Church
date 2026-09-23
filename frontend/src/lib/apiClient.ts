@@ -36,6 +36,8 @@ import type {
   CommentaryKind,
   CommentaryPlace,
   CommentarySection,
+  CommentaryWork,
+  CommentaryWorkDetail,
 } from "./types";
 
 /** 解釈書の場所を、API の入力（投稿・お気に入り）の形にする。 */
@@ -477,6 +479,12 @@ export function fetchCommentaryBookmarks(work: string, chapter?: number): Promis
   const q = new URLSearchParams({ work });
   if (chapter != null) q.set("chapter", String(chapter));
   return apiFetchAll(`/bookmarks/?${q}`);
+}
+
+/** 解釈書の区切りのお気に入り（記事を書くときの引用パネルで使う）。章・書へのお気に入りは除く。 */
+export async function fetchCommentarySectionBookmarks(): Promise<Bookmark[]> {
+  const all: Bookmark[] = await apiFetchAll("/bookmarks/?type=commentary");
+  return all.filter((bm) => bm.commentary_reference?.number != null);
 }
 
 export function createCommentBookmark(commentId: string): Promise<Bookmark> {
@@ -1157,11 +1165,15 @@ export function fetchArticleTags(): Promise<ArticleTag[]> {
 
 /** その節を引用している公開記事。節のページの「引用した記事」タブで使う。 */
 export function fetchArticlesCitingVerse(params: {
-  book: string;
+  /** 聖書の書の slug。解釈書の区切りなら代わりに work を渡す。 */
+  book?: string;
+  work?: string;
   chapter: number;
   verse?: number;
 }): Promise<PaginatedResponse<Article>> {
-  const qs = new URLSearchParams({ book: params.book, chapter: String(params.chapter) });
+  const qs = new URLSearchParams({ chapter: String(params.chapter) });
+  if (params.work) qs.set("work", params.work);
+  else if (params.book) qs.set("book", params.book);
   if (params.verse) qs.set("verse", String(params.verse));
   return apiFetch(`/articles/citing/?${qs.toString()}`);
 }
@@ -1183,6 +1195,16 @@ export function fetchPassageCommentary(params: {
   if (params.page) qs.set("page", String(params.page));
   if (params.pageSize) qs.set("page_size", String(params.pageSize));
   return apiFetchPage(`/commentary/passage/?${qs.toString()}`);
+}
+
+/** 解釈書の一覧（時代順）。プランに章を足す・記事に引用するときに選ぶ。 */
+export function fetchCommentaryWorks(): Promise<CommentaryWork[]> {
+  return apiFetch("/commentary/works/");
+}
+
+/** 解釈書1冊（章の一覧つき）。 */
+export function fetchCommentaryWork(slug: string): Promise<CommentaryWorkDetail> {
+  return apiFetch(`/commentary/works/${encodeURIComponent(slug)}/`);
 }
 
 /** 解釈書の章の区切り（聖書の節にあたる）。抜粋集では1章に数百件あるので、ページで区切って取る。 */
@@ -1296,7 +1318,8 @@ export function addPlanDay(planId: string, data?: { title?: string }): Promise<P
 export type PlanDayInput = {
   title?: string;
   devotional?: string;
-  readings?: { book: string; chapter_number: number; translation?: string }[];
+  /** 聖書の章は book（書の slug）、解釈書の章は work（解釈書の slug）のどちらか一方 */
+  readings?: { book?: string; work?: string; chapter_number: number; translation?: string }[];
 };
 
 export function updatePlanDay(planId: string, dayId: string, data: PlanDayInput): Promise<PlanDay> {

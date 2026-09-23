@@ -147,13 +147,12 @@ export function CommentPanel({
     setArticlesError(false);
     setTab("comments");
     loadQuestions();
-    // 記事は聖書の箇所だけを引用する（解釈書の区切りを引く書き方はまだ無い）。
-    if (!bookSlug) {
-      return () => {
-        alive = false;
-      };
-    }
-    fetchArticlesCitingVerse({ book: bookSlug, chapter: chapterNumber, verse: verse.number })
+    // 記事は聖書の節も解釈書の区切りも引用できる（解釈書は [[@…]] の印）。
+    fetchArticlesCitingVerse(
+      workSlug
+        ? { work: workSlug, chapter: chapterNumber, verse: verse.number }
+        : { book: bookSlug, chapter: chapterNumber, verse: verse.number },
+    )
       .then((response) => {
         if (alive) setCitingArticles(response.results);
       })

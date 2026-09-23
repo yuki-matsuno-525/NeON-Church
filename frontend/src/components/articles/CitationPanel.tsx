@@ -4,11 +4,16 @@ import { useCallback, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   fetchVerseBookmarks,
+  fetchCommentarySectionBookmarks,
+  fetchCommentarySections,
   fetchBookRead,
   fetchVerses,
   type Bookmark,
+  type CommentarySection,
   type Verse,
 } from "@/lib/api";
+import { matchCommentaryWork, useCommentaryWorks } from "@/hooks/useCommentaryWorks";
+import { SECTION_PAGE_SIZE } from "@/lib/commentary";
 import { BOOKS, getBookBySlug } from "@/lib/books";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { bookLabel, useT } from "@/lib/i18n";
@@ -19,11 +24,12 @@ import { ClearableSearchInput } from "@/components/ui";
  * 引用パネル。記事を書きながら、引く節をここから選んで本文に入れる。
  *
  * 印は書く人が手で打つものではないので、選んでボタンを押すだけで入るようにする。
- * タブは「お気に入り」（読書中に印をつけた節）と「さがす」（書→章→節とたどる）の2つ。
+ * タブは「さがす」（書→章→節とたどる）、「解釈書」（解釈書→章→区切りとたどる）、
+ * 「お気に入り」（読書中に印をつけた節・区切り）の3つ。
  */
 export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }) {
   const t = useT();
-  const [tab, setTab] = useState<"bookmarks" | "search">("search");
+  const [tab, setTab] = useState<"bookmarks" | "search" | "commentary">("search");
   const tabsId = useId();
 
   return (
@@ -37,6 +43,9 @@ export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }
         <TabButton id={`${tabsId}-search`} panelId={`${tabsId}-search-panel`} active={tab === "search"} onClick={() => setTab("search")}>
           {t.citationSearchTab}
         </TabButton>
+        <TabButton id={`${tabsId}-commentary`} panelId={`${tabsId}-commentary-panel`} active={tab === "commentary"} onClick={() => setTab("commentary")}>
+          {t.citationCommentaryTab}
+        </TabButton>
         <TabButton id={`${tabsId}-bookmarks`} panelId={`${tabsId}-bookmarks-panel`} active={tab === "bookmarks"} onClick={() => setTab("bookmarks")}>
           {t.citationBookmarksTab}
         </TabButton>
@@ -48,7 +57,13 @@ export function CitationPanel({ onInsert }: { onInsert: (mark: string) => void }
         aria-labelledby={`${tabsId}-${tab}`}
         className="flex-1 min-h-0 overflow-y-auto py-3"
       >
-        {tab === "search" ? <SearchTab onInsert={onInsert} /> : <BookmarkTab onInsert={onInsert} />}
+        {tab === "search" ? (
+          <SearchTab onInsert={onInsert} />
+        ) : tab === "commentary" ? (
+          <CommentaryTab onInsert={onInsert} />
+        ) : (
+          <BookmarkTab onInsert={onInsert} />
+        )}
       </div>
     </div>
   );
@@ -282,6 +297,8 @@ function VerseList({
   loading,
   onBack,
   onInsert,
+  title,
+  backLabel,
 }: {
   slug: string;
   chapter: number;
@@ -290,6 +307,9 @@ function VerseList({
   loading: boolean;
   onBack: () => void;
   onInsert: (mark: string) => void;
+  /** 見出しに出す章の名前。省くと「8章」。解釈書では章の題（「第41講」など）を渡す。 */
+  title?: string;
+  backLabel?: string;
 }) {
   const t = useT();
   // 範囲で選ぶあいだだけ使う。start が決まると「終わりの節」を待つ。
@@ -324,9 +344,9 @@ function VerseList({
     <div>
       <div className="flex items-center gap-2 mb-2">
         <button type="button" onClick={onBack} className="back-button">
-          {t.citationBackToChapters}
+          {backLabel ?? t.citationBackToChapters}
         </button>
-        <span className="text-sm font-bold">{t.chapterFmt(chapter)}</span>
+        <span className="text-sm font-bold">{title ?? t.chapterFmt(chapter)}</span>
         <button
           type="button"
           onClick={() => (rangeMode ? clearRange() : setRangeMode(true))}
@@ -442,8 +462,11 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
     setLoading(true);
     setError(null);
     try {
-      const list = await fetchVerseBookmarks();
-      setBookmarks(list.filter((bm) => bm.target_type === "verse" && bm.reference));
+      const [verses, sections] = await Promise.all([fetchVerseBookmarks(), fetchCommentarySectionBookmarks()]);
+      setBookmarks([
+        ...verses.filter((bm) => bm.target_type === "verse" && bm.reference),
+        ...sections,
+      ]);
     } catch {
       setError(t.loadErrorDesc);
     } finally {
@@ -480,9 +503,13 @@ function BookmarkTab({ onInsert }: { onInsert: (mark: string) => void }) {
 
   return (
     <div className="flex flex-col gap-2 px-3">
-      {bookmarks.map((bookmark) => {
-        return <BookmarkCitationCard key={bookmark.id} bookmark={bookmark} onInsert={onInsert} />;
-      })}
+      {bookmarks.map((bookmark) =>
+        bookmark.commentary_reference ? (
+          <CommentaryBookmarkCard key={bookmark.id} bookmark={bookmark} onInsert={onInsert} />
+        ) : (
+          <BookmarkCitationCard key={bookmark.id} bookmark={bookmark} onInsert={onInsert} />
+        ),
+      )}
     </div>
   );
 }
@@ -521,6 +548,171 @@ function BookmarkCitationCard({ bookmark, onInsert }: { bookmark: Bookmark; onIn
         <button type="button" onClick={() => insert("inline")} className="small-button">{t.citationInsertInline}</button>
         <button type="button" onClick={() => insert("block")} className="small-button">{t.citationInsertBlock}</button>
       </div>
+    </div>
+  );
+}
+
+/** 解釈書の区切りのお気に入り。解釈書には訳が無いので、訳の選択は出さない。 */
+function CommentaryBookmarkCard({ bookmark, onInsert }: { bookmark: Bookmark; onInsert: (mark: string) => void }) {
+  const t = useT();
+  const ref = bookmark.commentary_reference!;
+  const insert = (kind: "inline" | "block") =>
+    onInsert(buildMark({ kind, slug: `@${ref.work}`, chapter: ref.chapter ?? 0, verseStart: ref.number ?? undefined }));
+  return (
+    <div className="border border-border rounded-md p-3">
+      <div className="text-xs text-accent font-bold mb-2">{ref.label}</div>
+      <div className="flex gap-2 flex-wrap">
+        <button type="button" onClick={() => insert("inline")} className="small-button">{t.citationInsertInline}</button>
+        <button type="button" onClick={() => insert("block")} className="small-button">{t.citationInsertBlock}</button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 解釈書タブ（解釈書 → 章 → 区切り）
+// ---------------------------------------------------------------------------
+
+/**
+ * 解釈書から引く。聖書の「さがす」タブと同じ流れで、解釈書 → 章 → 区切りとたどる。
+ * 印は [[@calvin-romans 8:3]] のように @ で始まる（訳の指定は無い）。
+ * 区切りの一覧は聖書と同じ VerseList を使うので、範囲で選ぶこともできる。
+ */
+function CommentaryTab({ onInsert }: { onInsert: (mark: string) => void }) {
+  const t = useT();
+  const [keyword, setKeyword] = useState("");
+  const [slug, setSlug] = useState<string | null>(null);
+  const [chapter, setChapter] = useState<{ number: number; title: string } | null>(null);
+  const [sections, setSections] = useState<CommentarySection[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingSections, setLoadingSections] = useState(false);
+  const [sectionsFailed, setSectionsFailed] = useState(false);
+  const { works, work, loading, failed, retry } = useCommentaryWorks(slug);
+
+  const loadSections = async (chapterNumber: number, nextPage: number) => {
+    if (!slug) return;
+    setLoadingSections(true);
+    setSectionsFailed(false);
+    try {
+      const result = await fetchCommentarySections(slug, chapterNumber, nextPage, SECTION_PAGE_SIZE);
+      setSections((prev) => (nextPage === 1 ? result.results : [...prev, ...result.results]));
+      setPage(nextPage);
+      setHasMore(result.hasMore);
+    } catch {
+      setSectionsFailed(true);
+    } finally {
+      setLoadingSections(false);
+    }
+  };
+
+  const errorBox = (onRetry: () => void) => (
+    <div role="alert" className="flex gap-2 items-center flex-wrap mb-2">
+      <p className="m-0 text-xs text-danger">{t.loadErrorDesc}</p>
+      <button type="button" onClick={onRetry} className="small-button">{t.retry}</button>
+    </div>
+  );
+
+  if (!slug) {
+    const matched = works.filter((w) => matchCommentaryWork(w, keyword));
+    return (
+      <div className="px-3">
+        <label htmlFor="citation-commentary-search" className="form-label">{t.commentaryFindWork}</label>
+        <ClearableSearchInput
+          id="citation-commentary-search"
+          value={keyword}
+          onChange={setKeyword}
+          placeholder={t.commentaryFindWork}
+          ariaLabel={t.commentaryFindWork}
+          inputClassName="form-control"
+        />
+        {failed && errorBox(retry)}
+        <div className="flex flex-col gap-1 mt-3">
+          {matched.map((w) => (
+            <button key={w.slug} type="button" onClick={() => setSlug(w.slug)} className="row-button">
+              {w.title_ja || w.title}
+              <span className="text-xs text-muted">　{w.author_ja || w.author}</span>
+            </button>
+          ))}
+          {!loading && !failed && matched.length === 0 && (
+            <p className="text-xs text-muted leading-reading">{t.listSearchEmpty}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!chapter) {
+    return (
+      <div className="px-3">
+        <button type="button" onClick={() => setSlug(null)} className="back-button">
+          {t.commentaryBackToWorks}
+        </button>
+        <strong className="block text-sm my-3">{work ? work.title_ja || work.title : ""}</strong>
+        {failed && errorBox(retry)}
+        {loading && <p role="status" className="text-xs text-muted">{t.loading}</p>}
+        <div className="flex flex-col gap-1">
+          {(work?.chapters ?? []).map((c) => (
+            <div key={c.number} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setChapter({ number: c.number, title: c.title });
+                  setSections([]);
+                  void loadSections(c.number, 1);
+                }}
+                className="row-button flex-1"
+              >
+                {c.title || c.number}
+              </button>
+              {/* 章まるごとへの参照（講全体を指すときなど） */}
+              <button
+                type="button"
+                onClick={() => onInsert(buildMark({ kind: "inline", slug: `@${slug}`, chapter: c.number }))}
+                aria-label={`${c.title || c.number} ${t.citationInsertInline}`}
+                className="small-button"
+              >
+                {t.citationInsertInline}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const verses: Verse[] = sections.map((section) => ({
+    id: section.id,
+    chapter: String(chapter.number),
+    number: section.number,
+    text: section.heading ? `${section.heading}　${section.text}` : section.text,
+  }));
+  return (
+    <div className="px-3">
+      {sectionsFailed && errorBox(() => void loadSections(chapter.number, page === 1 ? 1 : page + 1))}
+      <VerseList
+        slug={`@${slug}`}
+        chapter={chapter.number}
+        translation={DEFAULT_TRANSLATION}
+        verses={verses}
+        loading={loadingSections && sections.length === 0}
+        onBack={() => {
+          setChapter(null);
+          setSections([]);
+        }}
+        onInsert={onInsert}
+        title={chapter.title || String(chapter.number)}
+      />
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => void loadSections(chapter.number, page + 1)}
+          disabled={loadingSections}
+          className="small-button mt-3"
+        >
+          {t.loadMore}
+        </button>
+      )}
     </div>
   );
 }

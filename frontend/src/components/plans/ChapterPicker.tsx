@@ -13,14 +13,17 @@ import { planUiText } from "@/components/plans/planUiText";
 import { readingHref } from "./ReadingChips";
 
 export type PickedChapter = {
-  book: string;
+  /** 聖書の章なら書の slug。解釈書の章なら null で work を使う。 */
+  book: string | null;
+  work?: string | null;
   book_name: string;
   chapter_number: number;
+  chapter_title?: string;
   translation: string;
 };
 
 /** すでにその日に入っている章。＋ を押せなくするために受け取る。 */
-export type PickedKey = { book: string; chapter_number: number };
+export type PickedKey = { book: string | null; work?: string | null; chapter_number: number };
 
 /**
  * その日に読む章を選ぶ。ジャンルか名前で書を絞り、書を選ぶと章が 1 行 1 章で並ぶ。
