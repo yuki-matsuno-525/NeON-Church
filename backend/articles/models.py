@@ -119,6 +119,17 @@ class ArticleCitation(BaseModel):
         "bible.CanonicalBook",
         on_delete=models.PROTECT,
         related_name="article_citations",
+        null=True,
+        blank=True,
+    )
+    # 解釈書の引用（印は [[@calvin-romans 8:3]] のように @ で始まる）。聖書の書とは排他。
+    # 章番号＝解釈書の章、節の範囲＝区切りの番号の範囲として使う。
+    commentary_work = models.ForeignKey(
+        "commentary.Work",
+        on_delete=models.PROTECT,
+        related_name="article_citations",
+        null=True,
+        blank=True,
     )
     chapter_number = models.PositiveSmallIntegerField()
     # 節の範囲。両方 NULL なら章まるごとへの参照。
@@ -139,10 +150,22 @@ class ArticleCitation(BaseModel):
                 fields=["canonical_book", "chapter_number", "verse_number_start"],
                 name="article_citation_location",
             ),
+            models.Index(
+                fields=["commentary_work", "chapter_number", "verse_number_start"],
+                name="article_citation_commentary",
+            ),
         ]
         constraints = [
             # 同じ印は記事ごとに1行だけ持つ（本文に2回出てきてもまとめる）。
             models.UniqueConstraint(fields=["article", "raw"], name="unique_article_citation_raw"),
+            # 引くのは「聖書の書」か「解釈書」のどちらか一方。
+            models.CheckConstraint(
+                condition=(
+                    models.Q(canonical_book__isnull=False, commentary_work__isnull=True)
+                    | models.Q(canonical_book__isnull=True, commentary_work__isnull=False)
+                ),
+                name="article_citation_one_book",
+            ),
         ]
 
     def __str__(self) -> str:

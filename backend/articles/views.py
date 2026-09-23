@@ -143,8 +143,9 @@ class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ArticleCitingListView(generics.ListAPIView):
     """
     GET /api/articles/citing/?book=<書のslug>&chapter=<章>&verse=<節>
+    GET /api/articles/citing/?work=<解釈書のslug>&chapter=<章>&verse=<区切り>
 
-    その節を引用している公開記事。節のページの「引用した記事」タブで使う。
+    その節（解釈書の区切り）を引用している公開記事。パネルの「引用した記事」タブで使う。
     """
 
     serializer_class = ArticleListSerializer
@@ -154,15 +155,14 @@ class ArticleCitingListView(generics.ListAPIView):
     def get_queryset(self):
         params = self.request.query_params
         book_slug = params.get("book")
+        work_slug = params.get("work")
         chapter = params.get("chapter")
         verse = params.get("verse")
-        if not book_slug or not chapter:
+        if not (book_slug or work_slug) or chapter in (None, ""):
             return Article.objects.none()
 
-        condition = Q(
-            citations__canonical_book__slug=book_slug,
-            citations__chapter_number=chapter,
-        )
+        where = {"citations__commentary_work__slug": work_slug} if work_slug else {"citations__canonical_book__slug": book_slug}
+        condition = Q(**where, citations__chapter_number=chapter)
         if verse:
             # 節の指定があるときは、その節を含む引用（範囲引用も含む）と章まるごとの参照を拾う。
             condition &= Q(

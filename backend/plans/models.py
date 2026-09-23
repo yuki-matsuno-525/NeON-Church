@@ -76,13 +76,26 @@ class PlanDay(BaseModel):
 
 
 class PlanDayReading(BaseModel):
-    """その日に読む章を1つ。訳非依存の書＋章番号で持つ。"""
+    """その日に読む章を1つ。訳非依存の書＋章番号で持つ。
+
+    聖書の章のほかに、解釈書の章（カルヴァン ローマ書注解の8章、内村の第41講など）も入れられる。
+    そのときは canonical_book の代わりに commentary_work を持つ（どちらか一方）。
+    """
 
     day = models.ForeignKey(PlanDay, on_delete=models.CASCADE, related_name="readings")
     canonical_book = models.ForeignKey(
         "bible.CanonicalBook",
         on_delete=models.PROTECT,
         related_name="plan_readings",
+        null=True,
+        blank=True,
+    )
+    commentary_work = models.ForeignKey(
+        "commentary.Work",
+        on_delete=models.PROTECT,
+        related_name="plan_readings",
+        null=True,
+        blank=True,
     )
     chapter_number = models.PositiveSmallIntegerField()
     # 訳の指定（Book.translation の値）。空なら読む人の訳で開く。
@@ -93,9 +106,20 @@ class PlanDayReading(BaseModel):
     class Meta:
         db_table = "plan_day_readings"
         ordering = ["order"]
+        constraints = [
+            # 読むのは「聖書の章」か「解釈書の章」のどちらか一方。
+            models.CheckConstraint(
+                condition=(
+                    models.Q(canonical_book__isnull=False, commentary_work__isnull=True)
+                    | models.Q(canonical_book__isnull=True, commentary_work__isnull=False)
+                ),
+                name="plan_reading_one_book",
+            ),
+        ]
 
     def __str__(self) -> str:
-        return f"{self.canonical_book.slug} {self.chapter_number}"
+        book = self.canonical_book.slug if self.canonical_book_id else f"@{self.commentary_work.slug}"
+        return f"{book} {self.chapter_number}"
 
 
 class PlanSubscription(BaseModel):

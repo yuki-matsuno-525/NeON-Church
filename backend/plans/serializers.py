@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from bible.editions import pick_edition
 from bible.models import CanonicalBook
+from commentary.models import CommentaryChapter, Work
 from .models import (
     MAX_DAYS_PER_PLAN,
     MAX_READINGS_PER_DAY,
@@ -17,13 +18,25 @@ from .progress import resync_day_progress_for_all_readers
 class PlanReadingSerializer(serializers.ModelSerializer):
     """
     その日に読む章1つ。入出力とも訳非依存の書 slug（例: "matthew"）でやりとりする。
+    解釈書の章なら book の代わりに work（解釈書の slug、例: "calvin-romans"）を使う。
     """
 
     book = serializers.SlugRelatedField(
         slug_field="slug",
         queryset=CanonicalBook.objects.all(),
         source="canonical_book",
+        required=False,
+        allow_null=True,
     )
+    work = serializers.SlugRelatedField(
+        slug_field="slug",
+        queryset=Work.objects.all(),
+        source="commentary_work",
+        required=False,
+        allow_null=True,
+    )
+    # 解釈書の章の題（「第41講　救いの完成（八）」など）。聖書の章では空。
+    chapter_title = serializers.SerializerMethodField()
     # 画面に出す書名（指定の訳、無ければ既定の訳のもの）。読むだけの情報。
     book_name = serializers.SerializerMethodField()
     # その章を読み終えたか。読んでいる人が取得したときだけ true / false が入る。
@@ -31,7 +44,9 @@ class PlanReadingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PlanDayReading
-        fields = ["id", "book", "book_name", "chapter_number", "translation", "order", "completed"]
+        fields = [
+            "id", "book", "work", "book_name", "chapter_number", "chapter_title", "translation", "order", "completed",
+        ]
         read_only_fields = ["id", "order", "completed"]
 
     def get_completed(self, obj) -> bool:
@@ -40,7 +55,29 @@ class PlanReadingSerializer(serializers.ModelSerializer):
             return False
         return obj.id in completed_reading_ids
 
+    def validate(self, data):
+        book, work = data.get("canonical_book"), data.get("commentary_work")
+        if (book is None) == (work is None):
+            raise serializers.ValidationError("book か work のどちらか一方を指定してください。")
+        if work is not None:
+            if not CommentaryChapter.objects.filter(work=work, number=data.get("chapter_number")).exists():
+                raise serializers.ValidationError({"chapter_number": "その解釈書にこの章はありません。"})
+            data["translation"] = ""  # 解釈書には訳が無い
+        return data
+
+    def get_chapter_title(self, obj) -> str:
+        if not obj.commentary_work_id:
+            return ""
+        cache = self.context.setdefault("_commentary_chapter_titles", {})
+        key = (obj.commentary_work_id, obj.chapter_number)
+        if key not in cache:
+            chapter = CommentaryChapter.objects.filter(work_id=obj.commentary_work_id, number=obj.chapter_number).first()
+            cache[key] = chapter.title if chapter else ""
+        return cache[key]
+
     def get_book_name(self, obj) -> str:
+        if obj.commentary_work_id:
+            return obj.commentary_work.title_ja or obj.commentary_work.title
         # 詳細・日編集の view は editions までまとめて prefetch する。章ごとに Book を
         # 引くと、長いプランほど問い合わせが直線的に増えるため、prefetch 済みの
         # related manager をそのまま使う。単体利用時は通常の queryset として動く。
@@ -92,13 +129,14 @@ class PlanDaySerializer(serializers.ModelSerializer):
         書いた人が題を直しただけで読者の印が消えるのは困るので、
         同じ章（書・章番号・訳が一致）はその行のまま残し、順番だけ付け直す。
         """
-        def key(book_id, chapter_number, translation):
-            return (str(book_id), chapter_number, translation or "")
+        def key(book_id, work_id, chapter_number, translation):
+            return (str(book_id), str(work_id), chapter_number, translation or "")
 
         existing_by_key = {}
         for existing in day.readings.all():
             existing_by_key.setdefault(
-                key(existing.canonical_book_id, existing.chapter_number, existing.translation),
+                key(existing.canonical_book_id, existing.commentary_work_id, existing.chapter_number,
+                    existing.translation),
                 [],
             ).append(existing)
 
@@ -107,7 +145,8 @@ class PlanDaySerializer(serializers.ModelSerializer):
         for order, reading in enumerate(readings):
             candidates = existing_by_key.get(
                 key(
-                    reading["canonical_book"].id,
+                    getattr(reading.get("canonical_book"), "id", None),
+                    getattr(reading.get("commentary_work"), "id", None),
                     reading["chapter_number"],
                     reading.get("translation", ""),
                 )

@@ -153,7 +153,7 @@ class PlanDetailView(generics.RetrieveUpdateDestroyAPIView):
                 Prefetch(
                     "days__readings",
                     queryset=PlanDayReading.objects.select_related(
-                        "canonical_book"
+                        "canonical_book", "commentary_work"
                     ).prefetch_related("canonical_book__editions"),
                 )
             )
@@ -244,7 +244,7 @@ class PlanDayDetailView(generics.RetrieveUpdateDestroyAPIView):
             Prefetch(
                 "readings",
                 queryset=PlanDayReading.objects.select_related(
-                    "canonical_book"
+                    "canonical_book", "commentary_work"
                 ).prefetch_related("canonical_book__editions"),
             )
         )

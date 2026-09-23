@@ -8,9 +8,12 @@
     訳の指定      {{matthew 6:16-18|greek}}  → 縦棒のあとに訳名
     1節だけ       [[matthew 6:16]]
     章まるごと    [[matthew 6]]            → 参照のみ。引用ブロックでは長すぎるので認めない
+    解釈書        [[@calvin-romans 8:3]]   → 解釈書の「章:区切り」。@ の後ろは解釈書の slug
+                  {{@uchimura-romans 41:2-3}} → 区切りの本文が出る
 
 先頭の "matthew" は訳に依らない書の slug（CanonicalBook.slug）。
 これにより、読む人がどの訳を使っていても同じ印が通用する。
+解釈書の印には訳の指定は無い（本文は1つしか無いため）。
 """
 
 import re
@@ -20,6 +23,8 @@ from django.db.models import Q
 
 from bible.editions import pick_edition
 from bible.models import Book, CanonicalBook, Verse
+from commentary.location import commentary_location_label
+from commentary.models import Section, Work
 
 # 本文から印を抜き出す。改行をまたぐ印は認めない（書きかけの括弧を拾わないため）。
 INLINE_MARK_PATTERN = re.compile(r"\[\[([^\[\]\n]+)\]\]")
@@ -27,7 +32,7 @@ BLOCK_MARK_PATTERN = re.compile(r"\{\{([^{}\n]+)\}\}")
 
 # 印の中身。例: "matthew 6:16-18|greek"
 REFERENCE_PATTERN = re.compile(
-    r"^\s*(?P<slug>[a-z0-9][a-z0-9\-_]*)"
+    r"^\s*(?P<commentary>@)?(?P<slug>[a-z0-9][a-z0-9\-_]*)"
     r"\s+(?P<chapter>\d{1,3})"
     r"(?::(?P<start>\d{1,3})(?:\s*-\s*(?P<end>\d{1,3}))?)?"
     r"(?:\s*\|\s*(?P<translation>[^|]+?))?\s*$"
@@ -78,7 +83,12 @@ def parse_reference(inner: str) -> dict | None:
         return None
 
     translation = (match.group("translation") or "").strip()
+    commentary = bool(match.group("commentary"))
+    # 解釈書には訳が無いので、訳の指定が付いた解釈書の印は読めないものとして扱う
+    if commentary and translation:
+        return None
     return {
+        "commentary": commentary,
         "book_slug": match.group("slug"),
         "chapter_number": int(match.group("chapter")),
         "verse_number_start": start,
@@ -98,11 +108,20 @@ def sync_citations(article) -> None:
 
     parsed = parse_body(article.body)
 
-    # 書の slug をまとめて引く。存在しない slug の印は索引に載せない。
-    slugs = {item["book_slug"] for item in parsed}
+    # 書（解釈書）の slug をまとめて引く。存在しない slug の印は索引に載せない。
+    slugs = {item["book_slug"] for item in parsed if not item["commentary"]}
     books_by_slug = {
         book.slug: book for book in CanonicalBook.objects.filter(slug__in=slugs)
     }
+    work_slugs = {item["book_slug"] for item in parsed if item["commentary"]}
+    works_by_slug = {work.slug: work for work in Work.objects.filter(slug__in=work_slugs)}
+
+    def target(item):
+        if item["commentary"]:
+            work = works_by_slug.get(item["book_slug"])
+            return {"commentary_work": work} if work else None
+        book = books_by_slug.get(item["book_slug"])
+        return {"canonical_book": book} if book else None
 
     article.citations.all().delete()
     ArticleCitation.objects.bulk_create(
@@ -111,15 +130,15 @@ def sync_citations(article) -> None:
                 article=article,
                 raw=item["raw"],
                 kind=item["kind"],
-                canonical_book=books_by_slug[item["book_slug"]],
                 chapter_number=item["chapter_number"],
                 verse_number_start=item["verse_number_start"],
                 verse_number_end=item["verse_number_end"],
                 translation=item["translation"],
                 order=item["order"],
+                **target(item),
             )
             for item in parsed
-            if item["book_slug"] in books_by_slug
+            if target(item) is not None
         ]
     )
 
@@ -134,6 +153,11 @@ def resolve_citations(citations) -> list[dict]:
     citations = list(citations)
     if not citations:
         return []
+
+    commentary_resolved = _resolve_commentary_citations([c for c in citations if c.commentary_work_id])
+    citations = [c for c in citations if not c.commentary_work_id]
+    if not citations:
+        return _in_body_order(commentary_resolved)
 
     editions = _editions_by_canonical_book(citations)
     chosen = {
@@ -166,6 +190,7 @@ def resolve_citations(citations) -> list[dict]:
 
         resolved.append(
             {
+                "_order": citation.order,
                 "raw": citation.raw,
                 "kind": citation.kind,
                 "found": True,
@@ -178,13 +203,73 @@ def resolve_citations(citations) -> list[dict]:
                 # 実際に使った訳。指定した訳が無かったときは既定の訳の名前が入る。
                 "translation": book.translation,
                 "verses": body_verses,
+                "commentary_work": "",
             }
         )
+    return _in_body_order(resolved + commentary_resolved)
+
+
+def _in_body_order(resolved: list[dict]) -> list[dict]:
+    """聖書と解釈書を別々に解決したので、本文に出てくる順へ並べ直す。"""
+    return sorted(resolved, key=lambda item: item.pop("_order", 0))
+
+
+def _resolve_commentary_citations(citations) -> list[dict]:
+    """解釈書の引用を、画面に出せる形（場所の名前・区切りの本文つき）に変える。"""
+    if not citations:
+        return []
+    condition = Q()
+    for citation in citations:
+        if citation.kind == citation.KIND_BLOCK and citation.verse_number_start is not None:
+            condition |= Q(
+                work_id=citation.commentary_work_id,
+                chapter_number=citation.chapter_number,
+                number__gte=citation.verse_number_start,
+                number__lte=citation.verse_number_end,
+            )
+    sections = defaultdict(list)
+    if condition:
+        for section in Section.objects.filter(condition).order_by("number"):
+            sections[(section.work_id, section.chapter_number)].append(section)
+
+    cache: dict = {}
+    resolved = []
+    for citation in citations:
+        body = []
+        if citation.kind == citation.KIND_BLOCK:
+            body = [
+                {"number": s.number, "text": s.text}
+                for s in sections.get((citation.commentary_work_id, citation.chapter_number), [])
+                if citation.verse_number_start <= s.number <= citation.verse_number_end
+            ]
+        found = citation.kind != citation.KIND_BLOCK or bool(body)
+        place = commentary_location_label(citation.commentary_work_id, citation.chapter_number, None, cache)
+        numbers = ""
+        if citation.verse_number_start is not None:
+            numbers = f"{citation.verse_number_start}"
+            if citation.verse_number_end and citation.verse_number_end != citation.verse_number_start:
+                numbers += f"–{citation.verse_number_end}"
+        resolved.append({
+            "_order": citation.order,
+            "raw": citation.raw,
+            "kind": citation.kind,
+            "found": found,
+            "label": (f"{place} › {numbers}" if numbers else place) if found else citation.raw,
+            "book_slug": "",
+            "book_name": "",
+            "chapter_number": citation.chapter_number,
+            "verse_number_start": citation.verse_number_start,
+            "verse_number_end": citation.verse_number_end,
+            "translation": "",
+            "verses": body,
+            "commentary_work": citation.commentary_work.slug,
+        })
     return resolved
 
 
 def _not_found(citation) -> dict:
     return {
+        "_order": citation.order,
         "raw": citation.raw,
         "kind": citation.kind,
         "found": False,
@@ -196,6 +281,7 @@ def _not_found(citation) -> dict:
         "verse_number_end": citation.verse_number_end,
         "translation": citation.translation,
         "verses": [],
+        "commentary_work": "",
     }
 
 

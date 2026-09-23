@@ -56,7 +56,7 @@ class ArticleDetailSerializer(ArticleListSerializer):
         fields = ArticleListSerializer.Meta.fields + ["body", "citations"]
 
     def get_citations(self, obj) -> list[dict]:
-        return resolve_citations(obj.citations.select_related("canonical_book"))
+        return resolve_citations(obj.citations.select_related("canonical_book", "commentary_work"))
 
 
 class ArticleWriteSerializer(serializers.ModelSerializer):
@@ -75,7 +75,7 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "summary", "body", "visibility", "tag_ids", "citations"]
 
     def get_citations(self, obj) -> list[dict]:
-        return resolve_citations(obj.citations.select_related("canonical_book"))
+        return resolve_citations(obj.citations.select_related("canonical_book", "commentary_work"))
 
     def validate_title(self, value: str) -> str:
         cleaned = _clean_text(value, 200, "題")
