@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getBookBySlug, isValidSlug, chapterTitle, firstChapterOf, chapterNumbersOf, adjacentChapter } from "./books";
+import { getBookBySlug, isValidSlug, chapterTitle, firstChapterOf, chapterNumbersOf, adjacentChapter, bookNote } from "./books";
 
 describe("getBookBySlug", () => {
   it("有効なスラッグでbookオブジェクトを返す", () => {
@@ -109,5 +109,17 @@ describe("isValidSlug", () => {
 
   it.each(["not-a-real-book", "", "MATTHEW", "マタイ"])("%s はfalse", (slug) => {
     expect(isValidSlug(slug)).toBe(false);
+  });
+});
+
+describe("bookNote", () => {
+  it("Q資料には、復元された文書だという注記が日英である", () => {
+    expect(bookNote("quelle", "ja")).toContain("写本が1つも残っていない");
+    expect(bookNote("quelle", "en")).toContain("No manuscript of Q survives");
+  });
+
+  it("写本が残る書や知らない slug には注記を付けない", () => {
+    expect(bookNote("matthew", "ja")).toBeUndefined();
+    expect(bookNote("nope", "en")).toBeUndefined();
   });
 });

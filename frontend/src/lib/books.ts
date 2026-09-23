@@ -107,8 +107,14 @@ export const BOOKS = [
   // Q は写本が1つも残っていない（マタイとルカから復元された仮説上の書）ため、章節は
   // 慣例に従いルカの番号をそのまま使う。Q はルカ全体には対応しないので章は飛び飛びで、
   // 1 からも始まらない。chapterNumbers に実在する章だけを持たせている。
+  // note は書のページの題名の下に出す一言。写本が残る書と同じ並びに置くので、
+  // 「現存する書ではなく学者による復元である」ことだけは読む前に伝えておく。
   { slug: "quelle", name: "Q資料", englishName: "The Gospel of Q", short: "Q", totalChapters: 22, genre: "福音書" as BookGenre,
     chapterNumbers: [3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 22],
+    note: {
+      ja: "Q資料は写本が1つも残っていない仮説上の文書です。マタイとルカに共通する言葉から学者が復元したもので、章と節はルカの番号に合わせています。",
+      en: "No manuscript of Q survives. It is a hypothetical text reconstructed by scholars from sayings shared by Matthew and Luke; chapter and verse numbers follow Luke.",
+    },
     translations: [{ id: "Mark M. Mattison (EN)", name: "The Gospel of Q" }] },
   // トマスの福音書も Mark M. Mattison 英訳のみ（パブリックドメイン）。底本は NHC II,2。
   // 語録集で "トマス114" のように語番号で引用されるため、章番号＝語番号にしている。
@@ -549,6 +555,15 @@ export function firstChapterOf(slug: string): number {
   const book = getBookBySlug(slug);
   if (book && "chapterNumbers" in book) return book.chapterNumbers[0];
   return book && "firstChapter" in book ? book.firstChapter : 1;
+}
+
+/**
+ * 書のページの題名の下に出す注記。持たない書（ほとんど）は undefined。
+ */
+export function bookNote(slug: string, lang: "ja" | "en"): string | undefined {
+  const book = getBookBySlug(slug);
+  if (!book || !("note" in book)) return undefined;
+  return book.note[lang];
 }
 
 /**

@@ -12,7 +12,7 @@ import {
   type Bookmark,
 } from "@/lib/api";
 import { getLocalProgress } from "@/lib/readingProgress";
-import { getBookBySlug, resolveTranslation, chapterTitle } from "@/lib/books";
+import { getBookBySlug, resolveTranslation, chapterTitle, bookNote } from "@/lib/books";
 import { resolveVersionBookIds } from "@/lib/versions";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { BookmarkStar } from "@/components/ui/BookmarkStar";
@@ -35,6 +35,7 @@ function BookContent() {
   const slug = typeof params.book === "string" ? params.book : "";
   const meta = getBookBySlug(slug);
   const label = useBookLabel(slug);
+  const note = bookNote(slug, lang);
 
   const { user } = useAuth();
   const toast = useToast();
@@ -152,7 +153,7 @@ function BookContent() {
       </div>
     <div className="page page-wide">
 
-      <div className="flex items-center gap-1 mb-6">
+      <div className={`flex items-center gap-1 ${note ? "mb-2" : "mb-6"}`}>
         <h1 className="text-xl font-bold m-0">
           {label?.name ?? meta.name}
         </h1>
@@ -165,6 +166,9 @@ function BookContent() {
           />
         )}
       </div>
+
+      {/* Q資料のように、読む前に知っておいてほしいことがある書だけに出す */}
+      {note && <p className="mb-6 text-sm leading-reading text-muted">{note}</p>}
 
       {(bookmarkLoadError || versionError) && (
         <div role="alert" className="mb-4 flex flex-wrap items-center gap-3">
