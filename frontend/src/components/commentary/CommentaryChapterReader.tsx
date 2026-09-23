@@ -15,7 +15,16 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
-import { COMMENTARY_INDEX_HREF, SECTION_PAGE_SIZE, commentaryLinkHref, commentaryLinkLabel } from "@/lib/commentary";
+import {
+  COMMENTARY_INDEX_HREF,
+  SECTION_PAGE_SIZE,
+  chapterName,
+  commentaryLinkHref,
+  commentaryLinkLabel,
+  workByline,
+  workTitle as workTitleIn,
+} from "@/lib/commentary";
+import { saveCommentaryProgress } from "@/lib/commentaryProgress";
 import { Breadcrumb } from "@/components/list";
 import { LoadMoreButton } from "@/components/ui";
 import { ChapterComments } from "@/components/reader/ChapterComments";
@@ -40,13 +49,29 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
   const { lang } = useLang();
   const { user } = useAuth();
   const work = chapter.work;
-  const workTitle = work.title_ja || work.title;
+  const workTitle = workTitleIn(work, lang);
+  const chapterTitle = chapterName(chapter, lang);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  // この章のお気に入り（章そのものと、区切りのもの）。星とパネルで同じものを使い、取りに行くのは1回だけ。
+  const [bookmarks, setBookmarks] = useState<Bookmark[] | null>(null);
 
   const sections = usePagedSections(work.slug, chapter.number, initial, initialPage);
 
-  // この章の区切りに付いたお気に入り（パネルの星に使う）。
+  // 読んだ場所を残す（「読む」の解釈書タブの「続きから読む」と、書のページの印に使う）。
+  // 章を開いたとき、区切りを選んだとき。区切りは選ばれたものか、#s- で飛んできたもの。
+  const selectedNumber = sections.items.find((s) => s.id === selectedId)?.number ?? null;
+  useEffect(() => {
+    const fromHash = window.location.hash.match(/^#s-(\d+)$/);
+    saveCommentaryProgress({
+      work: work.slug,
+      chapter: chapter.number,
+      number: selectedNumber ?? (fromHash ? Number(fromHash[1]) : null),
+      title: { ja: workTitleIn(work, "ja"), en: workTitleIn(work, "en") },
+      chapterTitle: { ja: chapterName(chapter, "ja"), en: chapterName(chapter, "en") },
+    });
+  }, [work, chapter, selectedNumber]);
+
+  // この章のお気に入り（章の星とパネルの星に使う）。
   useEffect(() => {
     if (!user) return;
     let alive = true;
@@ -72,7 +97,8 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
     () => (selected ? { id: selected.id, chapter: String(chapter.number), number: selected.number, text: selected.text } : null),
     [selected, chapter.number],
   );
-  const sectionBookmarks = bookmarks.filter((bm) => bm.commentary_reference?.number != null);
+  const sectionBookmarks = (bookmarks ?? []).filter((bm) => bm.commentary_reference?.number != null);
+  const chapterBookmarks = bookmarks?.filter((bm) => bm.commentary_reference?.number == null) ?? null;
 
   return (
     <div className="min-h-page">
@@ -81,7 +107,7 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
           items={[
             { label: t.commentary, href: COMMENTARY_INDEX_HREF },
             { label: workTitle, href: `/commentary/${work.slug}` },
-            { label: chapter.title || String(chapter.number) },
+            { label: chapterTitle || String(chapter.number) },
           ]}
         />
         <div className="reader-header-actions flex items-center gap-2">
@@ -97,10 +123,19 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
       <div className={`reader-wrapper${selectedVerse ? " has-verse" : ""}`}>
         <div className="reader-main">
           <div className="flex items-center gap-1 mb-2">
-            <h1 className="text-xl font-bold m-0 text-balance">{chapter.title || `${workTitle} ${chapter.number}`}</h1>
-            <CommentaryBookmarkStar place={{ work: work.slug, chapter: chapter.number }} />
+            <h1 className="text-xl font-bold m-0 text-balance">{chapterTitle || `${workTitle} ${chapter.number}`}</h1>
+            <CommentaryBookmarkStar
+              place={{ work: work.slug, chapter: chapter.number }}
+              bookmarks={chapterBookmarks}
+              onChange={(updated) =>
+                setBookmarks((prev) => [
+                  ...(prev ?? []).filter((bm) => bm.commentary_reference?.number != null),
+                  ...(updated ? [updated] : []),
+                ])
+              }
+            />
           </div>
-          <div className="mb-4 text-sm text-muted">{work.author_ja || work.author}『{workTitle}』</div>
+          <div className="mb-4 text-sm text-muted">{workByline(work, lang)}</div>
 
           <LinkChips links={chapter.links} lang={lang} />
 
@@ -140,10 +175,10 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
               chapterNumber={chapter.number}
               onClose={() => setSelectedId(null)}
               commentaryPlace={{ work: work.slug, chapter: chapter.number, number: selected.number }}
-              headerLabel={`${chapter.title || chapter.number} › ${selected.number}`}
+              headerLabel={`${chapterTitle || chapter.number} › ${selected.number}`}
               verseBookmarks={sectionBookmarks}
               onVerseBookmarksChange={(updated) =>
-                setBookmarks((prev) => [...prev.filter((bm) => bm.commentary_reference?.number == null), ...updated])
+                setBookmarks((prev) => [...(prev ?? []).filter((bm) => bm.commentary_reference?.number == null), ...updated])
               }
             />
           </div>

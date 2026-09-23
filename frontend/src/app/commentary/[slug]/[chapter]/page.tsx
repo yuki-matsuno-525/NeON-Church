@@ -1,18 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, type CommentaryChapterDetail, type CommentarySection, type ListPage } from "@/lib/api";
-import { serverFetch, serverFetchPage } from "@/lib/apiServer";
-import { getT } from "@/lib/i18nServer";
+import { serverFetchPublic } from "@/lib/apiServer";
+import { getRequestLanguage, getT } from "@/lib/i18nServer";
 import { CommentaryChapterReader } from "@/components/commentary/CommentaryChapterReader";
-import { SECTION_PAGE_SIZE } from "@/lib/commentary";
+import { SECTION_PAGE_SIZE, chapterName, workTitle } from "@/lib/commentary";
 
 type Params = Promise<{ slug: string; chapter: string }>;
+
+// 解釈書の中身は seed を入れ直したときにしか変わらない。誰が見ても同じなので、1時間は取り置きを使う。
+// （お気に入りなど人によって違うものは、画面側で別に取る）
+const CHAPTER_REVALIDATE_SECONDS = 3600;
+
+function fetchChapter(slug: string, chapter: number) {
+  return serverFetchPublic<CommentaryChapterDetail>(
+    `/commentary/works/${slug}/chapters/${chapter}/`,
+    CHAPTER_REVALIDATE_SECONDS,
+  );
+}
+
+/** 区切りの1ページ。useLoadMore などと同じ形（ListPage）にして返す。 */
+async function fetchSectionPage(slug: string, chapter: number, page: number): Promise<ListPage<CommentarySection>> {
+  const data = await serverFetchPublic<{ results: CommentarySection[]; count: number; next: string | null }>(
+    `/commentary/works/${slug}/chapters/${chapter}/sections/?page=${page}&page_size=${SECTION_PAGE_SIZE}`,
+    CHAPTER_REVALIDATE_SECONDS,
+  );
+  return { results: data.results, count: data.count, hasMore: data.next !== null, counts: undefined };
+}
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug, chapter } = await params;
   try {
-    const detail = await serverFetch<CommentaryChapterDetail>(`/commentary/works/${slug}/chapters/${Number(chapter)}/`);
-    const title = `${detail.work.title_ja || detail.work.title} ${detail.title}`;
+    const detail = await fetchChapter(slug, Number(chapter));
+    const lang = await getRequestLanguage();
+    const title = `${workTitle(detail.work, lang)} ${chapterName(detail, lang)}`;
     return { title, openGraph: { title }, twitter: { title } };
   } catch {
     return {};
@@ -42,10 +63,8 @@ export default async function CommentaryChapterPage({
   let loaded: [CommentaryChapterDetail, ListPage<CommentarySection>];
   try {
     loaded = await Promise.all([
-      serverFetch<CommentaryChapterDetail>(`/commentary/works/${slug}/chapters/${chapterNumber}/`),
-      serverFetchPage<CommentarySection>(
-        `/commentary/works/${slug}/chapters/${chapterNumber}/sections/?page=${page}&page_size=${SECTION_PAGE_SIZE}`,
-      ),
+      fetchChapter(slug, chapterNumber),
+      fetchSectionPage(slug, chapterNumber, page),
     ]);
   } catch (reason) {
     const notFound = reason instanceof ApiError && reason.status === 404;

@@ -1,19 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, type CommentaryWorkDetail } from "@/lib/api";
-import { serverFetch } from "@/lib/apiServer";
-import { getT } from "@/lib/i18nServer";
+import { serverFetchPublic } from "@/lib/apiServer";
+import { getRequestLanguage, getT } from "@/lib/i18nServer";
 import { Breadcrumb } from "@/components/list";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { CommentaryBookmarkStar } from "@/components/commentary/CommentaryBookmarkStar";
+import { CommentaryChapterBoard } from "@/components/commentary/CommentaryChapterBoard";
 import styles from "@/components/commentary/Commentary.module.css";
-import { COMMENTARY_INDEX_HREF } from "@/lib/commentary";
+import { COMMENTARY_INDEX_HREF, workAuthor, workByline, workNote, workTitle } from "@/lib/commentary";
+
+// 解釈書の中身は seed を入れ直したときにしか変わらない。誰が見ても同じなので、1時間は取り置きを使う。
+const WORK_REVALIDATE_SECONDS = 3600;
+
+/** 解釈書1冊（章の一覧つき）。同じ描画の中の generateMetadata と本体で1回の取得にまとまる。 */
+function fetchWork(slug: string) {
+  return serverFetchPublic<CommentaryWorkDetail>(`/commentary/works/${slug}/`, WORK_REVALIDATE_SECONDS);
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const work = await serverFetch<CommentaryWorkDetail>(`/commentary/works/${slug}/`);
-    const title = `${work.author_ja || work.author}『${work.title_ja || work.title}』`;
+    const work = await fetchWork(slug);
+    const title = workByline(work, await getRequestLanguage());
     return { title, openGraph: { title }, twitter: { title } };
   } catch {
     return {};
@@ -32,10 +41,11 @@ function isNumberedByBibleChapter(work: CommentaryWorkDetail): boolean {
 export default async function CommentaryWorkPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = await getT();
+  const lang = await getRequestLanguage();
 
   let work: CommentaryWorkDetail;
   try {
-    work = await serverFetch<CommentaryWorkDetail>(`/commentary/works/${slug}/`);
+    work = await fetchWork(slug);
   } catch (reason) {
     const notFound = reason instanceof ApiError && reason.status === 404;
     return (
@@ -46,7 +56,9 @@ export default async function CommentaryWorkPage({ params }: { params: Promise<{
     );
   }
 
-  const title = work.title_ja || work.title;
+  const title = workTitle(work, lang);
+  // 題の下に添える、もう一方の言語の題（原題または和題）
+  const otherTitle = lang === "en" ? work.title_ja : work.title;
   const numbered = isNumberedByBibleChapter(work);
 
   return (
@@ -66,8 +78,10 @@ export default async function CommentaryWorkPage({ params }: { params: Promise<{
             <CommentaryBookmarkStar place={{ work: work.slug }} />
           </div>
           <div className="text-sm text-muted">
-            {work.author_ja || work.author}
-            {work.title_ja && work.title !== work.title_ja && <span lang={work.language}>　{work.title}</span>}
+            {workAuthor(work, lang)}
+            {otherTitle && otherTitle !== title && (
+              <span lang={lang === "en" ? "ja" : work.language}>　{otherTitle}</span>
+            )}
           </div>
           {!work.readable && <p className="m-0 text-sm text-muted">{t.commentaryExcerptsNote}</p>}
           <dl className={styles.sourceBox}>
@@ -80,44 +94,20 @@ export default async function CommentaryWorkPage({ params }: { params: Promise<{
             {work.translator && (
               <>
                 <dt>{t.commentaryTranslator}</dt>
-                <dd>{work.translator}</dd>
+                <dd>{workNote(work.translator, work.translator_en, lang)}</dd>
               </>
             )}
             <dt>{t.commentaryLicense}</dt>
             <dd>
               {t.commentaryLicenses[work.license] ?? work.license}
-              {work.license_note && `\n${work.license_note}`}
+              {work.license_note && `\n${workNote(work.license_note, work.license_note_en, lang)}`}
             </dd>
           </dl>
         </header>
 
         <h2 className="text-sm font-bold text-muted mb-3">{t.selectChapterHeading}</h2>
 
-        {numbered ? (
-          <div className="chapter-board">
-            {work.chapters.map((chapter) => (
-              <Link
-                key={chapter.number}
-                href={`/commentary/${work.slug}/${chapter.number}`}
-                title={chapter.title}
-                className="chapter-cell"
-              >
-                {chapter.number}
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <ol className={styles.chapterList}>
-            {work.chapters.map((chapter) => (
-              <li key={chapter.number}>
-                <Link href={`/commentary/${work.slug}/${chapter.number}`} className={styles.chapterItem}>
-                  <span>{chapter.title || chapter.number}</span>
-                  <span className={styles.chapterItemCount}>{t.commentarySectionCount(chapter.section_count)}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        )}
+        <CommentaryChapterBoard work={work.slug} chapters={work.chapters} numbered={numbered} />
 
         <ChapterComments commentary={{ work: work.slug }} label={t.bookCommentsHeading} />
       </div>

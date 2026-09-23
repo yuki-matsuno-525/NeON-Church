@@ -106,4 +106,16 @@ describe("解釈書の章のページ", () => {
     await screen.findByText("三");
     expect(screen.getAllByTestId("commentary-section").map((el) => el.textContent)).toEqual(["1一", "2二", "3三"]);
   });
+
+  it("開いた章と選んだ区切りを、続きから読むための控えに残す", async () => {
+    localStorage.clear();
+    render(<CommentaryChapterReader chapter={{ ...chapter, title_en: "Lecture 41" }} initial={page([section(1, "一"), section(2, "二")])} initialPage={1} />);
+    const { getLastCommentary } = await import("@/lib/commentaryProgress");
+    expect(getLastCommentary()).toMatchObject({
+      work: "uchimura-romans", chapter: 41, number: null,
+      title: { ja: "ロマ書の研究", en: "羅馬書之研究" }, chapterTitle: { ja: "第41講　救いの完成（八）", en: "Lecture 41" },
+    });
+    fireEvent.click(screen.getAllByTestId("commentary-section")[1]);
+    await waitFor(() => expect(getLastCommentary()?.number).toBe(2));
+  });
 });
