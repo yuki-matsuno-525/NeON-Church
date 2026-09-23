@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { commentaryLinkHref, commentaryLinkLabel, commentaryPlaceHref, commentarySectionHref } from "./commentary";
+import {
+  chapterName,
+  commentaryLinkHref,
+  commentaryLinkLabel,
+  commentaryPlaceHref,
+  commentarySectionHref,
+  workByline,
+  workNote,
+  workTitle,
+} from "./commentary";
 import type { CommentaryLink } from "./types";
 
 const link = (overrides: Partial<CommentaryLink>): CommentaryLink => ({
@@ -32,5 +41,24 @@ describe("解釈書の箇所の書き方", () => {
     // 章（講）そのものなら章のページ
     expect(commentarySectionHref("uchimura-romans", 41, null)).toBe("/commentary/uchimura-romans/41");
     expect(commentaryPlaceHref({ work: "uchimura-romans" })).toBe("/commentary/uchimura-romans");
+  });
+});
+
+describe("画面の言語での名前", () => {
+  const work = { title: "Studies in Romans", title_ja: "ロマ書の研究", author: "Uchimura Kanzō", author_ja: "内村鑑三" };
+
+  it("日本語の画面は日本語、英語の画面は英語（日本語の本は英題）", () => {
+    expect(workTitle(work, "ja")).toBe("ロマ書の研究");
+    expect(workTitle(work, "en")).toBe("Studies in Romans");
+    expect(workByline(work, "ja")).toBe("内村鑑三『ロマ書の研究』");
+    expect(workByline(work, "en")).toBe("Uchimura Kanzō, Studies in Romans");
+  });
+
+  it("片方しか無ければ、あるほうを出す", () => {
+    expect(workTitle({ title: "City of God", title_ja: "" }, "ja")).toBe("City of God");
+    expect(chapterName({ title: "第1講", title_en: "" }, "en")).toBe("第1講");
+    expect(chapterName({ title: "第1講", title_en: "Lecture 1" }, "en")).toBe("Lecture 1");
+    expect(workNote("注記", undefined, "en")).toBe("注記");
+    expect(workNote("注記", "Note", "en")).toBe("Note");
   });
 });

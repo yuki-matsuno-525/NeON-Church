@@ -3,7 +3,8 @@
 import Link from "next/link";
 import type { CommentaryEntry } from "@/lib/api";
 import { useT } from "@/lib/i18n";
-import { commentarySectionHref } from "@/lib/commentary";
+import { useLang } from "@/contexts/LanguageContext";
+import { chapterName, commentarySectionHref, workAuthor, workTitle } from "@/lib/commentary";
 import styles from "./Commentary.module.css";
 
 type Props = {
@@ -17,7 +18,9 @@ type Props = {
  */
 export function CommentaryEntryCard({ entry }: Props) {
   const t = useT();
+  const { lang } = useLang();
   const { work } = entry;
+  const chapterTitle = chapterName({ title: entry.chapter_title, title_en: entry.chapter_title_en }, lang);
   const isAi = entry.method === "ai";
 
   return (
@@ -32,11 +35,11 @@ export function CommentaryEntryCard({ entry }: Props) {
           </span>
         )}
       </div>
-      <div className={styles.author}>{work.author_ja || work.author}</div>
+      <div className={styles.author}>{workAuthor(work, lang)}</div>
       <div className={styles.workTitle}>
-        {work.title_ja || work.title}
+        {workTitle(work, lang)}
         {/* 区切りなら「章の題 › 見出し」、章（講）そのものなら章の題だけ */}
-        {entry.chapter_title && ` — ${entry.chapter_title}`}
+        {chapterTitle && ` — ${chapterTitle}`}
         {entry.number != null && entry.heading && ` › ${entry.heading}`}
       </div>
       <p className={styles.excerpt} lang={work.language}>

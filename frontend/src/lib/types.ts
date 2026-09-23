@@ -456,10 +456,13 @@ export type CommentaryWorkBrief = {
 
 export type CommentaryWork = CommentaryWorkBrief & {
   translator: string;
+  /** 英語の画面で出す訳者・権利の説明（無ければ空） */
+  translator_en?: string;
   source_name: string;
   source_url: string;
   license: string;
   license_note: string;
+  license_note_en?: string;
   /** true = 頭から通して読める本 / false = 節ごとの抜粋集 */
   readable: boolean;
   section_count: number | null;
@@ -467,7 +470,7 @@ export type CommentaryWork = CommentaryWorkBrief & {
 };
 
 /** 解釈書の章（書のページの章の選択に並べる）。 */
-export type CommentaryChapterBrief = { number: number; title: string; section_count: number };
+export type CommentaryChapterBrief = { number: number; title: string; title_en?: string; section_count: number };
 
 /** 解釈書の書のページ用。 */
 export type CommentaryWorkDetail = CommentaryWork & { chapters: CommentaryChapterBrief[] };
@@ -476,6 +479,8 @@ export type CommentaryWorkDetail = CommentaryWork & { chapters: CommentaryChapte
 export type CommentaryChapterDetail = {
   number: number;
   title: string;
+  /** 英語の画面で出す章の名前（無ければ空） */
+  title_en?: string;
   work: CommentaryWork;
   /** 章そのもの（講など）が論じる聖書の箇所 */
   links: CommentaryLink[];
@@ -517,6 +522,7 @@ export type CommentaryEntry = {
   chapter_number: number;
   number: number | null;
   chapter_title: string;
+  chapter_title_en?: string;
   heading: string;
   excerpt: string;
   truncated: boolean;

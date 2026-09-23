@@ -13,7 +13,7 @@ import {
   type Verse,
 } from "@/lib/api";
 import { matchCommentaryWork, useCommentaryWorks } from "@/hooks/useCommentaryWorks";
-import { SECTION_PAGE_SIZE } from "@/lib/commentary";
+import { SECTION_PAGE_SIZE, chapterName, workAuthor, workTitle } from "@/lib/commentary";
 import { BOOKS, getBookBySlug } from "@/lib/books";
 import { DEFAULT_TRANSLATION, translationLabel } from "@/lib/translations";
 import { bookLabel, useT } from "@/lib/i18n";
@@ -580,6 +580,7 @@ function CommentaryBookmarkCard({ bookmark, onInsert }: { bookmark: Bookmark; on
  */
 function CommentaryTab({ onInsert }: { onInsert: (mark: string) => void }) {
   const t = useT();
+  const { lang } = useLang();
   const [keyword, setKeyword] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
   const [chapter, setChapter] = useState<{ number: number; title: string } | null>(null);
@@ -630,8 +631,8 @@ function CommentaryTab({ onInsert }: { onInsert: (mark: string) => void }) {
         <div className="flex flex-col gap-1 mt-3">
           {matched.map((w) => (
             <button key={w.slug} type="button" onClick={() => setSlug(w.slug)} className="row-button">
-              {w.title_ja || w.title}
-              <span className="text-xs text-muted">　{w.author_ja || w.author}</span>
+              {workTitle(w, lang)}
+              <span className="text-xs text-muted">　{workAuthor(w, lang)}</span>
             </button>
           ))}
           {!loading && !failed && matched.length === 0 && (
@@ -648,7 +649,7 @@ function CommentaryTab({ onInsert }: { onInsert: (mark: string) => void }) {
         <button type="button" onClick={() => setSlug(null)} className="back-button">
           {t.commentaryBackToWorks}
         </button>
-        <strong className="block text-sm my-3">{work ? work.title_ja || work.title : ""}</strong>
+        <strong className="block text-sm my-3">{work ? workTitle(work, lang) : ""}</strong>
         {failed && errorBox(retry)}
         {loading && <p role="status" className="text-xs text-muted">{t.loading}</p>}
         <div className="flex flex-col gap-1">
@@ -657,19 +658,19 @@ function CommentaryTab({ onInsert }: { onInsert: (mark: string) => void }) {
               <button
                 type="button"
                 onClick={() => {
-                  setChapter({ number: c.number, title: c.title });
+                  setChapter({ number: c.number, title: chapterName(c, lang) });
                   setSections([]);
                   void loadSections(c.number, 1);
                 }}
                 className="row-button flex-1"
               >
-                {c.title || c.number}
+                {chapterName(c, lang) || c.number}
               </button>
               {/* 章まるごとへの参照（講全体を指すときなど） */}
               <button
                 type="button"
                 onClick={() => onInsert(buildMark({ kind: "inline", slug: `@${slug}`, chapter: c.number }))}
-                aria-label={`${c.title || c.number} ${t.citationInsertInline}`}
+                aria-label={`${chapterName(c, lang) || c.number} ${t.citationInsertInline}`}
                 className="small-button"
               >
                 {t.citationInsertInline}

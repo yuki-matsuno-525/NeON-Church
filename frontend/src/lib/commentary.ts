@@ -55,3 +55,36 @@ export function commentaryLinkHref(link: CommentaryLink): string {
     source_translation: "",
   });
 }
+
+/* ----- 画面の言語での名前 -----
+   解釈書の題・著者・章の名前は日本語と英語の両方を持っている。英語の画面では英語（日本語の本は英題）、
+   日本語の画面では日本語の名前を出す。片方しか無いときは、あるほうを出す。 */
+
+type WorkNames = { title: string; title_ja: string; author: string; author_ja: string };
+
+/** 解釈書の題。 */
+export function workTitle(work: Pick<WorkNames, "title" | "title_ja">, lang: string): string {
+  return lang === "en" ? work.title || work.title_ja : work.title_ja || work.title;
+}
+
+/** 解釈書の著者。 */
+export function workAuthor(work: Pick<WorkNames, "author" | "author_ja">, lang: string): string {
+  return lang === "en" ? work.author || work.author_ja : work.author_ja || work.author;
+}
+
+/** 「著者『題』」（英語は「Author, Title」）。 */
+export function workByline(work: WorkNames, lang: string): string {
+  const author = workAuthor(work, lang);
+  const title = workTitle(work, lang);
+  return lang === "en" ? `${author}, ${title}` : `${author}『${title}』`;
+}
+
+/** 章の名前。英語の名前が無い章は元の名前のまま。 */
+export function chapterName(chapter: { title: string; title_en?: string }, lang: string): string {
+  return lang === "en" && chapter.title_en ? chapter.title_en : chapter.title;
+}
+
+/** 訳者・権利の説明。英語版が無ければ日本語のまま。 */
+export function workNote(ja: string, en: string | undefined, lang: string): string {
+  return lang === "en" && en ? en : ja;
+}

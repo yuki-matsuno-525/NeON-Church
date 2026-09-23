@@ -4,7 +4,8 @@ import Link from "next/link";
 import type { PassageCommentaryState } from "@/hooks/usePassageCommentary";
 import type { CommentaryEntry } from "@/lib/api";
 import { useT } from "@/lib/i18n";
-import { commentarySectionHref } from "@/lib/commentary";
+import { useLang } from "@/contexts/LanguageContext";
+import { chapterName, commentarySectionHref, workByline } from "@/lib/commentary";
 import { LoadMoreButton } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { CommentaryEntryCard } from "./CommentaryEntryCard";
@@ -22,8 +23,8 @@ function matches(entry: CommentaryEntry, filter?: { tradition: string; query: st
   if (filter.tradition && entry.work.tradition !== filter.tradition) return false;
   if (!filter.query) return true;
   const { work } = entry;
-  return [work.author, work.author_ja, work.title, work.title_ja, entry.chapter_title, entry.heading, entry.excerpt]
-    .some((value) => value.toLowerCase().includes(filter.query));
+  return [work.author, work.author_ja, work.title, work.title_ja, entry.chapter_title, entry.chapter_title_en ?? "",
+    entry.heading, entry.excerpt].some((value) => value.toLowerCase().includes(filter.query));
 }
 
 /**
@@ -37,6 +38,7 @@ function matches(entry: CommentaryEntry, filter?: { tradition: string; query: st
  */
 export function PassageCommentary({ state, filter }: Props) {
   const t = useT();
+  const { lang } = useLang();
   const { discuss, broad, mention } = state;
   const discussItems = discuss.items.filter((entry) => matches(entry, filter));
   const broadItems = broad.items.filter((entry) => matches(entry, filter));
@@ -75,8 +77,8 @@ export function PassageCommentary({ state, filter }: Props) {
           <h3 className={styles.broadTitle}>{t.commentaryBroadTitle}</h3>
           {broadItems.map((entry) => (
             <Link key={entry.id} href={commentarySectionHref(entry.work.slug, entry.chapter_number, entry.number)} className={styles.broadItem}>
-              {entry.work.author_ja || entry.work.author}『{entry.work.title_ja || entry.work.title}』
-              {entry.chapter_title && ` ${entry.chapter_title}`}
+              {workByline(entry.work, lang)}
+              {entry.chapter_title && ` ${chapterName({ title: entry.chapter_title, title_en: entry.chapter_title_en }, lang)}`}
             </Link>
           ))}
           <LoadMoreButton

@@ -4,6 +4,8 @@ import { useDeferredValue, useState } from "react";
 import Link from "next/link";
 import type { CommentaryTradition, CommentaryWork } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { useLang } from "@/contexts/LanguageContext";
+import { workAuthor, workTitle } from "@/lib/commentary";
 import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
 import { chipClass, tileClass } from "@/components/read/BookBrowser";
@@ -102,11 +104,12 @@ export function CommentaryBrowser({ works }: { works: CommentaryWork[] }) {
 /** 解釈書1冊のタイル。書のタイルと同じ形に、著者と時代を添える。 */
 function WorkTile({ work }: { work: CommentaryWork }) {
   const t = useT();
+  const { lang } = useLang();
   return (
     <Link href={`/commentary/${work.slug}`} className={tileClass}>
-      <span className="book-tile-title">{work.title_ja || work.title}</span>
+      <span className="book-tile-title">{workTitle(work, lang)}</span>
       <span className="text-xs text-muted mt-2">
-        {work.author_ja || work.author}
+        {workAuthor(work, lang)}
         {work.year != null && ` · ${t.commentaryYear(work.year)}`}
       </span>
       <span className="text-xs text-faint mt-1">

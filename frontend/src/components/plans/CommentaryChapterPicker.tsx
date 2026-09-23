@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
+import { chapterName, workAuthor, workTitle as workTitleIn } from "@/lib/commentary";
 import { matchCommentaryWork, useCommentaryWorks } from "@/hooks/useCommentaryWorks";
 import { ClearableSearchInput } from "@/components/ui";
 import { Icon } from "@/components/ui/Icon";
@@ -59,9 +60,9 @@ export function CommentaryChapterPicker({
               <button type="button" onClick={() => setSlug(w.slug)} className="select-row-main">
                 <span className="flex items-center gap-2">
                   <Icon name="book-open" size={18} color="var(--neon-purple)" />
-                  <span>{w.title_ja || w.title}</span>
+                  <span>{workTitleIn(w, lang)}</span>
                 </span>
-                <span className="select-row-note">{w.author_ja || w.author}</span>
+                <span className="select-row-note">{workAuthor(w, lang)}</span>
               </button>
               <Icon name="chevron-right" size={18} color="var(--accent)" />
             </div>
@@ -74,7 +75,7 @@ export function CommentaryChapterPicker({
     );
   }
 
-  const workTitle = work ? work.title_ja || work.title : "";
+  const workTitle = work ? workTitleIn(work, lang) : "";
   return (
     <div role="group" aria-label={text.chooseChapter(workTitle)}>
       <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -87,7 +88,7 @@ export function CommentaryChapterPicker({
       {errorBox}
       <div className="scroll-list scroll-list-tall">
         {(work?.chapters ?? []).map((chapter) => {
-          const label = chapter.title || String(chapter.number);
+          const label = chapterName(chapter, lang) || String(chapter.number);
           const added = picked.some((item) => item.work === slug && item.chapter_number === chapter.number);
           return (
             <div key={chapter.number} className="select-row">
@@ -112,7 +113,7 @@ export function CommentaryChapterPicker({
                   work: slug,
                   book_name: workTitle,
                   chapter_number: chapter.number,
-                  chapter_title: chapter.title,
+                  chapter_title: chapterName(chapter, lang),
                   translation: "",
                 })}
                 disabled={added || !canAdd}
