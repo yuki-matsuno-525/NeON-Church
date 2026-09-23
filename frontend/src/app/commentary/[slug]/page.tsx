@@ -7,6 +7,7 @@ import { Breadcrumb } from "@/components/list";
 import { ChapterComments } from "@/components/reader/ChapterComments";
 import { CommentaryBookmarkStar } from "@/components/commentary/CommentaryBookmarkStar";
 import styles from "@/components/commentary/Commentary.module.css";
+import { COMMENTARY_INDEX_HREF } from "@/lib/commentary";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -40,7 +41,7 @@ export default async function CommentaryWorkPage({ params }: { params: Promise<{
     return (
       <div className="page page-detail">
         <p className="text-muted">{notFound ? t.notFoundTitle : t.loadErrorDesc}</p>
-        <Link href="/commentary" className="text-accent">{t.commentaryBackToList}</Link>
+        <Link href={COMMENTARY_INDEX_HREF} className="text-accent">{t.commentaryBackToList}</Link>
       </div>
     );
   }
@@ -51,7 +52,7 @@ export default async function CommentaryWorkPage({ params }: { params: Promise<{
   return (
     <div className="min-h-page">
       <div className="reader-sticky-header">
-        <Breadcrumb items={[{ label: t.commentary, href: "/commentary" }, { label: title }]} />
+        <Breadcrumb items={[{ label: t.commentary, href: COMMENTARY_INDEX_HREF }, { label: title }]} />
       </div>
       <div className="page page-wide">
         <header className={styles.workHeader}>

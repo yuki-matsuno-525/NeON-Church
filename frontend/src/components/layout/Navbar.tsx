@@ -24,7 +24,9 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const rootSegment = pathname.split("/").filter(Boolean)[0] ?? "";
-  const isReadRoute = pathname.startsWith("/read") || BOOKS.some((book) => book.slug === rootSegment);
+  // 解釈書（/commentary/…）も「読む」の中にある。
+  const isReadRoute =
+    pathname.startsWith("/read") || pathname.startsWith("/commentary") || BOOKS.some((book) => book.slug === rootSegment);
   const [logoutBusy, setLogoutBusy] = React.useState(false);
   const [logoutError, setLogoutError] = React.useState(false);
 

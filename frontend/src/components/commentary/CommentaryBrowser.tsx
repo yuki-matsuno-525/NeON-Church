@@ -13,7 +13,7 @@ import { matchesSearch, normalizeSearch } from "@/lib/textSearch";
 const TRADITION_ORDER: CommentaryTradition[] = ["jewish", "patristic", "medieval", "reformation", "mukyokai"];
 
 /**
- * 解釈書を探すところ。「読む」の書を探すところ（BookBrowser）と同じ作り:
+ * 解釈書を探すところ（「読む」の解釈書タブ）。「読む」の書を探すところ（BookBrowser）と同じ作り:
  * 上に検索、立場（ユダヤ教・教父…）のチップで絞り、本をタイルで並べる。
  *
  * 一覧はサーバーが渡す（80冊ほどなので全部）。絞り込みはこの場で行い、
@@ -22,7 +22,7 @@ const TRADITION_ORDER: CommentaryTradition[] = ["jewish", "patristic", "medieval
 export function CommentaryBrowser({ works }: { works: CommentaryWork[] }) {
   const t = useT();
   const [activeTradition, setActiveTradition] = useState<CommentaryTradition | "">("");
-  const { value: text, setValue: setText } = useQuerySearch("/commentary");
+  const { value: text, setValue: setText } = useQuerySearch("/read");
   const deferredText = useDeferredValue(text);
 
   const groups = TRADITION_ORDER.map((tradition) => ({

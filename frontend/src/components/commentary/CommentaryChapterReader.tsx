@@ -15,7 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT } from "@/lib/i18n";
-import { SECTION_PAGE_SIZE, commentaryLinkHref, commentaryLinkLabel } from "@/lib/commentary";
+import { COMMENTARY_INDEX_HREF, SECTION_PAGE_SIZE, commentaryLinkHref, commentaryLinkLabel } from "@/lib/commentary";
 import { Breadcrumb } from "@/components/list";
 import { LoadMoreButton } from "@/components/ui";
 import { ChapterComments } from "@/components/reader/ChapterComments";
@@ -79,7 +79,7 @@ export function CommentaryChapterReader({ chapter, initial, initialPage }: Props
       <div className="reader-sticky-header">
         <Breadcrumb
           items={[
-            { label: t.commentary, href: "/commentary" },
+            { label: t.commentary, href: COMMENTARY_INDEX_HREF },
             { label: workTitle, href: `/commentary/${work.slug}` },
             { label: chapter.title || String(chapter.number) },
           ]}

@@ -57,6 +57,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // 解釈書の入口は「読む」の解釈書タブへ移した。前の URL から来た人を、描画の前に送る。
+      // （ページ側の redirect だと、読み込み中の画面を出したあとに送ることになり、一瞬待たされる）
+      { source: "/commentary", destination: "/read?tab=commentary", permanent: false },
+    ];
+  },
   async rewrites() {
     return [
       {

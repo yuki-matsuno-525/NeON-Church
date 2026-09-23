@@ -9,6 +9,9 @@ import { passageHref } from "./passage";
  */
 export const SECTION_PAGE_SIZE = 50;
 
+/** 解釈書の入口（「読む」の解釈書タブ）。 */
+export const COMMENTARY_INDEX_HREF = "/read?tab=commentary";
+
 /**
  * 解釈書の場所（書・章・区切り）のページへの URL。聖書の passageHref の解釈書版。
  * 区切りまであれば #s-<番号> でその区切りへ。

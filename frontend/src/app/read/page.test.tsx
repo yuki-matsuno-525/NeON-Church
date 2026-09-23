@@ -24,6 +24,7 @@ vi.mock("@/lib/i18nServer", async () => {
 
 vi.mock("@/lib/apiServer", () => ({
   serverFetchAll: vi.fn(),
+  serverFetchPublic: vi.fn(),
   serverIsSignedIn: vi.fn(),
 }));
 
@@ -62,7 +63,8 @@ async function mockServer({ signedIn = false, library = [] as TranslationProject
   return apiServer;
 }
 
-const renderPage = async () => render(await ReadPage());
+const renderPage = async (tab?: string) =>
+  render(await ReadPage({ searchParams: Promise.resolve(tab ? { tab } : {}) }));
 
 describe("読むところの入口", () => {
   beforeEach(() => {
