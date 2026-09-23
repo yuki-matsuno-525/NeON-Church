@@ -1,4 +1,4 @@
-from django.db.models import Case, Count, IntegerField, Max, Min, Q, Value, When
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -6,42 +6,36 @@ from rest_framework import generics, permissions
 
 from common.pagination import StandardPageNumberPagination
 
-from .models import PassageLink, Section, Work
-from .serializers import PassageEntrySerializer, SectionSerializer, WorkSerializer
+from .models import CommentaryChapter, PassageLink, Section, Work
+from .serializers import (
+    EXCERPT_LENGTH,
+    ChapterDetailSerializer,
+    PassageEntrySerializer,
+    SectionSerializer,
+    WorkDetailSerializer,
+    WorkSerializer,
+)
 
 # 結び付き方の確かさの順（小さいほど確か）。
-_METHOD_RANK = Case(
-    When(links__method=PassageLink.Method.STRUCTURE, then=Value(0)),
-    When(links__method=PassageLink.Method.CITATION, then=Value(1)),
-    default=Value(2),
-    output_field=IntegerField(),
-)
-_RANK_TO_METHOD = {0: PassageLink.Method.STRUCTURE, 1: PassageLink.Method.CITATION, 2: PassageLink.Method.AI}
+_METHOD_RANK = {PassageLink.Method.STRUCTURE: 0, PassageLink.Method.CITATION: 1, PassageLink.Method.AI: 2}
 
 
-def covering_links_q(book: str, chapter: int, verse: int | None, prefix: str = "") -> Q:
+def covering_links_q(book: str, chapter: int, verse: int | None) -> Q:
     """箇所 (book, chapter, verse) を範囲に含む PassageLink の条件。
 
     範囲は (chapter, verse) 〜 (chapter_end, verse_end)。chapter が空なら書全体、
     verse が空ならその章全体を指す。verse を渡さないときは「その章に掛かるもの」を拾う。
-    prefix は Section から辿るとき用（"links__"）。
     """
-
-    def f(name: str) -> str:
-        return f"{prefix}{name}"
-
-    whole_book = Q(**{f("chapter__isnull"): True})
+    whole_book = Q(chapter__isnull=True)
     if verse is None:
-        starts_before = Q(**{f("chapter__lte"): chapter})
-        ends_after = Q(**{f("chapter_end__gte"): chapter})
+        starts_before = Q(chapter__lte=chapter)
+        ends_after = Q(chapter_end__gte=chapter)
     else:
-        starts_before = Q(**{f("chapter__lt"): chapter}) | Q(**{f("chapter"): chapter}) & (
-            Q(**{f("verse__isnull"): True}) | Q(**{f("verse__lte"): verse})
+        starts_before = Q(chapter__lt=chapter) | Q(chapter=chapter) & (Q(verse__isnull=True) | Q(verse__lte=verse))
+        ends_after = Q(chapter_end__gt=chapter) | Q(chapter_end=chapter) & (
+            Q(verse_end__isnull=True) | Q(verse_end__gte=verse)
         )
-        ends_after = Q(**{f("chapter_end__gt"): chapter}) | Q(**{f("chapter_end"): chapter}) & (
-            Q(**{f("verse_end__isnull"): True}) | Q(**{f("verse_end__gte"): verse})
-        )
-    return Q(**{f("canonical_book__slug"): book}) & (whole_book | (starts_before & ends_after))
+    return Q(canonical_book__slug=book) & (whole_book | (starts_before & ends_after))
 
 
 def _int_param(request, name: str) -> int | None:
@@ -60,53 +54,58 @@ class WorkListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return Work.objects.annotate(section_count=Count("sections")).order_by(
-            "year", "slug"
-        )
+        return Work.objects.annotate(
+            section_count=Count("sections", distinct=True), chapter_count=Count("chapters", distinct=True)
+        ).order_by("year", "slug")
 
 
 class WorkDetailView(generics.RetrieveAPIView):
-    """GET /api/commentary/works/<slug>/ 解釈書1冊の情報（出典・権利を含む）。"""
+    """GET /api/commentary/works/<slug>/ 解釈書の書のページ用（出典・権利・章の一覧）。"""
 
-    serializer_class = WorkSerializer
+    serializer_class = WorkDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "slug"
 
     def get_queryset(self):
-        return Work.objects.annotate(section_count=Count("sections"))
+        return Work.objects.annotate(
+            section_count=Count("sections", distinct=True), chapter_count=Count("chapters", distinct=True)
+        ).prefetch_related("chapters")
 
 
-class AroundPagination(StandardPageNumberPagination):
-    """?around=<order> を渡すと、その区切りを含むページを返す（?page があればそちらが優先）。"""
+class ChapterDetailView(generics.RetrieveAPIView):
+    """GET /api/commentary/works/<slug>/chapters/<章番号>/ 解釈書の章のページの上の部分。"""
 
-    def get_page_number(self, request, paginator):
-        around = _int_param(request, "around")
-        if around is not None and self.page_query_param not in request.query_params:
-            # 区切りの order は 0 からの連番（loader が振る）。order // 1ページの件数 + 1 がそのページ。
-            return max(around, 0) // paginator.per_page + 1
-        return super().get_page_number(request, paginator)
+    serializer_class = ChapterDetailSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_object(self):
+        return get_object_or_404(
+            CommentaryChapter.objects.select_related("work").prefetch_related("links__canonical_book"),
+            work__slug=self.kwargs["slug"],
+            number=self.kwargs["number"],
+        )
 
 
-class WorkSectionListView(generics.ListAPIView):
+class ChapterSectionListView(generics.ListAPIView):
     """
-    GET /api/commentary/works/<slug>/sections/?page=N
-    GET /api/commentary/works/<slug>/sections/?around=<order>
+    GET /api/commentary/works/<slug>/chapters/<章番号>/sections/?page=N
 
-    解釈書を頭から読むための区切りの一覧（全文）。around を渡すと、その区切りを含むページを返す
-    （節のパネルから「全文を読む」で飛んできたとき用）。
+    その章の区切り（聖書の節にあたる）。抜粋集では1章に数百件あるので、ページで区切って返す。
     """
 
     serializer_class = SectionSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = AroundPagination
+    pagination_class = StandardPageNumberPagination
 
     def get_queryset(self):
-        work = get_object_or_404(Work, slug=self.kwargs["slug"])
-        return work.sections.prefetch_related("links__canonical_book").order_by("order")
-
-    @extend_schema(parameters=[OpenApiParameter("around", OpenApiTypes.INT, description="この区切りを含むページを返す")])
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
+        chapter = get_object_or_404(
+            CommentaryChapter, work__slug=self.kwargs["slug"], number=self.kwargs["number"]
+        )
+        return (
+            Section.objects.filter(work_id=chapter.work_id, chapter_number=chapter.number)
+            .prefetch_related("links__canonical_book")
+            .order_by("number")
+        )
 
 
 class PassageKind:
@@ -119,6 +118,10 @@ class PassageKind:
     # 別の話の途中でこの節に触れている（引用・AI判定。畳んで出す）
     MENTION = "mention"
     values = (DISCUSS, BROAD, MENTION)
+
+
+def _target_key(link: PassageLink) -> tuple[str, str]:
+    return ("section", str(link.section_id)) if link.section_id else ("chapter", str(link.commentary_chapter_id))
 
 
 @extend_schema(
@@ -135,10 +138,10 @@ class PassageCommentaryListView(generics.ListAPIView):
     GET /api/commentary/passage/?book=<slug>&chapter=<章>&verse=<節>&kind=<discuss|broad|mention>
 
     その箇所についての解釈を、見せ方ごとに分けて返す（PassageKind）。
-      discuss … この節（verse を省けばこの章）を直接論じている区切り
-      broad …… 章全体・書全体を扱う区切り
+      discuss … この節（verse を省けばこの章）を直接論じている区切り・章
+      broad …… 章全体・書全体を扱う区切り・章
       mention … 別の話の途中でこの箇所に触れている区切り（discuss / broad に出たものは除く）
-    1つの区切りは1件にまとめる。並びは「時代 → 本 → 本の中の順」。
+    1つの区切り（または章）は1件にまとめる。並びは「時代 → 本 → 章 → 区切り」。
     """
 
     serializer_class = PassageEntrySerializer
@@ -152,43 +155,76 @@ class PassageCommentaryListView(generics.ListAPIView):
         verse = _int_param(self.request, "verse")
         kind = params.get("kind") or PassageKind.DISCUSS
         if not book or chapter is None or kind not in PassageKind.values:
-            return Section.objects.none()
+            return []
 
-        covering = covering_links_q(book, chapter, verse, prefix="links__")
-        structure = covering & Q(links__method=PassageLink.Method.STRUCTURE)
+        links = list(
+            PassageLink.objects.filter(covering_links_q(book, chapter, verse)).only(
+                "section_id", "commentary_chapter_id", "method", "confidence", "chapter", "verse"
+            )
+        )
         # 「直接論じている」の細かさ: 節を見ているなら節ごとの結び付き、章を見ているなら章ごと。
-        # （関連をまたぐ否定 ~Q は「そういう結び付きが1つも無い」の意味になってしまうので、肯定形で書く）
-        level = "links__verse__isnull" if verse is not None else "links__chapter__isnull"
-        discuss = structure & Q(**{level: False})
-        broad = structure & Q(**{level: True})
+        narrow = (lambda lk: lk.verse is not None) if verse is not None else (lambda lk: lk.chapter is not None)
+        structure = [lk for lk in links if lk.method == PassageLink.Method.STRUCTURE]
+        discuss_keys = {_target_key(lk) for lk in structure if narrow(lk)}
 
         if kind == PassageKind.DISCUSS:
-            link_q = discuss
-            qs = Section.objects.filter(link_q)
+            chosen = [lk for lk in structure if narrow(lk)]
         elif kind == PassageKind.BROAD:
-            link_q = broad
-            qs = Section.objects.filter(link_q).exclude(id__in=Section.objects.filter(discuss).values("id"))
+            chosen = [lk for lk in structure if not narrow(lk) and _target_key(lk) not in discuss_keys]
         else:
-            link_q = covering & Q(links__method__in=[PassageLink.Method.CITATION, PassageLink.Method.AI])
-            qs = Section.objects.filter(link_q).exclude(id__in=Section.objects.filter(structure).values("id"))
+            structure_keys = {_target_key(lk) for lk in structure}
+            chosen = [lk for lk in links if lk.method != PassageLink.Method.STRUCTURE
+                      and _target_key(lk) not in structure_keys]
 
-        tradition = params.get("tradition")
+        # 1つの区切り（章）に結び付きが複数あれば、一番確かなものを代表にする。
+        best: dict[tuple[str, str], PassageLink] = {}
+        for lk in chosen:
+            key = _target_key(lk)
+            if key not in best or _METHOD_RANK[lk.method] < _METHOD_RANK[best[key].method]:
+                best[key] = lk
+        entries = self._entries(best, params.get("tradition"))
+        entries.sort(key=lambda e: (e["work"].year if e["work"].year is not None else 9999, e["work"].slug,
+                                    e["chapter_number"], e["number"] or 0))
+        return entries
+
+    def _entries(self, best: dict, tradition: str | None) -> list[dict]:
+        section_ids = [k[1] for k in best if k[0] == "section"]
+        chapter_ids = [k[1] for k in best if k[0] == "chapter"]
+        works = Work.objects.all()
         if tradition in Work.Tradition.values:
-            qs = qs.filter(work__tradition=tradition)
+            works = works.filter(tradition=tradition)
+        entries = []
+        sections = Section.objects.filter(id__in=section_ids, work__in=works).select_related("work")
+        titles = {
+            (c.work_id, c.number): c.title
+            for c in CommentaryChapter.objects.filter(work__in={s.work_id for s in sections})
+        }
+        for s in sections:
+            lk = best[("section", str(s.id))]
+            entries.append(self._entry(s.id, s.work, s.chapter_number, s.number,
+                                       titles.get((s.work_id, s.chapter_number), ""), s.heading, s.text, lk))
+        chapters = CommentaryChapter.objects.filter(id__in=chapter_ids, work__in=works).select_related("work")
+        first_texts = {
+            (s.work_id, s.chapter_number): s.text
+            for s in Section.objects.filter(number=1, work__in={c.work_id for c in chapters})
+        }
+        for c in chapters:
+            lk = best[("chapter", str(c.id))]
+            entries.append(self._entry(c.id, c.work, c.number, None, c.title, c.title,
+                                       first_texts.get((c.work_id, c.number), ""), lk))
+        return entries
 
-        return (
-            qs.annotate(
-                method_rank=Min(_METHOD_RANK, filter=link_q),
-                best_confidence=Max("links__confidence", filter=link_q),
-            )
-            .select_related("work")
-            .order_by("work__year", "work__slug", "order")
-        )
-
-    def paginate_queryset(self, queryset):
-        page = super().paginate_queryset(queryset)
-        # 集計した順位を、画面向けの名前（method / confidence）に直して載せる。
-        for section in page if page is not None else []:
-            section.method = _RANK_TO_METHOD[section.method_rank]
-            section.confidence = section.best_confidence if section.method == PassageLink.Method.AI else None
-        return page
+    @staticmethod
+    def _entry(target_id, work, chapter_number, number, chapter_title, heading, text, link) -> dict:
+        return {
+            "id": str(target_id),
+            "chapter_number": chapter_number,
+            "number": number,
+            "chapter_title": chapter_title,
+            "heading": heading,
+            "excerpt": text[:EXCERPT_LENGTH],
+            "truncated": len(text) > EXCERPT_LENGTH,
+            "work": work,
+            "method": link.method,
+            "confidence": link.confidence if link.method == PassageLink.Method.AI else None,
+        }
