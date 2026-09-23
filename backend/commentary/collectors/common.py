@@ -124,6 +124,8 @@ def split_by_bible_book(meta: dict, sections: list[dict], slug_prefix: str,
 
     works = []
     for book in sorted(by_book, key=lambda b: order.get(b, 999)):
+        # 同じ著者の本を聖書の順に並べるための番号（1 から）
+        book_order = order.get(book, 998) + 1
         chapters: dict[int, list[dict]] = {}
         for s in by_book[book]:
             chapters.setdefault(primary_ref(s)["chapter"], []).append(s)
@@ -132,8 +134,10 @@ def split_by_bible_book(meta: dict, sections: list[dict], slug_prefix: str,
             "slug": f"{slug_prefix}-{book}",
             "title": title_en.format(book=book_name_en(book)),
             "title_ja": title_ja.format(book=book_name_ja(book)),
+            "order": book_order,
             "chapters": [
-                {"number": n, "title": f"{book_name_ja(book)} {n}章", "links": [], "sections": chapters[n]}
+                {"number": n, "title": f"{book_name_ja(book)} {n}章", "title_en": f"{book_name_en(book)} {n}",
+                 "links": [], "sections": chapters[n]}
                 for n in sorted(chapters)
             ],
         })
@@ -152,7 +156,8 @@ def chapters_by_bible_book(sections: list[dict]) -> list[dict]:
             by_book.setdefault(ref["book"], []).append(s)
     books = sorted(by_book, key=lambda b: order.get(b, 999))
     return [
-        {"number": i, "title": book_name_ja(book), "links": [], "sections": sorted(by_book[book], key=_verse_key)}
+        {"number": i, "title": book_name_ja(book), "title_en": book_name_en(book), "links": [],
+         "sections": sorted(by_book[book], key=_verse_key)}
         for i, book in enumerate(books, start=1)
     ]
 
@@ -163,7 +168,9 @@ def chapters_by_heading(sections: list[dict]) -> list[dict]:
     for s in sections:
         heading = s.get("heading", "")
         if not chapters or chapters[-1]["title"] != heading:
-            chapters.append({"number": len(chapters) + 1, "title": heading, "links": [], "sections": []})
+            # 原著の見出しは英語なので、英語の画面でもそのまま使う
+            chapters.append({"number": len(chapters) + 1, "title": heading, "title_en": heading, "links": [],
+                             "sections": []})
         chapters[-1]["sections"].append({**s, "heading": ""})
     return chapters
 

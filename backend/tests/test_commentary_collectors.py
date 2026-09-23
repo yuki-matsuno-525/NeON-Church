@@ -206,10 +206,13 @@ class TestGrouping:
             ("calvin-romans", "カルヴァン ローマ人への手紙注解", "On Romans"),
         ]
         romans = works[1]
-        assert [(c["number"], c["title"], [s["text"] for s in c["sections"]]) for c in romans["chapters"]] == [
-            (1, "ローマ人への手紙 1章", ["rom 1:1"]),
-            (8, "ローマ人への手紙 8章", ["rom 8:28"]),
+        assert [(c["number"], c["title"], c["title_en"], [s["text"] for s in c["sections"]])
+                for c in romans["chapters"]] == [
+            (1, "ローマ人への手紙 1章", "Romans 1", ["rom 1:1"]),
+            (8, "ローマ人への手紙 8章", "Romans 8", ["rom 8:28"]),
         ]
+        # 同じ著者の本は聖書の順に並ぶよう、書の順番を持つ
+        assert [w["order"] for w in works] == [1, 45]
         assert romans["author"] == "John Calvin"
 
     def test_chapters_by_heading(self):
@@ -231,7 +234,8 @@ class TestGrouping:
             41, "第41講", "第一段落。八章二八節を見よ。\n\n第二段落（ヨハネ三の一六）。",
             [Ref("romans", 8, 28, 8, 30)], "romans", "https://example.org/",
         )
-        assert chapter["number"] == 41
+        assert (chapter["number"], chapter["title_en"]) == (41, "Lecture 41")
+        assert japanese.lecture_chapter(0, "序", "本文", [], None, "https://example.org/")["title_en"] == "Preface"
         assert [(lk["book"], lk["verse"], lk["verse_end"]) for lk in chapter["links"]] == [("romans", 28, 30)]
         assert [s["text"] for s in chapter["sections"]] == ["第一段落。八章二八節を見よ。", "第二段落（ヨハネ三の一六）。"]
         assert [(lk["book"], lk["chapter"], lk["verse"]) for lk in chapter["sections"][0]["links"]] == [("romans", 8, 28)]

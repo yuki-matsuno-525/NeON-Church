@@ -78,11 +78,15 @@ def lecture_number(title: str, fallback: int) -> int:
 
 
 def lecture_chapter(number: int, title: str, text: str, structure: list[Ref],
-                    default_book: str | None, source_url: str) -> dict:
-    """講1つを章にする。講の対象箇所は章に、本文中の引用は段落（区切り）に付ける。"""
+                    default_book: str | None, source_url: str, title_en: str = "") -> dict:
+    """講1つを章にする。講の対象箇所は章に、本文中の引用は段落（区切り）に付ける。
+
+    title_en は英語の画面で出す章の名前。省くと「Lecture 41」（0 章は「Preface」）。
+    """
     return {
         "number": number,
         "title": title,
+        "title_en": title_en or (f"Lecture {number}" if number else "Preface"),
         "links": dedupe_links([link(r, "structure") for r in structure]),
         "sections": [
             {"heading": "", "text": p, "source_url": source_url,
@@ -163,7 +167,7 @@ def collect_uchimura_romans() -> dict:
         chapters.append(lecture_chapter(number, title, page, structure, "romans", ROMANS_BASE + lec["file"]))
     return _base(
         slug="uchimura-romans",
-        title="羅馬書之研究", title_ja="ロマ書の研究",
+        title="Studies in Romans", title_ja="ロマ書の研究",
         author="Uchimura Kanzō", author_ja="内村鑑三", year=1924,
         source_name="旭丘キリスト教会『内村鑑三「ロマ書の研究」』（翻刻）",
         source_url=ROMANS_BASE + "U_Rom_idx.htm",
@@ -227,7 +231,7 @@ def collect_uchimura_job() -> dict:
     ]
     return _base(
         slug="uchimura-job",
-        title="ヨブ記講演", title_ja="ヨブ記講演",
+        title="Lectures on Job", title_ja="ヨブ記講演",
         author="Uchimura Kanzō", author_ja="内村鑑三", year=None,
         source_name="青空文庫", source_url="https://www.aozora.gr.jp/cards/000034/card56908.html",
         license_note="内村鑑三（1930年没）の著作で日本ではパブリックドメイン。青空文庫のテキストによる。\n" + info,
@@ -241,10 +245,10 @@ def collect_uchimura_yomikata() -> dict:
     parts, info = parse_aozora(fetch(url, "cp932"))
     text = "\n\n".join(body for _, body in parts)
     # 短い1篇なので章は1つだけ
-    chapters = [lecture_chapter(1, "聖書の読方", text, [], None, url)]
+    chapters = [lecture_chapter(1, "聖書の読方", text, [], None, url, title_en="How to Read the Bible")]
     return _base(
         slug="uchimura-seisho-no-yomikata",
-        title="聖書の読方　来世を背景として読むべし", title_ja="聖書の読方",
+        title="How to Read the Bible", title_ja="聖書の読方",
         author="Uchimura Kanzō", author_ja="内村鑑三", year=None,
         source_name="青空文庫", source_url="https://www.aozora.gr.jp/cards/000034/card1218.html",
         license_note="内村鑑三（1930年没）の著作で日本ではパブリックドメイン。青空文庫のテキストによる。\n" + info,
@@ -293,7 +297,7 @@ def collect_fujii_revelation_lectures() -> dict:
         chapters.append(lecture_chapter(lecture_number(title, n), heading, text, structure, "revelation", url))
     return _base(
         slug="fujii-revelation-lectures",
-        title="黙示録講義", title_ja="黙示録講義",
+        title="Lectures on Revelation", title_ja="黙示録講義",
         author="Fujii Takeshi", author_ja="藤井武", year=1929,
         source_name="OGCCL（オープン・ゴスペル・クリスチャン・センター・ライブラリー）",
         source_url=OGCCL_BASE + "fujii005_index.html",
@@ -305,12 +309,12 @@ def collect_fujii_revelation_lectures() -> dict:
 
 def collect_fujii_revelation_studies() -> dict:
     chapters = [
-        lecture_chapter(n, title, text, [], "revelation", url)
+        lecture_chapter(n, title, text, [], "revelation", url, title_en=f"Chapter {n}")
         for n, (url, title, _subtitle, text) in enumerate(_collect_ogccl("fujii006_index.html"), start=1)
     ]
     return _base(
         slug="fujii-revelation-studies",
-        title="黙示録研究", title_ja="黙示録研究",
+        title="Studies in Revelation", title_ja="黙示録研究",
         author="Fujii Takeshi", author_ja="藤井武", year=None,
         source_name="OGCCL（オープン・ゴスペル・クリスチャン・センター・ライブラリー）",
         source_url=OGCCL_BASE + "fujii006_index.html",
