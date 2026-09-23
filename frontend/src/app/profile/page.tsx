@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useT, formatBookLocation, useRelativeTime } from "@/lib/i18n";
 import { passageHref } from "@/lib/passage";
+import { commentaryPlaceHref } from "@/lib/commentary";
 import { AsyncPagedList, SkeletonList, EmptyState, Button, Toggle, FilterChips, type FilterChip } from "@/components/ui";
 import { BookmarkCard, BOOKMARK_TYPES, bookmarkKindLabel } from "@/components/bookmarks/BookmarkCard";
 import { useLoadMore } from "@/hooks/useLoadMore";
@@ -347,11 +348,20 @@ function CommentList({ comments }: { comments: MyComment[] }) {
   return (
     <div className="flex flex-col gap-3">
       {comments.map((c) => {
-        const href = passageHref(c);
+        // 解釈書の場所へのコメントなら、その解釈書のページへ。名前はサーバーが組んだ場所の名前を使う。
+        const href = c.commentary_work_slug
+          ? commentaryPlaceHref({
+              work: c.commentary_work_slug,
+              chapter: c.chapter_number ?? undefined,
+              number: c.verse_number ?? undefined,
+            })
+          : passageHref(c);
         const inner = (
           <>
             <p className="mt-0 mb-1 text-xs font-bold text-accent">
-              {formatBookLocation(c.book_slug, c.chapter_number, c.verse_number, lang)}
+              {c.commentary_work_slug
+                ? c.location_label
+                : formatBookLocation(c.book_slug, c.chapter_number, c.verse_number, lang)}
             </p>
             <p className="m-0 text-sm leading-base text-body">
               {c.body}

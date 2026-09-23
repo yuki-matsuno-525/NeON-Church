@@ -56,8 +56,10 @@ export type Bookmark = {
   comment_detail: BookmarkCommentDetail | null;
   project_detail: BookmarkProjectDetail | null;
   // verse=節 / chapter=章 / book=書 / comment=コメント / project=翻訳プロジェクト
-  target_type: "verse" | "chapter" | "book" | "comment" | "project" | null;
+  target_type: "verse" | "chapter" | "book" | "commentary" | "comment" | "project" | null;
   reference: BookmarkReference | null; // 訳非依存の箇所（箇所のお気に入りのみ。comment/project では null）
+  // 解釈書の場所のお気に入り（書・章・区切り）。それ以外では null。
+  commentary_reference?: { work: string; chapter: number | null; number: number | null; label: string } | null;
   verse_text: string | null; // 節のお気に入りの表示用本文（口語訳優先。それ以外のお気に入りでは null）
   created_at: string;
 };
@@ -68,6 +70,7 @@ export type NotificationTargetKind =
   | "qa"
   | "translation_project_comment"
   | "translation_unit"
+  | "commentary_comment"
   | null;
 
 export type Notification = {
@@ -85,6 +88,9 @@ export type Notification = {
   created_at: string;
   target_kind: NotificationTargetKind;
   book_name: string | null;
+  /** 解釈書の場所へのコメント・質問なら、その解釈書の slug と表示用の場所 */
+  commentary_work?: string | null;
+  commentary_label?: string | null;
   chapter_number: number | null;
   verse_number: number | null;
   translation_unit_id: string | null;
@@ -136,6 +142,8 @@ export type MyComment = {
   location_label: string;
   // 箇所へのリンク組み立て用（訳非依存 slug＋章／節＋投稿時訳）。
   book_slug: string;
+  /** 解釈書の場所へのコメントなら、その解釈書の slug（book_slug は空） */
+  commentary_work_slug?: string;
   chapter_number: number | null;
   verse_number: number | null;
   source_translation: string;
@@ -158,8 +166,10 @@ export type QAQuestion = {
   body: string;
   created_at: string;
   is_deleted: boolean;
-  /** 訳非依存の書。読書ページへのリンクを組み立てるのに使う。 */
+  /** 訳非依存の書。読書ページへのリンクを組み立てるのに使う。解釈書への質問では空。 */
   book_slug: string;
+  /** 解釈書への質問なら、その解釈書の slug（chapter_number＝章、verse_number＝区切り）。 */
+  commentary_work_slug?: string;
   /** 投稿時に見ていた訳での書名。 */
   book_name: string;
   chapter_number: number | null;
@@ -444,7 +454,32 @@ export type CommentaryWork = CommentaryWorkBrief & {
   /** true = 頭から通して読める本 / false = 節ごとの抜粋集 */
   readable: boolean;
   section_count: number | null;
+  chapter_count: number | null;
 };
+
+/** 解釈書の章（書のページの章の選択に並べる）。 */
+export type CommentaryChapterBrief = { number: number; title: string; section_count: number };
+
+/** 解釈書の書のページ用。 */
+export type CommentaryWorkDetail = CommentaryWork & { chapters: CommentaryChapterBrief[] };
+
+/** 解釈書の章のページの上の部分。 */
+export type CommentaryChapterDetail = {
+  number: number;
+  title: string;
+  work: CommentaryWork;
+  /** 章そのもの（講など）が論じる聖書の箇所 */
+  links: CommentaryLink[];
+  prev_number: number | null;
+  next_number: number | null;
+  section_count: number;
+};
+
+/**
+ * 解釈書の場所。コメント・Q&A・お気に入りの付き先になる（聖書の書・章・節にあたる）。
+ * chapter を省くと書（解釈書）全体、number を省くと章。
+ */
+export type CommentaryPlace = { work: string; chapter?: number; number?: number };
 
 export type CommentaryLink = {
   book: string;
@@ -456,20 +491,23 @@ export type CommentaryLink = {
   confidence: number | null;
 };
 
-/** 解釈書を読むページの1区切り（全文）。 */
+/** 解釈書の章のページの1区切り（全文）。聖書の節にあたる。 */
 export type CommentarySection = {
   id: string;
-  order: number;
+  chapter_number: number;
+  number: number;
   heading: string;
   text: string;
   source_url: string;
   links: CommentaryLink[];
 };
 
-/** ある節についての解釈1件（節のパネル用。本文は抜粋）。 */
+/** ある節についての解釈1件（節のパネル用。本文は抜粋）。number が null なら章（講など）そのもの。 */
 export type CommentaryEntry = {
   id: string;
-  order: number;
+  chapter_number: number;
+  number: number | null;
+  chapter_title: string;
   heading: string;
   excerpt: string;
   truncated: boolean;

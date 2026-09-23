@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchTags, createComment, type Tag } from "@/lib/api";
+import { fetchTags, createComment, type CommentaryPlace, type Tag } from "@/lib/api";
 import { useComments } from "@/hooks/useComments";
 import { CommentInput } from "@/components/comments/CommentInput";
 import { CommentItem } from "@/components/comments/CommentItem";
@@ -9,9 +9,10 @@ import { ClearableSearchInput, ErrorState, LoadMoreButton } from "@/components/u
 import { useT } from "@/lib/i18n";
 
 type Props = {
-  // chapterId（章コメント）または bookId（書コメント）のどちらか一方を渡す。
+  // chapterId（章コメント）・bookId（書コメント）・commentary（解釈書の書・章へのコメント）のどれか1つを渡す。
   chapterId?: string;
   bookId?: string;
+  commentary?: CommentaryPlace;
   label?: string;
   commentBookmarkMap?: Record<string, string>;
   // 翻訳プロジェクトの読書ページから使う場合、その翻訳専用のコメントとして扱う。
@@ -20,7 +21,7 @@ type Props = {
   allVersionIds?: string[];
 };
 
-export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap = {}, translationProject }: Props) {
+export function ChapterComments({ chapterId, bookId, commentary, label, commentBookmarkMap = {}, translationProject }: Props) {
   const t = useT();
   const heading = label ?? t.chapterCommentsHeading;
   const [ordering, setOrdering] = useState<"new" | "votes">("new");
@@ -29,14 +30,15 @@ export function ChapterComments({ chapterId, bookId, label, commentBookmarkMap =
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // コメントの紐付け先（章 or 書）。createComment / useComments で共用する。
-  const target = bookId ? { book: bookId } : { chapter: chapterId };
+  // コメントの紐付け先（章 or 書 or 解釈書の場所）。createComment / useComments で共用する。
+  const target = commentary ? { commentary } : bookId ? { book: bookId } : { chapter: chapterId };
 
   // 段階6D: 単一 id を backend が箇所へ解決し、訳をまたいで同じ章/書のコメントを集約する。
   // 各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
   const { comments, setComments, total, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } = useComments({
     chapter_id: chapterId,
     book_id: bookId,
+    commentary,
     ordering,
     tag_id: activeTagId,
     translation_project: translationProject,

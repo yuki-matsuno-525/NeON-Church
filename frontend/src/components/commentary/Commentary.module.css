@@ -242,3 +242,65 @@
   text-decoration: none;
   color: var(--text);
 }
+
+/* ---- 解釈書の章のページ（聖書の章のページと同じ行の見た目に、見出しとリンクを足す） ---- */
+
+.sectionRow {
+  scroll-margin-top: calc(var(--navbar-height) + var(--reader-header-height) + var(--spacing-4));
+}
+
+/* 注解の見出し（「Romans 8:28」、抜粋の出典など）。本文の前に小さく。 */
+.rowHeading {
+  display: block;
+  margin-bottom: var(--spacing-1);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-muted);
+}
+
+.rowText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 行の下のリンクの列は、行の本文の左端にそろえる。 */
+.rowChips {
+  padding: 0 var(--spacing-4) var(--spacing-2);
+}
+
+.rowChips .chips {
+  margin-top: 0;
+}
+
+/* 章の題が番号でない本（講・巻・抜粋集の聖書の書）は、番号の升目ではなく題の一覧にする。 */
+.chapterList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chapterItem {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: baseline;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  text-decoration: none;
+  font-size: var(--text-sm);
+}
+
+.chapterItem:hover {
+  border-color: var(--accent);
+}
+
+.chapterItemCount {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+}

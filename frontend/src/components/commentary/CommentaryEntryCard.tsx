@@ -35,7 +35,9 @@ export function CommentaryEntryCard({ entry }: Props) {
       <div className={styles.author}>{work.author_ja || work.author}</div>
       <div className={styles.workTitle}>
         {work.title_ja || work.title}
-        {entry.heading && ` — ${entry.heading}`}
+        {/* 区切りなら「章の題 › 見出し」、章（講）そのものなら章の題だけ */}
+        {entry.chapter_title && ` — ${entry.chapter_title}`}
+        {entry.number != null && entry.heading && ` › ${entry.heading}`}
       </div>
       <p className={styles.excerpt} lang={work.language}>
         {entry.excerpt}
@@ -45,7 +47,7 @@ export function CommentaryEntryCard({ entry }: Props) {
         <p className={styles.aiNote}>{t.commentaryAiNote(Math.round(entry.confidence * 100))}</p>
       )}
       <div className={styles.footer}>
-        <Link href={commentarySectionHref(work.slug, entry.order)} className={styles.readLink}>
+        <Link href={commentarySectionHref(work.slug, entry.chapter_number, entry.number)} className={styles.readLink}>
           {t.commentaryReadFull} →
         </Link>
       </div>

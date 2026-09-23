@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Button, ConfirmDialog, useToast } from "@/components/ui";
 import { formatBookLocation, useRelativeTime, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
+import { commentaryPlaceHref } from "@/lib/commentary";
 
 /**
  * 質問そのものの表示と、質問した人だけができること（書き直す・消す）。
@@ -37,7 +38,13 @@ export function QuestionArticle({ question }: { question: QAQuestion }) {
     ? formatBookLocation(question.book_slug, question.chapter_number, question.verse_number, lang)
     : question.location_label;
   // 箇所の読書ページへのリンク（節まであればその節へアンカーで飛ぶ）。
-  const passageUrl = question.book_slug
+  const passageUrl = question.commentary_work_slug
+    ? commentaryPlaceHref({
+        work: question.commentary_work_slug,
+        chapter: question.chapter_number ?? undefined,
+        number: question.verse_number ?? undefined,
+      })
+    : question.book_slug
     ? question.chapter_number
       ? `/${question.book_slug}/${question.chapter_number}${question.verse_number ? `#verse-${question.verse_number}` : ""}`
       : `/${question.book_slug}`

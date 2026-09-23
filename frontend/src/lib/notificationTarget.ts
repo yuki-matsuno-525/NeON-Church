@@ -1,6 +1,7 @@
 import type { Notification } from "./types";
 import { BOOKS } from "./books";
 import { formatBookLocation, type Translations } from "./i18n";
+import { commentaryPlaceHref } from "./commentary";
 
 function slugFromBookName(name: string | null): string | null {
   if (!name) return null;
@@ -50,6 +51,14 @@ export function notificationTargetUrl(n: Notification): string | null {
       const anchor = n.translation_unit_id ? `#unit-${n.translation_unit_id}` : "";
       return `/translations/${n.translation_project_id}${anchor}`;
     }
+    case "commentary_comment": {
+      if (!n.commentary_work) return null;
+      return commentaryPlaceHref({
+        work: n.commentary_work,
+        chapter: n.chapter_number ?? undefined,
+        number: n.verse_number ?? undefined,
+      });
+    }
     default:
       return null;
   }
@@ -70,7 +79,10 @@ export function notificationContextLabel(n: Notification, t: Translations, lang 
       return formatBookLocation(slug, n.chapter_number, null, lang);
     case "book_comment":
       return slug ? formatBookLocation(slug, null, null, lang) : null;
+    case "commentary_comment":
+      return n.commentary_label ?? null;
     case "qa":
+      if (n.commentary_label) return `Q&A · ${n.commentary_label}`;
       if (slug && n.chapter_number != null && n.verse_number != null) {
         return `Q&A · ${formatBookLocation(slug, n.chapter_number, n.verse_number, lang)}`;
       }

@@ -32,7 +32,9 @@ const verse: Verse = { id: "v1", chapter: "c1", number: 28, text: "神を愛す�
 
 function entry(overrides: Partial<CommentaryEntry> & { id: string }): CommentaryEntry {
   return {
-    order: 0,
+    chapter_number: 8,
+    number: 1,
+    chapter_title: "ローマ人への手紙 8章",
     heading: "Romans 8:28",
     excerpt: "And we know, etc.",
     truncated: true,
@@ -74,11 +76,11 @@ describe("節のパネルの「解釈」タブ", () => {
     await mockCommentary({
       discuss: [entry({ id: "s1" })],
       broad: [entry({
-        id: "s2", order: 0, heading: "第１講　ロマ書の大意", method: "structure",
+        id: "s2", chapter_number: 1, number: null, chapter_title: "第１講　ロマ書の大意", heading: "第１講　ロマ書の大意", method: "structure",
         work: { slug: "uchimura-romans", title: "羅馬書之研究", title_ja: "ロマ書の研究", author: "Uchimura Kanzō",
           author_ja: "内村鑑三", year: 1924, tradition: "mukyokai", language: "ja" },
       })],
-      mention: [entry({ id: "s3", order: 5, heading: "Genesis 31:14", method: "citation" })],
+      mention: [entry({ id: "s3", chapter_number: 31, number: 5, chapter_title: "創世記 31章", heading: "Genesis 31:14", method: "citation" })],
     });
     renderPanel();
 
@@ -93,7 +95,7 @@ describe("節のパネルの「解釈」タブ", () => {
     expect(cards[0]).toHaveTextContent("1555年ごろ");
     expect(cards[0]).toHaveTextContent("英語");
     expect(within(cards[0]).getByRole("link", { name: /全文を読む/ })).toHaveAttribute(
-      "href", "/commentary/calvin-commentaries?around=0#s-0",
+      "href", "/commentary/calvin-commentaries/8?s=1#s-1",
     );
 
     // 章・書全体は別枠

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import Link from "next/link";
 import {
   createBookmark,
+  createCommentaryBookmark,
   removeBookmark,
   createComment,
   fetchArticlesCitingVerse,
@@ -14,6 +15,7 @@ import {
   type Article,
   type QAQuestion,
   type Tag,
+  type CommentaryPlace,
 } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useComments } from "@/hooks/useComments";
@@ -46,6 +48,11 @@ type Props = {
   translationProject?: string;
   // 全バージョン表示用：この節の全バージョンの節id。2件以上でトグルを表示。
   allVersionVerseIds?: string[];
+  // 解釈書の区切りから開いたとき、その場所（解釈書・章・区切り）。
+  // 渡すとコメント・Q&A・お気に入りは聖書の節ではなくこの場所に付く。引用した記事と解釈のタブは出さない。
+  commentaryPlace?: CommentaryPlace;
+  // 見出しの札に出す場所の名前。省くと「8章 28節」のように章・節で出す。
+  headerLabel?: string;
 };
 
 const MIN_WIDTH = 280;
@@ -61,6 +68,8 @@ export function CommentPanel({
   onVerseBookmarksChange,
   bookSlug,
   translationProject,
+  commentaryPlace,
+  headerLabel,
 }: Props) {
   const t = useT();
   const toast = useToast();
@@ -110,25 +119,40 @@ export function CommentPanel({
   const [panelError, setPanelError] = useState<string | null>(null);
   const [articlesError, setArticlesError] = useState(false);
 
-  /** この節の質問を取り直す。質問を投稿した直後にも呼ぶ。 */
+  const workSlug = commentaryPlace?.work;
+  const heading = headerLabel ?? t.chapterVerseHeader(chapterNumber, verse.number);
+
+  /** この節（解釈書なら区切り）の質問を取り直す。質問を投稿した直後にも呼ぶ。 */
   const loadQuestions = useCallback(() => {
-    if (!bookSlug) {
+    const params = workSlug
+      ? { work_slug: workSlug, chapter_number: chapterNumber, verse_number: verse.number }
+      : bookSlug
+        ? { book_slug: bookSlug, chapter_number: chapterNumber, verse_number: verse.number }
+        : null;
+    if (!params) {
       setQuestions([]);
       return;
     }
-    fetchQuestionPage({ book_slug: bookSlug, chapter_number: chapterNumber, verse_number: verse.number })
+    fetchQuestionPage(params)
       .then((page) => setQuestions(page.results))
       .catch(() => setQuestions([]));
-  }, [bookSlug, chapterNumber, verse.number]);
+  }, [bookSlug, workSlug, chapterNumber, verse.number]);
 
   useEffect(() => {
-    if (!bookSlug) return;
+    if (!bookSlug && !workSlug) return;
     let alive = true;
     // 別の節を選び直したときに前の節の記事が残らないよう、いったん空にする。
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCitingArticles([]);
     setArticlesError(false);
     setTab("comments");
+    loadQuestions();
+    // 記事は聖書の箇所だけを引用する（解釈書の区切りを引く書き方はまだ無い）。
+    if (!bookSlug) {
+      return () => {
+        alive = false;
+      };
+    }
     fetchArticlesCitingVerse({ book: bookSlug, chapter: chapterNumber, verse: verse.number })
       .then((response) => {
         if (alive) setCitingArticles(response.results);
@@ -136,13 +160,12 @@ export function CommentPanel({
       .catch(() => {
         if (alive) setArticlesError(true);
       });
-    loadQuestions();
     return () => {
       alive = false;
     };
     // loadQuestions は同じ箇所のあいだ変わらない（上の useCallback）。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookSlug, chapterNumber, verse.number]);
+  }, [bookSlug, workSlug, chapterNumber, verse.number]);
 
   useEffect(() => {
     fetchTags().then(setTags).catch(() => {});
@@ -150,8 +173,11 @@ export function CommentPanel({
 
   // 段階6D: 単一 verse_id を backend が「その箇所」へ解決し、訳をまたいで同じ節のコメントを
   // 1スレッドに集約する。各コメントには「投稿時: 〜」の訳ラベルが付く（全訳トグルは廃止）。
+  // 解釈書の区切りなら、その場所へのコメント。聖書なら節（訳をまたいで集約される）。
+  const commentTarget = commentaryPlace ? { commentary: commentaryPlace } : { verse: verse.id };
   const { comments, setComments, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } = useComments({
-    verse_id: verse.id,
+    verse_id: commentaryPlace ? undefined : verse.id,
+    commentary: commentaryPlace,
     ordering,
     translation_project: translationProject,
   });
@@ -169,7 +195,14 @@ export function CommentPanel({
     [verseBookmarks]
   );
   const locationKey = bookSlug ? `${bookSlug}/${chapterNumber}/${verse.number}` : null;
-  const existingBookmark = locationKey ? bookmarkByLocation.get(locationKey) : undefined;
+  const existingBookmark = workSlug
+    ? verseBookmarks.find(
+        (bm) =>
+          bm.commentary_reference?.work === workSlug &&
+          bm.commentary_reference.chapter === chapterNumber &&
+          bm.commentary_reference.number === verse.number,
+      )
+    : locationKey ? bookmarkByLocation.get(locationKey) : undefined;
   const isBookmarked = existingBookmark !== undefined;
 
   const handleBookmark = async () => {
@@ -185,7 +218,7 @@ export function CommentPanel({
         await removeBookmark(existingBookmark.id);
         onVerseBookmarksChange(verseBookmarks.filter((bm) => bm.id !== existingBookmark.id));
       } else {
-        const bm = await createBookmark(verse.id);
+        const bm = commentaryPlace ? await createCommentaryBookmark(commentaryPlace) : await createBookmark(verse.id);
         onVerseBookmarksChange([...verseBookmarks, bm]);
       }
     } catch {
@@ -197,7 +230,7 @@ export function CommentPanel({
   };
 
   const handleSubmit = async (body: string, tagIds?: string[]) => {
-    const comment = await createComment({ verse: verse.id, body, tag_ids: tagIds, translation_project: translationProject });
+    const comment = await createComment({ ...commentTarget, body, tag_ids: tagIds, translation_project: translationProject });
     setComments((prev) => [comment, ...prev]);
     setComposeOpen(false);
   };
@@ -213,7 +246,7 @@ export function CommentPanel({
   const handleReply = async (body: string, parentId: string) => {
     // 返信は親コメントの中に出るので、親一覧（comments）には足さない。
     // 投稿後の表示は CommentItem 側がその親の返信を取り直して行う。
-    await createComment({ verse: verse.id, body, parent: parentId, translation_project: translationProject });
+    await createComment({ ...commentTarget, body, parent: parentId, translation_project: translationProject });
   };
 
   // 別の節を選び直したら本文の展開状態をリセットする（パネルは再利用される）。
@@ -407,7 +440,7 @@ export function CommentPanel({
               本文はその下に全幅で広げ、展開時のスクロールバーをパネル右端に出す。 */}
           <div className="flex items-center justify-between gap-2">
             <h2 id={headingId} className="badge m-0 bg-accent-tint text-accent">
-              {t.chapterVerseHeader(chapterNumber, verse.number)}
+              {heading}
             </h2>
             <div className="flex shrink-0 items-center gap-1">
               {user && onVerseBookmarksChange && (
@@ -501,10 +534,11 @@ export function CommentPanel({
               <QAPostForm
                 catalog={catalog}
                 tags={tags}
-                fixedLocation={{
-                  verse: verse.id,
-                  label: t.chapterVerseHeader(chapterNumber, verse.number),
-                }}
+                fixedLocation={
+                  commentaryPlace
+                    ? { commentary: commentaryPlace, label: heading }
+                    : { verse: verse.id, label: heading }
+                }
                 onSubmitted={() => {
                   setAskOpen(false);
                   loadQuestions();

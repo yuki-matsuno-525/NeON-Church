@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { fetchCommentPage, type Comment } from "@/lib/api";
+import { fetchCommentPage, type Comment, type CommentaryPlace } from "@/lib/api";
 import { useLoadMore } from "./useLoadMore";
 
 type Params = {
@@ -11,6 +11,8 @@ type Params = {
   ordering?: "new" | "votes";
   tag_id?: string | null;
   translation_project?: string;
+  /** 解釈書の場所へのコメント（verse_id などの代わり） */
+  commentary?: CommentaryPlace;
 };
 
 /**
@@ -23,6 +25,10 @@ type Params = {
  */
 export function useComments(params: Params) {
   const { verse_id, chapter_id, book_id, ordering, tag_id, translation_project } = params;
+  // 場所の object は描画のたびに作り直されるので、中身の値で読み直しを判断する。
+  const work = params.commentary?.work;
+  const workChapter = params.commentary?.chapter;
+  const workNumber = params.commentary?.number;
 
   const fetchPage = useCallback(
     (page: number) =>
@@ -30,12 +36,13 @@ export function useComments(params: Params) {
         verse_id,
         chapter_id,
         book_id,
+        commentary: work ? { work, chapter: workChapter, number: workNumber } : undefined,
         ordering,
         tag_id: tag_id ?? undefined,
         translation_project,
         page,
       }),
-    [verse_id, chapter_id, book_id, ordering, tag_id, translation_project]
+    [verse_id, chapter_id, book_id, work, workChapter, workNumber, ordering, tag_id, translation_project]
   );
 
   const { items, setItems, total, loading, loadingMore, hasMore, error, loadMoreError, loadMore, retry, reload } =

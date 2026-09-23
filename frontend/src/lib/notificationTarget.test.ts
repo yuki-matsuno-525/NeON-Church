@@ -158,3 +158,23 @@ describe("notificationContextLabel", () => {
     expect(label).toContain("Matthew");
   });
 });
+
+describe("解釈書の場所へのコメントの通知", () => {
+  it("その解釈書の区切りへ飛び、場所の名前を出す", () => {
+    const n = makeN({
+      target_kind: "commentary_comment",
+      book_name: null,
+      commentary_work: "uchimura-romans",
+      commentary_label: "ロマ書の研究 › 第41講 › 2",
+      chapter_number: 41,
+      verse_number: 2,
+    });
+    expect(notificationTargetUrl(n)).toBe("/commentary/uchimura-romans/41?s=2#s-2");
+    expect(notificationContextLabel(n, translations.ja)).toBe("ロマ書の研究 › 第41講 › 2");
+  });
+
+  it("章へのコメントなら章のページへ", () => {
+    const n = makeN({ target_kind: "commentary_comment", commentary_work: "uchimura-romans", chapter_number: 0, verse_number: null });
+    expect(notificationTargetUrl(n)).toBe("/commentary/uchimura-romans/0");
+  });
+});

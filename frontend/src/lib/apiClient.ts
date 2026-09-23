@@ -34,7 +34,18 @@ import type {
   PlanVisibility,
   CommentaryEntry,
   CommentaryKind,
+  CommentaryPlace,
+  CommentarySection,
 } from "./types";
+
+/** 解釈書の場所を、API の入力（投稿・お気に入り）の形にする。 */
+function commentaryInput(place: CommentaryPlace) {
+  return {
+    commentary_work: place.work,
+    ...(place.chapter != null ? { commentary_chapter: place.chapter } : {}),
+    ...(place.number != null ? { commentary_number: place.number } : {}),
+  };
+}
 
 export class ApiError extends Error {
   /**
@@ -321,9 +332,16 @@ export function fetchCommentPage(params: {
   ordering?: "new" | "votes";
   tag_id?: string;
   translation_project?: string;
+  /** 解釈書の場所へのコメント（verse_id などの代わり） */
+  commentary?: CommentaryPlace;
   page?: number;
 }): Promise<ListPage<Comment>> {
   const q = new URLSearchParams();
+  if (params.commentary) {
+    q.set("work_slug", params.commentary.work);
+    if (params.commentary.chapter != null) q.set("chapter_number", String(params.commentary.chapter));
+    if (params.commentary.number != null) q.set("verse_number", String(params.commentary.number));
+  }
   if (params.verse_id) q.set("verse_id", params.verse_id);
   if (params.chapter_id) q.set("chapter_id", params.chapter_id);
   if (params.book_id) q.set("book_id", params.book_id);
@@ -347,10 +365,13 @@ export function createComment(data: {
   parent?: string;
   tag_ids?: string[];
   translation_project?: string;
+  /** 解釈書の場所へのコメント（verse / chapter / book の代わり） */
+  commentary?: CommentaryPlace;
 }): Promise<Comment> {
+  const { commentary, ...rest } = data;
   return apiFetch("/comments/", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify(commentary ? { ...rest, ...commentaryInput(commentary) } : rest),
   });
 }
 
@@ -374,12 +395,12 @@ export function updateComment(commentId: string, body: string): Promise<Comment>
 }
 
 // お気に入りの種類。バックエンドが返す target_type と同じ値を使う。
-export type BookmarkType = "verse" | "chapter" | "book" | "comment" | "project";
+export type BookmarkType = "verse" | "chapter" | "book" | "commentary" | "comment" | "project";
 export type BookmarkCounts = Record<BookmarkType | "all", number>;
 
 /** まだ読み込んでいないときに使う件数ゼロの値。 */
 export const EMPTY_BOOKMARK_COUNTS: BookmarkCounts = {
-  all: 0, verse: 0, chapter: 0, book: 0, comment: 0, project: 0,
+  all: 0, verse: 0, chapter: 0, book: 0, commentary: 0, comment: 0, project: 0,
 };
 
 /**
@@ -441,6 +462,21 @@ export function createBookBookmark(bookId: string): Promise<Bookmark> {
     method: "POST",
     body: JSON.stringify({ book: bookId }),
   });
+}
+
+/** 解釈書の場所（書・章・区切り）をお気に入りに入れる。 */
+export function createCommentaryBookmark(place: CommentaryPlace): Promise<Bookmark> {
+  return apiFetch("/bookmarks/", {
+    method: "POST",
+    body: JSON.stringify(commentaryInput(place)),
+  });
+}
+
+/** 解釈書の書・章のページで使うお気に入り（その書、またはその章と章の区切り）だけを取る。 */
+export function fetchCommentaryBookmarks(work: string, chapter?: number): Promise<Bookmark[]> {
+  const q = new URLSearchParams({ work });
+  if (chapter != null) q.set("chapter", String(chapter));
+  return apiFetchAll(`/bookmarks/?${q}`);
 }
 
 export function createCommentBookmark(commentId: string): Promise<Bookmark> {
@@ -635,6 +671,8 @@ export type QuestionListParams = {
   book_id?: string;
   /** 箇所で絞る（読書ページの Q&A タブ用）。訳非依存の書 slug。 */
   book_slug?: string;
+  /** 解釈書の場所で絞る（解釈書のパネルの Q&A タブ用）。chapter_number / verse_number と併せて使う。 */
+  work_slug?: string;
   chapter_number?: number;
   verse_number?: number;
   tag_id?: string;
@@ -650,6 +688,7 @@ export function questionListPath(params?: QuestionListParams): string {
   const qs = new URLSearchParams();
   if (params?.book_id) qs.set("book_id", params.book_id);
   if (params?.book_slug) qs.set("book_slug", params.book_slug);
+  if (params?.work_slug) qs.set("work_slug", params.work_slug);
   if (params?.chapter_number) qs.set("chapter_number", String(params.chapter_number));
   if (params?.verse_number) qs.set("verse_number", String(params.verse_number));
   if (params?.tag_id) qs.set("tag_id", params.tag_id);
@@ -673,11 +712,17 @@ export function createQuestion(data: {
   verse?: string;
   chapter?: string;
   book?: string;
+  /** 解釈書の場所への質問（verse / chapter / book の代わり） */
+  commentary?: CommentaryPlace;
   title: string;
   body: string;
   tag_ids?: string[];
 }): Promise<QAQuestion> {
-  return apiFetch("/qa/questions/", { method: "POST", body: JSON.stringify(data) });
+  const { commentary, ...rest } = data;
+  return apiFetch("/qa/questions/", {
+    method: "POST",
+    body: JSON.stringify(commentary ? { ...rest, ...commentaryInput(commentary) } : rest),
+  });
 }
 
 export function updateQuestion(id: string, data: { title: string; body: string }): Promise<QAQuestion> {
@@ -1138,6 +1183,17 @@ export function fetchPassageCommentary(params: {
   if (params.page) qs.set("page", String(params.page));
   if (params.pageSize) qs.set("page_size", String(params.pageSize));
   return apiFetchPage(`/commentary/passage/?${qs.toString()}`);
+}
+
+/** 解釈書の章の区切り（聖書の節にあたる）。抜粋集では1章に数百件あるので、ページで区切って取る。 */
+export function fetchCommentarySections(
+  work: string,
+  chapter: number,
+  page = 1,
+  pageSize = 50,
+): Promise<ListPage<CommentarySection>> {
+  const q = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  return apiFetchPage(`/commentary/works/${encodeURIComponent(work)}/chapters/${chapter}/sections/?${q}`);
 }
 
 export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {

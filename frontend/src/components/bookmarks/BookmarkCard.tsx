@@ -5,6 +5,7 @@ import type { Bookmark, BookmarkType } from "@/lib/api";
 import { bookLabel, formatBookLocation, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { passageHref } from "@/lib/passage";
+import { commentaryPlaceHref } from "@/lib/commentary";
 
 /**
  * お気に入り1件のカード。
@@ -41,6 +42,16 @@ function useBookmarkTarget(bookmark: Bookmark) {
       kindLabel: t.bookmarkKindProject,
       href: `/translations/${pd.id}`,
       title: pd.name,
+      body: null,
+    };
+  }
+
+  if (bookmark.target_type === "commentary" && bookmark.commentary_reference) {
+    const cr = bookmark.commentary_reference;
+    return {
+      kindLabel: t.bookmarkKindCommentary,
+      href: commentaryPlaceHref({ work: cr.work, chapter: cr.chapter ?? undefined, number: cr.number ?? undefined }),
+      title: cr.label,
       body: null,
     };
   }
@@ -140,7 +151,7 @@ export function BookmarkCard({
 }
 
 /** チップに出す種類の並び。「すべて」は画面側が先頭に足す。 */
-export const BOOKMARK_TYPES: BookmarkType[] = ["verse", "chapter", "book", "comment", "project"];
+export const BOOKMARK_TYPES: BookmarkType[] = ["verse", "chapter", "book", "commentary", "comment", "project"];
 
 export function bookmarkKindLabel(type: BookmarkType, t: ReturnType<typeof useT>): string {
   switch (type) {
@@ -148,6 +159,8 @@ export function bookmarkKindLabel(type: BookmarkType, t: ReturnType<typeof useT>
       return t.bookmarkKindVerse;
     case "chapter":
       return t.bookmarkKindChapter;
+    case "commentary":
+      return t.bookmarkKindCommentary;
     case "book":
       return t.bookmarkKindBook;
     case "comment":

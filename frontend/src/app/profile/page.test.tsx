@@ -57,7 +57,7 @@ const makeBookmarkPage = (
   results: Bookmark[],
   overrides: Partial<ListPage<Bookmark, BookmarkCounts>> = {}
 ): ListPage<Bookmark, BookmarkCounts> => {
-  const counts: BookmarkCounts = { all: results.length, verse: 0, chapter: 0, book: 0, comment: 0, project: 0 };
+  const counts: BookmarkCounts = { all: results.length, verse: 0, chapter: 0, book: 0, commentary: 0, comment: 0, project: 0 };
   for (const bm of results) {
     if (bm.target_type) counts[bm.target_type] += 1;
   }

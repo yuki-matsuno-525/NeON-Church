@@ -17,7 +17,7 @@ vi.mock("@/lib/apiServer", () => ({ serverFetchList: vi.fn() }));
 const work = (overrides: Partial<CommentaryWork>): CommentaryWork => ({
   slug: "w", title: "W", title_ja: "", author: "A", author_ja: "", year: null, tradition: "patristic", language: "en",
   translator: "", source_name: "S", source_url: "https://example.org/", license: "public-domain", license_note: "",
-  readable: true, section_count: 10, ...overrides,
+  readable: true, section_count: 10, chapter_count: 1, ...overrides,
 });
 
 describe("解釈書の一覧", () => {

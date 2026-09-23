@@ -11,6 +11,7 @@ import {
   createBookBookmark,
   createCommentBookmark,
   createProjectBookmark,
+  createCommentaryBookmark,
   EMPTY_BOOKMARK_COUNTS,
   type Bookmark,
   type BookmarkType,
@@ -84,6 +85,11 @@ export default function BookmarksPage() {
         newBm = await createCommentBookmark(bm.comment_detail.id);
       } else if (bm.target_type === "project" && bm.project_detail) {
         newBm = await createProjectBookmark(bm.project_detail.id);
+      } else if (bm.target_type === "commentary" && bm.commentary_reference) {
+        const cr = bm.commentary_reference;
+        newBm = await createCommentaryBookmark({
+          work: cr.work, chapter: cr.chapter ?? undefined, number: cr.number ?? undefined,
+        });
       } else if (bm.target_type === "verse" && bm.reference?.chapter && bm.reference?.verse) {
         const ids = await resolveVersionVerseIds(bm.reference.book, bm.reference.chapter, bm.reference.verse);
         if (!ids[0]) throw new Error("Bookmark target not found");

@@ -55,9 +55,9 @@ export function PassageCommentary({ state }: Props) {
         <section className={styles.broadBox} aria-label={t.commentaryBroadTitle}>
           <h3 className={styles.broadTitle}>{t.commentaryBroadTitle}</h3>
           {broad.items.map((entry) => (
-            <Link key={entry.id} href={commentarySectionHref(entry.work.slug, entry.order)} className={styles.broadItem}>
+            <Link key={entry.id} href={commentarySectionHref(entry.work.slug, entry.chapter_number, entry.number)} className={styles.broadItem}>
               {entry.work.author_ja || entry.work.author}『{entry.work.title_ja || entry.work.title}』
-              {entry.heading && ` ${entry.heading}`}
+              {entry.chapter_title && ` ${entry.chapter_title}`}
             </Link>
           ))}
           <LoadMoreButton

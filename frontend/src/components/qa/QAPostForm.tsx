@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { fetchChapters, fetchVerses, createQuestion, type Chapter, type Tag, type Verse } from "@/lib/api";
+import { fetchChapters, fetchVerses, createQuestion, type Chapter, type CommentaryPlace, type Tag, type Verse } from "@/lib/api";
 import { useT, bookLabel } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { getBookBySlug } from "@/lib/books";
@@ -17,7 +17,7 @@ type Props = {
    * 箇所をあらかじめ決めておく（読書ページから「この箇所について質問する」で開く場合）。
    * 渡すと書・章・節の選択欄は出さず、その箇所で固定する。
    */
-  fixedLocation?: { verse?: string; chapter?: string; book?: string; label?: string };
+  fixedLocation?: { verse?: string; chapter?: string; book?: string; commentary?: CommentaryPlace; label?: string };
 };
 
 
@@ -111,7 +111,12 @@ export function QAPostForm({ catalog, tags, onSubmitted, onCancel, fixedLocation
     try {
       // 箇所は verse / chapter / book のちょうど1つ。細かい方を優先する。
       const location = fixedLocation
-        ? { verse: fixedLocation.verse, chapter: fixedLocation.chapter, book: fixedLocation.book }
+        ? {
+            verse: fixedLocation.verse,
+            chapter: fixedLocation.chapter,
+            book: fixedLocation.book,
+            commentary: fixedLocation.commentary,
+          }
         : verseId
           ? { verse: verseId }
           : chapterId
