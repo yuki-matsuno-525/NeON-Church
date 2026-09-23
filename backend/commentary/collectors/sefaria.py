@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from commentary.refs import ENGLISH_TO_SLUG, Ref
 from commentary.versification import hebrew_to_kjv
 
-from .common import clean_text, dedupe_links, link
+from .common import clean_text, dedupe_links, link, split_by_bible_book
 from .japanese import USER_AGENT
 
 VERSION = "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934"
@@ -80,13 +80,12 @@ def sections_from_book(book: str, text: list) -> list[dict]:
     return sections
 
 
-def collect_rashi() -> dict:
+def collect_rashi() -> list[dict]:
+    """ラシのモーセ五書注解。書ごとの5冊にする。"""
     sections = []
     for book in BOOKS:
         sections += sections_from_book(book, fetch_book(book))
-    return {
-        "slug": "rashi-on-torah",
-        "title": "Rashi on the Torah", "title_ja": "ラシのトーラー注解",
+    meta = {
         "author": "Rashi (Shlomo Yitzchaki)", "author_ja": "ラシ（シュロモ・イツハキ）", "year": 1100,
         "tradition": "jewish", "language": "en",
         "translator": "M. Rosenbaum & A. M. Silbermann（1929–1934）",
@@ -94,5 +93,5 @@ def collect_rashi() -> dict:
         "license": "public-domain",
         "license_note": "英訳は Sefaria で Public Domain と表示されている版。章節はヘブライ語聖書の番号を KJV の番号へ直した。",
         "readable": False,
-        "sections": sections,
     }
+    return split_by_bible_book(meta, sections, "rashi", "ラシ {book}注解", "Rashi on {book}")

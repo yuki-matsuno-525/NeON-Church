@@ -4,6 +4,9 @@
     python manage.py import_commentary --only rashi-on-torah calvin-commentaries
     python manage.py import_commentary --dry-run       # 検証だけして保存しない
 
+コメント・Q&A・お気に入りは「解釈書・章番号・区切り番号」で付く。それらが付いている場所の
+番号や本文が変わる入れ直しは、付き先がずれるので止まる（--force で押し切れるが使わない前提）。
+
 commentary/seed/ にコミットされた正規化データ（*.json.gz）を読む。ネットワークには
 つながない。データを作り直すのはローカルの collect_commentary の役目。
 何度流しても同じ結果になる（同じ slug の本は入れ直す）。
@@ -29,6 +32,11 @@ class Command(BaseCommand):
         parser.add_argument("--dir", default=str(DEFAULT_DIR), help=f"seed のディレクトリ（既定: {DEFAULT_DIR}）")
         parser.add_argument("--only", nargs="+", metavar="SLUG", help="この slug の本だけ入れる")
         parser.add_argument("--dry-run", action="store_true", help="検証と件数表示だけして保存しない")
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help="コメント等が付いている場所の番号・本文が変わっても入れ直す（付き先がずれる。普段は使わない）",
+        )
 
     def handle(self, *args, **options):
         directory = Path(options["dir"])
@@ -46,7 +54,7 @@ class Command(BaseCommand):
                 if only and data.get("slug") not in only:
                     continue
                 try:
-                    work, n_sections, n_links = load_work(data, book_slugs)
+                    work, n_sections, n_links = load_work(data, book_slugs, force=options["force"])
                 except CommentaryDataError as e:
                     raise CommandError(f"{path.name}: {e}")
                 count += 1

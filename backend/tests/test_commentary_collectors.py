@@ -105,12 +105,19 @@ class TestCdb:
         data = cdb.collect_father(tmp_path, "Origen of Alexandria", classes)
         assert data["slug"] == "origen-excerpts"
         assert data["readable"] is False
-        # 聖書の順（創世記 → ヨハネ）に並び、カテナと出典不明は入らない
-        assert [s["text"] for s in data["sections"]] == ["Heaven and earth.", "In the beginning was the Word."]
-        assert data["sections"][1]["links"][0]["method"] == "structure"
+        # 章＝聖書の書（聖書の順に 1 から）、カテナと出典不明は入らない
+        assert [(c["number"], c["title"]) for c in data["chapters"]] == [(1, "創世記"), (2, "ヨハネによる福音書")]
+        assert [s["text"] for c in data["chapters"] for s in c["sections"]] == [
+            "Heaven and earth.", "In the beginning was the Word.",
+        ]
+        assert data["chapters"][1]["sections"][0]["links"][0]["method"] == "structure"
 
-        catena_data = cdb.collect_catena(tmp_path)
-        assert [(s["heading"], s["text"]) for s in catena_data["sections"]] == [("Origen of Alexandria", "From the catena.")]
+        # カテナ・アウレアは福音書ごとの1冊。章＝聖書の章
+        [catena] = cdb.collect_catena(tmp_path)
+        assert (catena["slug"], catena["title_ja"]) == ("catena-aurea-john", "カテナ・アウレア ヨハネによる福音書")
+        assert [(c["number"], [(s["heading"], s["text"]) for s in c["sections"]]) for c in catena["chapters"]] == [
+            (1, [("Origen of Alexandria", "From the catena.")]),
+        ]
 
 
 class TestSefaria:
@@ -178,3 +185,54 @@ def test_dedupe_links_keeps_order():
     a = link(Ref("john", 1, 1), "citation")
     b = link(Ref("john", 1, 2), "citation")
     assert dedupe_links([a, b, dict(a)]) == [a, b]
+
+
+class TestGrouping:
+    def sec(self, text, book, chapter, verse, method="structure"):
+        return {"heading": "", "text": text, "links": [link(Ref(book, chapter, verse), method)]}
+
+    def test_split_by_bible_book(self):
+        from commentary.collectors.common import split_by_bible_book
+
+        sections = [
+            self.sec("rom 8:28", "romans", 8, 28),
+            self.sec("gen 1:1", "genesis", 1, 1),
+            self.sec("rom 1:1", "romans", 1, 1),
+            {"heading": "", "text": "no structure", "links": [link(Ref("john", 1, 1), "citation")]},
+        ]
+        works = split_by_bible_book({"author": "John Calvin"}, sections, "calvin", "カルヴァン {book}注解", "On {book}")
+        assert [(w["slug"], w["title_ja"], w["title"]) for w in works] == [
+            ("calvin-genesis", "カルヴァン 創世記注解", "On Genesis"),
+            ("calvin-romans", "カルヴァン ローマ人への手紙注解", "On Romans"),
+        ]
+        romans = works[1]
+        assert [(c["number"], c["title"], [s["text"] for s in c["sections"]]) for c in romans["chapters"]] == [
+            (1, "ローマ人への手紙 1章", ["rom 1:1"]),
+            (8, "ローマ人への手紙 8章", ["rom 8:28"]),
+        ]
+        assert romans["author"] == "John Calvin"
+
+    def test_chapters_by_heading(self):
+        from commentary.collectors.common import chapters_by_heading
+
+        chapters = chapters_by_heading([
+            {"heading": "Book I › Chapter 1", "text": "a", "links": []},
+            {"heading": "Book I › Chapter 1", "text": "b", "links": []},
+            {"heading": "Book I › Chapter 2", "text": "c", "links": []},
+        ])
+        assert [(c["number"], c["title"], [s["text"] for s in c["sections"]]) for c in chapters] == [
+            (1, "Book I › Chapter 1", ["a", "b"]),
+            (2, "Book I › Chapter 2", ["c"]),
+        ]
+        assert chapters[0]["sections"][0]["heading"] == ""
+
+    def test_lecture_chapter(self):
+        chapter = japanese.lecture_chapter(
+            41, "第41講", "第一段落。八章二八節を見よ。\n\n第二段落（ヨハネ三の一六）。",
+            [Ref("romans", 8, 28, 8, 30)], "romans", "https://example.org/",
+        )
+        assert chapter["number"] == 41
+        assert [(lk["book"], lk["verse"], lk["verse_end"]) for lk in chapter["links"]] == [("romans", 28, 30)]
+        assert [s["text"] for s in chapter["sections"]] == ["第一段落。八章二八節を見よ。", "第二段落（ヨハネ三の一六）。"]
+        assert [(lk["book"], lk["chapter"], lk["verse"]) for lk in chapter["sections"][0]["links"]] == [("romans", 8, 28)]
+        assert [(lk["book"], lk["chapter"]) for lk in chapter["sections"][1]["links"]] == [("john", 3)]

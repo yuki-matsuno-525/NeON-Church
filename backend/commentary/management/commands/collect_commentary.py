@@ -38,6 +38,7 @@ class Command(BaseCommand):
         parser.add_argument("--hcf-tar", help="Writings-Database の tar.gz")
         parser.add_argument("--ccel-dir", help="CCEL の ThML（*.xml）を置いたディレクトリ")
         parser.add_argument("--out", default=str(SEED_DIR), help=f"出力先（既定: {SEED_DIR}）")
+        parser.add_argument("--replace", metavar="PREFIX", help="書き出す前に、この slug で始まる古い seed を消す")
 
     def handle(self, *args, **options):
         source = options["source"]
@@ -50,16 +51,16 @@ class Command(BaseCommand):
             hcf_class = cdb.classify_hcf_tarball(Path(options["hcf_tar"]))
             for author in cdb.FATHERS:
                 works.append(cdb.collect_father(root, author, hcf_class))
-            works.append(cdb.collect_catena(root))
+            works += cdb.collect_catena(root)
         elif source == "ccel":
             if not options["ccel_dir"]:
                 raise CommandError("ccel には --ccel-dir が要ります")
             ccel_dir = Path(options["ccel_dir"])
             for slug in ccel.CCEL_WORKS:
                 works.append(ccel.collect_ccel_work(slug, ccel_dir))
-            works.append(ccel.collect_calvin(ccel_dir))
+            works += ccel.collect_calvin(ccel_dir)
         elif source == "rashi":
-            works.append(sefaria.collect_rashi())
+            works += sefaria.collect_rashi()
         elif source == "japanese":
             works += [
                 japanese.collect_uchimura_romans(),
@@ -70,8 +71,13 @@ class Command(BaseCommand):
             ]
 
         book_slugs = known_book_slugs()
+        out = Path(options["out"])
+        if options["replace"]:
+            # 分け方を変えたときは、この源から作った古い seed を先に消す（残ると二重に入る）。
+            for old in out.glob(f"{options['replace']}*.json.gz"):
+                old.unlink()
         for data in works:
             validate(data, book_slugs)
-            path = write_seed(data, Path(options["out"]))
+            path = write_seed(data, out)
             self.stdout.write(f"  {summarize(data)} → {path.name}")
         self.stdout.write(self.style.SUCCESS(f"完了: {len(works)} 冊"))

@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag, XMLParsedAsHTMLWarning
 
 from commentary.refs import ENGLISH_TO_SLUG, parse_osis
 
-from .common import clean_text, dedupe_links, link
+from .common import chapters_by_heading, clean_text, dedupe_links, link, split_by_bible_book
 
 CCEL_BASE = "https://www.ccel.org/ccel"
 LICENSE_NOTE = (
@@ -177,19 +177,22 @@ def collect_ccel_work(slug: str, ccel_dir: Path) -> dict:
         "source_name": f"Christian Classics Ethereal Library（{volume}）", "source_url": source_url,
         "license": "public-domain", "license_note": LICENSE_NOTE,
         "readable": True,
-        "sections": parse_thml_work(xml_text, cfg["divs"], source_url),
+        # 章＝原著の巻・章（段落の見出しが変わるところ）、区切り＝段落
+        "chapters": chapters_by_heading(parse_thml_work(xml_text, cfg["divs"], source_url)),
     }
 
 
-def collect_calvin(ccel_dir: Path) -> dict:
-    """カルヴァン注解全45巻（<ccel_dir>/calcomNN.xml）を1冊にまとめる。"""
+def collect_calvin(ccel_dir: Path) -> list[dict]:
+    """カルヴァン注解全45巻（<ccel_dir>/calcomNN.xml）を、聖書の書ごとの1冊に分ける。
+
+    福音書の調和（マタイ・マルコ・ルカを並べて注解した巻）は、最初に挙がる書の1冊に入る。
+    ほかの福音書の節からも、節のパネルではその注解が出る（箇所の結び付きは全部残るため）。
+    """
     sections = []
     for volume in CALVIN_VOLUMES:
         source_url = f"{CCEL_BASE}/calvin/{volume}.html"
         sections += parse_calvin((ccel_dir / f"{volume}.xml").read_text(encoding="utf-8"), source_url)
-    return {
-        "slug": "calvin-commentaries",
-        "title": "Calvin's Commentaries", "title_ja": "カルヴァン聖書注解",
+    meta = {
         "author": "John Calvin", "author_ja": "ジャン・カルヴァン", "year": 1555,
         "tradition": "reformation", "language": "en",
         "translator": "Calvin Translation Society（エディンバラ, 1843–1855）",
@@ -197,5 +200,5 @@ def collect_calvin(ccel_dir: Path) -> dict:
         "license": "public-domain",
         "license_note": LICENSE_NOTE + " 節との対応は CCEL 版の「この節の注解」の区切りによる。",
         "readable": True,
-        "sections": sections,
     }
+    return split_by_bible_book(meta, sections, "calvin", "カルヴァン {book}注解", "Calvin's Commentary on {book}")

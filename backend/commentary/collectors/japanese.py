@@ -26,7 +26,7 @@ from commentary.refs import (
     parse_number,
 )
 
-from .common import clean_text, dedupe_links, link
+from .common import clean_text, dedupe_links, link, split_paragraphs
 
 USER_AGENT = "NeON-Church commentary collector (non-commercial)"
 
@@ -63,6 +63,33 @@ def _chapters_in(heading: str, book: str) -> list[Ref]:
         else:
             refs.append(Ref(book, n, None, n, None))
     return refs
+
+
+_LECTURE_NO = re.compile(r"第\s*([0-9０-９〇一二三四五六七八九十百]+)\s*講")
+
+
+def lecture_number(title: str, fallback: int) -> int:
+    """「第四十一講」「第41講」から講の番号を取る。講でないもの（序など）は fallback。
+
+    章の番号を講の番号にそろえると、「第41講」が /…/41 になって分かりやすい。
+    """
+    m = _LECTURE_NO.search(title)
+    return parse_number(m.group(1)) if m else fallback
+
+
+def lecture_chapter(number: int, title: str, text: str, structure: list[Ref],
+                    default_book: str | None, source_url: str) -> dict:
+    """講1つを章にする。講の対象箇所は章に、本文中の引用は段落（区切り）に付ける。"""
+    return {
+        "number": number,
+        "title": title,
+        "links": dedupe_links([link(r, "structure") for r in structure]),
+        "sections": [
+            {"heading": "", "text": p, "source_url": source_url,
+             "links": dedupe_links(citations_ja(p, default_book=default_book))}
+            for p in split_paragraphs(text)
+        ],
+    }
 
 
 def _base(**kw) -> dict:
@@ -124,16 +151,16 @@ def parse_romans_page(html: str) -> str:
 
 def collect_uchimura_romans() -> dict:
     index_html = fetch(ROMANS_BASE + "U_Rom_idx.htm", "cp932")
-    sections = []
+    chapters = []
     for lec in parse_romans_index(index_html):
         page = parse_romans_page(fetch(ROMANS_BASE + lec["file"], "cp932"))
         structure = parse_index_passage(lec["passage"])
         if re.search(r"ロマ書.*(大意|大觀)", lec["title"]):
             structure = [Ref("romans")]  # 書全体の概説（最初と最後の講）
-        links = [link(r, "structure") for r in structure] + citations_ja(page, default_book="romans")
-        heading = f"{lec['label']}　{lec['title']}".strip() if lec["label"] != lec["title"] else lec["title"]
-        sections.append({"heading": heading, "text": page, "source_url": ROMANS_BASE + lec["file"],
-                         "links": dedupe_links(links)})
+        title = f"{lec['label']}　{lec['title']}".strip() if lec["label"] != lec["title"] else lec["title"]
+        # 章の番号＝講の番号。講でない「序」は 0。
+        number = lecture_number(lec["label"], 0)
+        chapters.append(lecture_chapter(number, title, page, structure, "romans", ROMANS_BASE + lec["file"]))
     return _base(
         slug="uchimura-romans",
         title="羅馬書之研究", title_ja="ロマ書の研究",
@@ -142,7 +169,7 @@ def collect_uchimura_romans() -> dict:
         source_url=ROMANS_BASE + "U_Rom_idx.htm",
         license_note="内村鑑三（1930年没）の著作で日本ではパブリックドメイン。本文は旭丘キリスト教会サイトの翻刻による。",
         readable=True,
-        sections=sections,
+        chapters=chapters,
     )
 
 
@@ -193,8 +220,11 @@ def collect_uchimura_job() -> dict:
             sections[-1]["text"] = "\n\n".join(t for t in (sections[-1]["text"], body) if t)
             sections[-1]["links"] += [link(r, "structure") for r in _chapters_in(sub, "job")]
     sections = [s for s in sections if s["text"]]
-    for s in sections:
-        s["links"] = dedupe_links(s["links"] + citations_ja(s["text"], default_book="job"))
+    chapters = [
+        lecture_chapter(lecture_number(s["heading"], n), s["heading"], s["text"], [], "job", url)
+        | {"links": dedupe_links(s["links"])}
+        for n, s in enumerate(sections, start=1)
+    ]
     return _base(
         slug="uchimura-job",
         title="ヨブ記講演", title_ja="ヨブ記講演",
@@ -202,7 +232,7 @@ def collect_uchimura_job() -> dict:
         source_name="青空文庫", source_url="https://www.aozora.gr.jp/cards/000034/card56908.html",
         license_note="内村鑑三（1930年没）の著作で日本ではパブリックドメイン。青空文庫のテキストによる。\n" + info,
         readable=True,
-        sections=sections,
+        chapters=chapters,
     )
 
 
@@ -210,9 +240,8 @@ def collect_uchimura_yomikata() -> dict:
     url = "https://www.aozora.gr.jp/cards/000034/files/1218_18404.html"
     parts, info = parse_aozora(fetch(url, "cp932"))
     text = "\n\n".join(body for _, body in parts)
-    paragraphs = [p for p in text.split("\n\n") if p.strip()]
-    sections = [{"heading": "", "text": p, "source_url": url, "links": dedupe_links(citations_ja(p))}
-                for p in paragraphs]
+    # 短い1篇なので章は1つだけ
+    chapters = [lecture_chapter(1, "聖書の読方", text, [], None, url)]
     return _base(
         slug="uchimura-seisho-no-yomikata",
         title="聖書の読方　来世を背景として読むべし", title_ja="聖書の読方",
@@ -220,7 +249,7 @@ def collect_uchimura_yomikata() -> dict:
         source_name="青空文庫", source_url="https://www.aozora.gr.jp/cards/000034/card1218.html",
         license_note="内村鑑三（1930年没）の著作で日本ではパブリックドメイン。青空文庫のテキストによる。\n" + info,
         readable=True,
-        sections=sections,
+        chapters=chapters,
     )
 
 
@@ -257,14 +286,11 @@ def _collect_ogccl(index_file: str) -> list[tuple[str, str, str, str]]:
 
 
 def collect_fujii_revelation_lectures() -> dict:
-    sections = []
-    for url, title, subtitle, text in _collect_ogccl("fujii005_index.html"):
-        structure = [link(r, "structure") for r in _chapters_in(subtitle.split("（")[0], "revelation")]
-        sections.append({
-            "heading": f"{title}（{subtitle}）" if subtitle else title,
-            "text": text, "source_url": url,
-            "links": dedupe_links(structure + citations_ja(text, default_book="revelation")),
-        })
+    chapters = []
+    for n, (url, title, subtitle, text) in enumerate(_collect_ogccl("fujii005_index.html"), start=1):
+        structure = _chapters_in(subtitle.split("（")[0], "revelation")
+        heading = f"{title}（{subtitle}）" if subtitle else title
+        chapters.append(lecture_chapter(lecture_number(title, n), heading, text, structure, "revelation", url))
     return _base(
         slug="fujii-revelation-lectures",
         title="黙示録講義", title_ja="黙示録講義",
@@ -273,15 +299,15 @@ def collect_fujii_revelation_lectures() -> dict:
         source_url=OGCCL_BASE + "fujii005_index.html",
         license_note="藤井武（1930年没）の著作で日本ではパブリックドメイン。OGCCL は「著作権フリー」として公開。",
         readable=True,
-        sections=sections,
+        chapters=chapters,
     )
 
 
 def collect_fujii_revelation_studies() -> dict:
-    sections = []
-    for url, title, _subtitle, text in _collect_ogccl("fujii006_index.html"):
-        sections.append({"heading": title, "text": text, "source_url": url,
-                         "links": dedupe_links(citations_ja(text, default_book="revelation"))})
+    chapters = [
+        lecture_chapter(n, title, text, [], "revelation", url)
+        for n, (url, title, _subtitle, text) in enumerate(_collect_ogccl("fujii006_index.html"), start=1)
+    ]
     return _base(
         slug="fujii-revelation-studies",
         title="黙示録研究", title_ja="黙示録研究",
@@ -290,5 +316,5 @@ def collect_fujii_revelation_studies() -> dict:
         source_url=OGCCL_BASE + "fujii006_index.html",
         license_note="藤井武（1930年没）の著作で日本ではパブリックドメイン。OGCCL は「著作権フリー」として公開。",
         readable=True,
-        sections=sections,
+        chapters=chapters,
     )

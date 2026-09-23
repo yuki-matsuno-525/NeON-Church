@@ -38,3 +38,16 @@ def make_comment(*, user, verse=None, chapter=None, book=None, **kwargs):
     else:
         loc = {}
     return Comment.objects.create(user=user, **loc, **kwargs)
+
+
+_user_seq = 0
+
+
+def make_user(username: str | None = None):
+    """テスト用の利用者。名前を省くと連番で作る。"""
+    global _user_seq
+    from django.contrib.auth import get_user_model
+
+    _user_seq += 1
+    name = username or f"user{_user_seq}"
+    return get_user_model().objects.create_user(username=name, email=f"{name}@example.com", password="pass12345")

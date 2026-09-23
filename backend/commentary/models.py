@@ -59,10 +59,40 @@ class Work(BaseModel):
         return self.title_ja or self.title
 
 
+class CommentaryChapter(BaseModel):
+    """解釈書の章。聖書の章と同じく、ここを単位に読み、章へのコメントが付く。
+
+    何を1章とするかは本による（backend/commentary/README.md）。
+      聖書の書ごとの注解（カルヴァン ローマ書注解など）…… 聖書の章
+      教父の抜粋集 ………………………………………………………… 聖書の書
+      『神の国』などの著作 ……………………………………………… 原著の巻・章
+      内村・藤井の講義 …………………………………………………… 講
+    """
+
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="chapters")
+    number = models.PositiveSmallIntegerField()
+    title = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        db_table = "commentary_chapters"
+        unique_together = [("work", "number")]
+        ordering = ["number"]
+
+    def __str__(self) -> str:
+        return f"{self.work} 第{self.number}章"
+
+
 class Section(BaseModel):
-    """解釈書の本文の区切り。order 順に並べると本が頭から読める。"""
+    """解釈書の区切り（聖書の節にあたる。注解1件・抜粋1つ・段落1つ）。
+
+    場所は「解釈書・章番号・区切り番号」。コメントや Q&A もこの番号で付くので、
+    seed を作り直しても番号は変えない（import_commentary が確かめる）。
+    order は本全体での通し番号（頭から読む順）。
+    """
 
     work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="sections")
+    chapter_number = models.PositiveSmallIntegerField()
+    number = models.PositiveIntegerField()
     order = models.PositiveIntegerField()
     heading = models.CharField(max_length=500, blank=True)
     text = models.TextField()
@@ -71,15 +101,18 @@ class Section(BaseModel):
 
     class Meta:
         db_table = "commentary_sections"
-        unique_together = [("work", "order")]
+        unique_together = [("work", "order"), ("work", "chapter_number", "number")]
         ordering = ["order"]
 
     def __str__(self) -> str:
-        return f"{self.work} #{self.order}"
+        return f"{self.work} {self.chapter_number}:{self.number}"
 
 
 class PassageLink(BaseModel):
-    """ある区切りが、聖書のどの箇所を解釈しているか。
+    """解釈書の区切り（または章）が、聖書のどの箇所を解釈しているか。
+
+    区切り（section）か章（commentary_chapter）のどちらか一方に付く。
+    章に付くのは、講や巻そのものが聖書の箇所を論じるとき（内村の各講の対象箇所など）。
 
     範囲は (chapter, verse) から (chapter_end, verse_end) まで。
     verse が空なら章全体、chapter も空なら書全体を指す。
@@ -93,7 +126,10 @@ class PassageLink(BaseModel):
         # 節が書かれていない箇所を AI が推定した。画面では必ず「AI判定」と明記する
         AI = "ai", "AI判定"
 
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="links")
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="links", null=True, blank=True)
+    commentary_chapter = models.ForeignKey(
+        CommentaryChapter, on_delete=models.CASCADE, related_name="links", null=True, blank=True
+    )
     canonical_book = models.ForeignKey(
         "bible.CanonicalBook", on_delete=models.PROTECT, related_name="commentary_links"
     )
@@ -117,6 +153,14 @@ class PassageLink(BaseModel):
             models.CheckConstraint(
                 name="commentary_link_ai_has_confidence",
                 condition=~models.Q(method="ai") | models.Q(confidence__isnull=False),
+            ),
+            # 区切りか章の、どちらか一方にだけ付く。
+            models.CheckConstraint(
+                name="commentary_link_one_target",
+                condition=(
+                    models.Q(section__isnull=False, commentary_chapter__isnull=True)
+                    | models.Q(section__isnull=True, commentary_chapter__isnull=False)
+                ),
             ),
         ]
 

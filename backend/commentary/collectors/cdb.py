@@ -23,7 +23,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from commentary.refs import OSIS_TO_SLUG, parse_cdb_filename
 
-from .common import link
+from .common import chapters_by_bible_book, link, split_by_bible_book
 
 # 書の並び順（旧約→第二正典→新約）。抜粋集の区切りを聖書の順に並べるのに使う。
 _BOOK_ORDER = {slug: i for i, slug in enumerate(OSIS_TO_SLUG.values())}
@@ -221,12 +221,13 @@ def collect_father(cdb_root: Path, author: str, hcf_class: dict[str, str]) -> di
             "抜粋だけを採用し、機械翻訳・出典不明の抜粋は除いた（commentary/collectors/cdb.py の基準）。"
         ),
         "readable": False,
-        "sections": [_section(ref, e, e.get("source_title") or "") for ref, e in rows],
+        # 章＝聖書の書、区切り＝抜粋1つ
+        "chapters": chapters_by_bible_book([_section(ref, e, e.get("source_title") or "") for ref, e in rows]),
     }
 
 
-def collect_catena(cdb_root: Path) -> dict:
-    """カテナ・アウレア（トマス・アクィナスが福音書の節ごとに教父の言葉を集めた本）。
+def collect_catena(cdb_root: Path) -> list[dict]:
+    """カテナ・アウレア（トマス・アクィナスが福音書の節ごとに教父の言葉を集めた本）。福音書ごとの4冊にする。
 
     データベースでは引用された教父ごとのフォルダに散らばっているので、全フォルダから拾い集める。
     """
@@ -237,10 +238,7 @@ def collect_catena(cdb_root: Path) -> dict:
             if CATENA_MARK in path:
                 rows.append((ref, author_dir.name, entry))
     rows.sort(key=lambda r: (_sort_key(r[0]), r[1]))
-    return {
-        "slug": "catena-aurea",
-        "title": "Catena Aurea: Commentary on the Four Gospels, Collected out of the Works of the Fathers",
-        "title_ja": "カテナ・アウレア（黄金の鎖）",
+    meta = {
         "author": "Thomas Aquinas",
         "author_ja": "トマス・アクィナス",
         "year": 1264,
@@ -252,5 +250,6 @@ def collect_catena(cdb_root: Path) -> dict:
         "license": "public-domain",
         "license_note": "英訳は1841–1845年刊行でパブリックドメイン。節との対応はデータベース（パブリックドメイン宣言）による。",
         "readable": False,
-        "sections": [_section(ref, e, author) for ref, author, e in rows],
     }
+    sections = [_section(ref, e, author) for ref, author, e in rows]
+    return split_by_bible_book(meta, sections, "catena-aurea", "カテナ・アウレア {book}", "Catena Aurea: {book}")
