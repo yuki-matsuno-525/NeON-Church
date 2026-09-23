@@ -42,7 +42,8 @@ from .models import CommentaryChapter, PassageLink, Section, Work
 
 WORK_FIELDS = (
     "slug", "title", "title_ja", "author", "author_ja", "year", "tradition", "language",
-    "translator", "source_name", "source_url", "license", "license_note", "readable", "order",
+    "translator", "translator_en", "source_name", "source_url", "license", "license_note", "license_note_en",
+    "readable", "order",
 )
 REQUIRED = ("slug", "title", "author", "tradition", "language", "source_name", "source_url", "license", "chapters")
 

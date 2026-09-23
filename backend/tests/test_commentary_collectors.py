@@ -240,3 +240,35 @@ class TestGrouping:
         assert [s["text"] for s in chapter["sections"]] == ["第一段落。八章二八節を見よ。", "第二段落（ヨハネ三の一六）。"]
         assert [(lk["book"], lk["chapter"], lk["verse"]) for lk in chapter["sections"][0]["links"]] == [("romans", 8, 28)]
         assert [(lk["book"], lk["chapter"]) for lk in chapter["sections"][1]["links"]] == [("john", 3)]
+
+
+class TestEnglishNotes:
+    def test_known_notes_get_english(self):
+        from commentary.collectors.english import add_english_notes
+
+        data = add_english_notes({
+            "translator": "Calvin Translation Society（エディンバラ, 1843–1855）",
+            "license_note": "内村鑑三（1930年没）の著作で日本ではパブリックドメイン。青空文庫のテキストによる。\n底本：「ヨブ記講演」",
+        })
+        assert data["translator_en"] == "Calvin Translation Society (Edinburgh, 1843–1855)"
+        # 決まった文は英語に、後ろの奥付は日本語のまま残す
+        assert data["license_note_en"].startswith("Works of Uchimura Kanzō")
+        assert data["license_note_en"].endswith("底本：「ヨブ記講演」")
+
+    def test_unknown_note_stays_empty(self):
+        from commentary.collectors.english import add_english_notes
+
+        data = add_english_notes({"translator": "誰か", "license_note": "知らない注記"})
+        assert (data["translator_en"], data["license_note_en"]) == ("", "")
+
+    def test_every_seed_has_english_names(self):
+        # 入っている seed はどれも、英語の画面で出す章名・注記を持っている
+        import gzip
+        import json
+
+        from commentary.collectors.common import SEED_DIR
+
+        for path in SEED_DIR.glob("*.json.gz"):
+            data = json.loads(gzip.decompress(path.read_bytes()))
+            assert all(c.get("title_en") for c in data["chapters"]), path.name
+            assert bool(data["license_note_en"]) == bool(data["license_note"]), path.name

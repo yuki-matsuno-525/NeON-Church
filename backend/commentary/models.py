@@ -44,10 +44,13 @@ class Work(BaseModel):
     # 本文の言語（en / ja）。原典の言語ではなく、ここに入っている本文の言語。
     language = models.CharField(max_length=8)
     translator = models.CharField(max_length=300, blank=True)
+    # 英語の画面で出す訳者・権利の説明（無ければ日本語のものを出す）
+    translator_en = models.CharField(max_length=300, blank=True)
     source_name = models.CharField(max_length=300)
     source_url = models.URLField(max_length=500)
     license = models.CharField(max_length=20, choices=License.choices)
     license_note = models.TextField(blank=True)
+    license_note_en = models.TextField(blank=True)
     # True = 頭から通して読める本。False = 節ごとの注解を集めた抜粋集（通読には向かない）。
     readable = models.BooleanField(default=True)
     # 同じ著者・同じ年の本の並び。聖書の書ごとに分けた注解（カルヴァン ローマ書注解など）は聖書の順にする。

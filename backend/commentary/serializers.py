@@ -27,7 +27,8 @@ class WorkSerializer(serializers.ModelSerializer):
         model = Work
         fields = [
             "slug", "title", "title_ja", "author", "author_ja", "year", "tradition", "language",
-            "translator", "source_name", "source_url", "license", "license_note", "readable",
+            "translator", "translator_en", "source_name", "source_url", "license", "license_note", "license_note_en",
+            "readable",
             "section_count", "chapter_count",
         ]
 

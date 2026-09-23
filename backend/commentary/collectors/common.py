@@ -45,6 +45,9 @@ def write_seed(data: dict, seed_dir: Path = SEED_DIR) -> Path:
 
     gzip の中の時刻を 0 に固定し、同じ中身なら同じファイルになるようにする（git の差分が出ない）。
     """
+    from .english import add_english_notes
+
+    add_english_notes(data)
     seed_dir.mkdir(parents=True, exist_ok=True)
     path = seed_dir / f"{data['slug']}.json.gz"
     raw = json.dumps(data, ensure_ascii=False, indent=0).encode("utf-8")
