@@ -29,6 +29,8 @@ import { handleHorizontalTabListKeyDown } from "@/lib/a11y";
 import { ClearableSearchInput, LoadMoreButton, useToast } from "@/components/ui";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { usePassageCommentary } from "@/hooks/usePassageCommentary";
+import { PassageCommentary } from "@/components/commentary/PassageCommentary";
 import styles from "./CommentPanel.module.css";
 
 type Props = {
@@ -74,6 +76,8 @@ export function CommentPanel({
   const commentsTabId = useId();
   const qaTabId = useId();
   const articlesTabId = useId();
+  const commentaryTabId = useId();
+  const commentaryPanelId = useId();
   const commentsPanelId = useId();
   const qaPanelId = useId();
   const articlesPanelId = useId();
@@ -100,7 +104,9 @@ export function CommentPanel({
   const [askOpen, setAskOpen] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const catalog = useBookCatalog();
-  const [tab, setTab] = useState<"comments" | "qa" | "articles">("comments");
+  const [tab, setTab] = useState<"comments" | "qa" | "articles" | "commentary">("comments");
+  // 教父・カルヴァン・内村などの解釈書。件数をタブに出すので、パネルを開いた時点で取る。
+  const commentary = usePassageCommentary(bookSlug, chapterNumber, verse.number);
   const [panelError, setPanelError] = useState<string | null>(null);
   const [articlesError, setArticlesError] = useState(false);
 
@@ -460,6 +466,11 @@ export function CommentPanel({
             <PanelTab id={qaTabId} controls={qaPanelId} active={tab === "qa"} onClick={() => setTab("qa")}>
               {t.tabQa(questions.length)}
             </PanelTab>
+            {commentary.total > 0 && (
+              <PanelTab id={commentaryTabId} controls={commentaryPanelId} active={tab === "commentary"} onClick={() => setTab("commentary")}>
+                {t.tabCommentary(commentary.total)}
+              </PanelTab>
+            )}
             {(citingArticles.length > 0 || articlesError) && (
               <PanelTab id={articlesTabId} controls={articlesPanelId} active={tab === "articles"} onClick={() => setTab("articles")}>
                 {t.citingArticles(citingArticles.length)}
@@ -521,6 +532,10 @@ export function CommentPanel({
               // 箇所はこの節だと分かっているので、カードには出さない。
               questions.map((q) => <QACard key={q.id} question={q} showLocation={false} />)
             )}
+          </div>
+        ) : tab === "commentary" ? (
+          <div id={commentaryPanelId} role="tabpanel" aria-labelledby={commentaryTabId} className={styles.tabPanel}>
+            <PassageCommentary state={commentary} />
           </div>
         ) : tab === "articles" ? (
           <div id={articlesPanelId} role="tabpanel" aria-labelledby={articlesTabId} className={styles.tabPanel}>

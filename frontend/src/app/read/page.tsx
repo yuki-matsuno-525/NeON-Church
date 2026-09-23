@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { TranslationProject } from "@/lib/api";
 import { serverFetchAll, serverIsSignedIn } from "@/lib/apiServer";
 import { getT } from "@/lib/i18nServer";
@@ -22,7 +23,13 @@ export default async function ReadPage() {
 
   return (
     <div className="page page-wide">
-      <h1 className="text-xl font-bold mb-6">{t.readTitle}</h1>
+      <div className="flex items-baseline justify-between gap-3 flex-wrap mb-6">
+        <h1 className="text-xl font-bold m-0">{t.readTitle}</h1>
+        {/* 本文と並ぶもう1つの読み物。教父・ラシ・カルヴァン・内村などの解釈書。 */}
+        <Link href="/commentary" className="text-sm text-accent no-underline">
+          {t.commentary} →
+        </Link>
+      </div>
 
       <ResumeLink />
 

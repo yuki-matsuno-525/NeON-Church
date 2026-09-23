@@ -22,6 +22,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return {
     ...actual,
     fetchArticlesCitingVerse: vi.fn(),
+    // 解釈書は既定で0件（解釈タブのテストでだけ中身を入れる）。
+    fetchPassageCommentary: vi.fn().mockResolvedValue({ results: [], count: 0, hasMore: false, counts: undefined }),
   };
 });
 

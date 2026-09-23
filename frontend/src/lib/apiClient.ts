@@ -32,6 +32,8 @@ import type {
   PlanDay,
   PlanSubscription,
   PlanVisibility,
+  CommentaryEntry,
+  CommentaryKind,
 } from "./types";
 
 export class ApiError extends Error {
@@ -1117,6 +1119,25 @@ export function fetchArticlesCitingVerse(params: {
   const qs = new URLSearchParams({ book: params.book, chapter: String(params.chapter) });
   if (params.verse) qs.set("verse", String(params.verse));
   return apiFetch(`/articles/citing/?${qs.toString()}`);
+}
+
+/**
+ * その箇所についての解釈（節のパネルの「解釈」タブ）。kind で見せ分けごとに取る。
+ * verse を省くと章についての解釈になる。
+ */
+export function fetchPassageCommentary(params: {
+  book: string;
+  chapter: number;
+  verse?: number;
+  kind: CommentaryKind;
+  page?: number;
+  pageSize?: number;
+}): Promise<ListPage<CommentaryEntry>> {
+  const qs = new URLSearchParams({ book: params.book, chapter: String(params.chapter), kind: params.kind });
+  if (params.verse) qs.set("verse", String(params.verse));
+  if (params.page) qs.set("page", String(params.page));
+  if (params.pageSize) qs.set("page_size", String(params.pageSize));
+  return apiFetchPage(`/commentary/passage/?${qs.toString()}`);
 }
 
 export function fetchArticleComments(articleId: string): Promise<ArticleComment[]> {

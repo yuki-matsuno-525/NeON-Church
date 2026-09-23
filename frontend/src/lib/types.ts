@@ -410,3 +410,70 @@ export type PlanSubscription = {
   day_count: number;
   completed_count: number;
 };
+
+// ---------------------------------------------------------------------------
+// 解釈書（教父・ラシ・カルヴァン・無教会など）。backend/commentary/README.md 参照。
+// ---------------------------------------------------------------------------
+
+export type CommentaryTradition = "jewish" | "patristic" | "medieval" | "reformation" | "mukyokai";
+
+/** 節と区切りの結び付き方。structure = 本の作りが節ごと / citation = 章節が書いてある / ai = AI判定 */
+export type CommentaryMethod = "structure" | "citation" | "ai";
+
+/** 節のパネルでの見せ分け。discuss = この節を論じる / broad = 章・書全体 / mention = 触れているだけ */
+export type CommentaryKind = "discuss" | "broad" | "mention";
+
+export type CommentaryWorkBrief = {
+  slug: string;
+  title: string;
+  title_ja: string;
+  author: string;
+  author_ja: string;
+  year: number | null;
+  tradition: CommentaryTradition;
+  /** 本文の言語（en / ja） */
+  language: string;
+};
+
+export type CommentaryWork = CommentaryWorkBrief & {
+  translator: string;
+  source_name: string;
+  source_url: string;
+  license: string;
+  license_note: string;
+  /** true = 頭から通して読める本 / false = 節ごとの抜粋集 */
+  readable: boolean;
+  section_count: number | null;
+};
+
+export type CommentaryLink = {
+  book: string;
+  chapter: number | null;
+  verse: number | null;
+  chapter_end: number | null;
+  verse_end: number | null;
+  method: CommentaryMethod;
+  confidence: number | null;
+};
+
+/** 解釈書を読むページの1区切り（全文）。 */
+export type CommentarySection = {
+  id: string;
+  order: number;
+  heading: string;
+  text: string;
+  source_url: string;
+  links: CommentaryLink[];
+};
+
+/** ある節についての解釈1件（節のパネル用。本文は抜粋）。 */
+export type CommentaryEntry = {
+  id: string;
+  order: number;
+  heading: string;
+  excerpt: string;
+  truncated: boolean;
+  work: CommentaryWorkBrief;
+  method: CommentaryMethod;
+  confidence: number | null;
+};
