@@ -97,6 +97,11 @@ export function CommentPanel({
   const filterPanelId = useId();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [searchQuery, setSearchQuery] = useState("");
+  // Q&A と解釈のタブの絞り込み。どちらも読み込み済みのものにだけ効く（コメントの検索と同じ）。
+  const [qaStatus, setQaStatus] = useState<"all" | "open" | "answered">("all");
+  const [qaQuery, setQaQuery] = useState("");
+  const [commentaryTradition, setCommentaryTradition] = useState("");
+  const [commentaryQuery, setCommentaryQuery] = useState("");
   const [loadingBookmark, setLoadingBookmark] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const showLoginModalRef = useRef(showLoginModal);
@@ -262,8 +267,28 @@ export function CommentPanel({
   const visibleComments = q
     ? comments.filter((c) => c.body.toLowerCase().includes(q))
     : comments;
-  // 絞り込みを畳んでいる間も、効いていることが分かるように印を出すための判定。
-  const filterActive = q !== "" || ordering !== "new";
+  // 絞り込みを畳んでいる間も、効いていることが分かるように印を出すための判定（タブごと）。
+  const qaQ = qaQuery.trim().toLowerCase();
+  const commentaryQ = commentaryQuery.trim().toLowerCase();
+  const filterActive =
+    tab === "qa"
+      ? qaQ !== "" || qaStatus !== "all"
+      : tab === "commentary"
+        ? commentaryQ !== "" || commentaryTradition !== ""
+        : q !== "" || ordering !== "new";
+  const visibleQuestions = questions.filter((question) => {
+    if (qaStatus === "open" && question.best_answer) return false;
+    if (qaStatus === "answered" && !question.best_answer) return false;
+    return !qaQ || `${question.title}\n${question.body}`.toLowerCase().includes(qaQ);
+  });
+  // 解釈のタブで選べる立場は、いま読み込んでいる解釈に出てくるものだけ（押しても空、を作らない）。
+  const commentaryTraditions = Array.from(
+    new Set(
+      [commentary.discuss, commentary.broad, commentary.mention].flatMap((list) =>
+        list.items.map((entry) => entry.work.tradition),
+      ),
+    ),
+  );
 
   // 本文が長いときは省略しつつ、折り畳みで全文展開できるようにする。
   const VERSE_PREVIEW_LEN = 90;
@@ -509,16 +534,16 @@ export function CommentPanel({
               </PanelTab>
             )}
           </div>
-          {/* 並び替えと検索はコメントにしか効かないので、コメントのタブのときだけ出す。
+          {/* 並び替え・絞り込みと検索。コメント・Q&A・解釈のタブで出す（記事のタブには無い）。
               閉じていても効いていることが分かるよう、効いている間は印を出す。 */}
-          {tab === "comments" && (
+          {tab !== "articles" && (
             <button
               type="button"
               onClick={() => setFilterOpen((open) => !open)}
               aria-expanded={filterOpen}
               aria-controls={filterPanelId}
-              aria-label={t.commentFilters}
-              title={t.commentFilters}
+              aria-label={tab === "comments" ? t.commentFilters : t.panelFilters}
+              title={tab === "comments" ? t.commentFilters : t.panelFilters}
               className={`${styles.filterButton} ${filterOpen ? styles.filterButtonOn : ""}`}
             >
               <Icon name="filter" size={15} />
@@ -529,6 +554,30 @@ export function CommentPanel({
 
         {tab === "qa" ? (
           <div id={qaPanelId} role="tabpanel" aria-labelledby={qaTabId} className={styles.tabPanel}>
+            {filterOpen && (
+              <div id={filterPanelId}>
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  {(["all", "open", "answered"] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => setQaStatus(status)}
+                      aria-pressed={qaStatus === status}
+                      className={`${styles.orderButton} ${qaStatus === status ? styles.orderButtonOn : ""}`}
+                    >
+                      {status === "all" ? t.filterAll : status === "open" ? t.filterUnanswered : t.filterAnswered}
+                    </button>
+                  ))}
+                </div>
+                <ClearableSearchInput
+                  value={qaQuery}
+                  onChange={setQaQuery}
+                  placeholder={t.searchLoadedQuestions}
+                  ariaLabel={t.searchLoadedQuestions}
+                  inputClassName={styles.search}
+                />
+              </div>
+            )}
             {askOpen ? (
               <QAPostForm
                 catalog={catalog}
@@ -561,14 +610,40 @@ export function CommentPanel({
               <p className={styles.noticeTight}>
                 {t.qaNoQuestionsHere}
               </p>
+            ) : visibleQuestions.length === 0 ? (
+              <p className={styles.noticeTight}>{t.filterQuestionsNoMatch}</p>
             ) : (
               // 箇所はこの節だと分かっているので、カードには出さない。
-              questions.map((q) => <QACard key={q.id} question={q} showLocation={false} />)
+              visibleQuestions.map((q) => <QACard key={q.id} question={q} showLocation={false} />)
             )}
           </div>
         ) : tab === "commentary" ? (
           <div id={commentaryPanelId} role="tabpanel" aria-labelledby={commentaryTabId} className={styles.tabPanel}>
-            <PassageCommentary state={commentary} />
+            {filterOpen && (
+              <div id={filterPanelId}>
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  {["", ...commentaryTraditions].map((tradition) => (
+                    <button
+                      key={tradition || "all"}
+                      type="button"
+                      onClick={() => setCommentaryTradition(tradition)}
+                      aria-pressed={commentaryTradition === tradition}
+                      className={`${styles.orderButton} ${commentaryTradition === tradition ? styles.orderButtonOn : ""}`}
+                    >
+                      {tradition ? t.commentaryTraditions[tradition] ?? tradition : t.filterAll}
+                    </button>
+                  ))}
+                </div>
+                <ClearableSearchInput
+                  value={commentaryQuery}
+                  onChange={setCommentaryQuery}
+                  placeholder={t.searchLoadedCommentary}
+                  ariaLabel={t.searchLoadedCommentary}
+                  inputClassName={styles.search}
+                />
+              </div>
+            )}
+            <PassageCommentary state={commentary} filter={{ tradition: commentaryTradition, query: commentaryQ }} />
           </div>
         ) : tab === "articles" ? (
           <div id={articlesPanelId} role="tabpanel" aria-labelledby={articlesTabId} className={styles.tabPanel}>

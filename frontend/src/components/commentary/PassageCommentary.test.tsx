@@ -136,3 +136,70 @@ describe("節のパネルの「解釈」タブ", () => {
     ]);
   });
 });
+
+describe("パネルの絞り込み（解釈・Q&A）", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("解釈のタブでも絞り込みボタンが出て、立場と検索で絞れる", async () => {
+    await mockCommentary({
+      discuss: [
+        entry({ id: "calvin" }),
+        entry({
+          id: "chrys", heading: "Homily on Romans 15", excerpt: "Here he seems to me",
+          work: { slug: "chrysostom-excerpts", title: "Chrysostom", title_ja: "クリュソストモス 節ごとの注解抜粋",
+            author: "John Chrysostom", author_ja: "ヨアンネス・クリュソストモス", year: 400, tradition: "patristic", language: "en" },
+        }),
+      ],
+      broad: [],
+      mention: [],
+    });
+    renderPanel();
+    fireEvent.click(await screen.findByRole("tab", { name: "解釈 (2)" }));
+
+    const toggle = screen.getByRole("button", { name: "絞り込みと検索" });
+    expect(screen.queryByRole("searchbox", { name: "表示中の解釈を絞り込む" })).not.toBeInTheDocument();
+    fireEvent.click(toggle);
+
+    // 立場のチップは、読み込んだ解釈に出てくるものだけ
+    fireEvent.click(screen.getByRole("button", { name: "教父" }));
+    expect(screen.getAllByTestId("commentary-entry")).toHaveLength(1);
+    expect(screen.getByTestId("commentary-entry")).toHaveTextContent("ヨアンネス・クリュソストモス");
+
+    fireEvent.click(screen.getByRole("button", { name: "すべて" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "表示中の解釈を絞り込む" }), { target: { value: "and we know" } });
+    expect(screen.getByTestId("commentary-entry")).toHaveTextContent("ジャン・カルヴァン");
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "表示中の解釈を絞り込む" }), { target: { value: "該当なし" } });
+    expect(screen.getByText("表示中の解釈に一致するものはありません。")).toBeInTheDocument();
+    // 閉じても、効いている印が残る
+    fireEvent.click(toggle);
+    expect(toggle.querySelector("span")).not.toBeNull();
+  });
+
+  it("Q&A のタブでも絞り込みボタンが出て、解決済み・未解決と検索で絞れる", async () => {
+    await mockCommentary({ discuss: [], broad: [], mention: [] });
+    const { fetchQuestionPage } = await import("@/lib/api");
+    const question = (id: string, title: string, answered: boolean) => ({
+      id, title, body: "本文", created_at: "2026-09-01T00:00:00Z", is_deleted: false,
+      user: { id: "u", username: "alice" }, book_slug: "romans", book_name: "ローマ人への手紙",
+      chapter_number: 8, verse_number: 28, location_label: "", version_label: "", tags: [], answer_count: answered ? 1 : 0,
+      best_answer: answered ? { id: "a", user: { id: "u", username: "bob" }, body: "答え", created_at: "2026-09-02T00:00:00Z" } : null,
+    });
+    vi.mocked(fetchQuestionPage).mockResolvedValue({
+      results: [question("q1", "万事が益とは", true), question("q2", "召された者とは誰か", false)],
+      count: 2, hasMore: false, counts: undefined,
+    });
+    renderPanel();
+    fireEvent.click(await screen.findByRole("tab", { name: "Q&A (2)" }));
+    fireEvent.click(screen.getByRole("button", { name: "絞り込みと検索" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "未解決" }));
+    expect(screen.queryByText("万事が益とは")).not.toBeInTheDocument();
+    expect(screen.getByText("召された者とは誰か")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "すべて" }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "表示中の質問を絞り込む" }), { target: { value: "万事" } });
+    expect(screen.getByText("万事が益とは")).toBeInTheDocument();
+    expect(screen.queryByText("召された者とは誰か")).not.toBeInTheDocument();
+  });
+});

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { PassageCommentaryState } from "@/hooks/usePassageCommentary";
+import type { CommentaryEntry } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import { commentarySectionHref } from "@/lib/commentary";
 import { LoadMoreButton } from "@/components/ui";
@@ -11,7 +12,19 @@ import styles from "./Commentary.module.css";
 
 type Props = {
   state: PassageCommentaryState;
+  /** パネルの絞り込み（立場・検索語）。読み込み済みの解釈にだけ効く。query は小文字にそろえたもの。 */
+  filter?: { tradition: string; query: string };
 };
+
+/** 絞り込みに合うか。検索は著者・題・章の題・見出し・抜粋のどれかに含まれていればよい。 */
+function matches(entry: CommentaryEntry, filter?: { tradition: string; query: string }): boolean {
+  if (!filter) return true;
+  if (filter.tradition && entry.work.tradition !== filter.tradition) return false;
+  if (!filter.query) return true;
+  const { work } = entry;
+  return [work.author, work.author_ja, work.title, work.title_ja, entry.chapter_title, entry.heading, entry.excerpt]
+    .some((value) => value.toLowerCase().includes(filter.query));
+}
 
 /**
  * 節のパネルの「解釈」タブの中身。
@@ -22,9 +35,13 @@ type Props = {
  *
  * データは CommentPanel が usePassageCommentary で取って渡す（タブの件数にも使うため）。
  */
-export function PassageCommentary({ state }: Props) {
+export function PassageCommentary({ state, filter }: Props) {
   const t = useT();
   const { discuss, broad, mention } = state;
+  const discussItems = discuss.items.filter((entry) => matches(entry, filter));
+  const broadItems = broad.items.filter((entry) => matches(entry, filter));
+  const mentionItems = mention.items.filter((entry) => matches(entry, filter));
+  const filtering = !!filter && (filter.tradition !== "" || filter.query !== "");
 
   if (discuss.failed) {
     return <ErrorState title={t.loadErrorTitle} message={t.loadErrorDesc} onRetry={discuss.retry} retryLabel={t.retry} />;
@@ -35,11 +52,13 @@ export function PassageCommentary({ state }: Props) {
 
   return (
     <>
-      {discuss.items.length === 0 ? (
-        <p className="m-0 text-sm text-muted">{t.commentaryNoneHere}</p>
+      {discussItems.length === 0 ? (
+        <p className="m-0 text-sm text-muted">
+          {filtering && discuss.items.length > 0 ? t.filterCommentaryNoMatch : t.commentaryNoneHere}
+        </p>
       ) : (
         <>
-          {discuss.items.map((entry) => (
+          {discussItems.map((entry) => (
             <CommentaryEntryCard key={entry.id} entry={entry} />
           ))}
           <LoadMoreButton
@@ -51,10 +70,10 @@ export function PassageCommentary({ state }: Props) {
         </>
       )}
 
-      {broad.items.length > 0 && (
+      {broadItems.length > 0 && (
         <section className={styles.broadBox} aria-label={t.commentaryBroadTitle}>
           <h3 className={styles.broadTitle}>{t.commentaryBroadTitle}</h3>
-          {broad.items.map((entry) => (
+          {broadItems.map((entry) => (
             <Link key={entry.id} href={commentarySectionHref(entry.work.slug, entry.chapter_number, entry.number)} className={styles.broadItem}>
               {entry.work.author_ja || entry.work.author}『{entry.work.title_ja || entry.work.title}』
               {entry.chapter_title && ` ${entry.chapter_title}`}
@@ -70,10 +89,11 @@ export function PassageCommentary({ state }: Props) {
       )}
 
       {mention.total > 0 && (
-        <details className={styles.mentions}>
+        // 絞り込み中は開いておく（畳んだままだと、合うものがあっても見えない）。
+        <details className={styles.mentions} open={filtering || undefined}>
           <summary className={styles.mentionsSummary}>{t.commentaryMentions(mention.total)}</summary>
           <div className={styles.mentionsList}>
-            {mention.items.map((entry) => (
+            {mentionItems.map((entry) => (
               <CommentaryEntryCard key={entry.id} entry={entry} />
             ))}
             <LoadMoreButton

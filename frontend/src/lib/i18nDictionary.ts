@@ -125,6 +125,9 @@ const ja = {
   commentaryLoadEarlier: "↑ 前の区切りを読む",
   commentarySelectChapter: "章を選ぶ",
   commentaryFindWork: "解釈書を名前・著者で絞る",
+  commentarySearchLabel: "解釈書を検索",
+  commentarySearchPlaceholder: "書名・著者・立場で検索",
+  commentarySearchEmpty: "一致する解釈書がありません。",
   commentaryBackToWorks: "← 解釈書を選び直す",
   planPickSource: "足す章の種類",
   planPickBible: "聖書",
@@ -732,6 +735,11 @@ const ja = {
   // ボタンを押したときだけ開く。効いている間はボタンに印を出す。
   commentFilters: "並び替えと検索",
   filterCommentsNoMatch: "表示中のコメントに一致するものはありません。",
+  panelFilters: "絞り込みと検索",
+  searchLoadedQuestions: "表示中の質問を絞り込む",
+  searchLoadedCommentary: "表示中の解釈を絞り込む",
+  filterQuestionsNoMatch: "表示中の質問に一致するものはありません。",
+  filterCommentaryNoMatch: "表示中の解釈に一致するものはありません。",
 
   // Q&A 投稿フォーム
   qaInputTitlePlaceholder: "質問のタイトル（必須）",
@@ -967,6 +975,9 @@ const en: typeof ja = {
   commentaryLoadEarlier: "↑ Show earlier entries",
   commentarySelectChapter: "Choose a chapter",
   commentaryFindWork: "Filter commentaries by title or author",
+  commentarySearchLabel: "Search commentaries",
+  commentarySearchPlaceholder: "Search by title, author, or tradition",
+  commentarySearchEmpty: "No matching commentaries.",
   commentaryBackToWorks: "← Choose another commentary",
   planPickSource: "What to add",
   planPickBible: "Bible",
@@ -1517,6 +1528,11 @@ const en: typeof ja = {
   searchLoadedComments: "Filter loaded comments",
   commentFilters: "Sort and search",
   filterCommentsNoMatch: "No loaded comments match this filter.",
+  panelFilters: "Filter and search",
+  searchLoadedQuestions: "Filter loaded questions",
+  searchLoadedCommentary: "Filter loaded commentary",
+  filterQuestionsNoMatch: "No loaded questions match this filter.",
+  filterCommentaryNoMatch: "No loaded commentary matches this filter.",
 
   qaInputTitlePlaceholder: "Question title (required)",
   qaInputPlaceholder: "Describe your question in detail...",
