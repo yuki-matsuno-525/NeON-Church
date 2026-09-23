@@ -14,7 +14,7 @@ class ChapterBriefSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CommentaryChapter
-        fields = ["number", "title", "section_count"]
+        fields = ["number", "title", "title_en", "section_count"]
 
 
 class WorkSerializer(serializers.ModelSerializer):
@@ -46,7 +46,7 @@ class WorkDetailSerializer(WorkSerializer):
             obj.sections.order_by().values("chapter_number").annotate(n=Count("pk")).values_list("chapter_number", "n")
         )
         return [
-            {"number": c.number, "title": c.title, "section_count": counts.get(c.number, 0)}
+            {"number": c.number, "title": c.title, "title_en": c.title_en, "section_count": counts.get(c.number, 0)}
             for c in obj.chapters.all()
         ]
 
@@ -88,7 +88,7 @@ class ChapterDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CommentaryChapter
-        fields = ["number", "title", "work", "links", "prev_number", "next_number", "section_count"]
+        fields = ["number", "title", "title_en", "work", "links", "prev_number", "next_number", "section_count"]
 
     def get_prev_number(self, obj) -> int | None:
         prev = obj.work.chapters.filter(number__lt=obj.number).order_by("-number").first()
@@ -113,6 +113,8 @@ class PassageEntrySerializer(serializers.Serializer):
     chapter_number = serializers.IntegerField()
     number = serializers.IntegerField(allow_null=True)
     chapter_title = serializers.CharField()
+    # 英語の画面で出す章の名前（無ければ空。画面側は chapter_title を使う）
+    chapter_title_en = serializers.CharField(allow_blank=True)
     heading = serializers.CharField()
     excerpt = serializers.CharField()
     truncated = serializers.BooleanField()

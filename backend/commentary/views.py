@@ -78,7 +78,7 @@ class WorkListView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        return with_counts(Work.objects.all()).order_by("year", "slug")
+        return with_counts(Work.objects.all()).order_by("year", "author", "order", "slug")
 
 
 class WorkDetailView(generics.RetrieveAPIView):
@@ -216,13 +216,15 @@ class PassageCommentaryListView(generics.ListAPIView):
         entries = []
         sections = Section.objects.filter(id__in=section_ids, work__in=works).select_related("work")
         titles = {
-            (c.work_id, c.number): c.title
-            for c in CommentaryChapter.objects.filter(work__in={s.work_id for s in sections})
+            (c.work_id, c.number): (c.title, c.title_en)
+            for c in CommentaryChapter.objects.filter(work__in={s.work_id for s in sections}).only(
+                "work_id", "number", "title", "title_en"
+            )
         }
         for s in sections:
             lk = best[("section", str(s.id))]
             entries.append(self._entry(s.id, s.work, s.chapter_number, s.number,
-                                       titles.get((s.work_id, s.chapter_number), ""), s.heading, s.text, lk))
+                                       titles.get((s.work_id, s.chapter_number), ("", "")), s.heading, s.text, lk))
         chapters = CommentaryChapter.objects.filter(id__in=chapter_ids, work__in=works).select_related("work")
         first_texts = {
             (s.work_id, s.chapter_number): s.text
@@ -230,17 +232,19 @@ class PassageCommentaryListView(generics.ListAPIView):
         }
         for c in chapters:
             lk = best[("chapter", str(c.id))]
-            entries.append(self._entry(c.id, c.work, c.number, None, c.title, c.title,
+            entries.append(self._entry(c.id, c.work, c.number, None, (c.title, c.title_en), c.title,
                                        first_texts.get((c.work_id, c.number), ""), lk))
         return entries
 
     @staticmethod
-    def _entry(target_id, work, chapter_number, number, chapter_title, heading, text, link) -> dict:
+    def _entry(target_id, work, chapter_number, number, chapter_titles, heading, text, link) -> dict:
+        # chapter_titles は（日本語の画面の章名, 英語の画面の章名）。画面側が言語で選ぶ。
         return {
             "id": str(target_id),
             "chapter_number": chapter_number,
             "number": number,
-            "chapter_title": chapter_title,
+            "chapter_title": chapter_titles[0],
+            "chapter_title_en": chapter_titles[1],
             "heading": heading,
             "excerpt": text[:EXCERPT_LENGTH],
             "truncated": len(text) > EXCERPT_LENGTH,

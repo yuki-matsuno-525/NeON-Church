@@ -6,12 +6,12 @@ from comments.models import Comment
 from commentary.loader import load_work
 
 WORK = {
-    "slug": "uchimura-romans", "title": "羅馬書之研究", "title_ja": "ロマ書の研究", "author": "Uchimura",
+    "slug": "uchimura-romans", "title": "Studies in Romans", "title_ja": "ロマ書の研究", "author": "Uchimura",
     "author_ja": "内村鑑三", "year": 1924, "tradition": "mukyokai", "language": "ja", "translator": "",
     "source_name": "S", "source_url": "https://example.org/", "license": "public-domain", "license_note": "",
     "readable": True,
     "chapters": [
-        {"number": 1, "title": "第1講　ロマ書の大意", "links": [], "sections": [{"text": "一段落目"}, {"text": "二段落目"}]},
+        {"number": 1, "title": "第1講　ロマ書の大意", "title_en": "Lecture 1", "links": [], "sections": [{"text": "一段落目"}, {"text": "二段落目"}]},
         {"number": 2, "title": "第2講", "links": [], "sections": [{"text": "第二講"}]},
     ],
 }
@@ -85,6 +85,11 @@ class TestQuestions:
         assert data["commentary_work_slug"] == "uchimura-romans"
         assert data["book_slug"] == ""
         assert data["location_label"] == "ロマ書の研究 › 第1講　ロマ書の大意"
+
+        # 英語の画面では、英題と英語の章名で出す
+        en = auth_client.get("/api/qa/questions/", {"work_slug": "uchimura-romans", "chapter_number": 1},
+                             HTTP_ACCEPT_LANGUAGE="en").json()
+        assert en["results"][0]["location_label"] == "Studies in Romans › Lecture 1"
 
         listed = auth_client.get("/api/qa/questions/", {"work_slug": "uchimura-romans", "chapter_number": 1}).json()
         assert [q["title"] for q in listed["results"]] == ["大意とは"]

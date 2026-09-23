@@ -66,6 +66,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 MIDDLEWARE = [
     # リクエストの最外層に置き、全レスポンスに X-Request-Id を付与する
     "common.middleware.RequestIdMiddleware",
+    # 画面の言語（ja / en）をリクエストのあいだ覚える。解釈書の章の名前などの出し分けに使う
+    "common.language.UiLanguageMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # 静的ファイルを WhiteNoise で配信する（本番のみ実際に使われる）

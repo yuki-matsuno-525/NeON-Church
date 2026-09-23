@@ -7,6 +7,8 @@ bible/passage.py の聖書版と対になる。
 
 from __future__ import annotations
 
+from common.language import ui_language
+
 from .models import CommentaryChapter, Section, Work
 
 
@@ -43,23 +45,41 @@ def commentary_location_filter(slug: str, chapter=None, number=None) -> dict:
     return loc
 
 
+def work_title(work: Work, lang: str) -> str:
+    """画面の言語での解釈書の題。英語なら原題（日本語の本は英題）、日本語なら日本語の題。"""
+    if lang == "en":
+        return work.title or work.title_ja
+    return work.title_ja or work.title
+
+
+def chapter_title(chapter: CommentaryChapter, lang: str) -> str:
+    """画面の言語での章の名前。英語の名前が無い章は元の名前のまま。"""
+    if lang == "en" and chapter.title_en:
+        return chapter.title_en
+    return chapter.title
+
+
 def commentary_location_label(work_id, chapter: int | None, number: int | None, cache: dict | None = None) -> str:
-    """「カルヴァン ローマ書注解 › ローマ人への手紙 8章 › 3」のような表示用の場所。"""
-    key = ("commentary", work_id, chapter)
+    """「カルヴァン ローマ書注解 › ローマ人への手紙 8章 › 3」のような表示用の場所。
+
+    英語の画面（Accept-Language: en）では「Commentary on Romans › Romans 8 › 3」になる。
+    """
+    lang = ui_language()
+    key = ("commentary", work_id, chapter, lang)
     if cache is not None and key in cache:
-        work_title, chapter_title = cache[key]
+        title, ch_title = cache[key]
     else:
         work = Work.objects.filter(id=work_id).only("title", "title_ja").first()
-        work_title = (work.title_ja or work.title) if work else ""
-        chapter_title = ""
+        title = work_title(work, lang) if work else ""
+        ch_title = ""
         if chapter is not None:
-            ch = CommentaryChapter.objects.filter(work_id=work_id, number=chapter).only("title").first()
-            chapter_title = (ch.title if ch and ch.title else f"{chapter}")
+            ch = CommentaryChapter.objects.filter(work_id=work_id, number=chapter).only("title", "title_en").first()
+            ch_title = (chapter_title(ch, lang) if ch and ch.title else f"{chapter}")
         if cache is not None:
-            cache[key] = (work_title, chapter_title)
-    parts = [work_title]
+            cache[key] = (title, ch_title)
+    parts = [title]
     if chapter is not None:
-        parts.append(chapter_title)
+        parts.append(ch_title)
     if number is not None:
         parts.append(str(number))
     return " › ".join(p for p in parts if p)

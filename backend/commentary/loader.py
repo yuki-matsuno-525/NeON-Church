@@ -42,7 +42,7 @@ from .models import CommentaryChapter, PassageLink, Section, Work
 
 WORK_FIELDS = (
     "slug", "title", "title_ja", "author", "author_ja", "year", "tradition", "language",
-    "translator", "source_name", "source_url", "license", "license_note", "readable",
+    "translator", "source_name", "source_url", "license", "license_note", "readable", "order",
 )
 REQUIRED = ("slug", "title", "author", "tradition", "language", "source_name", "source_url", "license", "chapters")
 
@@ -181,7 +181,15 @@ def load_work(data: dict, book_slugs: set[str] | None = None, force: bool = Fals
     work.chapters.all().delete()
 
     chapters = CommentaryChapter.objects.bulk_create(
-        [CommentaryChapter(work=work, number=c["number"], title=(c.get("title") or "")[:500]) for c in data["chapters"]]
+        [
+            CommentaryChapter(
+                work=work,
+                number=c["number"],
+                title=(c.get("title") or "")[:500],
+                title_en=(c.get("title_en") or "")[:500],
+            )
+            for c in data["chapters"]
+        ]
     )
 
     section_rows: list[Section] = []

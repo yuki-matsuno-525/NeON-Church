@@ -50,10 +50,12 @@ class Work(BaseModel):
     license_note = models.TextField(blank=True)
     # True = 頭から通して読める本。False = 節ごとの注解を集めた抜粋集（通読には向かない）。
     readable = models.BooleanField(default=True)
+    # 同じ著者・同じ年の本の並び。聖書の書ごとに分けた注解（カルヴァン ローマ書注解など）は聖書の順にする。
+    order = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
         db_table = "commentary_works"
-        ordering = ["year", "slug"]
+        ordering = ["year", "author", "order", "slug"]
 
     def __str__(self) -> str:
         return self.title_ja or self.title
@@ -72,6 +74,8 @@ class CommentaryChapter(BaseModel):
     work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name="chapters")
     number = models.PositiveSmallIntegerField()
     title = models.CharField(max_length=500, blank=True)
+    # 英語の画面で出す章の名前（「Romans 8」「Lecture 41」など）。空なら title を使う。
+    title_en = models.CharField(max_length=500, blank=True)
 
     class Meta:
         db_table = "commentary_chapters"

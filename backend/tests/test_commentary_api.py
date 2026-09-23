@@ -55,7 +55,7 @@ def works(db):
     ]))
     load_work(work("uchimura", 1924, [
         {"number": 1, "title": "第1講　ロマ書の大意", "links": [WHOLE_ROMANS], "sections": [section("大意の本文")]},
-        {"number": 41, "title": "第41講　救いの完成", "links": [link("romans", 8, 28, 8, 30)],
+        {"number": 41, "title": "第41講　救いの完成", "title_en": "Lecture 41", "links": [link("romans", 8, 28, 8, 30)],
          "sections": [section("第四十一講の本文"), section("推定", link("romans", 8, 28, method="ai", confidence=0.9))]},
     ], tradition="mukyokai"))
 
@@ -82,7 +82,7 @@ class TestPassage:
     def test_chapter_entry_uses_title_and_first_paragraph(self, client, works):
         entry = next(r for r in passage(client, book="romans", chapter=8, verse=28)["results"] if r["number"] is None)
         assert entry["heading"] == "第41講　救いの完成"
-        assert entry["chapter_title"] == "第41講　救いの完成"
+        assert (entry["chapter_title"], entry["chapter_title_en"]) == ("第41講　救いの完成", "Lecture 41")
         assert entry["excerpt"] == "第四十一講の本文"
 
     def test_broad_is_whole_chapter_or_book(self, client, works):
@@ -131,19 +131,26 @@ class TestReading:
             ("augustine", 1, 3), ("calvin-romans", 1, 2), ("uchimura", 2, 3),
         ]
 
+    def test_same_author_follows_bible_order(self, client, works):
+        # 同じ年・同じ著者の本は、slug の字順ではなく order（聖書の書の順）で並ぶ
+        load_work({**work("rashi-numbers", 1100, [{"number": 1, "title": "t", "links": [], "sections": [section("n")]}]), "order": 4})
+        load_work({**work("rashi-exodus", 1100, [{"number": 1, "title": "t", "links": [], "sections": [section("e")]}]), "order": 2})
+        data = client.get("/api/commentary/works/").json()
+        assert [w["slug"] for w in data if w["slug"].startswith("rashi")] == ["rashi-exodus", "rashi-numbers"]
+
     def test_work_detail_has_chapters(self, client, works):
         data = client.get("/api/commentary/works/uchimura/").json()
         assert data["license"] == "public-domain"
         assert data["chapters"] == [
-            {"number": 1, "title": "第1講　ロマ書の大意", "section_count": 1},
-            {"number": 41, "title": "第41講　救いの完成", "section_count": 2},
+            {"number": 1, "title": "第1講　ロマ書の大意", "title_en": "", "section_count": 1},
+            {"number": 41, "title": "第41講　救いの完成", "title_en": "Lecture 41", "section_count": 2},
         ]
         assert client.get("/api/commentary/works/nope/").status_code == 404
 
     def test_chapter_detail(self, client, works):
         data = client.get("/api/commentary/works/uchimura/chapters/41/").json()
-        assert (data["title"], data["prev_number"], data["next_number"], data["section_count"]) == (
-            "第41講　救いの完成", 1, None, 2,
+        assert (data["title"], data["title_en"], data["prev_number"], data["next_number"], data["section_count"]) == (
+            "第41講　救いの完成", "Lecture 41", 1, None, 2,
         )
         assert data["work"]["slug"] == "uchimura"
         assert data["links"][0]["book"] == "romans"

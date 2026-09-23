@@ -3,7 +3,9 @@ from rest_framework import serializers
 
 from bible.editions import pick_edition
 from bible.models import CanonicalBook
+from commentary.location import chapter_title, work_title
 from commentary.models import CommentaryChapter, Work
+from common.language import ui_language
 from .models import (
     MAX_DAYS_PER_PLAN,
     MAX_READINGS_PER_DAY,
@@ -69,15 +71,16 @@ class PlanReadingSerializer(serializers.ModelSerializer):
         if not obj.commentary_work_id:
             return ""
         cache = self.context.setdefault("_commentary_chapter_titles", {})
-        key = (obj.commentary_work_id, obj.chapter_number)
+        lang = ui_language()
+        key = (obj.commentary_work_id, obj.chapter_number, lang)
         if key not in cache:
             chapter = CommentaryChapter.objects.filter(work_id=obj.commentary_work_id, number=obj.chapter_number).first()
-            cache[key] = chapter.title if chapter else ""
+            cache[key] = chapter_title(chapter, lang) if chapter else ""
         return cache[key]
 
     def get_book_name(self, obj) -> str:
         if obj.commentary_work_id:
-            return obj.commentary_work.title_ja or obj.commentary_work.title
+            return work_title(obj.commentary_work, ui_language())
         # 詳細・日編集の view は editions までまとめて prefetch する。章ごとに Book を
         # 引くと、長いプランほど問い合わせが直線的に増えるため、prefetch 済みの
         # related manager をそのまま使う。単体利用時は通常の queryset として動く。
