@@ -328,7 +328,7 @@ class TestBookmarkTypeFilter:
         res = auth_client.get(BOOKMARKS_URL)
         assert res.status_code == status.HTTP_200_OK
         assert res.data["counts"] == {
-            "all": 5, "verse": 1, "chapter": 1, "book": 1, "comment": 1, "project": 1,
+            "all": 5, "verse": 1, "chapter": 1, "book": 1, "commentary": 0, "comment": 1, "project": 1,
         }
 
     @pytest.mark.parametrize("target_type", ["verse", "chapter", "book", "comment", "project"])

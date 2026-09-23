@@ -1,6 +1,9 @@
 from comments.models import DELETED_COMMENT_BODY
 from rest_framework import serializers
 
+from commentary.location import commentary_location_label
+from commentary.models import Work
+
 from bible.models import Book, Chapter, Verse
 from .models import Bookmark
 
@@ -54,6 +57,14 @@ class BookmarkSerializer(serializers.ModelSerializer):
     book = serializers.PrimaryKeyRelatedField(
         queryset=Book.objects.all(), write_only=True, required=False
     )
+    # 解釈書の場所の入力（解釈書の slug ＋ 章番号 ＋ 区切り番号）。章・区切りを省くと書・章へのお気に入り。
+    commentary_work = serializers.SlugRelatedField(
+        slug_field="slug", queryset=Work.objects.all(), write_only=True, required=False
+    )
+    commentary_chapter = serializers.IntegerField(write_only=True, required=False, min_value=0)
+    commentary_number = serializers.IntegerField(write_only=True, required=False, min_value=1)
+    # 解釈書の場所のお気に入りなら {work, chapter, number, label}。それ以外は null。
+    commentary_reference = serializers.SerializerMethodField()
     comment_detail = CommentBriefSerializer(source="comment", read_only=True)
     project_detail = ProjectBriefSerializer(source="translation_project", read_only=True)
     target_type = serializers.SerializerMethodField()
@@ -66,7 +77,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
         model = Bookmark
         fields = [
             "id", "verse", "chapter", "book", "comment", "translation_project",
-            "comment_detail", "project_detail", "target_type", "reference",
+            "commentary_work", "commentary_chapter", "commentary_number",
+            "comment_detail", "project_detail", "target_type", "reference", "commentary_reference",
             "verse_text", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
@@ -80,6 +92,8 @@ class BookmarkSerializer(serializers.ModelSerializer):
             return "comment"
         if obj.translation_project_id:
             return "project"
+        if obj.commentary_work_id:
+            return "commentary"
         if obj.canonical_book_id:
             if obj.verse_number is not None:
                 return "verse"
@@ -98,6 +112,17 @@ class BookmarkSerializer(serializers.ModelSerializer):
                 "verse": obj.verse_number,
             }
         return None
+
+    def get_commentary_reference(self, obj):
+        if not obj.commentary_work_id:
+            return None
+        cache = self.context.setdefault("_commentary_label_cache", {})
+        return {
+            "work": obj.commentary_work.slug,
+            "chapter": obj.chapter_number,
+            "number": obj.verse_number,
+            "label": commentary_location_label(obj.commentary_work_id, obj.chapter_number, obj.verse_number, cache),
+        }
 
     def get_verse_text(self, obj):
         # view が annotate した表示用本文。節のお気に入り以外や本文が引けない場合は null。

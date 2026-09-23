@@ -32,6 +32,15 @@ class Bookmark(BaseModel):
         null=True,
         blank=True,
     )
+    # 解釈書の場所のお気に入り。canonical_book の代わりにこれを持ち、章番号＝解釈書の章、
+    # 節番号＝区切りの番号として使う（コメントと同じ）。
+    commentary_work = models.ForeignKey(
+        "commentary.Work",
+        on_delete=models.PROTECT,
+        related_name="bookmarks",
+        null=True,
+        blank=True,
+    )
     chapter_number = models.PositiveSmallIntegerField(null=True, blank=True)
     verse_number = models.PositiveSmallIntegerField(null=True, blank=True)
     comment = models.ForeignKey(
@@ -95,14 +104,37 @@ class Bookmark(BaseModel):
                 & models.Q(verse_number__isnull=True),
                 name="unique_user_book_bookmark",
             ),
-            # 各お気に入りは「コメントのお気に入り」「翻訳プロジェクトのお気に入り」「箇所のお気に入り」のいずれか1種のみ。
-            # 箇所のお気に入りは canonical_book 必須で、節があれば章も必須（書→章→節の入れ子）。
+            # 解釈書の場所も、書・章・区切りの粒度ごとに重複を禁止する。
+            models.UniqueConstraint(
+                fields=["user", "commentary_work", "chapter_number", "verse_number"],
+                condition=models.Q(commentary_work__isnull=False)
+                & models.Q(chapter_number__isnull=False)
+                & models.Q(verse_number__isnull=False),
+                name="unique_user_commentary_section_bookmark",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "commentary_work", "chapter_number"],
+                condition=models.Q(commentary_work__isnull=False)
+                & models.Q(chapter_number__isnull=False)
+                & models.Q(verse_number__isnull=True),
+                name="unique_user_commentary_chapter_bookmark",
+            ),
+            models.UniqueConstraint(
+                fields=["user", "commentary_work"],
+                condition=models.Q(commentary_work__isnull=False)
+                & models.Q(chapter_number__isnull=True)
+                & models.Q(verse_number__isnull=True),
+                name="unique_user_commentary_work_bookmark",
+            ),
+            # 各お気に入りは「コメント」「翻訳プロジェクト」「聖書の箇所」「解釈書の場所」のいずれか1種のみ。
+            # 箇所・場所のお気に入りは、節（区切り）があれば章も必須（書→章→節の入れ子）。
             models.CheckConstraint(
                 condition=(
                     (
                         models.Q(comment__isnull=False)
                         & models.Q(translation_project__isnull=True)
                         & models.Q(canonical_book__isnull=True)
+                        & models.Q(commentary_work__isnull=True)
                         & models.Q(chapter_number__isnull=True)
                         & models.Q(verse_number__isnull=True)
                     )
@@ -110,11 +142,23 @@ class Bookmark(BaseModel):
                         models.Q(translation_project__isnull=False)
                         & models.Q(comment__isnull=True)
                         & models.Q(canonical_book__isnull=True)
+                        & models.Q(commentary_work__isnull=True)
                         & models.Q(chapter_number__isnull=True)
                         & models.Q(verse_number__isnull=True)
                     )
                     | (
                         models.Q(canonical_book__isnull=False)
+                        & models.Q(commentary_work__isnull=True)
+                        & models.Q(comment__isnull=True)
+                        & models.Q(translation_project__isnull=True)
+                        & (
+                            models.Q(verse_number__isnull=True)
+                            | models.Q(chapter_number__isnull=False)
+                        )
+                    )
+                    | (
+                        models.Q(commentary_work__isnull=False)
+                        & models.Q(canonical_book__isnull=True)
                         & models.Q(comment__isnull=True)
                         & models.Q(translation_project__isnull=True)
                         & (

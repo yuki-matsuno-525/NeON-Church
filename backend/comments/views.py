@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 from translations.access import can_view_project_work, get_visible_project_or_404
+from commentary.location import commentary_location_filter
 from .models import Comment, Report, Tag, Vote
 from .serializers import CommentSerializer, ReportSerializer, TagSerializer
 
@@ -82,6 +83,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     """
     GET  /api/comments/?verse_id=&ordering=new|votes  コメント一覧（親コメントのみ）
     GET  /api/comments/?parent_id=<id>                 そのコメントへの返信一覧
+    GET  /api/comments/?work_slug=&chapter_number=&verse_number=  解釈書の場所へのコメント
     POST /api/comments/                                コメント投稿（要認証）
 
     verse_id / chapter_id / book_id のいずれかが必須。
@@ -181,6 +183,12 @@ class CommentListCreateView(generics.ListCreateAPIView):
                 qs = qs.filter(chapter_number__isnull=True, verse_number__isnull=True)
             # 箇所で絞るときは親コメントだけ（返信は parent_id で別に取る）
             qs = qs.filter(parent__isnull=True)
+        elif params.get("work_slug"):
+            # 解釈書の場所（解釈書・章番号・区切り番号）。粒度は聖書と同じく指定の細かさで決まる。
+            qs = qs.filter(
+                **commentary_location_filter(params["work_slug"], chapter_number, verse_number),
+                parent__isnull=True,
+            )
         elif verse_id or chapter_id or book_id:
             loc = _location_from_target(verse_id=verse_id, chapter_id=chapter_id, book_id=book_id)
             if loc is None:

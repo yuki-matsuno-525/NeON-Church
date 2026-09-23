@@ -29,6 +29,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     chapter_number = serializers.SerializerMethodField()
     verse_number = serializers.SerializerMethodField()
     translation_unit_id = serializers.SerializerMethodField()
+    # 解釈書の場所へのコメント・質問なら、その解釈書の slug と表示用の場所（それ以外は null）。
+    commentary_work = serializers.SerializerMethodField()
+    commentary_label = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
@@ -48,6 +51,8 @@ class NotificationSerializer(serializers.ModelSerializer):
             "chapter_number",
             "verse_number",
             "translation_unit_id",
+            "commentary_work",
+            "commentary_label",
         ]
 
     # ------------------------------------------------------------------
@@ -139,6 +144,9 @@ class NotificationSerializer(serializers.ModelSerializer):
         # 翻訳プロジェクトの読書画面で付いたコメントは、そのプロジェクト内へ戻す。
         if root.translation_project_id:
             return "translation_project_comment"
+        # 解釈書の場所（書・章・区切り）へのコメントは、その解釈書のページへ戻す。
+        if root.commentary_work_id:
+            return "commentary_comment"
         # 箇所は canonical_book/章/節の列で判定する。細かい粒度から順に見る。
         if root.verse_number is not None:
             return "verse_comment"
@@ -158,6 +166,21 @@ class NotificationSerializer(serializers.ModelSerializer):
         cache = self.context.setdefault("_book_name_cache", {})
         name = book_name_for(target.canonical_book_id, target.source_translation, cache)
         return name or None
+
+    def get_commentary_work(self, obj) -> str | None:
+        target = self._located(obj)
+        if not target or not getattr(target, "commentary_work_id", None):
+            return None
+        return target.commentary_work.slug
+
+    def get_commentary_label(self, obj) -> str | None:
+        target = self._located(obj)
+        if not target or not getattr(target, "commentary_work_id", None):
+            return None
+        from commentary.location import commentary_location_label
+
+        cache = self.context.setdefault("_commentary_label_cache", {})
+        return commentary_location_label(target.commentary_work_id, target.chapter_number, target.verse_number, cache)
 
     def get_chapter_number(self, obj) -> int | None:
         target = self._located(obj)

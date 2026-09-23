@@ -31,6 +31,17 @@ class Question(BaseModel):
         "bible.CanonicalBook",
         on_delete=models.PROTECT,
         related_name="questions",
+        null=True,
+        blank=True,
+    )
+    # 解釈書への質問。canonical_book の代わりにこれを持ち、章番号＝解釈書の章、
+    # 節番号＝区切りの番号として使う（コメントと同じ）。聖書の書とは排他。
+    commentary_work = models.ForeignKey(
+        "commentary.Work",
+        on_delete=models.PROTECT,
+        related_name="questions",
+        null=True,
+        blank=True,
     )
     chapter_number = models.PositiveSmallIntegerField(null=True, blank=True)
     verse_number = models.PositiveSmallIntegerField(null=True, blank=True)
@@ -61,6 +72,10 @@ class Question(BaseModel):
                 fields=["canonical_book", "chapter_number", "verse_number", "-created_at"],
                 name="qa_question_location_idx",
             ),
+            models.Index(
+                fields=["commentary_work", "chapter_number", "verse_number", "-created_at"],
+                name="qa_question_commentary_idx",
+            ),
         ]
         constraints = [
             # 粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) / (章あり・節あり=節) のみ。
@@ -71,6 +86,14 @@ class Question(BaseModel):
                     & models.Q(verse_number__isnull=False)
                 ),
                 name="qa_question_location_grain_valid",
+            ),
+            # 書は「聖書の書」か「解釈書」のどちらか一方。
+            models.CheckConstraint(
+                condition=(
+                    models.Q(canonical_book__isnull=False, commentary_work__isnull=True)
+                    | models.Q(canonical_book__isnull=True, commentary_work__isnull=False)
+                ),
+                name="qa_question_one_book",
             ),
         ]
 

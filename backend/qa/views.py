@@ -7,6 +7,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from bible.passage import location_filter
+from commentary.location import commentary_location_filter
 from common.pagination import StandardPageNumberPagination
 from common.permissions import IsOwner
 
@@ -27,7 +28,7 @@ def _question_queryset():
     """
     return (
         Question.objects.filter(is_deleted=False)
-        .select_related("user", "canonical_book", "best_answer__user")
+        .select_related("user", "canonical_book", "commentary_work", "best_answer__user")
         .prefetch_related("tags")
         .annotate(
             answer_count=Count(
@@ -77,6 +78,12 @@ class QuestionListCreateView(generics.ListCreateAPIView):
                     chapter_number=params.get("chapter_number"),
                     verse_number=params.get("verse_number"),
                 )
+            )
+
+        work_slug = params.get("work_slug")
+        if work_slug:
+            qs = qs.filter(
+                **commentary_location_filter(work_slug, params.get("chapter_number"), params.get("verse_number"))
             )
 
         book_id = params.get("book_id")

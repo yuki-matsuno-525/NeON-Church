@@ -50,6 +50,15 @@ class Comment(BaseModel):
         null=True,
         blank=True,
     )
+    # 解釈書（カルヴァン ローマ書注解など）へのコメント。canonical_book の代わりにこれを持ち、
+    # chapter_number＝解釈書の章番号、verse_number＝区切り番号として使う。聖書の書とは排他。
+    commentary_work = models.ForeignKey(
+        "commentary.Work",
+        on_delete=models.PROTECT,
+        related_name="comments",
+        null=True,
+        blank=True,
+    )
     chapter_number = models.PositiveSmallIntegerField(null=True, blank=True)
     verse_number = models.PositiveSmallIntegerField(null=True, blank=True)
     # 投稿時に表示していた聖書訳（Book.translation の値）のスナップショット。
@@ -90,16 +99,25 @@ class Comment(BaseModel):
                 fields=["canonical_book", "chapter_number", "verse_number", "-created_at"],
                 name="comment_location_recent_idx",
             ),
+            # 解釈書の場所のコメント（書・章・区切り）。
+            models.Index(
+                fields=["commentary_work", "chapter_number", "verse_number", "-created_at"],
+                name="comment_commentary_recent_idx",
+            ),
             # 返信の読み足しは親でぶら下がりを引く。
             models.Index(fields=["parent", "-created_at"], name="comment_replies_recent_idx"),
         ]
         constraints = [
             # 段階6E: すべてのコメントは書・章・節のいずれかの粒度を必ず持つ。
-            # canonical_book は必須。粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) /
+            # 書は「聖書の書（canonical_book）」か「解釈書（commentary_work）」のどちらか一方。
+            # 粒度は (章NULL・節NULL=書) / (章あり・節NULL=章) /
             # (章あり・節あり=節) のみ許可し、章NULLで節だけある等の中途半端を禁止する。
             models.CheckConstraint(
                 condition=(
-                    models.Q(canonical_book__isnull=False)
+                    (
+                        models.Q(canonical_book__isnull=False, commentary_work__isnull=True)
+                        | models.Q(canonical_book__isnull=True, commentary_work__isnull=False)
+                    )
                     & ~(
                         models.Q(chapter_number__isnull=True)
                         & models.Q(verse_number__isnull=False)

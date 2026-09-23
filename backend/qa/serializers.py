@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
+from commentary.location import CommentaryLocationError, commentary_location_label, resolve_commentary_location
+from commentary.models import Work
 from comments.models import Tag
 from common.text import clean_body
 
@@ -102,6 +104,14 @@ class QuestionSerializer(serializers.ModelSerializer):
     verse = serializers.PrimaryKeyRelatedField(queryset=Verse.objects.all(), write_only=True, required=False)
     chapter = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), write_only=True, required=False)
     book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all(), write_only=True, required=False)
+    # 解釈書への質問の入力（解釈書の slug ＋ 章番号 ＋ 区切り番号）。コメントと同じ形。
+    commentary_work = serializers.SlugRelatedField(
+        slug_field="slug", queryset=Work.objects.all(), write_only=True, required=False
+    )
+    commentary_chapter = serializers.IntegerField(write_only=True, required=False, min_value=0)
+    commentary_number = serializers.IntegerField(write_only=True, required=False, min_value=1)
+    # 解釈書への質問なら、その解釈書の slug（画面がリンクを組み立てるため）。聖書の質問では空。
+    commentary_work_slug = serializers.SerializerMethodField()
 
     best_answer = BestAnswerSerializer(read_only=True)
     answer_count = serializers.SerializerMethodField()
@@ -114,8 +124,8 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             "id", "user", "title", "body", "created_at", "is_deleted",
-            "verse", "chapter", "book",
-            "book_slug", "book_name", "chapter_number", "verse_number",
+            "verse", "chapter", "book", "commentary_work", "commentary_chapter", "commentary_number",
+            "book_slug", "book_name", "commentary_work_slug", "chapter_number", "verse_number",
             "location_label", "version_label",
             "tags", "tag_ids", "best_answer", "answer_count",
         ]
@@ -134,10 +144,19 @@ class QuestionSerializer(serializers.ModelSerializer):
     def get_book_slug(self, obj) -> str:
         return obj.canonical_book.slug if obj.canonical_book_id else ""
 
+    def get_commentary_work_slug(self, obj) -> str:
+        return obj.commentary_work.slug if obj.commentary_work_id else ""
+
     def get_book_name(self, obj) -> str:
+        if obj.commentary_work_id:
+            return commentary_location_label(obj.commentary_work_id, None, None, _book_name_cache(self))
         return book_name_for(obj.canonical_book_id, obj.source_translation, _book_name_cache(self))
 
     def get_location_label(self, obj) -> str:
+        if obj.commentary_work_id:
+            return commentary_location_label(
+                obj.commentary_work_id, obj.chapter_number, obj.verse_number, _book_name_cache(self)
+            )
         name = self.get_book_name(obj)
         return format_location_label(name, obj.chapter_number, obj.verse_number)
 
@@ -165,22 +184,35 @@ class QuestionSerializer(serializers.ModelSerializer):
         return title
 
     def validate(self, data):
-        targets = [x for x in (data.get("verse"), data.get("chapter"), data.get("book")) if x is not None]
+        targets = [
+            x for x in (data.get("verse"), data.get("chapter"), data.get("book"), data.get("commentary_work"))
+            if x is not None
+        ]
         if len(targets) != 1:
             raise serializers.ValidationError(
-                "Specify exactly one of verse, chapter, or book."
+                "Specify exactly one of verse, chapter, book, or commentary_work."
             )
         return data
 
     def create(self, validated_data):
         tags = validated_data.pop("tags", [])
         validated_data["user"] = self.context["request"].user
-        # 表示中の訳の id を訳非依存の箇所へ翻訳して保存する。入力自体は保存しない。
-        location = derive_location(
-            verse=validated_data.pop("verse", None),
-            chapter=validated_data.pop("chapter", None),
-            book=validated_data.pop("book", None),
-        )
+        work = validated_data.pop("commentary_work", None)
+        chapter_number = validated_data.pop("commentary_chapter", None)
+        number = validated_data.pop("commentary_number", None)
+        if work is not None:
+            # 解釈書の場所（解釈書・章番号・区切り番号）を確かめてそのまま保存する。
+            try:
+                location = resolve_commentary_location(work.slug, chapter_number, number)
+            except CommentaryLocationError as e:
+                raise serializers.ValidationError({"commentary_work": str(e)})
+        else:
+            # 表示中の訳の id を訳非依存の箇所へ翻訳して保存する。入力自体は保存しない。
+            location = derive_location(
+                verse=validated_data.pop("verse", None),
+                chapter=validated_data.pop("chapter", None),
+                book=validated_data.pop("book", None),
+            )
         validated_data.update(location)
         question = super().create(validated_data)
         if tags:

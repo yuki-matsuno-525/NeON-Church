@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from bible.models import Book, Chapter, Verse
 from bible.passage import book_name_for, derive_location, format_location_label
+from commentary.location import CommentaryLocationError, commentary_location_label, resolve_commentary_location
+from commentary.models import Work
 from common.text import clean_body as _clean_body
 from .models import Comment, DELETED_COMMENT_BODY, Report, Tag
 
@@ -29,6 +31,9 @@ def _get_location_parts(obj: Comment, cache: dict | None = None) -> tuple[str, i
     1件のコメントにつき4回（書名・章・節・ラベル）呼ばれるので、`cache`
     （book_name_cache が返す辞書）を渡して同じ組を使い回す。
     """
+    if obj.commentary_work_id:
+        # 解釈書の場所は「解釈書 › 章 › 区切り」を1つの名前にして返す（章・節の番号は付けない）。
+        return commentary_location_label(obj.commentary_work_id, obj.chapter_number, obj.verse_number, cache), None, None
     if not obj.canonical_book_id:
         return "", None, None
     name = book_name_for(obj.canonical_book_id, obj.source_translation, cache)
@@ -77,10 +82,17 @@ class CommentSerializer(serializers.ModelSerializer):
     verse = serializers.PrimaryKeyRelatedField(queryset=Verse.objects.all(), write_only=True, required=False)
     chapter = serializers.PrimaryKeyRelatedField(queryset=Chapter.objects.all(), write_only=True, required=False)
     book = serializers.PrimaryKeyRelatedField(queryset=Book.objects.all(), write_only=True, required=False)
+    # 解釈書へのコメントの入力（解釈書の slug ＋ 章番号 ＋ 区切り番号）。章・区切りは省くと書・章へのコメント。
+    commentary_work = serializers.SlugRelatedField(
+        slug_field="slug", queryset=Work.objects.all(), write_only=True, required=False
+    )
+    commentary_chapter = serializers.IntegerField(write_only=True, required=False, min_value=0)
+    commentary_number = serializers.IntegerField(write_only=True, required=False, min_value=1)
 
     class Meta:
         model = Comment
-        fields = ["id", "user", "verse", "chapter", "book", "translation_project", "version_label", "parent", "body", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
+        fields = ["id", "user", "verse", "chapter", "book",
+                  "commentary_work", "commentary_chapter", "commentary_number", "translation_project", "version_label", "parent", "body", "is_deleted", "created_at", "vote_count", "reply_count", "tags", "tag_ids"]
         read_only_fields = ["id", "user", "is_deleted", "created_at", "vote_count", "reply_count", "version_label", "tags"]
 
     def get_vote_count(self, obj) -> int:
@@ -109,13 +121,15 @@ class CommentSerializer(serializers.ModelSerializer):
         book = data.get("book")
         parent = data.get("parent")
 
-        targets = [x for x in [verse, chapter, book] if x is not None]
-        # 返信も含め、すべてのコメントは書・章・節のちょうど1つの粒度を必ず持つ。
-        # （3列すべて NULL は DB の CHECK でも禁止している。）
+        targets = [x for x in [verse, chapter, book, data.get("commentary_work")] if x is not None]
+        # 返信も含め、すべてのコメントは書・章・節（または解釈書の書・章・区切り）のちょうど1つの粒度を必ず持つ。
+        # （すべて NULL は DB の CHECK でも禁止している。）
         if len(targets) != 1:
             raise serializers.ValidationError(
-                "Specify exactly one of verse, chapter, or book."
+                "Specify exactly one of verse, chapter, book, or commentary_work."
             )
+        if data.get("commentary_work") is not None and data.get("translation_project") is not None:
+            raise serializers.ValidationError("Commentary comments cannot belong to a translation project.")
 
         if parent:
             # 段階6D: 返信は親と「同じ箇所」であればよい（訳が違っても可）。旧 verse_id 一致から
@@ -123,7 +137,8 @@ class CommentSerializer(serializers.ModelSerializer):
             # 返信できる（同じスレッドに集約される）。
             loc = self._derive_location(data)
             if (
-                loc["canonical_book"].id != parent.canonical_book_id
+                getattr(loc.get("canonical_book"), "id", None) != parent.canonical_book_id
+                or getattr(loc.get("commentary_work"), "id", None) != parent.commentary_work_id
                 or loc["chapter_number"] != parent.chapter_number
                 or loc["verse_number"] != parent.verse_number
             ):
@@ -142,7 +157,7 @@ class CommentSerializer(serializers.ModelSerializer):
         # 入力自体は保存しないので取り除く。値はクライアント入力を信用せず入力 FK から導出する。
         # 返信も返信自身の入力 FK から導出する（親からの継承はしない）。
         validated_data.update(self._derive_location(validated_data))
-        for field in ("verse", "chapter", "book"):
+        for field in ("verse", "chapter", "book", "commentary_chapter", "commentary_number"):
             validated_data.pop(field, None)
         comment = super().create(validated_data)
         if tags:
@@ -151,7 +166,16 @@ class CommentSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _derive_location(validated_data) -> dict:
-        """入力の verse/chapter/book（いずれか1つ）から箇所と投稿時訳を導出する。"""
+        """入力の verse/chapter/book（いずれか1つ）から箇所と投稿時訳を導出する。
+        解釈書へのコメントなら、解釈書・章番号・区切り番号を確かめてその場所にする。"""
+        work = validated_data.get("commentary_work")
+        if work is not None:
+            try:
+                return resolve_commentary_location(
+                    work.slug, validated_data.get("commentary_chapter"), validated_data.get("commentary_number")
+                ) | {"source_translation": None}
+            except CommentaryLocationError as e:
+                raise serializers.ValidationError({"commentary_work": str(e)})
         location = derive_location(
             verse=validated_data.get("verse"),
             chapter=validated_data.get("chapter"),
@@ -189,12 +213,14 @@ class MyCommentSerializer(serializers.ModelSerializer):
     chapter_number = serializers.IntegerField(read_only=True)
     verse_number = serializers.IntegerField(read_only=True)
     source_translation = serializers.CharField(read_only=True)
+    # 解釈書の場所へのコメントなら、その解釈書の slug（章・区切りは chapter_number / verse_number）。
+    commentary_work_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = [
             "id", "user", "body", "created_at", "vote_count", "location_label",
-            "book_slug", "chapter_number", "verse_number", "source_translation",
+            "book_slug", "commentary_work_slug", "chapter_number", "verse_number", "source_translation",
         ]
 
     def get_vote_count(self, obj) -> int:
@@ -206,6 +232,9 @@ class MyCommentSerializer(serializers.ModelSerializer):
 
     def get_book_slug(self, obj) -> str:
         return obj.canonical_book.slug if obj.canonical_book_id else ""
+
+    def get_commentary_work_slug(self, obj) -> str:
+        return obj.commentary_work.slug if obj.commentary_work_id else ""
 
 
 class TrendingCommentSerializer(serializers.ModelSerializer):

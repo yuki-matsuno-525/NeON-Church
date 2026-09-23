@@ -9,7 +9,7 @@ from django.db.models import Count, Q
 
 # 種類の名前は BookmarkSerializer.get_target_type が返す値と揃えること。
 # フロントのタブもこの名前をそのまま使う。
-BOOKMARK_TYPES = ("verse", "chapter", "book", "comment", "project")
+BOOKMARK_TYPES = ("verse", "chapter", "book", "commentary", "comment", "project")
 
 # 種類ごとの絞り込み条件。Bookmark の CheckConstraint により、1件のお気に入りは
 # 必ずこのうちどれか1つだけに当てはまる。
@@ -25,6 +25,8 @@ _TYPE_FILTERS = {
         chapter_number__isnull=True,
         verse_number__isnull=True,
     ),
+    # 解釈書の場所（書・章・区切りのどの粒度でも1つのタブにまとめる）
+    "commentary": Q(commentary_work__isnull=False),
     "comment": Q(comment__isnull=False),
     "project": Q(translation_project__isnull=False),
 }
@@ -73,6 +75,24 @@ def filter_by_location(queryset, book_slug, chapter_number=None, project_id=None
             comment__canonical_book__slug=book_slug,
             comment__chapter_number=chapter_number,
         )
+    )
+
+
+def filter_by_commentary_location(queryset, work_slug, chapter_number=None):
+    """解釈書のページ用。filter_by_location の解釈書版。
+
+    - 書のページ: その解釈書そのものへのお気に入り
+    - 章のページ: その章と、その章の区切りへのお気に入り、その章へのコメントのお気に入り
+    """
+    if chapter_number is None:
+        return queryset.filter(
+            commentary_work__slug=work_slug,
+            chapter_number__isnull=True,
+            verse_number__isnull=True,
+        )
+    return queryset.filter(
+        Q(commentary_work__slug=work_slug, chapter_number=chapter_number)
+        | Q(comment__commentary_work__slug=work_slug, comment__chapter_number=chapter_number)
     )
 
 

@@ -13,7 +13,8 @@ from translations.access import (
     filter_by_project_visibility,
     get_visible_project_or_404,
 )
-from .filters import count_by_type, filter_by_location, filter_by_type
+from commentary.location import CommentaryLocationError, resolve_commentary_location
+from .filters import count_by_type, filter_by_commentary_location, filter_by_location, filter_by_type
 from .models import Bookmark
 from .serializers import BookmarkSerializer
 
@@ -69,6 +70,7 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
     GET /api/bookmarks/?book=<書のslug>              その書に付いたお気に入り
     GET /api/bookmarks/?book=<書のslug>&chapter=<章> その章と、その章の節に付いたお気に入り・コメントのお気に入り
     GET /api/bookmarks/?translation_project=<id>     その翻訳企画のお気に入り
+    GET /api/bookmarks/?work=<解釈書のslug>(&chapter=<章>)  解釈書の書・章のページ用
     箇所で絞ったときは counts を付けない（画面のタブに使わないため、集計の往復を省く）。
     """
 
@@ -88,20 +90,25 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         params = self.request.query_params
         book_slug = params.get("book")
         project_id = params.get("translation_project")
-        if not book_slug and not project_id:
+        work_slug = params.get("work")
+        if not book_slug and not project_id and not work_slug:
             return None
         chapter = params.get("chapter")
         chapter_number = int(chapter) if chapter and chapter.isdigit() else None
-        return book_slug, chapter_number, project_id
+        return book_slug, chapter_number, project_id, work_slug
 
     def get_queryset(self):
         qs = self.get_base_queryset().select_related(
             "comment__user", "comment__canonical_book", "canonical_book",
-            "translation_project",
+            "translation_project", "commentary_work",
         )
         location = self._location_params()
         if location:
-            qs = filter_by_location(qs, *location)
+            book_slug, chapter_number, project_id, work_slug = location
+            if work_slug:
+                qs = filter_by_commentary_location(qs, work_slug, chapter_number)
+            else:
+                qs = filter_by_location(qs, book_slug, chapter_number, project_id)
         else:
             qs = filter_by_type(qs, self.request.query_params.get("type"))
         return annotate_verse_text(qs)
@@ -119,10 +126,13 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
         verse = serializer.validated_data.pop("verse", None)
         chapter = serializer.validated_data.pop("chapter", None)
         book = serializer.validated_data.pop("book", None)
+        work = serializer.validated_data.pop("commentary_work", None)
+        work_chapter = serializer.validated_data.pop("commentary_chapter", None)
+        work_number = serializer.validated_data.pop("commentary_number", None)
         comment = serializer.validated_data.get("comment")
         project = serializer.validated_data.get("translation_project")
 
-        if not any([verse, chapter, book, comment, project]):
+        if not any([verse, chapter, book, work, comment, project]):
             raise ValidationError({"detail": "Specify a verse, chapter, book, comment or project to favorite."})
 
         comment_project = comment.translation_project if comment and comment.translation_project_id else None
@@ -153,6 +163,17 @@ class BookmarkListCreateView(generics.ListCreateAPIView):
                 "canonical_book_id": book.canonical_book_id,
                 "chapter_number": None,
                 "verse_number": None,
+            }
+        elif work:
+            # 解釈書の場所（解釈書・章番号・区切り番号）。無い場所なら 400。
+            try:
+                resolve_commentary_location(work.slug, work_chapter, work_number)
+            except CommentaryLocationError as e:
+                raise ValidationError({"detail": str(e)})
+            location = {
+                "commentary_work_id": work.id,
+                "chapter_number": work_chapter,
+                "verse_number": work_number,
             }
 
         # 同一ユーザー・同一対象の重複を弾く（章のお気に入り/書のお気に入りは verse/chapter が NULL の行だけを対象に一致）。
