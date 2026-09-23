@@ -463,6 +463,14 @@ const ja = {
     "検索の拡充 — 記事・プラン・Q&A も探せるようにする",
     "プロフィール画像",
   ],
+  // 「Church」という名前や、正典と外典を同じ並びに置く方針から誤解されやすい点を先に伝える
+  aboutSection4Title: "ご利用にあたって",
+  aboutNotices: [
+    "NeON Churchは教会組織ではなく、特定の教派にも属していません。牧師による相談や、祈りの依頼の受け付けも行っていません。",
+    "命や安全に関わる悩みがあるときは、このサイトではなく、身近な人や地域の専門の相談窓口に連絡してください。緊急のときは警察（110）や救急（119）へ。",
+    "正典・第二正典・外典・偽典、学者による復元資料までを同じ並びに置いているのは、読む前に価値の序列を決めないためです。書かれた時代や、それぞれの伝統での位置づけが同じだという意味ではありません。",
+    "投票の数やトレンドは、その意見が正しいと認めるものではありません。",
+  ],
   backToHome: "← トップへ戻る",
 
   // 翻訳プロジェクト一覧
@@ -1237,6 +1245,13 @@ const en: typeof ja = {
     "Side-by-side translation view",
     "Wider search — articles, plans, and Q&A too",
     "Profile photos",
+  ],
+  aboutSection4Title: "Before you use NeON Church",
+  aboutNotices: [
+    "NeON Church is not a church organization and is not affiliated with any denomination. We do not offer pastoral counseling or accept prayer requests.",
+    "If you are struggling with something that affects your life or safety, please reach out to people you trust or to a local support service rather than this site. In an emergency, contact your local emergency services.",
+    "Canonical, deuterocanonical, apocryphal, and pseudepigraphal books, as well as scholarly reconstructions, are listed side by side so that no ranking is decided before you read. This does not mean they share the same date or the same standing in each tradition.",
+    "Vote counts and trends do not mean that an opinion is correct.",
   ],
   backToHome: "← Back to home",
 

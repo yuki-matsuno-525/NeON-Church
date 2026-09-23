@@ -18,6 +18,8 @@ vi.mock("@/lib/i18nServer", () => ({
     aboutFeatures: ["読む"],
     aboutSection3Title: "これから",
     aboutPlanned: ["改善"],
+    aboutSection4Title: "ご利用にあたって",
+    aboutNotices: ["教会組織ではありません"],
     backToHome: "トップへ戻る",
   }),
 }));
@@ -30,13 +32,15 @@ describe("AboutContent", () => {
     expect(screen.getByRole("status")).toHaveTextContent("ベータ版");
     expect(screen.getByRole("heading", { name: "概要" })).toBeInTheDocument();
     expect(screen.getByText("読む")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "ご利用にあたって" })).toBeInTheDocument();
+    expect(screen.getByText("教会組織ではありません")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "トップへ戻る" })).toHaveAttribute("href", "/");
   });
 
   it("目次のパネルは置かない", async () => {
     render(await AboutContent());
 
-    // 節が 3 つしかないので目次は出さない（規約など長い画面では引き続き使う）。
+    // 節が 4 つしかないので目次は出さない（規約など長い画面では引き続き使う）。
     expect(screen.queryByText("このページの内容")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
   });

@@ -6,7 +6,7 @@ import { getT, getRequestLanguage } from "@/lib/i18nServer";
  * 表示文言をサーバー側の getT() で取ることで `"use client"` が不要になり、
  * ブラウザに JavaScript を送らずに描ける。
  *
- * 目次のパネル（ContentPageMeta）は置かない。節が 3 つしかない画面で目次を出しても
+ * 目次のパネル（ContentPageMeta）は置かない。節が 4 つしかない画面で目次を出しても
  * 行き先が増えず、読み始める前に箱を 1 つまたぐことになるため。
  * 規約やプライバシーのように長い画面では引き続き使う。
  */
@@ -40,6 +40,12 @@ export async function AboutContent() {
       <Section id="section-3" title={t.aboutSection3Title}>
         <ul className="m-0 list-disc pl-6 leading-reading">
           {t.aboutPlanned.map((f, i) => <li key={i}>{f}</li>)}
+        </ul>
+      </Section>
+
+      <Section id="section-4" title={t.aboutSection4Title}>
+        <ul className="m-0 list-disc pl-6 leading-reading">
+          {t.aboutNotices.map((f, i) => <li key={i}>{f}</li>)}
         </ul>
       </Section>
 
