@@ -46,4 +46,5 @@ urlpatterns += [
     path("api/", include("translations.urls")),
     path("api/", include("articles.urls")),
     path("api/", include("plans.urls")),
+    path("api/commentary/", include("commentary.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
