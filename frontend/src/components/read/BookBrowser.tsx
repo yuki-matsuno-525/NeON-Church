@@ -9,6 +9,7 @@ import { bookLabel, useT } from "@/lib/i18n";
 import { useLang } from "@/contexts/LanguageContext";
 import { useQuerySearch } from "@/hooks/useQuerySearch";
 import { ClearableSearchInput } from "@/components/ui/ClearableSearchInput";
+import { matchesSearch, normalizeSearch } from "@/lib/textSearch";
 
 // 翻訳本棚カテゴリ用の擬似ジャンルキー。実ジャンル名と衝突しない値にする。
 const TRANSLATION_TAB = "__translation_library__";
@@ -163,10 +164,10 @@ export function BookBrowser({ library, libraryFailed }: Props) {
   );
 }
 
-const tileClass = "card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body";
+export const tileClass = "card-glow card-glow-interactive flex flex-col py-4 px-4 no-underline text-body";
 
 /** 絞り込みの丸いラベル。選ばれているものは塗りつぶす。 */
-function chipClass(isActive: boolean): string {
+export function chipClass(isActive: boolean): string {
   return `chip${isActive ? " chip-on" : ""}`;
 }
 
@@ -188,12 +189,4 @@ function ProjectTile({ project }: { project: TranslationProject }) {
       </span>
     </Link>
   );
-}
-
-function normalizeSearch(value: string): string {
-  return value.trim().toLocaleLowerCase();
-}
-
-function matchesSearch(query: string, values: Array<string | null | undefined>): boolean {
-  return values.some((value) => value?.toLocaleLowerCase().includes(query));
 }

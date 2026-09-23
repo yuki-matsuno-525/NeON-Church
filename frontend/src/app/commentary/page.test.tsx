@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import CommentaryListPage from "./page";
 import type { CommentaryWork } from "@/lib/types";
 
@@ -7,12 +7,18 @@ vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a>,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/commentary",
+}));
+
 vi.mock("@/lib/i18nServer", async () => {
   const { translations } = await import("@/lib/i18nDictionary");
   return { getT: async () => translations.ja, getRequestLanguage: async () => "ja" };
 });
 
-vi.mock("@/lib/apiServer", () => ({ serverFetchList: vi.fn() }));
+vi.mock("@/lib/apiServer", () => ({ serverFetchPublic: vi.fn() }));
 
 const work = (overrides: Partial<CommentaryWork>): CommentaryWork => ({
   slug: "w", title: "W", title_ja: "", author: "A", author_ja: "", year: null, tradition: "patristic", language: "en",
@@ -20,32 +26,58 @@ const work = (overrides: Partial<CommentaryWork>): CommentaryWork => ({
   readable: true, section_count: 10, chapter_count: 1, ...overrides,
 });
 
-describe("解釈書の一覧", () => {
+const works = [
+  work({ slug: "rashi-genesis", title_ja: "ラシ 創世記注解", author_ja: "ラシ", tradition: "jewish", year: 1100, chapter_count: 50 }),
+  work({ slug: "calvin-romans", title_ja: "カルヴァン ローマ人への手紙注解", author_ja: "ジャン・カルヴァン", tradition: "reformation", year: 1555 }),
+  work({ slug: "uchimura-romans", title_ja: "ロマ書の研究", author_ja: "内村鑑三", tradition: "mukyokai", year: 1924, language: "ja", chapter_count: 61 }),
+];
+
+async function renderPage(result: CommentaryWork[] | Error = works) {
+  const { serverFetchPublic } = await import("@/lib/apiServer");
+  if (result instanceof Error) vi.mocked(serverFetchPublic).mockRejectedValue(result);
+  else vi.mocked(serverFetchPublic).mockResolvedValue(result);
+  render(await CommentaryListPage());
+}
+
+describe("解釈書の入口（「読む」と同じ作り）", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("立場ごとに分け、古い立場から並べる", async () => {
-    const { serverFetchList } = await import("@/lib/apiServer");
-    vi.mocked(serverFetchList).mockResolvedValue([
-      work({ slug: "uchimura-romans", title_ja: "ロマ書の研究", author_ja: "内村鑑三", tradition: "mukyokai", year: 1924, language: "ja" }),
-      work({ slug: "rashi-on-torah", title_ja: "ラシのトーラー注解", author_ja: "ラシ", tradition: "jewish", year: 1100 }),
-    ]);
-    render(await CommentaryListPage());
+  it("立場のチップで絞り、最初は一番古い立場の本を出す", async () => {
+    await renderPage();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("解釈書");
+    // 出てくる立場だけがチップになる
+    expect(screen.getAllByRole("button", { pressed: false }).map((b) => b.textContent)).toEqual(["宗教改革 (1)", "無教会 (1)"]);
+    expect(screen.getByRole("button", { pressed: true })).toHaveTextContent("ユダヤ教 (1)");
 
-    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(["ユダヤ教", "無教会"]);
-
-    const rashi = screen.getByRole("link", { name: /ラシのトーラー注解/ });
-    expect(rashi).toHaveAttribute("href", "/commentary/rashi-on-torah");
+    const rashi = screen.getByRole("link", { name: /ラシ 創世記注解/ });
+    expect(rashi).toHaveAttribute("href", "/commentary/rashi-genesis");
     expect(rashi).toHaveTextContent("1100年ごろ");
+    expect(rashi).toHaveTextContent("全50章");
     expect(rashi).toHaveTextContent("英語");
-    // 日本語の本には言語を書かない
-    expect(within(screen.getByRole("link", { name: /ロマ書の研究/ })).queryByText("日本語")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "無教会 (1)" }));
+    const uchimura = screen.getByRole("link", { name: /ロマ書の研究/ });
+    expect(uchimura).not.toHaveTextContent("日本語");
+    expect(screen.queryByRole("link", { name: /ラシ/ })).not.toBeInTheDocument();
+  });
+
+  it("書名・著者・立場で検索できる", async () => {
+    await renderPage();
+    const search = screen.getByRole("searchbox", { name: "解釈書を検索" });
+
+    fireEvent.change(search, { target: { value: "カルヴァン" } });
+    expect(await screen.findByRole("link", { name: /ローマ人への手紙注解/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /ラシ/ })).not.toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: "無教会" } });
+    expect(await screen.findByRole("link", { name: /ロマ書の研究/ })).toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: "該当なし" } });
+    expect(await screen.findByText("一致する解釈書がありません。")).toBeInTheDocument();
   });
 
   it("取れなかったときは、その旨を出す", async () => {
-    const { serverFetchList } = await import("@/lib/apiServer");
-    vi.mocked(serverFetchList).mockRejectedValue(new Error("down"));
-    render(await CommentaryListPage());
+    await renderPage(new Error("down"));
     expect(screen.getByText("読み込めませんでした")).toBeInTheDocument();
   });
 });
