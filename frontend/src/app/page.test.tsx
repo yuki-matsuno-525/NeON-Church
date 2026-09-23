@@ -21,16 +21,34 @@ vi.mock("./HomeSections", () => ({
 }));
 
 describe("表紙", () => {
-  it("記事のカードから記事一覧へ行ける（ログインは要らない）", async () => {
+  it("押すものは「登録せずに読んでみる」で、書の一覧へ行く（ログインは要らない）", async () => {
     render(await Home());
 
-    expect(screen.getByRole("link", { name: "記事" })).toHaveAttribute("href", "/articles");
+    expect(screen.getByRole("link", { name: "登録せずに読んでみる →" })).toHaveAttribute("href", "/read");
+    expect(screen.getByText(/読むだけなら登録は要りません/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "NeON Church とは" })).toHaveAttribute("href", "/about");
   });
 
-  it("見出しとパネルに加えて、聖句と一覧の欄を置く", async () => {
+  it("初めての3冊は、正典2冊と外典1冊をそれぞれ最初の章へつなぐ", async () => {
     render(await Home());
 
-    expect(screen.getByRole("link", { name: "読む" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ヨハネ/ })).toHaveAttribute("href", "/john/1");
+    expect(screen.getByRole("link", { name: /マルコ/ })).toHaveAttribute("href", "/mark/1");
+    // トマスの福音書は冒頭の Prologue が第0章
+    expect(screen.getByRole("link", { name: /トマス/ })).toHaveAttribute("href", "/thomas/0");
+  });
+
+  it("読む以外の機能へも一番下から行ける", async () => {
+    render(await Home());
+
+    const nav = screen.getByRole("navigation", { name: "そのほかの入口" });
+    expect(nav.querySelector('a[href="/articles"]')).not.toBeNull();
+    expect(nav.querySelector('a[href="/qa"]')).not.toBeNull();
+  });
+
+  it("聖句と一覧の欄を置く", async () => {
+    render(await Home());
+
     expect(screen.getByText("聖句の欄")).toBeInTheDocument();
     expect(screen.getByText("一覧の欄")).toBeInTheDocument();
   });

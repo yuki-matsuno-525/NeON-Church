@@ -27,26 +27,6 @@
   color: rgba(213, 181, 255, 0.88);
 }
 
-/* 画面幅に合わせて 30px〜52px の間で伸び縮みする */
-.heroTitle {
-  margin: 0 0 var(--spacing-4);
-  font-family: var(--font-serif);
-  font-size: clamp(30px, 5vw, 52px);
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-  color: rgba(255, 255, 255, 0.95);
-  white-space: pre-line;
-}
-
-.heroDesc {
-  margin: 0;
-  max-width: 480px;
-  font-size: var(--text-md);
-  line-height: var(--leading-reading);
-  color: var(--text-muted);
-}
-
 /* ネオンカードの見た目そのものは globals.css の .card-glow / .card-glow-strong
    が持つ（サイト全体で共通）。ここではトップページ固有の余白だけを足す。 */
 .neonCardPad {
@@ -79,60 +59,6 @@
   margin: 0;
   font-size: var(--text-sm);
   color: rgba(193, 143, 255, 0.88);
-}
-
-/* ----- セクションカード ----- */
-
-.cards {
-  display: grid;
-  /* 5 枚を 1 行に詰めると狭くなるので、幅に合わせて折り返す */
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-4);
-}
-
-@media (max-width: 768px) {
-  .cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 769px) and (max-width: 980px) {
-  .cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.sectionCard {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--spacing-3);
-  min-height: 140px;
-  padding: var(--spacing-6);
-  color: inherit;
-  text-decoration: none;
-}
-
-.sectionRow {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-3);
-}
-
-.sectionIcon {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-
-.sectionTitle {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  line-height: 1;
-  color: rgba(255, 255, 255, 0.94);
 }
 
 /* ----- 一覧のカード（トレンド・最近の Q&A で共通） ----- */
