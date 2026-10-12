@@ -40,6 +40,7 @@ from bible.models import Book, Chapter, Verse
 from bookmarks.models import Bookmark
 from comments.models import PREDEFINED_TAGS, Comment, Report, Tag, Vote
 from common.seed_data import LOCALES
+from common.wipe import wipe_user_data
 from notifications.models import Notification
 from plans.models import (
     MAX_DAYS_PER_PLAN,
@@ -245,34 +246,9 @@ class Command(BaseCommand):
     # ── 片付け ──────────────────────────────────────────────────────────────
 
     def _wipe(self):
-        """利用者が作ったものを、外部キーの依存順に消す。聖書本文と管理者は残す。"""
+        """利用者が作ったものを消す。聖書本文と管理者は残す（中身は common/wipe.py）。"""
         self.stdout.write("既存データを消しています...")
-        for model in (
-            Notification,
-            PlanDayProgress,
-            PlanSubscription,
-            PlanDayReading,
-            PlanDay,
-            Plan,
-            ArticleComment,
-            ArticleCitation,
-            Article,
-            Report,
-            Answer,
-            Question,
-            Vote,
-            Bookmark,
-            Comment,
-            ReadingProgress,
-            TranslationComment,
-            TranslationLibraryEntry,
-            TranslationUnit,
-            TranslationMembership,
-            TranslationProject,
-        ):
-            model.objects.all().delete()
-        # 管理者だけ残す。ここまでで管理者に紐づく投稿も消えている。
-        User.objects.filter(is_superuser=False, is_staff=False).delete()
+        wipe_user_data()
         self.stdout.write("  消し終わりました")
 
     # ── 下ごしらえ ──────────────────────────────────────────────────────────
