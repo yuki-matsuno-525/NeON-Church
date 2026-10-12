@@ -38,7 +38,7 @@ If you have never read the Bible, start with Mark. It is the shortest Gospel and
 
 {{mark 1:1-3|KJV}}
 
-If you know the Bible well, open a book you have never read. Try 1 Enoch, whose first chapter is quoted in the New Testament ([[jude 1:14-15]]), or the Gospel of Thomas, which is nothing but sayings.
+If you know the Bible well, open a book you have never read. Try 1 Enoch, whose first chapter is quoted in the New Testament [[jude 1:14-15]], or the Gospel of Thomas, which is nothing but sayings.
 
 If you want to see what this site does differently, open [[matthew 6:13]] and switch between the KJV and the Greek. The last line of the Lord's Prayer is there in one and missing in the other. Every edition is a decision someone made.
 
@@ -86,7 +86,7 @@ That is 1 Enoch 1:9, which you can read for yourself:
 
 {{enoch 1:9}}
 
-Paul quotes Greek poets ([[acts 17:28]]). Hebrews 11 alludes to martyr stories that resemble 2 Maccabees ([[hebrews 11:35]]). Reading the early Christian world only through its eventual canon means missing some of the voices its writers were listening to.
+Paul quotes Greek poets [[acts 17:28]]. Hebrews 11 alludes to martyr stories that resemble 2 Maccabees [[hebrews 11:35]]. Reading the early Christian world only through its eventual canon means missing some of the voices its writers were listening to.
 
 ## What we do
 
@@ -115,7 +115,7 @@ Ask almost anyone who tempted Eve, and they will say "Satan." Read Genesis 3, an
 
 {{genesis 3:1|KJV}}
 
-The serpent is "more subtil than any beast of the field which the LORD God had made." It is a creature, compared to other creatures. At the end of the scene it is cursed to crawl and eat dust ([[genesis 3:14]]) — a punishment that fits an animal. Nothing in the chapter says it is anything more.
+The serpent is "more subtil than any beast of the field which the LORD God had made." It is a creature, compared to other creatures. At the end of the scene it is cursed to crawl and eat dust [[genesis 3:14]] — a punishment that fits an animal. Nothing in the chapter says it is anything more.
 
 ## How the serpent became the devil
 
@@ -139,17 +139,17 @@ The New Testament's last book makes the link explicit:
 
 ### The Life of Adam and Eve
 
-Among the books on this site is the *Life of Adam and Eve*, a retelling of the story after the expulsion from Eden. It goes further still: the devil tells Adam that he was cast out of heaven because of him, after refusing to worship the newly made image of God ([[adam-and-eve 12:1-3]], [[adam-and-eve 14:1-3]]). It shows how vividly later readers imagined what Genesis leaves unsaid.
+Among the books on this site is the *Life of Adam and Eve*, a retelling of the story after the expulsion from Eden. It goes further still: the devil tells Adam that he was cast out of heaven because of him, after refusing to worship the newly made image of God [[adam-and-eve 12:1-3]], [[adam-and-eve 14:1-3]]. It shows how vividly later readers imagined what Genesis leaves unsaid.
 
 ## Why it matters how you read it
 
 If the serpent is Satan, Genesis 3 is a story about a cosmic enemy who deceives humanity. If the serpent is a clever animal, it is a story about a choice humans made, with no one else to blame. Both readings have deep roots.
 
-The first reading has the weight of most Christian tradition, and of Revelation itself. The second is closer to what the text of Genesis actually says. Notice too that in Genesis, when God questions the humans, the man blames the woman and the woman blames the serpent ([[genesis 3:12-13]]). The serpent is not asked. A story that ends with everyone shifting blame may be warning its readers not to do the same.
+The first reading has the weight of most Christian tradition, and of Revelation itself. The second is closer to what the text of Genesis actually says. Notice too that in Genesis, when God questions the humans, the man blames the woman and the woman blames the serpent [[genesis 3:12-13]]. The serpent is not asked. A story that ends with everyone shifting blame may be warning its readers not to do the same.
 
 ## A detail worth noticing
 
-The serpent's predictions come partly true. It says their eyes will be opened and they will know good and evil ([[genesis 3:5]]). Their eyes are opened ([[genesis 3:7]]), and God says the man has become "as one of us, to know good and evil" ([[genesis 3:22]]). Whatever the serpent is, it is not simply a liar. That is what makes it dangerous — and what makes the story worth reading again.
+The serpent's predictions come partly true. It says their eyes will be opened and they will know good and evil [[genesis 3:5]]. Their eyes are opened [[genesis 3:7]], and God says the man has become "as one of us, to know good and evil" [[genesis 3:22]]. Whatever the serpent is, it is not simply a liar. That is what makes it dangerous — and what makes the story worth reading again.
 
 Join the discussion on [[genesis 3:1]] — the editors have posted several readings there.
 """,
@@ -174,7 +174,7 @@ The Book of the Watchers (1 Enoch 1–36) retells the moment as a conspiracy:
 
 {{enoch 6:1-3}}
 
-Two hundred angels swear an oath together and descend on Mount Hermon ([[enoch 6:4-6]]). Their leader, Semjaza, is afraid of bearing the guilt alone, so he makes it collective. Their children are giants, who devour first the labor of humans and then humans themselves ([[enoch 7:2-5]]).
+Two hundred angels swear an oath together and descend on Mount Hermon [[enoch 6:4-6]]. Their leader, Semjaza, is afraid of bearing the guilt alone, so he makes it collective. Their children are giants, who devour first the labor of humans and then humans themselves [[enoch 7:2-5]].
 
 ## The knowledge that corrupts
 
@@ -182,7 +182,7 @@ Enoch adds something Genesis never mentions: the Watchers teach. Azazel teaches 
 
 {{enoch 8:1-2}}
 
-Other angels teach enchantments, astrology, and the signs of the sky ([[enoch 8:3]]). In this telling, violence and corruption spread not only through the giants but through knowledge put into human hands too soon.
+Other angels teach enchantments, astrology, and the signs of the sky [[enoch 8:3]]. In this telling, violence and corruption spread not only through the giants but through knowledge put into human hands too soon.
 
 ## The earth cries out
 
@@ -190,17 +190,17 @@ The most moving moment may be this one:
 
 {{enoch 8:4}}
 
-In chapter 9 four archangels — Michael, Uriel, Raphael and Gabriel — look down, see the blood, and bring the earth's cry before God ([[enoch 9:1-3]]). God sends them to act: Raphael binds Azazel, Gabriel turns the giants against each other, Michael binds Semjaza, and Noah is warned of the flood ([[enoch 10:1-12]]). Chapters 10–11 also look beyond the flood to a cleansed earth, where "truth and peace shall be associated together" ([[enoch 11:2]]).
+In chapter 9 four archangels — Michael, Uriel, Raphael and Gabriel — look down, see the blood, and bring the earth's cry before God [[enoch 9:1-3]]. God sends them to act: Raphael binds Azazel, Gabriel turns the giants against each other, Michael binds Semjaza, and Noah is warned of the flood [[enoch 10:1-12]]. Chapters 10–11 also look beyond the flood to a cleansed earth, where "truth and peace shall be associated together" [[enoch 11:2]].
 
 ## Reading them together
 
 There are at least three ways to read the two texts side by side.
 
-1. **Enoch as expansion.** Genesis compresses a story everyone knew; Enoch tells it in full. This is how many ancient readers seem to have taken it — Jude quotes Enoch ([[jude 1:14]]) and mentions angels who "kept not their first estate" ([[jude 1:6]]).
+1. **Enoch as expansion.** Genesis compresses a story everyone knew; Enoch tells it in full. This is how many ancient readers seem to have taken it — Jude quotes Enoch [[jude 1:14]] and mentions angels who "kept not their first estate" [[jude 1:6]].
 2. **Enoch as interpretation.** Enoch is a later attempt to explain a puzzling passage, as every commentary is. It tells us how some Jews of the Second Temple period read Genesis, not what Genesis meant.
 3. **Two independent traditions.** Both draw on older stories about divine beings and giants, and each shapes them for its own purposes.
 
-Whichever you choose, notice what Enoch adds to the question of responsibility. In Genesis 6, God sees that "the wickedness of man was great" ([[genesis 6:5]]). In Enoch, heaven carries much of the blame. That shift — from human evil to cosmic rebellion — would echo through Jewish and Christian thought for centuries.
+Whichever you choose, notice what Enoch adds to the question of responsibility. In Genesis 6, God sees that "the wickedness of man was great" [[genesis 6:5]]. In Enoch, heaven carries much of the blame. That shift — from human evil to cosmic rebellion — would echo through Jewish and Christian thought for centuries.
 
 ## Try it yourself
 
@@ -233,7 +233,7 @@ In the Sermon on the Mount, Jesus assumes his hearers will fast. His concern is 
 
 {{matthew 6:16-18|KJV}}
 
-The same pattern governs giving and prayer in the same chapter ([[matthew 6:1-6]]). Fasting is good; fasting for an audience is not. Later, Jesus says his disciples will fast "when the bridegroom shall be taken from them" ([[matthew 9:15]]).
+The same pattern governs giving and prayer in the same chapter [[matthew 6:1-6]]. Fasting is good; fasting for an audience is not. Later, Jesus says his disciples will fast "when the bridegroom shall be taken from them" [[matthew 9:15]].
 
 ## Thomas: guilt
 
@@ -245,7 +245,7 @@ Jesus does not answer the questions. He replaces them with two commands: don't l
 
 {{thomas 14:1}}
 
-The saying goes on to repeat a line we also know from Mark and Matthew: it is not what goes into your mouth that defiles you, but what comes out ([[thomas 14:2]]; compare [[mark 7:15]]).
+The saying goes on to repeat a line we also know from Mark and Matthew: it is not what goes into your mouth that defiles you, but what comes out [[thomas 14:2]]. Compare [[mark 7:15]].
 
 ## Three positions
 
@@ -253,7 +253,7 @@ The saying goes on to repeat a line we also know from Mark and Matthew: it is no
 - **Matthew:** fasting is good if it is hidden.
 - **Thomas:** fasting, as a religious performance, is dangerous; what matters is honesty and what comes out of you.
 
-Christians have mostly followed Matthew; Lent and other fasts are part of many traditions. Thomas's sayings are harder to place. Some readers see them as a radical spirituality that sets aside external practice; others note that another saying in Thomas says "If you don't fast from the world, you won't find the kingdom" ([[thomas 27]]), and suspect the book is less hostile to fasting than saying 14 sounds.
+Christians have mostly followed Matthew; Lent and other fasts are part of many traditions. Thomas's sayings are harder to place. Some readers see them as a radical spirituality that sets aside external practice; others note that another saying in Thomas says "If you don't fast from the world, you won't find the kingdom" [[thomas 27]], and suspect the book is less hostile to fasting than saying 14 sounds.
 
 That tension — inside one book, and between three — is a good reason to read them together. The plan "The Sayings of Jesus: Sermon on the Mount, Q, and Thomas" does exactly that.
 """,
@@ -280,7 +280,7 @@ She tells the disciples "that she had seen the LORD." She is the one sent to tel
 
 ## What the Gospels don't say
 
-None of them says she was a prostitute, or a repentant sinner. That picture came later. Luke 7 tells of an unnamed "woman in the city, which was a sinner" who anoints Jesus' feet ([[luke 7:37-38]]). A few verses later, Luke introduces Mary Magdalene as a new character ([[luke 8:2]]). In the Western church, a sermon by Pope Gregory the Great in 591 merged these women — and Mary of Bethany — into one. The merged figure dominated Western art for more than a thousand years. The Eastern churches never accepted it.
+None of them says she was a prostitute, or a repentant sinner. That picture came later. Luke 7 tells of an unnamed "woman in the city, which was a sinner" who anoints Jesus' feet [[luke 7:37-38]]. A few verses later, Luke introduces Mary Magdalene as a new character [[luke 8:2]]. In the Western church, a sermon by Pope Gregory the Great in 591 merged these women — and Mary of Bethany — into one. The merged figure dominated Western art for more than a thousand years. The Eastern churches never accepted it.
 
 ## In the Gospel of Mary
 
@@ -294,7 +294,7 @@ Whatever its date and origins, the Gospel of Mary preserves an argument: about a
 
 ## In the Gospel of Peter
 
-The Gospel of Peter calls her "a disciple of the Lord" and describes her going to the tomb at dawn with her friends ([[peter 12:50-51]]). As in Mark, its tomb scene ends with frightened women who flee ([[peter 13:57]]).
+The Gospel of Peter calls her "a disciple of the Lord" and describes her going to the tomb at dawn with her friends [[peter 12:50-51]]. As in Mark, its tomb scene ends with frightened women who flee [[peter 13:57]].
 
 ## Reading her well
 
@@ -317,11 +317,11 @@ The book of Job is often summarized as "a good man suffers and keeps his faith."
 
 ## The friends' case
 
-Job's three friends come to comfort him, and for seven days they say nothing ([[job 2:13]]) — the best thing they do in the book. Then they start talking. Their argument is simple: God is just, so suffering must be deserved.
+Job's three friends come to comfort him, and for seven days they say nothing [[job 2:13]] — the best thing they do in the book. Then they start talking. Their argument is simple: God is just, so suffering must be deserved.
 
 {{job 4:7-8|KJV}}
 
-Over many chapters they become harsher. Eliphaz eventually accuses Job of specific sins that the book has given us no reason to believe ([[job 22:5-7]]).
+Over many chapters they become harsher. Eliphaz eventually accuses Job of specific sins that the book has given us no reason to believe [[job 22:5-7]].
 
 ## Job's case
 
@@ -329,7 +329,7 @@ Job refuses. He knows he has not done what they say, and he says so, and he dema
 
 {{job 23:3-4|KJV}}
 
-Some of his speeches come close to accusing God of cruelty ([[job 9:22-24]]). If you are used to hearing the Bible defend God, these chapters are startling.
+Some of his speeches come close to accusing God of cruelty [[job 9:22-24]]. If you are used to hearing the Bible defend God, these chapters are startling.
 
 ## God's answer
 
@@ -337,7 +337,7 @@ When God finally speaks "out of the whirlwind," it is not an explanation:
 
 {{job 38:4|KJV}}
 
-God takes Job on a tour of creation — stars, sea, snow, wild goats, the war-horse, the eagle, the great beasts. Nothing about the wager in chapter 1. Nothing about why Job's children died. Job responds with humility ([[job 42:5-6]]).
+God takes Job on a tour of creation — stars, sea, snow, wild goats, the war-horse, the eagle, the great beasts. Nothing about the wager in chapter 1. Nothing about why Job's children died. Job responds with humility [[job 42:5-6]].
 
 ## The verdict
 
@@ -355,7 +355,7 @@ Readers have drawn different lessons:
 - **Explanations can be cruel.** The friends' theology was used as a weapon against a suffering man. When someone is in pain, "you must have deserved it" is never a comfort.
 - **The book refuses to explain.** God's speeches do not answer the question of innocent suffering. Some readers find that unsatisfying; others think it is the point.
 
-And then there is the ending: Job's fortunes restored double, new children, a long life ([[job 42:10-17]]). Many readers find this ending hard. The first children are not brought back. Whatever the epilogue means, it does not erase the poem before it.
+And then there is the ending: Job's fortunes restored double, new children, a long life [[job 42:10-17]]. Many readers find this ending hard. The first children are not brought back. Whatever the epilogue means, it does not erase the poem before it.
 
 Discuss on [[job 42:7]], or follow "Wisdom in 14 Days," which reads Job next to Proverbs and Ecclesiastes.
 """,
@@ -427,7 +427,7 @@ The earth abides. The sun, the wind, the rivers keep their courses. It is human 
 
 ## Everything tried
 
-The book's narrator tries everything: wisdom, pleasure, building, wealth ([[ecclesiastes 2:4-11]]). Every experiment ends with the same word: *hevel*. Even wisdom, which he values, ends in the same death as folly ([[ecclesiastes 2:14-16]]).
+The book's narrator tries everything: wisdom, pleasure, building, wealth [[ecclesiastes 2:4-11]]. Every experiment ends with the same word: *hevel*. Even wisdom, which he values, ends in the same death as folly [[ecclesiastes 2:14-16]].
 
 ## What remains
 
@@ -435,7 +435,7 @@ And yet the book keeps returning to a quiet piece of advice:
 
 {{ecclesiastes 2:24|KJV}}
 
-Eat, drink, enjoy your work, love the people you are with ([[ecclesiastes 9:7-9]]). Some readers hear this as resignation. Others hear it as the book's real wisdom: if life is vapor, the right response is not despair but attention — to the bread, the wine, the person beside you, today.
+Eat, drink, enjoy your work, love the people you are with [[ecclesiastes 9:7-9]]. Some readers hear this as resignation. Others hear it as the book's real wisdom: if life is vapor, the right response is not despair but attention — to the bread, the wine, the person beside you, today.
 
 ## A time for everything
 
@@ -447,7 +447,7 @@ It is often read at funerals and weddings alike. Notice that it does not say whi
 
 ## The ending
 
-The last verses tell the reader to fear God and keep his commandments ([[ecclesiastes 12:13-14]]). Many scholars think these were added by a later editor, who wanted to frame the book safely; others read them as the Preacher's own conclusion. Either way, the book that precedes them is not tidy, and it has outlasted every attempt to tidy it.
+The last verses tell the reader to fear God and keep his commandments [[ecclesiastes 12:13-14]]. Many scholars think these were added by a later editor, who wanted to frame the book safely; others read them as the Preacher's own conclusion. Either way, the book that precedes them is not tidy, and it has outlasted every attempt to tidy it.
 
 The editors' thread on [[ecclesiastes 1:2]] sets out three readings of the opening. The plan "Wisdom in 14 Days" reads chapters 1, 3 and 12.
 """,
@@ -458,7 +458,7 @@ The editors' thread on [[ecclesiastes 1:2]] sets out three readings of the openi
         "summary": "Belief in bodily resurrection appears late in the Hebrew Bible and grows in times of persecution. Three texts trace how the hope took shape.",
         "tags": ["death-and-resurrection"],
         "body": """
-For most of the Hebrew Bible, the dead go to Sheol, a shadowy place where, as one psalm puts it, no one praises God ([[psalms 6:5]]). Then, late in its history, a new hope appears.
+For most of the Hebrew Bible, the dead go to Sheol, a shadowy place where, as one psalm puts it, no one praises God [[psalms 6:5]]. Then, late in its history, a new hope appears.
 
 ## Daniel 12
 
@@ -474,7 +474,7 @@ The clearest statement in the Hebrew Bible comes at the end of Daniel:
 
 {{2-maccabees 7:9}}
 
-The fourth son says to the king that for him there will be "no resurrection to life" ([[2-maccabees 7:14]]). And the mother encourages her youngest by pointing to God the Creator:
+The fourth son says to the king that for him there will be "no resurrection to life" [[2-maccabees 7:14]]. And the mother encourages her youngest by pointing to God the Creator:
 
 {{2-maccabees 7:28}}
 
@@ -486,13 +486,13 @@ Paul writes the longest discussion of resurrection in the New Testament. For him
 
 {{1-corinthians 15:12-14|KJV}}
 
-He answers the question "With what body do they come?" with an image from farming: a seed is sown and a plant rises, different and yet continuous ([[1-corinthians 15:35-38]]). Near the end of the chapter comes a taunt: "O death, where is thy sting?" ([[1-corinthians 15:55]]).
+He answers the question "With what body do they come?" with an image from farming: a seed is sown and a plant rises, different and yet continuous [[1-corinthians 15:35-38]]. Near the end of the chapter comes a taunt: "O death, where is thy sting?" [[1-corinthians 15:55]].
 
 ## What connects them
 
 All three texts link resurrection to justice and to the faithfulness of God. The martyrs of Maccabees die for God's law; Daniel's faithful suffer under a tyrant; Paul's Christ is executed and vindicated. Resurrection is not, in these texts, a general belief in the immortality of the soul. It is the conviction that God will not let death have the last word over those who trusted him.
 
-Jesus' own debate with the Sadducees, who denied the resurrection, is in [[mark 12:18-27]]. Hebrews alludes to martyrs who refused deliverance "that they might obtain a better resurrection" ([[hebrews 11:35]]) — very likely a reference to the stories in 2 Maccabees.
+Jesus' own debate with the Sadducees, who denied the resurrection, is in [[mark 12:18-27]]. Hebrews alludes to martyrs who refused deliverance "that they might obtain a better resurrection" [[hebrews 11:35]] — very likely a reference to the stories in 2 Maccabees.
 
 Discuss the martyrs' story on [[2-maccabees 7:9]].
 """,
@@ -507,13 +507,13 @@ Peter asks a reasonable question:
 
 {{matthew 18:21-22|KJV}}
 
-Seven times would already be generous. "Seventy times seven" is a way of saying: stop counting. Then Jesus tells a parable about a servant forgiven a debt he could never repay, who then refuses to forgive a small debt owed to him ([[matthew 18:23-35]]). The parable ends with a warning, not a comfort.
+Seven times would already be generous. "Seventy times seven" is a way of saying: stop counting. Then Jesus tells a parable about a servant forgiven a debt he could never repay, who then refuses to forgive a small debt owed to him [[matthew 18:23-35]]. The parable ends with a warning, not a comfort.
 
 ## Joseph
 
 One of the longest stories of forgiveness in the Bible is in Genesis. Joseph's brothers sell him into slavery. Years later, he is the most powerful man in Egypt and they come to him for food, not recognizing him.
 
-He does not forgive them at once. He tests them, for chapters, until Judah offers himself as a slave in place of Benjamin ([[genesis 44:33-34]]). Only then does Joseph reveal himself, weeping:
+He does not forgive them at once. He tests them, for chapters, until Judah offers himself as a slave in place of Benjamin [[genesis 44:33-34]]. Only then does Joseph reveal himself, weeping:
 
 {{genesis 45:4-5|KJV}}
 
@@ -528,7 +528,7 @@ Put the two together and some things become clear.
 - **Forgiveness names the wrong.** Joseph does not say "it was nothing." He says "ye thought evil against me." The servant's debt in the parable is huge, and the text says so.
 - **Forgiveness is not the same as trust.** Joseph tests his brothers before he reveals himself. Forgiving someone does not require pretending they have changed.
 - **Forgiveness gives up the right to judge.** "Am I in the place of God?" Joseph will not be his brothers' judge.
-- **Forgiveness is tied to being forgiven.** The parable makes this explicit, as does the Lord's Prayer ([[matthew 6:12]]).
+- **Forgiveness is tied to being forgiven.** The parable makes this explicit, as does the Lord's Prayer [[matthew 6:12]].
 
 ## A caution
 

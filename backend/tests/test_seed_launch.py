@@ -168,6 +168,15 @@ class TestLaunchContent:
                     unreadable.append(f"{article['title']}: {raw}")
         assert unreadable == []
 
+    def test_citation_marks_are_not_wrapped_in_parentheses(self):
+        """文中の参照は表示側が「(Genesis 3:1)」と括弧を付ける。本文でも括弧で囲むと二重になる。"""
+        wrapped = [
+            f"{article['title']}: {m.group(0)}"
+            for article in ARTICLES
+            for m in re.finditer(r"[(（]\s*\[\[[^\]]+\]\]", article["body"])
+        ]
+        assert wrapped == []
+
     def test_pinned_translations_exist_for_the_book(self):
         pins = [
             reading.split(" ")[0] + "|" + reading.partition("|")[2]

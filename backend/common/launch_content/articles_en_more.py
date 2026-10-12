@@ -17,17 +17,17 @@ Joseph's first dreams get him into trouble:
 
 {{genesis 37:5-7|KJV}}
 
-His brothers hate him for it, and his father rebukes him ([[genesis 37:10]]). Notice that the dreams are not wrong — the brothers will one day bow before him — but telling them is unwise. A dream is not a license.
+His brothers hate him for it, and his father rebukes him [[genesis 37:10]]. Notice that the dreams are not wrong — the brothers will one day bow before him — but telling them is unwise. A dream is not a license.
 
 In Egypt Joseph becomes the interpreter of others' dreams, and he is careful to say where interpretation comes from:
 
 {{genesis 40:8|KJV}}
 
-His reading of Pharaoh's dreams — seven fat cows, seven lean — saves Egypt and his own family ([[genesis 41:25-32]]). The dreamer who was hated becomes the one who feeds those who hated him.
+His reading of Pharaoh's dreams — seven fat cows, seven lean — saves Egypt and his own family [[genesis 41:25-32]]. The dreamer who was hated becomes the one who feeds those who hated him.
 
 ## Daniel
 
-Daniel is Joseph's successor in a foreign court. Nebuchadnezzar demands not only an interpretation but the dream itself — a test no one can pass ([[daniel 2:5]]). Daniel prays, and the dream is revealed to him: a statue of gold, silver, bronze, iron and clay, struck by a stone "cut out without hands" ([[daniel 2:34-35]]).
+Daniel is Joseph's successor in a foreign court. Nebuchadnezzar demands not only an interpretation but the dream itself — a test no one can pass [[daniel 2:5]]. Daniel prays, and the dream is revealed to him: a statue of gold, silver, bronze, iron and clay, struck by a stone "cut out without hands" [[daniel 2:34-35]].
 
 Later, Daniel has his own visions, and they are frightening: four beasts from the sea, and then:
 
@@ -37,17 +37,17 @@ Later, Daniel has his own visions, and they are frightening: four beasts from th
 
 ## Joseph, husband of Mary
 
-Matthew's Joseph never speaks a word in the Gospel. He dreams, and he obeys. Four times he is guided in a dream — three times by an angel: take Mary as your wife ([[matthew 1:20]]); flee to Egypt ([[matthew 2:13]]); return ([[matthew 2:19-20]]); and finally a warning that sends him to Galilee ([[matthew 2:22]]). Each time, he does what he is told.
+Matthew's Joseph never speaks a word in the Gospel. He dreams, and he obeys. Four times he is guided in a dream — three times by an angel: take Mary as your wife [[matthew 1:20]]; flee to Egypt [[matthew 2:13]]; return [[matthew 2:19-20]]; and finally a warning that sends him to Galilee [[matthew 2:22]]. Each time, he does what he is told.
 
 It is hard to believe Matthew did not have the first Joseph in mind. Another Joseph, another dream, another journey into Egypt that saves a family.
 
 ## Visions beyond the canon
 
-1 Enoch is a book of visions from the start: "Enoch a righteous man, whose eyes were opened by God, saw the vision of the Holy One in the heavens" ([[enoch 1:2]]). Its dream visions in chapters 83–90 retell the history of Israel as a story of animals — sheep, wolves, and shepherds. Reading them next to Daniel 7 shows how widespread this kind of symbolic history was.
+1 Enoch is a book of visions from the start: "Enoch a righteous man, whose eyes were opened by God, saw the vision of the Holy One in the heavens" [[enoch 1:2]]. Its dream visions in chapters 83–90 retell the history of Israel as a story of animals — sheep, wolves, and shepherds. Reading them next to Daniel 7 shows how widespread this kind of symbolic history was.
 
 ## A caution and an invitation
 
-Peter, quoting Joel at Pentecost, promises that "your old men shall dream dreams" ([[acts 2:17]]). Deuteronomy, on the other hand, warns against dreamers who lead people away from God ([[deuteronomy 13:1-3]]). The Bible takes dreams seriously and also tests them. Both instincts are worth keeping.
+Peter, quoting Joel at Pentecost, promises that "your old men shall dream dreams" [[acts 2:17]]. Deuteronomy, on the other hand, warns against dreamers who lead people away from God [[deuteronomy 13:1-3]]. The Bible takes dreams seriously and also tests them. Both instincts are worth keeping.
 """,
     },
     {
@@ -72,7 +72,7 @@ In Babylon, the young Daniel refuses the king's food:
 
 {{daniel 1:8|KJV}}
 
-He asks for vegetables and water instead, and after ten days he and his friends look healthier than the others ([[daniel 1:12-15]]). Keeping the food laws in exile was a way of staying who you were.
+He asks for vegetables and water instead, and after ten days he and his friends look healthier than the others [[daniel 1:12-15]]. Keeping the food laws in exile was a way of staying who you were.
 
 ## The Maccabees: worth dying for
 
@@ -80,7 +80,7 @@ Under the Seleucid king Antiochus, eating pork became a test of loyalty, and ref
 
 {{2-maccabees 6:18-19}}
 
-His friends offer him a way out — bring his own meat and only pretend to eat the pork. He refuses, because the young would think he had abandoned the law ([[2-maccabees 6:21-25]]). Chapter 7 follows with the mother and her seven sons. 4 Maccabees retells these deaths as a philosophical argument that devout reason can master the passions ([[4-maccabees 5:1-3]]).
+His friends offer him a way out — bring his own meat and only pretend to eat the pork. He refuses, because the young would think he had abandoned the law [[2-maccabees 6:21-25]]. Chapter 7 follows with the mother and her seven sons. 4 Maccabees retells these deaths as a philosophical argument that devout reason can master the passions [[4-maccabees 5:1-3]].
 
 To understand how seriously the early church argued about food, remember that, for many Jews of the time, these stories were recent history.
 
@@ -90,9 +90,9 @@ In Mark, Jesus says something radical:
 
 {{mark 7:15|KJV}}
 
-Mark adds a comment that is translated differently depending on the manuscripts behind it. The KJV says the food goes into the belly and out, "purging all meats" ([[mark 7:19]]). Many modern translations, following other manuscripts, read it as Mark's own comment: "Thus he declared all foods clean." Switch to the Greek and compare.
+Mark adds a comment that is translated differently depending on the manuscripts behind it. The KJV says the food goes into the belly and out, "purging all meats" [[mark 7:19]]. Many modern translations, following other manuscripts, read it as Mark's own comment: "Thus he declared all foods clean." Switch to the Greek and compare.
 
-The Gospel of Thomas has a close parallel: "it's not what goes into your mouth that will defile you" ([[thomas 14:2]]).
+The Gospel of Thomas has a close parallel: "it's not what goes into your mouth that will defile you" [[thomas 14:2]].
 
 ## Peter's vision
 
@@ -100,11 +100,11 @@ In Acts, Peter sees a sheet let down from heaven full of animals, and hears a vo
 
 {{acts 10:13-15|KJV}}
 
-He soon understands the vision to be about people, not only food: he goes to the house of Cornelius, a Gentile ([[acts 10:28]]). The question of what to eat became the question of whom to eat with.
+He soon understands the vision to be about people, not only food: he goes to the house of Cornelius, a Gentile [[acts 10:28]]. The question of what to eat became the question of whom to eat with.
 
 ## Paul: the weak and the strong
 
-By the time of Romans, Paul is persuaded "that there is nothing unclean of itself" — and immediately adds that it is unclean for anyone who thinks it is ([[romans 14:14]]). His concern is not the menu but the community: "Destroy not him with thy meat, for whom Christ died" ([[romans 14:15]]).
+By the time of Romans, Paul is persuaded "that there is nothing unclean of itself" — and immediately adds that it is unclean for anyone who thinks it is [[romans 14:14]]. His concern is not the menu but the community: "Destroy not him with thy meat, for whom Christ died" [[romans 14:15]].
 
 ## Reading it whole
 
@@ -123,9 +123,9 @@ Money is one of the subjects Jesus talks about most. It is also one where reader
 
 {{mark 10:21-22|KJV}}
 
-Jesus "loved him" — Mark is the only Gospel to say so — and then asked for everything. The man leaves, and Jesus says it is easier for a camel to go through the eye of a needle than for a rich man to enter the kingdom ([[mark 10:25]]). The disciples are astonished. So, often, are we.
+Jesus "loved him" — Mark is the only Gospel to say so — and then asked for everything. The man leaves, and Jesus says it is easier for a camel to go through the eye of a needle than for a rich man to enter the kingdom [[mark 10:25]]. The disciples are astonished. So, often, are we.
 
-People have long tried to shrink the needle — a narrow gate in Jerusalem, a mistranslated word for "rope." There is no good evidence for either. The saying is meant to be impossible, and Jesus says so: "with God all things are possible" ([[mark 10:27]]).
+People have long tried to shrink the needle — a narrow gate in Jerusalem, a mistranslated word for "rope." There is no good evidence for either. The saying is meant to be impossible, and Jesus says so: "with God all things are possible" [[mark 10:27]].
 
 ## Zacchaeus
 
@@ -133,15 +133,15 @@ Luke tells a story that answers the first one:
 
 {{luke 19:8-9|KJV}}
 
-Zacchaeus is not told to give everything. He offers half to the poor and fourfold restitution to anyone he cheated. Jesus' response is "This day is salvation come to this house." The rich man of Mark 10 went away sad; this rich man comes down from a tree in a hurry ([[luke 19:6]]).
+Zacchaeus is not told to give everything. He offers half to the poor and fourfold restitution to anyone he cheated. Jesus' response is "This day is salvation come to this house." The rich man of Mark 10 went away sad; this rich man comes down from a tree in a hurry [[luke 19:6]].
 
 ## Tobit's advice
 
-The book of Tobit, read as Scripture by Catholic and Orthodox Christians, is full of almsgiving. Tobit buries the dead and feeds the hungry at risk to himself ([[tobit 1:17-18]]). His advice to his son is a small treatise on generosity:
+The book of Tobit, read as Scripture by Catholic and Orthodox Christians, is full of almsgiving. Tobit buries the dead and feeds the hungry at risk to himself [[tobit 1:17-18]]. His advice to his son is a small treatise on generosity:
 
 {{tobit 4:7}}
 
-(In the Brenton translation on this site, Tobit's whole speech is printed under verse 7.) Notice the line in the middle: "Do that to no man which thou hatest" — a negative form of the golden rule, centuries before Matthew 7:12. Later the angel Raphael says, "It is better to give alms than to lay up gold" ([[tobit 12:8-9]]).
+(In the Brenton translation on this site, Tobit's whole speech is printed under verse 7.) Notice the line in the middle: "Do that to no man which thou hatest" — a negative form of the golden rule, centuries before Matthew 7:12. Later the angel Raphael says, "It is better to give alms than to lay up gold" [[tobit 12:8-9]].
 
 ## Sirach
 
@@ -149,11 +149,11 @@ Sirach is practical about lending, borrowing, and the poor:
 
 {{sirach 29:12}}
 
-Store your alms like treasure. It is the same instinct as Jesus' "lay up for yourselves treasures in heaven" ([[matthew 6:19-21]]).
+Store your alms like treasure. It is the same instinct as Jesus' "lay up for yourselves treasures in heaven" [[matthew 6:19-21]].
 
 ## The early church
 
-Acts describes the first believers selling possessions and sharing everything, "neither was there any among them that lacked" ([[acts 4:32-35]]). Paul organizes a collection for the poor in Jerusalem and argues for it at length ([[2-corinthians 8:13-15]]). And the famous warning: "the love of money is the root of all evil" ([[1-timothy 6:10]]) — not money itself, but love of it.
+Acts describes the first believers selling possessions and sharing everything, "neither was there any among them that lacked" [[acts 4:32-35]]. Paul organizes a collection for the poor in Jerusalem and argues for it at length [[2-corinthians 8:13-15]]. And the famous warning: "the love of money is the root of all evil" [[1-timothy 6:10]] — not money itself, but love of it.
 
 ## The question it leaves
 
@@ -178,11 +178,11 @@ Mountains shaken, hills made low, the Watchers trembling, judgment upon all. The
 
 {{enoch 1:8}}
 
-This is the passage the Letter of Jude quotes ([[jude 1:14-15]]). For Enoch, the end is not mainly destruction; it is the moment God makes things right — peace for the righteous, light for the elect.
+This is the passage the Letter of Jude quotes [[jude 1:14-15]]. For Enoch, the end is not mainly destruction; it is the moment God makes things right — peace for the righteous, light for the elect.
 
 ## Mark 13
 
-Leaving the temple, a disciple admires the stones. Jesus says they will all be thrown down ([[mark 13:1-2]]). Then a long speech: wars, earthquakes, false messiahs, persecution, the "abomination of desolation." And then:
+Leaving the temple, a disciple admires the stones. Jesus says they will all be thrown down [[mark 13:1-2]]. Then a long speech: wars, earthquakes, false messiahs, persecution, the "abomination of desolation." And then:
 
 {{mark 13:24-27|KJV}}
 
@@ -198,11 +198,11 @@ First, urgency without a date:
 
 Not even the Son knows the hour. Every calculation of the end since has had to deal with this verse.
 
-Second, the speech ends not with a vision but a command, repeated: "Watch" ([[mark 13:37]]). The point is not information about the future but alertness in the present.
+Second, the speech ends not with a vision but a command, repeated: "Watch" [[mark 13:37]]. The point is not information about the future but alertness in the present.
 
 ## Reading them together
 
-Some readers find that Enoch helps them understand Mark: the imagery is not invented, but drawn from a shared hope that God would come, judge oppressors, and vindicate the faithful. Others notice the differences: Enoch's judgment falls heavily on the Watchers and the wicked, while Mark's speech is addressed to disciples who might themselves fall away ([[mark 13:5-6]]).
+Some readers find that Enoch helps them understand Mark: the imagery is not invented, but drawn from a shared hope that God would come, judge oppressors, and vindicate the faithful. Others notice the differences: Enoch's judgment falls heavily on the Watchers and the wicked, while Mark's speech is addressed to disciples who might themselves fall away [[mark 13:5-6]].
 
 Either way, apocalyptic texts were not originally written to frighten. They were written to people under pressure, to say that their present suffering was not the end of the story. That is worth remembering before reading any of them as a timetable.
 
@@ -229,7 +229,7 @@ Uchimura gives sixty lectures, moving through the letter in order but spending m
 
 {{romans 7:15|KJV}}
 
-Who is the "I" here? Calvin answers firmly. His comment on this verse ([[@calvin-romans 7:14]]) begins: "He now comes to a more particular case, that of a man already regenerated." For Calvin, Paul is describing a believer in whom the Spirit and the flesh are at war. Uchimura's lecture on 7:7–14 dwells on the Tenth Commandment, "Thou shalt not covet," as a command aimed at the heart rather than at outward acts ([[@uchimura-romans 32:9]]).
+Who is the "I" here? Calvin answers firmly. His comment on this verse [[@calvin-romans 7:14]] begins: "He now comes to a more particular case, that of a man already regenerated." For Calvin, Paul is describing a believer in whom the Spirit and the flesh are at war. Uchimura's lecture on 7:7–14 dwells on the Tenth Commandment, "Thou shalt not covet," as a command aimed at the heart rather than at outward acts [[@uchimura-romans 32:9]].
 
 ## A summit: Romans 8
 
@@ -237,9 +237,9 @@ Uchimura describes chapter 8 like this:
 
 {{@uchimura-romans 34:3}}
 
-"The summit" — chapter 8 as the top of a mountain that the first seven chapters have climbed. His opening lecture on the chapter also divides it into five sections, from freedom from sin (8:1–4) to the "great praise" of 8:31–39 ([[@uchimura-romans 34:6-10]]).
+"The summit" — chapter 8 as the top of a mountain that the first seven chapters have climbed. His opening lecture on the chapter also divides it into five sections, from freedom from sin (8:1–4) to the "great praise" of 8:31–39 [[@uchimura-romans 34:6-10]].
 
-Calvin, characteristically, goes verse by verse, and his comment on 8:28 is worth comparing with the Japanese translation discussion on that verse ([[@calvin-romans 8:28]]; [[romans 8:28]]).
+Calvin, characteristically, goes verse by verse, and his comment on 8:28 [[@calvin-romans 8:28]] is worth comparing with the Japanese discussion on that verse [[romans 8:28]].
 
 ## How to use them
 
@@ -285,7 +285,7 @@ Put the two passages together:
 - The Song's love is a **flame**; Paul's love **suffereth long**.
 - The Song's love **cannot be bought**; Paul's love **seeketh not her own**.
 
-It would be easy to say that one is human love and the other divine love, or one is eros and the other agape. But both passages make claims about love's permanence: "many waters cannot quench love," and "charity never faileth" ([[1-corinthians 13:8]]). Both insist that love outlasts what threatens it.
+It would be easy to say that one is human love and the other divine love, or one is eros and the other agape. But both passages make claims about love's permanence: "many waters cannot quench love," and "charity never faileth" [[1-corinthians 13:8]]. Both insist that love outlasts what threatens it.
 
 ## A third voice
 
@@ -293,7 +293,7 @@ The First Letter of John adds the shortest and boldest claim:
 
 {{1-john 4:7-8|KJV}}
 
-And: "There is no fear in love; but perfect love casteth out fear" ([[1-john 4:18]]).
+And: "There is no fear in love; but perfect love casteth out fear" [[1-john 4:18]].
 
 Perhaps the Bible keeps both the Song and Paul because love needs both: the fire that makes us willing to give everything, and the patience that keeps us from burning each other.
 """,
@@ -330,7 +330,7 @@ Judas alone seems to understand who Jesus is. Jesus takes him aside to teach him
 
 {{judas 5:44}}
 
-And later Judas learns he will be "cursed by the other generations" ([[judas 5:46]]).
+And later Judas learns he will be "cursed by the other generations" [[judas 5:46]].
 
 ## The sacrifice
 
@@ -415,7 +415,7 @@ Tobit lives in Nineveh after the exile of the northern tribes. He gives alms, fe
 
 {{tobit 1:17-18}}
 
-Then a sparrow's droppings fall into his eyes, and he goes blind ([[tobit 2:10]]). The book does not pretend that the righteous are protected from absurd misfortune.
+Then a sparrow's droppings fall into his eyes, and he goes blind [[tobit 2:10]]. The book does not pretend that the righteous are protected from absurd misfortune.
 
 ## A bride with a curse
 
@@ -423,7 +423,7 @@ Far away, in Ecbatana, a young woman named Sarah has been married seven times. E
 
 {{tobit 3:8}}
 
-Sarah and Tobit, each in despair, pray on the same day. Both prayers are heard, and God sends one answer for both: the angel Raphael ([[tobit 3:16-17]]).
+Sarah and Tobit, each in despair, pray on the same day. Both prayers are heard, and God sends one answer for both: the angel Raphael [[tobit 3:16-17]].
 
 ## The journey
 
@@ -431,7 +431,7 @@ Tobit sends his son Tobias on a long journey to recover money. Tobias needs a gu
 
 {{tobit 5:16}}
 
-It is one of the only dogs in the Bible that is simply a companion — and it shows up again on the way home ([[tobit 11:4]]). Small details like this make Tobit feel like a family story more than a myth.
+It is one of the only dogs in the Bible that is simply a companion — and it shows up again on the way home [[tobit 11:4]]. Small details like this make Tobit feel like a family story more than a myth.
 
 ## Healing
 
@@ -439,11 +439,11 @@ Raphael teaches Tobias to catch a fish and keep its heart, liver, and gall. The 
 
 {{tobit 12:15}}
 
-"One of the seven holy angels." The idea of seven angels before God appears also in 1 Enoch 20 and in Revelation ([[revelation 8:2]]).
+"One of the seven holy angels." The idea of seven angels before God appears also in 1 Enoch 20 and in Revelation [[revelation 8:2]].
 
 ## Why read it
 
-Tobit's advice to his son is a small handbook of generosity — including the line "Do that to no man which thou hatest" ([[tobit 4:7]]), a negative form of the golden rule. Raphael sums it up: "It is better to give alms than to lay up gold" ([[tobit 12:8]]).
+Tobit's advice to his son is a small handbook of generosity — including the line "Do that to no man which thou hatest" [[tobit 4:7]], a negative form of the golden rule. Raphael sums it up: "It is better to give alms than to lay up gold" [[tobit 12:8]].
 
 But the book's deepest charm may be its picture of providence. God answers prayer not with a thunderbolt but with a travel companion. An angel walks beside a young man on an ordinary road, and nobody notices until the end. The editors' thread on [[tobit 12:15]] asks why the story is told that way.
 """,
