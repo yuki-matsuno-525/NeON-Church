@@ -239,7 +239,7 @@ GITHUB_REDIRECT_URI = config("GITHUB_REDIRECT_URI", default="")
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@neon-church.com")
-FEEDBACK_EMAIL = config("FEEDBACK_EMAIL", default="yuki.matsuno525@gmail.com")
+FEEDBACK_EMAIL = config("FEEDBACK_EMAIL", default="contact@neon-church.com")
 
 # ------------------------------------------------------------------
 # CSRF

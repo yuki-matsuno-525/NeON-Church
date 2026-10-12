@@ -6,7 +6,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { FeedbackCategory, sendFeedback } from "@/lib/apiClient";
 
 const REPO_URL = "https://github.com/yuki-matsuno-525/NeON-Church";
-const CONTACT_EMAIL = "yuki.matsuno525@gmail.com";
+const CONTACT_EMAIL = "contact@neon-church.com";
 
 const copy = {
   ja: {
