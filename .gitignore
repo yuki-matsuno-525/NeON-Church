@@ -41,6 +41,9 @@ htmlcov/
 .coverage
 coverage.xml
 
+# collectstatic の生成物（本番イメージ内で毎回作る）
+backend/staticfiles/
+
 # mypy
 .mypy_cache/
 

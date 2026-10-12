@@ -1,0 +1,20 @@
+name: Production Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["E2E Tests"]
+    types: [completed]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+jobs:
+  smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for deployment and verify production
+        shell: pwsh
+        run: ./scripts/smoke-production.ps1 -Attempts 20 -DelaySeconds 30

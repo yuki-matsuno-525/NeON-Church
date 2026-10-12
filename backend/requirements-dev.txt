@@ -1,0 +1,6 @@
+-r requirements.txt
+
+# テストと依存関係監査は本番イメージに含めない。
+pytest==9.1.1
+pytest-django==4.14.0
+pip-audit==2.9.0

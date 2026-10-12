@@ -31,6 +31,10 @@ DATABASES = {
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# 本番相当のパスワードハッシュは意図的に重い。認証ロジック自体は変えず、
+# テストだけ高速なハッシャーを使って全スイートを現実的な時間で完走させる。
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 # スロットリングを緩める
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {  # noqa: F405
     "auth": "1000/min",

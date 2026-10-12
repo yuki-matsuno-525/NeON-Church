@@ -19,7 +19,9 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
 
   const cookies = await page.context().cookies();
   const csrfToken = cookies.find((c) => c.name === "csrftoken")?.value ?? "";
-  const headers = csrfToken ? { "X-CSRFToken": csrfToken } : {};
+  // Playwright の headers は値を必ず string として要求するため、空の側に
+  // undefined が混ざらないよう明示的に型を固定する。
+  const headers: Record<string, string> = csrfToken ? { "X-CSRFToken": csrfToken } : {};
 
   // 公開するには1日以上の中身が要るので、まず下書きで作る。
   const planRes = await page.request.post(`${API_BASE}/api/plans/`, {

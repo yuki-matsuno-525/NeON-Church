@@ -78,6 +78,8 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 | Uptime monitoring | Better Stack |
 | CI/CD | GitHub Actions |
 
+正式公開、ロールバック、バックアップ復元確認は [release runbook](docs/release-runbook.md) を参照してください。
+
 ## Quick start
 
 Prerequisites: Docker & Docker Compose, Git.
