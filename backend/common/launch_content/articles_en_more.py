@@ -37,7 +37,7 @@ Later, Daniel has his own visions, and they are frightening: four beasts from th
 
 ## Joseph, husband of Mary
 
-Matthew's Joseph never speaks a word in the Gospel. He dreams, and he obeys. Four times an angel speaks to him in a dream: take Mary as your wife ([[matthew 1:20]]); flee to Egypt ([[matthew 2:13]]); return ([[matthew 2:19-20]]); go to Galilee ([[matthew 2:22]]). Each time, Matthew notes that he did exactly what he was told.
+Matthew's Joseph never speaks a word in the Gospel. He dreams, and he obeys. Four times he is guided in a dream — three times by an angel: take Mary as your wife ([[matthew 1:20]]); flee to Egypt ([[matthew 2:13]]); return ([[matthew 2:19-20]]); and finally a warning that sends him to Galilee ([[matthew 2:22]]). Each time, he does what he is told.
 
 It is hard to believe Matthew did not have the first Joseph in mind. Another Joseph, another dream, another journey into Egypt that saves a family.
 
@@ -108,7 +108,7 @@ By the time of Romans, Paul is persuaded "that there is nothing unclean of itsel
 
 ## Reading it whole
 
-It is easy to read this story as "the old rules were abolished." Many Jewish readers rightly object that this makes Leviticus, Daniel, and the martyrs look foolish, when they were faithful. It is truer to the texts to say that food was always about holiness and belonging, and that the early churches argued, painfully, about what holiness meant once Gentiles were at the table.
+It is easy to read this story as "the old rules were abolished." Many Jewish readers object, with reason, that this makes Leviticus, Daniel, and the martyrs look foolish, when they were faithful. It is truer to the texts to say that food was always about holiness and belonging, and that the early churches argued, painfully, about what holiness meant once Gentiles were at the table.
 """,
     },
     {
@@ -166,7 +166,7 @@ These texts do not agree on a percentage. Mark 10 asks for everything; Zacchaeus
         "summary": "Jesus' apocalyptic discourse and the opening of 1 Enoch share images and a world of expectation. Reading them together helps both make sense.",
         "tags": ["end-times"],
         "body": """
-When Jesus speaks about the end in Mark 13, he speaks a language his hearers knew. 1 Enoch, written earlier and widely read in his time, is one of the places where that language lived.
+When Jesus speaks about the end in Mark 13, he speaks a language his hearers knew. 1 Enoch, parts of which were written centuries earlier and copies of which were found among the Dead Sea Scrolls, is one of the places where that language lived.
 
 ## Enoch's opening vision
 
@@ -215,7 +215,7 @@ The editors' thread on [[revelation 21:4]] asks how the end of Revelation sits b
         "summary": "Two great readers of Romans, four centuries and half a world apart: John Calvin in Geneva and Uchimura Kanzō in Tokyo. How to use their commentaries alongside the text.",
         "tags": ["salvation", "law"],
         "body": """
-NeON Church includes commentaries as well as Scripture. Two of the most useful for Romans are John Calvin's *Commentary on Romans* (published 1540) and Uchimura Kanzō's *Studies in Romans* (『ロマ書の研究』), lectures given in Tokyo in the 1920s.
+NeON Church includes commentaries as well as Scripture. Two of the most useful for Romans are John Calvin's *Commentary on Romans* (published 1540) and Uchimura Kanzō's *Studies in Romans* (『ロマ書の研究』), lectures given in Tokyo in the early 1920s.
 
 Calvin was a French Reformer working in Geneva, one of the shapers of Protestant theology. Uchimura (1861–1930) was a Japanese Christian writer who founded the Mukyōkai ("non-church") movement, which met to study the Bible without church institutions. Reading them together is a lesson in how one letter speaks to very different worlds.
 
@@ -223,17 +223,13 @@ Calvin was a French Reformer working in Geneva, one of the shapers of Protestant
 
 Calvin comments verse by verse. His sections follow the text closely, so you can go straight to the verse you are reading.
 
-Uchimura gives sixty lectures, moving through the letter in order but spending many lectures on a single chapter — nine on chapter 8 alone. Each lecture opens with the verses it covers.
+Uchimura gives sixty lectures, moving through the letter in order but spending many lectures on a single chapter — nine on chapter 8 alone. Most lectures open by naming the verses they cover.
 
 ## A test case: Romans 7
 
 {{romans 7:15|KJV}}
 
-Who is the "I" here? Calvin answers firmly. Here is his comment on this verse:
-
-{{@calvin-romans 7:14}}
-
-For Calvin, Paul is describing a believer — "a man already regenerated" — in whom the Spirit and the flesh are at war. Uchimura's lectures on the chapter take up the same struggle, beginning from the Tenth Commandment, "Thou shalt not covet," as a law about the heart rather than outward acts ([[@uchimura-romans 32:9]]).
+Who is the "I" here? Calvin answers firmly. His comment on this verse ([[@calvin-romans 7:14]]) begins: "He now comes to a more particular case, that of a man already regenerated." For Calvin, Paul is describing a believer in whom the Spirit and the flesh are at war. Uchimura's lecture on 7:7–14 dwells on the Tenth Commandment, "Thou shalt not covet," as a command aimed at the heart rather than at outward acts ([[@uchimura-romans 32:9]]).
 
 ## A summit: Romans 8
 
@@ -249,7 +245,7 @@ Calvin, characteristically, goes verse by verse, and his comment on 8:28 is wort
 
 1. **Read Paul first.** A commentary is a conversation partner, not a replacement.
 2. **Pick one verse that puzzles you** and read what each commentator says about it.
-3. **Notice what they assume.** Calvin argues against Catholic and other Protestant positions of his day. Uchimura writes for Japanese readers in the 1920s, many of them new to Christianity, and often addresses the church institutions of his time.
+3. **Notice what they assume.** Calvin argues against Catholic and other Protestant positions of his day. Uchimura spoke to a Tokyo audience in the early 1920s, and his lectures often turn to the Japan of his own day.
 4. **Disagree.** Both men were confident. Neither is the last word.
 
 Two reading plans pair the text with each commentary day by day: "Romans with Calvin" (English) and 「内村鑑三と読むロマ書」 (Japanese).
@@ -261,7 +257,7 @@ Two reading plans pair the text with each commentary day by day: "Romans with Ca
         "summary": "The Bible's great love poem and its great hymn to love say very different things about love. Read them side by side.",
         "tags": ["love"],
         "body": """
-Two passages are read at weddings more than any others. They could hardly be more different.
+Two passages are among the most often read at weddings. They could hardly be more different.
 
 ## The Song of Songs
 
@@ -393,11 +389,11 @@ These differences are real, and it is better to know them than to discover them 
 
 - The great majority of differences between manuscripts are spelling, word order, and small slips that do not change the meaning.
 - The cases above are famous precisely because they are unusual.
-- No Christian teaching rests only on any of these passages.
+- No major Christian teaching rests only on any of these passages.
 
 ## What the editions on this site are
 
-- **KJV** (1611): translated mainly from the Greek *Textus Receptus*.
+- **KJV** (1611): its New Testament was translated mainly from the Greek *Textus Receptus*.
 - **TR (GRC)**: a form of the Textus Receptus, the printed Greek tradition behind the KJV.
 - **Nestle 1904 (GRC)**: an edition of the Greek Gospels based on comparing the major nineteenth-century critical editions.
 - **口語訳** (1955): a Japanese translation made from a modern critical Greek text.

@@ -30,7 +30,7 @@ Short answer: no single list of books is "the Bible" for every Christian, and we
 
 Then there are early Christian writings that no church put in its Bible — the Gospel of Thomas, the Gospel of Mary, the Gospel of Peter — but which tell us how early Christians thought, argued, and prayed.
 
-We put all of these on the same shelf and let you read each one in its own words. Each book's introduction says where it comes from and who reads it as Scripture. Whether a book is Scripture for you is your call, not ours.
+We put all of these on the same shelf and let you read each one in its own words. Our guides post short introductions in the discussion of the less familiar books, saying where each comes from and who reads it as Scripture. Whether a book is Scripture for you is your call, not ours.
 """,
             },
         ],
@@ -99,9 +99,9 @@ Is there any point opening the WLC or LXX if I can't read them?
                 "body": """
 More than you'd expect. A few things you can do without knowing a word:
 
-1. Compare length. If the Greek of a verse is much shorter than the KJV, something is missing or added. The ends of the Lord's Prayer (Matthew 6:13) and of Mark (16:9–20) are classic cases.
+1. Look for gaps and brackets. Open the KJV and Nestle 1904 (GRC) side by side at Matthew 6:13: the last line of the Lord's Prayer is simply not there in the Greek. At Mark 16:9, the Greek marks the rest of the chapter with double brackets.
 2. Watch repetition. In Genesis 1 the same Hebrew phrases repeat at the same points in each day. You can see the pattern before you can read it.
-3. Count verses. Some books are numbered differently in the Hebrew and Greek traditions (the Psalms are a famous example), and seeing both helps explain why references sometimes don't match.
+3. Expect numbering differences. Chapter and verse numbers are not identical in every tradition — the Psalms are numbered differently in Hebrew and Greek Bibles, and Hebrew Bibles often count a psalm's heading as verse 1. If a reference seems off by one, that is usually why.
 4. Notice direction. Hebrew runs right to left; that alone reminds you that every English verse is a translation.
 
 And if you want to learn, the Q&A here is a good place to ask what a particular word is.
@@ -338,7 +338,7 @@ Mark 6:3 names "James, and Joses, and of Juda, and Simon" and mentions sisters. 
                 "body": """
 This is a real disagreement between Christian traditions, and the text alone does not settle it. There are three classic readings:
 
-1. They were children of Joseph and Mary, born after Jesus. This is the common Protestant reading and the most straightforward sense of the words.
+1. They were children of Joseph and Mary, born after Jesus. This is the common Protestant reading, and many readers take it as the plainest sense of the words.
 2. They were Joseph's children from an earlier marriage. This is the traditional Orthodox view, and it has early support: in the Infancy Gospel of James (9:2), Joseph says, "I have sons and am an old man."
 3. They were cousins or close relatives, since "brother" could be used broadly. This is the traditional Catholic view, associated with Jerome.
 
@@ -628,7 +628,7 @@ In Enoch 14 a house of crystal and fire, a throne, and a Great Glory. Isaiah see
                 "body": """
 書いてありません。
 
-ルカ 8:2 は、マグダラのマリヤを「七つの悪霊を追い出していただいた」女性として紹介しています。その直前、ルカ 7 章でイエスの足に香油を塗る「罪の女」は、名前が書かれていません。
+ルカ 8:2 は、マグダラのマリヤを「七つの悪霊を追い出してもらった」女性として紹介しています。その直前、ルカ 7 章でイエスの足に香油を塗る「罪の女」は、名前が書かれていません。
 
 この二人（さらにベタニヤのマリヤ）を同じ人物とみなす読み方は、6 世紀末の教皇グレゴリウス 1 世の説教によって西方教会に広まりました。東方教会はこの同一視をせず、彼女を復活の最初の証人として「使徒に等しい」と呼んできました。カトリック教会も、20 世紀の典礼改革でこの同一視を改めています。
 
@@ -682,7 +682,7 @@ In Enoch 14 a house of crystal and fire, a throne, and a Great Glory. Isaiah see
 日本語での一般的な使い分けは次のとおりです。
 
 - 外典（旧約続編・第二正典）… トビト記、ユディト記、知恵の書、シラ書、マカバイ記など。ギリシャ語の旧約（七十人訳）に入っていて、カトリック教会と正教会では聖書の一部です。プロテスタントでは聖書に数えません。日本では新共同訳などが「旧約聖書続編」として収めています。
-- 偽典 … エノク書、ヨベル書など、古代の人物の名を冠して書かれ、ほとんどの教会が聖書に入れなかった文書。ただしエチオピア正教会は、エノク書とヨベル書を旧約聖書に含めています。
+- 偽典 … エノク書、ヨベル書など、古代の人物の名を冠して書かれ、ほとんどの教会が聖書に入れなかった文書。ただしエチオピア正教会（とエリトリア正教会）は、エノク書とヨベル書を旧約聖書に含めています。
 
 このように、ある教会の「外典」「偽典」が、別の教会では聖書そのもの、ということが起こります。NeON Church がこれらの書を区別せず同じ棚に並べているのはそのためです。
 """,

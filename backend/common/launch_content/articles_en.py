@@ -29,7 +29,7 @@ You can read everything without an account. You need one only to post.
 - **Comment.** Tap a verse to see what others have said about it, or to start a thread. Chapters and books have their own discussions too.
 - **Ask.** The Q&A is for questions that have answers — or at least better and worse ones. Mark the most helpful answer when your question is resolved.
 - **Follow a plan.** Reading plans give you a chapter or a few each day, sometimes with a short note. Some cross the boundaries between canon and non-canon on purpose.
-- **Write.** Articles, like this one, can quote passages directly. Type a reference and it becomes a link; quote a passage and its text appears in the article.
+- **Write.** Articles, like this one, can quote passages directly. Insert a reference from the citation panel and it becomes a link; insert a quotation and the passage's text appears in the article.
 - **Translate.** Some texts here exist only in English. Translation projects let people work together, verse by verse, to bring them into other languages.
 
 ## Three places to start
@@ -90,7 +90,7 @@ Paul quotes Greek poets ([[acts 17:28]]). Hebrews 11 alludes to martyr stories t
 
 ## What we do
 
-We put the texts side by side and let you read each one in its own words. We do not rank them with labels like "true" and "false," or "canon" and "heresy." Each book has an introduction that says where it comes from, how old it is, and which communities read it as Scripture.
+We put the texts side by side and let you read each one in its own words. We do not rank them with labels like "true" and "false," or "canon" and "heresy." Our guides are posting short introductions in the discussion of each book — starting with the less familiar ones — that say where it comes from, how old it is, and which communities read it as Scripture.
 
 ## What we don't do
 
@@ -123,7 +123,7 @@ The identification grew over centuries, and you can trace some of its steps on t
 
 ### The Wisdom of Solomon
 
-Written in Greek in the centuries before Jesus, Wisdom says:
+Written in Greek, probably in the last century or so before Jesus, Wisdom says:
 
 {{wisdom 2:23-24}}
 
@@ -164,7 +164,7 @@ Genesis 6 opens with four of the strangest verses in the Bible:
 
 {{genesis 6:1-4|KJV}}
 
-Then, without explanation, comes the flood. Who were the "sons of God"? Who were the giants? Genesis does not say.
+Then, almost at once, the flood story begins. Who were the "sons of God"? Who were the giants? Genesis does not say.
 
 1 Enoch does — at length.
 
@@ -190,7 +190,7 @@ The most moving moment may be this one:
 
 {{enoch 8:4}}
 
-In chapter 9 four archangels — Michael, Uriel, Raphael and Gabriel — look down, see the blood, and bring the earth's cry before God ([[enoch 9:1-3]]). God sends them to act: Raphael binds Azazel, Gabriel turns the giants against each other, Michael binds Semjaza, and Noah is warned of the flood ([[enoch 10:1-12]]). Chapter 10 also looks beyond the flood to a cleansed earth, where "truth and peace shall be associated together" ([[enoch 11:2]]).
+In chapter 9 four archangels — Michael, Uriel, Raphael and Gabriel — look down, see the blood, and bring the earth's cry before God ([[enoch 9:1-3]]). God sends them to act: Raphael binds Azazel, Gabriel turns the giants against each other, Michael binds Semjaza, and Noah is warned of the flood ([[enoch 10:1-12]]). Chapters 10–11 also look beyond the flood to a cleansed earth, where "truth and peace shall be associated together" ([[enoch 11:2]]).
 
 ## Reading them together
 
@@ -237,7 +237,7 @@ The same pattern governs giving and prayer in the same chapter ([[matthew 6:1-6]
 
 ## Thomas: guilt
 
-In the Gospel of Thomas, the disciples ask the same three questions — about fasting, prayer, and giving — and get a startling reply:
+In the Gospel of Thomas, the disciples ask about the same three practices — fasting, prayer, and giving — and about food, and get a startling reply:
 
 {{thomas 6:1-2}}
 
@@ -276,7 +276,7 @@ All four Gospels place her at the cross or the tomb. In John she comes to the to
 
 {{john 20:16-18|KJV}}
 
-"I have seen the Lord." She is sent to tell the others. Eastern Christian tradition calls her "equal to the apostles" because of this scene.
+She tells the disciples "that she had seen the LORD." She is the one sent to tell the others. Eastern Christian tradition calls her "equal to the apostles" because of this scene.
 
 ## What the Gospels don't say
 
@@ -294,7 +294,7 @@ Whatever its date and origins, the Gospel of Mary preserves an argument: about a
 
 ## In the Gospel of Peter
 
-The Gospel of Peter calls her "a disciple of the Lord" and describes her going to the tomb at dawn with her friends ([[peter 12:50-51]]). Like Mark, it ends with frightened women ([[peter 13:57]]).
+The Gospel of Peter calls her "a disciple of the Lord" and describes her going to the tomb at dawn with her friends ([[peter 12:50-51]]). As in Mark, its tomb scene ends with frightened women who flee ([[peter 13:57]]).
 
 ## Reading her well
 
@@ -310,7 +310,7 @@ Discuss on [[john 20:17]], or follow the plan "Women Who Spoke: From Ruth to Mar
     {
         "author": "editors",
         "title": "Job's Friends Were Wrong: Suffering Without an Explanation",
-        "summary": "The book of Job lets its pious characters defend God for thirty chapters, then says they were wrong. What does that do to our explanations of suffering?",
+        "summary": "The book of Job lets its pious characters defend God for most of the book, then says they were wrong. What does that do to our explanations of suffering?",
         "tags": ["suffering"],
         "body": """
 The book of Job is often summarized as "a good man suffers and keeps his faith." That is the first two chapters. The rest of the book is a fight.
@@ -486,7 +486,7 @@ Paul writes the longest discussion of resurrection in the New Testament. For him
 
 {{1-corinthians 15:12-14|KJV}}
 
-He answers the question "With what body do they come?" with an image from farming: a seed is sown and a plant rises, different and yet continuous ([[1-corinthians 15:35-38]]). The chapter ends with a taunt: "O death, where is thy sting?" ([[1-corinthians 15:55]]).
+He answers the question "With what body do they come?" with an image from farming: a seed is sown and a plant rises, different and yet continuous ([[1-corinthians 15:35-38]]). Near the end of the chapter comes a taunt: "O death, where is thy sting?" ([[1-corinthians 15:55]]).
 
 ## What connects them
 
@@ -511,7 +511,7 @@ Seven times would already be generous. "Seventy times seven" is a way of saying:
 
 ## Joseph
 
-The longest story of forgiveness in the Bible is in Genesis. Joseph's brothers sell him into slavery. Years later, he is the most powerful man in Egypt and they come to him for food, not recognizing him.
+One of the longest stories of forgiveness in the Bible is in Genesis. Joseph's brothers sell him into slavery. Years later, he is the most powerful man in Egypt and they come to him for food, not recognizing him.
 
 He does not forgive them at once. He tests them, for chapters, until Judah offers himself as a slave in place of Benjamin ([[genesis 44:33-34]]). Only then does Joseph reveal himself, weeping:
 

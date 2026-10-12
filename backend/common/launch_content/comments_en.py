@@ -66,7 +66,7 @@ Traditional reading — It is temptation, and the half-truth is exactly what mak
             {
                 "author": "editors",
                 "body": """
-Literary reading — Notice that the serpent never tells the woman to eat. It asks a question, corrects her, and makes a prediction. The decision is hers, and then his. The story spends its words on seeing ("the tree was pleasant to the eyes"), wanting, taking, giving. It reads less like a trap sprung on helpless people and more like a portrait of how a choice is made.
+Literary reading — Notice that the serpent never tells the woman to eat. It asks a question, corrects her, and makes a prediction. The decision is hers, and then his. The story spends its words on seeing ("pleasant to the eyes," 3:6), wanting, taking, giving. It reads less like a trap sprung on helpless people and more like a portrait of how a choice is made.
 """,
             },
             {
@@ -90,7 +90,7 @@ Ethical question — The punishments land unevenly: pain in childbirth and rule 
         "body": """
 Editors' question
 
-"The sons of God saw the daughters of men that they were fair; and they took them wives of all which they chose." Four verses later comes the flood.
+"The sons of God saw the daughters of men that they were fair; and they took them wives of all which they chose." A few verses later God resolves to send the flood (6:7).
 
 1 Enoch 6–8 tells what looks like the same event at length: two hundred angels swear an oath on Mount Hermon, take wives, father giants, and teach humans metallurgy, cosmetics, and sorcery. Genesis gives it four verses and moves on.
 
@@ -100,7 +100,7 @@ Why would one text say so little and the other so much?
             {
                 "author": "editors",
                 "body": """
-Literary reading — Genesis 6:1–4 reads like a fragment of a larger story everyone already knew, compressed into a footnote. Enoch reads like someone unpacking that footnote. Reading them together on this site, you can watch a tradition grow: the same names, the same mountain, the same giants, more detail at every step.
+Literary reading — Genesis 6:1–4 reads like a fragment of a larger story everyone already knew, compressed into a footnote. Enoch reads like someone unpacking that footnote. Reading them together on this site, you can watch a tradition grow: the same sons of heaven and daughters of men, the same giants — and now names, an oath, and a mountain that Genesis never mentions.
 """,
             },
             {
@@ -132,7 +132,7 @@ Chapter 22 begins by telling the reader it is a test (22:1). Abraham is not told
             {
                 "author": "editors",
                 "body": """
-Traditional reading — Easier, and that is the point of telling us. The reader knows from the first line that God will not let Isaac die, so we are free to watch Abraham's trust rather than fear for the boy. Hebrews 11:17–19 reads it this way: Abraham reasoned that God could raise the dead.
+Traditional reading — Easier, and that is the point of telling us. The reader is told from the first line that this is a test, so we are free to watch Abraham's trust rather than fear for the boy. Hebrews 11:17–19 reads it this way: Abraham reasoned that God could raise the dead.
 """,
             },
             {
@@ -172,7 +172,7 @@ Traditional reading — It is forgiveness that has found its footing. Joseph doe
             {
                 "author": "editors",
                 "body": """
-Ethical question — "God meant it for good" is easy to say from the top of Egypt. It is a dangerous sentence in the mouth of anyone who did the harm, and an unbearable one when said to someone still in the pit. The verse works because the victim says it, after the fact, freely. It should not be borrowed by anyone else.
+Ethical question — "God meant it unto good" is easy to say from the top of Egypt. It is a dangerous sentence in the mouth of anyone who did the harm, and an unbearable one when said to someone still in the pit. The verse works because the victim says it, after the fact, freely. It should not be borrowed by anyone else.
 """,
             },
         ],
@@ -298,7 +298,7 @@ Editors' question
 
 Psalm 137 begins with one of the most beautiful lines in the Bible — "By the rivers of Babylon, there we sat down, yea, we wept" — and ends with this: "Happy shall he be, that taketh and dasheth thy little ones against the stones."
 
-Most lectionaries and hymn settings leave the last verses out. Should they?
+Many liturgies and musical settings leave the last verses out — the Roman Catholic Liturgy of the Hours, for example, omits verses 7–9. Should they?
 """,
         "replies": [
             {
@@ -328,7 +328,7 @@ Reception history — Some early Christian readers solved the problem with alleg
         "body": """
 Editors' question
 
-At the end of Job, God tells Eliphaz: "ye have not spoken of me the thing that is right, as my servant Job hath." The friends spent thirty chapters defending God's justice. Job spent them accusing God of injustice.
+At the end of Job, God tells Eliphaz: "ye have not spoken of me the thing that is right, as my servant Job hath." For most of the book the friends defend God's justice, and Job accuses God of injustice.
 
 How can the accuser be the one who spoke rightly?
 """,
@@ -382,7 +382,7 @@ Skeptical reading — It is a sign that life is empty, and the book is braver th
             {
                 "author": "editors",
                 "body": """
-Traditional reading — The book ends: "Fear God, and keep his commandments" (12:13). Everything "under the sun" is vapor because it is judged from under the sun. The book clears the ground of every false source of meaning so that the only one left is God.
+Traditional reading — Near its end the book says: "Fear God, and keep his commandments" (12:13). Everything "under the sun" is vapor because it is judged from under the sun. The book clears the ground of every false source of meaning so that the only one left is God.
 """,
             },
         ],
@@ -620,7 +620,7 @@ Traditional reading — Because the man from Nazareth is the one through whom th
             {
                 "author": "editors",
                 "body": """
-Literary reading — It turns a biography into a new Genesis. Light and darkness come back (1:5), and the Gospel ends with Jesus breathing on his disciples (20:22), as God breathed into Adam (Genesis 2:7). The whole book is framed as creation starting over.
+Literary reading — It turns a biography into a new Genesis. Light and darkness come back (1:5), and near the end the risen Jesus breathes on his disciples (20:22), as God breathed into Adam (Genesis 2:7). The whole book is framed as creation starting over.
 """,
             },
             {
@@ -693,7 +693,7 @@ Traditional reading — Eastern Christian tradition calls her "equal to the apos
         "body": """
 Editors' question
 
-"For the good that I would I do not: but the evil which I would not, that do I."
+"For the good that I would I do not: but the evil which I would not, that I do."
 
 Who is the "I" in Romans 7? Paul before he believed, Paul as a believer, or a figure standing for humanity — or for Israel under the law?
 """,
@@ -801,7 +801,7 @@ A New Testament letter quotes a book that most churches did not put in their Bib
             {
                 "author": "editors",
                 "body": """
-Reception history — It tells us 1 Enoch was read and respected by at least some early Christians. Jude calls it prophecy. Later writers took different paths: some took Jude's quotation as a reason to value Enoch; others questioned Jude because of the quotation. Only the Ethiopian Orthodox Tewahedo Church kept Enoch in its Old Testament.
+Reception history — It tells us 1 Enoch was read and respected by at least some early Christians. Jude calls it prophecy. Later writers took different paths: some took Jude's quotation as a reason to value Enoch; others questioned Jude because of the quotation. Today the Ethiopian and Eritrean Orthodox Tewahedo churches keep Enoch in their Old Testament.
 """,
             },
             {
@@ -821,7 +821,7 @@ Editors' question
 
 "And God shall wipe away all tears from their eyes; and there shall be no more death, neither sorrow, nor crying, neither shall there be any more pain."
 
-Revelation spends twenty chapters on war, plague, and judgment, and ends with this. Does the ending redeem the violence that came before it, or sit uneasily beside it?
+Revelation spends much of its length on war, plague, and judgment, and ends with this. Does the ending redeem the violence that came before it, or sit uneasily beside it?
 """,
         "replies": [
             {
@@ -894,7 +894,7 @@ Literary reading — Thomas mocks the idea of a kingdom you can point to: if it 
             {
                 "author": "editors",
                 "body": """
-Traditional reading — In the canonical Gospels the kingdom is near and arriving — "Thy kingdom come" — and it comes with judgment and resurrection. Thomas keeps the "within" and drops the "coming." That is precisely why most early churches did not read Thomas in worship: it keeps the sayings and loses the story.
+Traditional reading — In the canonical Gospels the kingdom is near and arriving — "Thy kingdom come" — and it comes with judgment and resurrection. Thomas keeps the "within" and drops the "coming." Many readers think this is part of why Thomas did not become a book the churches read in worship: it keeps the sayings and loses the story.
 """,
             },
             {
@@ -938,7 +938,7 @@ Traditional reading — Both. Later Scripture interpreting earlier Scripture is 
         "body": """
 Editors' question
 
-Raphael finally reveals himself: "I am Raphael, one of the seven holy angels." For eleven chapters he traveled with Tobias in disguise, under the name Azarias.
+Raphael finally reveals himself: "I am Raphael, one of the seven holy angels." Since chapter 5 he has traveled with Tobias in disguise, under the name Azarias.
 
 Why tell a story where an angel is present the whole time and no one knows?
 """,
@@ -952,7 +952,7 @@ Literary reading — Because the book is about ordinary faithfulness: burying th
             {
                 "author": "editors",
                 "body": """
-Reception history — Tobit is in Catholic and Orthodox Bibles and in the Apocrypha of older Protestant Bibles, including the original 1611 KJV. Raphael's name as an archangel comes largely from this book; he is the only one named among the seven, and the idea of seven angels before God also appears in 1 Enoch 20 and Revelation 8:2.
+Reception history — Tobit is in Catholic and Orthodox Bibles and in the Apocrypha of older Protestant Bibles, including the original 1611 KJV. In the Bibles that include Tobit, this is the only book that names Raphael (he also appears in 1 Enoch); he is the only one of the seven named here, and the idea of seven angels before God also appears in 1 Enoch 20 and Revelation 8:2.
 """,
             },
         ],
@@ -966,7 +966,7 @@ Editors' question
 
 A mother and her seven sons are tortured for refusing to eat pork. The second son, dying, tells the king that the King of the world will raise up those who die for his laws "unto everlasting life."
 
-This is one of the clearest statements of bodily resurrection in the Jewish scriptures. Why does belief in resurrection appear so strongly in a story about martyrdom?
+This is one of the clearest statements of bodily resurrection in ancient Jewish writing. Why does belief in resurrection appear so strongly in a story about martyrdom?
 """,
         "replies": [
             {
