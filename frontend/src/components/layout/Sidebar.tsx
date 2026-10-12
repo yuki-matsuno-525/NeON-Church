@@ -26,7 +26,9 @@ type SidebarProps = {
 };
 
 export function Sidebar({ open = false, onClose }: SidebarProps) {
-  const isMobile = useIsMobile();
+  // CSS がドロワーへ切り替わる幅と揃える。ずれると、画面外のリンクが
+  // キーボードのタブ順に残ったり、開いたドロワーが dialog にならない。
+  const isMobile = useIsMobile(1023);
   const sidebarRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {

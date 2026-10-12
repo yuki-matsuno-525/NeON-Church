@@ -133,23 +133,27 @@ export function PlanReader({ initialPlan }: { initialPlan: Plan }) {
         onCancel={() => setConfirmRestart(false)}
       />
 
-      <div className="flex items-center gap-3 flex-wrap mb-6">
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
         {!user ? (
           <Link href={`/login?from=${encodeURIComponent(`/plans/${id}`)}`} className="action-link">
             {t.planReadLoginRequired}
           </Link>
         ) : isReading ? (
           <>
-            <span className="text-sm font-bold">
-              {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
-            </span>
-            <span className="text-sm text-muted">{t.planProgress(doneCount, plan.day_count)}</span>
-            <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} className="outline-button">
-              {t.planRestart}
-            </button>
-            <button type="button" onClick={() => void run(() => unsubscribeFromPlan(id))} disabled={busy} className="outline-button">
-              {t.planStop}
-            </button>
+            <div className="flex min-w-0 items-center gap-3 flex-wrap">
+              <span className="text-sm font-bold">
+                {today && today <= plan.day_count ? t.planTodayIs(today) : t.planReading}
+              </span>
+              <span className="text-sm text-muted">{t.planProgress(doneCount, plan.day_count)}</span>
+            </div>
+            <div className="flex shrink-0 items-center gap-2" data-testid="plan-reading-actions">
+              <button type="button" onClick={() => setConfirmRestart(true)} disabled={busy} className="outline-button">
+                {t.planRestart}
+              </button>
+              <button type="button" onClick={() => void run(() => unsubscribeFromPlan(id))} disabled={busy} className="outline-button">
+                {t.planStop}
+              </button>
+            </div>
           </>
         ) : (
           <button type="button" onClick={() => void run(() => subscribeToPlan(id))} disabled={busy} className="cta-button">

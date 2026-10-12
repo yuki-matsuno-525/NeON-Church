@@ -23,6 +23,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
+  const isSearchRoute = pathname === "/search";
   const rootSegment = pathname.split("/").filter(Boolean)[0] ?? "";
   // 解釈書（/commentary/…）も「読む」の中にある。
   const isReadRoute =
@@ -60,7 +61,10 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
     // もう一度組み立てる。その入れ替わりが終わったかどうかは、画面のどこを見ても
     // 分かりにくい（上部バーのログアウトは、狭い画面では隠れている）。
     // e2e はこの印が loading でなくなるのを待ってから中身を見る。
-    <nav className="navbar-root" data-auth-state={loading ? "loading" : user ? "signed-in" : "signed-out"}>
+    <nav
+      className={`navbar-root${isSearchRoute ? " navbar-search-page" : ""}`}
+      data-auth-state={loading ? "loading" : user ? "signed-in" : "signed-out"}
+    >
       {/* ハンバーガーボタン（モバイルのみ） */}
       <button
         type="button"
@@ -154,7 +158,7 @@ export function Navbar({ onMenuToggle, menuOpen = false }: NavbarProps) {
                   <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
                 {unreadCount > 0 && (
-                  <span className="badge absolute -top-2 -right-2 bg-neon-pink text-white">
+                  <span className="badge absolute -top-1 -right-1 bg-neon-pink text-white">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}

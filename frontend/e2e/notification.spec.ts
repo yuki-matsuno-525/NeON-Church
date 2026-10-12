@@ -39,11 +39,27 @@ test("N-1,N-2: 返信通知が届き、クリックで既読になる", async ({
   );
   await loginWithUI(page, userA.username, userA.password);
   await notifResponsePromise;
+  await page.setViewportSize({ width: 1024, height: 900 });
   const notifLink = page.locator('nav a[href="/notifications"]');
-  await expect(notifLink.locator("span")).toHaveText("1");
+  const unreadBadge = notifLink.locator("span");
+  await expect(unreadBadge).toHaveText("1");
+  const [navBounds, badgeBounds] = await Promise.all([
+    page.locator(".navbar-root").boundingBox(),
+    unreadBadge.boundingBox(),
+  ]);
+  expect(navBounds).not.toBeNull();
+  expect(badgeBounds).not.toBeNull();
+  expect(badgeBounds!.y).toBeGreaterThanOrEqual(navBounds!.y);
 
   // 通知ページで確認
   await gotoReady(page, "/notifications");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const chipRow = page.getByRole("group", { name: "種類で絞り込む" });
+  await expect(chipRow).toHaveCSS("flex-wrap", "nowrap");
+  await expect(chipRow).toHaveCSS("overflow-x", "auto");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    await page.evaluate(() => document.documentElement.clientWidth),
+  );
   // 種類の絞り込みにも「返信」ボタンが出るので、通知カードのバッジだけを見る。
   await expect(page.locator("span.badge").filter({ hasText: "返信" })).toBeVisible();
   await expect(page.getByText(userB.username)).toBeVisible();

@@ -345,6 +345,44 @@
   background: var(--neon-pink);
 }
 
+/* 一覧検索は、検索欄を最優先にして漏斗と件数を右へ並べる。 */
+.list-filter-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.list-filter-count {
+  white-space: nowrap;
+}
+
+/* 種類チップは広い画面では折り返し、スマホでは1行を横に送る。 */
+.filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+@media (max-width: 768px) {
+  .list-filter-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .list-filter-count {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .filter-chip-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--spacing-1);
+    overscroll-behavior-x: contain;
+  }
+  .filter-chip-row > * {
+    flex: 0 0 auto;
+  }
+}
+
 /* ----- パンくず -----
    いまどこにいるかと、上の階層への戻り道。
    広い画面では全部の階層を › でつなぎ、狭い画面ではすぐ上の 1 段だけにする。

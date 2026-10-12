@@ -34,7 +34,7 @@
   z-index: 50;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--spacing-4);
   height: var(--navbar-height);
   padding: 0 var(--spacing-4);
@@ -62,6 +62,15 @@
 /* 検索バーと言語切替のまとまり。広い画面では中身をそのまま横に並べる。 */
 .navbar-search-group {
   display: contents;
+}
+
+/* 検索結果ページはページ内の検索欄を正とし、共通バーの入力欄は重ねて出さない。 */
+.navbar-search-page .navbar-search-form {
+  display: none;
+}
+.navbar-search-page .navbar-search-group {
+  display: flex;
+  margin-left: auto;
 }
 .navbar-search-form {
   flex: 1;
@@ -384,14 +393,7 @@
   display: flex;
 }
 
-@media (max-width: 768px) {
-  /* 画面が狭いときは余白を詰める。
-     以前は各ページがインラインで余白を指定していて、それに勝つために
-     !important が必要だった。指定を .content-page に集約したので不要になった。 */
-  .content-page {
-    padding: var(--spacing-8) var(--spacing-4);
-  }
-
+@media (max-width: 1023px) {
   .hamburger-btn {
     display: flex;
   }
@@ -429,6 +431,7 @@
   }
 
   .navbar-root {
+    flex-wrap: wrap;
     align-content: center;
     row-gap: var(--spacing-2);
     padding-top: var(--spacing-2);
@@ -451,6 +454,37 @@
 
   .navbar-search-input {
     max-width: none;
+  }
+
+  /* /search ではページ内検索だけを使うため、上部バーは1段に戻す。 */
+  .navbar-root.navbar-search-page {
+    height: 60px;
+    flex-wrap: nowrap;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .navbar-search-page .navbar-search-group {
+    order: 0;
+    flex-basis: auto;
+    margin-left: auto;
+  }
+
+  /* --navbar-height は全ページ共通なので、短い検索ページだけ実寸で上書きする。 */
+  body:has(.navbar-search-page) .sidebar-overlay {
+    top: 60px;
+  }
+  body:has(.navbar-search-page) .sidebar {
+    top: 60px;
+    height: calc(100dvh - 60px);
+  }
+}
+
+@media (max-width: 768px) {
+  /* 画面が狭いときは余白を詰める。
+     以前は各ページがインラインで余白を指定していて、それに勝つために
+     !important が必要だった。指定を .content-page に集約したので不要になった。 */
+  .content-page {
+    padding: var(--spacing-8) var(--spacing-4);
   }
 
   .citation-pane {

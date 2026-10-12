@@ -74,7 +74,9 @@ export function CommentPanel({
   const t = useT();
   const toast = useToast();
   const { user } = useAuth();
-  const isMobile = useIsMobile(768);
+  // サイドバーがドロワーになるタブレット幅では本文の横幅が足りないため、
+  // CSS と同じ境界でコメント欄を全画面表示に切り替える。
+  const isMobile = useIsMobile(1023);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
