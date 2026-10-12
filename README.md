@@ -21,39 +21,83 @@
 
 ---
 
-NeON Church reimagines Christianity not as a single fixed authority, but as an open field where multiple texts, interpretations, histories, and fragments connect. It draws on Kanzo Uchimura's Non-Church Christianity and a "database-like" reading of faith after postmodernism, shedding light on texts placed outside the canon and interpretations long marginalized. Every text is treated as equal — no second-class scriptures. Here you can read, annotate, discuss, and collaboratively translate biblical texts (canon, Apocrypha, and Pseudepigrapha) together.
+> **Public beta.** The site is open to everyone and still changing. Feedback is very welcome — see [Contact & feedback](#contact--feedback).
+
+NeON Church reimagines Christianity not as a single fixed authority, but as an open field where multiple texts, interpretations, histories, and fragments connect. It draws on Kanzo Uchimura's Non-Church Christianity and a "database-like" reading of faith after postmodernism, shedding light on texts placed outside the canon and interpretations long marginalized. Every text is treated as equal — no second-class scriptures. Here you can read, annotate, discuss, and collaboratively translate biblical texts (canon, deuterocanon, Apocrypha, and Pseudepigrapha) together.
+
+It is not a church organization or a devotional service. It is an experiment in reading together.
 
 <div align="center">
-<img src="docs/assets/screenshot-read.webp" alt="Reading view with the comment panel open" width="860" />
-<p><sub>Selecting a verse opens the comment panel — John 1 in the Textus Receptus (Greek)</sub></p>
+<img src="docs/assets/screenshot-read.webp" alt="Reading Genesis 3 in the KJV with the comment panel open" width="860" />
+<p><sub>Selecting a verse opens its discussion — Genesis 3:1 in the KJV, with the editors' question and readings</sub></p>
 </div>
 
 <table>
 <tr>
-<td width="50%"><img src="docs/assets/screenshot-qa.webp" alt="Q&A board" /></td>
-<td width="50%"><img src="docs/assets/screenshot-translation.webp" alt="Translation project" /></td>
+<td width="50%"><img src="docs/assets/screenshot-home.webp" alt="Home page" /></td>
+<td width="50%"><img src="docs/assets/screenshot-article.webp" alt="An article quoting Jude and 1 Enoch" /></td>
 </tr>
 <tr>
-<td align="center"><sub>Q&A — tabs for unanswered / answered</sub></td>
-<td align="center"><sub>A collaborative translation project</sub></td>
+<td align="center"><sub>Home — start reading without an account</sub></td>
+<td align="center"><sub>Articles quote passages directly — here Jude 1:14–15 next to 1 Enoch 1:9</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/assets/screenshot-plan.webp" alt="A reading plan" /></td>
+<td width="50%"><img src="docs/assets/screenshot-qa.webp" alt="Q&A board" /></td>
+</tr>
+<tr>
+<td align="center"><sub>Reading plans that cross from Genesis into 1 Enoch</sub></td>
+<td align="center"><sub>Q&A — unresolved / resolved tabs</sub></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="docs/assets/screenshot-translation.webp" alt="Translation project" width="50%" /></td>
+</tr>
+<tr>
+<td colspan="2" align="center"><sub>A collaborative translation project — 1 Enoch into Japanese, verse by verse</sub></td>
 </tr>
 </table>
 
-> The interface ships in both English and Japanese — switch with the JA / EN toggle in the header.
+> The interface is bilingual. It opens in English; switch with the JA / EN toggle in the header.
+
+## What's in the library
+
+| Group | Examples | Editions |
+|---|---|---|
+| Hebrew Bible / Old Testament | Genesis – Malachi | KJV, 口語訳 (Japanese), 文語訳 (classical Japanese), Hebrew (WLC), Greek (LXX) |
+| New Testament | Matthew – Revelation | KJV, 口語訳, 文語訳, Greek (Textus Receptus; Nestle 1904 for the Gospels) |
+| Deuterocanon | Tobit, Judith, Wisdom, Sirach, Baruch, 1–4 Maccabees, 1 Esdras, Susanna, … | Brenton's English translation of the Greek |
+| Other early texts | 1 Enoch, the Gospels of Thomas, Mary, Peter, Judas, Philip, Truth, Q, the Infancy Gospels, the Life of Adam and Eve, … | Public-domain English translations (R. H. Charles, Mark M. Mattison, and others) |
+| Commentaries | Calvin, Rashi, Thomas Aquinas's *Catena Aurea*, church fathers (Augustine, Origen, Irenaeus, Chrysostom, …), Uchimura Kanzō | As published (public domain) |
+
+Sources and licenses for every text are listed on the site at [/licenses](https://neon-church.com/licenses).
 
 ## Features
 
-- **Scripture reading** — Hierarchical navigation: book → chapter → verse.
+- **Scripture reading** — Book → chapter → verse, with an edition switcher on every chapter so you can compare translations and source texts.
+- **Commentaries** — Read classic commentaries chapter by chapter, linked back to the verses they discuss.
 - **Comments** — Post on a verse, a chapter, or a whole book. Threaded replies, upvotes, editing, deletion, and tagging.
-- **Q&A** — Questions and answers live in their own app (`backend/qa/`), separate from comments. Ask, answer, and mark a best answer; the list is split into unanswered / answered tabs.
-- **Articles** — Write essays on a theme, citing passages inline with `[[matthew 6:16-18]]` marks. Draft / unlisted / public, with topics and their own comment threads.
-- **Reading plans** — Build a plan of N days, assign chapters to each day, and let readers subscribe and track their progress.
-- **Collaborative translation** — Start a translation project and assign translators verse by verse.
+- **Q&A** — Questions and answers live in their own app (`backend/qa/`), separate from comments. Ask, answer, and mark a best answer; the list is split into unresolved / resolved tabs.
+- **Articles** — Write essays that cite passages inline (`[[matthew 6:16-18]]`) or quote them as blocks (`{{john 1:1-5|KJV}}`), including commentary sections. Public or private, with topics and their own comment threads.
+- **Reading plans** — Build a plan of up to 365 days, mixing Bible chapters, other texts and commentary chapters; readers subscribe and track their progress chapter by chapter.
+- **Collaborative translation** — Start a translation project and work verse by verse, with review and discussion.
 - **Full-text search** — Searches across verse text, comment bodies, and book names (trigram indexes on Postgres).
 - **Favorites** — Add verses, chapters, books, comments, and translation projects to your favorites; browse them from your profile.
-- **Notifications** — Get notified when someone replies to your comment, with an unread badge.
-- **Reading progress** — Remembers the last verse you read so you can pick up where you left off.
-- **Profiles** — Avatar, bio, comment history, and favorites. Other users' profiles are public too.
+- **Notifications** — Get notified about replies, mentions, and answers, with an unread badge.
+- **Reading progress** — Remembers where you left off.
+- **Profiles** — Bio, comment history, and (optionally public) favorites.
+
+## About the seeded content
+
+A new community starts empty, so the first articles, reading plans, discussion prompts, Q&A and translation projects were drafted by the site team **with AI assistance** and checked against the source texts. They are posted from three clearly named accounts — `NeONChurch`, `NeONChurch_Editors`, and `NeONChurch_Guides` — whose profiles say so. They are there to give early visitors something to respond to, not to imitate real users. The text lives in [`backend/common/launch_content/`](backend/common/launch_content/); corrections are welcome.
+
+## Contact & feedback
+
+| What | Where it goes |
+|---|---|
+| Feedback, bug reports, feature requests, privacy requests | The form at [neon-church.com/feedback](https://neon-church.com/feedback) — no account needed. Sent by email to the site team. |
+| Email | [contact@neon-church.com](mailto:contact@neon-church.com) |
+| Bugs and ideas in public | [GitHub Issues](https://github.com/yuki-matsuno-525/NeON-Church/issues) |
+| A post that breaks the [community guidelines](https://neon-church.com/guidelines) | The **Report** menu on that post. Reports go to the moderators' admin queue. |
 
 ## Tech stack
 
@@ -78,7 +122,7 @@ NeON Church reimagines Christianity not as a single fixed authority, but as an o
 | Uptime monitoring | Better Stack |
 | CI/CD | GitHub Actions |
 
-正式公開、ロールバック、バックアップ復元確認は [release runbook](docs/release-runbook.md) を参照してください。
+For launch, rollback and backup-restore procedures, see the [release runbook](docs/release-runbook.md) (in Japanese).
 
 ## Quick start
 
@@ -336,6 +380,8 @@ NeON-Church/
 │   ├── notifications/   # Notifications
 │   ├── reading_progress/# Reading progress
 │   ├── translations/    # Collaborative translation projects
+│   ├── commentary/      # Commentaries (works, chapters, sections, links to verses)
+│   ├── common/          # Shared pieces: language, wipe, seed commands, launch content
 │   ├── users/           # Auth and profiles
 │   ├── config/          # Django settings and URL routing
 │   └── tests/           # Test suite
@@ -368,4 +414,4 @@ NeON-Church/
 
 ## License
 
-ソースコードは [MIT License](LICENSE)。収録している聖書本文などのテキストデータは、それぞれの出典のライセンスに従います（一覧はサイトの /licenses）。
+The source code is under the [MIT License](LICENSE). The texts in the library (scripture, translations, commentaries) follow the licenses of their sources — see [/licenses](https://neon-church.com/licenses) on the site.
