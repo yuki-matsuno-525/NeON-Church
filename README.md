@@ -200,6 +200,21 @@ What `--scale xl` (the default) creates:
 > It also creates an admin account if the database has no superuser yet, and prints
 > that password once.
 
+**Launch content (`seed_launch`):**
+
+`seed_demo` is for testing only. The posts that stay in production — articles, reading plans,
+comments, Q&A and translation projects written by the site team — come from a separate command.
+The text lives in `backend/common/launch_content/`; edit it there.
+
+```bash
+python manage.py seed_launch            # create the three NeONChurch accounts and their posts
+python manage.py seed_launch --dry-run  # show counts and any passages missing from this database
+python manage.py seed_launch --replace  # delete the operator accounts' posts and load them again
+```
+
+It never touches other users' posts (except replies attached to operator posts when you use
+`--replace`). Passages that are not in the database are skipped and listed at the end.
+
 </details>
 
 <details>
