@@ -58,7 +58,8 @@ describe("ApiError", () => {
 describe("apiFetch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setCookie("");
+    // 下のエラー文言の確かめは日本語で書いてあるので、日本語を選んだ状態から始める。
+    setCookie("neon_lang=ja");
   });
 
   it("成功時に JSON をパースして返す", async () => {
@@ -201,6 +202,13 @@ describe("apiFetch", () => {
     await fetchBooks();
     const [, init] = mockFetch.mock.calls[0];
     expect((init as RequestInit).headers).not.toHaveProperty("X-CSRFToken");
+  });
+
+  it("言語を選んでいなければ英語のエラー文言にする", async () => {
+    setCookie("");
+    mockFetch.mockResolvedValueOnce(makeRes(403, { detail: "日本語の詳細" }));
+    const err = await fetchBooks().catch((e) => e);
+    expect(err.message).toBe("You do not have permission to do that.");
   });
 
   it("英語選択時は Accept-Language とエラー文言を英語にする", async () => {

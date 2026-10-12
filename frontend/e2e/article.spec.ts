@@ -120,6 +120,8 @@ test("A-5: 下書きは他の人から見えない", async ({ page, request, bro
   // 別のユーザーで開くと読めない
   const other = await registerUser(request, "_a5b");
   const context = await browser.newContext();
+  // 自分で作った窓には設定の Cookie が入らないので、日本語の画面を選んでおく。
+  await context.addCookies([{ name: "neon_lang", value: "ja", url: page.url() }]);
   const otherPage = await context.newPage();
   await loginWithUI(otherPage, other.username, other.password);
   await gotoReady(otherPage, url);

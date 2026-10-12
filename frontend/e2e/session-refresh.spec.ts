@@ -32,7 +32,8 @@ test("期限切れでもページを開けばログイン状態が続く", async
 });
 
 test("ログインしていない人のページ表示は変わらない", async ({ page, context }) => {
-  await context.clearCookies();
+  // ログインの Cookie だけ消す。表示言語の Cookie（neon_lang=ja）まで消すと英語の画面になる。
+  await context.clearCookies({ name: /^(?!neon_lang$)/ });
 
   await gotoReady(page, "/read");
 

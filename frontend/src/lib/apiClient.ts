@@ -75,9 +75,10 @@ const API_BASE = "";
 
 // 表示言語は Cookie（neon_lang）だけを見る。サーバー側（lib/i18nServer.ts）も
 // 同じ Cookie を読むため、サーバーとブラウザで表示言語が食い違わない。
+// 日本語を選んだ人だけ日本語、それ以外は英語（lib/serverLanguage.ts と同じ決め方）。
 function getUiLanguage(): "ja" | "en" {
-  if (typeof document === "undefined") return "ja";
-  return /(?:^|; )neon_lang=en\b/.test(document.cookie) ? "en" : "ja";
+  if (typeof document === "undefined") return "en";
+  return /(?:^|; )neon_lang=ja\b/.test(document.cookie) ? "ja" : "en";
 }
 
 function localizedErrorMessage(status: number): string {
