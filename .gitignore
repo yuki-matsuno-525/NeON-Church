@@ -99,3 +99,5 @@ artifacts/
 
 # Claude Code の作業用ワークツリー
 .claude/worktrees/
+# Claude Code の手元だけの設定（許可したコマンドの一覧など）。人ごとに違うので共有しない。
+.claude/settings.local.json
