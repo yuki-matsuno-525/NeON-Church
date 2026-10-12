@@ -491,6 +491,10 @@ const ja = {
   // About
   aboutTitle: "NeON Church について",
   aboutSubtitle: "テキストと解釈が交差する、新しいキリスト教的プラットフォーム",
+  // 副題の下の一行。間にフィードバックのページへのリンクが入る
+  aboutBetaNoteBefore: "ベータ版として公開中です。使いにくいところや気づいたことは、",
+  aboutBetaNoteLink: "フィードバックのページ",
+  aboutBetaNoteAfter: "からお寄せください。",
   aboutSection1Title: "コンセプト",
   // 主な読み手は海外の人なので、内村鑑三・東浩紀には「誰で、何を言った人か」を添えている
   aboutSection1Body: "「日本的なキリスト教」とは何か。\nその問いを考えるうちに、私は明治・大正期のキリスト者、内村鑑三（1861–1930）の「無教会主義（Non-Church）」にたどり着きました。組織としての教会や職業的な聖職者、洗礼・聖餐といった儀式は救いに欠かせないものではないとし、信徒が集まって聖書を学ぶことを信仰の中心に置く考え方です。内村は欧米の宣教師の教会や教派から離れ、日本に根ざしたキリスト教を求めました。\n\n一方で、私はもともとポストモダン思想に関心がありました。批評家の東浩紀は『動物化するポストモダン』（2001年）で、アニメ・マンガ・ゲームの愛好者は、もはや作品の背後にひとつの「大きな物語」を求めず、キャラクターや設定などの要素を共有の巨大な「データベース」から取り出して消費し、自由に組み合わせるようになったと論じました。その影響から、私は「データベース的なキリスト教」という構想を抱くようになりました。キリスト教を、ひとつの固定された制度や権威としてではなく、複数のテキスト、解釈、歴史、断片が接続される開かれた場として捉えることはできないか。NeON Church は、この問いから生まれたプロジェクトです。\n\nこの構想を通じて、保守的なキリスト教とポストモダン以後の思想とのあいだに、新しい接点を見出せるのではないかと考えています。また、歴史のなかで正典の外に置かれてきた文書や、周縁化されてきた解釈にも光を当てることを目指しています。\n\n「NeON」という名前は、まず元素の「ネオン（neon）」に由来します。ネオンという名は、ギリシャ語で「新しい」を意味する neos から来ています。同時に、大文字の N・O・N が示すように、冒頭で触れた「無教会（Non-Church）」の「Non」でもあります。「新しさ」と「無教会」——この名前には、その二つの意味が重ねられています。さらに、背景の写真が示すように、東京のネオン街に象徴される雑種性、人工性、混沌、そして新しさのイメージとも重なっています。\n\nNeON Church は、制度としての教会ではなく、テキストと解釈が交差する、新しいキリスト教的プラットフォームです。",
@@ -518,7 +522,6 @@ const ja = {
   aboutSection4Title: "ご利用にあたって",
   aboutNotices: [
     "NeON Church は教会組織ではなく、特定の教派にも属していません。牧師による相談や、祈りの依頼の受け付けも行っていません。",
-    "命や安全に関わる悩みがあるときは、このサイトではなく、身近な人や地域の専門の相談窓口に連絡してください。緊急のときは警察（110）や救急（119）へ。",
     "正典・第二正典・外典・偽典、学者による復元資料までを同じ並びに置いているのは、読む前に価値の序列を決めないためです。書かれた時代や、それぞれの伝統での位置づけが同じだという意味ではありません。",
     "投票の数やトレンドは、その意見が正しいと認めるものではありません。",
   ],
@@ -1331,6 +1334,9 @@ const en: typeof ja = {
 
   aboutTitle: "About NeON Church",
   aboutSubtitle: "A new Christian platform where texts and interpretations intersect",
+  aboutBetaNoteBefore: "NeON Church is in public beta. If something is hard to use or you notice a problem, please let us know on the ",
+  aboutBetaNoteLink: "feedback page",
+  aboutBetaNoteAfter: ".",
   aboutSection1Title: "Concept",
   aboutSection1Body: "What does it mean for Christianity to be “Japanese”?\n\nAs I reflected on this question, I found my way to Kanzō Uchimura (1861–1930), a Christian thinker of Meiji- and Taishō-era Japan. Uchimura founded the Non-Church movement (Mukyōkai). He held that the institutional church, professional clergy, and sacraments such as baptism and Communion are not essential to salvation; instead, believers gather to study the Bible together. Breaking away from Western missionary churches and denominations, he sought a form of Christianity rooted in Japan.\n\nAt the same time, I have long been interested in postmodern thought. In Otaku: Japan’s Database Animals (2001; English translation 2009), the Japanese critic Hiroki Azuma argued that fans of anime, manga, and games no longer look for a single grand narrative behind each work. Instead, they consume elements — characters, settings, motifs — drawn from a vast shared “database,” and freely recombine them. Influenced by this idea, I began to imagine what might be called a database-like Christianity. Rather than understanding Christianity as a single fixed institution or authority, could it instead be seen as an open field where multiple texts, interpretations, histories, and fragments are connected?\n\nNeON Church was born from this question.\n\nThrough this project, I hope to discover new points of contact between conservative Christianity and thought after postmodernism. I also hope to shed light on texts that have been placed outside the canon over the course of history, as well as on interpretations that have been marginalized.\n\nThe name NeON comes first from neon, the chemical element whose name derives from the Greek neos, meaning “new.” At the same time, as the capital letters N-O-N suggest, it also comes from the “Non” of the Non-Church movement mentioned above. “Newness” and “Non-Church” — the name carries both meanings at once. It also resonates, as the background photo suggests, with the neon-lit streets of Tokyo: their hybridity, artificiality, chaos, and sense of newness.\n\nNeON Church is not a church as an institution, but a new Christian platform where texts and interpretations intersect.",
   aboutSection2Title: "Features",
@@ -1356,7 +1362,6 @@ const en: typeof ja = {
   aboutSection4Title: "Before you use NeON Church",
   aboutNotices: [
     "NeON Church is not a church organization and is not affiliated with any denomination. We do not offer pastoral counseling or accept prayer requests.",
-    "If you are struggling with something that affects your life or safety, please reach out to people you trust or to a local support service rather than this site. In an emergency, contact your local emergency services.",
     "Canonical, deuterocanonical, apocryphal, and pseudepigraphal books, as well as scholarly reconstructions, are listed side by side so that no ranking is decided before you read. This does not mean they share the same date or the same standing in each tradition.",
     "Vote counts and trends do not mean that an opinion is correct.",
   ],
