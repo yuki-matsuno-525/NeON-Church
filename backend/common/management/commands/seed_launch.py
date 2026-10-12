@@ -3,6 +3,7 @@
 
     python manage.py seed_launch            # 運営アカウントを用意して、投稿を入れる
     python manage.py seed_launch --replace  # 運営の投稿を消してから入れ直す
+    python manage.py seed_launch --wipe     # 聖書本文以外の既存データを全部消してから入れる
     python manage.py seed_launch --dry-run  # 何が入るか・どの箇所が見つからないかだけ確かめる
 
 seed_demo（目視確認用の架空データ）とは別物。こちらは本番に残し続ける本物の投稿で、
@@ -38,6 +39,7 @@ from common.launch_content import (
     QUESTIONS,
     THREADS,
 )
+from common.wipe import wipe_user_data
 from plans.models import MAX_DAYS_PER_PLAN, MAX_READINGS_PER_DAY, Plan, PlanDay, PlanDayReading
 from qa.models import Answer, Question
 from translations.models import (
@@ -70,6 +72,14 @@ class Command(BaseCommand):
             ),
         )
         parser.add_argument(
+            "--wipe",
+            action="store_true",
+            help=(
+                "入れる前に、聖書本文・解釈書・管理者アカウント以外の既存データを全部消す"
+                "（一般ユーザーと、すべての投稿・記事・プラン・翻訳・お気に入り・通知）"
+            ),
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="DB を変えずに、入る件数と見つからない箇所だけを表示する",
@@ -82,10 +92,16 @@ class Command(BaseCommand):
         self.counts = {}
         self.skipped = []
         self.passwords = {}
+        self.wiped = {}
         self._load_places()
 
         try:
+            # 消すのも入れるのも 1 つの処理の中で行う。途中で落ちたら消した分も元に戻るので、
+            # 「消えただけで何も入っていない」状態にはならない。
             with transaction.atomic():
+                if options["wipe"]:
+                    self.stdout.write("既存データを消しています...")
+                    self.wiped = wipe_user_data()
                 self.accounts = self._ensure_accounts()
                 self._guard_existing(options["replace"])
                 self._seed_comments()
@@ -97,6 +113,7 @@ class Command(BaseCommand):
                     raise _DryRun()
         except _DryRun:
             self.passwords = {}
+            self.wiped = {label: f"{n}（消える予定）" for label, n in self.wiped.items()}
             self.stdout.write(self.style.WARNING("--dry-run なので DB は元に戻しました"))
 
         self._report()
@@ -453,6 +470,11 @@ class Command(BaseCommand):
 
     def _report(self):
         self.stdout.write("")
+        if self.wiped:
+            self.stdout.write("消した既存データ:")
+            for label, n in self.wiped.items():
+                self.stdout.write(f"  {label}: {n}")
+            self.stdout.write("入れた運営の投稿:")
         for label, n in self.counts.items():
             self.stdout.write(f"  {label}: {n}")
         if self.skipped:

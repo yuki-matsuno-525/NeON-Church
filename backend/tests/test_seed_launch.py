@@ -341,6 +341,51 @@ class TestSeedLaunchCommand:
         assert Article.objects.count() == 0
         assert Comment.objects.count() == 0
 
+    def make_existing_data(self):
+        """本番に残っている既存データの代わり。一般ユーザーと管理者、それぞれの投稿。"""
+        from bible.models import Book
+
+        genesis = Book.objects.get(canonical_book__slug="genesis", translation="KJV")
+        reader = User.objects.create_user(username="reader", password="pw-12345678")
+        admin = User.objects.create_superuser(username="admin", password="pw-12345678")
+        make_comment(user=reader, book=genesis, body="一般ユーザーのコメント")
+        make_comment(user=admin, book=genesis, body="管理者のコメント")
+        Article.objects.create(owner=reader, title="一般ユーザーの記事", body="")
+        Plan.objects.create(owner=admin, title="管理者のプラン")
+        return reader, admin
+
+    def test_wipe_removes_existing_data_but_keeps_scripture_and_admins(self, scripture):
+        reader, admin = self.make_existing_data()
+        verses = Verse.objects.count()
+        output = self.run("--wipe")
+
+        # 一般ユーザーと、管理者を含む全員の投稿が消える
+        assert not User.objects.filter(pk=reader.pk).exists()
+        assert not Comment.objects.filter(body__in=["一般ユーザーのコメント", "管理者のコメント"]).exists()
+        assert not Article.objects.filter(title="一般ユーザーの記事").exists()
+        assert not Plan.objects.filter(title="管理者のプラン").exists()
+        # 管理者アカウントと聖書本文は残る
+        assert User.objects.filter(pk=admin.pk).exists()
+        assert Verse.objects.count() == verses
+        # 消したあとに運営の投稿が入る
+        assert Article.objects.count() == len(ARTICLES)
+        assert Plan.objects.count() == len(PLANS)
+        assert "消した既存データ" in output
+
+    def test_wipe_also_recreates_operator_accounts(self, scripture):
+        self.run()
+        output = self.run("--wipe")  # 二重投入のエラーにならず、運営アカウントも作り直す
+        assert Article.objects.count() == len(ARTICLES)
+        assert "パスワード" in output
+
+    def test_wipe_with_dry_run_deletes_nothing(self, scripture):
+        reader, _admin = self.make_existing_data()
+        output = self.run("--wipe", "--dry-run")
+        assert "消える予定" in output
+        assert User.objects.filter(pk=reader.pk).exists()
+        assert Comment.objects.filter(body="一般ユーザーのコメント").exists()
+        assert Article.objects.count() == 1
+
     def test_needs_scripture(self, db):
         with pytest.raises(CommandError, match="聖書データ"):
             self.run()

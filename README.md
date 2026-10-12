@@ -210,10 +210,12 @@ The text lives in `backend/common/launch_content/`; edit it there.
 python manage.py seed_launch            # create the three NeONChurch accounts and their posts
 python manage.py seed_launch --dry-run  # show counts and any passages missing from this database
 python manage.py seed_launch --replace  # delete the operator accounts' posts and load them again
+python manage.py seed_launch --wipe     # delete all existing user data first (keeps scripture, commentaries, admins)
 ```
 
-It never touches other users' posts (except replies attached to operator posts when you use
-`--replace`). Passages that are not in the database are skipped and listed at the end.
+Without `--wipe` it never touches other users' posts (except replies attached to operator posts
+when you use `--replace`). `--wipe` deletes every non-staff user and everything people created,
+in the same transaction as the load, so a failure leaves the database unchanged. Passages that are not in the database are skipped and listed at the end.
 
 </details>
 
