@@ -52,3 +52,29 @@ def test_accepts_a_queryset(editions):
     from bible.models import Book
 
     assert pick_edition(Book.objects.all(), "KJV").translation == "KJV"
+
+
+@pytest.fixture
+def english_screen():
+    """英語の画面からのリクエストの最中、という状態を作る。"""
+    from common.language import _ui_language
+
+    token = _ui_language.set("en")
+    yield
+    _ui_language.reset(token)
+
+
+def test_english_screen_falls_back_to_kjv(editions, english_screen):
+    # 英語の画面では、訳の指定が無ければ KJV の書名・本文にする（日本語の書名を出さない）。
+    assert pick_edition(editions, None).translation == "KJV"
+    assert pick_edition(editions, "存在しない訳").translation == "KJV"
+    # 指定があればそれが優先
+    assert pick_edition(editions, "口語訳").translation == "口語訳"
+
+
+def test_english_screen_without_kjv_uses_the_default(english_screen):
+    books = [
+        make_book("創世記", "口語訳", 1, slug="genesis"),
+        make_book("Γένεση", "LXX (GRC)", 2, slug="genesis"),
+    ]
+    assert pick_edition(books, None).translation == "口語訳"
