@@ -243,7 +243,7 @@
 
    以前はこの打ち消しを reader.css 側に書いていたが、この部品の指定に
    勝てず 7 か所すべてに !important が必要だった。持ち主の側へ移したので要らない。 */
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .panel {
     position: static;
     width: 100%;

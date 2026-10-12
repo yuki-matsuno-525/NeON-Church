@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PlanReader } from "./PlanReader";
 import type { Plan } from "@/lib/types";
@@ -111,6 +111,15 @@ describe("プランを読み進めるところ", () => {
 
     await user.click(screen.getByRole("button", { name: "すべて閉じる" }));
     expect(screen.getByRole("button", { name: /第1日/ })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("読書中の操作ボタンは進捗文と分けた同じグループに置く", () => {
+    render(<PlanReader initialPlan={readingPlan} />);
+
+    const actions = screen.getByTestId("plan-reading-actions");
+    expect(within(actions).getByRole("button", { name: "最初からやり直す" })).toBeInTheDocument();
+    expect(within(actions).getByRole("button", { name: "やめる" })).toBeInTheDocument();
+    expect(actions).not.toHaveTextContent("日目");
   });
 
   it("日の見出しは、左の目盛りを足しても 1 回しか読み上げられない", () => {

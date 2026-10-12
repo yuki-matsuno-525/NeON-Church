@@ -28,7 +28,7 @@ export function FilterChips<T extends string>({
   ariaLabel: string;
 }) {
   return (
-    <div role="group" aria-label={ariaLabel} className="mb-6 flex flex-wrap gap-2">
+    <div role="group" aria-label={ariaLabel} className="filter-chip-row mb-6">
       {chips.map((chip) => {
         const isActive = chip.value === value;
         return (

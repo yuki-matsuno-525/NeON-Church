@@ -63,6 +63,24 @@ test("その日の1つ目の章を押すと、その章に飛ぶ（最後の章�
   expect(publishRes.ok(), `公開に失敗: ${await publishRes.text()}`).toBeTruthy();
 
   await gotoReady(page, `/plans/${plan.id}`);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "読み始める" }).click();
+  const actions = page.getByTestId("plan-reading-actions");
+  await expect(actions).toBeVisible();
+  const actionButtons = await actions.getByRole("button").all();
+  expect(actionButtons).toHaveLength(2);
+  const [restartBounds, stopBounds] = await Promise.all([
+    actionButtons[0].boundingBox(),
+    actionButtons[1].boundingBox(),
+  ]);
+  expect(restartBounds).not.toBeNull();
+  expect(stopBounds).not.toBeNull();
+  expect(Math.abs(restartBounds!.y - stopBounds!.y)).toBeLessThan(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    await page.evaluate(() => document.documentElement.clientWidth),
+  );
+
   const firstReading = page.getByRole("link", { name: /マタイによる福音書 1章/ });
   await expect(firstReading).toBeVisible();
   await firstReading.click();

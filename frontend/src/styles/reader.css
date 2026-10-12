@@ -290,7 +290,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   /* 節選択時: コメントパネルを画面いっぱいに開く。
      以前は下 7 割までで、狭い画面ではコメントが数件しか見えなかった。
      上部バーごと覆うので、戻るのは右上の × から。
@@ -326,6 +326,14 @@
   .reader-wrapper.has-verse .resize-handle {
     display: none;
   }
+
+  /* この幅ではサイドバーが画面外のため、前章ナビを画面左端に戻す。 */
+  .chapter-nav-prev {
+    left: 0;
+  }
+}
+
+@media (max-width: 768px) {
 
   .reader-main {
     padding: var(--spacing-4);
@@ -363,8 +371,4 @@
     min-width: 0;
   }
 
-  /* モバイルではサイドバーが画面外のため、前章ナビを画面左端に戻す */
-  .chapter-nav-prev {
-    left: 0;
-  }
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { gotoReady } from "./helpers";
+import { gotoReady, loginWithUI, registerUser } from "./helpers";
 
 /**
  * スマホ幅でのレイアウトが崩れていないことを、実際の計算結果で確かめる。
@@ -60,6 +60,81 @@ test("画面が広いときはハンバーガーボタンを出さない", async
   await gotoReady(page, "/read");
   const style = await computed(page, ".hamburger-btn", ["display"]);
   expect(style.display).toBe("none");
+});
+
+test("タブレット幅はドロワー、1024pxからデスクトップナビになる", async ({ page, request }) => {
+  const user = await registerUser(request, "_responsive_nav");
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await loginWithUI(page, user.username, user.password);
+
+  for (const width of [769, 800, 900, 939, 1023]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator(".hamburger-btn")).toBeVisible();
+    await expect(page.locator(".nav-desktop-only")).toBeHidden();
+    await expect(page.locator("#app-sidebar")).toHaveAttribute("inert", "");
+  }
+
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await expect(page.locator(".hamburger-btn")).toBeHidden();
+  await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
+
+  const bounds = await page.evaluate(() => {
+    const nav = document.querySelector(".navbar-root")!.getBoundingClientRect();
+    const logout = [...document.querySelectorAll("button")]
+      .find((button) => button.textContent?.trim() === "ログアウト")!
+      .getBoundingClientRect();
+    return { navBottom: nav.bottom, logoutTop: logout.top, logoutBottom: logout.bottom };
+  });
+  expect(bounds.logoutTop).toBeGreaterThanOrEqual(0);
+  expect(bounds.logoutBottom).toBeLessThanOrEqual(bounds.navBottom);
+
+});
+
+test("タブレットではコメントパネルを全画面、1024pxでは2列で表示する", async ({ page }) => {
+  await page.setViewportSize({ width: 940, height: 800 });
+  await gotoReady(page, "/matthew/1");
+  await page.getByTestId("verse-item").first().click();
+
+  await expect(page.locator(".reader-panel")).toHaveCSS("position", "fixed");
+  await expect(page.locator(".navbar-root")).toBeHidden();
+
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await expect(page.locator(".reader-panel")).toHaveCSS("position", "static");
+  await expect(page.locator(".navbar-root")).toBeVisible();
+
+  const columns = await page.evaluate(() => {
+    const main = document.querySelector(".reader-main")!.getBoundingClientRect();
+    const panel = document.querySelector(".reader-panel")!.getBoundingClientRect();
+    return { mainRight: main.right, panelLeft: panel.left, mainWidth: main.width };
+  });
+  expect(columns.mainRight).toBeLessThanOrEqual(columns.panelLeft + 1);
+  expect(columns.mainWidth).toBeGreaterThan(400);
+});
+
+test("検索結果ページはページ内検索だけを表示する", async ({ page }) => {
+  await gotoReady(page, "/search?q=%E7%A5%9E");
+
+  await expect(page.locator('input[type="search"]:visible')).toHaveCount(1);
+  await expect(page.locator(".navbar-root")).toHaveCSS("height", "60px");
+  await expect(page.locator(".navbar-search-form")).toBeHidden();
+});
+
+test("スマホの一覧検索は件数を検索欄の下へ送る", async ({ page }) => {
+  await gotoReady(page, "/qa");
+
+  const searchBox = page.locator('.list-filter-row input[type="search"]');
+  const count = page.locator(".list-filter-count");
+  const [searchBounds, countBounds] = await Promise.all([
+    searchBox.boundingBox(),
+    count.boundingBox(),
+  ]);
+
+  expect(searchBounds).not.toBeNull();
+  expect(countBounds).not.toBeNull();
+  expect(countBounds!.y).toBeGreaterThanOrEqual(searchBounds!.y + searchBounds!.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
+    await page.evaluate(() => document.documentElement.clientWidth),
+  );
 });
 
 test("メニューを開いたまま動かしても、上のバーは画面の上に残る", async ({ page }) => {

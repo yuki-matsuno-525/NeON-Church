@@ -53,7 +53,7 @@ export function ListFilters({
 
   return (
     <div className="mb-4">
-      <div className="flex items-center gap-2">
+      <div className="list-filter-row">
         <ClearableSearchInput
           value={value}
           onChange={setValue}
@@ -77,7 +77,7 @@ export function ListFilters({
           </button>
         )}
         {totalText && (
-          <span className="whitespace-nowrap text-xs text-faint">{totalText}</span>
+          <span className="list-filter-count text-xs text-faint">{totalText}</span>
         )}
       </div>
 
