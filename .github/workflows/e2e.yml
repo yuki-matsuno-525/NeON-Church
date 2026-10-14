@@ -43,11 +43,11 @@ jobs:
       PLAYWRIGHT_API_BASE: http://localhost:8000
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ── Backend ──────────────────────────────────────────────
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -78,7 +78,7 @@ jobs:
 
       # ── Frontend ─────────────────────────────────────────────
       - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -109,7 +109,7 @@ jobs:
 
       # ── Playwright ───────────────────────────────────────────
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: frontend/playwright-report/
@@ -134,7 +134,7 @@ jobs:
       # 時々落ちるテストを追うときは、これを落として `npx playwright show-trace` で見る。
       - name: Upload Playwright traces
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-traces
           path: frontend/test-results/

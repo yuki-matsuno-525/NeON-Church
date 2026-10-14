@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Wait for deployment and verify production
         shell: pwsh
         run: ./scripts/smoke-production.ps1 -Attempts 20 -DelaySeconds 30
